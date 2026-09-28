@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
+import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shackles.class, RagingGoblin.class, Spellbook.class})
+@CardUsed({Shackles.class, BenalishLancer.class, ChromaticSphere.class})
 class ShacklesTest extends BaseCardTest {
 
     @Test
@@ -31,12 +32,14 @@ class ShacklesTest extends BaseCardTest {
     @DisplayName("Activated ability returns Shackles to its owner's hand")
     void activatedAbilityReturnsSelfToHand() {
         enchantOpponentCreature();
-        int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Shackles"));
+        Permanent aura = findPermanent(player1, "Shackles");
+        int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(aura);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, auraIndex, null, null);
         harness.passBothPriorities();
 
+        assertThat(aura.isTapped()).isFalse();
         harness.assertNotOnBattlefield(player1, "Shackles");
         harness.assertInHand(player1, "Shackles");
     }
@@ -44,8 +47,7 @@ class ShacklesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotEnchantNoncreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
-        addCreatureReady(player2, new RagingGoblin());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ChromaticSphere());
 
         harness.setHand(player1, List.of(new Shackles()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -74,7 +76,7 @@ class ShacklesTest extends BaseCardTest {
     @Test
     @DisplayName("Returns to its owner's hand when another player controls Shackles")
     void returnsToOwnersHandWhenOpponentControlsAura() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
         Shackles ownedShackles = new Shackles();
         ownedShackles.setOwnerId(player1.getId());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, ownedShackles);
@@ -92,7 +94,7 @@ class ShacklesTest extends BaseCardTest {
     }
 
     private Permanent enchantOpponentCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
 
         harness.setHand(player1, List.of(new Shackles()));
         harness.addMana(player1, ManaColor.WHITE, 3);

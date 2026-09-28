@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DryadOfTheIlysianGrove.class, Forest.class, Mountain.class, Piracy.class, Twiddle.class, VernalBloom.class})
+@CardUsed({Forest.class, Mountain.class, VernalBloom.class})
 class VernalBloomTest extends BaseCardTest {
 
     @Test
@@ -55,6 +55,7 @@ class VernalBloomTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Piracy.class)
     @DisplayName("A Forest tapped through Piracy gives the bonus to the Forest's controller")
     void foreignForestBonusGoesToForestController() {
         harness.addToBattlefield(player1, new VernalBloom());
@@ -96,6 +97,7 @@ class VernalBloomTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(DryadOfTheIlysianGrove.class)
     @DisplayName("A land that gains the Forest subtype also triggers Vernal Bloom")
     void gainedForestSubtypeTriggers() {
         harness.addToBattlefield(player1, new VernalBloom());
@@ -109,6 +111,7 @@ class VernalBloomTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Twiddle.class)
     @DisplayName("Tapping a Forest without producing mana does not trigger Vernal Bloom")
     void nonManaTapDoesNotTrigger() {
         harness.addToBattlefield(player1, new VernalBloom());
@@ -138,8 +141,7 @@ class VernalBloomTest extends BaseCardTest {
     @DisplayName("A land that becomes a Forest also produces an additional green")
     void effectiveForestSubtypeAlsoTriggers() {
         harness.addToBattlefield(player1, new VernalBloom());
-        harness.addToBattlefield(player1, new Mountain());
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).get(1);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
 
         harness.setHand(player1, List.of(new LushGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);

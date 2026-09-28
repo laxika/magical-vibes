@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
+/** Resolves Inkshield's combat-damage prevention and token rider. */
 @Component
 @RequiredArgsConstructor
 public class PreventAllCombatDamageToControllerAndCreateTokensEffectHandler

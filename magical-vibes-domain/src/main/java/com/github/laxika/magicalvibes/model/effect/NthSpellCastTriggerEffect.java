@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.List;
 
@@ -19,15 +20,22 @@ import java.util.List;
  * @param spellNumber     the exact spell number that triggers this (e.g. 3 for "third spell")
  * @param resolvedEffects effects to put on the stack when this triggers
  * @param countScope      whose spell-cast count to use
+ * @param sourceZone      optional zone from which the counted spells must have been cast
  */
 public record NthSpellCastTriggerEffect(
         int spellNumber,
         List<CardEffect> resolvedEffects,
-        CountScope countScope
+        CountScope countScope,
+        Zone sourceZone
 ) implements CardEffect {
 
     public NthSpellCastTriggerEffect(int spellNumber, List<CardEffect> resolvedEffects) {
-        this(spellNumber, resolvedEffects, CountScope.CONTROLLER);
+        this(spellNumber, resolvedEffects, CountScope.CONTROLLER, null);
+    }
+
+    public NthSpellCastTriggerEffect(int spellNumber, List<CardEffect> resolvedEffects,
+                                     CountScope countScope) {
+        this(spellNumber, resolvedEffects, countScope, null);
     }
 
     @Override

@@ -121,6 +121,8 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenPutCounterOnTargetCreatureResume;
     public ExileUpToOneMatchingCardFromEachGraveyardContext
             resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
+    /** Resolution-time mandatory exile of one card from each player's graveyard. */
+    public EachPlayerExilesCardFromGraveyardContext eachPlayerExilesCardFromGraveyard;
     public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
     public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume;
     public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChoiceMade;
@@ -152,6 +154,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
     /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
     public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
+    /** Whether Winter's multi-card graveyard selection is awaiting its answer. */
+    public boolean resolutionTimeExileAnyNumberWithFourCardTypesResume;
+    /** Whether Winter's multi-card graveyard selection has been answered. */
+    public boolean resolutionTimeExileAnyNumberWithFourCardTypesChoiceMade;
+    /** Cards chosen for Winter's multi-card graveyard selection. */
+    public List<UUID> resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
      * Lore). When set,
@@ -266,6 +274,14 @@ public class GraveyardTargetOperationState {
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {
+    }
+
+    public record EachPlayerExilesCardFromGraveyardContext(
+            UUID controllerId, UUID sourcePermanentId, CardEffect thenEffect,
+            List<UUID> remainingPlayerIds, UUID currentPlayerId, int nonlandCardsExiled) {
+        public EachPlayerExilesCardFromGraveyardContext {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
     }
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {

@@ -5,5 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * the creature that dealt the damage play it for as long as it remains exiled.
  */
 public record ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect()
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
+    }
 }

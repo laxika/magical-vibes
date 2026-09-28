@@ -31,11 +31,22 @@ class RadjanSpiritTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target a creature its controller controls")
+    void targetsOwnCreature() {
+        Permanent spirit = addCreatureReady(player1, new RadjanSpirit());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+
+        harness.activateAbility(player1, 0, null, elemental.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
     }
 
     @Test

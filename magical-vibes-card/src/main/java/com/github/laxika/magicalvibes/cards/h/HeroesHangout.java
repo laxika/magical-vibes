@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "79")
 @CardRegistration(set = "OM1", collectorNumber = "79")
+@CardRegistration(set = "MSC", collectorNumber = "804")
 public class HeroesHangout extends Card {
 
     public HeroesHangout() {

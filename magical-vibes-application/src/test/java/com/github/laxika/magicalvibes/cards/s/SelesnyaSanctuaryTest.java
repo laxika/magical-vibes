@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SelesnyaSanctuary.class, Forest.class})
+@CardUsed({SelesnyaSanctuary.class, Forest.class, Watchwolf.class})
 class SelesnyaSanctuaryTest extends BaseCardTest {
 
     @Test
@@ -24,9 +25,7 @@ class SelesnyaSanctuaryTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
 
-        Permanent sanctuary = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof SelesnyaSanctuary)
-                .findFirst().orElseThrow();
+        Permanent sanctuary = findPermanent(player1, "Selesnya Sanctuary");
         assertThat(sanctuary.isTapped()).isTrue();
 
         harness.passBothPriorities();
@@ -47,13 +46,32 @@ class SelesnyaSanctuaryTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent sanctuary = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent sanctuary = findPermanent(player1, "Selesnya Sanctuary");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactly(sanctuary.getId());
         harness.handlePermanentChosen(player1, sanctuary.getId());
 
         harness.assertNotOnBattlefield(player1, "Selesnya Sanctuary");
         harness.assertInHand(player1, "Selesnya Sanctuary");
+    }
+
+    @Test
+    @DisplayName("The ETB ability only offers lands controlled by its controller")
+    void onlyOffersControlledLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        harness.setHand(player1, List.of(new SelesnyaSanctuary()));
+
+        harness.playLand(player1, 0);
+        Permanent sanctuary = findPermanent(player1, "Selesnya Sanctuary");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(forest.getId(), sanctuary.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(opponentForest.getId());
+
+        harness.handlePermanentChosen(player1, forest.getId());
     }
 
     @Test

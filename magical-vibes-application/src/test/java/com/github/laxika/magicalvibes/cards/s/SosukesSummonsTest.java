@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,6 +43,19 @@ class SosukesSummonsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Created Snake tokens are green")
+    void createsGreenSnakeTokens() {
+        prepareMain(player1);
+        harness.castFromHand(player1, new SosukesSummons(), "{2}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Snake"))
+                .hasSize(2)
+                .allSatisfy(snake -> assertThat(snake.getCard().getColor()).isEqualTo(CardColor.GREEN));
+    }
+
+    @Test
     @DisplayName("A nontoken Snake entering lets you return Sosuke's Summons from your graveyard")
     void nontokenSnakeReturnsSummons() {
         SosukesSummons summons = new SosukesSummons();
@@ -57,6 +71,39 @@ class SosukesSummonsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(summons.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(summons.getId()));
+    }
+
+    @Test
+    @DisplayName("Declining the optional return leaves Sosuke's Summons in the graveyard")
+    void decliningReturnLeavesSummonsInGraveyard() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setGraveyard(player1, List.of(summons));
+        prepareMain(player1);
+
+        harness.castFromHand(player1, new SkeletalSnake(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card.getId().equals(summons.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(summons.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A nontoken Snake an opponent controls does not trigger the graveyard ability")
+    void opponentSnakeDoesNotTrigger() {
+        SosukesSummons summons = new SosukesSummons();
+        harness.setGraveyard(player1, List.of(summons));
+
+        harness.enterBattlefieldAndReturn(player2, new SkeletalSnake());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(summons.getId()));
     }
 
     @Test

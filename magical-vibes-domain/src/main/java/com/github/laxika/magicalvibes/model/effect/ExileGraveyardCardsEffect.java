@@ -127,6 +127,12 @@ public record ExileGraveyardCardsEffect(
                 filter, null, false, true, false, null, false, false, false, false);
     }
 
+    /** Exiles every opponent's graveyard and tracks the cards with the source permanent. */
+    public static ExileGraveyardCardsEffect allOpponentsWithSource() {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_OPPONENTS,
+                null, null, false, true, false, null, false);
+    }
+
     public static ExileGraveyardCardsEffect allPlayersMatchingFromBattlefieldThisTurn(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS,
                 filter, null, false, false, true, null, false);

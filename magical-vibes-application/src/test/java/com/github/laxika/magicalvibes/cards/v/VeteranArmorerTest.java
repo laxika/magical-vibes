@@ -16,22 +16,32 @@ class VeteranArmorerTest extends BaseCardTest {
     @DisplayName("Other creatures you control get +0/+1")
     void buffsOtherOwnCreatures() {
         harness.addToBattlefield(player1, new VeteranArmorer());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
+    @DisplayName("Multiple Armorers boost one another and other creatures")
+    void multipleArmorersBoostEachOther() {
+        Permanent firstArmorer = harness.addToBattlefieldAndReturn(player1, new VeteranArmorer());
+        Permanent secondArmorer = harness.addToBattlefieldAndReturn(player1, new VeteranArmorer());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, firstArmorer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstArmorer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondArmorer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondArmorer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Does not buff itself or opponent's creatures")
     void doesNotBuffItselfOrOpponentsCreatures() {
-        harness.addToBattlefield(player1, new VeteranArmorer());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent armorer = findPermanent(player1, "Veteran Armorer");
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
+        Permanent armorer = harness.addToBattlefieldAndReturn(player1, new VeteranArmorer());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, armorer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, armorer)).isEqualTo(2);

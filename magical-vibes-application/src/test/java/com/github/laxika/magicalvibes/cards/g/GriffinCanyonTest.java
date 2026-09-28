@@ -66,7 +66,7 @@ class GriffinCanyonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, nonGriffin.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("required predicate");
+                .hasMessageContaining("Griffin");
     }
 
     @Test

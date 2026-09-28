@@ -18,30 +18,39 @@ import java.util.List;
  *
  * @param spellFilter which hand cards are eligible ({@code null} = any nonland)
  * @param maxManaValue maximum eligible mana value ({@code null} = no maximum)
+ * @param afterSuccessfulCastEffect optional follow-up queued after a successful cast
  */
 public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
-                                                                  DynamicAmount maxManaValue)
+                                                                  DynamicAmount maxManaValue,
+                                                                  CardEffect afterSuccessfulCastEffect)
         implements CardEffect, CombatDamageAmountAwareEffect {
 
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                DynamicAmount maxManaValue) {
+        this(spellFilter, maxManaValue, null);
+    }
+
+    public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
+                                                               DynamicAmount maxManaValue,
+                                                               CardEffect afterSuccessfulCastEffect) {
         this.spellFilter = spellFilter;
         this.maxManaValue = maxManaValue;
+        this.afterSuccessfulCastEffect = afterSuccessfulCastEffect;
     }
 
     /** Any nonland spell (Maelstrom Archangel). */
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect() {
-        this(null, null);
+        this(null, null, null);
     }
 
     /** A matching nonland spell, capped by a dynamic mana value. */
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(DynamicAmount maxManaValue) {
-        this(null, maxManaValue);
+        this(null, maxManaValue, null);
     }
 
     /** A matching nonland spell with no mana-value cap. */
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter) {
-        this(spellFilter, null);
+        this(spellFilter, null, null);
     }
 
     @Override
@@ -58,6 +67,7 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
         CardPredicate combinedFilter = spellFilter == null
                 ? manaValueFilter
                 : new CardAllOfPredicate(List.of(spellFilter, manaValueFilter));
-        return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(combinedFilter, null);
+        return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
+                combinedFilter, null, afterSuccessfulCastEffect);
     }
 }

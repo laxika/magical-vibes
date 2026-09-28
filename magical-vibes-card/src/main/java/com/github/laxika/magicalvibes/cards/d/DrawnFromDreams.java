@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "56")
+@CardRegistration(set = "NCC", collectorNumber = "220")
 public class DrawnFromDreams extends Card {
 
     public DrawnFromDreams() {

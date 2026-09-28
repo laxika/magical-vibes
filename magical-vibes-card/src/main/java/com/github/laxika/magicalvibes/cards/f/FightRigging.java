@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "145")
+@CardRegistration(set = "FIC", collectorNumber = "303")
 public class FightRigging extends Card {
 
     public FightRigging() {

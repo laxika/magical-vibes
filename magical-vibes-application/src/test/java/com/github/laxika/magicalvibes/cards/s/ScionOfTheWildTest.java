@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScionOfTheWild.class, GrizzlyBears.class, GloriousAnthem.class})
 class ScionOfTheWildTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Scion of the Wild puts it on the stack")
@@ -34,7 +33,7 @@ class ScionOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Scion of the Wild is 1/1 when it is your only creature")
     void isOneOneWhenOnlyCreature() {
-        Permanent scion = addScionReady(player1);
+        Permanent scion = addCreatureReady(player1, new ScionOfTheWild());
 
         assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
@@ -43,7 +42,7 @@ class ScionOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Scion of the Wild power and toughness equal creatures you control")
     void ptEqualsControlledCreatures() {
-        Permanent scion = addScionReady(player1);
+        Permanent scion = addCreatureReady(player1, new ScionOfTheWild());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
@@ -54,7 +53,7 @@ class ScionOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Scion of the Wild counts only your creatures, not opponent creatures")
     void countsOnlyControllersCreatures() {
-        Permanent scion = addScionReady(player1);
+        Permanent scion = addCreatureReady(player1, new ScionOfTheWild());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -65,7 +64,7 @@ class ScionOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Scion of the Wild power and toughness update as creatures enter and leave")
     void ptUpdatesAsCreaturesChange() {
-        Permanent scion = addScionReady(player1);
+        Permanent scion = addCreatureReady(player1, new ScionOfTheWild());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(2);
@@ -84,7 +83,7 @@ class ScionOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Scion of the Wild characteristic-defining P/T stacks with static bonuses")
     void ptStacksWithStaticBonuses() {
-        Permanent scion = addScionReady(player1);
+        Permanent scion = addCreatureReady(player1, new ScionOfTheWild());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
@@ -92,11 +91,4 @@ class ScionOfTheWildTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(3);
     }
 
-    private Permanent addScionReady(Player player) {
-        ScionOfTheWild card = new ScionOfTheWild();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

@@ -420,6 +420,45 @@ public class ManaCost {
         return total;
     }
 
+    /** Returns this cost in the engine's brace-delimited mana-symbol format. */
+    public String toManaCostString() {
+        StringBuilder result = new StringBuilder();
+        if (genericCost > 0) {
+            appendSymbol(result, Integer.toString(genericCost));
+        }
+        for (ManaColor color : ManaColor.values()) {
+            appendRepeatedSymbols(result, color.getCode(), coloredCosts.getOrDefault(color, 0));
+            appendRepeatedSymbols(result, color.getCode() + "/P", phyrexianCosts.getOrDefault(color, 0));
+        }
+        for (HybridSymbol hybrid : hybridCosts) {
+            List<String> parts = new ArrayList<>();
+            if (hybrid.genericAlternative() >= 0) {
+                parts.add(Integer.toString(hybrid.genericAlternative()));
+            }
+            hybrid.colors().stream().map(ManaColor::getCode).forEach(parts::add);
+            if (hybrid.phyrexianAlternative()) {
+                parts.add("P");
+            }
+            appendSymbol(result, String.join("/", parts));
+        }
+        appendRepeatedSymbols(result, "S", snowCost);
+        appendRepeatedSymbols(result, "X", xSymbolCount);
+        if (result.isEmpty()) {
+            return "{0}";
+        }
+        return result.toString();
+    }
+
+    private static void appendRepeatedSymbols(StringBuilder result, String symbol, int count) {
+        for (int i = 0; i < count; i++) {
+            appendSymbol(result, symbol);
+        }
+    }
+
+    private static void appendSymbol(StringBuilder result, String symbol) {
+        result.append('{').append(symbol).append('}');
+    }
+
     public boolean hasPhyrexianMana() {
         return !phyrexianCosts.isEmpty()
                 || hybridCosts.stream().anyMatch(HybridSymbol::phyrexianAlternative);

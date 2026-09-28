@@ -25,12 +25,14 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEff
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
@@ -181,6 +183,9 @@ public class TargetPolarityClassifier {
                 best = higherPriority(best, classify(gameData, step, aiPlayerId));
             }
             return best;
+        }
+        if (effect instanceof GrantStaticEffectToTargetEffect grant) {
+            return classify(gameData, grant.staticEffect(), aiPlayerId);
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return classify(gameData, exileThen.thenEffect(), aiPlayerId);
@@ -342,6 +347,10 @@ public class TargetPolarityClassifier {
                     || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0;
             return negative ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
+        if (effect instanceof PerpetuallyBoostTargetCreatureEffect boost) {
+            return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
+                    ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
+        }
 
         if (effect instanceof RegenerationEffect) {
             return TargetPolarity.BENEFICIAL;
@@ -395,6 +404,7 @@ public class TargetPolarityClassifier {
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyUpToTargetsThenReturnFromGraveyardEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DisorientingChoiceEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Blood Frenzy: the pump rides along, but the target still dies at the next end
             // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.
             entry("DestroyTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -481,6 +491,7 @@ public class TargetPolarityClassifier {
             entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),
             entry("RemoveAllCountersFromTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
+            entry("LosesAllNonManaAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
             entry("MarkTargetCreatureExileInsteadOfDieThisTurnEffect", TargetPolarity.HARMFUL),
@@ -496,6 +507,7 @@ public class TargetPolarityClassifier {
             entry("TargetCreatureDealsPowerDamageToControllerEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPowerToughnessEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetDealsPowerDamageToTargetEffect", TargetPolarity.HARMFUL),
             entry("EachTargetCreatureDealsPowerDamageToTargetCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RemoveUpToCountersFromTargetEffect", TargetPolarity.HARMFUL),
@@ -524,6 +536,8 @@ public class TargetPolarityClassifier {
             entry("EarthbendTargetLandThenFightEffect", TargetPolarity.BENEFICIAL),
             entry("AttachOneOfControlledEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachTargetEquipmentToSourceEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachTargetEquipmentToTriggeringPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentsToTargetCreatureThenEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetToSourcePermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
@@ -535,6 +549,10 @@ public class TargetPolarityClassifier {
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
+            entry("ConniveEachTargetEffect", TargetPolarity.BENEFICIAL),
+            entry("PhaseOutChosenTargetCreaturesEffect", TargetPolarity.BENEFICIAL),
+            entry("TargetCreatureMustAttackTargetPlayerThisTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("ConjureDuplicateOfTargetCreatureIntoHandEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
             entry("GrantFlyingToTargetCreatureOrPlayerEffect", TargetPolarity.BENEFICIAL),
@@ -571,6 +589,7 @@ public class TargetPolarityClassifier {
             entry("PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddToughnessCountersEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectAllDamageToTargetCreatureToControllerEffect", TargetPolarity.BENEFICIAL),
+            entry("RedirectYourDamageToTargetCreatureThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
@@ -593,6 +612,11 @@ public class TargetPolarityClassifier {
             entry("AttachTargetAuraToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ExileTargetNontokenCreatureAndTopCardsThenCloakEffect", TargetPolarity.BENEFICIAL),
             entry("FalseOrdersEffect", TargetPolarity.NEUTRAL),
+            entry("ReselectAttackingCreatureEffect", TargetPolarity.NEUTRAL),
+            entry("ReselectAttackingCreatureAttackTargetEffect", TargetPolarity.NEUTRAL),
+            entry("TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect", TargetPolarity.NEUTRAL),
+            entry("ExchangeTextBoxesEffect", TargetPolarity.NEUTRAL),
+            entry("ShuffleTargetPermanentsThenEachControllerMayCastEffect", TargetPolarity.NEUTRAL),
             entry("TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MustBlockEachAttackingCreatureThisTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
@@ -607,6 +631,7 @@ public class TargetPolarityClassifier {
             entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             // Fell the Mighty uses the target's power as a threshold and spares the target itself.
             entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),
+            entry("DestroyAllCreaturesWithPowerLessThanTargetEffect", TargetPolarity.NEUTRAL),
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

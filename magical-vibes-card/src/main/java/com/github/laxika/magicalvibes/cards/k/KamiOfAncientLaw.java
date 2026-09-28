@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "21")
 @CardRegistration(set = "MM2", collectorNumber = "21")
+@CardRegistration(set = "SOC", collectorNumber = "150")
 public class KamiOfAncientLaw extends Card {
 
     public KamiOfAncientLaw() {

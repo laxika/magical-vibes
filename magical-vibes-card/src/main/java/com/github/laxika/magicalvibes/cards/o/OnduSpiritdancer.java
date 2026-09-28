@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "723")
 @CardRegistration(set = "CMM", collectorNumber = "756")
+@CardRegistration(set = "DSC", collectorNumber = "101")
 public class OnduSpiritdancer extends Card {
 
     public OnduSpiritdancer() {

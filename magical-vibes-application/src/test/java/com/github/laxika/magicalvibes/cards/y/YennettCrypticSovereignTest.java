@@ -26,6 +26,7 @@ class YennettCrypticSovereignTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();

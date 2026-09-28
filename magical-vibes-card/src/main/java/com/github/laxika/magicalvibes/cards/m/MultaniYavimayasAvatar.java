@@ -20,6 +20,8 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "174")
 @CardRegistration(set = "MB2", collectorNumber = "248")
+@CardRegistration(set = "DSC", collectorNumber = "190")
+@CardRegistration(set = "TDC", collectorNumber = "263")
 public class MultaniYavimayasAvatar extends Card {
 
     public MultaniYavimayasAvatar() {

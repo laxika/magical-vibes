@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -327,6 +329,25 @@ public class AsEntersInteractionService {
                                 convokeCreatureIds));
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, new ArrayList<>(validIds),
                         List.of(controllerId), "Choose a nonland permanent, or choose yourself to decline.");
+                return;
+            }
+        }
+
+        boolean needsOpponentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
+        if (needsOpponentChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            UUID choiceControllerId = controllerId;
+            List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(choiceControllerId))
+                    .toList();
+            if (!validOpponentIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
+                        justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                        etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                        convokeCreatureIds));
+                playerInputService.beginPlayerChoice(gameData, controllerId,
+                        new ArrayList<>(validOpponentIds), "Secretly choose an opponent.");
                 return;
             }
         }
@@ -701,6 +722,35 @@ public class AsEntersInteractionService {
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
                         new ArrayList<>(eligibleCards), 2, 0,
                         card.getName() + " — Put two opponent-owned cards from exile into their owners' graveyards?");
+                return;
+            }
+        }
+
+        RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect removeCountersForCounters =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(e -> e instanceof RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect)
+                        .map(RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (removeCountersForCounters != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId);
+            List<UUID> eligible = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(p -> p != justEntered)
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            p, removeCountersForCounters.filter(), filterContext))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!eligible.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(eligible), eligible.size(),
+                        new MultiPermanentChoiceContext.RemoveAllCountersAsEntersForCounters(
+                                justEntered.getId(), removeCountersForCounters, controllerId, card,
+                                targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — choose any number of artifacts, creatures, and enchantments.");
                 return;
             }
         }

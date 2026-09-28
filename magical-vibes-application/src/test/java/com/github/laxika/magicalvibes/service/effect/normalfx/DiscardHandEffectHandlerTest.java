@@ -29,6 +29,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         resolveEffect(gd, entry, new DiscardHandEffect());
 
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
+        assertThat(entry.getEventValue()).isEqualTo(2);
         verify(graveyardService).discardCard(gd, player1Id, handCard1);
         verify(graveyardService).discardCard(gd, player1Id, handCard2);
         verify(triggerCollectionService).checkDiscardTriggers(gd, player1Id, handCard1);
@@ -56,6 +57,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
         resolveEffect(gd, entry, new DiscardHandEffect());
 
+        assertThat(entry.getEventValue()).isZero();
         verify(graveyardService, never()).discardCard(any(), any(), any());
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("no cards to discard")));

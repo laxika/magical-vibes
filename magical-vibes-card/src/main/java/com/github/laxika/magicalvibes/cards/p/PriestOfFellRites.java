@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "208")
+@CardRegistration(set = "FIC", collectorNumber = "328")
 public class PriestOfFellRites extends Card {
 
     public PriestOfFellRites() {

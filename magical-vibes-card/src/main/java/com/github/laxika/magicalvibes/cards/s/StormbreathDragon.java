@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "143")
 @CardRegistration(set = "PIO", collectorNumber = "157")
+@CardRegistration(set = "TDC", collectorNumber = "237")
 public class StormbreathDragon extends Card {
 
     public StormbreathDragon() {

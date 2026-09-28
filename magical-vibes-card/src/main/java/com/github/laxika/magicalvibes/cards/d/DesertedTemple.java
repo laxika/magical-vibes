@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "56")
 @CardRegistration(set = "EOS", collectorNumber = "101")
 @CardRegistration(set = "EOS", collectorNumber = "146")
+@CardRegistration(set = "LTC", collectorNumber = "363")
+@CardRegistration(set = "LTC", collectorNumber = "393")
 public class DesertedTemple extends Card {
 
     public DesertedTemple() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(WateryGrave.class)
 class WateryGraveTest extends BaseCardTest {
 
     @Test
@@ -78,10 +80,7 @@ class WateryGraveTest extends BaseCardTest {
     }
 
     private Permanent addGraveReady(Player player) {
-        Permanent grave = new Permanent(new WateryGrave());
-        grave.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(grave);
-        return grave;
+        return harness.addToBattlefieldAndReturn(player, new WateryGrave());
     }
 
     private Permanent findGrave(Player player) {

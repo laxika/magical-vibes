@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ANA", collectorNumber = "3a")
+@CardRegistration(set = "40K", collectorNumber = "308")
 @CardRegistration(set = "C15", collectorNumber = "330")
 @CardRegistration(set = "ACR", collectorNumber = "103")
 @CardRegistration(set = "ACR", collectorNumber = "104")
@@ -482,6 +483,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLD", collectorNumber = "1400")
 @CardRegistration(set = "SLD", collectorNumber = "1469")
 @CardRegistration(set = "SLD", collectorNumber = "1940")
+@CardRegistration(set = "SLD", collectorNumber = "2510")
 @CardRegistration(set = "GN2", collectorNumber = "57")
 @CardRegistration(set = "GN2", collectorNumber = "58")
 @CardRegistration(set = "GN3", collectorNumber = "125")
@@ -513,6 +515,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CMM", collectorNumber = "440")
 @CardRegistration(set = "CMM", collectorNumber = "442")
 @CardRegistration(set = "CMM", collectorNumber = "441")
+@CardRegistration(set = "40K", collectorNumber = "307")
+@CardRegistration(set = "40K", collectorNumber = "309")
 public class Island extends Card {
 
     public Island() {

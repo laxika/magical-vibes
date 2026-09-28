@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "ECC", collectorNumber = "63")
 @CardRegistration(set = "TMC", collectorNumber = "81")
+@CardRegistration(set = "SOC", collectorNumber = "419")
 public class VernalFen extends Card {
 
     public VernalFen() {

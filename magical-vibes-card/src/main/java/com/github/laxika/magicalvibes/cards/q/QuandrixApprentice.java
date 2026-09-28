@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "216")
+@CardRegistration(set = "SOC", collectorNumber = "324")
 public class QuandrixApprentice extends Card {
 
     public QuandrixApprentice() {

@@ -41,8 +41,7 @@ class BogImpTest extends BaseCardTest {
         Permanent imp = addCreatureReady(player1, new BogImp());
         Permanent blocker = addCreatureReady(player2, new StormCrow());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(imp);
@@ -57,8 +56,7 @@ class BogImpTest extends BaseCardTest {
         Permanent imp = addCreatureReady(player1, new BogImp());
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(imp);

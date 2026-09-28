@@ -17,25 +17,42 @@ class LifebloodTest extends BaseCardTest {
     @DisplayName("An opponent's Mountain becoming tapped gains the controller 1 life")
     void opponentMountainTapGainsLife() {
         harness.addToBattlefield(player1, new Lifeblood());
+        harness.addToBattlefield(player2, new Mountain());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Each time an opponent's Mountain becomes tapped, the controller gains 1 life")
+    void eachOpponentMountainTapTriggersSeparately() {
+        harness.addToBattlefield(player1, new Lifeblood());
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        tap(mountain);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+        mountain.untap();
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
     @Test
     @DisplayName("Tapping your own Mountain does not trigger")
     void ownMountainTapDoesNotTrigger() {
         harness.addToBattlefield(player1, new Lifeblood());
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        tap(mountain);
+        harness.tapPermanent(player1, 1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -45,19 +62,14 @@ class LifebloodTest extends BaseCardTest {
     @DisplayName("Tapping an opponent's non-Mountain land does not trigger")
     void opponentNonMountainTapDoesNotTrigger() {
         harness.addToBattlefield(player1, new Lifeblood());
-        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        tap(island);
+        harness.tapPermanent(player2, 0);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private void tap(Permanent permanent) {
-        permanent.tap();
-        harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
-    }
 }

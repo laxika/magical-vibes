@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -90,9 +91,8 @@ public class PerpetuallyBoostOwnedCardsEffectHandler implements NormalEffectHand
         modifiedCardIds.add(card.getId());
         gameData.perpetualCardPowerToughnessModifiers.merge(
                 card.getId(),
-                new GameData.PerpetualPowerToughnessModifier(effect.powerBoost(), effect.toughnessBoost()),
-                (oldValue, newValue) -> new GameData.PerpetualPowerToughnessModifier(
-                        oldValue.power() + newValue.power(), oldValue.toughness() + newValue.toughness()));
+                new CardPowerToughnessModifier(effect.powerBoost(), effect.toughnessBoost()),
+                (oldValue, newValue) -> oldValue.add(newValue.power(), newValue.toughness()));
     }
 
     private boolean isOwnedBy(Card card, UUID ownerId, UUID zoneOwnerId) {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "33")
+@CardRegistration(set = "C21", collectorNumber = "117")
 public class CraftyCutpurse extends Card {
 
     public CraftyCutpurse() {

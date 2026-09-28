@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BottomlessPit;
+import com.github.laxika.magicalvibes.cards.d.Donate;
 import com.github.laxika.magicalvibes.cards.r.Ruination;
 import com.github.laxika.magicalvibes.cards.v.VerdantTouch;
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 @CardUsed({SacredGround.class, Ruination.class, VolrathsStronghold.class, VerdantTouch.class,
-        StrongholdAssassin.class, BottomlessPit.class})
+        StrongholdAssassin.class, BottomlessPit.class, Donate.class, ShardVolley.class})
 class SacredGroundTest extends BaseCardTest {
 
     @Test
@@ -96,16 +97,39 @@ class SacredGroundTest extends BaseCardTest {
         harness.castSorcery(player1, 0, land.getId());
         resolveAllTriggers();
 
-        Permanent assassin = harness.addToBattlefieldAndReturn(player2, new StrongholdAssassin());
-        Permanent fodder = harness.addToBattlefieldAndReturn(player2, new StrongholdAssassin());
-        assassin.setSummoningSick(false);
-        fodder.setSummoningSick(false);
+        Permanent assassin = addCreatureReady(player2, new StrongholdAssassin());
+        Permanent fodder = addCreatureReady(player2, new StrongholdAssassin());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         int assassinIndex = gd.playerBattlefields.get(player2.getId()).indexOf(assassin);
         harness.activateAbility(player2, assassinIndex, 0, null, land.getId());
         harness.handlePermanentChosen(player2, fodder.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
+    }
+
+    @Test
+    @DisplayName("An opponent's spell sacrificing your controlled land as an additional cost returns it")
+    void opponentsAdditionalCostSacrificeReturnsLand() {
+        harness.addToBattlefield(player1, new SacredGround());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
+
+        harness.setHand(player1, List.of(new Donate()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(player2.getId(), land.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new ShardVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), land.getId());
+        harness.assertInGraveyard(player1, "Volrath's Stronghold");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Volrath's Stronghold");

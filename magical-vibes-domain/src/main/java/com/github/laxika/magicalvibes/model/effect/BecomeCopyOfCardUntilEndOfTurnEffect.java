@@ -11,13 +11,15 @@ import java.util.Set;
  */
 public record BecomeCopyOfCardUntilEndOfTurnEffect(
         Card card,
-        Set<CardType> additionalTypes,
-        Set<CardSubtype> additionalSubtypes
+        Set<CardType> additionalTypesOverride,
+        Set<CardSubtype> additionalSubtypesOverride
 ) implements CardEffect {
 
     public BecomeCopyOfCardUntilEndOfTurnEffect {
-        additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
-        additionalSubtypes = additionalSubtypes == null ? Set.of() : Set.copyOf(additionalSubtypes);
+        additionalTypesOverride = additionalTypesOverride == null
+                ? Set.of() : Set.copyOf(additionalTypesOverride);
+        additionalSubtypesOverride = additionalSubtypesOverride == null
+                ? Set.of() : Set.copyOf(additionalSubtypesOverride);
     }
 
     public BecomeCopyOfCardUntilEndOfTurnEffect(Card card) {

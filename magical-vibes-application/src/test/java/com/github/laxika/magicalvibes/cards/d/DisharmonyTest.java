@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KoboldsOfKherKeep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Disharmony.class, GrizzlyBears.class})
+@CardUsed({Disharmony.class, KoboldsOfKherKeep.class})
 class DisharmonyTest extends BaseCardTest {
 
     @Test
@@ -59,7 +59,7 @@ class DisharmonyTest extends BaseCardTest {
     void cannotTargetNonAttackingCreature() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());
         setUpSpell();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
@@ -92,7 +92,7 @@ class DisharmonyTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = new Permanent(new KoboldsOfKherKeep());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(owner.getId().equals(player1.getId()) ? player2.getId() : player1.getId());

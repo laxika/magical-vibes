@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FrenziedGoblin;
+import com.github.laxika.magicalvibes.cards.s.ScreechingGriffin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,15 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RollingSpoil.class, Forest.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({RollingSpoil.class, Forest.class, FrenziedGoblin.class, ScreechingGriffin.class})
 class RollingSpoilTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a target land without black mana and leaves creatures unchanged")
     void destroysLandWithoutBlackMana() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ScreechingGriffin());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
 
         castRollingSpoil(target, false);
 
@@ -38,8 +38,8 @@ class RollingSpoilTest extends BaseCardTest {
     @DisplayName("Black mana gives all creatures -1/-1 until end of turn")
     void blackManaAppliesCreatureDebuff() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ScreechingGriffin());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
 
         castRollingSpoil(target, true);
 
@@ -58,18 +58,18 @@ class RollingSpoilTest extends BaseCardTest {
     @DisplayName("The black mana debuff destroys creatures reduced to zero toughness")
     void blackManaDebuffKillsSmallCreatures() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new FrenziedGoblin());
 
         castRollingSpoil(target, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Fugitive Wizard"));
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Frenzied Goblin"));
     }
 
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
         harness.setHand(player1, List.of(new RollingSpoil()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -84,7 +84,6 @@ class RollingSpoilTest extends BaseCardTest {
         harness.addMana(player1, blackManaSpent ? ManaColor.BLACK : ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }

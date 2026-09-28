@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "920")
 @CardRegistration(set = "SLD", collectorNumber = "1311")
 @CardRegistration(set = "MB2", collectorNumber = "192")
+@CardRegistration(set = "SLD", collectorNumber = "2425")
 public class GoblinLackey extends Card {
 
     public GoblinLackey() {

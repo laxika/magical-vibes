@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,44 +9,65 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VotaryOfTheConclave.class, Shock.class})
+@CardUsed({VotaryOfTheConclave.class, Char.class})
 class VotaryOfTheConclaveTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability grants a regeneration shield")
     void activatingAbilityGrantsRegenerationShield() {
-        harness.addToBattlefield(player1, new VotaryOfTheConclave());
+        Permanent votary = harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Votary of the Conclave").getRegenerationShield()).isEqualTo(1);
+        assertThat(votary.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The regeneration shield saves it from lethal damage")
     void regenerationShieldSavesFromLethalDamage() {
-        harness.addToBattlefield(player1, new VotaryOfTheConclave());
+        Permanent votary = harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        UUID votaryId = harness.getPermanentId(player1, "Votary of the Conclave");
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Char()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, votaryId);
-        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, votary.getId());
 
-        Permanent votary = findPermanent(player1, "Votary of the Conclave");
-        assertThat(votary).isNotNull();
+        harness.assertOnBattlefield(player1, "Votary of the Conclave");
         assertThat(votary.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the two generic mana")
+    void cannotActivateWithoutGenericMana() {
+        harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        harness.addToBattlefieldAndReturn(player1, new VotaryOfTheConclave());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }

@@ -17,11 +17,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record PutCounterOnEachMatchingPermanentEffect(CounterType counterType, DynamicAmount amount,
                                                       PermanentPredicate predicate,
-                                                      EachPermanentScope scope) implements CardEffect {
+                                                      EachPermanentScope scope,
+                                                      boolean evaluateAmountPerPermanent) implements CardEffect {
+
+    public PutCounterOnEachMatchingPermanentEffect(CounterType counterType, DynamicAmount amount,
+                                                   PermanentPredicate predicate, EachPermanentScope scope) {
+        this(counterType, amount, predicate, scope, false);
+    }
 
     public PutCounterOnEachMatchingPermanentEffect(CounterType counterType, int count,
                                                    PermanentPredicate predicate, EachPermanentScope scope) {
-        this(counterType, new Fixed(count), predicate, scope);
+        this(counterType, new Fixed(count), predicate, scope, false);
+    }
+
+    /** Evaluates the dynamic amount with each matching permanent as the amount source. */
+    public PutCounterOnEachMatchingPermanentEffect(CounterType counterType, DynamicAmount amount,
+                                                   PermanentPredicate predicate, EachPermanentScope scope,
+                                                   boolean evaluateAmountPerPermanent) {
+        this.counterType = counterType;
+        this.amount = amount;
+        this.predicate = predicate;
+        this.scope = scope;
+        this.evaluateAmountPerPermanent = evaluateAmountPerPermanent;
     }
 
     @Override

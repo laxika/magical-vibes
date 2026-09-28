@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "MM2", collectorNumber = "64")
 @CardRegistration(set = "SPG", collectorNumber = "85")
 @CardRegistration(set = "SPG", collectorNumber = "95")
+@CardRegistration(set = "MOC", collectorNumber = "242")
 public class Thoughtcast extends Card {
 
     public Thoughtcast() {

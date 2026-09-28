@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NomadicElf;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,60 +14,69 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TurfWound.class, Forest.class, NomadicElf.class})
 class TurfWoundTest extends BaseCardTest {
 
-    private void castAtPlayer2() {
+    private void castAt(Player target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new TurfWound()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
-    private List<Integer> player2Playable() {
-        harness.forceActivePlayer(player2);
+    private List<Integer> playableCards(Player player) {
+        harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player, List.of(new Forest(), new NomadicElf()));
+        harness.addMana(player, ManaColor.GREEN, 2);
         harness.clearPriorityPassed();
-        harness.ensurePriority(player2);
+        harness.ensurePriority(player);
         return harness.getGameActionAvailabilityService()
-                .getPlayableCardIndices(harness.getGameData(), player2.getId());
+                .getPlayableCardIndices(harness.getGameData(), player.getId());
     }
 
     @Test
     @DisplayName("Target can't play lands this turn but can still cast creatures")
     void blocksLandsButNotCreatures() {
-        castAtPlayer2();
+        castAt(player2);
 
-        List<Integer> playable = player2Playable();
+        List<Integer> playable = playableCards(player2);
         assertThat(playable).doesNotContain(0);
         assertThat(playable).contains(1);
     }
 
     @Test
+    @DisplayName("Only the targeted player is prevented from playing lands")
+    void restrictsOnlyTargetedPlayer() {
+        castAt(player2);
+
+        assertThat(playableCards(player2)).doesNotContain(0);
+        assertThat(playableCards(player1)).contains(0);
+    }
+
+    @Test
     @DisplayName("Land restriction wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        castAtPlayer2();
-        assertThat(player2Playable()).doesNotContain(0);
+        castAt(player2);
+        assertThat(playableCards(player2)).doesNotContain(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(player2Playable()).contains(0);
+        assertThat(playableCards(player2)).contains(0);
     }
 
     @Test
     @DisplayName("Controller draws a card immediately")
     void controllerDrawsCard() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        castAtPlayer2();
+        harness.setLibrary(player1, List.of(new NomadicElf()));
+        castAt(player2);
 
         assertThat(harness.getGameData().playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+                .anyMatch(card -> card instanceof NomadicElf);
         assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
     }
 }

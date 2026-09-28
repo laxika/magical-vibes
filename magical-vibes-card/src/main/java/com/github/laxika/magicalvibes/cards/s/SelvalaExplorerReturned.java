@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "260")
 @CardRegistration(set = "SLD", collectorNumber = "1914")
+@CardRegistration(set = "NCC", collectorNumber = "350")
 public class SelvalaExplorerReturned extends Card {
 
     public SelvalaExplorerReturned() {

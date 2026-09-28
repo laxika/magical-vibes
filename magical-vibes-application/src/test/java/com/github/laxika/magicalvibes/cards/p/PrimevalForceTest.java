@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,10 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PrimevalForceTest extends BaseCardTest {
 
     private void castPrimevalForce() {
-        harness.setHand(player1, List.of(new PrimevalForce()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PrimevalForce(), "{2}{G}{G}{G}");
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB
     }
@@ -67,6 +63,24 @@ class PrimevalForceTest extends BaseCardTest {
         // All three Forests sacrificed without a further choice; Primeval Force stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Forest")).isEqualTo(0);
+        harness.assertOnBattlefield(player1, "Primeval Force");
+    }
+
+    @Test
+    @DisplayName("Accepting with tapped Forests sacrifices them and keeps Primeval Force")
+    void acceptsTappedForestsAsPayment() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        castPrimevalForce();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Forest")).isZero();
         harness.assertOnBattlefield(player1, "Primeval Force");
     }
 

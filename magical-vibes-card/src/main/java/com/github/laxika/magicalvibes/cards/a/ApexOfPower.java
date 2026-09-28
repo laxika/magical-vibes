@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "129")
+@CardRegistration(set = "C21", collectorNumber = "158")
 public class ApexOfPower extends Card {
 
     public ApexOfPower() {

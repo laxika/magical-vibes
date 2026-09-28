@@ -198,6 +198,18 @@ public class GraveyardTargetingService {
         int maxTargets = exile.maxTargetsFromMultikicker()
                 ? exile.maxTargetsForX(multikickerPaymentCount)
                 : exile.maxTargets();
+        if (exile.exactTargets()) {
+            int requiredTargets = maxTargets;
+            boolean enoughTargets = exile.singleGraveyard()
+                    ? graveyardOwners.stream().anyMatch(ownerId -> matchingCards.stream()
+                            .filter(candidate -> gameData.playerGraveyards.getOrDefault(ownerId, List.of())
+                                    .contains(candidate))
+                            .count() >= requiredTargets)
+                    : matchingCards.size() >= requiredTargets;
+            if (!enoughTargets) {
+                return;
+            }
+        }
         if (matchingCards.isEmpty() || maxTargets == 0) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -218,7 +230,9 @@ public class GraveyardTargetingService {
                     ? sourcePermanentId : null;
             gameData.graveyardTargetOperation.singleGraveyard = exile.singleGraveyard();
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
+                    exile.exactTargets() ? maxTargets : 0,
+                    "Choose " + (exile.exactTargets() ? "exactly " : "up to ") + maxTargets
+                            + " target card" + (maxTargets != 1 ? "s" : "")
                             + (exile.ownGraveyardOnly() ? " from your graveyard"
                             : exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
                             + " to exile.");
@@ -809,7 +823,7 @@ public class GraveyardTargetingService {
     }
 
     public void handleGraveyardMayPlayETBTargeting(GameData gameData, UUID controllerId, Card card,
-                                                    List<CardEffect> effects) {
+                                                    List<CardEffect> effects, UUID sourcePermanentId) {
         ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect mayPlayEffect = effects.stream()
                 .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect)
                 .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
@@ -837,6 +851,7 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     "Choose target card from your graveyard to exile.");
         }
@@ -1066,12 +1081,33 @@ public class GraveyardTargetingService {
     /** Begins the ordered, independently optional graveyard target groups of a spell. */
     public boolean beginIndependentGraveyardSpellTargeting(GameData gameData, UUID controllerId,
                                                             IndependentlyTargetedGraveyardCardsEffect effect) {
+        return beginIndependentGraveyardSpellTargeting(gameData, controllerId, effect, false);
+    }
+
+    /** Begins independent graveyard target groups, optionally enabling kicked-only groups. */
+    public boolean beginIndependentGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                                            IndependentlyTargetedGraveyardCardsEffect effect,
+                                                            boolean kicked) {
+        if (effect.targetScopes().size() != effect.targetFilters().size()
+                || effect.targetGroupsOnlyWhenKicked().size() != effect.targetFilters().size()) {
+            throw new IllegalArgumentException("Independent graveyard target metadata must have equal sizes");
+        }
         while (gameData.graveyardTargetOperation.independentTargetGroupIndex
                 < effect.targetFilters().size()) {
             int groupIndex = gameData.graveyardTargetOperation.independentTargetGroupIndex;
+            if (effect.targetGroupsOnlyWhenKicked().get(groupIndex) && !kicked) {
+                gameData.graveyardTargetOperation.independentTargetGroupSizes.add(0);
+                gameData.graveyardTargetOperation.independentTargetGroupIndex++;
+                continue;
+            }
+
+            GraveyardSearchScope scope = effect.targetScopes().get(groupIndex);
             List<Card> matchingCards = new ArrayList<>();
-            List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
-            if (graveyard != null) {
+            for (UUID graveyardOwnerId : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
+                List<Card> graveyard = targetableGraveyard(gameData, graveyardOwnerId, controllerId);
+                if (graveyard == null) {
+                    continue;
+                }
                 for (Card graveyardCard : graveyard) {
                     if (effect.requiresDistinctTargets()
                             && gameData.graveyardTargetOperation.independentTargetCardIds
@@ -1098,7 +1134,7 @@ public class GraveyardTargetingService {
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     effect.minimumTargetCounts().get(groupIndex),
                     "Choose up to one target " + effect.targetDescriptions().get(groupIndex)
-                            + " from your graveyard.");
+                            + " from " + zoneLabel(scope) + ".");
             return true;
         }
 

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.r.RagingCougar;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,16 +11,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HulkingCyclops.class, RagingCougar.class})
+@CardUsed({HulkingCyclops.class})
 class HulkingCyclopsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Hulking Cyclops cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent cyclops = addCreatureReady(player2, new HulkingCyclops());
+        addCreatureReady(player2, new HulkingCyclops());
 
-        Permanent attacker = addCreatureReady(player1, new RagingCougar());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new HulkingCyclops());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

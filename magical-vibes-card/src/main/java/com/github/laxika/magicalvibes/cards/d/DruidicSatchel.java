@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "207")
 @CardRegistration(set = "C13", collectorNumber = "242")
+@CardRegistration(set = "C21", collectorNumber = "241")
 public class DruidicSatchel extends Card {
 
     public DruidicSatchel() {

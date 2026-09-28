@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "BFZ", collectorNumber = "180")
+@CardRegistration(set = "C21", collectorNumber = "201")
 public class NissasRenewal extends Card {
 
     public NissasRenewal() {

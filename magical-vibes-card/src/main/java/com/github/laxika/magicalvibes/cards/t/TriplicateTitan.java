@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AA2", collectorNumber = "22")
+@CardRegistration(set = "C21", collectorNumber = "79")
 public class TriplicateTitan extends Card {
 
     public TriplicateTitan() {

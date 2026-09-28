@@ -39,12 +39,14 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -75,12 +77,14 @@ public class MayCastHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final ExileFreeCastSupport exileFreeCastSupport;
+    private final ExileCastTargetSupport exileCastTargetSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final SpellCastingService spellCastingService;
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
+    private final LifeSupport lifeSupport;
 
     /** Resolves Word of Command's accepted card choice using the targeted player's normal cast/play rules. */
     public void handleWordOfCommandPlay(GameData gameData, Player player, boolean accepted,
@@ -619,10 +623,27 @@ public class MayCastHandlerService {
     public void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                PendingMayAbility ability,
                                                CastTargetInstantOrSorceryFromGraveyardEffect castEffect) {
+        handleCastFromGraveyardChoice(gameData, player, accepted, ability,
+                castEffect.scope(), castEffect.filter(), castEffect.withoutPayingManaCost(),
+                castEffect.exileInsteadOfGraveyard(), castEffect.anyManaType(), castEffect.copyCount(),
+                castEffect.afterSuccessfulCastEffect(), false);
+    }
+
+    public void handleCastSourceCardFromGraveyardChoice(GameData gameData, Player player,
+                                                         boolean accepted, PendingMayAbility ability) {
+        handleCastFromGraveyardChoice(gameData, player, accepted, ability,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, null, true, false, false, 0, null, true);
+    }
+
+    private void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                               PendingMayAbility ability, GraveyardSearchScope scope,
+                                               CardPredicate filter, boolean withoutPayingManaCost,
+                                               boolean exileInsteadOfGraveyard, boolean anyManaType,
+                                               int copyCount, CardEffect afterSuccessfulCastEffect,
+                                               boolean allowPermanentSpell) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
-        GraveyardSearchScope scope = castEffect.scope();
-        String castLabel = castEffect.withoutPayingManaCost() ? " without paying its mana cost" : "";
+        String castLabel = withoutPayingManaCost ? " without paying its mana cost" : "";
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
         if (accepted && !gameQueryService.canCastSpellFromZone(gameData, cardToCast, Zone.GRAVEYARD, player.getId())) {
@@ -645,24 +666,28 @@ public class MayCastHandlerService {
                     case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(player.getId());
                     case ALL_GRAVEYARDS -> true;
                 };
-                boolean matchesFilter = castEffect.filter() == null
+                boolean instantOrSorcery = cardToCast.hasType(CardType.INSTANT)
+                        || cardToCast.hasType(CardType.SORCERY);
+                boolean matchesFilter = filter == null
                         || predicateEvaluationService.matchesCardPredicate(
                         graveyardCard,
-                        castEffect.filter(),
+                        filter,
                         cardToCast.getId(),
                         gameData,
                         graveyardOwnerId,
                         ability.sourcePermanentId(),
                         ability.sourcePowerAtTrigger(),
                         ability.xValue());
-                if (!validScope || !matchesFilter) {
+                if (!validScope || !matchesFilter || (!allowPermanentSpell && !instantOrSorcery)
+                        || (allowPermanentSpell && cardToCast.hasType(CardType.LAND))) {
                     
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
                     log.info("Game {} - {} not in valid graveyard (scope={})", gameData.id, cardToCast.getName(), scope);
                 } else {
-                    List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-                    StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
-                            ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+                    boolean isPermanentSpell = permanentSpell(cardToCast);
+                    List<CardEffect> spellEffects = isPermanentSpell
+                            ? List.of() : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                    StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
 
                     if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
                         // Targeted spell — need to choose target before putting on stack
@@ -670,7 +695,7 @@ public class MayCastHandlerService {
 
                         if (validTargets.isEmpty()) {
                             // No valid targets — card goes to owner's graveyard
-                            if (castEffect.exileInsteadOfGraveyard()) {
+                            if (exileInsteadOfGraveyard) {
                                 permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
                                 gameData.addToExile(graveyardOwnerId, cardToCast);
                             }
@@ -680,10 +705,11 @@ public class MayCastHandlerService {
                             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
                             gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
-                                            spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
-                                            castEffect.withoutPayingManaCost(), graveyardOwnerId, false,
-                                            castEffect.anyManaType(),
-                                            castEffect.copyCount()));
+                                            spellEffects, spellType, exileInsteadOfGraveyard,
+                                            withoutPayingManaCost, graveyardOwnerId, false,
+                                            anyManaType,
+                                            copyCount, afterSuccessfulCastEffect,
+                                            ability.sourcePermanentId()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
 
@@ -695,10 +721,10 @@ public class MayCastHandlerService {
                         }
                     } else {
                         // Non-targeted spell — put directly on stack
-                        if (!castEffect.withoutPayingManaCost()) {
+                        if (!withoutPayingManaCost) {
                             try {
                                 spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
-                                        Zone.GRAVEYARD, castEffect.anyManaType());
+                                        Zone.GRAVEYARD, anyManaType);
                             } catch (IllegalStateException ex) {
                                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast because its mana cost can't be paid."));
                                 log.info("Game {} - {} cannot pay to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
@@ -711,12 +737,12 @@ public class MayCastHandlerService {
                                 spellType, cardToCast, player.getId(), cardToCast.getName(),
                                 spellEffects, 0, (UUID) null, null
                         );
-                        freeCast.setExileInsteadOfGraveyard(castEffect.exileInsteadOfGraveyard());
+                        freeCast.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
                         freeCast.setOwnerIdOverride(graveyardOwnerId);
                         freeCast.setSourceZone(Zone.GRAVEYARD);
                         gameData.stack.add(freeCast);
 
-                        for (int i = 0; i < castEffect.copyCount(); i++) {
+                        for (int i = 0; i < copyCount; i++) {
                             Card copyCard = copySupport.createCopyCard(cardToCast);
                             StackEntry copyEntry = copySupport.createCopyStackEntry(
                                     freeCast, copyCard, player.getId(), freeCast.getTargetId());
@@ -729,6 +755,9 @@ public class MayCastHandlerService {
                                         copyCard.getId()));
                             }
                         }
+
+                        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
+                                ability.sourcePermanentId(), afterSuccessfulCastEffect);
 
                         gameData.recordSpellCast(player.getId(), cardToCast);
                         gameData.priorityPassedBy.clear();
@@ -819,7 +848,8 @@ public class MayCastHandlerService {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.GraveyardCastSpellTarget(
                             cardToCast, player.getId(), spellEffects, spellType,
-                            exileInsteadOfGraveyard, false, graveyardOwnerId, false, false, 0,
+                            exileInsteadOfGraveyard, castEffect.withoutPayingManaCost(), graveyardOwnerId,
+                            false, false, 0,
                             castAsAdventure));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
@@ -828,14 +858,16 @@ public class MayCastHandlerService {
             return;
         }
 
-        try {
-            spellCastingService.paySpellManaCostFromNonHandZone(
-                    gameData, player.getId(), spellCard, 0, Zone.GRAVEYARD);
-        } catch (IllegalStateException ex) {
-            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                    " can't be cast because its mana cost can't be paid."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
+        if (!castEffect.withoutPayingManaCost()) {
+            try {
+                spellCastingService.paySpellManaCostFromNonHandZone(
+                        gameData, player.getId(), spellCard, 0, Zone.GRAVEYARD);
+            } catch (IllegalStateException ex) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " can't be cast because its mana cost can't be paid."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
         }
 
         if (castAsAdventure) {
@@ -861,8 +893,11 @@ public class MayCastHandlerService {
         gameData.recordSpellCast(player.getId(), castCharacteristics);
         gameData.priorityPassedBy.clear();
 
+        String castLabel = castEffect.withoutPayingManaCost()
+                ? " from the graveyard without paying its mana cost."
+                : " from the graveyard.";
         gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ")
-                .card(castCharacteristics).text(" from the graveyard.").build());
+                .card(castCharacteristics).text(castLabel).build());
         triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -988,7 +1023,7 @@ public class MayCastHandlerService {
                                               PendingMayAbility ability,
                                               PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
         handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.filter(),
-                player.getId(), false, true);
+                player.getId(), effect.exileInsteadOfGraveyard(), true);
     }
 
     public void handleCastFromNoncreatureGraveyardChoice(
@@ -1593,8 +1628,15 @@ public class MayCastHandlerService {
                 .map(MayCastFromHandWithoutPayingManaCostEffect::exileInsteadOfGraveyard)
                 .findFirst()
                 .orElse(false);
+        CardEffect afterSuccessfulCastEffect = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .findFirst()
+                .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
+                .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
-                revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard);
+                revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,
+                afterSuccessfulCastEffect);
     }
 
     /** Casts an accepted commander-zone offer without paying its mana cost. */
@@ -1602,12 +1644,89 @@ public class MayCastHandlerService {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0, false, Zone.COMMAND);
     }
 
+    public void handleMayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValue(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int handIndex = hand == null ? -1 : indexOfCard(hand, cardToCast.getId());
+        if (handIndex >= 0) {
+            if (!isEligibleArtifact(cardToCast) || !canPayManaValueLife(gameData, player, cardToCast)) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " can't be cast by paying life equal to its mana value."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            hand.remove(handIndex);
+            lifeSupport.applyLifePayment(gameData, player.getId(), cardToCast.getManaValue(),
+                    cardToCast.getName() + "'s alternate cost");
+            castCardFromHandPayingAlternateCost(gameData, player, cardToCast,
+                    cardToCast.getManaValue() + " life", "mana value");
+            return;
+        }
+
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
+        if (graveyardCard == null || !player.getId().equals(graveyardOwnerId)
+                || !isEligibleArtifact(graveyardCard)
+                || !canPayManaValueLife(gameData, player, graveyardCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast by paying life equal to its mana value."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        lifeSupport.applyLifePayment(gameData, player.getId(), graveyardCard.getManaValue(),
+                graveyardCard.getName() + "'s alternate cost");
+        permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
+
+        StackEntry stackEntry = new StackEntry(
+                mapCardTypeToSpellType(graveyardCard),
+                graveyardCard,
+                player.getId(),
+                graveyardCard.getName(),
+                List.of(),
+                0,
+                (UUID) null,
+                null);
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
+        stackEntry.setOwnerIdOverride(graveyardOwnerId);
+        gameData.stack.add(stackEntry);
+        gameData.recordSpellCast(player.getId(), graveyardCard);
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " casts ", graveyardCard,
+                " from the graveyard by paying " + graveyardCard.getManaValue() + " life."));
+        triggerCollectionService.checkSpellCastTriggers(gameData, graveyardCard, player.getId(), false);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean isEligibleArtifact(Card card) {
+        return card.hasType(CardType.ARTIFACT) && !card.hasType(CardType.LAND);
+    }
+
+    private boolean canPayManaValueLife(GameData gameData, Player player, Card card) {
+        return gameData.getLife(player.getId()) >= card.getManaValue()
+                && gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                && gameQueryService.canPayLifeForCosts(gameData);
+    }
+
     private void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
                                                      PendingMayAbility ability,
                                                      Class<? extends CardEffect> pendingEffectType,
                                                      boolean revealCardOnDecline,
                                                      boolean scryIfDeclined,
-                                                     boolean exileInsteadOfGraveyard) {
+                                                     boolean exileInsteadOfGraveyard,
+                                                     CardEffect afterSuccessfulCastEffect) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -1673,7 +1792,8 @@ public class MayCastHandlerService {
 
         // Remove from hand and cast
         hand.remove(cardIndex);
-        castCardFromHandWithoutPaying(gameData, player, cardToCast, exileInsteadOfGraveyard);
+        castCardFromHandWithoutPaying(gameData, player, cardToCast, exileInsteadOfGraveyard,
+                ability.sourcePermanentId(), afterSuccessfulCastEffect);
     }
 
     private void queueScryFallback(GameData gameData) {
@@ -1688,6 +1808,14 @@ public class MayCastHandlerService {
                                                boolean exileInsteadOfGraveyard) {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
                 exileInsteadOfGraveyard);
+    }
+
+    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
+                                                boolean exileInsteadOfGraveyard,
+                                                UUID sourcePermanentId,
+                                                CardEffect afterSuccessfulCastEffect) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
+                exileInsteadOfGraveyard, Zone.HAND, sourcePermanentId, afterSuccessfulCastEffect);
     }
 
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
@@ -1718,6 +1846,15 @@ public class MayCastHandlerService {
                                                      String paidCostDescription, String costLabel,
                                                      int xValue, boolean exileInsteadOfGraveyard,
                                                      Zone sourceZone) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel,
+                xValue, exileInsteadOfGraveyard, sourceZone, null, null);
+    }
+
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue, boolean exileInsteadOfGraveyard,
+                                                     Zone sourceZone, UUID afterCastSourcePermanentId,
+                                                     CardEffect afterSuccessfulCastEffect) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         String costPhrase;
@@ -1774,7 +1911,8 @@ public class MayCastHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType, xValue,
-                            castForMadnessCost, exileInsteadOfGraveyard, sourceZone));
+                            castForMadnessCost, exileInsteadOfGraveyard, sourceZone,
+                            afterSuccessfulCastEffect, afterCastSourcePermanentId));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -1811,6 +1949,8 @@ public class MayCastHandlerService {
             triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId,
                     "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
         }
+        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, playerId,
+                afterCastSourcePermanentId, afterSuccessfulCastEffect);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

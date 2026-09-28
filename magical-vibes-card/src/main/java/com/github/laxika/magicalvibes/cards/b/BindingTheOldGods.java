@@ -31,6 +31,7 @@ import java.util.Set;
  */
 @CardRegistration(set = "KHM", collectorNumber = "206")
 @CardRegistration(set = "ECC", collectorNumber = "120")
+@CardRegistration(set = "DSC", collectorNumber = "213")
 public class BindingTheOldGods extends Card {
 
     public BindingTheOldGods() {

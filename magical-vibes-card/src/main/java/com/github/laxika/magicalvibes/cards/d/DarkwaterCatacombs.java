@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "319")
+@CardRegistration(set = "40K", collectorNumber = "274")
+@CardRegistration(set = "TDC", collectorNumber = "355")
 public class DarkwaterCatacombs extends Card {
 
     public DarkwaterCatacombs() {

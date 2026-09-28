@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param chosenCount 0 = untap every permanent in scope; &gt;0 = the controller chooses up to N
  */
 public record UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
-        implements CardEffect {
+        implements CardEffect, CombatDamageTriggerContextEffect {
 
     public UntapPermanentsEffect(TapUntapScope scope) {
         this(scope, null, 0);
@@ -34,6 +34,12 @@ public record UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filt
 
     public UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter) {
         this(scope, filter, 0);
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return scope == TapUntapScope.SELF || scope == TapUntapScope.SOURCE_PERMANENT
+                ? TriggerContext.SOURCE_SELF : null;
     }
 
     @Override

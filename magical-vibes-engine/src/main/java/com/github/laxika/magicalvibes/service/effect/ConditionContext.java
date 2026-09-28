@@ -353,7 +353,8 @@ public record ConditionContext(
                 entry.getSourcePermanentSnapshot(), entry.getCard(), entry.isKicked(), entry.isBuyback(),
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
                 sourceZone, entry.getXValue(), entry.getTargetId(),
-                entry.getExiledCostCardSnapshot(), false,
+                entry.getDiscardedCardSnapshot() != null
+                        ? entry.getDiscardedCardSnapshot() : entry.getExiledCostCardSnapshot(), false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),

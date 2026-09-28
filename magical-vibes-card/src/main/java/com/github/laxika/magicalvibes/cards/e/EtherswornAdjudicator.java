@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "26")
+@CardRegistration(set = "MOC", collectorNumber = "222")
 public class EtherswornAdjudicator extends Card {
 
     public EtherswornAdjudicator() {

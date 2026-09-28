@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThunderSpirit.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({ThunderSpirit.class, BarbaryApes.class, SuntailHawk.class})
 class ThunderSpiritTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a ground creature from blocking")
     void flyingPreventsGroundCreatureFromBlocking() {
         Permanent attacker = addReadyAttacker(player1, new ThunderSpirit());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
         prepareDeclareBlockers();
 
@@ -36,10 +36,7 @@ class ThunderSpiritTest extends BaseCardTest {
     @DisplayName("First strike destroys an equally sized blocker before regular damage")
     void firstStrikeDestroysBlockerBeforeRegularDamage() {
         Permanent attacker = addReadyAttacker(player1, new ThunderSpirit());
-        SuntailHawk blockerCard = new SuntailHawk();
-        blockerCard.setPower(2);
-        blockerCard.setToughness(2);
-        Permanent blocker = addReadyCreature(player2, blockerCard);
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -52,15 +49,8 @@ class ThunderSpiritTest extends BaseCardTest {
     }
 
     private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent permanent = addReadyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
-        return permanent;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

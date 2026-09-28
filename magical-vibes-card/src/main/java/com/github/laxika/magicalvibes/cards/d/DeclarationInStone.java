@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SOI", collectorNumber = "12")
 @CardRegistration(set = "HA4", collectorNumber = "2")
 @CardRegistration(set = "SIR", collectorNumber = "23")
+@CardRegistration(set = "NCC", collectorNumber = "196")
 public class DeclarationInStone extends Card {
 
     public DeclarationInStone() {

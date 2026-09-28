@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SunhomeFortressOfTheLegion.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({SunhomeFortressOfTheLegion.class, BorosRecruit.class, BorosSignet.class})
 class SunhomeFortressOfTheLegionTest extends BaseCardTest {
 
     @Test
@@ -34,42 +34,45 @@ class SunhomeFortressOfTheLegionTest extends BaseCardTest {
     @DisplayName("Activated ability grants target creature double strike")
     void grantsDoubleStrikeToTargetCreature() {
         harness.addToBattlefield(player1, new SunhomeFortressOfTheLegion());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
         addAbilityMana();
 
-        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.activateAbility(player1, 0, 1, null, recruit.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
     @Test
     @DisplayName("Double strike granted by the ability wears off at end of turn")
     void doubleStrikeWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new SunhomeFortressOfTheLegion());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
         addAbilityMana();
 
-        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.activateAbility(player1, 0, 1, null, recruit.getId());
         harness.passBothPriorities();
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
     @DisplayName("Activated ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         harness.addToBattlefield(player1, new SunhomeFortressOfTheLegion());
-        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         addAbilityMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, fountain.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }

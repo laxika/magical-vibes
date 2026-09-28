@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "OPC2", collectorNumber = "12")
 @CardRegistration(set = "OPCA", collectorNumber = "16")
+@CardRegistration(set = "MOC", collectorNumber = "140")
 public class BloodhillBastion extends Card {
 
     public BloodhillBastion() {

@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.d.Dodecapod;
-import com.github.laxika.magicalvibes.cards.d.DragonArch;
-import com.github.laxika.magicalvibes.cards.z.ZombieBoa;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Smash.class, DragonArch.class, Dodecapod.class, ZombieBoa.class})
+@CardUsed({Smash.class, BorosSignet.class, GlassGolem.class, BorosRecruit.class})
 class SmashTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Smash puts it on the stack with target")
     void castingPutsOnStack() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonArch());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         Smash smash = new Smash();
         harness.setHand(player1, List.of(smash));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -48,13 +48,12 @@ class SmashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonArch());
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Dragon Arch");
-        harness.assertInGraveyard(player2, "Dragon Arch");
+        harness.assertNotOnBattlefield(player2, "Boros Signet");
+        harness.assertInGraveyard(player2, "Boros Signet");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
@@ -62,17 +61,16 @@ class SmashTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Smash destroys an artifact creature and draws a card")
     void destroysArtifactCreatureAndDraws() {
-        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new GlassGolem());
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, artifactCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifactCreature.getId());
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Dodecapod");
-        harness.assertInGraveyard(player2, "Dodecapod");
+        harness.assertNotOnBattlefield(player2, "Glass Golem");
+        harness.assertInGraveyard(player2, "Glass Golem");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
@@ -80,26 +78,24 @@ class SmashTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy own artifact with Smash")
     void canDestroyOwnArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Dodecapod());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GlassGolem());
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
-        harness.assertNotOnBattlefield(player1, "Dodecapod");
-        harness.assertInGraveyard(player1, "Dodecapod");
+        harness.assertNotOnBattlefield(player1, "Glass Golem");
+        harness.assertInGraveyard(player1, "Glass Golem");
     }
 
     @Test
     @DisplayName("Smash goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonArch());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -109,7 +105,7 @@ class SmashTest extends BaseCardTest {
     @Test
     @DisplayName("Smash fizzles and does not draw when target is removed before resolution")
     void fizzlesAndDoesNotDrawWhenTargetRemoved() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonArch());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -129,7 +125,7 @@ class SmashTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot destroy a creature with Smash")
     void cannotDestroyCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ZombieBoa());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 

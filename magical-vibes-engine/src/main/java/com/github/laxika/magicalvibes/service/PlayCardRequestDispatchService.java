@@ -54,11 +54,15 @@ public class PlayCardRequestDispatchService {
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
             List<UUID> counterCostPermanentIds = listOrEmpty(request.exileCounterCostPermanentIds());
-            if (counterCostPermanentIds.isEmpty()) {
+            List<UUID> additionalCostSacrificePermanentIds = listOrEmpty(request.additionalCostSacrificePermanentIds());
+            if (counterCostPermanentIds.isEmpty() && additionalCostSacrificePermanentIds.isEmpty()) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
-            } else {
+            } else if (additionalCostSacrificePermanentIds.isEmpty()) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
                         counterCostPermanentIds);
+            } else {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds);
             }
             return;
         }

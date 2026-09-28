@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "134")
+@CardRegistration(set = "MOC", collectorNumber = "276")
 public class FalkenrathExterminator extends Card {
 
     public FalkenrathExterminator() {

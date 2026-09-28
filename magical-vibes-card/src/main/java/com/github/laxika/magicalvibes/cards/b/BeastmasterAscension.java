@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "C14", collectorNumber = "186")
 @CardRegistration(set = "C15", collectorNumber = "176")
 @CardRegistration(set = "TLE", collectorNumber = "39")
+@CardRegistration(set = "NCC", collectorNumber = "283")
 public class BeastmasterAscension extends Card {
 
     public BeastmasterAscension() {

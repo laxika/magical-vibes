@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerOtherThanTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -188,18 +189,25 @@ public class TriggerTargetCollector {
     public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
                           UUID controllerId, Card sourceCard, Options options,
                           Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, defendingPlayerId, xValue, null);
+    }
 
-        boolean canTargetPlayers = effects.stream()
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
+                          UUID triggeringPermanentId) {
+
+        List<CardEffect> unwrappedEffects = effects.stream()
                 .map(e -> unwrap(e, options))
+                .toList();
+        boolean canTargetPlayers = unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean canTargetPermanents = effects.stream()
-                .map(e -> unwrap(e, options))
+        boolean canTargetPermanents = unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        boolean canTargetExiledCards = effects.stream()
-                .map(e -> unwrap(e, options))
+        boolean canTargetExiledCards = unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
-        boolean canTargetGraveyardCards = effects.stream()
-                .map(e -> unwrap(e, options))
+        boolean canTargetGraveyardCards = unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
         if (targetFilter instanceof PermanentPredicateTargetFilter
@@ -215,9 +223,14 @@ public class TriggerTargetCollector {
         // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
         // The declared target cannot express it: playerOrPlaneswalker() is shared with "target
         // player or planeswalker" (Goblin Razerunners), where the controller is a legal choice.
-        boolean effectsAreOpponentOnly = !effects.isEmpty() && effects.stream()
-                .map(e -> unwrap(e, options))
+        boolean effectsAreOpponentOnly = !unwrappedEffects.isEmpty()
+                && unwrappedEffects.stream()
                 .allMatch(e -> e.targetPlayerRelation() == PlayerRelation.OPPONENT);
+        boolean excludesTriggeringPermanentController = unwrappedEffects.stream()
+                .anyMatch(TargetPlayerOtherThanTriggeringPermanentControllerEffect.class::isInstance);
+        UUID excludedPlayerId = excludesTriggeringPermanentController && sourcePermanentSnapshot != null
+                ? gameQueryService.findPermanentController(gameData, sourcePermanentSnapshot.getId())
+                : null;
 
         boolean opponentOnly = isOpponentRestricted(targetFilter) || effectsAreOpponentOnly;
 
@@ -226,12 +239,21 @@ public class TriggerTargetCollector {
         if (canTargetPlayers) {
             if (opponentOnly) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (!pid.equals(controllerId)) {
+                    if (!pid.equals(controllerId)
+                            && (excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
                         validTargets.add(pid);
                     }
                 }
             } else {
-                validTargets.addAll(gameData.orderedPlayerIds);
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    if ((excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
+                        validTargets.add(pid);
+                    }
+                }
             }
         }
 
@@ -241,6 +263,7 @@ public class TriggerTargetCollector {
                     .withSourcePermanentId(sourcePermanentSnapshot == null
                             ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
+                    .withTriggeringPermanentId(triggeringPermanentId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -266,7 +289,8 @@ public class TriggerTargetCollector {
                             sourcePermanentSnapshot)
                             .withSourcePermanentId(sourcePermanentSnapshot == null
                                     ? null : sourcePermanentSnapshot.getId())
-                            .withDefendingPlayerId(defendingPlayerId);
+                            .withDefendingPlayerId(defendingPlayerId)
+                            .withTriggeringPermanentId(triggeringPermanentId);
                 }
             }
 
@@ -354,8 +378,9 @@ public class TriggerTargetCollector {
                                     new TargetValidationContext(gameData, p.getId(), Zone.BATTLEFIELD,
                                             sourceCard, xValue == null ? 0 : xValue, controllerId,
                                             sourcePermanentSnapshot,
+                                            false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null, defendingPlayerId)).isPresent()) {
+                                            null, defendingPlayerId, triggeringPermanentId)).isPresent()) {
                         continue;
                     }
 

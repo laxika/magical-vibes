@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "217")
+@CardRegistration(set = "TDC", collectorNumber = "316")
 public class CrashingDrawbridge extends Card {
 
     public CrashingDrawbridge() {

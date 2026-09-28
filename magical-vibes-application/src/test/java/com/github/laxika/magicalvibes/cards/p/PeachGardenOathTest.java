@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({PeachGardenOath.class, ShuFootSoldiers.class, Forest.class})
+@CardUsed({PeachGardenOath.class, GlorySeeker.class, Forest.class})
 class PeachGardenOathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains 2 life for each creature you control")
     void gainsTwoLifePerControlledCreature() {
-        harness.addToBattlefield(player1, new ShuFootSoldiers());
-        harness.addToBattlefield(player1, new ShuFootSoldiers());
-        harness.addToBattlefield(player1, new ShuFootSoldiers());
+        harness.addToBattlefield(player1, new GlorySeeker());
+        harness.addToBattlefield(player1, new GlorySeeker());
+        harness.addToBattlefield(player1, new GlorySeeker());
 
         harness.setLife(player1, 20);
         harness.castFromHand(player1, new PeachGardenOath(), "{W}");
@@ -27,8 +27,8 @@ class PeachGardenOathTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count opponent's creatures")
     void doesNotCountOpponentCreatures() {
-        harness.addToBattlefield(player2, new ShuFootSoldiers());
-        harness.addToBattlefield(player2, new ShuFootSoldiers());
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.addToBattlefield(player2, new GlorySeeker());
 
         harness.setLife(player1, 20);
         harness.castFromHand(player1, new PeachGardenOath(), "{W}");
@@ -65,7 +65,7 @@ class PeachGardenOathTest extends BaseCardTest {
     void countsCreaturesAtResolution() {
         harness.setLife(player1, 20);
         harness.castFromHand(player1, new PeachGardenOath(), "{W}");
-        harness.addToBattlefield(player1, new ShuFootSoldiers());
+        harness.addToBattlefield(player1, new GlorySeeker());
 
         harness.passBothPriorities();
 

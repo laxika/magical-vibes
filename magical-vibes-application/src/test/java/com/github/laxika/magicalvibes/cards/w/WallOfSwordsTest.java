@@ -28,8 +28,7 @@ class WallOfSwordsTest extends BaseCardTest {
         addCreatureReady(player1, new WindDrake());
         Permanent wall = addCreatureReady(player2, new WallOfSwords());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
@@ -40,8 +39,7 @@ class WallOfSwordsTest extends BaseCardTest {
         addCreatureReady(player1, new WindDrake());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -53,8 +51,7 @@ class WallOfSwordsTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent wall = addCreatureReady(player2, new WallOfSwords());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();

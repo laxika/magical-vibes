@@ -118,8 +118,9 @@ public class ExileFreeCastSupport {
                 gameData.spellsGrantedHasteOnEntry.add(exileCardId);
             }
             gameData.recordCardPlayedFromExile(playerId);
-            gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
+                    card, playerId, spellEffects, spellType, false, List.of(), 0, false, 0,
+                    false, false, null, exiledEntry.sourcePermanentId(), 0));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 
@@ -149,7 +150,8 @@ public class ExileFreeCastSupport {
                 GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.EXILE);
+        triggerCollectionService.checkSpellCastTriggers(
+                gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

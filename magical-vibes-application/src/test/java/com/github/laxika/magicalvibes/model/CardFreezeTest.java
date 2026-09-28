@@ -34,6 +34,7 @@ class CardFreezeTest {
         assertThatThrownBy(() -> card.addActivatedAbility(null)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(card::clearRuntimeSpellTargets).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> card.setCastTimeTargetFilter(null)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.setFlashCastTargetPredicate(null)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

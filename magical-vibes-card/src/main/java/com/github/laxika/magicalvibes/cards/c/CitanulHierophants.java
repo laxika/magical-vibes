@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "USG", collectorNumber = "244")
+@CardRegistration(set = "DSC", collectorNumber = "81")
 public class CitanulHierophants extends Card {
 
     public CitanulHierophants() {

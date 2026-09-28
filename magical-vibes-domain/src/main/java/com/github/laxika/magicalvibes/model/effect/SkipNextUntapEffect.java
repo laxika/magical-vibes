@@ -25,10 +25,17 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter     optional predicate narrowing the scanned scopes (null = no restriction)
  * @param untapSteps number of upcoming untap steps to skip
  * @param matchAtUntap whether the target player's matching permanents are determined at untap
+ * @param allPlayersAtUntap whether matching permanents controlled by any player are affected
+ *                          during the target player's untap step
  */
 public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                                  boolean matchAtUntap)
+                                  boolean matchAtUntap, boolean allPlayersAtUntap)
         implements CardEffect, CombatOpponentReferencingEffect {
+
+    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
+                               boolean matchAtUntap) {
+        this(scope, filter, untapSteps, matchAtUntap, false);
+    }
 
     public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps) {
         this(scope, filter, untapSteps, false);
@@ -49,6 +56,9 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     public SkipNextUntapEffect {
         if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
             throw new IllegalArgumentException("Matching at untap requires a target player");
+        }
+        if (allPlayersAtUntap && !matchAtUntap) {
+            throw new IllegalArgumentException("All-player matching requires matching at untap");
         }
         if (untapSteps < 1) {
             throw new IllegalArgumentException("untapSteps must be positive");

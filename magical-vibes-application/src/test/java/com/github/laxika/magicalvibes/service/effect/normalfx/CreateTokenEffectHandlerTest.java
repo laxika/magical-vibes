@@ -44,6 +44,8 @@ class CreateTokenEffectHandlerTest {
     @Mock
     private CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
     @Mock
+    private CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
+    @Mock
     private TriggerCollectionService triggerCollectionService;
 
     private CreateTokenEffectHandler handler;
@@ -60,6 +62,7 @@ class CreateTokenEffectHandlerTest {
         handler = new CreateTokenEffectHandler(
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
                 enchantedPermanentTokenCopyHandler,
+                chosenCreatureTokenCopyHandler,
                 triggerCollectionService);
     }
 

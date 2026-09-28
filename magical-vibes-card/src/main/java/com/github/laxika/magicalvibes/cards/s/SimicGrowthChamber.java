@@ -19,6 +19,8 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "331")
 @CardRegistration(set = "CMD", collectorNumber = "288")
 @CardRegistration(set = "C15", collectorNumber = "305")
+@CardRegistration(set = "C21", collectorNumber = "317")
+@CardRegistration(set = "DSC", collectorNumber = "298")
 public class SimicGrowthChamber extends Card {
 
     public SimicGrowthChamber() {

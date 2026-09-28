@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -68,10 +69,18 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
     }
 
     private boolean containsEffect(CardEffect candidate, CardEffect target) {
+        if (candidate == null) {
+            return false;
+        }
         if (candidate.equals(target)) {
             return true;
         }
-        return candidate instanceof SequenceEffect sequence
-                && sequence.steps().stream().anyMatch(step -> containsEffect(step, target));
+        if (candidate instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(step -> containsEffect(step, target));
+        }
+        if (candidate instanceof MayEffect may) {
+            return containsEffect(may.wrapped(), target) || containsEffect(may.elseEffect(), target);
+        }
+        return false;
     }
 }

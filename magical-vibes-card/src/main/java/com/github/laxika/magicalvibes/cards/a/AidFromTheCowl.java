@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "105")
+@CardRegistration(set = "MOC", collectorNumber = "290")
 public class AidFromTheCowl extends Card {
 
     public AidFromTheCowl() {

@@ -63,6 +63,15 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                         AmountContext.forStackEntry(entry, null)));
         List<UUID> castableSpellIds = new ArrayList<>();
         List<UUID> exiledCardIds = new ArrayList<>();
+        List<UUID> uncastCardsToHandIds = new ArrayList<>();
+        List<UUID> uncastCardsToBottomIds = new ArrayList<>();
+
+        if (e.putUncastCardsIntoHand() || e.uncastCardsToHandFilter() != null) {
+            gameData.pendingExileFreeCastRemainderToHand.clear();
+        }
+        if (e.putUncastCardsOnBottomRandom() || e.uncastCardsToHandFilter() != null) {
+            gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
+        }
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
             List<Card> deck = gameData.playerDecks.get(playerId);
@@ -70,16 +79,30 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             for (int i = 0; i < count && deck != null && !deck.isEmpty(); i++) {
                 Card card = deck.removeFirst();
                 if (e.trackWithSource()) {
-                    exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                    if (e.faceDown()) {
+                        exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+                    } else {
+                        exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                    }
                 } else {
                     gameData.addToExile(playerId, card);
                 }
                 exiledCardIds.add(card.getId());
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " exiles ")
-                        .card(card)
-                        .text(" from the top of their library.")
-                        .build());
+                if (e.uncastCardsToHandFilter() != null) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            card, e.uncastCardsToHandFilter(), entry.getCard().getId())) {
+                        uncastCardsToHandIds.add(card.getId());
+                    } else {
+                        uncastCardsToBottomIds.add(card.getId());
+                    }
+                }
+                gameLogService.append(gameData, e.faceDown()
+                        ? GameLog.text(playerName + " exiles a card face down from the top of their library.")
+                        : GameLog.builder()
+                                .text(playerName + " exiles ")
+                                .card(card)
+                                .text(" from the top of their library.")
+                                .build());
 
                 if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
                     castableSpellIds.add(card.getId());
@@ -87,13 +110,22 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
-        if (e.putUncastCardsOnBottomRandom()) {
+        if (e.uncastCardsToHandFilter() != null) {
+            exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, uncastCardsToBottomIds);
+            gameData.pendingExileFreeCastRemainderToHand.addAll(uncastCardsToHandIds);
+        } else if (e.putUncastCardsOnBottomRandom()) {
             exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, exiledCardIds);
+        }
+        if (e.putUncastCardsIntoHand() && e.uncastCardsToHandFilter() == null) {
+            gameData.pendingExileFreeCastRemainderToHand.addAll(exiledCardIds);
         }
 
         if (castableSpellIds.isEmpty()) {
             if (e.putUncastCardsOnBottomRandom()) {
                 exileFreeCastQueueSupport.putRemainderIntoLibraryBottom(gameData);
+            }
+            if (e.putUncastCardsIntoHand()) {
+                exileFreeCastQueueSupport.putRemainderIntoOwnersHands(gameData);
             }
             log.info("Game {} - {} found no spells among the exiled cards", gameData.id, entry.getCard().getName());
             return;
@@ -135,8 +167,8 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     }
 
     private boolean isCastable(Card card, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry) {
-        return effect.castFilter() == null
-                ? isSpell(card)
-                : predicateEvaluationService.matchesCardPredicate(card, effect.castFilter(), entry.getCard().getId());
+        return isSpell(card)
+                && (effect.castFilter() == null
+                || predicateEvaluationService.matchesCardPredicate(card, effect.castFilter(), entry.getCard().getId()));
     }
 }

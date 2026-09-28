@@ -8,16 +8,18 @@ import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkullmaneBaku.class, CallousDeceiver.class, Forest.class, GrizzlyBears.class,
+        HillGiant.class, ReachThroughMists.class})
 class SkullmaneBakuTest extends BaseCardTest {
 
     @Test
@@ -25,11 +27,7 @@ class SkullmaneBakuTest extends BaseCardTest {
     void spiritSpellAddsKiCounter() {
         Permanent baku = addBaku();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new CallousDeceiver()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CallousDeceiver(), "{2}{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -41,11 +39,7 @@ class SkullmaneBakuTest extends BaseCardTest {
     void decliningLeavesNoKiCounter() {
         Permanent baku = addBaku();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new ReachThroughMists()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -57,12 +51,20 @@ class SkullmaneBakuTest extends BaseCardTest {
     void unrelatedSpellDoesNotTrigger() {
         Permanent baku = addBaku();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Skullmane Baku"));
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+    }
 
+    @Test
+    @DisplayName("An opponent casting a Spirit spell does not trigger")
+    void opponentSpiritSpellDoesNotTrigger() {
+        Permanent baku = addBaku();
+        prepareMainPhase(player2);
+        harness.castFromHand(player2, new CallousDeceiver(), "{2}{U}");
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Skullmane Baku"));
         assertThat(baku.getCounterCount(CounterType.KI)).isZero();
     }
@@ -81,6 +83,23 @@ class SkullmaneBakuTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(2);
         assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(baku.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing zero ki counters resolves as a -0/-0 effect")
+    void removingZeroKiCountersIsAllowed() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 1);
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
         assertThat(baku.isTapped()).isTrue();
     }
 
@@ -143,15 +162,15 @@ class SkullmaneBakuTest extends BaseCardTest {
     }
 
     private Permanent addBaku() {
-        Permanent baku = harness.addToBattlefieldAndReturn(player1, new SkullmaneBaku());
-        // The {T} in the shrink cost needs a creature that has been under its controller's control
-        // since their most recent turn began (CR 302.6).
-        baku.setSummoningSick(false);
-        return baku;
+        return addCreatureReady(player1, new SkullmaneBaku());
     }
 
     private void prepareMainPhase() {
-        harness.forceActivePlayer(player1);
+        prepareMainPhase(player1);
+    }
+
+    private void prepareMainPhase(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }

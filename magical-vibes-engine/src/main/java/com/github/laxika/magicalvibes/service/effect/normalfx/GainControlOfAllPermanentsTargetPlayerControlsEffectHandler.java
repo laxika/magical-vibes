@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +26,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
-    private static final GainControlOfTargetEffect CONTROL_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
+    private final GainControlOfTargetEffectHandler gainControlOfTargetEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,14 +48,46 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return;
 
+        List<Permanent> toSeize = new ArrayList<>();
         for (Permanent permanent : new ArrayList<>(battlefield)) {
             if (seizeEffect.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, seizeEffect.filter())) {
                 continue;
             }
+            toSeize.add(permanent);
+        }
+
+        ControlDuration duration = seizeEffect.duration();
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
+        for (Permanent permanent : toSeize) {
+            if (duration.isSourceLinked()) {
+                StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(),
+                        entry.getControllerId(), entry.getDescription(), List.of(controlEffect),
+                        permanent.getId(), entry.getSourcePermanentId());
+                individual.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                individual.setNonTargeting(true);
+                gainControlOfTargetEffectHandler.resolve(gameData, individual, controlEffect);
+                continue;
+            }
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), permanent,
-                    CONTROL_EFFECT, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    controlEffect, duration.toEffectDuration(), null,
                     entry.getCard().getName());
+        }
+
+        for (CardEffect thenEffect : seizeEffect.thenEffects()) {
+            var handler = effectHandlerRegistry.getHandler(thenEffect);
+            if (handler == null) {
+                continue;
+            }
+            for (Permanent permanent : toSeize) {
+                UUID previousTargetId = entry.getTargetId();
+                entry.setTargetId(permanent.getId());
+                try {
+                    handler.resolve(gameData, entry, thenEffect);
+                } finally {
+                    entry.setTargetId(previousTargetId);
+                }
+            }
         }
     }
 }

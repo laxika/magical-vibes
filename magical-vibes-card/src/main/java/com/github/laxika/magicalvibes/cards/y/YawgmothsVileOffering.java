@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "114")
+@CardRegistration(set = "MOC", collectorNumber = "271")
 public class YawgmothsVileOffering extends Card {
 
     public YawgmothsVileOffering() {

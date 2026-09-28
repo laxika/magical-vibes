@@ -84,7 +84,8 @@ public class ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect
                 Set.of(auraCard.getId()),
                 null,
                 0,
-                Map.of()));
+                Map.of(),
+                false));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(enchantedCard,

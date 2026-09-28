@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "250")
+@CardRegistration(set = "SOC", collectorNumber = "327")
 public class QuintoriusLoremaster extends Card {
 
     public QuintoriusLoremaster() {

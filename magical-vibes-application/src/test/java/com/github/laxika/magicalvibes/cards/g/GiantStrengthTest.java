@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiantStrength.class, GrizzlyBears.class, TrainedArmodon.class, LotusPetal.class})
+@CardUsed({GiantStrength.class, TrainedArmodon.class, LotusPetal.class})
 class GiantStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +2/+2")
@@ -67,17 +67,17 @@ class GiantStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Strength stops boosting its creature when it becomes unattached")
     void effectsStopWhenUnattached() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new TrainedArmodon());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new GiantStrength());
         auraPerm.setAttachedTo(bearsPerm.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(5);
 
         auraPerm.setAttachedTo(null);
 
-        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
 
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Giant Strength");
@@ -86,7 +86,7 @@ class GiantStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Strength is put into its owner's graveyard when its creature leaves")
     void isPutIntoGraveyardWhenEnchantedCreatureLeaves() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new TrainedArmodon());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new GiantStrength());
         auraPerm.setAttachedTo(bearsPerm.getId());

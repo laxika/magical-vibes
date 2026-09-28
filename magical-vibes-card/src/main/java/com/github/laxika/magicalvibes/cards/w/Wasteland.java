@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "SLC", collectorNumber = "23")
 @CardRegistration(set = "SLC", collectorNumber = "50")
 @CardRegistration(set = "MB2", collectorNumber = "115")
+@CardRegistration(set = "LTC", collectorNumber = "376")
 public class Wasteland extends Card {
 
     public Wasteland() {

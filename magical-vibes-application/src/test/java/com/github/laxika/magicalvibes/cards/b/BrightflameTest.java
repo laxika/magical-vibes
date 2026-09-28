@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.h.HealingSalve;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,26 +11,27 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Brightflame.class, AirElemental.class, HealingSalve.class, HillGiant.class, Island.class})
+@CardUsed({Brightflame.class, BenevolentAncestor.class, BorosSwiftblade.class, Island.class,
+        SnappingDrake.class, ViashinoFangtail.class})
 class BrightflameTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals X damage to the target and color-sharing creatures, then gains the damage dealt")
     void damagesTargetAndColorSharingCreaturesAndGainsLife() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
         harness.setHand(player1, List.of(new Brightflame()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 2, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(matchingCreature.getMarkedDamage()).isEqualTo(2);
@@ -42,24 +42,42 @@ class BrightflameTest extends BaseCardTest {
     @Test
     @DisplayName("Gains life only for damage that was actually dealt")
     void lifeGainUsesActualDamageAfterPrevention() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        harness.setHand(player1, List.of(new HealingSalve()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0, 1, protectedCreature.getId());
-        harness.passBothPriorities();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent firstAncestor = addCreatureReady(player1, new BenevolentAncestor());
+        Permanent secondAncestor = addCreatureReady(player1, new BenevolentAncestor());
+        activateAndResolve(firstAncestor, protectedCreature.getId());
+        activateAndResolve(secondAncestor, protectedCreature.getId());
 
         harness.setHand(player1, List.of(new Brightflame()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 2, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(protectedCreature.getMarkedDamage()).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Damages creatures sharing either color with a multicolored target")
+    void damagesCreaturesSharingEitherColorWithMulticoloredTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BorosSwiftblade());
+        Permanent redCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new BenevolentAncestor());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
+        harness.setHand(player1, List.of(new Brightflame()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(redCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(whiteCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(differentColorCreature.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -72,5 +90,10 @@ class BrightflameTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void activateAndResolve(Permanent source, UUID targetId) {
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), null, targetId);
+        harness.passBothPriorities();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,9 +47,8 @@ public class ReturnTargetCreatureToHandAndPerpetuallyBoostEffectHandler implemen
             }
             gameData.perpetualCardPowerToughnessModifiers.merge(
                     card.getId(),
-                    new GameData.PerpetualPowerToughnessModifier(e.powerBoost(), e.toughnessBoost()),
-                    (oldValue, newValue) -> new GameData.PerpetualPowerToughnessModifier(
-                            oldValue.power() + newValue.power(), oldValue.toughness() + newValue.toughness()));
+                    new CardPowerToughnessModifier(e.powerBoost(), e.toughnessBoost()),
+                    (oldValue, newValue) -> oldValue.add(newValue.power(), newValue.toughness()));
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " is returned to its owner's hand and perpetually gets "
                             + formatModifier(e.powerBoost(), e.toughnessBoost()) + "."));

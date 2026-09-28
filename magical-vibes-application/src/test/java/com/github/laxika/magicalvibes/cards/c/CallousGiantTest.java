@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Fireball;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AncientKavu;
+import com.github.laxika.magicalvibes.cards.g.GhituFire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CallousGiant.class, GhituFire.class, AncientKavu.class})
 class CallousGiantTest extends BaseCardTest {
 
     @Test
@@ -23,13 +22,11 @@ class CallousGiantTest extends BaseCardTest {
     void preventsDamageAtOrBelowThreshold() {
         Permanent giant = addCreatureReady(player2, new CallousGiant());
         UUID giantId = giant.getId();
-        harness.setHand(player1, List.of(new Shock(), new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new GhituFire(), new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castInstant(player1, 0, giantId);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, giantId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, giantId);
+        harness.castAndResolveSorcery(player1, 0, 3, giantId);
 
         assertThat(giant.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Callous Giant");
@@ -40,14 +37,27 @@ class CallousGiantTest extends BaseCardTest {
     void doesNotPreventDamageAboveThreshold() {
         Permanent giant = addCreatureReady(player2, new CallousGiant());
         UUID giantId = giant.getId();
-        harness.setHand(player1, List.of(new Fireball()));
+        harness.setHand(player1, List.of(new GhituFire()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, 4, List.of(giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, giantId);
 
         harness.assertNotOnBattlefield(player2, "Callous Giant");
         harness.assertInGraveyard(player2, "Callous Giant");
+    }
+
+    @Test
+    @DisplayName("Only prevents damage to itself")
+    void onlyPreventsDamageToItself() {
+        Permanent giant = addCreatureReady(player2, new CallousGiant());
+        Permanent otherCreature = addCreatureReady(player2, new AncientKavu());
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, otherCreature.getId());
+
+        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -57,13 +67,10 @@ class CallousGiantTest extends BaseCardTest {
         giant.setBlocking(true);
         giant.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new HillGiant());
+        Permanent attacker = addCreatureReady(player2, new AncientKavu());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(giant.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Callous Giant");

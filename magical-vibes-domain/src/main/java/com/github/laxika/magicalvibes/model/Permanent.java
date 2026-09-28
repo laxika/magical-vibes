@@ -48,11 +48,15 @@ public class Permanent {
     @Setter private Integer amplifyRevealedCards;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
-    @Setter private UUID attackTarget;
+    private UUID attackTarget;
     private boolean attackedThisTurn;
     /** Number of times this permanent has been declared as an attacker this turn. */
     @Setter private int attacksThisTurn;
     private boolean attackedThisCombat;
+    /** Player or permanent IDs this creature attacked during the current combat. */
+    private final Set<UUID> playersAttackedThisCombat = new HashSet<>();
+    /** Player or permanent IDs this creature attacked during its immediately preceding combat. */
+    private final Set<UUID> playersAttackedLastCombat = new HashSet<>();
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
     /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
@@ -452,6 +456,8 @@ public class Permanent {
     @Setter private boolean protectionFromOpponentsPermanently;
     /** Players from whom this permanent has durable protection, captured when the effect resolved. */
     private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
+    /** Players from whom this permanent has protection until end of turn. */
+    private final Set<UUID> protectionFromPlayerIdsUntilEndOfTurn = new HashSet<>();
     /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
@@ -750,6 +756,8 @@ public class Permanent {
         this.attackedThisTurn = source.attackedThisTurn;
         this.attacksThisTurn = source.attacksThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
+        this.playersAttackedThisCombat.addAll(source.playersAttackedThisCombat);
+        this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
@@ -907,6 +915,7 @@ public class Permanent {
         this.protectionFromColorlessUntilEndOfTurn = source.protectionFromColorlessUntilEndOfTurn;
         this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
+        this.protectionFromPlayerIdsUntilEndOfTurn.addAll(source.protectionFromPlayerIdsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
@@ -1140,6 +1149,16 @@ public class Permanent {
             this.attacksThisTurn++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
+            if (attackTarget != null) {
+                playersAttackedThisCombat.add(attackTarget);
+            }
+        }
+    }
+
+    public void setAttackTarget(UUID attackTarget) {
+        this.attackTarget = attackTarget;
+        if (attacking && attackTarget != null) {
+            playersAttackedThisCombat.add(attackTarget);
         }
     }
 
@@ -1208,6 +1227,13 @@ public class Permanent {
         this.cantBlockThisCombat = false;
         this.mustAttackThisCombat = false;
         clearUntilEndOfCombatAnimation();
+    }
+
+    /** Finalizes the set of players or permanents this creature attacked during the combat. */
+    public void rollOverCombatAttackRecord() {
+        playersAttackedLastCombat.clear();
+        playersAttackedLastCombat.addAll(playersAttackedThisCombat);
+        playersAttackedThisCombat.clear();
     }
 
     /**
@@ -1728,6 +1754,7 @@ public class Permanent {
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
+        this.protectionFromPlayerIdsUntilEndOfTurn.clear();
         this.protectionFromColorlessUntilEndOfTurn = false;
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;

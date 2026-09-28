@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WildColos;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, ThornElemental.class, WildColos.class})
+@CardUsed({ThornElemental.class, GrizzlyBears.class})
 class ThornElementalTest extends BaseCardTest {
 
     @Test
@@ -22,9 +21,7 @@ class ThornElementalTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        thornElemental.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareBlockers(thornElemental, blocker);
 
         resolveCombat();
 
@@ -44,13 +41,8 @@ class ThornElementalTest extends BaseCardTest {
     void blockedThornElementalAssignsDamageToDefendingPlayerUpstreamReview() {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
-        thornElemental.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new WildColos());
-
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
-                gd.playerBattlefields.get(player1.getId()).indexOf(thornElemental))));
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(thornElemental, blocker);
         resolveCombat();
 
         // Assign all 7 damage to defending player (as though unblocked)
@@ -58,7 +50,7 @@ class ThornElementalTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         // Blocker should survive since no damage was assigned to it
-        harness.assertOnBattlefield(player2, "Wild Colos");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -67,9 +59,7 @@ class ThornElementalTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        thornElemental.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareBlockers(thornElemental, blocker);
 
         resolveCombat();
 
@@ -88,21 +78,16 @@ class ThornElementalTest extends BaseCardTest {
     void blockedThornElementalAssignsDamageToBlockerUpstreamReview() {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
-        thornElemental.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new WildColos());
-
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
-                gd.playerBattlefields.get(player1.getId()).indexOf(thornElemental))));
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(thornElemental, blocker);
         resolveCombat();
 
         // Assign all damage to blocker instead of defending player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 7));
 
-        // Wild Colos (2/2) takes 7 damage -> dies
-        harness.assertNotOnBattlefield(player2, "Wild Colos");
-        harness.assertInGraveyard(player2, "Wild Colos");
+        // Grizzly Bears (2/2) takes 7 damage -> dies
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Life unchanged since damage went to blocker
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -113,9 +98,7 @@ class ThornElementalTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        thornElemental.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareBlockers(thornElemental, blocker);
 
         resolveCombat();
 
@@ -134,18 +117,9 @@ class ThornElementalTest extends BaseCardTest {
     void blockedThornElementalCannotSplitDamageBetweenBlockerAndDefendingPlayer() {
         harness.setLife(player2, 20);
         Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
-        thornElemental.setAttacking(true);
-        Permanent firstBlocker = addCreatureReady(player2, new WildColos());
-        Permanent secondBlocker = addCreatureReady(player2, new WildColos());
-
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(
-                        gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker),
-                        gd.playerBattlefields.get(player1.getId()).indexOf(thornElemental)),
-                new BlockerAssignment(
-                        gd.playerBattlefields.get(player2.getId()).indexOf(secondBlocker),
-                        gd.playerBattlefields.get(player1.getId()).indexOf(thornElemental))));
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(thornElemental, firstBlocker, secondBlocker);
         resolveCombat();
 
         assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
@@ -155,5 +129,36 @@ class ThornElementalTest extends BaseCardTest {
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 7));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("Blocked Thorn Elemental can assign combat damage among multiple blockers")
+    void blockedThornElementalAssignsDamageAmongMultipleBlockers() {
+        harness.setLife(player2, 20);
+        Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(thornElemental, firstBlocker, secondBlocker);
+
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 2,
+                secondBlocker.getId(), 5));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(firstBlocker.getId())
+                        || permanent.getId().equals(secondBlocker.getId()));
+    }
+
+    private void declareBlockers(Permanent attacker, Permanent... blockers) {
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(blockers).stream()
+                .map(blocker -> new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker), attackerIndex))
+                .toList());
     }
 }

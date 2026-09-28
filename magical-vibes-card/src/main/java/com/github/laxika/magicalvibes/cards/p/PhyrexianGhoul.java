@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "TD2", collectorNumber = "53")
 @CardRegistration(set = "A25", collectorNumber = "100")
 @CardRegistration(set = "DMR", collectorNumber = "98")
+@CardRegistration(set = "MOC", collectorNumber = "264")
 public class PhyrexianGhoul extends Card {
 
     public PhyrexianGhoul() {

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinChariot.class, GoblinMatron.class, GoblinPatrol.class, GoblinRaider.class, Island.class})
+@CardUsed({GoblinChariot.class, GoblinMatron.class, GoblinRaider.class, Island.class})
 class GoblinMatronTest extends BaseCardTest {
 
     @Test

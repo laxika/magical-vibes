@@ -26,6 +26,7 @@ public class GibberingKami extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

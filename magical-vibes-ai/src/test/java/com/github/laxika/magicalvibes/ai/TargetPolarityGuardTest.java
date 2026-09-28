@@ -239,6 +239,36 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    void recentPermanentTargetingCardsChooseTheIntendedBoard() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.t.TownRazerTyrant(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.r.RavenousPursuit(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.s.SinisterReflections(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.h.HeroicSacrifice(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.d.DeadpoolTradingCard(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classifyCard(gd,
+                new com.github.laxika.magicalvibes.cards.m.MisleadingSignpost(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect(-1, 0),
+                aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
+    }
+
+    @Test
     void classifiesCloakingAndCombatReassignment() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);

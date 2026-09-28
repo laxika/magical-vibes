@@ -37,7 +37,7 @@ public record ForcedCostOrElseEffect(
         boolean payerIsEnchantedController,
         boolean payerIsDefendingPlayer,
         List<CardEffect> paidEffects
-) implements CardEffect {
+) implements CombatDamageTriggerContextEffect {
     public ForcedCostOrElseEffect {
         paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
     }
@@ -78,5 +78,10 @@ public record ForcedCostOrElseEffect(
     public static ForcedCostOrElseEffect enchantedControllerMayPay(CostEffect forcedCost,
                                                                    List<CardEffect> elseEffects) {
         return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false, List.of());
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return payerIsEnchantedController() ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

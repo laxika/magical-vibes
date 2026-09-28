@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "22")
+@CardRegistration(set = "TDC", collectorNumber = "131")
 public class SlaughterTheStrong extends Card {
 
     public SlaughterTheStrong() {

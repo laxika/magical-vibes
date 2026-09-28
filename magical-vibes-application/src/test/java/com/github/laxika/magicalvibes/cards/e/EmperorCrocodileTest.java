@@ -23,10 +23,7 @@ class EmperorCrocodileTest extends BaseCardTest {
     @Test
     @DisplayName("Cast with no other creatures — state trigger fires and Crocodile is sacrificed")
     void sacrificedWhenControllingNoOtherCreatures() {
-        harness.setHand(player1, List.of(new EmperorCrocodile()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
         harness.passBothPriorities(); // resolve creature spell → state trigger fires
 
         // State trigger is on the stack — Crocodile still alive
@@ -43,10 +40,7 @@ class EmperorCrocodileTest extends BaseCardTest {
     @DisplayName("Survives while controlling another creature — no state trigger")
     void survivesWithAnotherCreature() {
         harness.addToBattlefield(player1, new MetathranSoldier());
-        harness.setHand(player1, List.of(new EmperorCrocodile()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -57,10 +51,7 @@ class EmperorCrocodileTest extends BaseCardTest {
     @DisplayName("Sacrificed when the last other creature dies")
     void sacrificedWhenLastOtherCreatureDies() {
         harness.addToBattlefield(player1, new MetathranSoldier());
-        harness.setHand(player1, List.of(new EmperorCrocodile()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
         harness.passBothPriorities();
 
         // Both creatures present, no trigger yet
@@ -86,10 +77,7 @@ class EmperorCrocodileTest extends BaseCardTest {
     @DisplayName("Controlling another creature owned via opponent does not count — sacrificed")
     void opponentCreaturesDoNotCount() {
         harness.addToBattlefield(player2, new MetathranSoldier());
-        harness.setHand(player1, List.of(new EmperorCrocodile()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
         harness.passBothPriorities(); // state trigger fires — opponent's creature doesn't count
         harness.passBothPriorities(); // resolve → sacrificed
 

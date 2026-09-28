@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TendoIceBridge.class})
 class TendoIceBridgeTest extends BaseCardTest {
 
     @Test
@@ -70,9 +72,6 @@ class TendoIceBridgeTest extends BaseCardTest {
     }
 
     private Permanent addReadyBridge(Player player) {
-        Permanent permanent = new Permanent(new TendoIceBridge());
-        permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new TendoIceBridge());
     }
 }

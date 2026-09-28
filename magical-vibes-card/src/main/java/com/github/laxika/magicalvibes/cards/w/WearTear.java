@@ -26,6 +26,7 @@ import java.util.List;
  */
 @CardRegistration(set = "DGM", collectorNumber = "135")
 @CardRegistration(set = "PIO", collectorNumber = "398")
+@CardRegistration(set = "MOC", collectorNumber = "343")
 public class WearTear extends Card {
 
     public WearTear() {

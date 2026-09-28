@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "ARB", collectorNumber = "2")
+@CardRegistration(set = "NCC", collectorNumber = "329")
 public class AvenMimeomancer extends Card {
 
     public AvenMimeomancer() {

@@ -64,6 +64,19 @@ class KarmaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Karma triggers independently")
+    void multipleKarmasTriggerIndependently() {
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
     @DisplayName("Counts Swamps when the upkeep trigger resolves")
     void countsSwampsAtResolution() {
         harness.addToBattlefield(player1, new Karma());

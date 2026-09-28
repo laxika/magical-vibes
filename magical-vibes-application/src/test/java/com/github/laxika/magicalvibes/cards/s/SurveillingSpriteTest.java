@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SurveillingSprite.class, Forest.class, Shock.class})
+@CardUsed({SurveillingSprite.class, Forest.class, LastGasp.class})
 class SurveillingSpriteTest extends BaseCardTest {
 
     @Test
@@ -54,10 +55,10 @@ class SurveillingSpriteTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, sprite.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, sprite.getId());
         harness.passBothPriorities();
     }
 }

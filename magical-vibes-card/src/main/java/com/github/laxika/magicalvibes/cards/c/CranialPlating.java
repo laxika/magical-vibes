@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "206")
 @CardRegistration(set = "2XM", collectorNumber = "245")
 @CardRegistration(set = "TSR", collectorNumber = "392")
+@CardRegistration(set = "40K", collectorNumber = "236")
 public class CranialPlating extends Card {
 
     public CranialPlating() {

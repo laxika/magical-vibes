@@ -50,7 +50,9 @@ public class PutCardFromHandOrGraveyardChoiceInteractionHandler
         if (!chosenIds.isEmpty()) {
             support.applyChoice(gameData, player.getId(), chosenIds.getFirst(), interaction.cardName(),
                     interaction.enterWithCounter(), interaction.enterWithCounterCount(), interaction.grantHaste(),
-                    interaction.returnToHandAtEndStep());
+                    interaction.returnToHandAtEndStep(), interaction.includeGraveyard(),
+                    interaction.includeCommandZone(), interaction.delayedAuraCardId(),
+                    interaction.delayedAuraOwnerId(), interaction.handleCreatureEtbAndLegendRule());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
