@@ -138,6 +138,7 @@ combat damage step is processed.
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost). Single permanent/player targets use `AttackTriggerTarget`; multi-target / "up to N" (`needsSlotBySlotTargetSelection`) reuses `ETBTokenMultiTargetTrigger` (Archon of the Triumvirate) | Attack |
 | `ON_ATTACKS_UNBLOCKED` (graveyard-targeting) | `CombatBlockService.collectUnblockedAttackTriggers` routes effects implementing `GraveyardCardChoosingEffect` (Rysorian Badger's `ExileCardsFromGraveyardEffect`) to `GraveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting` — an up-to-N multi-select over the defending player's graveyard, filtered by `graveyardChoiceFilter()`, as the trigger goes on the stack. The attacker rides along as `sourcePermanentId` (for "if you do, it assigns no combat damage"); no matching cards ⇒ the trigger is still pushed with 0 targets | Declare blockers |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` (targeting variants) | `CombatDamageService` routes effects whose `targetSpec()` includes permanents or players to the shared `AttackTriggerTarget` pipeline; triggers with multiple target groups or slot-by-slot optional targets use `ETBTokenMultiTargetTrigger`. Effects carrying baked combat context remain non-targeting, and graveyard-targeting effects still use `GraveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting` (Skullsnatcher). The target-group filter is taken from the effect's `target(...)` declaration | Combat damage |
+| `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` (targeting variants) | `CombatDamageService` routes the wrapped effect of `AllyCombatDamageTriggerEffect` through the same `AttackTriggerTarget` pipeline; the ally trigger's target-group binding is preserved through the wrapper, and `attackedTargetId` supplies the damaged player to defending-player predicates | Combat damage |
 | `ON_ATTACKS_UNBLOCKED` (permanent-targeting may) | Same collector routes `MayEffect`s whose `targetSpec()` includes permanents (Dwarven Vigilantes) via `queueMayAbility(..., null, attackerId)` — CR 603.5 may at resolution, then creature target; non-targeting mays / mandatory effects still bake the defending player as `targetId` | Declare blockers |
 | `ON_ATTACKS_UNBLOCKED` (multi-target) | A card with more than one `target(...)` group (Goblin Grenadiers' "destroy target creature and target land") is routed by `collectUnblockedAttackTriggers` to `PermanentChoiceContext.ETBTokenMultiTargetTrigger` before the may/plain branches — the single-target pipelines can't collect two targets. Targets are picked slot-by-slot as the trigger goes on the stack; a wrapping `MayEffect` still prompts at resolution and `MayAbilityHandlerService` leaves the entry's `targetIds` alone (`targetAlreadySet`) | Declare blockers |
 | `ON_BECOMES_BLOCKED` (granted combat-opponent effects) | Temporary or persistent granted effects implementing `CombatOpponentReferencingEffect` are collected once for each declared blocker and auto-reference that blocker. They are omitted when an effect makes a creature blocked without a blocker. | Declare blockers |
@@ -149,6 +150,7 @@ combat damage step is processed.
 | `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` (targeting variants) | `CombatBlockService.checkAllyBecomesBlockedTriggers` queues effects whose `targetSpec()` includes permanents or players through the shared `AttackTriggerTarget` pipeline; the watching permanent is the source for damage and other source-dependent effects. Non-targeting effects retain the blocked creature as `sourcePermanentId`. | Declare blockers |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; unblocked creature stored as non-targeting `sourcePermanentId`) | Non-targeting |
+| `ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED` | `CombatBlockService` (declare-blockers step; fires once when at least one direct attacker is unblocked, attacking player stored as non-targeting `targetId`) | Non-targeting |
 | `ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED` | `CombatBlockService` (declare-blockers step; fires once per defending permanent when an opponent's creature attacks the player directly and at least one such attacker is unblocked; attacking player stored as non-targeting `targetId`) | Declare blockers |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_CREATURE_ATTACKS_YOU_DIRECTLY` | `CombatAttackService.declareAttackers` (directly attacked player's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
@@ -177,6 +179,7 @@ combat damage step is processed.
 | `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
@@ -186,6 +189,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
+| `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
@@ -207,10 +211,13 @@ combat damage step is processed.
 | `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `GRAVEYARD_ON_CONTROLLER_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
+| `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
+| `GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; `TriggeringPermanentConditionalEffect` filters the entering permanent and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
+| `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token | Token creation (non-targeting) |
 | `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token. Permanent-targeting effects queue `EntersTriggerTarget` for target choice before the trigger is put on the stack. | Token creation |
 | `ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` → `EntersTriggerTarget` (queued when the resolved effect's `targetSpec()` includes permanents — including a `MayEffect` wrapper, whose spec delegates to the wrapped effect; Oath of the Ancient Wood's "you may put a +1/+1 counter on target creature"). Non-targeting effects still push straight to the stack with `triggeringCardId` set. | Enters (same `Options.ATTACK` target list; honours the card's `PermanentPredicateTargetFilter`) |
 | `GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` scans the entering player's graveyard; a `MayEffect` is queued as a may-ability and other effects are pushed onto the stack. | None (graveyard-resident, non-targeting) |
@@ -219,6 +226,7 @@ combat damage step is processed.
 | `GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER` | `CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers` — fires from the graveyard of every player dealt combat damage this step, directly or on a planeswalker they control. The only targeting graveyard slot: it queues an `AttackTriggerTarget` whose `sourceCard` is the graveyard card (no source permanent), and `CombatDamageService` drains it before the damage step ends so "attacking creature" target filters still see the attackers. Vengeful Pharaoh. | Attack |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | `ON_CREWS_VEHICLE` | `TriggerCollectionService.checkCrewsVehicleTriggers` from `CrewCostHandler`; the Vehicle is stored as the triggered entry's `triggeringPermanentId` so effects can resolve against "that Vehicle" | Non-targeting |
+| `ON_ALLY_CREATURE_CREWS_VEHICLE` | `TriggerCollectionService.checkAllyCreatureCrewsVehicleTriggers` from `CrewCostHandler`; the event context carries the allied crewing creature and Vehicle, and trigger collectors may bind the Vehicle's physical card | Non-targeting |
 | `ON_EXPLOIT` | `TriggerCollectionService.checkExploitTriggers` | Exploit; player-targeting effects use `ExploitPlayerTriggerTarget`, permanent-targeting effects use `ExploitPermanentTriggerTarget`, and stack-targeting effects use `ExploitTriggerTarget` |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
@@ -290,6 +298,9 @@ whenever a non-token creature card enters any graveyard from a non-battlefield z
 `ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Quest for Ancient Secrets; fires on every permanent the
 graveyard owner controls whenever a non-token card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`),
+`ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD` (Ultron the Annihilator; fires on every
+permanent the graveyard owner controls whenever a non-token artifact card enters their graveyard from a
+non-battlefield zone),
 `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,
@@ -362,6 +373,8 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 counters before the trigger is queued.
 `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
+Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
+counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -391,6 +404,17 @@ counters placed as the trigger event value),
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+`ON_YOU_PUT_COUNTERS_ON_CREATURE` (Rikku, Resourceful Guardian; fires once per placement event for
+one or more counters of any type put on any creature by the controller, carrying the affected creature
+as a non-targeting event subject),
+`ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE` (Captain Marvel, Apex Avenger; fires once per placement
+event when the controller puts one or more counters of any kind on another creature, regardless of
+that creature's controller; non-targeting and captures the counter kind, amount, and creature for
+resolution),
+`ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL` (Bold Plagiarist; fires once per placement
+event when an opponent puts one or more counters on a creature they control; the trigger remains
+controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
+same number and kind are placed by that opponent),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same
@@ -419,6 +443,9 @@ counters were placed at once; non-targeting — the Snake creation is a plain `C
 fires once per nonland card milled by an opponent),
 `GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` (graveyard mirror of `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`;
 `TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
+`GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` (graveyard mirror of
+`ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD`; use `TriggeringPermanentConditionalEffect` for a commander or
+other permanent predicate — Endless Ranks of HYDRA),
 `GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
 `GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD` (graveyard watcher for any creature entering;
 `TriggeringCardConditionalEffect` can gate on the entering card's mana value — Dragon Scales),
@@ -759,3 +786,4 @@ the planar trigger path uses that group's filter directly rather than walking un
 belonging to the plane's other abilities.
 
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.
+| `ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE` | `TriggerCollectionService.checkControllerDealtDamageTriggers` when the damage source controller matches the damaged player + `DamageTriggerCollectorService` | The source-control gate is checked at the damage event; the damage amount is carried in `eventValue`, and player-targeting effects use `SpellTargetTriggerAnyTarget` |

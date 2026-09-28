@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -62,10 +63,13 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomS
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -282,7 +286,23 @@ public class DrawService {
 
     private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
                                         Card cycledCard) {
+        resolveCurrentDrawCard(gameData, playerId, originalFirstDrawStepDraw, cycledCard, false);
+    }
+
+    /** Continues the pending draw through the remaining replacement effects after dredge is declined. */
+    public void continueDrawAfterDecliningDredge(GameData gameData, UUID playerId) {
+        resolveCurrentDrawCard(gameData, playerId, gameData.pendingDrawFirstDrawStepFlags.get(playerId),
+                pendingCyclingCard(gameData, playerId), true);
+    }
+
+    private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
+                                        Card cycledCard, boolean skipDredge) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return;
+        }
+
+        if (resolveEmptyLibraryDrawReplacement(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
@@ -317,7 +337,8 @@ public class DrawService {
             return;
         }
 
-        List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
+        List<Integer> dredgeIndices = skipDredge ? List.of()
+                : dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
             interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                     .builder(playerId, dredgeIndices, GraveyardChoiceDestination.DREDGE,
@@ -594,6 +615,22 @@ public class DrawService {
                         .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
                         .build());
                 performDrawCard(gameData, thiefController);
+                return;
+            }
+        }
+
+        if (!firstDrawStepDraw) {
+            FirstNonDrawStepDrawReplacement replacement =
+                    findFirstNonDrawStepDrawReplacement(gameData, playerId);
+            if (replacement != null
+                    && gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.add(replacement.source().getId())) {
+                int drawCount = replacement.effect().replacementDrawCount();
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount
+                        + " cards instead with " + replacement.source().getCard().getName() + "."));
+                for (int i = 0; i < drawCount; i++) {
+                    performDrawCard(gameData, playerId);
+                }
                 return;
             }
         }
@@ -1059,6 +1096,7 @@ public class DrawService {
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled, source.getId());
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionSourcePermanents.put(exiled.getId(), source.getId());
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
 
         gameLogService.append(gameData, GameLog.builder()
@@ -1074,6 +1112,7 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
                 boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
@@ -1301,6 +1340,31 @@ public class DrawService {
         return null;
     }
 
+    private FirstNonDrawStepDrawReplacement findFirstNonDrawStepDrawReplacement(
+            GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.contains(permanent.getId())) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstNonDrawStepDrawReplacementEffect replacement) {
+                    return new FirstNonDrawStepDrawReplacement(permanent, replacement);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record FirstNonDrawStepDrawReplacement(
+            Permanent source,
+            FirstNonDrawStepDrawReplacementEffect effect) {
+    }
+
     private Card findReturnFromGraveyardInsteadOfDrawSourceCard(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1312,6 +1376,65 @@ public class DrawService {
                     .anyMatch(effect -> effect instanceof ReturnFromGraveyardInsteadOfDrawEffect);
             if (hasEffect) {
                 return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves replacements whose condition is specifically an empty-library draw. These must be
+     * checked before {@link #performDrawCard} applies the normal empty-library loss.
+     */
+    private boolean resolveEmptyLibraryDrawReplacement(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        if (library != null && !library.isEmpty()) {
+            return false;
+        }
+
+        Permanent source = findEmptyLibraryDrawReplacementSource(gameData, playerId);
+        if (source == null) {
+            return false;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> creatureIndices = graveyard == null
+                ? List.of()
+                : IntStream.range(0, graveyard.size())
+                        .filter(index -> graveyard.get(index).hasType(CardType.CREATURE))
+                        .boxed()
+                        .toList();
+        if (creatureIndices.isEmpty()) {
+            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                String lossLog = gameData.playerIdToName.get(playerId)
+                        + " can't return a creature card from their graveyard and loses the game.";
+                gameLogService.append(gameData, GameLog.text(lossLog));
+                log.info("Game {} - {} loses ({}: no creature in graveyard on empty-library draw)",
+                        gameData.id, gameData.playerIdToName.get(playerId), source.getCard().getName());
+                gameOutcomeService.declareWinner(gameData, winnerId);
+            }
+            return true;
+        }
+
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(playerId, creatureIndices, GraveyardChoiceDestination.BATTLEFIELD,
+                        "Return a creature card from your graveyard to the battlefield.")
+                .mandatory(true)
+                .build());
+        return true;
+    }
+
+    private Permanent findEmptyLibraryDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(EmptyLibraryDrawReplacementEffect.class::isInstance);
+            if (hasEffect) {
+                return permanent;
             }
         }
         return null;
@@ -1430,7 +1553,8 @@ public class DrawService {
                 false, false, 0, null, 1,
                 restToGraveyard
                         ? "Put one of these cards into your hand and the rest into your graveyard."
-                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
+                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order.",
+                false, 1, false, null, false));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {
@@ -1933,6 +2057,12 @@ public class DrawService {
                         continue;
                     }
                 }
+                if (effect instanceof DrawnCardTriggerEffect drawnCardTrigger) {
+                    effect = drawnCardTrigger.effectForDrawnCard(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
                 if (effect instanceof DrawTriggerEffect drawTrigger) {
                     effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                     if (effect == null) {
@@ -2011,7 +2141,7 @@ public class DrawService {
                                 drawingPlayerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(effect)),
-                                drawingPlayerId,
+                                effect instanceof ChooseOneEffect ? null : drawingPlayerId,
                                 perm.getId()
                         ));
 
@@ -2047,6 +2177,43 @@ public class DrawService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on second card draw",
                         gameData.id, card.getName());
+            }
+        }
+    }
+
+    private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        if (cardsDrawnThisTurn != 2) return;
+
+        for (UUID graveyardOwnerId : gameData.playerGraveyards.keySet()) {
+            if (graveyardOwnerId.equals(drawingPlayerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) continue;
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect authoredEffect : effects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
+
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            graveyardOwnerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard ability triggers on opponent's second card draw",
+                            gameData.id, card.getName());
+                }
             }
         }
     }
@@ -2114,11 +2281,13 @@ public class DrawService {
             if (playerId.equals(drawingPlayerId)) return;
 
             for (Permanent perm : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : drawEffects) {
-                    CardEffect effect = authoredEffect;
+                    CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
+                    if (effect == null) continue;
                     if (effect instanceof ExceptFirstDrawStepTriggerEffect
                             && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                         continue;
@@ -2158,7 +2327,7 @@ public class DrawService {
                             ));
 
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -2166,15 +2335,19 @@ public class DrawService {
                                 new ArrayList<>(List.of(effect)),
                                 drawingPlayerId,
                                 perm.getId()
-                            ));
+                            );
+                            trigger.setNonTargeting(true);
+                            gameData.stack.add(trigger);
                         }
 
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         });
+        checkGraveyardOpponentDrawTriggerSlot(gameData, drawingPlayerId);
     }
 
     private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {

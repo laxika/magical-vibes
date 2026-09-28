@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect
 import com.github.laxika.magicalvibes.model.effect.AttackerTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreviouslyAttackedPlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect.Direction;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -112,7 +115,8 @@ public class AttackLegalityService {
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)
                 && !canAttackAsThoughHasteFromOwnStatic(gameData, creature)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
-                && !canAttackDespiteDefender(gameData, creature)) return false;
+                && !canAttackDespiteDefender(gameData, creature)
+                && !canAttackPlayersWhoAttackedControllerLastTurn(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature,
                 e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsAttacking())) return false;
         if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
@@ -140,8 +144,48 @@ public class AttackLegalityService {
      * those wrapped in a {@link ConditionalEffect} (e.g. metalcraft).
      */
     private boolean canAttackDespiteDefender(GameData gameData, Permanent creature) {
+        if (hasUnconditionalNoDefenderPermission(gameData, creature)) {
+            return true;
+        }
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
+        return gameData.playerIds.stream()
+                .filter(targetId -> !targetId.equals(controllerId))
+                .anyMatch(targetId -> canAttackDespiteDefender(gameData, creature, targetId));
+    }
+
+    /**
+     * Returns whether the creature's defender permission applies to this particular attack target.
+     * The defender-specific permission on Weathered Sentinels is deliberately checked here rather
+     * than as a general creature characteristic: a different player may still be an illegal target.
+     */
+    private boolean canAttackDespiteDefender(GameData gameData, Permanent creature, UUID targetId) {
+        if (hasUnconditionalNoDefenderPermission(gameData, creature)) {
+            return true;
+        }
+        if (!gameData.playerIds.contains(targetId)) {
+            return false;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        Set<UUID> attackingPlayers = gameData.playersWhoAttackedPlayersLastTurn
+                .getOrDefault(controllerId, Set.of());
+        if (!attackingPlayers.contains(targetId)) {
+            return false;
+        }
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(NoDefenderAttackPermissionEffect.class::isInstance)
+                .map(NoDefenderAttackPermissionEffect.class::cast)
+                .anyMatch(NoDefenderAttackPermissionEffect::
+                        grantsCarrierAttackAsThoughNoDefenderAgainstDefenderWhoAttackedControllerLastTurn);
+    }
+
+    private boolean hasUnconditionalNoDefenderPermission(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof NoDefenderAttackPermissionEffect permission
                     && permission.grantsCarrierAttackAsThoughNoDefender()) {
@@ -199,6 +243,24 @@ public class AttackLegalityService {
         return false;
     }
 
+    private boolean canAttackPlayersWhoAttackedControllerLastTurn(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null || gameQueryService.hasLostAllAbilities(gameData, creature)) {
+            return false;
+        }
+        boolean hasPermission = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect.class::isInstance);
+        if (!hasPermission) {
+            return false;
+        }
+        Set<UUID> players = gameData.playersWhoAttackedPlayersLastTurn.get(controllerId);
+        if (players == null) {
+            return false;
+        }
+        Set<UUID> validTargetIds = getValidAttackTargetIds(gameData, controllerId);
+        return players.stream().anyMatch(validTargetIds::contains);
+    }
+
     /**
      * Evaluates the creature's {@link CantAttackUnlessEffect} restrictions (CR 508.1a): the
      * creature can't attack while any attached condition is unmet. Each restriction's condition
@@ -240,6 +302,11 @@ public class AttackLegalityService {
         if (!canAttackInChosenDirection(gameData, attacker, targetId)) {
             return false;
         }
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.DEFENDER)
+                && !canAttackDespiteDefender(gameData, attacker, targetId)
+                && !canAttackDespiteDefenderForTarget(gameData, attacker, targetId)) {
+            return false;
+        }
         if (isRestrictedFromAttackingPreviouslyAttackedPlayer(gameData, attacker, targetId)) {
             return false;
         }
@@ -256,7 +323,9 @@ public class AttackLegalityService {
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         if (targetIsPlayer
                 && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
-                && gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                && gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
             return false;
         }
@@ -264,7 +333,7 @@ public class AttackLegalityService {
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (protectedPlayerId == null) return true;
-        if (cantAttackCardOwner(attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
+        if (cantAttackCardOwner(gameData, attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
             return false;
         }
         // Restrictions come from static abilities of the protected player's permanents (Form of the
@@ -277,6 +346,13 @@ public class AttackLegalityService {
                         .withSourceCardId(source.getCard().getId())
                         .withSourceControllerId(protectedPlayerId);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ConditionalEffect conditional) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forStaticEffect(source, protectedPlayerId))) {
+                            continue;
+                        }
+                        effect = conditional.wrapped();
+                    }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
                             && !source.isAuraEffectsIgnoredThisTurn()
                             && source.isAttached()
@@ -297,9 +373,21 @@ public class AttackLegalityService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (protectedPlayerId.equals(fe.affectedPlayerId())
+                if (attacker.getId().equals(fe.affectedPermanentId())
+                        && protectedPlayerId.equals(fe.controllerId())
+                        && fe.effect() instanceof EnchantedCreatureAttackRestrictionEffect
+                        && attacker.getCounterCount(CounterType.VOW) > 0
+                        && (targetIsPlayer || targetPermanent != null
+                        && targetPermanent.getCard().hasType(CardType.PLANESWALKER))) {
+                    return false;
+                }
+                boolean scopedToAttacker = fe.scope() != null
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, fe.scope());
+                if ((protectedPlayerId.equals(fe.affectedPlayerId())
                         && (fe.affectedPermanentId() == null
-                        || fe.affectedPermanentId().equals(attacker.getId()))) {
+                        || fe.affectedPermanentId().equals(attacker.getId())))
+                        || (scopedToAttacker && protectedPlayerId.equals(fe.controllerId()))) {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
@@ -314,6 +402,22 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    private boolean canAttackDespiteDefenderForTarget(GameData gameData, Permanent attacker,
+                                                       UUID targetId) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
+        if (controllerId == null || !gameData.playerIds.contains(targetId)
+                || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
+            return false;
+        }
+        boolean hasPermission = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect.class::isInstance);
+        if (!hasPermission) {
+            return false;
+        }
+        Set<UUID> attackers = gameData.playersWhoAttackedPlayersLastTurn.get(controllerId);
+        return attackers != null && attackers.contains(targetId);
     }
 
     private boolean isRestrictedByAttackTargetDirection(GameData gameData, Permanent attacker,
@@ -446,9 +550,11 @@ public class AttackLegalityService {
                 .contains(targetId);
     }
 
-    private boolean cantAttackCardOwner(Permanent attacker, Permanent targetPermanent,
+    private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
                                         boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
         boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackCardOwnerEffect.class::isInstance)
+                || gameQueryService.getGrantedEffects(gameData, attacker).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
         if (!restrictionPresent || attacker.getOriginalCard().getOwnerId() == null) {
             return false;
@@ -608,6 +714,14 @@ public class AttackLegalityService {
      * "Each opponent who cast a spell this turn can't attack with creatures").
      */
     public boolean isPlayerPreventedFromAttacking(GameData gameData, UUID playerId) {
+        synchronized (gameData.floatingEffects) {
+            if (gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && floating.effect() instanceof PlayerCantCastSpellsAndAttackWithCreaturesEffect)) {
+                return true;
+            }
+        }
+
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         if (spellsCast == 0) return false;
 
@@ -764,6 +878,12 @@ public class AttackLegalityService {
                     && predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
                             .withSourceControllerId(floatingEffect.controllerId()))) {
+                Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
+                UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+                if (requiredTargetId != null && !canAttackRequiredTarget(gameData, creature, requiredTargetId)) {
+                    continue;
+                }
                 count[0]++;
             }
         }
@@ -802,7 +922,7 @@ public class AttackLegalityService {
     }
 
     /**
-     * Returns the legal specific attack targets required by matching static combat requirements.
+     * Returns the legal specific attack targets required by matching combat requirements.
      * A target is omitted when the requirement is inactive or the creature cannot attack it.
      */
     public List<UUID> getRequiredAttackTargetIds(GameData gameData, Permanent creature) {
@@ -824,6 +944,22 @@ public class AttackLegalityService {
                 }
             }
         });
+        for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
+            if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
+                    || (floatingEffect.affectedPermanentId() != null
+                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
+                    || !predicateEvaluationService.matchesPermanentPredicate(creature,
+                    requirement.affectedPredicate(), FilterContext.of(gameData)
+                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                continue;
+            }
+            Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
+            UUID targetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+            if (targetId != null && canAttackRequiredTarget(gameData, creature, targetId)) {
+                targetIds.add(targetId);
+            }
+        }
         return targetIds;
     }
 

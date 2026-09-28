@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LoxodonHierarch;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LightningHelix.class, AirElemental.class, Forest.class, GrizzlyBears.class})
+@CardUsed({LightningHelix.class, LoxodonHierarch.class, Forest.class})
 class LightningHelixTest extends BaseCardTest {
 
     @Test
@@ -25,27 +24,24 @@ class LightningHelixTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 18);
     }
 
     @Test
     void dealsDamageToCreatureAndGainsLife() {
-        Permanent elemental = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player2.getId()).add(elemental);
+        Permanent hierarch = harness.addToBattlefieldAndReturn(player2, new LoxodonHierarch());
         harness.setHand(player1, List.of(new LightningHelix()));
         addLightningHelixMana();
         harness.setLife(player1, 15);
 
-        harness.castInstant(player1, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hierarch.getId());
 
-        harness.assertOnBattlefield(player2, "Air Elemental");
-        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertOnBattlefield(player2, "Loxodon Hierarch");
+        assertThat(hierarch.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -62,13 +58,12 @@ class LightningHelixTest extends BaseCardTest {
 
     @Test
     void fizzlesWithoutLifeGainWhenTargetIsRemoved() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent hierarch = harness.addToBattlefieldAndReturn(player2, new LoxodonHierarch());
         harness.setHand(player1, List.of(new LightningHelix()));
         addLightningHelixMana();
         harness.setLife(player1, 15);
 
-        harness.castInstant(player1, 0, bear.getId());
+        harness.castInstant(player1, 0, hierarch.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "SOC", collectorNumber = "371")
 @CardRegistration(set = "ECC", collectorNumber = "61")
 public class FesteringThicket extends Card {
 

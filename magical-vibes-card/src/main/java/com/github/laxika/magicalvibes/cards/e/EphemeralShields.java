@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "11")
+@CardRegistration(set = "MOC", collectorNumber = "184")
 public class EphemeralShields extends Card {
 
     public EphemeralShields() {

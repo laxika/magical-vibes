@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "98")
+@CardRegistration(set = "C21", collectorNumber = "166")
 public class ErraticCyclops extends Card {
 
     public ErraticCyclops() {

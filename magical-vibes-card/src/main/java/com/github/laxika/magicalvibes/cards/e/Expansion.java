@@ -28,6 +28,7 @@ import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "224")
 @CardRegistration(set = "RVR", collectorNumber = "243")
+@CardRegistration(set = "TDC", collectorNumber = "287")
 public class Expansion extends Card {
 
     public Expansion() {

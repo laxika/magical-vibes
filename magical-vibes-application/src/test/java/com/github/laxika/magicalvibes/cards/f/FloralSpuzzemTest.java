@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.b.BronzeHorse;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,28 +16,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FloralSpuzzem.class, Millstone.class, GrizzlyBears.class})
+@CardUsed({FloralSpuzzem.class, BronzeHorse.class, DurkwoodBoars.class})
 class FloralSpuzzemTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new FloralSpuzzem());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new FloralSpuzzem());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addDefenderArtifact() {
-        Permanent artifact = new Permanent(new Millstone());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
-        return artifact;
+        return addCreatureReady(player2, new BronzeHorse());
     }
 
     private void advanceToUnblockedMay(Permanent target) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -49,6 +43,7 @@ class FloralSpuzzemTest extends BaseCardTest {
     void acceptDestroysArtifactAndPreventsDamage() {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUnblockedMay(artifact);
 
@@ -58,6 +53,7 @@ class FloralSpuzzemTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
     }
 
     @Test
@@ -65,20 +61,38 @@ class FloralSpuzzemTest extends BaseCardTest {
     void declineDoesNothing() {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUnblockedMay(artifact);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("An indestructible artifact survives and does not prevent combat damage")
+    void indestructibleArtifactDoesNotSatisfyDestroyClause() {
+        Permanent artifact = addDefenderArtifact();
+        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        Permanent attacker = addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUnblockedMay(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 2);
     }
 
     @Test
     @DisplayName("Only artifacts controlled by the defending player are eligible")
     void onlyDefendingPlayerArtifactsAreEligible() {
         Permanent attacker = addAttacker();
-        Permanent ownArtifact = new Permanent(new Millstone());
-        gd.playerBattlefields.get(player1.getId()).add(ownArtifact);
+        Permanent ownArtifact = addCreatureReady(player1, new BronzeHorse());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
@@ -90,12 +104,27 @@ class FloralSpuzzemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A non-artifact permanent controlled by the defending player is not eligible")
+    void nonArtifactIsNotEligible() {
+        Permanent attacker = addAttacker();
+        Permanent defenderCreature = addCreatureReady(player2, new DurkwoodBoars());
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(defenderCreature);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 2);
+    }
+
+    @Test
     @DisplayName("A blocked attacker does not trigger the ability")
     void blockedDoesNotTrigger() {
         Permanent attacker = addAttacker();
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new DurkwoodBoars());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

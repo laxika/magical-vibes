@@ -12,9 +12,12 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "446")
 @CardRegistration(set = "PIP", collectorNumber = "682")
 @CardRegistration(set = "PIP", collectorNumber = "974")
+@CardRegistration(set = "SOC", collectorNumber = "421")
+@CardRegistration(set = "DSC", collectorNumber = "324")
 public class ViridescentBog extends Card {
 
     public ViridescentBog() {
+        // {1}, {T}: Add {B}{G}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

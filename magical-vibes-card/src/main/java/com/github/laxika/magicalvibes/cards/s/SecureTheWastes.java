@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "457")
 @CardRegistration(set = "PIP", collectorNumber = "699")
 @CardRegistration(set = "PIP", collectorNumber = "985")
+@CardRegistration(set = "MOC", collectorNumber = "203")
 public class SecureTheWastes extends Card {
 
     public SecureTheWastes() {

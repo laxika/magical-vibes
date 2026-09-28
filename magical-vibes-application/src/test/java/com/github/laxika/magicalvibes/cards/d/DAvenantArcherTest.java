@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DAvenantArcher.class, SamiteHealer.class})
+@CardUsed({DAvenantArcher.class, TundraWolves.class})
 class DAvenantArcherTest extends BaseCardTest {
 
     @Test
@@ -32,7 +32,7 @@ class DAvenantArcherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        harness.assertInGraveyard(player2, "Samite Healer");
+        harness.assertInGraveyard(player2, "Tundra Wolves");
     }
 
     @Test
@@ -44,7 +44,7 @@ class DAvenantArcherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Samite Healer");
+        harness.assertInGraveyard(player1, "Tundra Wolves");
     }
 
     @Test
@@ -56,7 +56,21 @@ class DAvenantArcherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Samite Healer");
+        harness.assertInGraveyard(player2, "Tundra Wolves");
+    }
+
+    @Test
+    @DisplayName("Ability deals exactly 1 damage to a creature that survives")
+    void abilityDealsExactlyOneDamageToSurvivingCreature() {
+        addArcherReady(player1);
+        Permanent target = addCreatureReady(player2, new DAvenantArcher());
+        target.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
     @Test
@@ -87,8 +101,7 @@ class DAvenantArcherTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while D'Avenant Archer has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent archer = new Permanent(new DAvenantArcher());
-        gd.playerBattlefields.get(player1.getId()).add(archer);
+        harness.addToBattlefieldAndReturn(player1, new DAvenantArcher());
         Permanent attacker = addCombatCreature(player2, true, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
@@ -96,12 +109,24 @@ class DAvenantArcherTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
+    @Test
+    @DisplayName("Cannot activate while D'Avenant Archer is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent archer = addArcherReady(player1);
+        archer.tap();
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+    }
+
     private Permanent addArcherReady(Player player) {
         return addCreatureReady(player, new DAvenantArcher());
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {
-        Permanent creature = addCreatureReady(player, new SamiteHealer());
+        Permanent creature = addCreatureReady(player, new TundraWolves());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
         return creature;

@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "42")
@@ -16,7 +19,9 @@ public class KnacksawClique extends Card {
                 false, "{1}{U}",
                 List.of(new ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffect()),
                 "{1}{U}, {Q}: Target opponent exiles the top card of their library. "
-                        + "Until end of turn, you may play that card."
+                        + "Until end of turn, you may play that card.",
+                new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                        "Target must be an opponent")
         ).withRequiresUntap());
     }
 }

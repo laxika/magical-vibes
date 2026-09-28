@@ -134,6 +134,7 @@ public class PotentialManaService {
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
                 virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
                 virtual.addLandAbilityOnlyMana(color, current.getLandAbilityOnlyMana(color));
+                virtual.addPowerUpAbilityOnlyMana(color, current.getPowerUpAbilityOnlyMana(color));
             }
         }
 
@@ -560,7 +561,8 @@ public class PotentialManaService {
                     || anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY)) {
                 int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
                 if (amount > 0) {
-                    for (ManaColor color : ManaProductionSupport.commanderColorIdentity(gameData, playerId)) {
+                    List<ManaColor> colors = ManaProductionSupport.commanderColorIdentity(gameData, playerId);
+                    for (ManaColor color : colors) {
                         EnumMap<ManaColor, Integer> option = new EnumMap<>(ManaColor.class);
                         option.put(color, amount);
                         conditionalOptions.add(option);

@@ -12,9 +12,8 @@ public class AkkiLavarunner extends Card {
     public AkkiLavarunner() {
         setBackFaceCard(new TokTokVolcanoBorn());
 
-        // "Whenever this creature deals damage to an opponent, flip it." - ON_DAMAGE_TO_PLAYER covers
-        // combat and noncombat damage alike.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new TransformToBackFaceEffect());
+        // Includes combat and noncombat damage, but only to an opponent.
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new TransformToBackFaceEffect());
     }
 
     @Override

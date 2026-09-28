@@ -14,45 +14,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DesolateMireTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Paying one and tapping Desolate Mire adds white and black mana")
+    @DisplayName("Paying one generic mana and tapping adds one white and one black mana")
     void addsWhiteAndBlackMana() {
-        Permanent mire = addReadyMire();
+        Permanent mire = harness.addToBattlefieldAndReturn(player1, new DesolateMire());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(mire.isTapped()).isTrue();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(mire.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("Cannot activate Desolate Mire without paying one")
+    @DisplayName("Cannot activate Desolate Mire without paying one generic mana")
     void cannotActivateWithoutMana() {
-        addReadyMire();
+        Permanent mire = harness.addToBattlefieldAndReturn(player1, new DesolateMire());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mire.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Cannot activate Desolate Mire while tapped")
     void cannotActivateWhileTapped() {
-        Permanent mire = addReadyMire();
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        mire.tap();
+        harness.addToBattlefield(player1, new DesolateMire());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
-    }
-
-    private Permanent addReadyMire() {
-        Permanent mire = new Permanent(new DesolateMire());
-        mire.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mire);
-        return mire;
     }
 }

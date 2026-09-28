@@ -37,6 +37,19 @@ class OverflowingBasinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate Overflowing Basin while tapped")
+    void cannotActivateWhileTapped() {
+        addReadyBasin();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
     private Permanent addReadyBasin() {
         Permanent basin = new Permanent(new OverflowingBasin());
         basin.setSummoningSick(false);

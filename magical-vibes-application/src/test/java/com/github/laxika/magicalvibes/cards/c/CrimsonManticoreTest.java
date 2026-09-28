@@ -112,6 +112,18 @@ class CrimsonManticoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taps itself as part of activation")
+    void tapsItselfWhenActivated() {
+        Permanent manticore = addReadyManticore();
+        Permanent attacker = addAttacker(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        assertThat(manticore.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Does not damage a target that stops attacking before resolution")
     void targetBecomesNonCombatCreatureBeforeResolution() {
         addReadyManticore();

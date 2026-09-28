@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(UtopiaTree.class)
 class UtopiaTreeTest extends BaseCardTest {
 
     @Test
@@ -29,17 +30,16 @@ class UtopiaTreeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating Utopia Tree taps it and prompts for mana color")
     void activateAbilityPromptsManaColor() {
-        harness.addToBattlefield(player1, new UtopiaTree());
-        GameData gd = harness.getGameData();
-        Permanent tree = gd.playerBattlefields.get(player1.getId()).getFirst();
-        tree.setSummoningSick(false);
+        Permanent tree = addCreatureReady(player1, new UtopiaTree());
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(tree.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     }
 
     @Test
@@ -50,18 +50,23 @@ class UtopiaTreeTest extends BaseCardTest {
             player1 = harness.getPlayer1();
             harness.skipMulligan();
 
-            harness.addToBattlefield(player1, new UtopiaTree());
-            GameData gd = harness.getGameData();
-            Permanent tree = gd.playerBattlefields.get(player1.getId()).getFirst();
-            tree.setSummoningSick(false);
+            gd = harness.getGameData();
+            addCreatureReady(player1, new UtopiaTree());
+            for (ManaColor existingColor : ManaColor.values()) {
+                harness.addMana(player1, existingColor, 1);
+            }
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, null, null);
-            int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
             harness.handleListChoice(player1, color);
 
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
+            for (ManaColor existingColor : ManaColor.values()) {
+                int expected = existingColor == manaColor ? 2 : 1;
+                assertThat(gd.playerManaPools.get(player1.getId()).get(existingColor))
+                        .as("mana of %s", existingColor)
+                        .isEqualTo(expected);
+            }
             assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }
@@ -69,10 +74,7 @@ class UtopiaTreeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Utopia Tree when it is already tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new UtopiaTree());
-        GameData gd = harness.getGameData();
-        Permanent tree = gd.playerBattlefields.get(player1.getId()).getFirst();
-        tree.setSummoningSick(false);
+        addCreatureReady(player1, new UtopiaTree());
 
         harness.activateAbility(player1, 0, null, null);
 

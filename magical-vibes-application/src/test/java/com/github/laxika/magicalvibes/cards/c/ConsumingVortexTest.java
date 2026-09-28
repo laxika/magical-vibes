@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,22 +16,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ConsumingVortex.class, Forest.class, ReachThroughMists.class, WanderingOnes.class})
 class ConsumingVortexTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns target creature to its owner's hand")
     void returnsTargetCreatureToOwnersHand() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new ConsumingVortex()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(GrizzlyBears.class::isInstance);
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(WanderingOnes.class::isInstance);
     }
 
     @Test
@@ -50,20 +50,72 @@ class ConsumingVortexTest extends BaseCardTest {
     @Test
     @DisplayName("Splices onto an Arcane spell and stays in hand")
     void splicesOntoArcaneSpell() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Card arcaneShock = new Shock().createRuntimeCopy();
-        arcaneShock.setSubtypes(List.of(CardSubtype.ARCANE));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        ReachThroughMists host = new ReachThroughMists();
         ConsumingVortex vortex = new ConsumingVortex();
+        Forest drawnCard = new Forest();
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(arcaneShock, vortex));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(host, vortex));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castWithSplice(player1, 0, bears.getId(), List.of(1));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(vortex);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(vortex, drawnCard);
+        harness.assertInGraveyard(player1, "Reach Through Mists");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner's hand")
+    void returnsStolenCreatureToOwnersHand() {
+        Permanent bears = addCreatureReady(player1, new WanderingOnes());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        harness.assertInHand(player2, "Wandering Ones");
+        harness.assertNotInHand(player1, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Requires the full splice cost")
+    void requiresFullSpliceCost() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ReachThroughMists(), new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, bears.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        harness.assertInHand(player1, "Reach Through Mists");
+        harness.assertInHand(player1, "Consuming Vortex");
+    }
+
+    @Test
+    @CardUsed(Shock.class)
+    @DisplayName("Cannot splice onto a non-Arcane spell")
+    void rejectsNonArcaneHost() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Shock(), new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, bears.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot be spliced");
     }
 }

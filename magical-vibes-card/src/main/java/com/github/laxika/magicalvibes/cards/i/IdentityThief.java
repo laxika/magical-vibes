@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "64")
+@CardRegistration(set = "NCC", collectorNumber = "224")
 public class IdentityThief extends Card {
 
     public IdentityThief() {

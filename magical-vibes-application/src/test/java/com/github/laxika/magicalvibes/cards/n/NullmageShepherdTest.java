@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.e.ElvishSkysweeper;
+import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NullmageShepherd.class, GrizzlyBears.class, LeoninScimitar.class, Pacifism.class})
+@CardUsed({NullmageShepherd.class, ElvishSkysweeper.class, BorosSignet.class, FaithsFetters.class})
 class NullmageShepherdTest extends BaseCardTest {
 
     @Test
@@ -22,12 +22,12 @@ class NullmageShepherdTest extends BaseCardTest {
     void destroysArtifact() {
         Permanent shepherd = addReadyShepherd();
         List<Permanent> creatures = addThreeReadyCreatures();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
 
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Boros Signet");
         assertThat(shepherd.isTapped()).isTrue();
         assertThat(creatures).allMatch(Permanent::isTapped);
     }
@@ -37,15 +37,15 @@ class NullmageShepherdTest extends BaseCardTest {
     void destroysEnchantment() {
         addReadyShepherd();
         addThreeReadyCreatures();
-        Permanent host = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent pacifism = harness.addToBattlefieldAndReturn(player2, new Pacifism());
-        pacifism.setAttachedTo(host.getId());
+        Permanent host = addCreatureReady(player2, new ElvishSkysweeper());
+        Permanent faithsFetters = harness.addToBattlefieldAndReturn(player2, new FaithsFetters());
+        faithsFetters.setAttachedTo(host.getId());
 
-        harness.activateAbility(player1, 0, null, pacifism.getId());
+        harness.activateAbility(player1, 0, null, faithsFetters.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Pacifism");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Faith's Fetters");
+        harness.assertOnBattlefield(player2, "Elvish Skysweeper");
     }
 
     @Test
@@ -53,7 +53,7 @@ class NullmageShepherdTest extends BaseCardTest {
     void cannotTargetCreature() {
         addReadyShepherd();
         addThreeReadyCreatures();
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new ElvishSkysweeper());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -63,25 +63,41 @@ class NullmageShepherdTest extends BaseCardTest {
     @DisplayName("Cannot activate without four untapped creatures")
     void cannotActivateWithoutFourCreatures() {
         addReadyShepherd();
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        addCreatureReady(player1, new ElvishSkysweeper());
+        addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot pay with tapped or opponent creatures")
+    void cannotPayWithTappedOrOpponentCreatures() {
+        Permanent shepherd = addReadyShepherd();
+        addCreatureReady(player1, new ElvishSkysweeper());
+        addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent tappedCreature = addCreatureReady(player1, new ElvishSkysweeper());
+        tappedCreature.tap();
+        addCreatureReady(player2, new ElvishSkysweeper());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shepherd.isTapped()).isFalse();
+        assertThat(tappedCreature.isTapped()).isTrue();
+    }
+
     private Permanent addReadyShepherd() {
-        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new NullmageShepherd());
-        shepherd.setSummoningSick(false);
-        return shepherd;
+        return addCreatureReady(player1, new NullmageShepherd());
     }
 
     private List<Permanent> addThreeReadyCreatures() {
         return List.of(
-                addCreatureReady(player1, new GrizzlyBears()),
-                addCreatureReady(player1, new GrizzlyBears()),
-                addCreatureReady(player1, new GrizzlyBears())
+                addCreatureReady(player1, new ElvishSkysweeper()),
+                addCreatureReady(player1, new ElvishSkysweeper()),
+                addCreatureReady(player1, new ElvishSkysweeper())
         );
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "172")
+@CardRegistration(set = "SOC", collectorNumber = "259")
 public class VolcanicSalvo extends Card {
 
     public VolcanicSalvo() {

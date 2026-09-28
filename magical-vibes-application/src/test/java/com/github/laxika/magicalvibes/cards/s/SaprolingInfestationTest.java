@@ -5,14 +5,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArdentSoldier.class, SaprolingInfestation.class})
 class SaprolingInfestationTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,9 @@ class SaprolingInfestationTest extends BaseCardTest {
         harness.castKickedCreature(player2, 0);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = saprolings(player1);
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getCard().isToken()).isTrue();
         assertThat(tokens.getFirst().getCard().getPower()).isEqualTo(1);
         assertThat(tokens.getFirst().getCard().getToughness()).isEqualTo(1);
         assertThat(tokens.getFirst().getCard().getColor()).isEqualTo(CardColor.GREEN);
@@ -42,12 +44,6 @@ class SaprolingInfestationTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(saprolings(player1)).isEmpty();
-    }
-
-    private List<Permanent> saprolings(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Saproling"))
-                .toList();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
 }

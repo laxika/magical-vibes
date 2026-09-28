@@ -14,7 +14,10 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,6 +43,10 @@ public class TurnSupport {
     private final TurnCleanupService turnCleanupService;
     private final ExileService exileService;
 
+    @Autowired
+    @Lazy
+    private PlayerInputService playerInputService;
+
     public UUID resolveTargetPlayer(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -57,13 +64,14 @@ public class TurnSupport {
         Set<StackEntryType> spellTypes = Set.of(
                 StackEntryType.CREATURE_SPELL, StackEntryType.INSTANT_SPELL,
                 StackEntryType.SORCERY_SPELL, StackEntryType.ENCHANTMENT_SPELL,
-                StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL
+                StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL,
+                StackEntryType.BATTLE_SPELL
         );
 
         for (StackEntry se : remaining) {
-            if (spellTypes.contains(se.getEntryType())) {
-                Card card = se.getCard();
-                exileService.exileCard(gameData, se.getControllerId(), card);
+            if (spellTypes.contains(se.getEntryType()) && !se.isCopy()) {
+                Card card = se.getPhysicalCard();
+                exileService.exileCard(gameData, se.getOwnerId(), card);
                 gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
                 log.info("Game {} - {} exiled from stack (end the turn)", gameData.id, card.getName());
             }
@@ -89,6 +97,22 @@ public class TurnSupport {
         creatureControlService.reconcileControl(gameData);
         gameData.controlLossUnattachTriggers.clear();
         gameData.priorityPassedBy.clear();
+
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            turnCleanupService.applyCleanupResets(gameData);
+            return;
+        }
+        List<Card> hand = gameData.playerHands.get(activePlayerId);
+        int maxHandSize = Math.max(turnCleanupService.getMaxHandSize(gameData, activePlayerId), 0);
+        if (hand != null && hand.size() > maxHandSize
+                && !turnCleanupService.hasNoMaximumHandSize(gameData, activePlayerId)) {
+            gameData.cleanupDiscardPending = true;
+            gameData.discardCausedByOpponent = false;
+            playerInputService.beginDiscardChoice(gameData, activePlayerId, hand.size() - maxHandSize);
+        } else {
+            turnCleanupService.applyCleanupResets(gameData);
+        }
     }
 
     public static String pluralize(String word, int count) {

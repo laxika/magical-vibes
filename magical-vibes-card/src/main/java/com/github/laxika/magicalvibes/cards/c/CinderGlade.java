@@ -17,12 +17,16 @@ import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "4")
 @CardRegistration(set = "EA3", collectorNumber = "21")
+@CardRegistration(set = "MSC", collectorNumber = "230")
+@CardRegistration(set = "MSC", collectorNumber = "465")
 @CardRegistration(set = "ECC", collectorNumber = "146")
 @CardRegistration(set = "TMC", collectorNumber = "61")
 @CardRegistration(set = "PIP", collectorNumber = "257")
 @CardRegistration(set = "PIP", collectorNumber = "490")
 @CardRegistration(set = "PIP", collectorNumber = "785")
 @CardRegistration(set = "PIP", collectorNumber = "1018")
+@CardRegistration(set = "40K", collectorNumber = "269")
+@CardRegistration(set = "TDC", collectorNumber = "350")
 public class CinderGlade extends Card {
 
     public CinderGlade() {

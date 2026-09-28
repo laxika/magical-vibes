@@ -69,7 +69,8 @@ class DoesMachinesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(artifact1.getId(), artifact2.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(artifact1.getId(), artifact2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(artifact1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(artifact2.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(artifact1, artifact2);

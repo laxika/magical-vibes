@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerTo
 @CardRegistration(set = "PIP", collectorNumber = "475")
 @CardRegistration(set = "PIP", collectorNumber = "740")
 @CardRegistration(set = "PIP", collectorNumber = "1003")
+@CardRegistration(set = "SOC", collectorNumber = "297")
+@CardRegistration(set = "C21", collectorNumber = "209")
+@CardRegistration(set = "DSC", collectorNumber = "214")
 public class BiomassMutation extends Card {
 
     public BiomassMutation() {

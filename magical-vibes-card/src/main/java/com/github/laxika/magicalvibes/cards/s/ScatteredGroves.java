@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "PIP", collectorNumber = "505")
 @CardRegistration(set = "PIP", collectorNumber = "814")
 @CardRegistration(set = "PIP", collectorNumber = "1033")
+@CardRegistration(set = "LTC", collectorNumber = "328")
+@CardRegistration(set = "MSC", collectorNumber = "262")
+@CardRegistration(set = "MSC", collectorNumber = "490")
 public class ScatteredGroves extends Card {
 
     public ScatteredGroves() {

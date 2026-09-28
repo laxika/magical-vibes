@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "507")
 @CardRegistration(set = "PIP", collectorNumber = "816")
 @CardRegistration(set = "PIP", collectorNumber = "1035")
+@CardRegistration(set = "DSC", collectorNumber = "296")
 public class ShadowbloodRidge extends Card {
 
     public ShadowbloodRidge() {

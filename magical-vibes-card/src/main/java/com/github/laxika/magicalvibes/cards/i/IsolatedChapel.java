@@ -18,11 +18,14 @@ import java.util.Set;
 @CardRegistration(set = "MD1", collectorNumber = "16")
 @CardRegistration(set = "SLD", collectorNumber = "739")
 @CardRegistration(set = "DMR", collectorNumber = "249")
+@CardRegistration(set = "SOC", collectorNumber = "382")
 @CardRegistration(set = "YEOE", collectorNumber = "36")
 @CardRegistration(set = "PIP", collectorNumber = "269")
 @CardRegistration(set = "PIP", collectorNumber = "500")
 @CardRegistration(set = "PIP", collectorNumber = "797")
 @CardRegistration(set = "PIP", collectorNumber = "1028")
+@CardRegistration(set = "LTC", collectorNumber = "318")
+@CardRegistration(set = "TDC", collectorNumber = "373")
 public class IsolatedChapel extends Card {
 
     public IsolatedChapel() {

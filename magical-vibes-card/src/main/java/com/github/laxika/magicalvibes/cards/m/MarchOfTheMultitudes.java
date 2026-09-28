@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "188")
+@CardRegistration(set = "NCC", collectorNumber = "346")
 public class MarchOfTheMultitudes extends Card {
 
     public MarchOfTheMultitudes() {

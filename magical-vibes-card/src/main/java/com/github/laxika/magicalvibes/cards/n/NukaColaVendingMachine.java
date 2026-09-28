@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "358")
 @CardRegistration(set = "PIP", collectorNumber = "665")
 @CardRegistration(set = "PIP", collectorNumber = "886")
+@CardRegistration(set = "SLD", collectorNumber = "2462")
 public class NukaColaVendingMachine extends Card {
 
     public NukaColaVendingMachine() {
@@ -24,10 +25,10 @@ public class NukaColaVendingMachine extends Card {
                 List.of(CreateTokenEffect.ofFoodToken(1)),
                 "{1}, {T}: Create a Food token."
         ));
-
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                        CreateTokenEffect.ofTappedTreasureToken(1)));
+                        CreateTokenEffect.ofTappedTreasureToken(1)
+                ));
     }
 }

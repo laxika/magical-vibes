@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShatterTheOath.class, GrizzlyBears.class, UnderworldDreams.class})
+@CardUsed({ShatterTheOath.class, Forest.class, GrizzlyBears.class, UnderworldDreams.class})
 class ShatterTheOathTest extends BaseCardTest {
 
     @Test

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1533")
 @CardRegistration(set = "FCA", collectorNumber = "64")
 @CardRegistration(set = "C15", collectorNumber = "56")
+@CardRegistration(set = "TDC", collectorNumber = "352")
 public class CommandBeacon extends Card {
 
     public CommandBeacon() {

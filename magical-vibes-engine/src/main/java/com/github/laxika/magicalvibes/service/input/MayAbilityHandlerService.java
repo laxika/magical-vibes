@@ -103,6 +103,7 @@ public class MayAbilityHandlerService {
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
@@ -130,6 +131,7 @@ public class MayAbilityHandlerService {
                                     BendOrBreakEffectHandler bendOrBreakEffectHandler,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
@@ -153,6 +155,7 @@ public class MayAbilityHandlerService {
         this.bendOrBreakEffectHandler = bendOrBreakEffectHandler;
         this.fightOrFlightSupport = fightOrFlightSupport;
         this.standOrFallSupport = standOrFallSupport;
+        this.makeAnExampleEffectHandler = makeAnExampleEffectHandler;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
@@ -194,7 +197,9 @@ public class MayAbilityHandlerService {
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
+            if (pileSeparation.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
+                makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted);
+            } else if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
                 fightOrFlightSupport.completePileSeparationStep2(gameData, accepted);
             } else if (pileSeparation.disposition() == CardPileDisposition.BLOCKERS) {
                 standOrFallSupport.completePileSeparationStep2(gameData, accepted);
@@ -469,23 +474,24 @@ public class MayAbilityHandlerService {
 
     private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
         // Collect valid permanent targets from all battlefields using the may-ability's target filter
-        List<UUID> validTargets = new ArrayList<>();
+        List<UUID> validPermanents = new ArrayList<>();
+        List<UUID> validPlayers = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
         TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
         boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         if (canTargetPermanent) {
-            validTargets.addAll(mayAbilityPermanentTargets(gameData, ability, targetFilter));
+            validPermanents.addAll(mayAbilityPermanentTargets(gameData, ability, targetFilter));
         }
 
         // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect),
         // honoring the card's player target filter (e.g. "target opponent") so the controller is excluded.
         boolean canTargetPlayer = ability.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         if (canTargetPlayer) {
-            validTargets.addAll(validTargetService.filterValidPlayerTargets(
+            validPlayers.addAll(validTargetService.filterValidPlayerTargets(
                     gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId()));
         }
 
-        if (validTargets.isEmpty()) {
+        if (validPermanents.isEmpty() && validPlayers.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(ability.sourceCard(), "'s ability has no valid targets."));
             log.info("Game {} - {} may ability has no valid targets", gameData.id, ability.sourceCard().getName());
@@ -509,7 +515,7 @@ public class MayAbilityHandlerService {
             targetDescription = "creature";
         }
         UUID choicePlayerId = ability.choicePlayerId() != null ? ability.choicePlayerId() : ability.controllerId();
-        playerInputService.beginPermanentChoice(gameData, choicePlayerId, validTargets,
+        playerInputService.beginAnyTargetChoice(gameData, choicePlayerId, validPermanents, validPlayers,
                 ability.sourceCard().getName() + "'s ability — Choose target " + targetDescription + ".");
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -775,7 +781,9 @@ public class MayAbilityHandlerService {
                     GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
             gameData.resolvedMayAccepted = false;
         }
-        if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+        }
         if (gameData.interaction.isAwaitingInput()) { return; }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "181")
+@CardRegistration(set = "MSC", collectorNumber = "814")
 public class CommuneWithDinosaurs extends Card {
 
     public CommuneWithDinosaurs() {

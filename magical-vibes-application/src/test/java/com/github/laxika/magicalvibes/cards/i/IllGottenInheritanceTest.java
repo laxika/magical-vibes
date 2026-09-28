@@ -63,6 +63,6 @@ class IllGottenInheritanceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessageContaining("Target must be an opponent");
     }
 }

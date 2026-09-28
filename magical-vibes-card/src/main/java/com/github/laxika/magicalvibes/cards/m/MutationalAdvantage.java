@@ -17,15 +17,14 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "422")
 @CardRegistration(set = "PIP", collectorNumber = "639")
 @CardRegistration(set = "PIP", collectorNumber = "950")
+@CardRegistration(set = "SLD", collectorNumber = "2454")
 public class MutationalAdvantage extends Card {
 
     public MutationalAdvantage() {
-        var permanentsWithCounters = new PermanentHasCountersPredicate(CounterType.ANY);
+        PermanentHasCountersPredicate hasCounters = new PermanentHasCountersPredicate(CounterType.ANY);
         addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
-                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS,
-                permanentsWithCounters));
-        addEffect(EffectSlot.SPELL,
-                PreventDamageEffect.allToControlledMatchingPermanents(permanentsWithCounters));
+                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS, hasCounters));
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControlledMatchingPermanents(hasCounters));
         addEffect(EffectSlot.SPELL, new ProliferateEffect());
     }
 }

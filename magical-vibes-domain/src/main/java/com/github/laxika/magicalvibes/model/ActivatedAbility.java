@@ -145,6 +145,8 @@ public class ActivatedAbility {
     private boolean requiresXValue;
     /** Minimum value that may be announced for this ability's {@code X} cost. */
     private int minimumXValue;
+    /** Counter type whose current count fixes the announced X for this ability. */
+    private CounterType requiredXSourceCounterType;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
     /** Whether each modal option may be selected only once per permanent object. */
@@ -349,6 +351,7 @@ public class ActivatedAbility {
         copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
         copy.minimumXValue = this.minimumXValue;
+        copy.requiredXSourceCounterType = this.requiredXSourceCounterType;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.modalModesMustBeUnused = this.modalModesMustBeUnused;
         copy.sparkAbility = this.sparkAbility;
@@ -373,6 +376,11 @@ public class ActivatedAbility {
             throw new IllegalArgumentException("Minimum X value cannot be negative");
         }
         this.minimumXValue = minimumXValue;
+        return this;
+    }
+
+    public ActivatedAbility withXEqualToSourceCounters(CounterType counterType) {
+        this.requiredXSourceCounterType = counterType;
         return this;
     }
 

@@ -22,6 +22,7 @@ import java.util.Set;
  * <p>Scope note: this covers the printed, statically-known protection shapes
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
+ * {@code ProtectionFromManaValueAtMostEffect},
  * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
  * {@code ProtectionFromEnemyColoredMulticoloredEffect},
  * {@code ProtectionFromAllOtherManaValuesEffect}).
@@ -106,6 +107,14 @@ public interface ProtectionGrantingEffect extends CardEffect {
         return OptionalInt.empty();
     }
 
+    /**
+     * The inclusive upper bound of protected source mana values, when this effect grants
+     * "protection from mana value N or less".
+     */
+    default OptionalInt protectionFromManaValueAtMost() {
+        return OptionalInt.empty();
+    }
+
     /** Whether this effect protects from source mana values matching the source permanent's chosen odd/even quality. */
     default boolean protectionFromManaValueParity() {
         return false;
@@ -127,6 +136,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
      * from all sources, which is the shared gate for damage, combat, targeting and enchant/equip.
      */
     default boolean protectsFromEverything() {
+        return false;
+    }
+
+    /** Whether this effect protects from permanents currently designated as Ring-bearers. */
+    default boolean protectionFromRingBearers() {
         return false;
     }
 }

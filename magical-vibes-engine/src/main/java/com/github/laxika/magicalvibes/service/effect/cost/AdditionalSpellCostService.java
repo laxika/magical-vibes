@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsTo
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -188,6 +189,59 @@ public class AdditionalSpellCostService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    /** Returns the spell's optional counter-removal cost reduction, if it has one. */
+    public RemoveCountersForCostReductionEffect findRemoveCountersForCostReductionEffect(Card card) {
+        if (card == null) {
+            return null;
+        }
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(RemoveCountersForCostReductionEffect.class::isInstance)
+                .map(RemoveCountersForCostReductionEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** Maximum generic reduction available from the counters on the caster's creatures. */
+    public int maximumRemoveCountersForCostReduction(GameData gameData, UUID playerId, Card card) {
+        RemoveCountersForCostReductionEffect effect = findRemoveCountersForCostReductionEffect(card);
+        if (effect == null) {
+            return 0;
+        }
+        int counterCount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .mapToInt(permanent -> counterCount(permanent, effect.counterType()))
+                .sum();
+        return counterCount * effect.reductionPerCounter();
+    }
+
+    /** Validates the selected creatures for an optional counter-removal cost reduction. */
+    public void validateRemoveCountersForCostReduction(
+            GameData gameData, Player player, Card card,
+            RemoveCountersForCostReductionEffect effect, List<UUID> permanentIds) {
+        if (effect == null) {
+            return;
+        }
+        Map<UUID, Integer> selectedCounts = new HashMap<>();
+        for (UUID permanentId : permanentIds == null ? List.<UUID>of() : permanentIds) {
+            if (permanentId == null) {
+                throw new IllegalStateException("Invalid creature selected for the counter cost");
+            }
+            selectedCounts.merge(permanentId, 1, Integer::sum);
+        }
+        for (var selected : selectedCounts.entrySet()) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, selected.getKey());
+            if (permanent == null
+                    || !player.getId().equals(gameQueryService.findPermanentController(gameData, selected.getKey()))
+                    || !gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Counters must be removed from creatures you control");
+            }
+            if (counterCount(permanent, effect.counterType()) < selected.getValue()) {
+                throw new IllegalStateException("Creature does not have enough counters to reduce "
+                        + card.getName() + "'s cost");
+            }
+        }
+    }
 
     /**
      * The additional cast costs found on one spell, in canonical payment order. Extracted once
@@ -556,9 +610,13 @@ public class AdditionalSpellCostService {
         if (hasCreatureSpellAdditionalCountersCost(gameData, playerId, card)) {
             effects.add(new RepeatableAdditionalManaCost(List.of("{1}")));
         }
-        if (card.getManaCost() != null
-                && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.REPLICATE)) {
-            effects.add(new RepeatableAdditionalManaCost(List.of(card.getManaCost())));
+        if (card.getManaCost() != null) {
+            gameQueryService.getSpellCastingAbilityGrantValues(gameData, playerId, card, Keyword.REPLICATE)
+                    .stream()
+                    .map(value -> value > 0 ? "{" + value + "}" : card.getManaCost())
+                    .distinct()
+                    .forEach(replicateCost ->
+                            effects.add(new RepeatableAdditionalManaCost(List.of(replicateCost))));
         }
         addPayLifeToReduceColoredCastCost(gameData, playerId, card, effects);
         return extractAndRemove(effects);
@@ -3017,6 +3075,10 @@ public class AdditionalSpellCostService {
             GameData gameData, Player player, Card card, ExileAnyNumberOfCardsFromGraveyardCost cost,
             List<Integer> exileGraveyardCardIndices) {
         List<Integer> indices = exileGraveyardCardIndices != null ? exileGraveyardCardIndices : List.of();
+        if (indices.size() > cost.maxCards()) {
+            throw new IllegalStateException("Cannot exile more than " + cost.maxCards()
+                    + " card(s) for the additional cost of " + card.getName());
+        }
         if (indices.stream().distinct().count() != indices.size()) {
             throw new IllegalStateException("Duplicate graveyard exile indices for " + card.getName());
         }

@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +22,10 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new CollectiveUnconscious()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
@@ -35,8 +39,10 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new CollectiveUnconscious()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -47,11 +53,29 @@ class CollectiveUnconsciousTest extends BaseCardTest {
     void drawsNoCardsWithoutCreatures() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new CollectiveUnconscious()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Does not count noncreature permanents")
+    void doesNotCountNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.setHand(player1, List.of(new CollectiveUnconscious()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
 
     @Test

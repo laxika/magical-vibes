@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "TOR", collectorNumber = "142")
 @CardRegistration(set = "PIP", collectorNumber = "300")
 @CardRegistration(set = "PIP", collectorNumber = "828")
+@CardRegistration(set = "DSC", collectorNumber = "304")
 public class TaintedPeak extends Card {
 
     public TaintedPeak() {

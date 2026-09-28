@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 @CardRegistration(set = "DIS", collectorNumber = "73")
 @CardRegistration(set = "RVR", collectorNumber = "126")
 @CardRegistration(set = "C13", collectorNumber = "121")
+@CardRegistration(set = "NCC", collectorNumber = "276")
 public class StalkingVengeance extends Card {
 
     public StalkingVengeance() {

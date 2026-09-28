@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
@@ -169,6 +171,22 @@ public final class TextChangeTransformer {
             }
         }
         return result;
+    }
+
+    /** Rewrites color words in a spell's permanent target restriction. */
+    public static TargetFilter transformTargetFilter(TargetFilter filter, List<TextReplacement> replacements) {
+        if (!(filter instanceof PermanentPredicateTargetFilter permanentFilter)) {
+            return filter;
+        }
+        PermanentPredicate predicate = permanentFilter.predicate();
+        for (TextReplacement replacement : replacements) {
+            Substitution substitution = resolve(replacement);
+            if (substitution != null) {
+                predicate = apply(predicate, substitution);
+            }
+        }
+        return predicate == permanentFilter.predicate() ? filter
+                : new PermanentPredicateTargetFilter(predicate, permanentFilter.errorMessage());
     }
 
     public static Set<Keyword> transformKeywords(Set<Keyword> keywords, List<TextReplacement> replacements) {

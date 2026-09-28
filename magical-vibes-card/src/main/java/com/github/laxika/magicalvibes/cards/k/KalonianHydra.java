@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnContro
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "181")
+@CardRegistration(set = "MOC", collectorNumber = "305")
 public class KalonianHydra extends Card {
 
     public KalonianHydra() {

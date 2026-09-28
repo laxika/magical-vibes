@@ -79,6 +79,7 @@ class PirImaginativeRascalTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new TimberlandGuide()));
         harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0, List.of(opponentBears.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();

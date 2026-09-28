@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OPC2", collectorNumber = "29")
 @CardRegistration(set = "OPCA", collectorNumber = "59")
+@CardRegistration(set = "MOC", collectorNumber = "152")
 public class OrochiColony extends Card {
 
     public OrochiColony() {

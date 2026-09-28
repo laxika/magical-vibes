@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiveNoGround;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CursedRonin.class, HumbleBudoka.class, GiveNoGround.class})
 class CursedRoninTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cursed Ronin gets +1/+1 until end of turn when it becomes blocked")
     void becomesBlockedGetsBushidoBonus() {
-        Permanent ronin = addReadyRonin(player1);
+        Permanent ronin = addCreatureReady(player1, new CursedRonin());
         ronin.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new HumbleBudoka());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -34,9 +36,9 @@ class CursedRoninTest extends BaseCardTest {
     @Test
     @DisplayName("Cursed Ronin gets +1/+1 until end of turn when it blocks")
     void blocksGetsBushidoBonus() {
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new HumbleBudoka());
         attacker.setAttacking(true);
-        Permanent ronin = addReadyRonin(player2);
+        Permanent ronin = addCreatureReady(player2, new CursedRonin());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -44,6 +46,29 @@ class CursedRoninTest extends BaseCardTest {
 
         assertThat(ronin.getPowerModifier()).isEqualTo(1);
         assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cursed Ronin gets only one Bushido bonus when it blocks multiple creatures")
+    void blocksMultipleCreaturesGetsOneBushidoBonus() {
+        Permanent ronin = addCreatureReady(player2, new CursedRonin());
+        addCreatureReady(player1, new CursedRonin());
+        addCreatureReady(player1, new CursedRonin());
+
+        harness.setHand(player2, List.of(new GiveNoGround()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, ronin.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(8);
     }
 
     @Test
@@ -79,19 +104,5 @@ class CursedRoninTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(1);
-    }
-
-    private Permanent addReadyRonin(Player player) {
-        Permanent permanent = new Permanent(new CursedRonin());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

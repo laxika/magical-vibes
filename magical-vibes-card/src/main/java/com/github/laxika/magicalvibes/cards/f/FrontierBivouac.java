@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "KTK", collectorNumber = "234")
 @CardRegistration(set = "TDM", collectorNumber = "256")
 @CardRegistration(set = "ECC", collectorNumber = "150")
+@CardRegistration(set = "40K", collectorNumber = "281")
 public class FrontierBivouac extends Card {
 
     public FrontierBivouac() {

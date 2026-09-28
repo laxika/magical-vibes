@@ -119,6 +119,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast instant/sorcery spells or spells with one of the given subtypes. */
+    record InstantSorceryOrSubtypes(Set<CardSubtype> subtypes) implements ManaRestriction {
+        public InstantSorceryOrSubtypes {
+            subtypes = Set.copyOf(subtypes);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addInstantSorceryOrSubtypeSpellOnlyMana(subtypes, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "instant, sorcery, or " + subtypes + " spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells from outside the controller's hand. */
     record NonHandSpells() implements ManaRestriction {
         @Override
@@ -280,6 +297,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "abilities only";
+        }
+    }
+
+    /** Mana spendable only to activate Power-up abilities (Quinjet Technician). */
+    record PowerUpAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerUpAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "Power-up abilities only";
         }
     }
 

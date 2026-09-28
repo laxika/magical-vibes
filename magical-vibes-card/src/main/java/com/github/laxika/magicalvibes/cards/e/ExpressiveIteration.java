@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandBottomExile
 @CardRegistration(set = "SLD", collectorNumber = "2305")
 @CardRegistration(set = "SPG", collectorNumber = "43")
 @CardRegistration(set = "SOA", collectorNumber = "64")
+@CardRegistration(set = "SOC", collectorNumber = "309")
+@CardRegistration(set = "MSC", collectorNumber = "183")
+@CardRegistration(set = "TDC", collectorNumber = "288")
 public class ExpressiveIteration extends Card {
 
     public ExpressiveIteration() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "TLE", collectorNumber = "37")
+@CardRegistration(set = "SOC", collectorNumber = "260")
 public class VolcanicTorrent extends Card {
 
     public VolcanicTorrent() {

@@ -118,6 +118,34 @@ class TheBruteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Brute's regeneration ability requires red mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TheBrute());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(bears.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Brute's regeneration ability does nothing when it is unattached")
+    void abilityDoesNothingWhenNotAttached() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TheBrute());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with The Brute")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());

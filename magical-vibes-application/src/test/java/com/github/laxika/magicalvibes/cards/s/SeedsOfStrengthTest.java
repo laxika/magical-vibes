@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeedsOfStrength.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({SeedsOfStrength.class, BorosRecruit.class, Mountain.class})
 class SeedsOfStrengthTest extends BaseCardTest {
 
     @Test
@@ -27,12 +27,23 @@ class SeedsOfStrengthTest extends BaseCardTest {
 
         castSeedsOfStrength(List.of(first.getId(), second.getId(), third.getId()));
 
-        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, third)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, third)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, third)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, third)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature")
+    void boostsOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+
+        castSeedsOfStrength(List.of(creature.getId(), creature.getId(), creature.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -42,8 +53,8 @@ class SeedsOfStrengthTest extends BaseCardTest {
 
         castSeedsOfStrength(List.of(creature.getId(), creature.getId(), creature.getId()));
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -82,19 +93,18 @@ class SeedsOfStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     private Permanent addCreature() {
-        return harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        return harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
     }
 
     private void castSeedsOfStrength(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new SeedsOfStrength()));
         addMana();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void addMana() {

@@ -18,6 +18,7 @@ public class ScorchingLava extends Card {
                 new Kicked(),
                 new DealDamageToAnyTargetEffect(new Fixed(2)),
                 new DealDamageToAnyTargetEffect(new Fixed(2), true, true)
+                        .withUnconditionalRegenerationPrevention()
         ));
     }
 }

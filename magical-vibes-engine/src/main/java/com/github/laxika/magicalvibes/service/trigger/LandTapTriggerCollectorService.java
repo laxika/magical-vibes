@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -57,6 +58,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -86,6 +89,7 @@ public class LandTapTriggerCollectorService {
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
     private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
@@ -99,9 +103,7 @@ public class LandTapTriggerCollectorService {
                 || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
             return false;
         }
-        if (!handleAddOneOfEachManaType(match, mana, ctx)) {
-            return false;
-        }
+        handleAddOneOfEachManaType(match, mana, ctx);
 
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
         StackEntry entry = createLandTapDamageEntry(
@@ -113,6 +115,21 @@ public class LandTapTriggerCollectorService {
                 match.gameData(), entry, new DealDamageToPlayersEffect(
                         damage.damage(), DamageRecipient.TARGET_PLAYER));
         return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleConditionalManaAbilitySequence(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (match.permanent() == null
+                || (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())))) {
+            return false;
+        }
+        if (!(conditional.wrapped() instanceof SequenceEffect sequence)) {
+            return false;
+        }
+        return handleManaAbilitySequence(match, sequence, ctx);
     }
 
     @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
@@ -417,7 +434,7 @@ public class LandTapTriggerCollectorService {
         if (trigger.monarchOnly() && !match.controllerId().equals(match.gameData().monarchPlayerId)) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        if (tappedLand == null) return false;
+        if (tappedLand == null && (trigger.landFilter() != null || trigger.matchesImprintedCardName())) return false;
         if (trigger.landFilter() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(
                         match.gameData(), tappedLand, trigger.landFilter())) return false;
@@ -443,7 +460,7 @@ public class LandTapTriggerCollectorService {
         }
 
         Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
-        if (producedColors.isEmpty()) {
+        if (producedColors.isEmpty() && tappedLand != null) {
             tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
                     .filter(AwardManaEffect.class::isInstance)
                     .map(AwardManaEffect.class::cast)
@@ -470,7 +487,7 @@ public class LandTapTriggerCollectorService {
             return true;
         }
 
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional mana of a type produced by the land."));
         return true;
@@ -496,11 +513,27 @@ public class LandTapTriggerCollectorService {
                 .count();
         if (matchingLandCount == 0) return false;
 
-        Set<ManaColor> producedColors = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
+        if (lt.producedColors().isEmpty()
+                && gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            List<CardEffect> deferredMana = new ArrayList<>();
+            for (long i = 0; i < matchingLandCount; i++) {
+                deferredMana.add(new AddManaOfTypeProducedByTappedPermanentEffect());
+            }
+            StackEntry deferred = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(), lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    deferredMana, null, match.permanent().getId());
+            deferred.setNonTargeting(true);
+            gameData.pendingManaAbilityTriggers.add(deferred);
+            return true;
+        }
+
+        Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
+        tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
                 .filter(AwardManaEffect.class::isInstance)
                 .map(AwardManaEffect.class::cast)
                 .map(AwardManaEffect::color)
-                .collect(Collectors.toSet());
+                .forEach(producedColors::add);
         if (producedColors.isEmpty()) return false;
 
         ManaPool pool = gameData.playerManaPools.get(lt.tappingPlayerId());

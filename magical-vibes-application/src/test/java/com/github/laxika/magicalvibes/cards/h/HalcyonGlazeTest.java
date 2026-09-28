@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,11 +11,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HalcyonGlaze.class, GrizzlyBears.class, Shock.class})
+@CardUsed({HalcyonGlaze.class, CourierHawk.class, BorosSignet.class})
 class HalcyonGlazeTest extends BaseCardTest {
 
     @Test
@@ -41,10 +38,23 @@ class HalcyonGlazeTest extends BaseCardTest {
     @DisplayName("Does not animate when you cast a noncreature spell")
     void doesNotAnimateForNoncreatureSpell() {
         Permanent glaze = addGlaze();
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, new BorosSignet(), "{2}");
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, glaze)).isFalse();
+        assertThat(gqs.isEnchantment(gd, glaze)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not animate when an opponent casts a creature spell")
+    void doesNotAnimateForOpponentCreatureSpell() {
+        Permanent glaze = addGlaze();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new CourierHawk(), "{1}{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, glaze)).isFalse();
@@ -75,9 +85,7 @@ class HalcyonGlazeTest extends BaseCardTest {
     }
 
     private void castCreatureSpell() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CourierHawk(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

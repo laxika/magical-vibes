@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.cards.r.RoofstalkerWight;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,19 +19,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CircuDimirLobotomist.class, DarkRitual.class, Divination.class, GrizzlyBears.class})
+@CardUsed({CircuDimirLobotomist.class, DimirInfiltrator.class, ElvesOfDeepShadow.class,
+        Lignify.class, RoofstalkerWight.class, SnappingDrake.class})
 class CircuDimirLobotomistTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a blue spell exiles the top card of the chosen player's library with Circu")
     void blueSpellExilesTopCardWithCircu() {
         Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
-        GrizzlyBears topCard = new GrizzlyBears();
+        RoofstalkerWight topCard = new RoofstalkerWight();
         harness.setLibrary(player2, List.of(topCard));
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castCreature(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -42,12 +45,12 @@ class CircuDimirLobotomistTest extends BaseCardTest {
     @DisplayName("Casting a black spell exiles the top card of the chosen player's library with Circu")
     void blackSpellExilesTopCardWithCircu() {
         Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
-        GrizzlyBears topCard = new GrizzlyBears();
+        SnappingDrake topCard = new SnappingDrake();
         harness.setLibrary(player2, List.of(topCard));
-        harness.setHand(player1, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new RoofstalkerWight()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0);
+        harness.castCreature(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -56,15 +59,41 @@ class CircuDimirLobotomistTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting a blue and black spell triggers both of Circu's abilities")
+    void blueAndBlackSpellTriggersBothAbilities() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        SnappingDrake controllerTopCard = new SnappingDrake();
+        RoofstalkerWight opponentTopCard = new RoofstalkerWight();
+        harness.setLibrary(player1, List.of(controllerTopCard));
+        harness.setLibrary(player2, List.of(opponentTopCard));
+        harness.setHand(player1, List.of(new DimirInfiltrator()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(circu.getId()))
+                .containsExactlyInAnyOrder(controllerTopCard, opponentTopCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Opponents cannot cast a spell with the name of a card exiled with Circu")
     void opponentCannotCastSpellWithExiledName() {
         Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
-        GrizzlyBears exiledCard = new GrizzlyBears();
+        ElvesOfDeepShadow exiledCard = new ElvesOfDeepShadow();
         harness.setLibrary(player2, List.of(exiledCard));
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -74,11 +103,70 @@ class CircuDimirLobotomistTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new ElvesOfDeepShadow()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Circu's controller can cast a spell with the name of a card exiled with Circu")
+    void controllerCanCastSpellWithExiledName() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        ElvesOfDeepShadow exiledCard = new ElvesOfDeepShadow();
+        harness.setLibrary(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).containsExactly(exiledCard);
+
+        harness.setHand(player1, List.of(new ElvesOfDeepShadow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elves of Deep Shadow");
+    }
+
+    @Test
+    @DisplayName("Circu's restriction ends when Circu loses all abilities")
+    void restrictionEndsWhenCircuLosesAllAbilities() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        ElvesOfDeepShadow exiledCard = new ElvesOfDeepShadow();
+        harness.setLibrary(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).containsExactly(exiledCard);
+
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, circu.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasLostAllAbilities(gd, circu)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ElvesOfDeepShadow()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elves of Deep Shadow");
     }
 }

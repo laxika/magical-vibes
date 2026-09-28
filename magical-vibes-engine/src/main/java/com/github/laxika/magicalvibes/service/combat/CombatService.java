@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
@@ -177,8 +176,10 @@ public class CombatService {
      * Resets all combat-related state on permanents and game data.
      */
     public void clearCombatState(GameData gameData) {
-        gameData.forEachBattlefield((playerId, battlefield) ->
-                battlefield.forEach(Permanent::clearCombatState));
+        gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(permanent -> {
+            permanent.rollOverCombatAttackRecord();
+            permanent.clearCombatState();
+        }));
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
@@ -191,9 +192,9 @@ public class CombatService {
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
-        // Melee's two combat-scoped delayed abilities ("this combat") expire here.
-        gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
-        gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
+        // Keep Master Warcraft's declaration control through additional combats this turn.
+        gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class,
+                control -> !control.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedCamouflage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }

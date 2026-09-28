@@ -16,12 +16,12 @@ class ViridescentBogTest extends BaseCardTest {
     @Test
     @DisplayName("Paying one and tapping Viridescent Bog adds black and green mana")
     void addsBlackAndGreenMana() {
-        Permanent land = addReadyLand();
+        Permanent bog = addReadyBog();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(land.isTapped()).isTrue();
+        assertThat(bog.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -31,7 +31,7 @@ class ViridescentBogTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Viridescent Bog without paying one")
     void cannotActivateWithoutMana() {
-        addReadyLand();
+        addReadyBog();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -40,7 +40,7 @@ class ViridescentBogTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Viridescent Bog while tapped")
     void cannotActivateWhileTapped() {
-        addReadyLand();
+        addReadyBog();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -50,10 +50,10 @@ class ViridescentBogTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    private Permanent addReadyLand() {
-        Permanent land = new Permanent(new ViridescentBog());
-        land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
-        return land;
+    private Permanent addReadyBog() {
+        Permanent bog = new Permanent(new ViridescentBog());
+        bog.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bog);
+        return bog;
     }
 }

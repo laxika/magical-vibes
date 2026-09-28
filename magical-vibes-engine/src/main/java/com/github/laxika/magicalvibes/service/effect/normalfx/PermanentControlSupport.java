@@ -139,6 +139,9 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
                         gameData, controllerId, token, totalAmount)
                 : 0;
+        int additionalFoodTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalFoodTokenCount(gameData, controllerId, totalAmount)
+                : 0;
         List<CreateTokenEffect> academyManufactorTokenBlueprints = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
                         gameData, controllerId, token, totalAmount)
@@ -162,7 +165,8 @@ public class PermanentControlSupport {
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
                 (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
                         + additionalMapTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
-                        + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalSoldierTokenCount);
+                        + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalFoodTokenCount
+                        + additionalSoldierTokenCount);
         if (academyManufactorTokenBlueprints.isEmpty()) {
             for (int i = 0; i < totalAmount; i++) {
                 tokenBlueprints.add(evaluatedToken);
@@ -175,6 +179,12 @@ public class PermanentControlSupport {
                 : null;
         for (int i = 0; i < additionalTreasureTokenCount; i++) {
             tokenBlueprints.add(additionalTreasureToken);
+        }
+        CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalFoodToken(token)
+                : null;
+        for (int i = 0; i < additionalFoodTokenCount; i++) {
+            tokenBlueprints.add(additionalFoodToken);
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));

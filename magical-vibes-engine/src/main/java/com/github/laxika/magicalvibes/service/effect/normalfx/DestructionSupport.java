@@ -539,18 +539,23 @@ public class DestructionSupport {
     }
 
     /**
-     * Removes one counter from {@code permanent}, taking the first kind present when it carries
-     * several. Returns false when the permanent has no counters left to remove.
+     * Removes one counter from {@code permanent}, asking the player to choose its kind when
+     * several kinds are present. Returns false when the permanent has no counters left to remove.
      */
     public boolean removeOneCounterAndLog(GameData gameData, Permanent permanent, UUID playerId) {
-        CounterType kind = permanent.getCounters().entrySet().stream()
+        List<CounterType> kinds = permanent.getCounters().entrySet().stream()
                 .filter(e -> e.getValue() > 0)
                 .map(java.util.Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
-        if (kind == null) {
+                .toList();
+        if (kinds.isEmpty()) {
             return false;
         }
+        if (kinds.size() > 1) {
+            playerInputService.beginRemoveOneCounterChoice(gameData, playerId, permanent.getId(),
+                    permanent.getCard().getName(), kinds);
+            return true;
+        }
+        CounterType kind = kinds.getFirst();
         permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
         if (kind == CounterType.OIL) {
             gameData.recordOilCounterRemoved(permanent, 1);
@@ -986,6 +991,11 @@ public class DestructionSupport {
                         gameData, controllerId, token)
                 : null;
         int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
+        int additionalFoodTokenCount = TokenCreationReplacementSupport.additionalFoodTokenCount(
+                gameData, controllerId, totalAmount);
+        CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalFoodToken(token)
+                : null;
         List<CreateTokenEffect> academyManufactorTokenBlueprints =
                 TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
                         gameData, controllerId, token, totalAmount);
@@ -1007,6 +1017,9 @@ public class DestructionSupport {
         }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);
+        }
+        for (int i = 0; i < additionalFoodTokenCount; i++) {
+            tokenBlueprints.add(additionalFoodToken);
         }
         for (CreateTokenEffect tokenToCreate : tokenBlueprints) {
             int tokenPower = tokenToCreate.tokenPower();

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "GN3", collectorNumber = "85")
 @CardRegistration(set = "2XM", collectorNumber = "140")
 @CardRegistration(set = "CMM", collectorNumber = "248")
+@CardRegistration(set = "TDC", collectorNumber = "229")
 public class RapaciousDragon extends Card {
 
     public RapaciousDragon() {

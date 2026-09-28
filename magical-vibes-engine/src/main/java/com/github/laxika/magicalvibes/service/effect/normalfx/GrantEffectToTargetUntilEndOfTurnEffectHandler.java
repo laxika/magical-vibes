@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,12 +32,24 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetUntilEndOfTurnEffect) effect;
 
-        // Multi-target: grant the ability to each valid target (any number of target creatures).
+        List<UUID> boundTargets = entry.targetsForBoundEffectGroup(e);
+        if (boundTargets != null) {
+            for (UUID targetId : boundTargets) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue; // Partially resolves — skip removed targets
+                }
+                grantTo(gameData, entry, e, target);
+            }
+            return;
+        }
+
+        // Unbound multi-target effects grant the ability to each valid target.
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
-                    continue; // Partially resolves — skip removed targets
+                    continue;
                 }
                 grantTo(gameData, entry, e, target);
             }

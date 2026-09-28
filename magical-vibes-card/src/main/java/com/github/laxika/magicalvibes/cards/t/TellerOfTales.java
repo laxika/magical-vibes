@@ -18,6 +18,7 @@ public class TellerOfTales extends Card {
 
     public TellerOfTales() {
         // Whenever you cast a Spirit or Arcane spell, you may tap or untap target creature.
+        target(TargetFilters.creature());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardAnyOfPredicate(List.of(

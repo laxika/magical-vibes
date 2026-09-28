@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "68")
 @CardRegistration(set = "LRW", collectorNumber = "79")
 @CardRegistration(set = "M12", collectorNumber = "73")
+@CardRegistration(set = "DSC", collectorNumber = "73")
 @CardRegistration(set = "SLD", collectorNumber = "245")
 @CardRegistration(set = "SLD", collectorNumber = "1783")
 @CardRegistration(set = "SLD", collectorNumber = "2292")
@@ -18,6 +19,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "TSR", collectorNumber = "315")
 @CardRegistration(set = "MAR", collectorNumber = "13")
 @CardRegistration(set = "OMB", collectorNumber = "13")
+@CardRegistration(set = "C21", collectorNumber = "125")
+@CardRegistration(set = "NCC", collectorNumber = "229")
+@CardRegistration(set = "TDC", collectorNumber = "159")
 public class Ponder extends Card {
 
     public Ponder() {

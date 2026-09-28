@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "245")
+@CardRegistration(set = "TDC", collectorNumber = "309")
 public class VelomachusLorehold extends Card {
 
     public VelomachusLorehold() {

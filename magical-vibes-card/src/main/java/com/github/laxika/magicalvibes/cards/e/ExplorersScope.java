@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "CMM", collectorNumber = "380")
 @CardRegistration(set = "PIP", collectorNumber = "231")
 @CardRegistration(set = "PIP", collectorNumber = "759")
+@CardRegistration(set = "FIC", collectorNumber = "344")
 public class ExplorersScope extends Card {
 
     public ExplorersScope() {

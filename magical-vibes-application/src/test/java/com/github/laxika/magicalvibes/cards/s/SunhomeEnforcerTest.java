@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SunhomeEnforcer.class, GrizzlyBears.class})
+@CardUsed({SunhomeEnforcer.class, GrayscaledGharial.class})
 class SunhomeEnforcerTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,8 @@ class SunhomeEnforcerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        resolveCombatAndTrigger();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -32,14 +33,13 @@ class SunhomeEnforcerTest extends BaseCardTest {
     @DisplayName("Combat damage to a creature gains that much life")
     void combatDamageToCreatureGainsLife() {
         addAttacker(player1);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrayscaledGharial());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         harness.setLife(player1, 20);
 
-        resolveCombatAndTrigger();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
@@ -56,6 +56,7 @@ class SunhomeEnforcerTest extends BaseCardTest {
 
         assertThat(enforcer.getPowerModifier()).isEqualTo(1);
         assertThat(enforcer.getToughnessModifier()).isEqualTo(0);
+        assertThat(enforcer.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -71,17 +72,6 @@ class SunhomeEnforcerTest extends BaseCardTest {
     }
 
     private Permanent addReadyEnforcer(Player player) {
-        Permanent enforcer = new Permanent(new SunhomeEnforcer());
-        enforcer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(enforcer);
-        return enforcer;
-    }
-
-    private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        return addCreatureReady(player, new SunhomeEnforcer());
     }
 }

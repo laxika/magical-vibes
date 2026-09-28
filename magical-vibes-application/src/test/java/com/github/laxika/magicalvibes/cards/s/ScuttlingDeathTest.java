@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
+import com.github.laxika.magicalvibes.cards.m.MossKami;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScuttlingDeath.class, GrizzlyBears.class, LanternKami.class,
+        KamiOfOldStone.class, MossKami.class})
 class ScuttlingDeathTest extends BaseCardTest {
 
     @Test
@@ -70,6 +75,51 @@ class ScuttlingDeathTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(spirit.getId()));
+    }
+
+    @Test
+    @DisplayName("Soulshift may be declined")
+    void soulshiftCanBeDeclined() {
+        harness.addToBattlefield(player1, new ScuttlingDeath());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card spirit = new LanternKami();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(spirit)));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(spirit.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c.getId().equals(spirit.getId()));
+    }
+
+    @Test
+    @DisplayName("Soulshift only offers Spirits with mana value 4 or less from your graveyard")
+    void soulshiftFiltersByTypeManaValueAndGraveyardOwner() {
+        harness.addToBattlefield(player1, new ScuttlingDeath());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card cheapSpirit = new LanternKami();
+        Card boundarySpirit = new KamiOfOldStone();
+        Card nonSpirit = new GrizzlyBears();
+        Card expensiveSpirit = new MossKami();
+        Card opponentSpirit = new LanternKami();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                cheapSpirit, boundarySpirit, nonSpirit, expensiveSpirit)));
+        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentSpirit)));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                cheapSpirit.getId(), boundarySpirit.getId());
+        assertThat(choice.validCardIds()).doesNotContain(
+                nonSpirit.getId(), expensiveSpirit.getId(), opponentSpirit.getId());
     }
 
     @Test

@@ -5,11 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,10 +20,7 @@ class HibernationTest extends BaseCardTest {
     void returnsAllGreenPermanents() {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
-        harness.setHand(player1, List.of(new Hibernation()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHibernation();
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -53,10 +48,7 @@ class HibernationTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent wildGrowth = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         wildGrowth.setAttachedTo(forest.getId());
-        harness.setHand(player1, List.of(new Hibernation()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHibernation();
 
         harness.assertInHand(player1, "Wild Growth");
         harness.assertNotOnBattlefield(player1, "Wild Growth");
@@ -67,10 +59,7 @@ class HibernationTest extends BaseCardTest {
     @DisplayName("Does not return nongreen permanents")
     void doesNotReturnNongreenPermanents() {
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.setHand(player1, List.of(new Hibernation()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHibernation();
 
         harness.assertOnBattlefield(player1, "Raging Goblin");
         harness.assertNotInHand(player1, "Raging Goblin");
@@ -90,10 +79,7 @@ class HibernationTest extends BaseCardTest {
     @DisplayName("Resolves with no green permanents in play")
     void resolvesWithNoGreenPermanents() {
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.setHand(player1, List.of(new Hibernation()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castAndResolveInstant(player1, 0);
+        castHibernation();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Raging Goblin");

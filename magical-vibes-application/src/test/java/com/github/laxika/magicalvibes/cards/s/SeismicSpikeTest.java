@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeismicSpike.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({SeismicSpike.class, Mountain.class, BorosRecruit.class})
 class SeismicSpikeTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class SeismicSpikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -42,8 +41,7 @@ class SeismicSpikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
@@ -52,11 +50,11 @@ class SeismicSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BorosRecruit());
         harness.setHand(player1, List.of(new SeismicSpike()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Boros Recruit");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }

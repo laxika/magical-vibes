@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SacredFoundry.class)
 class SacredFoundryTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class SacredFoundryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Sacred Foundry enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playSacredFoundry(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findSacredFoundry(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Sacred Foundry produces red mana")
     void producesRedMana() {
         Permanent foundry = addSacredFoundryReady(player1);
@@ -78,9 +92,8 @@ class SacredFoundryTest extends BaseCardTest {
     }
 
     private Permanent addSacredFoundryReady(Player player) {
-        Permanent foundry = new Permanent(new SacredFoundry());
+        Permanent foundry = harness.addToBattlefieldAndReturn(player, new SacredFoundry());
         foundry.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(foundry);
         return foundry;
     }
 

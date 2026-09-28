@@ -12,10 +12,11 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "444")
 @CardRegistration(set = "PIP", collectorNumber = "680")
 @CardRegistration(set = "PIP", collectorNumber = "972")
+@CardRegistration(set = "SOC", collectorNumber = "392")
+@CardRegistration(set = "DSC", collectorNumber = "293")
 public class OverflowingBasin extends Card {
 
     public OverflowingBasin() {
-        // {1}, {T}: Add {G}{U}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

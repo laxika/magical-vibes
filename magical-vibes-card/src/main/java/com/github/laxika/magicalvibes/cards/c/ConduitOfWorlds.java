@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "163")
+@CardRegistration(set = "MSC", collectorNumber = "171")
+@CardRegistration(set = "MSC", collectorNumber = "378")
+@CardRegistration(set = "TDC", collectorNumber = "251")
 public class ConduitOfWorlds extends Card {
 
     public ConduitOfWorlds() {

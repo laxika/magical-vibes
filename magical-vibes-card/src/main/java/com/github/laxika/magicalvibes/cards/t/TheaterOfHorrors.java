@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "213")
+@CardRegistration(set = "DSC", collectorNumber = "236")
 public class TheaterOfHorrors extends Card {
 
     public TheaterOfHorrors() {

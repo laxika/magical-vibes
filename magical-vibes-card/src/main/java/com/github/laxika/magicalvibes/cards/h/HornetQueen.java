@@ -14,11 +14,14 @@ import java.util.Set;
 @CardRegistration(set = "M15", collectorNumber = "178")
 @CardRegistration(set = "AKR", collectorNumber = "196")
 @CardRegistration(set = "CMD", collectorNumber = "159")
+@CardRegistration(set = "C21", collectorNumber = "193")
 @CardRegistration(set = "SLZ", collectorNumber = "78")
 @CardRegistration(set = "SLZ", collectorNumber = "199")
 @CardRegistration(set = "SLZ", collectorNumber = "320")
 @CardRegistration(set = "PIP", collectorNumber = "350")
 @CardRegistration(set = "PIP", collectorNumber = "878")
+@CardRegistration(set = "DSC", collectorNumber = "184")
+@CardRegistration(set = "LTC", collectorNumber = "250")
 public class HornetQueen extends Card {
 
     public HornetQueen() {

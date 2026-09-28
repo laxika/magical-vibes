@@ -26,6 +26,7 @@ import java.util.Set;
 @CardRegistration(set = "MUL", collectorNumber = "32")
 @CardRegistration(set = "MUL", collectorNumber = "97")
 @CardRegistration(set = "MUL", collectorNumber = "162")
+@CardRegistration(set = "DSC", collectorNumber = "211")
 public class ArixmethesSlumberingIsle extends Card {
 
     public ArixmethesSlumberingIsle() {

@@ -18,6 +18,8 @@ import java.util.Set;
 @CardRegistration(set = "M12", collectorNumber = "225")
 @CardRegistration(set = "M13", collectorNumber = "222")
 @CardRegistration(set = "XLN", collectorNumber = "252")
+@CardRegistration(set = "MSC", collectorNumber = "238")
+@CardRegistration(set = "MSC", collectorNumber = "468")
 @CardRegistration(set = "SLD", collectorNumber = "458")
 @CardRegistration(set = "ECC", collectorNumber = "147")
 @CardRegistration(set = "TMC", collectorNumber = "64")
@@ -26,6 +28,9 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "493")
 @CardRegistration(set = "PIP", collectorNumber = "789")
 @CardRegistration(set = "PIP", collectorNumber = "1021")
+@CardRegistration(set = "DSC", collectorNumber = "271")
+@CardRegistration(set = "LTC", collectorNumber = "304")
+@CardRegistration(set = "TDC", collectorNumber = "357")
 public class DragonskullSummit extends Card {
 
     public DragonskullSummit() {

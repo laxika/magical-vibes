@@ -14,17 +14,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SunscorchedDivideTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Pays one generic mana and produces one red and one white mana")
-    void paysGenericManaToProduceRedAndWhiteMana() {
-        harness.addToBattlefield(player1, new SunscorchedDivide());
+    @DisplayName("Paying one generic mana and tapping adds one red and one white mana")
+    void addsRedAndWhiteMana() {
+        Permanent divide = harness.addToBattlefieldAndReturn(player1, new SunscorchedDivide());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(divide.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -34,7 +34,7 @@ class SunscorchedDivideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SunscorchedDivide());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
@@ -46,7 +46,7 @@ class SunscorchedDivideTest extends BaseCardTest {
     void activationRequiresGenericMana() {
         Permanent divide = harness.addToBattlefieldAndReturn(player1, new SunscorchedDivide());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(divide.isTapped()).isFalse();
@@ -60,7 +60,7 @@ class SunscorchedDivideTest extends BaseCardTest {
         divide.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

@@ -235,6 +235,8 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(castingPermissionService.isFlashCastTargetPermissionSatisfied(
+                any(), any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
@@ -396,7 +398,7 @@ class SpellCastingServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
         verify(permanentRemovalService).removeCardFromGraveyardById(gd, spell.getId());
-        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded);
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded, Zone.HAND);
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getCard()).isSameAs(spell);
             assertThat(entry.isCastWithFlashback()).isTrue();

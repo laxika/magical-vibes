@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindTo
 
 @CardRegistration(set = "AER", collectorNumber = "46")
 @CardRegistration(set = "KLR", collectorNumber = "67")
+@CardRegistration(set = "NCC", collectorNumber = "232")
 public class SkyshipPlunderer extends Card {
 
     public SkyshipPlunderer() {

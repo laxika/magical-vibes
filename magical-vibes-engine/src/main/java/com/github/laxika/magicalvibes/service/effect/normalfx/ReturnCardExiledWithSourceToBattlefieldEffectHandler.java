@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -165,21 +166,31 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                                     List<Permanent> simultaneouslyEntered) {
         returnToBattlefield(gameData, controllerId, card, sourceName,
                 grantedSubtype, enterTapped, enterAttacking, 0, grantHaste,
-                enterTappedTypes, simultaneouslyEntered);
+                enterTappedTypes, simultaneouslyEntered, null);
+    }
+
+    /** Shared with resolution-time choices that carry an as-enters counter replacement. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
+                                    boolean grantHaste, EnterWithCountersEffect battlefieldEntryReplacement) {
+        returnToBattlefield(gameData, controllerId, card, sourceName,
+                grantedSubtype, enterTapped, enterAttacking, 0, grantHaste,
+                null, null, battlefieldEntryReplacement);
     }
 
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                      CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
                                      int additionalPlusOnePlusOneCounters, boolean grantHaste) {
         returnToBattlefield(gameData, controllerId, card, sourceName, grantedSubtype, enterTapped,
-                enterAttacking, additionalPlusOnePlusOneCounters, grantHaste, null, null);
+                enterAttacking, additionalPlusOnePlusOneCounters, grantHaste, null, null, null);
     }
 
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
                                      CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
                                      int additionalPlusOnePlusOneCounters, boolean grantHaste,
                                      Set<CardType> enterTappedTypes,
-                                     List<Permanent> simultaneouslyEntered) {
+                                     List<Permanent> simultaneouslyEntered,
+                                     EnterWithCountersEffect battlefieldEntryReplacement) {
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }
@@ -200,7 +211,12 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         if (enterTapped) {
             permanent.tap();
         }
-        if (enterTappedTypes == null || simultaneouslyEntered == null) {
+        if (battlefieldEntryReplacement != null) {
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(),
+                    battlefieldEntryReplacement);
+        } else if (enterTappedTypes == null || simultaneouslyEntered == null) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(

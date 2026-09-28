@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "188")
+@CardRegistration(set = "MOC", collectorNumber = "331")
 public class KnightOfTheLastBreath extends Card {
 
     public KnightOfTheLastBreath() {

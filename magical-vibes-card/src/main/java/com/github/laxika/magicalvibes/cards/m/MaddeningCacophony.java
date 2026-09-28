@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ZNR", collectorNumber = "67")
+@CardRegistration(set = "SLD", collectorNumber = "2322")
+@CardRegistration(set = "SLD", collectorNumber = "2337")
 public class MaddeningCacophony extends Card {
 
     public MaddeningCacophony() {

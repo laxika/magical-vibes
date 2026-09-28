@@ -80,7 +80,8 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
         }
 
         source.setCounterCount(e.counterType(), current + toAdd);
-        permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, toAdd);
+        permanentCounterSupport.notifyCountersPlaced(
+                gameData, entry, source, toAdd, e.counterType());
         if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                     gameData, source, entry.getControllerId());

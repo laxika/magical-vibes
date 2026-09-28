@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StinkweedImp.class, GiantSpider.class, Forest.class, GrizzlyBears.class})
+@CardUsed({StinkweedImp.class, CourierHawk.class, Forest.class})
 class StinkweedImpTest extends BaseCardTest {
 
     @Test
@@ -24,16 +23,16 @@ class StinkweedImpTest extends BaseCardTest {
     void combatDamageToCreatureDestroysIt() {
         Permanent imp = addCreatureReady(player1, new StinkweedImp());
         imp.setAttacking(true);
-        addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player2, new CourierHawk());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, "Giant Spider");
-        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player2, "Courier Hawk");
+        harness.assertInGraveyard(player2, "Courier Hawk");
     }
 
     @Test
@@ -41,20 +40,22 @@ class StinkweedImpTest extends BaseCardTest {
     void combatDamageToPlayerDoesNotTrigger() {
         Permanent imp = addCreatureReady(player1, new StinkweedImp());
         imp.setAttacking(true);
-        addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player2, new CourierHawk());
 
         prepareDeclareBlockers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(findPermanent(player2, "Giant Spider")).isNotNull();
+        harness.assertLife(player2, 19);
+        assertThat(findPermanent(player2, "Courier Hawk")).isNotNull();
     }
 
     @Test
     @DisplayName("May dredge Stinkweed Imp instead of drawing")
     void dredgesInsteadOfDrawing() {
         StinkweedImp imp = new StinkweedImp();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest(), new Forest(), new GrizzlyBears());
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
         harness.setGraveyard(player1, List.of(imp));
         harness.setLibrary(player1, milled);
 
@@ -75,7 +76,7 @@ class StinkweedImpTest extends BaseCardTest {
         StinkweedImp imp = new StinkweedImp();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(imp));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest(), new Forest()));
 
         resolveDraw();
         harness.handleGraveyardCardChosen(player1, -1);
@@ -91,13 +92,35 @@ class StinkweedImpTest extends BaseCardTest {
         StinkweedImp imp = new StinkweedImp();
         Card topCard = new Forest();
         harness.setGraveyard(player1, List.of(imp));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
 
         resolveDraw();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(imp);
+    }
+
+    @Test
+    @DisplayName("Returns the selected Stinkweed Imp when multiple dredgers are in the graveyard")
+    void choosesSelectedDredger() {
+        StinkweedImp firstImp = new StinkweedImp();
+        StinkweedImp selectedImp = new StinkweedImp();
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(firstImp, selectedImp));
+        harness.setLibrary(player1, milled);
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selectedImp);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(
+                List.of(firstImp, milled.get(0), milled.get(1), milled.get(2), milled.get(3), milled.get(4)));
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     private void resolveDraw() {

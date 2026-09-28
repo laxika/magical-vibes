@@ -285,6 +285,7 @@ public class TurnCleanupService {
 
         gameData.playerDamagePreventionShields.clear();
         gameData.playerCombatDamagePreventionShields.clear();
+        gameData.combatDamagePreventionTokenShields.clear();
         gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
@@ -401,6 +402,7 @@ public class TurnCleanupService {
         gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawGainLife.clear();
         gameData.pendingNextDrawCreateBears.clear();
@@ -413,7 +415,9 @@ public class TurnCleanupService {
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
+        gameData.controllerDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
@@ -423,6 +427,7 @@ public class TurnCleanupService {
         gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
+        gameData.playerProtectionFromPlayerIdsUntilEndOfTurn.clear();
         gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -452,14 +457,19 @@ public class TurnCleanupService {
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
+        gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
+        gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
+        gameData.nextSpellConvokeGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
+        gameData.nextSpellPayLifeEqualToManaValueThisTurn.clear();
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
+        gameData.nextCreatureSpellCascadeThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellEntryCounters.clear();
         gameData.spellGrantedSubtypesOnEntry.clear();
@@ -486,8 +496,10 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
+        gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
+        gameData.pendingNextXActivatedAbilityCopyThisTurnCount.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
         gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
@@ -512,13 +524,17 @@ public class TurnCleanupService {
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
+        gameData.graveyardLeaveNotificationPendingCards.clear();
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.cardsExiledThisTurn = 0;
         gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+        gameData.graveyardLeaveNotificationPendingArtifactOwners.clear();
+        gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
         gameData.kayaExileNotificationPendingCreatureCards.clear();
         gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.clear();
         gameData.cardsLeftGraveyardCountThisTurn.clear();
         gameData.creatureExileCountThisTurn.clear();
 

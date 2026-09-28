@@ -17,7 +17,9 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "63")
 @CardRegistration(set = "EOS", collectorNumber = "108")
 @CardRegistration(set = "EOS", collectorNumber = "153")
+@CardRegistration(set = "SOC", collectorNumber = "380")
 @CardRegistration(set = "C15", collectorNumber = "289")
+@CardRegistration(set = "C21", collectorNumber = "293")
 public class HighMarket extends Card {
 
     public HighMarket() {

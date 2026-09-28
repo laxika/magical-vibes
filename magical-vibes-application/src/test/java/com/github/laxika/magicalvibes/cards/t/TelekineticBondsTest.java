@@ -137,7 +137,7 @@ class TelekineticBondsTest extends BaseCardTest {
     @DisplayName("After paying, declining the tap or untap action leaves the target unchanged")
     void decliningTapOrUntapAfterPayingDoesNothing() {
         harness.addToBattlefield(player1, new TelekineticBonds());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new TelekineticBonds());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CabalTherapy()));
         harness.setHand(player2, List.of(new CabalTherapy()));
         harness.addMana(player2, ManaColor.BLACK, 1);

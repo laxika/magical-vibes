@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "61")
 @CardRegistration(set = "SLD", collectorNumber = "843")
+@CardRegistration(set = "MOC", collectorNumber = "252")
 public class HaakonStromgaldScourge extends Card {
 
     public HaakonStromgaldScourge() {

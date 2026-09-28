@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -26,7 +24,7 @@ class PsionicEntityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player1, "Psionic Entity");
         harness.assertInGraveyard(player1, "Psionic Entity");
     }
@@ -35,10 +33,9 @@ class PsionicEntityTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, killing a 2/2, and 3 to itself")
     void deals2ToCreatureAnd3ToSelf() {
         addCreatureReady(player1, new PsionicEntity());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -50,14 +47,30 @@ class PsionicEntityTest extends BaseCardTest {
     @DisplayName("2 damage does not kill a 4/4, but the entity still kills itself")
     void twoDamageDoesNotKillFourToughness() {
         addCreatureReady(player1, new PsionicEntity());
-        harness.addToBattlefield(player2, new AirElemental());
-        UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
-        harness.activateAbility(player1, 0, null, elementalId);
+        harness.activateAbility(player1, 0, null, elemental.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(elemental.getMarkedDamage()).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Psionic Entity");
+    }
+
+    @Test
+    @DisplayName("Deals exactly 2 damage to the target and 3 damage to itself when both survive")
+    void dealsDamageToTargetAndSourceWhenBothSurvive() {
+        Permanent entity = addCreatureReady(player1, new PsionicEntity());
+        entity.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(entity.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Psionic Entity");
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test
@@ -74,10 +87,9 @@ class PsionicEntityTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed — entity takes no self-damage")
     void fizzlesIfTargetRemoved() {
         Permanent entity = addCreatureReady(player1, new PsionicEntity());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, bears.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
@@ -109,14 +121,14 @@ class PsionicEntityTest extends BaseCardTest {
     }
     @Test
     void targetDamageResolvesAfterSourceLeaves() {
-        Permanent entity = addCreatureReady(player1, new PsionicEntity());
+        addCreatureReady(player1, new PsionicEntity());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(entity);
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Psionic Entity");
     }
 }

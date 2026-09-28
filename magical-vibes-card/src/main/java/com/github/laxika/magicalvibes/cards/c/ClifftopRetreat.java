@@ -16,11 +16,16 @@ import java.util.Set;
 @CardRegistration(set = "ISD", collectorNumber = "238")
 @CardRegistration(set = "DOM", collectorNumber = "239")
 @CardRegistration(set = "DMR", collectorNumber = "241")
+@CardRegistration(set = "SOC", collectorNumber = "366")
+@CardRegistration(set = "MSC", collectorNumber = "231")
+@CardRegistration(set = "MSC", collectorNumber = "466")
 @CardRegistration(set = "YEOE", collectorNumber = "31")
 @CardRegistration(set = "PIP", collectorNumber = "258")
 @CardRegistration(set = "PIP", collectorNumber = "491")
 @CardRegistration(set = "PIP", collectorNumber = "786")
 @CardRegistration(set = "PIP", collectorNumber = "1019")
+@CardRegistration(set = "LTC", collectorNumber = "300")
+@CardRegistration(set = "TDC", collectorNumber = "351")
 public class ClifftopRetreat extends Card {
 
     public ClifftopRetreat() {

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-/** Chooses the highest-mana-value eligible card from the AI's hand or graveyard. */
+/** Chooses the highest-mana-value eligible card from the interaction's eligible zones. */
 class PutCardFromHandOrGraveyardChoiceAiStrategy
         implements AiInteractionStrategy<PendingInteraction.PutCardFromHandOrGraveyardChoice> {
 
@@ -26,9 +26,17 @@ class PutCardFromHandOrGraveyardChoiceAiStrategy
         }
 
         List<UUID> validIds = interaction.validCardIds();
-        UUID choice = Stream.concat(
-                        ctx.gameData().playerHands.getOrDefault(ctx.aiPlayerId(), List.of()).stream(),
-                        ctx.gameData().playerGraveyards.getOrDefault(ctx.aiPlayerId(), List.of()).stream())
+        Stream<Card> eligibleCards = ctx.gameData().playerHands
+                .getOrDefault(ctx.aiPlayerId(), List.of()).stream();
+        if (interaction.includeGraveyard()) {
+            eligibleCards = Stream.concat(eligibleCards,
+                    ctx.gameData().playerGraveyards.getOrDefault(ctx.aiPlayerId(), List.of()).stream());
+        }
+        if (interaction.includeCommandZone()) {
+            eligibleCards = Stream.concat(eligibleCards,
+                    ctx.gameData().playerCommandZones.getOrDefault(ctx.aiPlayerId(), List.of()).stream());
+        }
+        UUID choice = eligibleCards
                 .filter(card -> validIds.contains(card.getId()))
                 .max(Comparator.comparingInt(Card::getManaValue))
                 .map(Card::getId)

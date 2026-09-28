@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.g.GolgariSignet;
+import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,21 +17,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FistsOfIronwood.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({FistsOfIronwood.class, GrayscaledGharial.class, GolgariSignet.class})
 class FistsOfIronwoodTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering creates two Saprolings and grants trample to the enchanted creature")
     void enteringCreatesSaprolingsAndGrantsTrample() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
 
         harness.setHand(player1, List.of(new FistsOfIronwood()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         List<Permanent> saprolings = findPermanents(player1, "Saproling");
         assertThat(saprolings).hasSize(2);
@@ -45,31 +45,65 @@ class FistsOfIronwoodTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The trample bonus ends when Fists of Ironwood leaves the battlefield")
-    void trampleEndsWhenAuraLeavesBattlefield() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+    @DisplayName("The Saprolings are created under the Aura controller's control")
+    void enteringCreatesTokensForAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrayscaledGharial());
 
         harness.setHand(player1, List.of(new FistsOfIronwood()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enters-the-battlefield ability resolves even if the Aura leaves first")
+    void enteringAbilityResolvesAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+
+        harness.setHand(player1, List.of(new FistsOfIronwood()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Fists of Ironwood");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trample bonus ends when Fists of Ironwood leaves the battlefield")
+    void trampleEndsWhenAuraLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+
+        harness.setHand(player1, List.of(new FistsOfIronwood()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Fists of Ironwood");
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("Fists of Ironwood cannot enchant a noncreature permanent")
     void cannotEnchantNoncreaturePermanent() {
-        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new GolgariSignet());
 
         harness.setHand(player1, List.of(new FistsOfIronwood()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, spellbook.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature, no special abilities.
  */
 @CardRegistration(set = "MOR", collectorNumber = "13")
+@CardRegistration(set = "TDC", collectorNumber = "121")
 public class IndomitableAncients extends Card {
 }

@@ -13,6 +13,8 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "230")
 @CardRegistration(set = "SLD", collectorNumber = "277")
 @CardRegistration(set = "SLD", collectorNumber = "587")
+@CardRegistration(set = "SLD", collectorNumber = "2325")
+@CardRegistration(set = "SLD", collectorNumber = "2340")
 @CardRegistration(set = "2XM", collectorNumber = "289")
 public class Spellskite extends Card {
 

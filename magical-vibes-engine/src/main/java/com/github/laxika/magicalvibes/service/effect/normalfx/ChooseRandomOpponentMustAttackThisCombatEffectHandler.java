@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -24,6 +27,7 @@ public class ChooseRandomOpponentMustAttackThisCombatEffectHandler implements No
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TapPermanentsEffectHandler tapPermanentsEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +36,8 @@ public class ChooseRandomOpponentMustAttackThisCombatEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ChooseRandomOpponentMustAttackThisCombatEffect randomOpponentEffect =
+                (ChooseRandomOpponentMustAttackThisCombatEffect) effect;
         if (entry.getSourcePermanentId() == null) {
             return;
         }
@@ -41,10 +47,17 @@ public class ChooseRandomOpponentMustAttackThisCombatEffectHandler implements No
             return;
         }
 
+        Set<UUID> excludedOpponents = randomOpponentEffect.excludeOpponentsAttackedLastCombat()
+                ? source.getPlayersAttackedLastCombat() : Set.of();
         List<UUID> opponents = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                .filter(playerId -> !excludedOpponents.contains(playerId))
                 .toList();
         if (opponents.isEmpty()) {
+            if (randomOpponentEffect.tapIfNoOpponent()) {
+                tapPermanentsEffectHandler.resolve(gameData, entry,
+                        new TapPermanentsEffect(TapUntapScope.SELF));
+            }
             return;
         }
 

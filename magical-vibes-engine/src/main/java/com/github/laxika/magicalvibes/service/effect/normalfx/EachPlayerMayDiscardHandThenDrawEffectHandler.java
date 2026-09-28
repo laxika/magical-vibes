@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AcceptedPlayersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardHandThenDrawEffect;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
                     ? discardEffect.sourceControllerId() : entry.getControllerId();
             promptNext(gameData, entry.getCard(), new EachPlayerMayDiscardHandThenDrawEffect(
                     discardEffect.cardsToDraw(), sourceControllerId,
-                    players, discardEffect.acceptedPlayerIds()));
+                    players, discardEffect.acceptedPlayerIds(), discardEffect.acceptedPlayersFollowUp()));
         }
     }
 
@@ -53,11 +54,18 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
     }
 
     public void resolveAcceptedPlayers(GameData gameData, Card sourceCard, UUID sourceControllerId,
-                                       List<UUID> acceptedPlayerIds, int cardsToDraw) {
+                                       List<UUID> acceptedPlayerIds, int cardsToDraw,
+                                       AcceptedPlayersAwareEffect followUp) {
         for (UUID playerId : acceptedPlayerIds) {
             discardHandEffectHandler.discardHand(gameData, playerId, sourceControllerId,
                     sourceCard.getName());
             playerInteractionSupport.applyDrawCards(gameData, playerId, cardsToDraw);
+        }
+
+        if (followUp != null && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(followUp.withAcceptedPlayerIds(acceptedPlayerIds)));
         }
     }
 

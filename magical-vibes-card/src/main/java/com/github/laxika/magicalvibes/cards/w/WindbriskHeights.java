@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "527")
 @CardRegistration(set = "PIP", collectorNumber = "843")
 @CardRegistration(set = "PIP", collectorNumber = "1055")
+@CardRegistration(set = "LTC", collectorNumber = "345")
 public class WindbriskHeights extends Card {
 
     public WindbriskHeights() {

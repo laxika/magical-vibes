@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoC
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
@@ -541,6 +543,14 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())) {
+            int amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+
         int xLifeCost = effectiveXValue;
         abilityEffects.stream()
                 .filter(PayXLifeCost.class::isInstance)
@@ -812,7 +822,8 @@ public class ActivatedAbilityExecutionService {
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
-            if (ability.isRequiresTap() && gameQueryService.isLand(gameData, permanent)) {
+            if (ability.isRequiresTap() && (gameQueryService.isLand(gameData, permanent)
+                    || permanent.getCard().hasType(CardType.LAND))) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
                         manaTypesBefore, pool.getAllManaTotals());
@@ -1368,6 +1379,21 @@ public class ActivatedAbilityExecutionService {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
                 }
+            } else if (effect instanceof EmpowerNextCreatureSpellThisTurnEffect empower) {
+                // Mana abilities resolve inline rather than through the normal effect-handler path.
+                // Grand Summon's mana ability uses this rider to register its one-shot creature
+                // spell empowerment alongside the mana it produces.
+                gameData.addNextCreatureSpellEmpowerment(playerId,
+                        new CreatureSpellEmpowerment(
+                                empower.uncounterable(), empower.additionalPlusOneCounters()));
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(permanent.getCard())
+                        .text(" empowers its controller's next creature spell this turn.")
+                        .build());
+                log.info("Game {} - {} empowers the next creature spell of player {} "
+                                + "(uncounterable={}, +1/+1 counters={})",
+                        gameData.id, permanent.getCard().getName(), playerId,
+                        empower.uncounterable(), empower.additionalPlusOneCounters());
             } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
                 int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
@@ -1684,7 +1710,7 @@ public class ActivatedAbilityExecutionService {
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
                     int opponentDamage = damage + gameQueryService.getControllerDamageToOpponentBonus(
-                            gameData, playerId, opponentId);
+                            gameData, playerId, opponentId, false, permanent.getId());
                     dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, opponentDamage);
                 }
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
@@ -2278,13 +2304,21 @@ public class ActivatedAbilityExecutionService {
         }
         if (discardedCardSnapshot != null) {
             stackEntry.setDiscardedCardSnapshot(discardedCardSnapshot);
+        } else if (ability.getEffects().stream().anyMatch(effect -> effect instanceof
+                com.github.laxika.magicalvibes.model.effect.HandCardCost cost && cost.imprintOnSource())) {
+            stackEntry.setDiscardedCardSnapshot(gameData.getImprintedCard(permanent.getCard()));
         }
         if (exiledCostCardSnapshot != null) {
             stackEntry.setExiledCostCardSnapshot(exiledCostCardSnapshot);
             stackEntry.setExiledCostCardId(exiledCostCardSnapshot.getId());
         }
         if (recordsSacrificedPermanentSnapshot) {
-            stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());
+            Permanent sacrificed = permanent.getChosenSacrificedPermanentSnapshot();
+            stackEntry.setSacrificedPermanentSnapshot(sacrificed);
+            if (sacrificed != null) {
+                stackEntry.setSacrificedPower(sacrificed.getEffectivePower());
+                stackEntry.setSacrificedToughness(sacrificed.getEffectiveToughness());
+            }
         }
         if (sacrificedSourceSnapshot != null) {
             stackEntry.setSacrificedPermanentSnapshot(sacrificedSourceSnapshot);

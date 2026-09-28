@@ -50,6 +50,6 @@ class WirewoodLodgeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, nonElf.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+                .hasMessageContaining("Target must be an Elf");
     }
 }

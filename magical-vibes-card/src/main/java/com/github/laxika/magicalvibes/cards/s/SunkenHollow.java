@@ -17,11 +17,15 @@ import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "2")
 @CardRegistration(set = "EA3", collectorNumber = "23")
+@CardRegistration(set = "MSC", collectorNumber = "271")
+@CardRegistration(set = "MSC", collectorNumber = "498")
 @CardRegistration(set = "TMC", collectorNumber = "76")
 @CardRegistration(set = "PIP", collectorNumber = "296")
 @CardRegistration(set = "PIP", collectorNumber = "514")
 @CardRegistration(set = "PIP", collectorNumber = "824")
 @CardRegistration(set = "PIP", collectorNumber = "1042")
+@CardRegistration(set = "40K", collectorNumber = "295")
+@CardRegistration(set = "LTC", collectorNumber = "335")
 public class SunkenHollow extends Card {
 
     public SunkenHollow() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.InfernalOfferingEffect;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "24")
+@CardRegistration(set = "C21", collectorNumber = "146")
 public class InfernalOffering extends Card {
 
     public InfernalOffering() {

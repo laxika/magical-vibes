@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "DDG", collectorNumber = "49")
 @CardRegistration(set = "VMA", collectorNumber = "186")
 @CardRegistration(set = "EVG", collectorNumber = "51")
+@CardRegistration(set = "SLD", collectorNumber = "2414")
 public class SkirkProspector extends Card {
 
     public SkirkProspector() {

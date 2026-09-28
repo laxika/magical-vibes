@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.d.DestructiveFlow;
+import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,14 +12,21 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoggSentry.class, MoggJailer.class, DestructiveFlow.class})
+@CardUsed({MoggSentry.class, GoblinRaider.class, HolyDay.class})
 class MoggSentryTest extends BaseCardTest {
 
     private void opponentCastsSpell() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castFromHand(player2, new MoggJailer(), "{1}{R}");
+        harness.castFromHand(player2, new GoblinRaider(), "{1}{R}");
+    }
+
+    private void opponentCastsInstantSpell() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new HolyDay(), "{W}");
     }
 
     @Test
@@ -38,10 +46,7 @@ class MoggSentryTest extends BaseCardTest {
     void triggersWhenOpponentCastsNoncreatureSpell() {
         harness.addToBattlefield(player1, new MoggSentry());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.castFromHand(player2, new DestructiveFlow(), "{B}{R}{G}");
+        opponentCastsInstantSpell();
         harness.passBothPriorities();
 
         assertThat(sentry().getPowerModifier()).isEqualTo(2);
@@ -66,9 +71,22 @@ class MoggSentryTest extends BaseCardTest {
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MoggSentry());
 
-        harness.castFromHand(player1, new MoggJailer(), "{1}{R}");
+        harness.castFromHand(player1, new GoblinRaider(), "{1}{R}");
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("Gets a separate +2/+2 boost for each opponent spell")
+    void getsSeparateBoostForEachOpponentSpell() {
+        harness.addToBattlefield(player1, new MoggSentry());
+
+        opponentCastsInstantSpell();
+        opponentCastsInstantSpell();
+        resolveAllTriggers();
+
+        assertThat(sentry().getPowerModifier()).isEqualTo(4);
+        assertThat(sentry().getToughnessModifier()).isEqualTo(4);
     }
 
     @Test

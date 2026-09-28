@@ -111,6 +111,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         return switch (castCost) {
             case NORMAL -> new MayCastCopyWithNormalCostEffect();
             case ONE_GENERIC -> new MayCastCopyWithManaCostEffect("{1}");
+            case THREE_GENERIC -> new MayCastCopyWithManaCostEffect("{3}");
             case FREE -> new MayCastCopyWithoutPayingManaCostEffect();
         };
     }
@@ -119,6 +120,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         return switch (castCost) {
             case NORMAL -> "Cast the copy of " + copy.getName() + " by paying its mana cost?";
             case ONE_GENERIC -> "Cast the copy of " + copy.getName() + " by paying {1}?";
+            case THREE_GENERIC -> "Cast the copy of " + copy.getName() + " by paying {3}?";
             case FREE -> "Cast the copy of " + copy.getName() + " without paying its mana cost?";
         };
     }

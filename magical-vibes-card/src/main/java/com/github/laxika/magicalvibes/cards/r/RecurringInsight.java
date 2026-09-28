@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "82")
+@CardRegistration(set = "MSC", collectorNumber = "154")
+@CardRegistration(set = "MSC", collectorNumber = "341")
 public class RecurringInsight extends Card {
 
     public RecurringInsight() {

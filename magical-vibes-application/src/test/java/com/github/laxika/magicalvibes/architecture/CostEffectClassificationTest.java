@@ -17,18 +17,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Guard for the additional-cast-cost system: every {@code CostEffect} implementation in the
- * domain module must be classified — either handled by
+ * domain module must be classified â€” either handled by
  * {@link AdditionalSpellCostService#HANDLED_SPELL_COST_TYPES} (payable as an additional cost when
  * casting a spell) or listed here as ability-only (paid by {@code AbilityActivationService}'s
  * activation flow and never placed in a card's SPELL slot).
  *
  * <p>Why: a SPELL-slot cost type that is invisible to {@code AdditionalSpellCostService} is
- * silently skipped by satisfiability, validation and payment — exactly how Seize the Spoils'
+ * silently skipped by satisfiability, validation and payment â€” exactly how Seize the Spoils'
  * {@code DiscardCardTypeCost} once let the engine consume mana for a cast it then rejected. A new
  * cost type fails this test until a deliberate decision puts it in one of the two sets (and, if
  * spell-handled, wires its extract/validate/pay support).
  */
 class CostEffectClassificationTest {
+
+    /** Paid through AlternativeCostForSpellsEffect by the casting services, not as an additional cost. */
+    private static final Set<String> ALTERNATIVE_ONLY_COST_TYPES = Set.of(
+            "PayLifeEqualToSpellManaValueCost");
 
     /**
      * Cost types only ever used as activation costs (activated/triggered abilities, crew, etc.).
@@ -56,15 +60,15 @@ class CostEffectClassificationTest {
             "IncreaseActivationCostPerCounterEffect",
             "IncreaseActivationCostEffect",
             "ReduceActivationCostEffect",
+            "ReduceActivationCostByManaCostEffect",
             "MillControllerCost",
             "OpponentCreatesTokensCost",
             "OpponentGainsLifeCost",
             "GainControlOfPermanentsCost",
             "PayEchoCost",
             "PayEnergyCost",
-            "PayXEnergyCost",
             "PayLifeForEachCardInHandCost",
-            "PayLifeEqualToCommanderColorIdentityCost",
+            "PayLifeForEachCommanderColorCost",
             "PayManaCost",
             "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",
@@ -91,6 +95,7 @@ class CostEffectClassificationTest {
             "ReturnCardFromGraveyardToHandCost",
             "ReturnSelfToHandCost",
             "RevealHandCost",
+            "RevealChosenPlayerCost",
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",
@@ -119,7 +124,6 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
-            "PayLifeEqualToSpellManaValueCost",
             "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
@@ -167,10 +171,12 @@ class CostEffectClassificationTest {
         for (String typeName : costEffectTypeNames()) {
             boolean isHandled = handled.contains(typeName);
             boolean isAbilityOnly = ABILITY_ONLY_COST_TYPES.contains(typeName);
-            if (!isHandled && !isAbilityOnly) {
+            boolean isAlternativeOnly = ALTERNATIVE_ONLY_COST_TYPES.contains(typeName);
+            if (!isHandled && !isAbilityOnly && !isAlternativeOnly) {
                 unclassified.add(typeName);
             }
-            if (isHandled && isAbilityOnly) {
+            if ((isHandled ? 1 : 0) + (isAbilityOnly ? 1 : 0)
+                    + (isAlternativeOnly ? 1 : 0) > 1) {
                 doublyClassified.add(typeName);
             }
         }
@@ -179,7 +185,7 @@ class CostEffectClassificationTest {
                 .withFailMessage(() -> "Unclassified CostEffect type(s): " + unclassified + ".\n"
                         + "Every additional-cost effect must be either handled by "
                         + "AdditionalSpellCostService.HANDLED_SPELL_COST_TYPES (with extract/satisfiable/"
-                        + "validate/pay support) or declared ability-only in this test — otherwise a spell "
+                        + "validate/pay support) or declared ability-only in this test â€” otherwise a spell "
                         + "carrying it would be advertised as castable and then rejected (or worse, cast "
                         + "without paying the cost).")
                 .isEmpty();

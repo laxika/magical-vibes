@@ -123,6 +123,8 @@ class LibraryChoiceHandlerServiceTest {
                 returnTwoExiledCardsWithSourceHandler,
                 permanentControlSupport, permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "landEquilibriumSupport",
+                mock(com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport.class));
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService, mock(WarpWorldService.class), inputCompletionService));

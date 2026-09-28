@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ZNR", collectorNumber = "125")
+@CardRegistration(set = "NCC", collectorNumber = "260")
 public class SkyclaveShade extends Card {
 
     public SkyclaveShade() {

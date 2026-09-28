@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RashmiTriggerEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "184")
 @CardRegistration(set = "KLR", collectorNumber = "202")
+@CardRegistration(set = "DSC", collectorNumber = "231")
 public class RashmiEternitiesCrafter extends Card {
 
     public RashmiEternitiesCrafter() {
