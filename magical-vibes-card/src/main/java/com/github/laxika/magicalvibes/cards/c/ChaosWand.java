@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "228")
+@CardRegistration(set = "AFC", collectorNumber = "201")
 public class ChaosWand extends Card {
 
     public ChaosWand() {

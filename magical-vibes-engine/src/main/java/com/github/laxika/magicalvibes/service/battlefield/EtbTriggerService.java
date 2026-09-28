@@ -989,7 +989,8 @@ public class EtbTriggerService {
             }
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue);
+                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue,
+                        returnEffect.attachToEnchantedCreature() ? graveyardSourcePermanentId : null);
             }
         }
 

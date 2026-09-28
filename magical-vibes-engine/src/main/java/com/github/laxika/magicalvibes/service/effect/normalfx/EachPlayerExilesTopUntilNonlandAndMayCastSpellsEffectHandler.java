@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves Etali's enter-the-battlefield library dig and free-cast choice. */
+/** Resolves an until-nonland library dig and free-cast choice. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
         List<UUID> castableSpellIds = new ArrayList<>();
         List<UUID> nonlandCardIds = new ArrayList<>();
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : exilingPlayers(gameData, entry, exileEffect.libraryScope())) {
             List<Card> library = gameData.playerDecks.get(playerId);
             while (library != null && !library.isEmpty()) {
                 Card card = library.removeFirst();
@@ -99,6 +100,16 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PlarggAndNassariCardChoice(
                         opponentId, controllerId, nonlandCardIds, maxCastCount));
+    }
+
+    private static List<UUID> exilingPlayers(GameData gameData, StackEntry entry,
+                                             LibraryScope libraryScope) {
+        if (libraryScope == LibraryScope.EACH_OPPONENT) {
+            return gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .toList();
+        }
+        return List.copyOf(gameData.orderedPlayerIds);
     }
 
     private static boolean isSpell(Card card) {

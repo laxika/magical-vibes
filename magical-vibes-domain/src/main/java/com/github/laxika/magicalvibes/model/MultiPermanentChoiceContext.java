@@ -506,6 +506,18 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chooses a nontoken creature for Danse Macabre before all are sacrificed. */
+    record DanseMacabreSacrifice(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public DanseMacabreSacrifice {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** Each opponent chooses a creature before the chosen creatures are sacrificed together. */
     record EachOpponentSacrificesCreatureCreateTokens(
             java.util.List<PendingForcedSacrifice> remainingChoosers,
@@ -713,6 +725,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses any number of creatures that must block this combat if able. */
+    record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
     record CulturalExchange(Card sourceCard, UUID chooserId, UUID firstPlayerId, UUID secondPlayerId,
                             List<UUID> firstChosenIds, boolean firstSelection) implements MultiPermanentChoiceContext {
@@ -804,11 +820,16 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Tap any number of matching permanents, then queue the target-dependent reflexive ability. */
-    record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
-                                                  PermanentPredicate filter,
-                                                  CardEffect reflexiveEffect)
-            implements MultiPermanentChoiceContext {
-    }
+      record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
+                                                    PermanentPredicate filter,
+                                                    CardEffect reflexiveEffect)
+              implements MultiPermanentChoiceContext {
+      }
+
+      /** Nihiloor's optional choice of one untapped creature to tap for one opponent. */
+      record NihiloorTapChoice(StackEntry resolvingEntry, CardEffect reflexiveEffect)
+              implements MultiPermanentChoiceContext {
+      }
 
     /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */
     record TapPermanentsDrawPerTapped() implements MultiPermanentChoiceContext {

@@ -101,6 +101,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (effect.enterTapped()) {
                     permanent.tap();
                 }
+                attachToEnchantedCreature(gameData, entry, permanent, effect);
                 permanent.setEnteredFromGraveyardOwnerId(graveyardCard.ownerId());
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
@@ -193,6 +194,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.enterTapped()) {
                     permanent.tap();
                 }
+                attachToEnchantedCreature(gameData, entry, permanent, e);
                 permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
@@ -227,6 +229,22 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         if (effect.sacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
+    }
+
+    private void attachToEnchantedCreature(GameData gameData, StackEntry entry, Permanent returnedPermanent,
+                                            ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
+        if (!effect.attachToEnchantedCreature() || entry.getSourcePermanentId() == null) {
+            return;
+        }
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent enchantedCreature = aura == null || aura.getAttachedTo() == null
+                ? null : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchantedCreature == null && entry.getTriggeringPermanentId() != null) {
+            enchantedCreature = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        }
+        if (enchantedCreature != null) {
+            returnedPermanent.setAttachedTo(enchantedCreature.getId());
         }
     }
 }

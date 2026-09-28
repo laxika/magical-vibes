@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "326")
 @CardRegistration(set = "DSC", collectorNumber = "296")
+@CardRegistration(set = "AFC", collectorNumber = "259")
 public class ShadowbloodRidge extends Card {
 
     public ShadowbloodRidge() {

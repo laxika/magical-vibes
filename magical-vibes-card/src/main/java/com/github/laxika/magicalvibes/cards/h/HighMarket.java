@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "380")
 @CardRegistration(set = "C15", collectorNumber = "289")
 @CardRegistration(set = "C21", collectorNumber = "293")
+@CardRegistration(set = "AFC", collectorNumber = "246")
 public class HighMarket extends Card {
 
     public HighMarket() {

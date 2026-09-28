@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "FCA", collectorNumber = "39")
 @CardRegistration(set = "RVR", collectorNumber = "117")
 @CardRegistration(set = "DSC", collectorNumber = "166")
+@CardRegistration(set = "AFC", collectorNumber = "131")
 public class LightUpTheStage extends Card {
 
     public LightUpTheStage() {

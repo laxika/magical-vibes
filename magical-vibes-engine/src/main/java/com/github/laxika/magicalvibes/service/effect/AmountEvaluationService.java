@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.CreatureCardsInGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
@@ -638,6 +639,8 @@ public class AmountEvaluationService {
                     countCreatureDeathsThisTurn(gameData, c, ctx);
             case CreaturesPutIntoOwnGraveyardThisTurn ignored ->
                     gameData.creaturesPutIntoOwnGraveyardThisTurnCount.getOrDefault(ctx.controllerId(), 0);
+            case CreatureCardsInGraveyardFromBattlefieldThisTurn ignored ->
+                    countCreatureCardsInGraveyardFromBattlefieldThisTurn(gameData, ctx);
             case NontokenCreaturesPutIntoOwnGraveyardThisTurn ignored ->
                     gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount
                             .getOrDefault(ctx.controllerId(), 0);
@@ -1143,6 +1146,13 @@ public class AmountEvaluationService {
                         var exiledCard = gameData.findExiledCard(id);
                         card = exiledCard == null ? null : exiledCard.card();
                     }
+                    if (card == null) {
+                        card = gameData.playerHands.values().stream()
+                                .flatMap(List::stream)
+                                .filter(handCard -> handCard.getId().equals(id))
+                                .findFirst()
+                                .orElse(null);
+                    }
                     return card;
                 })
                 .filter(java.util.Objects::nonNull)
@@ -1579,6 +1589,25 @@ public class AmountEvaluationService {
             }
         }
         return matches;
+    }
+
+    private int countCreatureCardsInGraveyardFromBattlefieldThisTurn(GameData gameData,
+                                                                      AmountContext ctx) {
+        if (ctx.controllerId() == null) {
+            return 0;
+        }
+        Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
+                .getOrDefault(ctx.controllerId(), Set.of());
+        if (tracked.isEmpty()) {
+            return 0;
+        }
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        if (graveyard == null) {
+            return 0;
+        }
+        return (int) graveyard.stream()
+                .filter(card -> !card.isToken() && tracked.contains(card.getId()))
+                .count();
     }
 
     private boolean matchesGraveyardCountFilter(GameData gameData, Card card, CardPredicate filter,

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "121")
+@CardRegistration(set = "AFC", collectorNumber = "11")
 public class RobeOfStars extends Card {
 
     public RobeOfStars() {

@@ -33,7 +33,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean singleGraveyard,
         boolean grantHaste,
         boolean sacrificeAtEndStep,
-        int minTargets
+        int minTargets,
+        boolean attachToEnchantedCreature
 ) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -135,6 +136,14 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, minTargets);
     }
 
+    /** Creates an any-number form that attaches each returned card to this Aura's enchanted creature. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect attachedToEnchantedCreature(
+            CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, 99, false, false, null, 0, null, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, 0, true);
+    }
+
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped,
@@ -167,6 +176,27 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean grantHaste,
                                                               boolean sacrificeAtEndStep,
                                                               int minTargets) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets, maxTotalManaValue,
+                dynamicMaxTotalManaValue, grantColor, grantSubtype, counterType, counterCount, source,
+                singleGraveyard, grantHaste, sacrificeAtEndStep, minTargets, false);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets,
+                                                              boolean attachToEnchantedCreature) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -192,6 +222,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.grantHaste = grantHaste;
         this.sacrificeAtEndStep = sacrificeAtEndStep;
         this.minTargets = minTargets;
+        this.attachToEnchantedCreature = attachToEnchantedCreature;
     }
 
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(CardPredicate filter) {

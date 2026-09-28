@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFromEnchantedCre
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "66")
+@CardRegistration(set = "AFC", collectorNumber = "97")
 public class DeadMansChest extends Card {
 
     public DeadMansChest() {

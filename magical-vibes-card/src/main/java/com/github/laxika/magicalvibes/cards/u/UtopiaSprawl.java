@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "SLD", collectorNumber = "409")
 @CardRegistration(set = "RVR", collectorNumber = "159")
 @CardRegistration(set = "WOT", collectorNumber = "63")
+@CardRegistration(set = "AFC", collectorNumber = "172")
 public class UtopiaSprawl extends Card {
 
     public UtopiaSprawl() {

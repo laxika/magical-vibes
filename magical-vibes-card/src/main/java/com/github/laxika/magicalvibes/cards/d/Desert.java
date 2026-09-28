@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "V12", collectorNumber = "4")
 @CardRegistration(set = "SPG", collectorNumber = "37")
 @CardRegistration(set = "ARN", collectorNumber = "72")
+@CardRegistration(set = "AFC", collectorNumber = "233")
 public class Desert extends Card {
 
     public Desert() {

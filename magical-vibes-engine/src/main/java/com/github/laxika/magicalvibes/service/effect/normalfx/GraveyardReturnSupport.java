@@ -1209,6 +1209,12 @@ public class GraveyardReturnSupport {
                 .enterWithCounters(effect.enterWithCounters())
                 .mandatory(effect.mandatory() || effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
+        if (effect.plusOneCounterCount() > 0
+                && effect.plusOneCountersIfSubtype() == null
+                && effect.plusOneCountersIfCardType() == null
+                && effect.plusOneCountersIfCondition() == null) {
+            choice.enterWithCounter(CounterType.PLUS_ONE_PLUS_ONE, effect.plusOneCounterCount());
+        }
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
         }

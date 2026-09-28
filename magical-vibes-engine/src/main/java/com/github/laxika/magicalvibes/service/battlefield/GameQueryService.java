@@ -3467,7 +3467,7 @@ public class GameQueryService {
         return hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
     }
 
-    boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
+    public boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;

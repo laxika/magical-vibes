@@ -76,7 +76,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.HostileNegotiationsFaceUpChoice,
         PendingInteraction.HostileNegotiationsOpponentPileChoice,
-        PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
+        PendingInteraction.MirrorOfFateChoice, PendingInteraction.ReturnExiledCardsToHandChoice,
+        PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
         PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
@@ -112,6 +113,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AttachAurasChoice, PendingInteraction.ReturnAurasFromGraveyardChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
+        PendingInteraction.TargetPlayerChoosesCardsFromHandChoice,
         PendingInteraction.TargetedHandBattlefieldChoice,
         PendingInteraction.SpectersShriekChoice,
         PendingInteraction.RevealCardsDiscardChoice,
@@ -873,23 +875,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                           String prompt, boolean castAsCopies)
+                                           String prompt, boolean castAsCopies, Integer maxTotalManaValue)
             implements PendingInteraction {
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount) {
-            this(playerId, validCardIds, maxCount, null, false);
+            this(playerId, validCardIds, maxCount, null, false, null);
         }
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount, String prompt) {
-            this(playerId, validCardIds, maxCount, prompt, false);
+            this(playerId, validCardIds, maxCount, prompt, false, null);
+        }
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount, String prompt, boolean castAsCopies) {
+            this(playerId, validCardIds, maxCount, prompt, castAsCopies, null);
         }
 
         public ImprovisationCapstoneCastChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             prompt = prompt == null ? "You may cast spells from among the exiled cards without paying "
                     + "their mana costs." : prompt;
+            if (maxTotalManaValue != null && maxTotalManaValue < 0) {
+                throw new IllegalArgumentException("maxTotalManaValue cannot be negative");
+            }
         }
 
         @Override
@@ -1399,6 +1409,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public MirrorOfFateChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Bag of Devouring: choose up to the d10 result of the source-tracked exiled cards. */
+    record ReturnExiledCardsToHandChoice(UUID playerId, UUID sourcePermanentId,
+                                         java.util.List<UUID> validCardIds, int maxCount,
+                                         String sourceName) implements PendingInteraction {
+
+        public ReturnExiledCardsToHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
 
@@ -2901,6 +2931,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, optional);
+        }
+    }
+
+    /** A target player chooses a hidden subset of their hand for the spell's controller to inspect. */
+    record TargetPlayerChoosesCardsFromHandChoice(
+            UUID choosingPlayerId,
+            UUID targetPlayerId,
+            UUID controllerId,
+            java.util.List<Integer> validIndices,
+            int remainingCount,
+            java.util.List<UUID> selectedCardIds,
+            String prompt) implements PendingInteraction {
+
+        public TargetPlayerChoosesCardsFromHandChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            selectedCardIds = java.util.List.copyOf(selectedCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

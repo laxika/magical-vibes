@@ -24,6 +24,7 @@ public enum CounterType {
     BRICK,
     CARRION,
     CHARGE,
+    COMPONENT,
     CONQUEROR,
     CONTESTED,
     CORRUPTION,

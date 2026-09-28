@@ -50,22 +50,32 @@ public class PlayedCardNameTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    })
     private boolean handleControllerCastsExiledCard(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return sc.castZone() == Zone.EXILE
-                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.spellCard(), trigger.followUpEffect());
+                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.castingPlayerId(),
+                sc.spellCard(), trigger.followUpEffect());
     }
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
     private boolean handleControllerPlaysExiledCardLand(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return lp.fromExile()
-                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.landCard(), trigger.followUpEffect());
+                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.playingPlayerId(),
+                lp.landCard(), trigger.followUpEffect());
     }
 
     @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
@@ -246,7 +256,7 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     private boolean collectFollowUp(TriggerMatchContext match, UUID exiledSourcePermanentId,
-                                    Card playedCard, CardEffect followUpEffect) {
+                                    UUID playingPlayerId, Card playedCard, CardEffect followUpEffect) {
         if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
             return false;
         }
@@ -260,6 +270,7 @@ public class PlayedCardNameTriggerCollectorService {
                 new ArrayList<>(List.of(followUpEffect)),
                 null,
                 match.permanent().getId());
+        entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

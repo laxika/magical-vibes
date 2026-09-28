@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "NCC", collectorNumber = "261")
 @CardRegistration(set = "SLD", collectorNumber = "2486")
 @CardRegistration(set = "TDC", collectorNumber = "198")
+@CardRegistration(set = "AFC", collectorNumber = "112")
 public class Victimize extends Card {
 
     public Victimize() {

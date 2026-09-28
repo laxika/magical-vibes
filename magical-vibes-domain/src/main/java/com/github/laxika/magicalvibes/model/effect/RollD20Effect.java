@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /** Rolls a d20 and resolves the branch matching the result range. */
 public record RollD20Effect(CardEffect zeroOrLess, CardEffect oneToNine, CardEffect tenToNineteen,
                             CardEffect twenty, DynamicAmount amountToSubtract,
-                            int firstBranchMax, boolean repeatOnHighBranch,
+                            DynamicAmount amountToAdd, int firstBranchMax, boolean repeatOnHighBranch,
                             boolean twentyUsesRawResult)
         implements CardEffect {
 
@@ -18,24 +18,31 @@ public record RollD20Effect(CardEffect zeroOrLess, CardEffect oneToNine, CardEff
 
     /** Creates the standard 1-9, 10-19, and 20 ranges. */
     public RollD20Effect(CardEffect oneToNine, CardEffect tenToNineteen, CardEffect twenty) {
-        this(null, oneToNine, tenToNineteen, twenty, null, 9, false, false);
+        this(null, oneToNine, tenToNineteen, twenty, null, null, 9, false, false);
     }
 
     /** Creates four branches for results 1, 2-9, 10-19, and 20. */
     public RollD20Effect(CardEffect one, CardEffect twoToNine, CardEffect tenToNineteen,
                          CardEffect twenty) {
-        this(one, twoToNine, tenToNineteen, twenty, new Fixed(1), 8, false, true);
+        this(one, twoToNine, tenToNineteen, twenty, new Fixed(1), null, 8, false, true);
     }
 
     /** Creates a two-outcome roll with the second branch covering results 10 through 20. */
     public RollD20Effect(CardEffect oneToNine, CardEffect tenToTwenty) {
-        this(null, oneToNine, tenToTwenty, null, null, 9, false, false);
+        this(null, oneToNine, tenToTwenty, null, null, null, 9, false, false);
     }
 
     /** Creates a roll whose high branch may be followed by another roll. */
     public static RollD20Effect withRepeatOnHighBranch(CardEffect lowBranch, CardEffect highBranch,
                                                         int lowBranchMax) {
-        return new RollD20Effect(null, lowBranch, highBranch, null, null, lowBranchMax, true, false);
+        return new RollD20Effect(null, lowBranch, highBranch, null, null, null, lowBranchMax, true, false);
+    }
+
+    /** Creates a two-outcome roll whose result is increased by the evaluated amount. */
+    public static RollD20Effect withAddedAmount(DynamicAmount amountToAdd,
+                                                 CardEffect lowBranch, CardEffect highBranch) {
+        return new RollD20Effect(null, lowBranch, highBranch, null, null, amountToAdd,
+                14, false, false);
     }
 
     /** Creates a roll whose result is reduced by an amount before branch selection. */
@@ -43,20 +50,20 @@ public record RollD20Effect(CardEffect zeroOrLess, CardEffect oneToNine, CardEff
                                                        CardEffect zeroOrLess, CardEffect oneToNine,
                                                        CardEffect tenToNineteen, CardEffect twenty) {
         return new RollD20Effect(zeroOrLess, oneToNine, tenToNineteen, twenty,
-                amountToSubtract, 9, false, false);
+                amountToSubtract, null, 9, false, false);
     }
 
     /** Backward-compatible full constructor with ordinary natural-20 branch semantics. */
     public RollD20Effect(CardEffect zeroOrLess, CardEffect oneToNine, CardEffect tenToNineteen,
                          CardEffect twenty, DynamicAmount amountToSubtract, int firstBranchMax,
                          boolean repeatOnHighBranch) {
-        this(zeroOrLess, oneToNine, tenToNineteen, twenty, amountToSubtract, firstBranchMax,
-                repeatOnHighBranch, false);
+        this(zeroOrLess, oneToNine, tenToNineteen, twenty, amountToSubtract, null,
+                firstBranchMax, repeatOnHighBranch, false);
     }
 
     public RollD20Effect copyForRepeat() {
         return new RollD20Effect(zeroOrLess, oneToNine, tenToNineteen, twenty,
-                amountToSubtract, firstBranchMax, repeatOnHighBranch, twentyUsesRawResult);
+                amountToSubtract, amountToAdd, firstBranchMax, repeatOnHighBranch, twentyUsesRawResult);
     }
 
     @Override

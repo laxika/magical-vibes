@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "16")
 @CardRegistration(set = "UMA", collectorNumber = "33")
+@CardRegistration(set = "AFC", collectorNumber = "71")
 public class RonomUnicorn extends Card {
 
     public RonomUnicorn() {

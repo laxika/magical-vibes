@@ -45,6 +45,8 @@ public class RecklessEndeavorEffectHandler implements NormalEffectHandlerBean {
                     + firstRoll + " and " + secondRoll + "."));
             triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                     gameData, entry.getControllerId(), 2, Math.max(firstRoll, secondRoll));
+            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                    gameData, entry.getControllerId(), 12, firstRoll, secondRoll);
         }
 
         int chosenRoll;

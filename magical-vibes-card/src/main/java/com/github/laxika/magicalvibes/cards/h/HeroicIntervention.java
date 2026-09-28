@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M21", collectorNumber = "188")
+@CardRegistration(set = "AFC", collectorNumber = "161")
 @CardRegistration(set = "AER", collectorNumber = "109")
 @CardRegistration(set = "SLD", collectorNumber = "1750")
 @CardRegistration(set = "SLD", collectorNumber = "1872")

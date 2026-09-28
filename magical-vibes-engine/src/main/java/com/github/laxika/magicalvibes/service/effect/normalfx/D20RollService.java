@@ -21,7 +21,16 @@ public class D20RollService {
 
     /** Rolls a d20 while applying each advantage replacement effect controlled by the player. */
     public int roll(GameData gameData, UUID rollingPlayerId) {
-        int diceCount = 1;
+        return roll(gameData, rollingPlayerId, 1);
+    }
+
+    /** Rolls the requested number of d20s while applying the player's extra-die effects. */
+    public int roll(GameData gameData, UUID rollingPlayerId, int baseDiceCount) {
+        if (baseDiceCount < 1) {
+            throw new IllegalArgumentException("At least one d20 must be rolled");
+        }
+
+        int diceCount = baseDiceCount;
         List<Permanent> battlefield = gameData == null || rollingPlayerId == null
                 ? null : gameData.playerBattlefields.get(rollingPlayerId);
         if (battlefield != null) {

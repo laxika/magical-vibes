@@ -40,6 +40,8 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean {
         entry.setEventValue(rawResult);
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                 gameData, entry.getControllerId(), 1, rawResult);
+        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                gameData, entry.getControllerId(), 20, rawResult);
         if (rawResult == 20) {
             triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, entry.getControllerId());
         }
@@ -51,6 +53,13 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean {
             int amount = amountEvaluationService.evaluate(gameData, rollEffect.amountToSubtract(),
                     AmountContext.forStackEntry(entry, source));
             result -= amount;
+        }
+        if (rollEffect.amountToAdd() != null) {
+            var source = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            int amount = amountEvaluationService.evaluate(gameData, rollEffect.amountToAdd(),
+                    AmountContext.forStackEntry(entry, source));
+            result += amount;
         }
 
         boolean isTwenty = (rollEffect.twentyUsesRawResult() ? rawResult : result) == 20;

@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "145")
 @CardRegistration(set = "TLE", collectorNumber = "154")
 @CardRegistration(set = "DBL", collectorNumber = "309")
+@CardRegistration(set = "AFC", collectorNumber = "76")
 public class ValorousStance extends Card {
 
     public ValorousStance() {

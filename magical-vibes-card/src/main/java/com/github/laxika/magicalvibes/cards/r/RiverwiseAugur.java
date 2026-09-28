@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "48")
+@CardRegistration(set = "AFC", collectorNumber = "93")
 public class RiverwiseAugur extends Card {
 
     public RiverwiseAugur() {

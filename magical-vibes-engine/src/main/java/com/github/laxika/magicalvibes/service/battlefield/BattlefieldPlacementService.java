@@ -279,7 +279,7 @@ public class BattlefieldPlacementService {
             applySpellEntryCounters(gameData, controllerId, permanent);
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
-            applyEntryReplacementEffects(gameData, controllerId, permanent);
+            applyEntryReplacementEffects(gameData, controllerId, permanent, xValue);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
@@ -1408,12 +1408,12 @@ public class BattlefieldPlacementService {
     }
 
     private void applyEntryReplacementEffects(GameData gameData, UUID controllerId,
-                                              Permanent permanent) {
+                                              Permanent permanent, int xValue) {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect);
+            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue);
         }
     }
 

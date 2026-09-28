@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "213")
 @CardRegistration(set = "DSC", collectorNumber = "236")
+@CardRegistration(set = "AFC", collectorNumber = "194")
 public class TheaterOfHorrors extends Card {
 
     public TheaterOfHorrors() {

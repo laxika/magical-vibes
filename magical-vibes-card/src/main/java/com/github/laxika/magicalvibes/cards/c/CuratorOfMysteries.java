@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "49")
 @CardRegistration(set = "AKR", collectorNumber = "58")
+@CardRegistration(set = "AFC", collectorNumber = "81")
 public class CuratorOfMysteries extends Card {
 
     public CuratorOfMysteries() {

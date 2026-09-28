@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "AVR", collectorNumber = "217")
 @CardRegistration(set = "GN3", collectorNumber = "118")
 @CardRegistration(set = "C14", collectorNumber = "251")
+@CardRegistration(set = "AFC", collectorNumber = "212")
 public class MoonsilverSpear extends Card {
 
     public MoonsilverSpear() {

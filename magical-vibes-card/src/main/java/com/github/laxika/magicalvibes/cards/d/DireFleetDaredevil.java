@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "99")
+@CardRegistration(set = "AFC", collectorNumber = "121")
 public class DireFleetDaredevil extends Card {
 
     public DireFleetDaredevil() {

@@ -1910,6 +1910,8 @@ public class CombatAttackService {
                             attackTrigger.setTargetId(attacker.getId());
                             attackTrigger.setNonTargeting(true);
                             attackTrigger.setTriggeringPermanentId(attacker.getId());
+                            attackTrigger.setTriggeringPermanentOwnerId(
+                                    gameData.defaultControllerOf(attacker.getId()));
                             if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
                                     && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
                                 attackTrigger.setEventValue(attacker.getCard().getManaValue());

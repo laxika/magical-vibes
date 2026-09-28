@@ -1477,7 +1477,11 @@ public class StackResolutionService {
             // otherwise to graveyard).
         } else if (exileSpellEffect != null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.addToExile(ownerId, physicalCard);
+            if (entry.getExileWithSourcePermanentId() == null) {
+                gameData.addToExile(ownerId, physicalCard);
+            } else {
+                gameData.addToExile(ownerId, physicalCard, entry.getExileWithSourcePermanentId());
+            }
             entry.getEffectsToResolve().stream()
                     .filter(ExileSpellEffect.class::isInstance)
                     .map(ExileSpellEffect.class::cast)

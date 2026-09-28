@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "970")
 @CardRegistration(set = "SLD", collectorNumber = "2493")
+@CardRegistration(set = "AFC", collectorNumber = "25")
 public class GrimHireling extends Card {
 
     public GrimHireling() {

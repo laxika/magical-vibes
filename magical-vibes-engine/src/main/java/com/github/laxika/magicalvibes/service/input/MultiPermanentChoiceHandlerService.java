@@ -176,6 +176,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandler
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DanseMacabreEffectHandler
+            danseMacabreEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachOpponentSacrificesCreatureCreateTokensEffectHandler
             eachOpponentSacrificesCreatureCreateTokensHandler;
@@ -249,6 +251,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
             playerChoosesUpToPermanentsThenSacrificesRestEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.NihiloorTapAndStealEffectHandler
+            nihiloorTapAndStealEffectHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -308,6 +312,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two players must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice
+                && permanentIds.size() > 1) {
+            throw new IllegalStateException("At most one creature may be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection sagaTarget
                 && permanentIds.size() < sagaTarget.minTargets()) {
             throw new IllegalStateException("Too few targets selected");
@@ -336,6 +344,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one nontoken creature must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
                 && permanentIds.size() != 1) {
@@ -863,6 +875,11 @@ public class MultiPermanentChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
+        } else if (context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice ctx) {
+            danseMacabreEffectHandler.completeChoice(gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx) {
             eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -913,6 +930,8 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
             handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToBlockThisTurnIfAble) {
+            handleChooseCreaturesToBlockThisTurnIfAble(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CulturalExchange ctx) {
             culturalExchangeSupport.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
@@ -923,6 +942,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapCreaturesThenQueueReflexiveAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsThenQueueReflexiveAbility ctx) {
             handleTapPermanentsThenQueueReflexiveAbility(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice ctx) {
+            nihiloorTapAndStealEffectHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped) {
             handleTapPermanentsDrawPerTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsAndPutCounters ctx) {
@@ -2190,6 +2211,22 @@ public class MultiPermanentChoiceHandlerService {
                 + " creature(s) that must attack during their next turn; other creatures can't attack."));
 
         // Standard completion: SBA → may abilities → resume effects
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleChooseCreaturesToBlockThisTurnIfAble(GameData gameData, UUID chooserId,
+                                                            List<UUID> permanentIds) {
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && gameQueryService.isCreature(gameData, permanent)) {
+                permanent.setMustBlockThisTurnIfAble(true);
+            }
+        }
+
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.get(chooserId)
+                        + " chooses " + permanentIds.size()
+                        + " creature(s) that must block this combat if able."));
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

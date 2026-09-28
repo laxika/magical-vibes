@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SCG", collectorNumber = "115")
+@CardRegistration(set = "AFC", collectorNumber = "156")
 public class DecreeOfSavagery extends Card {
 
     private static final String PROMPT = "Put four +1/+1 counters on target creature?";

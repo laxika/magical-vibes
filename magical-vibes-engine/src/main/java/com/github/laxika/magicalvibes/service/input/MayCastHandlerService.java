@@ -1617,6 +1617,7 @@ public class MayCastHandlerService {
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
                 .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
+                .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,

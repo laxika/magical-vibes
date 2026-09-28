@@ -132,6 +132,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HostileNegotiationsOpponentPileChoice.class,
                 this::projectHostileNegotiationsOpponentPileChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
+        register(PendingInteraction.ReturnExiledCardsToHandChoice.class,
+                this::projectReturnExiledCardsToHandChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
         register(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class,
                 this::projectEachPlayerChoosesOneCardOfEachColorChoice);
@@ -200,6 +202,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectRemoveTimeCounterCostChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class,
+                this::projectTargetPlayerChoosesCardsFromHandChoice);
         register(PendingInteraction.TargetedHandBattlefieldChoice.class,
                 this::projectTargetedHandBattlefieldChoice);
         register(PendingInteraction.SpectersShriekChoice.class, this::projectSpectersShriekChoice);
@@ -732,6 +736,16 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to seven face-up exiled cards you own to put on top of your library.");
+    }
+
+    private InteractionPromptMessage projectReturnExiledCardsToHandChoice(
+            GameData gameData, PendingInteraction.ReturnExiledCardsToHandChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.maxCount(),
+                "Choose up to " + interaction.maxCount() + " cards exiled with "
+                        + interaction.sourceName() + " to put into their owners' hands.");
     }
 
     private InteractionPromptMessage projectKeepCardsInHandChoice(
@@ -1278,6 +1292,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(),
                 interaction.prompt(),
                 interaction.optional());
+    }
+
+    private InteractionPromptMessage projectTargetPlayerChoosesCardsFromHandChoice(
+            GameData gameData, PendingInteraction.TargetPlayerChoosesCardsFromHandChoice interaction) {
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
+                interaction.validIndices(), interaction.prompt(), false);
     }
 
     private InteractionPromptMessage projectWordOfCommandCardChoice(

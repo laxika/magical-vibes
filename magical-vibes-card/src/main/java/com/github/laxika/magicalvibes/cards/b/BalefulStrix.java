@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "SLZ", collectorNumber = "88")
 @CardRegistration(set = "SLZ", collectorNumber = "209")
 @CardRegistration(set = "SLZ", collectorNumber = "330")
+@CardRegistration(set = "AFC", collectorNumber = "177")
 public class BalefulStrix extends Card {
 
     public BalefulStrix() {

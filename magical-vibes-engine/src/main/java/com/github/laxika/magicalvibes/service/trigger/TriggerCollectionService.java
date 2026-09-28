@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect;
@@ -607,6 +608,8 @@ public class TriggerCollectionService {
             }
 
             if (delayed.targetFilter() != null) {
+                boolean optionalTarget = delayed.resolvedEffects().stream()
+                        .anyMatch(effect -> effect instanceof OptionalTargetEffect || effect.hasOptionalTarget());
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         delayed.sourceCard(),
                         delayed.controllerId(),
@@ -615,7 +618,14 @@ public class TriggerCollectionService {
                         delayed.targetFilter(),
                         0,
                         delayed.sourcePermanentId(),
-                        spellCard.getManaValue()));
+                        delayed.sourcePermanentSnapshot(),
+                        optionalTarget,
+                        null,
+                        null,
+                        delayed.controllerId(),
+                        spellCard.getManaValue(),
+                        null,
+                        false));
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
                 log.info("Game {} - {} delayed spell-cast trigger awaits a target for {}",
@@ -2491,6 +2501,26 @@ public class TriggerCollectionService {
         for (Permanent perm : List.copyOf(ownBattlefield)) {
             dispatchSlot(gameData, perm, rollingPlayerId,
                     EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, ctx);
+        }
+    }
+
+    /** Fires one trigger for each die whose natural result was that die's highest face. */
+    public void checkControllerRollsHighestNaturalResultTriggers(GameData gameData,
+                                                                  UUID rollingPlayerId,
+                                                                  int sides,
+                                                                  int... results) {
+        if (rollingPlayerId == null || sides < 1 || results == null || results.length == 0) return;
+
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(rollingPlayerId);
+        if (ownBattlefield == null) return;
+
+        for (int result : results) {
+            if (result != sides) continue;
+            var ctx = new TriggerContext.DiceRoll(rollingPlayerId, 1, result);
+            for (Permanent perm : List.copyOf(ownBattlefield)) {
+                dispatchSlot(gameData, perm, rollingPlayerId,
+                        EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT, ctx);
+            }
         }
     }
 

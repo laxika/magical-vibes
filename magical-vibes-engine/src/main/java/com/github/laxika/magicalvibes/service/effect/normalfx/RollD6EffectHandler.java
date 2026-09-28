@@ -34,6 +34,8 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
                 + " rolls a d6 for " + entry.getCard().getName() + ": " + result + "."));
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                 gameData, entry.getControllerId(), 1, result);
+        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                gameData, entry.getControllerId(), 6, result);
 
         CardEffect branch = rollEffect.branches().get(result - 1);
         int effectIndex = -1;

@@ -114,6 +114,8 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Source permanent to record when an ExileSpellEffect tracks the spell in exile. */
+    @Setter private UUID exileWithSourcePermanentId;
     /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
     @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
@@ -367,6 +369,8 @@ public class StackEntry {
     @Setter private UUID triggeringPermanentId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
+    /** Owner of the triggering permanent when its non-targeting reference was captured. */
+    @Setter private UUID triggeringPermanentOwnerId;
     /** Power and toughness captured for a permanent when its trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;
     @Setter private Integer triggeringPermanentToughnessAtTrigger;
@@ -723,6 +727,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.exileWithSourcePermanentId = source.exileWithSourcePermanentId;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
@@ -825,6 +830,7 @@ public class StackEntry {
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
+        this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()

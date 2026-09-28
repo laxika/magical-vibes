@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "SLD", collectorNumber = "2508")
+@CardRegistration(set = "AFC", collectorNumber = "3")
 public class SefrisOfTheHiddenWays extends Card {
 
     public SefrisOfTheHiddenWays() {

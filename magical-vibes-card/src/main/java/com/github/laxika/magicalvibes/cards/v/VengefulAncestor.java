@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TDC", collectorNumber = "242")
+@CardRegistration(set = "AFC", collectorNumber = "35")
 public class VengefulAncestor extends Card {
 
     public VengefulAncestor() {

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandRepl
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1617,6 +1618,40 @@ public class PermanentRemovalService {
             UUID controllerId,
             UUID sourcePermanentId) {}
 
+    private boolean ownSubtypeExileReplacement(GameData gameData, Permanent dyingPermanent,
+                                               UUID dyingControllerId,
+                                               Set<CardSubtype> dyingSubtypes) {
+        if (dyingSubtypes.isEmpty()) {
+            return false;
+        }
+
+        if (hasOwnSubtypeExileReplacement(dyingPermanent, dyingSubtypes)) {
+            return true;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingControllerId);
+        if (battlefield != null && battlefield.stream()
+                .anyMatch(source -> hasOwnSubtypeExileReplacement(source, dyingSubtypes))) {
+            return true;
+        }
+
+        for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
+            UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
+            if (dyingControllerId.equals(sourceControllerId)
+                    && hasOwnSubtypeExileReplacement(entry.getValue(), dyingSubtypes)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasOwnSubtypeExileReplacement(Permanent source, Set<CardSubtype> dyingSubtypes) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::isInstance)
+                .map(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::cast)
+                .anyMatch(effect -> dyingSubtypes.contains(effect.subtype()));
+    }
+
     /**
      * True when a player other than {@code ownerId} controls a permanent with an opponent-owned
      * creature-card graveyard replacement, and the dying card is not a token.
@@ -1744,8 +1779,11 @@ public class PermanentRemovalService {
         OpponentDyingCreatureExileReplacement opponentExileReplacement = wasCreature
                 ? opponentDyingCreatureExileReplacement(gameData, controllerId, target.getCard())
                 : null;
+        boolean ownSubtypeExileReplacement = wasCreature
+                && ownSubtypeExileReplacement(gameData, target, controllerId, creatureSubtypesAtDeath);
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
                 || opponentExileReplacement != null
+                || ownSubtypeExileReplacement
                 || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
                 || (wasCreature && damagerExilesDyingCreature(gameData, target))
                 || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty())

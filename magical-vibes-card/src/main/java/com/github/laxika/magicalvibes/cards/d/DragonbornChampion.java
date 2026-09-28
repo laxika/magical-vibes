@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2498")
+@CardRegistration(set = "AFC", collectorNumber = "45")
 public class DragonbornChampion extends Card {
 
     public DragonbornChampion() {

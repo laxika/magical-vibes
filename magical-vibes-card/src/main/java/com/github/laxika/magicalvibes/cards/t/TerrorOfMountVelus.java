@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "FDN", collectorNumber = "549")
+@CardRegistration(set = "AFC", collectorNumber = "145")
 public class TerrorOfMountVelus extends Card {
 
     public TerrorOfMountVelus() {

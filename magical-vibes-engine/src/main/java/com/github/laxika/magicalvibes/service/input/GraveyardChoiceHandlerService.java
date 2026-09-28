@@ -1207,12 +1207,17 @@ public class GraveyardChoiceHandlerService {
         if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {
             gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = false;
             gameData.interaction.clearAwaitingInput();
+            List<Card> cardsToReturn = new ArrayList<>();
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                    graveyardReturnSupport.putCardOntoBattlefield(gameData, player.getId(), card);
+                    cardsToReturn.add(card);
                 }
+            }
+            if (!cardsToReturn.isEmpty()) {
+                graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
+                        gameData, Map.of(player.getId(), cardsToReturn), false, null);
             }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;

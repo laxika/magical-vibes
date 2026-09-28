@@ -358,9 +358,18 @@ public class GraveyardTargetingService {
     public void handleReturnToBattlefieldETBTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
             int maxTargets, Integer maxTotalManaValue, int xValue) {
+        handleReturnToBattlefieldETBTargeting(gameData, controllerId, card, effects, returnEffect,
+                maxTargets, maxTotalManaValue, xValue, null);
+    }
+
+    /** ETB targeting variant that keeps the entering Aura's permanent id for attached returns. */
+    public void handleReturnToBattlefieldETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
+            int maxTargets, Integer maxTotalManaValue, int xValue, UUID sourcePermanentId) {
         handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
                 returnEffect.filter(), maxTargets, 0,
-                " from your graveyard to return to the battlefield.", maxTotalManaValue, xValue);
+                " from your graveyard to return to the battlefield.", maxTotalManaValue, xValue,
+                sourcePermanentId);
     }
 
     /**
@@ -440,6 +449,13 @@ public class GraveyardTargetingService {
     private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
             String promptSuffix, Integer maxTotalManaValue, int xValue) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects, filter,
+                requestedMaxTargets, minTargets, promptSuffix, maxTotalManaValue, xValue, null);
+    }
+
+    private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
+            String promptSuffix, Integer maxTotalManaValue, int xValue, UUID sourcePermanentId) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
         if (graveyard != null) {
@@ -470,6 +486,12 @@ public class GraveyardTargetingService {
                     controllerId,
                     card.getName() + "'s ETB ability",
                     new ArrayList<>(effects),
+                    xValue,
+                    null,
+                    sourcePermanentId,
+                    Map.of(),
+                    null,
+                    List.of(),
                     List.of()
             ));
             gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
@@ -482,6 +504,12 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
             gameData.graveyardTargetOperation.xValue = xValue;
             gameData.graveyardTargetOperation.totalManaValueCap = maxTotalManaValue;
+            gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+            if (sourcePermanentId != null) {
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                gameData.graveyardTargetOperation.triggeringPermanentId = sourcePermanent == null
+                        ? null : sourcePermanent.getAttachedTo();
+            }
             String choicePrompt = minTargets > 0
                     ? "Choose " + minTargets + " target card" + (minTargets != 1 ? "s" : "") + promptSuffix
                     : "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")

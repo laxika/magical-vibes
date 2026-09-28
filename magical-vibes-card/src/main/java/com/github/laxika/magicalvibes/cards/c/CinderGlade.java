@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "TMC", collectorNumber = "61")
 @CardRegistration(set = "40K", collectorNumber = "269")
 @CardRegistration(set = "TDC", collectorNumber = "350")
+@CardRegistration(set = "AFC", collectorNumber = "229")
 public class CinderGlade extends Card {
 
     public CinderGlade() {

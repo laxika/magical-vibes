@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "150")
 @CardRegistration(set = "SOC", collectorNumber = "257")
+@CardRegistration(set = "AFC", collectorNumber = "146")
 public class ThroesOfChaos extends Card {
 
     public ThroesOfChaos() {

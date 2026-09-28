@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "LTC", collectorNumber = "324")
 @CardRegistration(set = "MSC", collectorNumber = "257")
 @CardRegistration(set = "MSC", collectorNumber = "485")
+@CardRegistration(set = "AFC", collectorNumber = "256")
 public class PrairieStream extends Card {
 
     public PrairieStream() {

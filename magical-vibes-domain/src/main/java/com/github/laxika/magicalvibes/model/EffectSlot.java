@@ -215,6 +215,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever this permanent's controller rolls one or more dice. */
     ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
+    /** Triggers once for each die showing its unmodified highest natural result. */
+    ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT,
     ON_CONTROLLER_BENDS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
