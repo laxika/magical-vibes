@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "9")
+@CardRegistration(set = "HBG", collectorNumber = "87")
 public class DawnbringerCleric extends Card {
 
     public DawnbringerCleric() {

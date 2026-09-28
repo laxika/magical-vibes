@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -119,14 +120,16 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
 
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
         if (!(thenEffect instanceof ReturnCardFromGraveyardEffect)) {
+            UUID targetId = thenEffect.targetSpec() == TargetSpec.NONE
+                    ? null : entry.getTargetId();
             StackEntry reflexiveAbility = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     entry.getCard(),
                     entry.getControllerId(),
                     entry.getCard().getName() + "'s reflexive ability",
                     new ArrayList<>(List.of(thenEffect)),
-                    entry.getSourcePermanentId(),
-                    List.of()
+                    targetId,
+                    entry.getSourcePermanentId()
             );
             reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             gameData.stack.add(reflexiveAbility);

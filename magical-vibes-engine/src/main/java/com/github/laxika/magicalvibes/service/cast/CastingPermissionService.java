@@ -1448,9 +1448,11 @@ public class CastingPermissionService {
     private boolean matchesLandFilter(GameData gameData, UUID playerId, Card card,
                                       PlayLandsFromGraveyardPermission permission,
                                       UUID sourceCardId) {
-        return permission.landFilter() == null
+        return (!permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                || cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card))
+                && (permission.landFilter() == null
                 || predicateEvaluationService.matchesCardPredicate(
-                card, permission.landFilter(), sourceCardId, gameData, playerId);
+                card, permission.landFilter(), sourceCardId, gameData, playerId));
     }
 
     public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
@@ -1750,6 +1752,29 @@ public class CastingPermissionService {
                 .map(CastSpellsFromGraveyardPermission.class::cast)
                 .anyMatch(permission -> predicateEvaluationService.matchesCardPredicate(
                         card, permission.filter(), null));
+    }
+
+    private boolean matchesGraveyardPlayPermission(GameData gameData, UUID playerId, Card card,
+                                                    GraveyardPlayPermission permission) {
+        if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                && !cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card)) {
+            return false;
+        }
+        if (permission instanceof CastSpellsFromGraveyardPermission castPermission) {
+            return predicateEvaluationService.matchesCardPredicate(card, castPermission.filter(), null);
+        }
+        if (permission instanceof PlayLandsFromGraveyardPermission landPermission) {
+            return matchesLandFilter(gameData, playerId, card, landPermission, null);
+        }
+        return false;
+    }
+
+    private boolean cardWasPutIntoGraveyardFromLibraryThisTurn(GameData gameData, Card card) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        return graveyardOwnerId != null
+                && gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of())
+                .contains(card.getId());
     }
 
     /**

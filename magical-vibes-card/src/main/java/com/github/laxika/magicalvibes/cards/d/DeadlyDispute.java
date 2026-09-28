@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2091")
 @CardRegistration(set = "MAR", collectorNumber = "64")
 @CardRegistration(set = "FCA", collectorNumber = "33")
+@CardRegistration(set = "HBG", collectorNumber = "150")
 @CardRegistration(set = "MSC", collectorNumber = "794")
 @CardRegistration(set = "TDC", collectorNumber = "177")
 public class DeadlyDispute extends Card {

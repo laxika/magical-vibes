@@ -632,6 +632,8 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardScreamCounters = new ConcurrentHashMap<>();
     /** Maps suspended exiled card UUID → remaining time counter count. */
     public final Map<UUID, Integer> exiledCardTimeCounters = new ConcurrentHashMap<>();
+    /** Exiled card UUIDs with time counters that do not have suspend's automatic upkeep trigger. */
+    public final Set<UUID> exiledCardsWithNonSuspendTimeCounters = ConcurrentHashMap.newKeySet();
     /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
     public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → hit counter count (Etrata, the Silencer). */
@@ -2080,6 +2082,8 @@ public class GameData {
     public final Map<UUID, UUID> permanentLeaveBatchWatcherControllers = new ConcurrentHashMap<>();
     /** Creature permanents that left during a non-dying battlefield-leave batch. */
     public final Map<UUID, UUID> permanentLeaveBatchPendingCreatures = new ConcurrentHashMap<>();
+    /** Permanents that left during a battlefield-leave batch, keyed by permanent and controller. */
+    public final Map<UUID, UUID> permanentLeaveBatchPendingPermanents = new ConcurrentHashMap<>();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -5516,6 +5520,7 @@ public class GameData {
             exileCardsEnterTapped.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
+            exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             exiledCardHitCounters.remove(cardId);
             lukkaExileCastPermissions.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
@@ -6813,6 +6818,7 @@ public class GameData {
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardScreamCounters.putAll(this.exiledCardScreamCounters);
         copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
+        copy.exiledCardsWithNonSuspendTimeCounters.addAll(this.exiledCardsWithNonSuspendTimeCounters);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
         copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
         copy.exiledCardRefineCounters.putAll(this.exiledCardRefineCounters);
@@ -7416,6 +7422,7 @@ public class GameData {
         copy.permanentLeaveBatchWatchers.putAll(this.permanentLeaveBatchWatchers);
         copy.permanentLeaveBatchWatcherControllers.putAll(this.permanentLeaveBatchWatcherControllers);
         copy.permanentLeaveBatchPendingCreatures.putAll(this.permanentLeaveBatchPendingCreatures);
+        copy.permanentLeaveBatchPendingPermanents.putAll(this.permanentLeaveBatchPendingPermanents);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->

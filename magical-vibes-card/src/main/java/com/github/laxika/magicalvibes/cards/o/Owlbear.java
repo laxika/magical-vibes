@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "198")
+@CardRegistration(set = "HBG", collectorNumber = "218")
 public class Owlbear extends Card {
 
     public Owlbear() {

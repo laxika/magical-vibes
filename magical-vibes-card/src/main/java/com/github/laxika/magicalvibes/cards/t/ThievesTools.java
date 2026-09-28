@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "122")
+@CardRegistration(set = "HBG", collectorNumber = "171")
 public class ThievesTools extends Card {
 
     public ThievesTools() {

@@ -13,7 +13,8 @@ import java.util.Objects;
  * library.
  */
 public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
-                                LibrarySearchDestination destination, ManaValueBound manaValueBound)
+                                LibrarySearchDestination destination, ManaValueBound manaValueBound,
+                                boolean faceDown)
         implements CardEffect {
 
     public SeekLibraryEffect {
@@ -22,23 +23,28 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter, LibrarySearchDestination destination) {
-        this(new Fixed(nonNegative(count)), filter, destination, null);
+        this(new Fixed(nonNegative(count)), filter, destination, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination) {
-        this(count, filter, destination, null);
+        this(count, filter, destination, null, false);
+    }
+
+    public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
+                             LibrarySearchDestination destination, ManaValueBound manaValueBound) {
+        this(count, filter, destination, manaValueBound, false);
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter) {
-        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null);
+        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null, false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue, boolean entersTapped) {
         this(new Fixed(1), filter,
                 entersTapped ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                         : LibrarySearchDestination.BATTLEFIELD,
-                new ManaValueBound(new Fixed(maxManaValue), false, 0));
+                new ManaValueBound(new Fixed(maxManaValue), false, 0), false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue) {

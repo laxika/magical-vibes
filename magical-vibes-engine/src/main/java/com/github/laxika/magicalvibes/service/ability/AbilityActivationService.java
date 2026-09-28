@@ -4950,11 +4950,19 @@ public class AbilityActivationService {
             List<UUID> candidates = collectSacrificeAnyNumberCostCandidates(
                     gameData, playerId, permanent, sacrificeAnyNumberCost);
             if (!candidates.isEmpty()) {
-                playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, candidates.size(),
+                int maximumCount = sacrificeAnyNumberCost.maximumCount() > 0
+                        ? Math.min(sacrificeAnyNumberCost.maximumCount(), candidates.size())
+                        : candidates.size();
+                String sacrificeChoiceDescription = sacrificeAnyNumberCost.maximumCount() > 0
+                        ? permanent.getCard().getName() + " — choose up to " + maximumCount
+                                + " permanents to sacrifice as a cost."
+                        : permanent.getCard().getName()
+                                + " — choose any number of permanents to sacrifice as a cost.";
+                playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, maximumCount,
                         new MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost(
                                 playerId, sourceId, effectiveIndex, effectiveXValue, targetId, targetZone,
                                 targetIds, damageAssignments, ability, new Permanent(permanent), sacrificeAnyNumberCost),
-                        permanent.getCard().getName() + " — choose any number of creatures to sacrifice as a cost.");
+                        sacrificeChoiceDescription);
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
@@ -5694,6 +5702,9 @@ public class AbilityActivationService {
                 .map(SacrificeAnyNumberOfPermanentsCost.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the required sacrifice cost"));
+        if (cost.maximumCount() > 0 && permanentIds.size() > cost.maximumCount()) {
+            throw new IllegalStateException("Too many permanents selected for the sacrifice cost");
+        }
         FilterContext filterContext = FilterContext.of(gameData).withSourcePermanentId(source.getId());
         for (UUID permanentId : permanentIds) {
             Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
@@ -5725,14 +5736,25 @@ public class AbilityActivationService {
                 .map(SacrificeAnyNumberOfPermanentsCost.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the required sacrifice cost"));
-        int totalPower = permanentIds.stream()
-                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
-                .filter(Objects::nonNull)
-                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
-                .sum();
-        int costDerivedXValue = cost.trackSacrificedPower()
-                ? Math.max(0, totalPower)
-                : permanentIds.size();
+        int costDerivedXValue;
+        if (cost.trackDistinctCardTypes()) {
+            Set<CardType> cardTypes = new HashSet<>();
+            permanentIds.stream()
+                    .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                    .filter(Objects::nonNull)
+                    .forEach(permanent -> cardTypes.addAll(
+                            gameQueryService.getEffectiveCardTypes(gameData, permanent)));
+            costDerivedXValue = cardTypes.size();
+        } else if (cost.trackSacrificedPower()) {
+            int totalPower = permanentIds.stream()
+                    .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                    .filter(Objects::nonNull)
+                    .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                    .sum();
+            costDerivedXValue = Math.max(0, totalPower);
+        } else {
+            costDerivedXValue = permanentIds.size();
+        }
         List<UUID> sacrificedCardIds = permanentIds.stream()
                 .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
                 .filter(Objects::nonNull)

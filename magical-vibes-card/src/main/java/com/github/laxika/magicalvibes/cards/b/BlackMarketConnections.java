@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "155")
 @CardRegistration(set = "MSC", collectorNumber = "346")
 @CardRegistration(set = "ACR", collectorNumber = "87")
+@CardRegistration(set = "HBG", collectorNumber = "145")
 public class BlackMarketConnections extends Card {
 
     public BlackMarketConnections() {

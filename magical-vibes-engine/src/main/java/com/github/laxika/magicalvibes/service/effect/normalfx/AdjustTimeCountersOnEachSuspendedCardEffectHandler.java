@@ -35,7 +35,9 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
         for (UUID cardId : suspendedCardIds) {
             ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
             Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
-            if (exiledEntry == null || exiledEntry.faceDown() || timeCounters == null || timeCounters <= 0) {
+            if (exiledEntry == null || exiledEntry.faceDown()
+                    || gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
+                    || timeCounters == null || timeCounters <= 0) {
                 continue;
             }
             if (adjustment.controllerOwnedOnly()

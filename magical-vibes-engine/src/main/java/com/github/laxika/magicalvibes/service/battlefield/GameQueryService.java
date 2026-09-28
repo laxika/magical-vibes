@@ -536,7 +536,8 @@ public class GameQueryService {
         for (Permanent perm : bf) {
             if (!perm.isFaceDown()
                     && !perm.isLosesAllAbilitiesUntilEndOfTurn()
-                    && perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
+                    && staticEffectsIncludingTemporary(gameData, perm, playerId).stream()
+                    .anyMatch(effectType::isInstance)) {
                 return true;
             }
         }
@@ -8969,7 +8970,11 @@ public class GameQueryService {
         Set<CardSubtype> result = new HashSet<>();
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (!bonus.subtypeOverriding()) {
-            addCreatureSubtypes(result, permanent.getCard().getSubtypes());
+            if (permanent.isFaceDown()) {
+                addCreatureSubtypes(result, permanent.getFaceDownSubtypes());
+            } else {
+                addCreatureSubtypes(result, permanent.getCard().getSubtypes());
+            }
         }
         addCreatureSubtypes(result, permanent.getTransientSubtypes());
         addCreatureSubtypes(result, permanent.getGrantedSubtypes());
@@ -9017,7 +9022,7 @@ public class GameQueryService {
         return false;
     }
 
-    private void addCreatureSubtypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+    private void addCreatureSubtypes(Set<CardSubtype> target, Collection<CardSubtype> subtypes) {
         for (CardSubtype subtype : subtypes) {
             if (isCreatureSubtype(subtype)) {
                 target.add(subtype);

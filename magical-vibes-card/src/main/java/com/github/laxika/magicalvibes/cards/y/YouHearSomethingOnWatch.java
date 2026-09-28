@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "42")
+@CardRegistration(set = "HBG", collectorNumber = "106")
 public class YouHearSomethingOnWatch extends Card {
 
     public YouHearSomethingOnWatch() {

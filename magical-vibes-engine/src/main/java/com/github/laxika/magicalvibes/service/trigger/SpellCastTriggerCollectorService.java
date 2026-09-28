@@ -1418,9 +1418,9 @@ public class SpellCastTriggerCollectorService {
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
                         trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),
-                        trigger.mayChooseNewTargets(),
-                        trigger.grantHasteToPermanentSpell(), markOnAcceptance,
-                        trigger.permanentSpellToken());
+                        trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
+                        markOnAcceptance, false, trigger.permanentSpellToken(),
+                        trigger.sacrificeAtEndStep());
         if (trigger.beforeCopyEffect() != null) {
             copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
         }
@@ -3274,6 +3274,10 @@ public class SpellCastTriggerCollectorService {
 
     private boolean effectCarriesTriggeringSpellManaValue(CardEffect effect) {
         if (effect instanceof TriggeringSpellManaValueEffect) {
+            return true;
+        }
+        if (effect instanceof DealDamageToAnyTargetEffect damage
+                && amountEvaluationService.referencesTargetSpellManaValue(damage.damage())) {
             return true;
         }
         if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {

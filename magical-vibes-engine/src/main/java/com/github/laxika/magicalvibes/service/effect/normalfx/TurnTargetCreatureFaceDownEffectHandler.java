@@ -38,7 +38,7 @@ public class TurnTargetCreatureFaceDownEffectHandler implements NormalEffectHand
                 continue;
             }
             target.setCard(target.getOriginalCard());
-            target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            target.setFaceDown(2, 2, Set.of(CardType.CREATURE), turnFaceDown.faceDownSubtypes());
         }
     }
 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "251")
+@CardRegistration(set = "HBG", collectorNumber = "265")
 public class SpikedPitTrap extends Card {
 
     public SpikedPitTrap() {

@@ -263,6 +263,14 @@ public class LibraryChoiceHandlerService {
                     : deck;
         }
 
+        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                && followUp.selectedCardFollowUp() != null
+                && followUp.selectedCardFollowUp().d20BasicLandSearch() != null) {
+            handleD20BasicLandSearchChoice(gameData, player, cardIndex, searchCards, deck,
+                    remainingCount, followUp, filterPredicate, accumulatedCards);
+            return;
+        }
+
         if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
@@ -2047,6 +2055,56 @@ public class LibraryChoiceHandlerService {
                         + controllerName + "'s graveyard. The rest go to their hand.", count));
     }
 
+    private void handleD20BasicLandSearchChoice(GameData gameData, Player player, int cardIndex,
+                                                 List<Card> searchCards, List<Card> deck,
+                                                 int remainingCount, LibrarySearchFollowUp followUp,
+                                                 com.github.laxika.magicalvibes.model.filter.CardPredicate filterPredicate,
+                                                 List<Card> previouslyAccumulatedCards) {
+        List<Card> accumulatedCards = new ArrayList<>(previouslyAccumulatedCards);
+
+        if (cardIndex >= 0) {
+            Card chosenCard = searchCards.get(cardIndex);
+            deck.removeIf(card -> card.getId().equals(chosenCard.getId()));
+            accumulatedCards.add(chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+
+            List<Card> remainingMatches = deck.stream()
+                    .filter(card -> filterPredicate == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, filterPredicate, null, gameData, player.getId()))
+                    .toList();
+            if (remainingCount > 1 && !remainingMatches.isEmpty()) {
+                int newRemaining = remainingCount - 1;
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(player.getId(), new ArrayList<>(remainingMatches))
+                                .remainingCount(newRemaining)
+                                .reveals(true)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .filterPredicate(filterPredicate)
+                                .accumulatedCards(accumulatedCards)
+                                .followUp(followUp)
+                                .build(),
+                        "Search your library for another basic land card to reveal ("
+                                + newRemaining + " remaining).", true));
+                return;
+            }
+        }
+
+        finishD20BasicLandSearch(gameData, player.getId(), accumulatedCards, followUp);
+    }
+
+    private void finishD20BasicLandSearch(GameData gameData, UUID controllerId, List<Card> cards,
+                                           LibrarySearchFollowUp followUp) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(followUp.selectedCardFollowUp().d20BasicLandSearch().rollEffect(cards)));
+        }
+        finishSearchAndResume(gameData);
+    }
+
     private void finishExileAndCreateTokensSearch(GameData gameData, Player player, UUID deckOwnerId,
                                                    List<Card> exiledCards, CreateTokenEffect tokenTemplate,
                                                    String sourceSetCode, boolean shuffleAfterSelection) {
@@ -2379,14 +2437,20 @@ public class LibraryChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(playerId);
 
         List<Card> matchingCards = deck.stream()
-                .filter(card -> !pick.basicOnly()
-                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
+                .filter(card -> pick.filter() != null
+                        ? predicateEvaluationService.matchesCardPredicate(
+                                card, pick.filter(), null, gameData, playerId)
+                        : !pick.basicOnly()
+                                || (card.hasType(CardType.LAND)
+                                && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .filter(card -> pick.subtype() == null || card.getSubtypes().contains(pick.subtype()))
                 .toList();
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-            String description = pick.subtype() == null
+            String description = pick.description() != null
+                    ? pick.description() + " cards"
+                    : pick.subtype() == null
                     ? (pick.basicOnly() ? "basic land cards" : "land cards")
                     : (pick.basicOnly() ? "basic " : "") + pick.subtype().getDisplayName() + " cards";
             String logMsg = playerName + " finds no more " + description + ". Library is shuffled.";
@@ -2394,7 +2458,9 @@ public class LibraryChoiceHandlerService {
             return false;
         }
 
-        String cardDescription = pick.subtype() == null
+        String cardDescription = pick.description() != null
+                ? pick.description()
+                : pick.subtype() == null
                 ? (pick.basicOnly() ? "basic land" : "land")
                 : (pick.basicOnly() ? "basic " : "") + pick.subtype().getDisplayName();
         String prompt = "Search your library for a " + cardDescription + " card to put into your hand.";

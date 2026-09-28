@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "221")
+@CardRegistration(set = "HBG", collectorNumber = "182")
 public class Fiendlash extends Card {
 
     public Fiendlash() {

@@ -3152,6 +3152,39 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),
+            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),
+            @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    })
+    private boolean handleGenericControllerLifeLoss(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (effect instanceof DealDamageToPlayersEffect damage
+                && amountEvaluationService.referencesEventValue(damage.amount())) {
+            entry.setEventValue(lifeLoss.lifeLostAmount());
+        } else if (effect instanceof PutCountersOnSelfEffect counters
+                && counters.amount() != null
+                && amountEvaluationService.referencesEventValue(counters.amount())) {
+            entry.setEventValue(lifeLoss.lifeLostAmount());
+        }
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life loss ({} life)",
+                match.gameData().id, sourceCard.getName(), lifeLoss.lifeLostAmount());
+        return true;
+    }
+
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleConditionalOnControllerLifeLoss(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {

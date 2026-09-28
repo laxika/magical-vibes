@@ -196,6 +196,7 @@ on what the mana may pay for.
 | Opponent land edict | `y/YawningFissure.java` | SacrificePermanentsEffect(1, PermanentIsLandPredicate, EACH_OPPONENT) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter + perpetual generic reduction for matching hand cards | `a/AbsorbEnergy.java` | `PerpetuallyReduceCostForHandCardsSharingTargetSpellEffect` followed by `CounterSpellEffect`; the first effect snapshots matching card identities in the controller's hand while the target spell is still on the stack |
+| Counter + perpetual -2/-0 for creature spells | `u/Undersimplify.java` | `PerpetuallyBoostTargetCreatureSpellEffect(-2, 0)` followed by `CounterUnlessPaysEffect(2)`; the first effect accepts any spell target and is a no-op for noncreature spells |
 | Counter by life bid | `m/MagesContest.java` | MagesContestEffect (spell target auto-derived); the parked resolution interaction runs a life auction between the caster and the targeted spell's controller |
 | Life-bid draw spell | `p/PainsReward.java` | PainsRewardEffect; the controller chooses the opening bid, then all players bid in turn order; the high bidder loses that much life and draws four cards |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |

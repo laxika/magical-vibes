@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "25")
+@CardRegistration(set = "HBG", collectorNumber = "96")
 public class MonkOfTheOpenHand extends Card {
 
     public MonkOfTheOpenHand() {

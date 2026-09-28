@@ -63,7 +63,9 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             if (e.maxTotalManaValue() != null && card.getManaValue() > e.maxTotalManaValue()) {
                 continue;
             }
-            if (predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    card, e.filter(), entry.getCard() == null ? null : entry.getCard().getId(),
+                    gameData, controllerId, null, null, entry.getXValue())) {
                 matching.add(card);
             }
         }

@@ -87,6 +87,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasSourceChosenSubtypePredicate,
         PermanentSharesNameWithAnotherPermanentPredicate,
         PermanentSharesNameWithAnotherControlledPermanentPredicate,
+        PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate,
         PermanentSharesNameWithControlledTokenPredicate,
         PermanentSharesColorWithEquippedCreaturePredicate,
         PermanentSharesCardTypeWithSourcePermanentPredicate,

@@ -153,6 +153,7 @@ public enum CounterType {
     REJECTION,
     RELEASE,
     RITUAL,
+    ROPE,
     RUST,
     PLUS_ONE_PLUS_ONE,
     PLUS_ONE_PLUS_ZERO,

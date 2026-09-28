@@ -238,6 +238,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentNamedPredicate` | `(String cardName)` | permanents with the given name (exact `Card.getName()` equality); e.g. "a permanent named Guan Yu, Sainted Warrior" | none |
 | `PermanentSharesNameWithAnotherPermanentPredicate` | `()` | permanent shares its name with at least one other permanent on any battlefield (Eye of Singularity ETB wipe) | `gameData` |
 | `PermanentSharesNameWithAnotherControlledPermanentPredicate` | `()` | permanent shares its name with at least one other permanent controlled by that permanent's current controller | `gameData` |
+| `PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate` | `()` | permanent shares its name with another creature controlled by the source controller or with a creature card in that controller's graveyard | `gameData`, source controller |
 | `PermanentSharesNameWithControlledTokenPredicate` | `()` | permanent shares its name with a token controlled by the source's controller | `gameData`, source controller |
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
@@ -314,6 +315,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
+| `StackEntryCastWithAdventurePredicate` | `()` | spells cast using an Adventure alternative casting option |
 | `StackEntryCastWithWarpCostPredicate` | `()` | spells cast using a Warp alternative cost |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The source aura's attachment is supplied externally by the evaluating service. Used by Curse of Echoes and Curse of Silence |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |

@@ -1362,7 +1362,6 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
-        boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
         boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
@@ -1372,7 +1371,10 @@ public class GameActionAvailabilityService {
                         && card.getCastingOption(GraveyardCast.class)
                         .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                         .orElse(false));
-        if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
+        boolean hasStaticGraveyardLandPermission = graveyard.stream()
+                .filter(card -> card.hasType(CardType.LAND))
+                .anyMatch(card -> castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card));
+        if (!hasStaticGraveyardLandPermission && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);

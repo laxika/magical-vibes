@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInLibraryThanTargetPlayer;
 import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
@@ -947,6 +948,11 @@ public class ConditionEvaluationService {
                     matchesCardDirectlyAboveSelfInGraveyard(gameData, ctx, c);
             case CardsInLibraryAtLeast c ->
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
+            case ControllerHasMoreCardsInLibraryThanTargetPlayer ignored ->
+                    ctx.controllerId() != null
+                            && ctx.targetId() != null
+                            && countCardsInLibrary(gameData, ctx.controllerId())
+                            > countCardsInLibrary(gameData, ctx.targetId());
             case StartingDeckAtLeast c ->
                     startingDeckSize(gameData, ctx.controllerId()) >= c.minimumDeckSize() + c.cardsOverMinimum();
             case AnyGraveyardAtLeast c ->
@@ -2444,7 +2450,9 @@ public class ConditionEvaluationService {
         if (ctx.sourceCard() == null) return false;
         UUID cardId = ctx.sourceCard().getId();
         Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
-        return timeCounters != null && timeCounters > 0 && gameData.findExiledCard(cardId) != null;
+        return timeCounters != null && timeCounters > 0
+                && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
+                && gameData.findExiledCard(cardId) != null;
     }
 
     /** True when a permanent on the controller's battlefield makes their party count as full. */

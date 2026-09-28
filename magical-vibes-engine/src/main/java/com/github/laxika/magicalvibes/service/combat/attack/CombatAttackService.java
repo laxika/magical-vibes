@@ -2004,6 +2004,8 @@ public class CombatAttackService {
                     ? attackedTargetId
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
+            triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
+                    gameData, attacker, attackedPlayerId);
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {

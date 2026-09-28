@@ -18,12 +18,14 @@ import com.github.laxika.magicalvibes.model.action.DelayedRevealCreatureCardsToB
 import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextTurnEndStep;
 import com.github.laxika.magicalvibes.model.action.DiscardSpecificCardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileCardsFromOwnGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
@@ -1911,6 +1913,9 @@ public class StepTriggerService {
         if (!gameData.exiledCardTimeCounters.isEmpty()) {
             List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
             for (Card card : new ArrayList<>(exiledCards)) {
+                if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())) {
+                    continue;
+                }
                 Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
                 if (timeCounters != null && timeCounters > 0) {
                     gameData.stack.add(new StackEntry(
@@ -1958,6 +1963,9 @@ public class StepTriggerService {
         // Suspended cards may also trigger during every player's upkeep.
         for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
             Card card = exiledEntry.card();
+            if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())) {
+                continue;
+            }
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
             if (timeCounters == null || timeCounters <= 0) {
                 continue;
@@ -4396,6 +4404,33 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(DiscardCardsAtNextTurnEndStep.class,
+                action -> gameData.turnNumber > action.registeredTurnNumber()
+                        && action.playerId().equals(gameData.activePlayerId))) {
+            List<DiscardCardsAtNextTurnEndStep> pending = gameData.drainDelayedActions(
+                    DiscardCardsAtNextTurnEndStep.class,
+                    action -> gameData.turnNumber > action.registeredTurnNumber()
+                            && action.playerId().equals(gameData.activePlayerId));
+            for (DiscardCardsAtNextTurnEndStep action : pending) {
+                List<CardEffect> effects = action.cardIds().stream()
+                        .<CardEffect>map(com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect::new)
+                        .toList();
+                if (effects.isEmpty()) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger — discard those cards",
+                        new ArrayList<>(effects));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger discards the returned cards."));
+            }
+        }
+
         // Elkin Lair: "At the beginning of the next end step, if the player hasn't played the card,
         // they put it into their graveyard." Chronological next end step — no active-player filter.
         if (gameData.hasDelayedAction(ExileToOwnerGraveyardAtNextEndStep.class)) {
@@ -4497,6 +4532,32 @@ public class StepTriggerService {
                         || !action.controllerId().equals(
                                 gameQueryService.findPermanentController(gameData, permanent.getId()))
                         || permanent.getCard().getManaValue() > action.maxManaValue()
+                        || gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                    continue;
+                }
+
+                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
+                    continue;
+                }
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, sacrificingPlayerId, permanent.getCard());
+                gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
+                log.info("Game {} - {} sacrificed by a mana-value-conditional delayed trigger",
+                        gameData.id, permanent.getCard().getName());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast.class)) {
+            List<DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast> pending =
+                    gameData.drainDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast.class);
+            for (DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast action : pending) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (permanent == null
+                        || !action.controllerId().equals(
+                                gameQueryService.findPermanentController(gameData, permanent.getId()))
+                        || permanent.getCard().getManaValue() < action.minManaValue()
                         || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                     continue;
                 }
@@ -5655,8 +5716,17 @@ public class StepTriggerService {
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
             for (Permanent perm : activeBattlefield) {
-                List<CardEffect> controllerEndStepEffects = new ArrayList<>(
-                        perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                List<CardEffect> controllerEndStepEffects = new ArrayList<>();
+                if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    if (!perm.isFaceDown()) {
+                        controllerEndStepEffects.addAll(
+                                perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                    }
+                    controllerEndStepEffects.addAll(
+                            perm.getTemporaryTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                    controllerEndStepEffects.addAll(
+                            perm.getPersistentTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                }
                 controllerEndStepEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, perm, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;

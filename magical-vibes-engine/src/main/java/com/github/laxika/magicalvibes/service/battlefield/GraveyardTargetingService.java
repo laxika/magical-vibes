@@ -1027,6 +1027,13 @@ public class GraveyardTargetingService {
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
+                                                    List<CardEffect> spellEffects, GraveyardSearchScope source) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
+                spellEffects, 0, false, false, source, false, null, null);
+    }
+
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                     StackEntryType entryType,
                                                     ReturnTargetCardsFromGraveyardToHandEffect returnEffect,
                                                     int maxTargetsCap, List<CardEffect> spellEffects) {

@@ -373,6 +373,9 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 counters before the trigger is queued.
 `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
+`ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD` is the batched controller-scoped watcher for "one or more"
+permanents, including the source permanent when it leaves; the removal service snapshots a batch
+before dispatching one trigger per source.
 Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
 counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped

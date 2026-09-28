@@ -226,6 +226,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DISCOVERS,
     /** Triggers whenever this permanent's controller seeks one or more cards. */
     ON_CONTROLLER_SEEKS,
+    /** Triggers whenever this permanent's controller conjures one or more cards. */
+    ON_CONTROLLER_CONJURES,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -856,6 +858,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield by any means. */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
+    /** Triggers once whenever one or more permanents controlled by this permanent's controller
+     *  leave the battlefield in a single event, including this permanent itself. */
+    ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
