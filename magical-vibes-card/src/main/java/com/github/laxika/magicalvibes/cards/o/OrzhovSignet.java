@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "C15", collectorNumber = "262")
 @CardRegistration(set = "DSC", collectorNumber = "249")
 @CardRegistration(set = "TDC", collectorNumber = "323")
+@CardRegistration(set = "LCC", collectorNumber = "310")
 public class OrzhovSignet extends Card {
 
     public OrzhovSignet() {

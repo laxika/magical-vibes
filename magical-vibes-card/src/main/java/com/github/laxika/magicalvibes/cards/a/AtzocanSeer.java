@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "153")
+@CardRegistration(set = "LCC", collectorNumber = "265")
 public class AtzocanSeer extends Card {
 
     public AtzocanSeer() {

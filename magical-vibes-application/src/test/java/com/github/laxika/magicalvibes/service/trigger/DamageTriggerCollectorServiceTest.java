@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -151,6 +152,48 @@ class DamageTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(equipment.getId());
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
+    }
+
+    @Test
+    @DisplayName("filters global permanent damage triggers by the damaged permanent")
+    void filtersGlobalPermanentDamageTriggerByDamagedPermanent() {
+        Permanent watcher = createPermanent("Wrathful Raptors");
+        Permanent damaged = createPermanent("Dinosaur");
+        var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
+        var wrapped = new DealDamageToAnyTargetEffect(new XValue());
+        var effect = new TriggeringPermanentConditionalEffect(predicate, wrapped);
+        var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 2);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged), eq(predicate), any(FilterContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect), EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                .isNotNull()
+                .satisfies(pending -> assertThat(pending.effects()).containsExactly(wrapped));
+    }
+
+    @Test
+    @DisplayName("does not queue global permanent damage triggers for a non-matching permanent")
+    void skipsGlobalPermanentDamageTriggerForNonMatchingPermanent() {
+        Permanent watcher = createPermanent("Wrathful Raptors");
+        Permanent damaged = createPermanent("Grizzly Bears");
+        var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
+        var effect = new TriggeringPermanentConditionalEffect(predicate,
+                new DealDamageToAnyTargetEffect(new XValue()));
+        var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 2);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged), eq(predicate), any(FilterContext.class)))
+                .thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect), EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
     }
 
     private static Card createCard(String name) {

@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "ISD", collectorNumber = "243")
 @CardRegistration(set = "V13", collectorNumber = "20")
 @CardRegistration(set = "SLD", collectorNumber = "355")
+@CardRegistration(set = "LCC", collectorNumber = "340")
 public class KessigWolfRun extends Card {
 
     public KessigWolfRun() {

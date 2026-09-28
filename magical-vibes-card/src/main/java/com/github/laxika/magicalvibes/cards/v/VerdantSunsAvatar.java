@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "213")
+@CardRegistration(set = "LCC", collectorNumber = "262")
 public class VerdantSunsAvatar extends Card {
 
     public VerdantSunsAvatar() {

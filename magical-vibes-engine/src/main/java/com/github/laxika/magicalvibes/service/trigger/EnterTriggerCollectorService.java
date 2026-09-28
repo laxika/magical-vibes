@@ -990,11 +990,15 @@ public class EnterTriggerCollectorService {
         UUID mayTargetId = gainLifeEqualToEnteringPower
                 || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget
                 ? enteringPermanentId : pe.defaultTargetPlayerId();
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     mayTargetId,
                     match.permanent().getId(),
-                    match.markSourceOncePerTurnOnAcceptance());
+                    match.markSourceOncePerTurnOnAcceptance(),
+                    enteringPermanent == null ? null : gameQueryService.getEffectiveToughness(
+                            match.gameData(), enteringPermanent));
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",
@@ -2309,6 +2313,8 @@ public class EnterTriggerCollectorService {
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
                 entry.setTriggeringPermanentPowerAtTrigger(
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
+                entry.setTriggeringPermanentToughnessAtTrigger(
+                        gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent));
             }
             match.gameData().stack.add(entry);
         }

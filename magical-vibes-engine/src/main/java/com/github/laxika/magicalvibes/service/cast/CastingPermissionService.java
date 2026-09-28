@@ -1570,26 +1570,35 @@ public class CastingPermissionService {
         if (!isCastableSpellCard(card)) {
             return Optional.empty();
         }
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return Optional.empty();
-        }
-        for (Permanent perm : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
-                continue;
-            }
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
-                if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
-                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
-                    continue;
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
+                    if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
+                            || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                        continue;
+                    }
+                    if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
+                        continue;
+                    }
+                    return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
                 }
-                return Optional.of(new FilteredGraveyardPermission(perm.getId(), permission));
             }
         }
+
+        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
+                .getOrDefault(playerId, List.of())) {
+            if (effect instanceof CastSpellsFromGraveyardPermission permission
+                    && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                return Optional.of(new FilteredGraveyardPermission(null, permission));
+            }
+        }
+
         return Optional.empty();
     }
 

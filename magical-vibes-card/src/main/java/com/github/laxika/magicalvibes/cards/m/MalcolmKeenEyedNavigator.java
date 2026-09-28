@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPG", collectorNumber = "2")
+@CardRegistration(set = "LCC", collectorNumber = "161")
 public class MalcolmKeenEyedNavigator extends Card {
 
     public MalcolmKeenEyedNavigator() {

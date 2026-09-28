@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "175")
+@CardRegistration(set = "LCC", collectorNumber = "115")
 public class MimicVat extends Card {
 
     public MimicVat() {

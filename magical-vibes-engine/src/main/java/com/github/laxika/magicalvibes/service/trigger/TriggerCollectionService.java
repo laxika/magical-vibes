@@ -3187,7 +3187,7 @@ public class TriggerCollectionService {
                 for (CardEffect effect : perm.getCard().getEffects(
                         EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)) {
                     var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
-                    registry.dispatch(match,
+                    dispatch(match,
                             EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
                             effect, ctx);
                 }
@@ -6080,7 +6080,7 @@ public class TriggerCollectionService {
 
         for (CardEffect effect : effects) {
             TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, damageSourceControllerId, effect);
-            if (registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, context)) {
+            if (dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, context)) {
                 continue;
             }
             if (effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect) {
@@ -6347,7 +6347,7 @@ public class TriggerCollectionService {
 
             for (CardEffect effect : effects) {
                 var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
+                dispatch(match, EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
             }
         });
 
@@ -14725,7 +14725,7 @@ public class TriggerCollectionService {
         for (Permanent watcher : List.copyOf(battlefield)) {
             for (CardEffect effect : watcher.getCard().getEffects(
                     EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)) {
-                registry.dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
+                dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
                         EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, effect, context);
             }
         }

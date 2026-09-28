@@ -7997,6 +7997,8 @@ public class GameQueryService {
                             || (additional.attackOnly() && !attackTrigger)
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
+                            || (additional.controlledCreatureDealtDamageOnly()
+                            && !controlledCreatureWasDealtDamage(gameData, controllerId, triggerContext))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
                             || (!additional.includeSourcePermanent()
                             && staticSource.getId().equals(triggeringPermanent.getId()))) {
@@ -8017,6 +8019,44 @@ public class GameQueryService {
             }
         }
         return count;
+    }
+
+    private boolean controlledCreatureWasDealtDamage(GameData gameData, UUID controllerId,
+                                                     TriggerContext context) {
+        if (controllerId == null || context == null) return false;
+        return switch (context) {
+            case TriggerContext.DamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
+            case TriggerContext.SourceDealsNoncombatDamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
+            case TriggerContext.AnyCreatureDealtDamage damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
+                            damage.damagedCreatureControllerId());
+            case TriggerContext.AnyPermanentDealtDamage damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(),
+                            damage.damagedPermanentControllerId());
+            case TriggerContext.CreatureDealsDamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
+                            damage.damagedCreatureControllerId());
+            case TriggerContext.CreatureDamageToYouOrYourPermanent damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(), null);
+            case TriggerContext.SourceDamageToYouOrYourPermanent damage ->
+                    isControlledCreature(gameData, controllerId,
+                            findPermanentById(gameData, damage.damagedPermanentId()), null);
+            case TriggerContext.SourceDealsDamage damage ->
+                    damage.damageToPermanents().keySet().stream()
+                            .map(targetId -> findPermanentById(gameData, targetId))
+                            .anyMatch(target -> isControlledCreature(gameData, controllerId, target, null));
+            default -> false;
+        };
+    }
+
+    private boolean isControlledCreature(GameData gameData, UUID controllerId,
+                                         Permanent permanent, UUID capturedControllerId) {
+        if (permanent == null || !isCreature(gameData, permanent)) return false;
+        UUID actualControllerId = capturedControllerId != null
+                ? capturedControllerId : findPermanentController(gameData, permanent.getId());
+        return controllerId.equals(actualControllerId);
     }
 
     private boolean matchesInstantSorceryCastOrCopy(TriggerContext triggerContext, UUID controllerId) {

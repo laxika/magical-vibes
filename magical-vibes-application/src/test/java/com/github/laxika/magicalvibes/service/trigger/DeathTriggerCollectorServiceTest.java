@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLife
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -1660,6 +1661,22 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER1_ID);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Default binds a dying-card-aware effect to the opponent creature that died")
+        void defaultBindsDyingCardAwareEffect() {
+            Card watcher = createCreature("Vein Patron", 4, 4);
+            Card dying = createCreature("Dead Creature", 2, 2);
+            var effect = new ExileTriggeringCreatureFromGraveyardEffect();
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
+
+            svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
+
+            var resolved = (ExileTriggeringCreatureFromGraveyardEffect)
+                    gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(resolved.dyingCardId()).isEqualTo(dying.getId());
         }
     }
 

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "109")
 @CardRegistration(set = "NCC", collectorNumber = "248")
+@CardRegistration(set = "LCC", collectorNumber = "193")
 public class DranaLiberatorOfMalakir extends Card {
 
     public DranaLiberatorOfMalakir() {

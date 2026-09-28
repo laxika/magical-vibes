@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffec
 @CardRegistration(set = "AVR", collectorNumber = "173")
 @CardRegistration(set = "SLD", collectorNumber = "1183")
 @CardRegistration(set = "TLE", collectorNumber = "167")
+@CardRegistration(set = "LCC", collectorNumber = "238")
 public class DescendantsPath extends Card {
 
     public DescendantsPath() {

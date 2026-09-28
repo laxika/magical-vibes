@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "229")
+@CardRegistration(set = "LCC", collectorNumber = "305")
 public class IconOfAncestry extends Card {
 
     public IconOfAncestry() {

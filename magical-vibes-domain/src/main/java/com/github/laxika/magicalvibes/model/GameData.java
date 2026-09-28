@@ -5549,6 +5549,14 @@ public class GameData {
                 markSourceOncePerTurnOnAcceptance);
     }
 
+    /** Queues an enter-triggered may ability with last-known toughness context. */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, boolean markSourceOncePerTurnOnAcceptance,
+                                Integer triggeringPermanentToughnessAtTrigger) {
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0,
+                markSourceOncePerTurnOnAcceptance, triggeringPermanentToughnessAtTrigger);
+    }
+
     /** Queues a resolution-time may ability while preserving its active-player context. */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, UUID activePlayerId, Permanent sourcePermanentSnapshot) {
@@ -5662,6 +5670,15 @@ public class GameData {
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, int eventValue,
                                 boolean markSourceOncePerTurnOnAcceptance) {
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
+                markSourceOncePerTurnOnAcceptance, null);
+    }
+
+    /** Queues a may ability while preserving last-known toughness for an entering permanent. */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, int eventValue,
+                                boolean markSourceOncePerTurnOnAcceptance,
+                                Integer triggeringPermanentToughnessAtTrigger) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -5673,6 +5690,10 @@ public class GameData {
         );
         entry.setEventValue(eventValue);
         entry.setMarkSourceOncePerTurnOnAcceptance(markSourceOncePerTurnOnAcceptance);
+        entry.setTriggeringPermanentToughnessAtTrigger(triggeringPermanentToughnessAtTrigger);
+        if (triggeringPermanentToughnessAtTrigger != null && targetCardId != null) {
+            entry.setTriggeringPermanentId(targetCardId);
+        }
         stack.add(entry);
     }
 

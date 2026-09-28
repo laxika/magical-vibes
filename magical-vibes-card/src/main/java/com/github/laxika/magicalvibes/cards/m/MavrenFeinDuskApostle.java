@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "24")
+@CardRegistration(set = "LCC", collectorNumber = "133")
 public class MavrenFeinDuskApostle extends Card {
 
     public MavrenFeinDuskApostle() {

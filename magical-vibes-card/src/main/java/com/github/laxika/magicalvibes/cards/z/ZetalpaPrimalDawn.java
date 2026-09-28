@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "CMM", collectorNumber = "71")
 @CardRegistration(set = "CMM", collectorNumber = "478")
 @CardRegistration(set = "TDC", collectorNumber = "142")
+@CardRegistration(set = "LCC", collectorNumber = "141")
 public class ZetalpaPrimalDawn extends Card {
 
     public ZetalpaPrimalDawn() {

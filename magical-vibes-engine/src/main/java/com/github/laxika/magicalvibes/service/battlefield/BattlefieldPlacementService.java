@@ -1464,7 +1464,8 @@ public class BattlefieldPlacementService {
         int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
                 new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard,
-                        sourceStackEntry, null, null, 0, 0, List.of(), false, convokeCreatureCount));
+                        sourceStackEntry, null, null, 0, 0, List.of(), false, convokeCreatureCount,
+                        List.of()));
         if (enterWith.count() instanceof CardsInGraveyard graveyardCount
                 && !graveyardCount.excludeSourceCard()
                 && permanent.getEnteredFromGraveyardOwnerId() != null

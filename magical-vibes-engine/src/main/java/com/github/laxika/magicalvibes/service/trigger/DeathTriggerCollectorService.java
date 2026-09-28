@@ -805,6 +805,7 @@ public class DeathTriggerCollectorService {
                     sd.dyingCard().getName() + "'s ability",
                     new ArrayList<>(List.of(resolvedMay))
             );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
             match.gameData().stack.add(entry);
         }
@@ -3239,6 +3240,9 @@ public class DeathTriggerCollectorService {
                 match.gameData(), death.dyingCreatureControllerId())) {
             return true;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleAllyNontokenMayPay(match, mayPay, ctx);
+        }
         return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
     }
 
@@ -3517,12 +3521,16 @@ public class DeathTriggerCollectorService {
             logOpponentCreatureDeath(match);
             return true;
         }
+        CardEffect resolvedEffect = effect;
+        if (effect instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
+            resolvedEffect = aware.boundToDyingCard(cd.dyingCard().getId());
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(List.of(resolvedEffect)),
                 cd.dyingCreatureControllerId(),
                 match.permanent().getId()
         ));

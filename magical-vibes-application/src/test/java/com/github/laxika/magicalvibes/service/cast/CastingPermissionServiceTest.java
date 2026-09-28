@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
@@ -215,6 +216,21 @@ class CastingPermissionServiceTest {
 
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(true);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isTrue();
+    }
+
+    @Test
+    void temporaryPlayerScopedGraveyardSpellPermissionApplies() {
+        Card spell = new Card();
+        spell.setType(CardType.CREATURE);
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        gd.playerStaticEffectsUntilEndOfTurn.put(player1Id, new ArrayList<>(List.of(
+                new GrantEscapeToGraveyardCardsEffect(filter, "{3}{B}", 4))));
+        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null)).thenReturn(true);
+
+        var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
+        assertThat(permission.sourcePermanentId()).isNull();
+        assertThat(permission.permission().alternateManaCost()).isEqualTo("{3}{B}");
+        assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(4);
     }
 
     @Test

@@ -1763,7 +1763,7 @@ public class CardChoiceHandlerService {
         };
     }
 
-    /** Answers a choice to put one card from a target player's revealed hand onto the battlefield. */
+    /** Answers a choice to put one card from a target player's hand onto the battlefield. */
     public void handleTargetedHandBattlefieldCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.TargetedHandBattlefieldChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.TargetedHandBattlefieldChoice.class);
@@ -1789,10 +1789,17 @@ public class CardChoiceHandlerService {
         UUID originalOwnerId = chosenCard.getOwnerId() != null
                 ? chosenCard.getOwnerId() : choice.targetPlayerId();
         Permanent permanent = new Permanent(chosenCard);
+        if (choice.enterTapped()) {
+            permanent.tap();
+        }
         if (choice.grantHaste()) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+        if (choice.enterAttacking()) {
+            permanent.setAttacking(true);
+            permanent.setAttackTarget(choice.attackTargetId());
+        }
         if (!player.getId().equals(originalOwnerId)) {
             graveyardReturnSupport.trackStolenCreature(
                     gameData, permanent.getId(), player.getId(), originalOwnerId);
@@ -1802,6 +1809,10 @@ public class CardChoiceHandlerService {
         if (choice.sacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
+        if (choice.returnToHandAtEndStep()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
         }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", chosenCard, " onto the battlefield under their control."));

@@ -96,6 +96,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasSupertypePredicate,
         PermanentInCombatWithSourcePredicate,
         PermanentIsArtifactPredicate,
+        PermanentIsDoubleFacedPredicate,
         PermanentIsAttackingPredicate,
         PermanentIsGoadedPredicate,
         PermanentIsAttackingAlonePredicate,

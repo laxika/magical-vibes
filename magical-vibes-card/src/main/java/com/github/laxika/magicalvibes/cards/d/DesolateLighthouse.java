@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "352")
 @CardRegistration(set = "UMA", collectorNumber = "242")
 @CardRegistration(set = "LTC", collectorNumber = "303")
+@CardRegistration(set = "LCC", collectorNumber = "327")
 public class DesolateLighthouse extends Card {
 
     public DesolateLighthouse() {

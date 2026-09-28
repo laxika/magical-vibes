@@ -816,6 +816,9 @@ public sealed interface ChoiceContext {
     record CardTypeOnEnterChoice(Card card, UUID controllerId, List<CardType> excludedTypes)
             implements ChoiceContext {}
 
+    record CraftedCardTypeOnEnterChoice(Permanent permanent, UUID controllerId,
+                                         List<CardType> allowedTypes) implements ChoiceContext {}
+
     /**
      * "You and an opponent each choose a card name other than a basic land card name" as the source
      * enters (Null Chamber). {@code choosingPlayerId} is whoever is being asked right now:

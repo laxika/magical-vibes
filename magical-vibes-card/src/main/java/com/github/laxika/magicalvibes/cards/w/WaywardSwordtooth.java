@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 @CardRegistration(set = "SLD", collectorNumber = "1392")
 @CardRegistration(set = "CMM", collectorNumber = "331")
 @CardRegistration(set = "CMM", collectorNumber = "576")
+@CardRegistration(set = "LCC", collectorNumber = "263")
 public class WaywardSwordtooth extends Card {
 
     public WaywardSwordtooth() {

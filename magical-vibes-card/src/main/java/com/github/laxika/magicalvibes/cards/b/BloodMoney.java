@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1789")
+@CardRegistration(set = "LCC", collectorNumber = "183")
 public class BloodMoney extends Card {
 
     public BloodMoney() {

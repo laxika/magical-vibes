@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class ChooseCardFromTargetHandToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -32,10 +34,19 @@ public class ChooseCardFromTargetHandToBattlefieldEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ChooseCardFromTargetHandToBattlefieldEffect) effect;
-        UUID targetPlayerId = entry.getTargetId();
+        UUID targetPlayerId = e.defendingPlayerHand()
+                ? defendingPlayerId(gameData, entry.getAttackedTargetId())
+                : entry.getTargetId();
+        if (targetPlayerId == null) {
+            return;
+        }
         List<Card> hand = gameData.playerHands.getOrDefault(targetPlayerId, List.of());
 
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        if (e.defendingPlayerHand()) {
+            cardRevealService.lookAtHand(gameData, entry.getControllerId(), targetPlayerId);
+        } else {
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        }
 
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         List<Integer> validIndices = new ArrayList<>();
@@ -51,7 +62,21 @@ public class ChooseCardFromTargetHandToBattlefieldEffectHandler implements Norma
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandBattlefieldChoice(
                 entry.getControllerId(), targetPlayerId, validIndices,
-                "You may put a " + e.label() + " card from their hand onto the battlefield under your control.",
-                e.grantHaste(), e.sacrificeAtEndStep()));
+                e.defendingPlayerHand()
+                        ? "You may put a " + e.label()
+                        + " card from the defending player's hand onto the battlefield tapped and attacking."
+                        : "You may put a " + e.label() + " card from their hand onto the battlefield under your control.",
+                e.grantHaste(), e.sacrificeAtEndStep(), e.enterTappedAndAttacking(),
+                e.enterTappedAndAttacking(), e.returnToHandAtEndStep(),
+                e.defendingPlayerHand() ? entry.getAttackedTargetId() : null));
+    }
+
+    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

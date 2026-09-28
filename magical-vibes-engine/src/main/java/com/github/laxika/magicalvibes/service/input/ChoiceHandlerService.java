@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.ExileAndReturnTransformedService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -113,6 +114,7 @@ public class ChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final ExileAndReturnTransformedService exileAndReturnTransformedService;
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
@@ -399,6 +401,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.CardTypeOnEnterChoice ctx) {
             handleCardTypeOnEnterChosen(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CraftedCardTypeOnEnterChoice ctx) {
+            handleCraftedCardTypeOnEnterChosen(gameData, player, colorName, ctx);
             return;
         }
 
@@ -2379,6 +2385,26 @@ public class ChoiceHandlerService {
         battlefieldEntryService.processCreatureETBEffects(
                 gameData, ctx.controllerId(), perm.getCard(), null, true);
 
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void handleCraftedCardTypeOnEnterChosen(GameData gameData, Player player, String typeName,
+                                                    ChoiceContext.CraftedCardTypeOnEnterChoice ctx) {
+        CardType cardType = CardType.valueOf(typeName);
+        if (!ctx.allowedTypes().contains(cardType)) {
+            throw new IllegalArgumentException("Card type is not shared by the craft materials: " + typeName);
+        }
+        gameData.interaction.clearAwaitingInput();
+        ctx.permanent().setChosenCardType(cardType);
+        exileAndReturnTransformedService.completeCraftedTransformAfterCardTypeChoice(
+                gameData, ctx.controllerId(), ctx.permanent());
+
+        String chosenType = cardType.getDisplayName().toLowerCase();
+        gameLogService.append(gameData,
+                GameLog.text(player.getUsername() + " chooses " + chosenType + " for "
+                        + ctx.permanent().getCard().getName() + "."));
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }

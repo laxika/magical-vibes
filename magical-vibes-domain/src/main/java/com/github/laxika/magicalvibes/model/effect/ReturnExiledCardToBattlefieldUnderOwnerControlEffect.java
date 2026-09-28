@@ -13,5 +13,11 @@ import java.util.UUID;
  *
  * @param exiledCardId the exiled card to return, or {@code null} to be bound at token creation
  */
-public record ReturnExiledCardToBattlefieldUnderOwnerControlEffect(UUID exiledCardId) implements CardEffect {
+public record ReturnExiledCardToBattlefieldUnderOwnerControlEffect(UUID exiledCardId,
+                                                                    boolean enterTapped)
+        implements CardEffect {
+
+    public ReturnExiledCardToBattlefieldUnderOwnerControlEffect(UUID exiledCardId) {
+        this(exiledCardId, false);
+    }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "150")
+@CardRegistration(set = "LCC", collectorNumber = "228")
 public class MaraudingRaptor extends Card {
 
     public MaraudingRaptor() {

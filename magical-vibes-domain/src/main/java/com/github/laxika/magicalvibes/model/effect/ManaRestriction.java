@@ -362,6 +362,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with one of the given subtypes. */
+    record SubtypeSpellOnly(Set<CardSubtype> subtypes) implements ManaRestriction {
+        public SubtypeSpellOnly {
+            subtypes = Set.copyOf(subtypes);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeSpellOnlyMana(subtypes, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtypes + " spells only";
+        }
+    }
+
     /** Colorless mana spendable only to cast colorless spells or activate abilities of the given subtype. */
     record ColorlessSubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
         @Override

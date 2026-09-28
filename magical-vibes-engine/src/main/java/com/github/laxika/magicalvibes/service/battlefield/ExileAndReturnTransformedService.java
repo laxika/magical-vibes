@@ -13,13 +13,16 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,6 +46,7 @@ public class ExileAndReturnTransformedService {
     private final SagaChapterService sagaChapterService;
     private final CreatureControlService creatureControlService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PlayerInputService playerInputService;
 
     /**
      * Exiles the given permanent and immediately returns it transformed. No-op when the permanent
@@ -202,6 +206,14 @@ public class ExileAndReturnTransformedService {
         }
 
         UUID ownerId = exiled.ownerId();
+        ChooseCardTypeOnEnterEffect cardTypeChoice = backFace.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseCardTypeOnEnterEffect.class::isInstance)
+                .map(ChooseCardTypeOnEnterEffect.class::cast)
+                .filter(ChooseCardTypeOnEnterEffect::sharedWithCraftMaterials)
+                .findFirst()
+                .orElse(null);
+        List<CardType> sharedCardTypes = cardTypeChoice == null
+                ? List.of() : sharedCraftCardTypes(gameData, oldSourcePermanentId);
         gameData.removeFromExile(cardId);
 
         Permanent newPerm = new Permanent(originalCard);
@@ -215,18 +227,52 @@ public class ExileAndReturnTransformedService {
             newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
-        if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
+        if (cardTypeChoice != null && !sharedCardTypes.isEmpty()) {
+            playerInputService.beginCraftedCardTypeOnEnterChoice(
+                    gameData, ownerId, newPerm, sharedCardTypes);
             return true;
         }
+
+        completeCraftedTransformAfterCardTypeChoice(gameData, ownerId, newPerm);
+        return true;
+    }
+
+    public void completeCraftedTransformAfterCardTypeChoice(GameData gameData, UUID controllerId,
+                                                            Permanent newPerm) {
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
+        if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
+            return;
+        }
         battlefieldEntryService.handleCreatureEnteredBattlefield(
-                gameData, ownerId, backFace, null, false);
-        initializeReturnedSaga(gameData, ownerId, newPerm);
+                gameData, controllerId, newPerm.getCard(), null, false);
+        initializeReturnedSaga(gameData, controllerId, newPerm);
+        Card originalCard = newPerm.getOriginalCard();
+        Card backFace = newPerm.getCard();
         gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
                 " returns transformed from exile as ", backFace, "."));
         log.info("Game {} - {} returns transformed from exile as {}",
                 gameData.id, originalCard.getName(), backFace.getName());
-        return true;
+    }
+
+    private List<CardType> sharedCraftCardTypes(GameData gameData, UUID sourcePermanentId) {
+        List<ExiledCardEntry> materials = gameData.exiledCards.stream()
+                .filter(entry -> sourcePermanentId.equals(entry.sourcePermanentId()))
+                .toList();
+        return Arrays.stream(CardType.values())
+                .filter(type -> {
+                    for (int first = 0; first < materials.size(); first++) {
+                        for (int second = first + 1; second < materials.size(); second++) {
+                            if (gameQueryService.cardHasType(materials.get(first).card(), type, gameData,
+                                    materials.get(first).ownerId())
+                                    && gameQueryService.cardHasType(materials.get(second).card(), type,
+                                    gameData, materials.get(second).ownerId())) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                })
+                .toList();
     }
 
     private void initializeReturnedSaga(GameData gameData, UUID controllerId, Permanent saga) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditi
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "184")
+@CardRegistration(set = "LCC", collectorNumber = "236")
 public class DeathgorgeScavenger extends Card {
 
     public DeathgorgeScavenger() {

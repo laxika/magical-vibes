@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "164")
+@CardRegistration(set = "LCC", collectorNumber = "276")
 public class MerfolkMistbinder extends Card {
 
     public MerfolkMistbinder() {
