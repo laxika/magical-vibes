@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "245")
 @CardRegistration(set = "CMM", collectorNumber = "546")
 @CardRegistration(set = "TDC", collectorNumber = "225")
+@CardRegistration(set = "OTC", collectorNumber = "176")
 public class NestingDragon extends Card {
 
     public NestingDragon() {

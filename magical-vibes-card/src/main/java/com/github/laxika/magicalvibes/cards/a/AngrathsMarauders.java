@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "132")
+@CardRegistration(set = "OTC", collectorNumber = "153")
 public class AngrathsMarauders extends Card {
 
     public AngrathsMarauders() {

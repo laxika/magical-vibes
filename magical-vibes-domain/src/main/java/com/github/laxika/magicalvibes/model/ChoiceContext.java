@@ -103,32 +103,38 @@ public sealed interface ChoiceContext {
     record SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
                                                        CardSubtype subtype, boolean fromCreature,
                                                        UUID sourcePermanentId, UUID recipientPlayerId,
-                                                       boolean fromSnowSource, boolean fromCaveSource)
+                                                       boolean fromSnowSource, boolean fromCaveSource,
+                                                       boolean fromDesertSource)
             implements ChoiceContext {
 
         public SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
                                                             CardSubtype subtype, boolean fromCreature) {
-            this(playerId, amount, subtype, fromCreature, null, null, false, false);
+            this(playerId, amount, subtype, fromCreature, null, null, false, false, false);
         }
 
         public SingleColorSubtypeSpellOrAbilityManaChoice withSourcePermanentId(UUID sourcePermanentId) {
             return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
-                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
 
         public SingleColorSubtypeSpellOrAbilityManaChoice withRecipientPlayerId(UUID recipientPlayerId) {
             return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
-                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
 
         public SingleColorSubtypeSpellOrAbilityManaChoice withSnowSource(boolean fromSnowSource) {
             return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
-                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
 
         public SingleColorSubtypeSpellOrAbilityManaChoice withCaveSource(boolean fromCaveSource) {
             return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
-                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
+        }
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice withDesertSource(boolean fromDesertSource) {
+            return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
     }
 
@@ -200,27 +206,33 @@ public sealed interface ChoiceContext {
 
     record MulticoloredSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
                                              boolean anyColorCombination, UUID recipientPlayerId,
-                                             boolean fromSnowSource, boolean fromCaveSource)
+                                             boolean fromSnowSource, boolean fromCaveSource,
+                                             boolean fromDesertSource)
             implements ChoiceContext {
 
         public MulticoloredSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
                                                 boolean anyColorCombination) {
-            this(playerId, fromCreature, amount, anyColorCombination, null, false, false);
+            this(playerId, fromCreature, amount, anyColorCombination, null, false, false, false);
         }
 
         public MulticoloredSpellManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
             return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
-                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
 
         public MulticoloredSpellManaColorChoice withSnowSource(boolean fromSnowSource) {
             return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
-                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
 
         public MulticoloredSpellManaColorChoice withCaveSource(boolean fromCaveSource) {
             return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
-                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource);
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
+        }
+
+        public MulticoloredSpellManaColorChoice withDesertSource(boolean fromDesertSource) {
+            return new MulticoloredSpellManaColorChoice(playerId, fromCreature, amount,
+                    anyColorCombination, recipientPlayerId, fromSnowSource, fromCaveSource, fromDesertSource);
         }
     }
 
@@ -263,7 +275,8 @@ public sealed interface ChoiceContext {
                            boolean fromBasicLandSource,
                            boolean creatureSpellManaValueAtLeastFourOrXOnly, boolean fromTreasureSource,
                            boolean fromArtifactSource,
-                           boolean tracksSourceForSpellCastTriggers) implements ChoiceContext {
+                           boolean tracksSourceForSpellCastTriggers,
+                           boolean fromDesertSource) implements ChoiceContext {
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                            boolean creatureSourceSpellOrAbility,
@@ -285,7 +298,7 @@ public sealed interface ChoiceContext {
                            boolean fromBasicLandSource,
                            boolean creatureSpellManaValueAtLeastFourOrXOnly, boolean fromTreasureSource,
                            boolean fromArtifactSource) {
-            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly, fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, false);
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly, fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -400,7 +413,7 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withTreasureSource(boolean fromTreasureSource) {
@@ -412,7 +425,7 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withArtifactSource(boolean fromArtifactSource) {
@@ -424,7 +437,7 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withCaveSource(boolean fromCaveSource) {
@@ -436,7 +449,20 @@ public sealed interface ChoiceContext {
                     abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
                     fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
+        }
+
+        public ManaColorChoice withDesertSource(boolean fromDesertSource) {
+            return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
+                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype,
+                    creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly,
+                    artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
+                    creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes,
+                    abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
+                    fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
+                    differentColors, planeswalkerSpellOnly, fromBasicLandSource,
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource,
+                    tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -532,7 +558,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withSourceTracking() {
@@ -543,7 +569,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, true);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, true, fromDesertSource);
         }
 
         public ManaColorChoice withAdditionalPlusOneCounter() {
@@ -554,7 +580,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, true,
                     fromSnowSource, fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
                     differentColors, planeswalkerSpellOnly, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withRiot() {
@@ -565,7 +591,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, true,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
@@ -577,7 +603,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withPlaneswalkerSpellOnly() {
@@ -588,7 +614,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, true, fromBasicLandSource,
-                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withBasicLandSource(boolean fromBasicLandSource) {
@@ -599,7 +625,7 @@ public sealed interface ChoiceContext {
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
                     grantsAdditionalPlusOneCounter, fromSnowSource, fromCaveSource, grantsRiot,
                     restrictedToSubtypeSpell, differentColors, planeswalkerSpellOnly,
-                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers);
+                    fromBasicLandSource, creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource, tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {

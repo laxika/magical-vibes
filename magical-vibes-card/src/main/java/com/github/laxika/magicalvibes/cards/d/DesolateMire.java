@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "367")
+@CardRegistration(set = "OTC", collectorNumber = "287")
 public class DesolateMire extends Card {
 
     public DesolateMire() {

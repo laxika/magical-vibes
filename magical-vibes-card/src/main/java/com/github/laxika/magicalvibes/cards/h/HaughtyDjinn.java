@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "52")
 @CardRegistration(set = "TDC", collectorNumber = "154")
+@CardRegistration(set = "OTC", collectorNumber = "99")
 public class HaughtyDjinn extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(

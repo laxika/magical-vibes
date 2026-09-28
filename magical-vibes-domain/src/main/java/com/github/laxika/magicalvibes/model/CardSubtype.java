@@ -38,6 +38,7 @@ public enum CardSubtype {
     ADVISOR("Advisor"),
     ASSASSIN("Assassin"),
     ASSASSIN_OR_FREERUNNING("Assassin or Freerunning"),
+    OUTLAW("Outlaw"),
     WALL("Wall"),
     BARD("Bard"),
     BARBARIAN("Barbarian"),

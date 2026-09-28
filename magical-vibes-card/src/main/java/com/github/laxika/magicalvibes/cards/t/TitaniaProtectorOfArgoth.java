@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "C14", collectorNumber = "50")
 @CardRegistration(set = "MH2", collectorNumber = "287")
+@CardRegistration(set = "OTC", collectorNumber = "210")
 public class TitaniaProtectorOfArgoth extends Card {
 
     public TitaniaProtectorOfArgoth() {

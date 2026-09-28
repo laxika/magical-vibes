@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "322")
 @CardRegistration(set = "CMD", collectorNumber = "270")
 @CardRegistration(set = "DSC", collectorNumber = "270")
+@CardRegistration(set = "OTC", collectorNumber = "288")
 public class DimirAqueduct extends Card {
 
     public DimirAqueduct() {

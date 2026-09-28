@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "SLD", collectorNumber = "2017")
 @CardRegistration(set = "ANB", collectorNumber = "110")
 @CardRegistration(set = "NCC", collectorNumber = "323")
+@CardRegistration(set = "OTC", collectorNumber = "214")
 public class WorldShaper extends Card {
 
     public WorldShaper() {

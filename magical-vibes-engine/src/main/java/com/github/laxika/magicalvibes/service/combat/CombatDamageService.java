@@ -114,6 +114,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -550,7 +551,7 @@ public class CombatDamageService {
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
-        processSelfDealsCombatDamageTriggers(gameData, state);
+        processSelfDealsCombatDamageTriggers(gameData, state, defenderId);
         processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(gameData, state);
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
@@ -1549,7 +1550,7 @@ public class CombatDamageService {
             triggerCollectionService.queueSourceDealsDamageReflections(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     damageToDefender > 0 ? Map.of(defenderId, damageToDefender) : Map.of(),
-                    state.selfDealsDamageEffects.get(source), null, damageToPermanents);
+                    state.selfDealsDamageEffects.get(source), null, damageToPermanents, true);
         }
     }
 
@@ -1564,7 +1565,8 @@ public class CombatDamageService {
         }
     }
 
-    private void processSelfDealsCombatDamageTriggers(GameData gameData, CombatDamageState state) {
+    private void processSelfDealsCombatDamageTriggers(GameData gameData, CombatDamageState state,
+                                                       UUID defenderId) {
         for (var entry : state.combatDamageDealt.entrySet()) {
             Permanent source = entry.getKey();
             int damageDealt = entry.getValue();
@@ -1578,6 +1580,7 @@ public class CombatDamageService {
             triggerCollectionService.queueSourceDealsCombatDamageTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
+                    defenderId,
                     state.selfDealsCombatDamageEffects.get(source));
         }
     }
@@ -1675,6 +1678,12 @@ public class CombatDamageService {
                     gameData, creature, EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, creature, EffectSlot.ON_DAMAGE_TO_PLAYER));
+            TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
+                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
+            int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                    + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    gameData, attackerId, creature, false, combatDamageContext));
+            try {
             for (CardEffect rawEffect : allDamageEffects) {
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
                         ? amountAware.snapshotCombatDamage(damageDealt)
@@ -1791,7 +1800,7 @@ public class CombatDamageService {
                                     creature.getCard(), attackerId,
                                     List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId),
                                             may.prompt(), may.elseEffect(), may.choicePlayer())),
-                                    creature.getId(), attackerId, defenderId));
+                                    creature.getId(), damageEffect.targetChooserId(defenderId, attackerId), defenderId));
                         }
                         continue;
                     }
@@ -1829,8 +1838,8 @@ public class CombatDamageService {
                             targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
                         }
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(targeted),
-                                creature.getId(), attackerId, defenderId));
+                                creature.getCard(), attackerId, List.of(targeted), creature.getId(),
+                                damageEffect.targetChooserId(defenderId, attackerId), defenderId));
                     }
                     continue;
                 }
@@ -1955,14 +1964,23 @@ public class CombatDamageService {
                 gameData.stack.add(se);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
             }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
 
             if (creature.isHasDamageToOpponentCreatureBounce()) {
+                int bouncePreviousCopies = beginCombatDamageTriggerCopies(
+                        gameData, attackerId, creature, creature, attackerId, damageDealt);
+                try {
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry bounceSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                         desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate())), 1, defenderId, null);
                 bounceSe.setNonTargeting(true);
                 gameData.stack.add(bounceSe);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(bouncePreviousCopies);
+                }
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
@@ -1970,7 +1988,8 @@ public class CombatDamageService {
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
-            checkSameNameCreatureCombatDamageToPlayerTriggers(gameData, creature, defenderId, damageDealt);
+            checkSameNameCreatureCombatDamageToPlayerTriggers(
+                    gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
@@ -1984,6 +2003,7 @@ public class CombatDamageService {
      * this models text such as Pirated Copy's "this creature or another creature with the same name".
      */
     private void checkSameNameCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature,
+                                                                    UUID attackerId,
                                                                     UUID defenderId,
                                                                     int damageDealt) {
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
@@ -2023,9 +2043,16 @@ public class CombatDamageService {
                         watcher.getId());
                 setCombatDamageEventValue(stackEntry, firedEffect, damageDealt);
                 stackEntry.setNonTargeting(true);
-                gameData.stack.add(stackEntry);
-                gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
-                        "'s same-name combat damage trigger goes on the stack."));
+                int previousCopies = beginCombatDamageTriggerCopies(
+                        gameData, watcherControllerId, watcher, creature,
+                        attackerId, damageDealt);
+                try {
+                    gameData.stack.add(stackEntry);
+                    gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
+                            "'s same-name combat damage trigger goes on the stack."));
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
             }
         });
     }
@@ -2066,6 +2093,9 @@ public class CombatDamageService {
                     }
                 }
 
+                int previousCopies = beginCombatDamageTriggerCopies(
+                        gameData, ownerId, perm, creature, attackerId, damageDealt);
+                try {
                 if (!effects.isEmpty()) {
                     boolean needsGraveyardTarget = effects.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
@@ -2127,8 +2157,25 @@ public class CombatDamageService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
                     }
                 }
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
             }
         });
+    }
+
+    private int beginCombatDamageTriggerCopies(GameData gameData, UUID abilityControllerId,
+                                                Permanent abilitySource, Permanent damageSource,
+                                                UUID damageSourceControllerId, int damageToPlayers) {
+        if (abilityControllerId == null || abilitySource == null || damageSource == null) {
+            return gameData.beginTriggeredAbilityCopies(1);
+        }
+        TriggerContext.SourceDealsCombatDamage context = new TriggerContext.SourceDealsCombatDamage(
+                damageSource.getCard(), damageSourceControllerId, damageSource.getId(),
+                damageToPlayers, damageToPlayers);
+        return gameData.beginTriggeredAbilityCopies(1
+                + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                gameData, abilityControllerId, abilitySource, false, context));
     }
 
     private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
@@ -2189,6 +2236,9 @@ public class CombatDamageService {
                         UUID sourcePermanentId = triggerContext
                                 == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
                                 ? creature.getId() : perm.getId();
+                        int previousCopies = beginCombatDamageTriggerCopies(
+                                gameData, ownerId, perm, creature, attackerId, damageDealt);
+                        try {
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -2205,6 +2255,9 @@ public class CombatDamageService {
                         gameData.stack.add(se);
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack."));
+                        } finally {
+                            gameData.restoreTriggeredAbilityCopies(previousCopies);
+                        }
                     }
                 }
             }
@@ -2250,6 +2303,9 @@ public class CombatDamageService {
                     EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, perm, EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE));
+            int previousCopies = beginCombatDamageTriggerCopies(
+                    gameData, attackerId, perm, creature, attackerId, damageDealt);
+            try {
             for (CardEffect authoredEffect : effects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
@@ -2381,6 +2437,9 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s triggered ability goes on the stack."));
                 }
+            }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         }
 
@@ -2618,6 +2677,7 @@ public class CombatDamageService {
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsCombatDamageToPlayerOrPlaneswalkerTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealtToPlayerOrPlaneswalker,
+                    state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.get(source));
         }
     }
@@ -2635,6 +2695,7 @@ public class CombatDamageService {
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsCombatDamageToPlayerOrBattleTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), totalDamage,
+                    state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.selfDealsCombatDamageToPlayerOrBattleEffects.get(source));
         }
     }

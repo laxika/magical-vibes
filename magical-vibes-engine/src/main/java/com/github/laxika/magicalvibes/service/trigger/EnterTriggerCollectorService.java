@@ -427,6 +427,9 @@ public class EnterTriggerCollectorService {
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            if (effect instanceof TriggeringPermanentManaValueEffect) {
+                entry.setEventValue(pe.enteringCard().getManaValue());
+            }
             if (match.sourcePlanarObject() != null) {
                 entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
             }

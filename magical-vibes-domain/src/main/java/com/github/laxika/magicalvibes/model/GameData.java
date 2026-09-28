@@ -235,6 +235,8 @@ public class GameData {
     public final Map<UUID, Integer> spellCastArtifactManaSpent = new ConcurrentHashMap<>();
     /** Amount of mana produced by Cave sources spent to cast a spell, keyed by spell card instance id. */
     public final Map<UUID, Integer> spellCastCaveManaSpent = new ConcurrentHashMap<>();
+    /** Amount of mana produced by Desert sources spent to cast a spell, keyed by spell card instance id. */
+    public final Map<UUID, Integer> spellCastDesertManaSpent = new ConcurrentHashMap<>();
     /** Producing permanents whose tagged mana was spent to cast each spell. */
     public final Map<UUID, Set<UUID>> spellCastManaSourceIds = new ConcurrentHashMap<>();
     /** Whether mana produced by a Treasure was spent to cast each spell. */
@@ -4559,6 +4561,18 @@ public class GameData {
         spellCastCaveManaSpent.remove(spellCardId);
     }
 
+    public void setSpellCastDesertManaSpent(UUID spellCardId, int desertManaSpent) {
+        spellCastDesertManaSpent.put(spellCardId, desertManaSpent);
+    }
+
+    public int getSpellCastDesertManaSpent(UUID spellCardId) {
+        return spellCastDesertManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastDesertManaSpent(UUID spellCardId) {
+        spellCastDesertManaSpent.remove(spellCardId);
+    }
+
     public void setSpellCastManaSpentOnX(UUID spellCardId, java.util.EnumMap<ManaColor, Integer> spentOnX) {
         spellCastManaSpentOnX.put(spellCardId, spentOnX);
     }
@@ -7369,6 +7383,7 @@ public class GameData {
         copy.spellCastTreasureManaSpent.putAll(this.spellCastTreasureManaSpent);
         copy.spellCastArtifactManaSpent.putAll(this.spellCastArtifactManaSpent);
         copy.spellCastCaveManaSpent.putAll(this.spellCastCaveManaSpent);
+        copy.spellCastDesertManaSpent.putAll(this.spellCastDesertManaSpent);
         copy.spellCastUsedTreasureMana.putAll(this.spellCastUsedTreasureMana);
         this.spellCastManaSourceIds.forEach((k, v) -> {
             Set<UUID> sourceIds = ConcurrentHashMap.newKeySet();

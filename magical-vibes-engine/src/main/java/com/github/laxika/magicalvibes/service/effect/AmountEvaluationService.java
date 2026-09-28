@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.DesertManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
@@ -340,6 +341,8 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastTreasureManaSpent(ctx.sourceCard().getId());
             case CaveManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
+            case DesertManaSpentToCast ignored ->
+                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastDesertManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
                     ctx.eventValue();
             case TotalManaValueOfDestroyedPermanents ignored ->
@@ -1432,7 +1435,10 @@ public class AmountEvaluationService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (!card.isToken() && (!amount.nonlandOnly() || !card.hasType(CardType.LAND))) {
+                if (!card.isToken()
+                        && (!amount.nonlandOnly() || !card.hasType(CardType.LAND))
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, amount.filter(), null, gameData, playerId)) {
                     found.add(card.getManaValue());
                 }
             }

@@ -130,10 +130,12 @@ This index has been split into smaller files for faster lookup. Each file is und
 | optional enlist trigger that conjures a perpetual duplicate into the top five | `ConjureDuplicateOfEnlistedNontokenCreatureEffect` + `ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect` |
 | next instant/sorcery cast conjures a duplicate into hand, with an un-kicked delayed discard | `RegisterDelayedControllerSpellCastTriggerEffect` + `ConjureDuplicateOfTriggeringSpellIntoHandEffect` + `DiscardSpecificCardEffect` |
 | one or more other nontoken creatures deal combat damage, then choose one and conjure its duplicate into hand | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` + `AllyCombatDamageTriggerEffect(..., oncePerDamageStep=true)` + `ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect` |
+| one or more creatures deal combat damage, create a Treasure, then manifest the damaged player's top card under your control | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` + `AllyCombatDamageTriggerEffect(null, SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1), ManifestTopCardOfDamagedPlayerLibraryEffect()), false, true)` |
 | perpetually modify a physical card's power and toughness | `PerpetuallyBoostCardEffect` + `GameData.perpetualCardPowerToughnessModifiers` |
 | perpetually boost other own creatures and matching creature cards in hand of a chosen type | `ChooseSubtypeOnEnterEffect` + `GrantChosenSubtypeToOwnCreaturesEffect.toSelf()` + `PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtypeEffect` |
 | perpetually boost a Vehicle when a matching creature crews it | `ON_ALLY_CREATURE_CREWS_VEHICLE` + `PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect` |
 | choose a nonland hand card that perpetually costs less to cast | `ChooseCardFromHandToPerpetuallyReduceCastCostEffect` + `GameData.perpetualCardCastCostReductions` |
+| target opponent chooses X cards from hand; look at them and may cast one revealed spell for free | `e/ExtractBrain.java` + `RevealCardsChooseOneToCastEffect` |
 | target a creature card in your graveyard, make it perpetually only one card type, and let you cast it this turn | `GrantTargetGraveyardCardCastEffect` + `PerpetuallySetTargetCreatureCardTypeEffect` |
 | look at top seven cards, perpetually gain keywords | `p/PriestOfPossibility.java` and `LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler` |
 | exile top cards, play this turn, unplayed exiled cards to graveyard and tokens | `g/GlimpseTheImpossible.java` |
@@ -186,6 +188,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | end-step may manifest plus exile a face-down permanent and play that exact card | `p/PrimordialMist.java` + `AllowPlayExiledCostCardThisTurnEffect` |
 | suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| combat damage → damaged player chooses a nonland permanent controlled by one of the source controller's opponents to destroy | `b/BladegriffPrototype.java` + `ON_COMBAT_DAMAGE_TO_PLAYER DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffect` |
 | combat damage to an opponent, same damage to each other opponent | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -210,6 +213,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | token enters, target another player to copy it, once-per-turn conditional draw | `l/LucyMacLeanPositivelyArmed.java` + `CreateTokenCopyOfEnteringTokenForTargetPlayerEffect` |
 | first token creation each turn may copy another creature | `e/EsixFractalBloom.java` + `EsixFractalBloomEffect` + `CreateTokenCopyOfChosenCreatureEffect` |
 | encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
+| static encore grant to creature cards matching any of several subtypes | `GrantEncoreToCreatureCardsOfSubtypesEffect` + a sorcery-speed graveyard ability |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each player may put counters on a creature, and players who do cannot attack the trigger controller until their next turn | `o/OrzhovAdvokist.java` + `EachPlayerMayPutCountersOnCreatureEffect` |

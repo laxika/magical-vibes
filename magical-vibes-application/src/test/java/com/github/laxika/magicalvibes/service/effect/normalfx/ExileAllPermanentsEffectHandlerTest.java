@@ -259,4 +259,32 @@ class ExileAllPermanentsEffectHandlerTest {
                         .extracting(DimensionalBreachUpkeepReturn::sourceCard)
                         .containsExactly(sourceCard);
             }
+
+            @Test
+            @DisplayName("Grants the resolving controller persistent play permission with any mana")
+            void grantsControllerPlayPermission() {
+                Card creatureCard = createCreatureCard("Bear");
+                Permanent creature = addPermanent(player2Id, creatureCard);
+
+                Card sourceCard = createSorceryCard("Heartless Conscription");
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                ExileAllPermanentsEffect effect = ExileAllPermanentsEffect
+                        .withControllerPlayPermission(filter, true);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                        List.of(effect), 0, (UUID) null, null
+                );
+
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
+                        .thenReturn(true);
+                when(permanentRemovalService.removePermanentToExile(gd, creature)).thenAnswer(invocation -> {
+                    gd.addToExile(player2Id, creatureCard);
+                    return true;
+                });
+
+                exileAllPermanentsHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.exilePlayPermissions).containsEntry(creatureCard.getId(), player1Id);
+                assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(creatureCard.getId());
+            }
 }

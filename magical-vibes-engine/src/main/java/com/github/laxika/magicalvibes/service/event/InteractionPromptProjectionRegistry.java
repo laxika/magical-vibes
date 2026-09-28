@@ -1784,6 +1784,11 @@ public class InteractionPromptProjectionRegistry {
         }
         String targetName =
                 gameData.playerIdToName.getOrDefault(interaction.targetPlayerId(), "that player");
+        if (interaction.destination() == HandChoiceDestination.KEEP_IN_HAND) {
+            return interaction.remainingCount() < interaction.discardCount()
+                    ? "Choose another revealed spell to cast without paying its mana cost."
+                    : "Choose a revealed spell to cast without paying its mana cost.";
+        }
         if (interaction.destination() == HandChoiceDestination.EXILE) {
             return interaction.remainingCount() < interaction.discardCount()
                     ? "Choose another revealed card to exile."

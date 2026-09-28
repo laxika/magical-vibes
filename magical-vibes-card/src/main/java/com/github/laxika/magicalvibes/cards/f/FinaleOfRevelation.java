@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "51")
+@CardRegistration(set = "OTC", collectorNumber = "97")
 public class FinaleOfRevelation extends Card {
 
     public FinaleOfRevelation() {

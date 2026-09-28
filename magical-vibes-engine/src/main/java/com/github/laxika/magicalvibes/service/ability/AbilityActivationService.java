@@ -321,6 +321,7 @@ public class AbilityActivationService {
         boolean isLandSource = gameQueryService.isLand(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = permanent.getCard().hasType(CardType.LAND)
                 && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         // Mana-production replacement effects are applied to the tapped permanent.
@@ -349,6 +350,7 @@ public class AbilityActivationService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withBasicLandSource(basicLandSource)
                             .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
@@ -378,6 +380,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(fixedLandColor, totalMana);
                 }
@@ -403,6 +408,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
@@ -435,6 +441,9 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(color, totalMana);
                     }
@@ -445,6 +454,7 @@ public class AbilityActivationService {
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource)
                                     .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
@@ -464,6 +474,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(overriddenManaColors.getFirst(), manaMultiplier);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
@@ -474,6 +487,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
@@ -501,6 +515,9 @@ public class AbilityActivationService {
                     manaPool.add(ManaColor.COLORLESS, manaMultiplier);
                     if (caveSource) {
                         manaPool.addCaveManaTag(ManaColor.COLORLESS, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(ManaColor.COLORLESS, manaMultiplier);
                     }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(ManaColor.COLORLESS, manaMultiplier);
@@ -531,6 +548,9 @@ public class AbilityActivationService {
                         }
                         if (caveSource) {
                             manaPool.addCaveManaTag(effectiveColor, amount);
+                        }
+                        if (desertSource) {
+                            manaPool.addDesertManaTag(effectiveColor, amount);
                         }
                         if (basicLandSource) {
                             manaPool.addBasicLandManaTag(effectiveColor, amount);
@@ -895,6 +915,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
         boolean anyColorReplacement = fixedLandColor == null
@@ -923,6 +944,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
             }
         } else if (anyColorReplacement) {
             int totalMana = 0;
@@ -940,6 +964,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -968,11 +993,15 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                 } else {
                     // Piracy + multi-type under Reality Twist: pick one color for all mana.
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -992,10 +1021,14 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(effectiveColor, 1);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(effectiveColor, 1);
+                }
             } else {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, 1)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1015,6 +1048,9 @@ public class AbilityActivationService {
                     }
                     if (caveSource) {
                         manaPool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(effectiveColor, amount);
                     }
                 }
             }
@@ -7929,6 +7965,13 @@ public class AbilityActivationService {
         if (subtypes.contains(CardSubtype.ASSASSIN)) {
             subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
+        if (subtypes.contains(CardSubtype.ASSASSIN)
+                || subtypes.contains(CardSubtype.MERCENARY)
+                || subtypes.contains(CardSubtype.PIRATE)
+                || subtypes.contains(CardSubtype.ROGUE)
+                || subtypes.contains(CardSubtype.WARLOCK)) {
+            subtypes.add(CardSubtype.OUTLAW);
+        }
         return subtypes;
     }
 
@@ -9243,5 +9286,10 @@ public class AbilityActivationService {
     private boolean isCaveSource(GameData gameData, Permanent permanent) {
         return predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+    }
+
+    private boolean isDesertSource(GameData gameData, Permanent permanent) {
+        return predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
     }
 }

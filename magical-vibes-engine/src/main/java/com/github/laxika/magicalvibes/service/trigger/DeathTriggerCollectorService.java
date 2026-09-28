@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscar
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -2743,6 +2744,31 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(new SacrificePermanentsEffect(
                         effect.count(), effect.filter(), SacrificeRecipient.CONTROLLER)))
         ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathBountyReward(TriggerMatchContext match,
+            EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureDeath death)
+                || death.dyingPermanent() == null
+                || death.dyingPermanent().getCounterCount(CounterType.BOUNTY) < 1) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                death.dyingCreatureControllerId(),
+                match.permanent().getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

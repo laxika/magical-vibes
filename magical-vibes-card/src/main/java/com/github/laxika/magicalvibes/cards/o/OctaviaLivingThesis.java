@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "29")
+@CardRegistration(set = "OTC", collectorNumber = "103")
 public class OctaviaLivingThesis extends Card {
 
     public OctaviaLivingThesis() {

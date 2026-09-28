@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "88")
+@CardRegistration(set = "OTC", collectorNumber = "149")
 public class TenuredInkcaster extends Card {
 
     public TenuredInkcaster() {

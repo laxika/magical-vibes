@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "SOC", collectorNumber = "205")
 @CardRegistration(set = "C21", collectorNumber = "133")
 @CardRegistration(set = "TDC", collectorNumber = "169")
+@CardRegistration(set = "OTC", collectorNumber = "120")
 public class TreasureCruise extends Card {
 
     public TreasureCruise() {

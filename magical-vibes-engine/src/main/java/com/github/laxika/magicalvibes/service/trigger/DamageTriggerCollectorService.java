@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
@@ -2264,6 +2265,11 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 equipment.getId());
+        if (effect instanceof CombatDamageTriggerContextEffect contextEffect
+                && contextEffect.combatDamageTriggerContext()
+                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
+            entry.setTargetId(sd.damagedPlayerId());
+        }
         entry.setNonTargeting(true);
         entry.setEventValue(sd.totalDamage());
         entry.setSourcePermanentSnapshot(new Permanent(equipment));

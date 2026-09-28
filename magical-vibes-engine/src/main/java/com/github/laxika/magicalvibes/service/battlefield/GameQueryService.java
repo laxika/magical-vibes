@@ -219,6 +219,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDunge
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
@@ -351,6 +352,7 @@ public class GameQueryService {
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
             CardSubtype.ASSASSIN_OR_FREERUNNING,
+            CardSubtype.OUTLAW,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS
@@ -1044,6 +1046,11 @@ public class GameQueryService {
                 .getOrDefault(card.getId(), Set.of()).contains(subtype)) {
             return true;
         }
+        if (gameData != null && cardOwnerId != null && !isOnBattlefield(card, gameData)
+                && cardHasType(card, CardType.LAND, gameData, cardOwnerId)
+                && computeGrantedSubtypesForOwnedLandCard(gameData, cardOwnerId).contains(subtype)) {
+            return true;
+        }
         if (cardHasType(card, CardType.CREATURE, gameData, cardOwnerId) && isCreatureSubtype(subtype)
                 && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card)
                 || selfAllZoneGrantedSubtypes(card).contains(subtype)
@@ -1056,6 +1063,21 @@ public class GameQueryService {
         return isCardInGraveyard(gameData, cardOwnerId, card)
                 && computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card)
                 .contains(subtype);
+    }
+
+    private List<CardSubtype> computeGrantedSubtypesForOwnedLandCard(GameData gameData, UUID ownerId) {
+        List<CardSubtype> result = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+        if (battlefield == null) return result;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof OwnLandSubtypeGrantingEffect grant
+                        && !result.contains(grant.subtype())) {
+                    result.add(grant.subtype());
+                }
+            }
+        }
+        return result;
     }
 
     private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
@@ -8048,6 +8070,8 @@ public class GameQueryService {
                 for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
                             || additional.allyCreatureBecomesTarget()
+                            || (additional.combatDamageToPlayerOnly()
+                            && !matchesCombatDamageToPlayerTrigger(gameData, controllerId, triggerContext))
                             || (additional.attackOnly() && !attackTrigger)
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
@@ -8071,6 +8095,39 @@ public class GameQueryService {
             }
         }
         return count;
+    }
+
+    private boolean matchesCombatDamageToPlayerTrigger(GameData gameData, UUID controllerId,
+                                                       TriggerContext context) {
+        if (context == null) {
+            return false;
+        }
+        return switch (context) {
+            case TriggerContext.SourceDealsCombatDamage damage ->
+                    controllerId.equals(damage.sourceControllerId())
+                            && damage.damageToPlayers() > 0
+                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
+            case TriggerContext.AllyCreaturesDealDamageToPlayer damage ->
+                    controllerId.equals(damage.sourceControllerId());
+            case TriggerContext.DamageToController damage when damage.isCombatDamage() -> {
+                Permanent source = findPermanentById(gameData, damage.sourcePermanentId());
+                yield source != null
+                        && isCreature(gameData, source)
+                        && controllerId.equals(findPermanentController(gameData, source.getId()));
+            }
+            case TriggerContext.SourceDealsDamage damage ->
+                    damage.combatDamage()
+                            && !damage.damageToPlayers().isEmpty()
+                            && controllerId.equals(damage.sourceControllerId())
+                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
+            default -> false;
+        };
+    }
+
+    private boolean sourceIsCreature(GameData gameData, Card sourceCard, UUID sourcePermanentId) {
+        Permanent source = sourcePermanentId == null ? null : findPermanentById(gameData, sourcePermanentId);
+        return source != null ? isCreature(gameData, source)
+                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
     }
 
     private boolean matchesInstantSorceryCastOrCopy(TriggerContext triggerContext, UUID controllerId) {

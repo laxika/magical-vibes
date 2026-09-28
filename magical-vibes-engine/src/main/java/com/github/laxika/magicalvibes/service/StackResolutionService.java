@@ -1323,6 +1323,7 @@ public class StackResolutionService {
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastDesertManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
     }
@@ -1477,7 +1478,7 @@ public class StackResolutionService {
             // otherwise to graveyard).
         } else if (exileSpellEffect != null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.addToExile(ownerId, physicalCard);
+            gameData.addToExile(ownerId, physicalCard, exileSpellEffect.sourcePermanentId());
             entry.getEffectsToResolve().stream()
                     .filter(ExileSpellEffect.class::isInstance)
                     .map(ExileSpellEffect.class::cast)

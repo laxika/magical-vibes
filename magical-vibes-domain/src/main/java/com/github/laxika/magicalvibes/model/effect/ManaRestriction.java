@@ -149,6 +149,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells the controller does not own. */
+    record NonOwnedSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonOwnedSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells you don't own only";
+        }
+    }
+
     record ForetellOrInstantSorcery() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {

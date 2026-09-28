@@ -18,6 +18,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> snowMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a Cave source, tracked as a tag for cast-time effects. */
     private final EnumMap<ManaColor, Integer> caveMana = new EnumMap<>(ManaColor.class);
+    /** Mana produced by a Desert source, tracked as a tag for cast-time effects. */
+    private final EnumMap<ManaColor, Integer> desertMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a Treasure, tracked as a tag on unrestricted mana. */
     private final EnumMap<ManaColor, Integer> treasureMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a non-Treasure artifact source, tracked as a tag on unrestricted mana. */
@@ -151,6 +153,10 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> nonHandSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Non-hand-only mana temporarily promoted during a non-hand spell payment. */
     private final EnumMap<ManaColor, Integer> promotedNonHandSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to cast spells the controller does not own. */
+    private final EnumMap<ManaColor, Integer> nonOwnedSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Non-owned-spell-only mana temporarily promoted during a non-owned spell payment. */
+    private final EnumMap<ManaColor, Integer> promotedNonOwnedSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
     /**
@@ -262,6 +268,7 @@ public class ManaPool {
             pool.put(color, 0);
             snowMana.put(color, 0);
             caveMana.put(color, 0);
+            desertMana.put(color, 0);
             treasureMana.put(color, 0);
             artifactSourceMana.put(color, 0);
             basicLandMana.put(color, 0);
@@ -289,6 +296,8 @@ public class ManaPool {
             promotedGraveyardOnlyMana.put(color, 0);
             nonHandSpellOnlyMana.put(color, 0);
             promotedNonHandSpellOnlyMana.put(color, 0);
+            nonOwnedSpellOnlyMana.put(color, 0);
+            promotedNonOwnedSpellOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
             kickedOrInstantSorceryOnlyColored.put(color, 0);
             coloredCostOnlyMana.put(color, 0);
@@ -323,6 +332,7 @@ public class ManaPool {
         pool.putAll(source.pool);
         snowMana.putAll(source.snowMana);
         caveMana.putAll(source.caveMana);
+        desertMana.putAll(source.desertMana);
         treasureMana.putAll(source.treasureMana);
         artifactSourceMana.putAll(source.artifactSourceMana);
         basicLandMana.putAll(source.basicLandMana);
@@ -358,6 +368,8 @@ public class ManaPool {
         promotedGraveyardOnlyMana.putAll(source.promotedGraveyardOnlyMana);
         nonHandSpellOnlyMana.putAll(source.nonHandSpellOnlyMana);
         promotedNonHandSpellOnlyMana.putAll(source.promotedNonHandSpellOnlyMana);
+        nonOwnedSpellOnlyMana.putAll(source.nonOwnedSpellOnlyMana);
+        promotedNonOwnedSpellOnlyMana.putAll(source.promotedNonOwnedSpellOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         artifactOnlyMana.putAll(source.artifactOnlyMana);
         artifactSpellOnlyMana.putAll(source.artifactSpellOnlyMana);
@@ -641,6 +653,17 @@ public class ManaPool {
         caveMana.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana produced by a Desert source. */
+    public void addDesertMana(ManaColor color, int amount) {
+        add(color, amount);
+        addDesertManaTag(color, amount);
+    }
+
+    /** Copies a Desert-source tag onto mana already present in this pool. */
+    public void addDesertManaTag(ManaColor color, int amount) {
+        desertMana.merge(color, amount, Integer::sum);
+    }
+
     /** Copies a Treasure-source tag onto mana already present in this pool. */
     public void addTreasureManaTag(ManaColor color, int amount) {
         treasureMana.merge(color, amount, Integer::sum);
@@ -745,6 +768,19 @@ public class ManaPool {
         return new EnumMap<>(caveMana);
     }
 
+    public int getDesertMana(ManaColor color) {
+        return desertMana.getOrDefault(color, 0);
+    }
+
+    public int getDesertManaTotal() {
+        return desertMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Returns a defensive snapshot of Desert-source tags currently available by color. */
+    public EnumMap<ManaColor, Integer> getDesertManaTotals() {
+        return new EnumMap<>(desertMana);
+    }
+
     /** Tags mana with the permanent that produced it for a source-specific spell-cast trigger. */
     public void addSpellCastTriggerMana(UUID sourcePermanentId, ManaColor color, int amount) {
         if (sourcePermanentId == null || amount <= 0) {
@@ -831,6 +867,7 @@ public class ManaPool {
             pool.put(color, 0);
             snowMana.put(color, 0);
             caveMana.put(color, 0);
+            desertMana.put(color, 0);
             treasureMana.put(color, 0);
             artifactSourceMana.put(color, 0);
             basicLandMana.put(color, 0);
@@ -858,6 +895,8 @@ public class ManaPool {
             promotedGraveyardOnlyMana.put(color, 0);
             nonHandSpellOnlyMana.put(color, 0);
             promotedNonHandSpellOnlyMana.put(color, 0);
+            nonOwnedSpellOnlyMana.put(color, 0);
+            promotedNonOwnedSpellOnlyMana.put(color, 0);
         }
         spellCastTriggerMana.clear();
         creatureOrEnchantmentSpellOnlyMana.clear();
@@ -1044,6 +1083,7 @@ public class ManaPool {
         total += getFlashbackOnlyManaTotal();
         total += getGraveyardOnlyManaTotal();
         total += getNonHandSpellOnlyManaTotal();
+        total += getNonOwnedSpellOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;
@@ -1279,6 +1319,10 @@ public class ManaPool {
         if (cave > 0) {
             caveMana.put(color, cave - 1);
         }
+        int desert = desertMana.getOrDefault(color, 0);
+        if (desert > 0) {
+            desertMana.put(color, desert - 1);
+        }
         int treasure = treasureMana.getOrDefault(color, 0);
         if (treasure > 0) {
             treasureMana.put(color, treasure - 1);
@@ -1312,9 +1356,14 @@ public class ManaPool {
                     if (promotedNonHandSpellOnly > 0) {
                         promotedNonHandSpellOnlyMana.put(color, promotedNonHandSpellOnly - 1);
                     } else {
-                        int promotedArtifactSpellOrAbilityOnly = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
-                        if (promotedArtifactSpellOrAbilityOnly > 0) {
-                            promotedArtifactSpellOrAbilityOnlyMana.put(color, promotedArtifactSpellOrAbilityOnly - 1);
+                        int promotedNonOwnedSpellOnly = promotedNonOwnedSpellOnlyMana.getOrDefault(color, 0);
+                        if (promotedNonOwnedSpellOnly > 0) {
+                            promotedNonOwnedSpellOnlyMana.put(color, promotedNonOwnedSpellOnly - 1);
+                        } else {
+                            int promotedArtifactSpellOrAbilityOnly = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
+                            if (promotedArtifactSpellOrAbilityOnly > 0) {
+                                promotedArtifactSpellOrAbilityOnlyMana.put(color, promotedArtifactSpellOrAbilityOnly - 1);
+                            }
                         }
                     }
                 }
@@ -2241,6 +2290,54 @@ public class ManaPool {
 
     public record NonHandSpellOnlyManaState(Map<ManaColor, Integer> regularBefore,
                                             Map<ManaColor, Integer> promoted) {
+    }
+
+    public void addNonOwnedSpellOnlyMana(ManaColor color, int amount) {
+        nonOwnedSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getNonOwnedSpellOnlyMana(ManaColor color) {
+        return nonOwnedSpellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getNonOwnedSpellOnlyManaTotal() {
+        return nonOwnedSpellOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Temporarily exposes non-owned-spell-only mana to the ordinary spell-payment algorithm. */
+    public NonOwnedSpellOnlyManaState promoteNonOwnedSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, get(color));
+            int amount = getNonOwnedSpellOnlyMana(color);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                nonOwnedSpellOnlyMana.put(color, 0);
+                promotedNonOwnedSpellOnlyMana.put(color, amount);
+            }
+        }
+        return new NonOwnedSpellOnlyManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent non-owned-spell-only mana after a spell payment. */
+    public void restorePromotedNonOwnedSpellOnlyMana(NonOwnedSpellOnlyManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - get(color));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                nonOwnedSpellOnlyMana.merge(color, remaining, Integer::sum);
+            }
+            promotedNonOwnedSpellOnlyMana.put(color, 0);
+        }
+    }
+
+    public record NonOwnedSpellOnlyManaState(Map<ManaColor, Integer> regularBefore,
+                                             Map<ManaColor, Integer> promoted) {
     }
 
     public int getInstantSorceryOnlyColorless() {
@@ -3972,6 +4069,7 @@ public class ManaPool {
             pool.merge(ManaColor.COLORLESS, amount, Integer::sum);
             moveTaggedManaToColorless(snowMana, color, amount);
             moveTaggedManaToColorless(caveMana, color, amount);
+            moveTaggedManaToColorless(desertMana, color, amount);
             moveTaggedManaToColorless(treasureMana, color, amount);
             moveTaggedManaToColorless(artifactSourceMana, color, amount);
             moveTaggedManaToColorless(basicLandMana, color, amount);
@@ -3980,6 +4078,7 @@ public class ManaPool {
             moveTaggedManaToColorless(promotedAbilityOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedGraveyardOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedNonHandSpellOnlyMana, color, amount);
+            moveTaggedManaToColorless(promotedNonOwnedSpellOnlyMana, color, amount);
             moveTaggedManaToColorless(hasteGrantingMana, color, amount);
             moveTaggedManaToColorlessBuckets(subtypeHasteGrantingMana, color, amount);
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
@@ -4015,6 +4114,7 @@ public class ManaPool {
         moveColoredManaToColorless(flashbackOnlyMana);
         moveColoredManaToColorless(graveyardOnlyMana);
         moveColoredManaToColorless(nonHandSpellOnlyMana);
+        moveColoredManaToColorless(nonOwnedSpellOnlyMana);
         moveColoredManaToColorless(abilityOnlyMana);
         moveColoredManaToColorless(landAbilityOnlyMana);
         moveColoredManaToColorlessBuckets(subtypeCreatureMana);
@@ -4074,6 +4174,7 @@ public class ManaPool {
             moveTaggedMana(promotedAbilityOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedGraveyardOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedNonHandSpellOnlyMana, color, replacementColor, amount);
+            moveTaggedMana(promotedNonOwnedSpellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
             moveTaggedManaBuckets(subtypeHasteGrantingMana, color, replacementColor, amount);
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
@@ -4143,6 +4244,7 @@ public class ManaPool {
         moveManaTo(replacementColor, coloredCostOnlyMana);
         moveManaTo(replacementColor, flashbackOnlyMana);
         moveManaTo(replacementColor, nonHandSpellOnlyMana);
+        moveManaTo(replacementColor, nonOwnedSpellOnlyMana);
         moveManaTo(replacementColor, abilityOnlyMana);
         moveManaToBuckets(replacementColor, subtypeCreatureMana);
         moveManaToBuckets(replacementColor, subtypeOrLegendaryCreatureMana);
@@ -4325,6 +4427,7 @@ public class ManaPool {
         clampColorTag(creatureMana, protectedColors);
         clampColorTag(snowMana, protectedColors);
         clampColorTag(caveMana, protectedColors);
+        clampColorTag(desertMana, protectedColors);
         clampColorTag(treasureMana, protectedColors);
         clampColorTag(artifactSourceMana, protectedColors);
         clampColorTag(basicLandMana, protectedColors);
@@ -4359,6 +4462,8 @@ public class ManaPool {
         drainColorBucket(promotedGraveyardOnlyMana, protectedColors);
         drainColorBucket(nonHandSpellOnlyMana, protectedColors);
         drainColorBucket(promotedNonHandSpellOnlyMana, protectedColors);
+        drainColorBucket(nonOwnedSpellOnlyMana, protectedColors);
+        drainColorBucket(promotedNonOwnedSpellOnlyMana, protectedColors);
         drainColorBucket(artifactOnlyMana, protectedColors);
         drainColorBucket(artifactSpellOnlyMana, protectedColors);
         drainColorBucket(artifactAbilityOnlyMana, protectedColors);
@@ -4513,6 +4618,7 @@ public class ManaPool {
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += nonHandSpellOnlyMana.getOrDefault(color, 0);
+            amount += nonOwnedSpellOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
             amount += landAbilityOnlyMana.getOrDefault(color, 0);
             amount += commanderOnlyMana.getOrDefault(color, 0);
@@ -4580,6 +4686,7 @@ public class ManaPool {
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += nonHandSpellOnlyMana.getOrDefault(color, 0);
+            amount += nonOwnedSpellOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
             amount += landAbilityOnlyMana.getOrDefault(color, 0);
             amount += commanderOnlyMana.getOrDefault(color, 0);
