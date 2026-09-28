@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -43,8 +45,8 @@ public class PerpetuallyBoostEquippedCreatureIfNameSharedEffectHandler implement
         var boost = (PerpetuallyBoostEquippedCreatureIfNameSharedEffect) effect;
         gameData.perpetualCardPowerToughnessModifiers.merge(
                 equippedCreature.getCard().getId(),
-                new GameData.PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
-                (oldValue, newValue) -> new GameData.PerpetualPowerToughnessModifier(
+                new CardPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
+                (oldValue, newValue) -> new CardPowerToughnessModifier(
                         oldValue.power() + newValue.power(), oldValue.toughness() + newValue.toughness()));
     }
 

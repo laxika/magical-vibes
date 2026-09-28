@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -27,8 +29,8 @@ public class PerpetuallyBoostTriggeringCardEffectHandler implements NormalEffect
         var boost = (PerpetuallyBoostTriggeringCardEffect) effect;
         gameData.perpetualCardPowerToughnessModifiers.merge(
                 cardId,
-                new GameData.PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
-                (oldValue, newValue) -> new GameData.PerpetualPowerToughnessModifier(
+                new CardPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
+                (oldValue, newValue) -> new CardPowerToughnessModifier(
                         oldValue.power() + newValue.power(), oldValue.toughness() + newValue.toughness()));
     }
 }

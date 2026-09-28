@@ -1360,7 +1360,7 @@ public class GameActionAvailabilityService {
                         .orElse(false));
         boolean hasStaticGraveyardLandPermission = graveyard.stream()
                 .filter(card -> card.hasType(CardType.LAND))
-                .anyMatch(card -> castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId, card));
+                .anyMatch(card -> castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card));
         if (!hasStaticGraveyardLandPermission && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }

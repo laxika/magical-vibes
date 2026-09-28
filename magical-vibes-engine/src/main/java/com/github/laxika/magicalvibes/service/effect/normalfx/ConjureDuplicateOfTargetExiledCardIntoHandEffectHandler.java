@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -86,8 +88,8 @@ public class ConjureDuplicateOfTargetExiledCardIntoHandEffectHandler implements 
         if (effect.powerBoost() != 0 || effect.toughnessBoost() != 0) {
             gameData.perpetualCardPowerToughnessModifiers.merge(
                     copy.getId(),
-                    new GameData.PerpetualPowerToughnessModifier(effect.powerBoost(), effect.toughnessBoost()),
-                    (oldValue, newValue) -> new GameData.PerpetualPowerToughnessModifier(
+                    new CardPowerToughnessModifier(effect.powerBoost(), effect.toughnessBoost()),
+                    (oldValue, newValue) -> new CardPowerToughnessModifier(
                             oldValue.power() + newValue.power(), oldValue.toughness() + newValue.toughness()));
         }
         if (!effect.keywords().isEmpty()) {
