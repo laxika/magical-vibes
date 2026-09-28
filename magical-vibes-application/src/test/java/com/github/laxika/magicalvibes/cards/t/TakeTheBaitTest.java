@@ -28,6 +28,7 @@ class TakeTheBaitTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.forceActivePlayer(player1);
+        gd.combatPhasesThisTurn = 1;
         attackerToPlayer.setAttacking(true);
         attackerToPlayer.setAttackTarget(player2.getId());
         attackerToPlayer.tap();
@@ -44,7 +45,7 @@ class TakeTheBaitTest extends BaseCardTest {
         assertThat(gqs.isGoaded(gd, attackerToPlayer)).isTrue();
         assertThat(gqs.isGoaded(gd, attackerToPlaneswalker)).isTrue();
 
-        resolveCombat(player1);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);

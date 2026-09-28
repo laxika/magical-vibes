@@ -51,6 +51,7 @@ class HotPursuitTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, suspectedOnly, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.ensurePriority(player1);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
