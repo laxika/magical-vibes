@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "E02", collectorNumber = "29")
 @CardRegistration(set = "WOT", collectorNumber = "49")
 @CardRegistration(set = "LTC", collectorNumber = "226")
+@CardRegistration(set = "C20", collectorNumber = "158")
 public class SharedAnimosity extends Card {
 
     public SharedAnimosity() {

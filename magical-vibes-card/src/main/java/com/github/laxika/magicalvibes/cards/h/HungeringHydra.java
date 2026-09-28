@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "189")
+@CardRegistration(set = "C20", collectorNumber = "177")
 public class HungeringHydra extends Card {
 
     public HungeringHydra() {

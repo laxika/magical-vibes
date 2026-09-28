@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "OTC", collectorNumber = "247")
+@CardRegistration(set = "C20", collectorNumber = "17")
 public class UkkimaStalkingShadow extends Card {
 
     private static final String PARTNER_NAME = "Cazur, Ruthless Stalker";

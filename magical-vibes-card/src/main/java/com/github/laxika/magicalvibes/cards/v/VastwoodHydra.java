@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "198")
+@CardRegistration(set = "C20", collectorNumber = "194")
 public class VastwoodHydra extends Card {
 
     public VastwoodHydra() {

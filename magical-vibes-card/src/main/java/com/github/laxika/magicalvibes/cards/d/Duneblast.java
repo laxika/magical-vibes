@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToOneCreatureDestroyRestEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "174")
+@CardRegistration(set = "C20", collectorNumber = "211")
 public class Duneblast extends Card {
 
     public Duneblast() {

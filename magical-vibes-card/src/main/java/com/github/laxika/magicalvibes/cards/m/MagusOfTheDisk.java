@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "27")
+@CardRegistration(set = "C20", collectorNumber = "94")
 public class MagusOfTheDisk extends Card {
 
     public MagusOfTheDisk() {

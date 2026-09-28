@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "32")
+@CardRegistration(set = "C20", collectorNumber = "108")
 public class ChemistersInsight extends Card {
 
     public ChemistersInsight() {

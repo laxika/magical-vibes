@@ -247,6 +247,7 @@ import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -809,9 +810,7 @@ public class AmountEvaluationService {
                     imprintedCreaturePT(gameData, ctx, false);
             case LandsMatchingImprintedName ignored ->
                     countLandsMatchingImprintedName(gameData, ctx);
-            case SourceCardPower ignored ->
-                    ctx.sourceCard() == null || ctx.sourceCard().getPower() == null ? 0
-                            : Math.max(0, ctx.sourceCard().getPower());
+            case SourceCardPower ignored -> sourceCardPower(gameData, ctx);
             case SourceCardManaValue ignored ->
                     ctx.sourceCard() == null ? 0 : ctx.sourceCard().getManaValue();
             case SourceIntensity ignored -> {
@@ -1686,6 +1685,19 @@ public class AmountEvaluationService {
             }
         }
         return matches;
+    }
+
+    private int sourceCardPower(GameData gameData, AmountContext ctx) {
+        Card sourceCard = ctx.sourceCard();
+        if (sourceCard == null) {
+            return 0;
+        }
+        for (var effect : sourceCard.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof SetPowerToughnessToAmountEffect cda) {
+                return Math.max(0, evaluate(gameData, cda.power(), ctx));
+            }
+        }
+        return sourceCard.getPower() == null ? 0 : Math.max(0, sourceCard.getPower());
     }
 
     private boolean matchesGraveyardCountFilter(GameData gameData, Card card, CardPredicate filter,

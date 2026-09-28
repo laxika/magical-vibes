@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "2")
+@CardRegistration(set = "C20", collectorNumber = "78")
 public class BountyAgent extends Card {
 
     public BountyAgent() {

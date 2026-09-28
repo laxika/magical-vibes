@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "231")
 @CardRegistration(set = "DSC", collectorNumber = "238")
 @CardRegistration(set = "OTC", collectorNumber = "246")
+@CardRegistration(set = "C20", collectorNumber = "232")
 public class TrygonPredator extends Card {
 
     public TrygonPredator() {

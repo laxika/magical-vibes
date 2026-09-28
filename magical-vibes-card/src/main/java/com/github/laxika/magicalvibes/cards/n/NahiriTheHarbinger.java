@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "247")
 @CardRegistration(set = "SIR", collectorNumber = "238")
+@CardRegistration(set = "C20", collectorNumber = "223")
 public class NahiriTheHarbinger extends Card {
 
     public NahiriTheHarbinger() {

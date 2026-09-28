@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "33")
+@CardRegistration(set = "C20", collectorNumber = "98")
 public class RidersOfGavony extends Card {
 
     public RidersOfGavony() {

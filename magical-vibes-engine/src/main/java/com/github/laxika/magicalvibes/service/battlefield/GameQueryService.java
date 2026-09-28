@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTrigge
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalSpellCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -5817,6 +5818,14 @@ public class GameQueryService {
         if (target.getProtectionFromPlayerIdsUntilEndOfTurn().contains(sourceControllerId)) {
             return true;
         }
+        UUID targetControllerId = findPermanentController(gameData, target.getId());
+        if (targetControllerId != null && isPlaneswalker(gameData, target)) {
+            Set<UUID> protectedPlayers = gameData.playerProtectionFromPlayerIdsUntilNextTurn
+                    .get(targetControllerId);
+            if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
+                return true;
+            }
+        }
         if (target.isProtectionFromOpponentsPermanently()
                 && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
             return true;
@@ -7495,6 +7504,10 @@ public class GameQueryService {
         if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
             return true;
         }
+        protectedPlayers = gameData.playerProtectionFromPlayerIdsUntilNextTurn.get(playerId);
+        if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
+            return true;
+        }
         if (playerId.equals(sourceControllerId)) {
             return false;
         }
@@ -8153,6 +8166,23 @@ public class GameQueryService {
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent) {
         return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent, false);
+    }
+
+    /** Returns one additional spell copy for each active global spell-copy replacement effect. */
+    public int countAdditionalSpellCopies(GameData gameData) {
+        int count = 0;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AdditionalSpellCopyEffect) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /**

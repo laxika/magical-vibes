@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "336")
+@CardRegistration(set = "C20", collectorNumber = "222")
 public class MigratoryRoute extends Card {
 
     public MigratoryRoute() {

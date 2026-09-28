@@ -33,6 +33,8 @@ class UkkimaStalkingShadowTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.playerId()).isEqualTo(player1.getId());
         assertThat(targetChoice.validPlayerIds()).contains(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -40,9 +42,11 @@ class UkkimaStalkingShadowTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(cazur);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test
@@ -81,5 +85,28 @@ class UkkimaStalkingShadowTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Ukkima also deals damage and gains life when exiled")
+    void exileTriggersLastKnownPowerDamageAndLifeGain() {
+        Permanent ukkima = harness.addToBattlefieldAndReturn(player1, new UkkimaStalkingShadow());
+        ukkima.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, ukkima));
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
     }
 }

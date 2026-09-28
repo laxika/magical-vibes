@@ -23,6 +23,7 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var copyEffect = (CreateTokenCopyOfEnteringPermanentEffect) effect;
         UUID enteringPermanentId = entry.getTargetId() != null
                 ? entry.getTargetId()
                 : entry.getTriggeringPermanentId();
@@ -30,6 +31,8 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
             return;
         }
         targetPermanentHandler.resolveForTarget(
-                gameData, entry, new CreateTokenCopyOfTargetPermanentEffect(), enteringPermanentId);
+                gameData, entry,
+                new CreateTokenCopyOfTargetPermanentEffect(copyEffect.grantHaste(), copyEffect.exileAtEndStep()),
+                enteringPermanentId);
     }
 }

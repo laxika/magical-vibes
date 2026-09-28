@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "2369")
+@CardRegistration(set = "C20", collectorNumber = "47")
 public class SpeciesSpecialist extends Card {
 
     public SpeciesSpecialist() {

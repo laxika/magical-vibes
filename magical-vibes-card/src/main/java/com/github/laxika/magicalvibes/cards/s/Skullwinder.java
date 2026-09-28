@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 
 @CardRegistration(set = "C15", collectorNumber = "39")
 @CardRegistration(set = "OTC", collectorNumber = "207")
+@CardRegistration(set = "C20", collectorNumber = "189")
 public class Skullwinder extends Card {
 
     public Skullwinder() {

@@ -67,7 +67,7 @@ public class LookAtTopCardsMayPutPermanentToBattlefieldAndHandRestToGraveyardEff
         LibrarySearchFollowUp secondPick = LibrarySearchFollowUp.forBoundedPick(
                 new LibrarySearchFollowUp.SecondBoundedPick(
                         null, true, null, List.of(), false, List.of(),
-                        LibrarySearchDestination.HAND, permanentPredicate, "a permanent card"));
+                        LibrarySearchDestination.HAND, permanentPredicate, "a permanent card", List.of()));
         LibrarySearchParams params = LibrarySearchParams.builder(entry.getControllerId(),
                         new ArrayList<>(eligibleCards))
                 .reveals(true)

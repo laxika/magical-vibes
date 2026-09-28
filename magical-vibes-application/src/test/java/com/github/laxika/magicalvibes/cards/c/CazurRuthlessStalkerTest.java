@@ -30,6 +30,8 @@ class CazurRuthlessStalkerTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.playerId()).isEqualTo(player1.getId());
         assertThat(targetChoice.validPlayerIds()).contains(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -37,9 +39,11 @@ class CazurRuthlessStalkerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(ukkima);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForN
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "OTC", collectorNumber = "188")
+@CardRegistration(set = "C20", collectorNumber = "5")
 public class CazurRuthlessStalker extends Card {
 
     private static final String PARTNER_NAME = "Ukkima, Stalking Shadow";
