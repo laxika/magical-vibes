@@ -122,7 +122,8 @@ class QueenMarchesaTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         int bearIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bear);
-        declareAttackers(player2, List.of(bearIndex));
+        declareAttackersAndPrepareBlockers(player2, List.of(bearIndex));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
 
         assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());

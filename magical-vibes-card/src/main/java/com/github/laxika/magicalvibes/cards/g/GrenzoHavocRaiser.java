@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "228")
 @CardRegistration(set = "CMM", collectorNumber = "538")
 @CardRegistration(set = "CMM", collectorNumber = "677")
+@CardRegistration(set = "TDC", collectorNumber = "216")
 public class GrenzoHavocRaiser extends Card {
 
     public GrenzoHavocRaiser() {

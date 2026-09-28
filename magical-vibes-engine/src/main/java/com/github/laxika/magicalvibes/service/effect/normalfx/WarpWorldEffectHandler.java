@@ -119,8 +119,8 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
 
             for (Card card : revealed) {
-                CardType type = card.getType();
-                if (type == CardType.ARTIFACT || type == CardType.CREATURE || type == CardType.LAND) {
+                if (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)
+                        || card.hasType(CardType.LAND)) {
                     Permanent permanent = new Permanent(card);
                     battlefieldEntryService.putPermanentOntoBattlefield(
                             gameData, playerId, permanent, enterTappedTypesSnapshot, permanentGroupBatch);
@@ -144,7 +144,10 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
 
             for (Card card : revealed) {
-                if (card.hasType(CardType.ENCHANTMENT)) {
+                if (card.hasType(CardType.ENCHANTMENT)
+                        && !card.hasType(CardType.ARTIFACT)
+                        && !card.hasType(CardType.CREATURE)
+                        && !card.hasType(CardType.LAND)) {
                     if (card.isAura()) {
                         List<UUID> validTargets = findLegalAuraAttachments(gameData, card, playerId, auraLegalBaseTargetIds);
                         if (validTargets.size() == 1) {

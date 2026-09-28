@@ -47,8 +47,6 @@ class JetRebelLeaderTest extends BaseCardTest {
         assertThat(libraryChoice.validCardIds()).containsExactly(eligibleCreature.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent enteredCreature = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == eligibleCreature)

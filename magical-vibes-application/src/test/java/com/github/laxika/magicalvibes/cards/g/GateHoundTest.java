@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AboshansDesire;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,15 +11,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GateHound.class, AboshansDesire.class, GrizzlyBears.class})
+@CardUsed({GateHound.class, FaithsFetters.class, GrayscaledGharial.class})
 class GateHoundTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gate Hound grants no vigilance while it is not enchanted")
     void doesNotGrantVigilanceWhileNotEnchanted() {
-        Permanent hound = addCreature(player1, new GateHound());
-        Permanent otherCreature = addCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreature(player2, new GrizzlyBears());
+        Permanent hound = addCreatureReady(player1, new GateHound());
+        Permanent otherCreature = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent opponentCreature = addCreatureReady(player2, new GrayscaledGharial());
 
         assertThat(gqs.hasKeyword(gd, hound, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
@@ -30,9 +29,9 @@ class GateHoundTest extends BaseCardTest {
     @Test
     @DisplayName("Gate Hound gives your creatures vigilance while it is enchanted")
     void grantsVigilanceWhileEnchanted() {
-        Permanent hound = addCreature(player1, new GateHound());
-        Permanent otherCreature = addCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreature(player2, new GrizzlyBears());
+        Permanent hound = addCreatureReady(player1, new GateHound());
+        Permanent otherCreature = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent opponentCreature = addCreatureReady(player2, new GrayscaledGharial());
         Permanent aura = attachAura(player2, hound);
 
         assertThat(gqs.hasKeyword(gd, hound, Keyword.VIGILANCE)).isTrue();
@@ -45,17 +44,9 @@ class GateHoundTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
     }
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new AboshansDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new FaithsFetters());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }

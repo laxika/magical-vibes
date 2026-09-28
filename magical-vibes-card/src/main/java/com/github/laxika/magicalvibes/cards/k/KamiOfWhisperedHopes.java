@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "196")
+@CardRegistration(set = "SOC", collectorNumber = "273")
 public class KamiOfWhisperedHopes extends Card {
 
     public KamiOfWhisperedHopes() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * "You may cast a spell from among cards exiled with this permanent without paying its mana cost."
@@ -12,9 +13,17 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * which offers <em>every</em> card exiled with a departing permanent to its own owner (Spell
  * Queller).</p>
  */
-public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue) implements CardEffect {
+public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter) implements CardEffect {
 
     public MayCastCardExiledWithSourceEffect() {
-        this(null);
+        this(null, null);
+    }
+
+    public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue) {
+        this(manaValue, null);
+    }
+
+    public MayCastCardExiledWithSourceEffect(CardPredicate filter) {
+        this(null, filter);
     }
 }

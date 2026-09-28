@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "MRD", collectorNumber = "203")
 @CardRegistration(set = "HOP", collectorNumber = "119")
 @CardRegistration(set = "C14", collectorNumber = "249")
+@CardRegistration(set = "FIC", collectorNumber = "350")
+@CardRegistration(set = "40K", collectorNumber = "243")
+@CardRegistration(set = "SLD", collectorNumber = "2309")
 public class MaskOfMemory extends Card {
 
     public MaskOfMemory() {

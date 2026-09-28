@@ -15,4 +15,9 @@ import java.util.UUID;
  * creature gains indestructible until end of turn."
  */
 public record GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword keyword, UUID chosenCreatureId) implements CardEffect {
+
+    @Override
+    public boolean usesChosenPermanentReference() {
+        return chosenCreatureId == null;
+    }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "235")
+@CardRegistration(set = "MOC", collectorNumber = "350")
 public class BloodlinePretender extends Card {
 
     public BloodlinePretender() {

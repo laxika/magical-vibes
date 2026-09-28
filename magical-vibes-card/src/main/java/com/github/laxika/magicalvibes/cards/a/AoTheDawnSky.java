@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "2")
+@CardRegistration(set = "SOC", collectorNumber = "135")
 public class AoTheDawnSky extends Card {
 
     private static final CardAllOfPredicate NONLAND_PERMANENT_WITH_MANA_VALUE_AT_MOST_FOUR =

@@ -46,10 +46,12 @@ class SlayersBountyTest extends BaseCardTest {
         harness.castArtifact(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(harness.getConn1().getSentMessages())
-                .anyMatch(message -> message.contains("REVEAL_HAND") && message.contains("Bounty Agent"))
+        assertThat(harness.getConn1().getSentMessages().stream()
+                .filter(message -> message.contains("REVEAL_HAND")).toList())
+                .anyMatch(message -> message.contains("Bounty Agent"))
                 .noneMatch(message -> message.contains("Shock"));
-        assertThat(harness.getConn2().getSentMessages())
+        assertThat(harness.getConn2().getSentMessages().stream()
+                .filter(message -> message.contains("REVEAL_HAND")).toList())
                 .noneMatch(message -> message.contains("Bounty Agent"));
     }
 
@@ -66,11 +68,12 @@ class SlayersBountyTest extends BaseCardTest {
         PendingInteraction.SpellbookDraftChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
         harness.assertInGraveyard(player1, "Slayer's Bounty");
 
         Card drafted = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
         assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
     }
 
@@ -78,8 +81,10 @@ class SlayersBountyTest extends BaseCardTest {
     void sacrificingAnotherClueDraftsWithoutSacrificingSlayersBounty() {
         harness.addToBattlefield(player1, new SlayersBounty());
         harness.enterBattlefieldAndReturn(player1, new ThrabenInspector());
+        resolveAllTriggers();
         Permanent clue = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.CLUE))
+                .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

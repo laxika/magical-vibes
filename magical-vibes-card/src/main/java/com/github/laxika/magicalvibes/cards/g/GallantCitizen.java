@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "129")
 @CardRegistration(set = "OM1", collectorNumber = "137")
+@CardRegistration(set = "MSC", collectorNumber = "820")
 public class GallantCitizen extends Card {
 
     public GallantCitizen() {

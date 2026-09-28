@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "HBG", collectorNumber = "247")
+@CardRegistration(set = "SLD", collectorNumber = "2496")
 public class ProsperTomeBound extends Card {
 
     public ProsperTomeBound() {

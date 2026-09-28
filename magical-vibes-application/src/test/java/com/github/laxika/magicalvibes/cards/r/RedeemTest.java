@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
-import com.github.laxika.magicalvibes.cards.h.HeatRay;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Redeem.class, ElvishLyrist.class, HeatRay.class, Mountain.class})
+@CardUsed({Redeem.class, ElvishLyrist.class, Shock.class, Mountain.class})
 class RedeemTest extends BaseCardTest {
 
     private void castRedeem(List<UUID> targets) {
@@ -28,12 +28,10 @@ class RedeemTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targets);
     }
 
-    private void heatRay(Permanent target) {
-        harness.setHand(player1, List.of(new HeatRay()));
+    private void shock(Permanent target) {
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, 1, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     @Test
@@ -44,8 +42,8 @@ class RedeemTest extends BaseCardTest {
 
         castRedeem(List.of(a.getId(), b.getId()));
 
-        heatRay(a);
-        heatRay(b);
+        shock(a);
+        shock(b);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
@@ -58,11 +56,61 @@ class RedeemTest extends BaseCardTest {
         Permanent a = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
 
         castRedeem(List.of(a.getId()));
-        heatRay(a);
+        shock(a);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
                 .contains(a.getId());
+    }
+
+    @Test
+    @DisplayName("Prevents repeated damage events to one target creature this turn")
+    void protectsAgainstRepeatedDamage() {
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+
+        castRedeem(List.of(a.getId()));
+        shock(a);
+        shock(a);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId)
+                .contains(a.getId());
+    }
+
+    @Test
+    @DisplayName("Still protects a surviving target when another target leaves before resolution")
+    void protectsSurvivingTargetWhenAnotherLeavesBeforeResolution() {
+        Permanent surviving = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+
+        harness.setHand(player1, List.of(new Redeem()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, List.of(surviving.getId(), removed.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        shock(surviving);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId)
+                .contains(surviving.getId());
+    }
+
+    @Test
+    @DisplayName("Does nothing when all targets leave before resolution")
+    void doesNothingWhenAllTargetsLeaveBeforeResolution() {
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+        Permanent b = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+
+        harness.setHand(player1, List.of(new Redeem()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, List.of(a.getId(), b.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.creaturesWithAllDamagePrevented).isEmpty();
     }
 
     @Test
@@ -77,7 +125,7 @@ class RedeemTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        heatRay(a);
+        shock(a);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(a.getId()));
@@ -103,8 +151,8 @@ class RedeemTest extends BaseCardTest {
         Permanent unprotectedCreature = harness.addToBattlefieldAndReturn(player2, new ElvishLyrist());
 
         castRedeem(List.of(protectedCreature.getId()));
-        heatRay(protectedCreature);
-        heatRay(unprotectedCreature);
+        shock(protectedCreature);
+        shock(unprotectedCreature);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(Permanent::getId)
@@ -118,7 +166,7 @@ class RedeemTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
 
         castRedeem(List.of());
-        heatRay(creature);
+        shock(creature);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));

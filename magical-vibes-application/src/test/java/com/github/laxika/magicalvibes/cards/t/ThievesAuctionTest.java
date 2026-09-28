@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
 import com.github.laxika.magicalvibes.cards.c.CoastalPiracy;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrafRats;
 import com.github.laxika.magicalvibes.cards.i.IronLance;
 import com.github.laxika.magicalvibes.cards.j.JeweledTorque;
+import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,16 +18,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThievesAuction.class, WildJhovall.class, Plains.class, IronLance.class,
-        CoastalPiracy.class, JeweledTorque.class})
+@CardUsed({ThievesAuction.class, RagingGoblin.class, Plains.class, RodOfRuin.class, GloriousAnthem.class, WildJhovall.class, IronLance.class, CoastalPiracy.class, JeweledTorque.class})
 class ThievesAuctionTest extends BaseCardTest {
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster) {
@@ -42,22 +46,11 @@ class ThievesAuctionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolves without prompting when no nontoken permanents exist")
-    void resolvesWithoutNontokenPermanents() {
-        cast(player1);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-    }
-
-    @Test
     @DisplayName("Exiles all nontoken permanents and prompts the controller first")
     void exilesAllAndPromptsController() {
-        harness.addToBattlefield(player1, new WildJhovall());
+        harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player2, new IronLance());
+        harness.addToBattlefield(player2, new RodOfRuin());
         harness.clearMessages();
 
         cast(player1);
@@ -66,7 +59,7 @@ class ThievesAuctionTest extends BaseCardTest {
         assertThat(auction).isNotNull();
         assertThat(auction.choosingPlayerId()).isEqualTo(player1.getId());
         assertThat(auction.pool()).extracting(Card::getName)
-                .containsExactlyInAnyOrder("Wild Jhovall", "Plains", "Iron Lance");
+                .containsExactlyInAnyOrder("Raging Goblin", "Plains", "Rod of Ruin");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         List<String> messages = harness.getConn1().getSentMessages();
@@ -77,21 +70,46 @@ class ThievesAuctionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolves without a choice when there are no nontoken permanents")
+    void resolvesWithoutNontokenPermanents() {
+        cast(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @CardUsed({GrafRats.class, MidnightScavengers.class, ChitteringHost.class})
+    @DisplayName("A melded permanent contributes both physical cards to the auction pool")
+    void meldedPermanentContributesBothCards() {
+        Permanent melded = new Permanent(new ChitteringHost());
+        melded.getMeldComponentCards().add(new GrafRats());
+        melded.getMeldComponentCards().add(new MidnightScavengers());
+        gd.playerBattlefields.get(player1.getId()).add(melded);
+
+        cast(player1);
+
+        assertThat(activeAuction().pool()).extracting(Card::getName)
+                .containsExactly("Graf Rats", "Midnight Scavengers");
+    }
+
+    @Test
     @DisplayName("Players pick in turn order and cards enter tapped under the chooser's control")
     void picksRotateAndEnterTapped() {
-        harness.addToBattlefield(player1, new WildJhovall());
+        harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player2, new IronLance());
+        harness.addToBattlefield(player2, new RodOfRuin());
 
         cast(player1);
 
         // Controller picks first.
-        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Wild Jhovall")));
+        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Raging Goblin")));
 
         // Then the other player.
         assertThat(activeAuction().choosingPlayerId()).isEqualTo(player2.getId());
         assertThat(activeAuction().pool()).hasSize(2);
-        harness.handleMultipleCardsChosen(player2, List.of(poolCardId("Iron Lance")));
+        harness.handleMultipleCardsChosen(player2, List.of(poolCardId("Rod of Ruin")));
 
         // Back to the controller for the last card.
         assertThat(activeAuction().choosingPlayerId()).isEqualTo(player1.getId());
@@ -103,8 +121,8 @@ class ThievesAuctionTest extends BaseCardTest {
         List<Permanent> p1 = gd.playerBattlefields.get(player1.getId());
         List<Permanent> p2 = gd.playerBattlefields.get(player2.getId());
         assertThat(p1).extracting(p -> p.getCard().getName())
-                .containsExactlyInAnyOrder("Wild Jhovall", "Plains");
-        assertThat(p2).extracting(p -> p.getCard().getName()).containsExactly("Iron Lance");
+                .containsExactlyInAnyOrder("Raging Goblin", "Plains");
+        assertThat(p2).extracting(p -> p.getCard().getName()).containsExactly("Rod of Ruin");
         assertThat(p1).allMatch(Permanent::isTapped);
         assertThat(p2).allMatch(Permanent::isTapped);
     }
@@ -112,49 +130,49 @@ class ThievesAuctionTest extends BaseCardTest {
     @Test
     @DisplayName("A player may claim a card an opponent controlled, changing its controller")
     void claimingOpponentCardChangesControl() {
-        harness.addToBattlefield(player1, new WildJhovall());
-        harness.addToBattlefield(player2, new IronLance());
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player2, new RodOfRuin());
 
         cast(player1);
 
-        // Controller grabs the opponent's Iron Lance.
-        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Iron Lance")));
-        // Opponent is left with the Wild Jhovall.
-        harness.handleMultipleCardsChosen(player2, List.of(poolCardId("Wild Jhovall")));
+        // Controller grabs the opponent's Rod of Ruin.
+        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Rod of Ruin")));
+        // Opponent is left with the Raging Goblin.
+        harness.handleMultipleCardsChosen(player2, List.of(poolCardId("Raging Goblin")));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getName())
-                .containsExactly("Iron Lance");
+                .containsExactly("Rod of Ruin");
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(p -> p.getCard().getName())
-                .containsExactly("Wild Jhovall");
+                .containsExactly("Raging Goblin");
     }
 
     @Test
     @DisplayName("Token permanents are not exiled and stay on the battlefield")
     void tokensAreNotExiled() {
-        harness.addToBattlefield(player1, new WildJhovall());
+        harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, tokenCreature());
         gd.playerBattlefields.get(player2.getId()).clear();
 
         cast(player1);
 
-        assertThat(activeAuction().pool()).extracting(Card::getName).containsExactly("Wild Jhovall");
+        assertThat(activeAuction().pool()).extracting(Card::getName).containsExactly("Raging Goblin");
         // Token stayed put during the auction.
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getName())
                 .containsExactly("Goblin Token");
 
-        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Wild Jhovall")));
+        harness.handleMultipleCardsChosen(player1, List.of(poolCardId("Raging Goblin")));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getName())
-                .containsExactlyInAnyOrder("Wild Jhovall", "Goblin Token");
+                .containsExactlyInAnyOrder("Raging Goblin", "Goblin Token");
     }
 
     @Test
     @DisplayName("An invalid pick re-prompts the same player without advancing")
     void invalidPickReprompts() {
-        harness.addToBattlefield(player1, new WildJhovall());
-        harness.addToBattlefield(player1, new CoastalPiracy());
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new GloriousAnthem());
 
         cast(player1);
 
@@ -164,6 +182,27 @@ class ThievesAuctionTest extends BaseCardTest {
         assertThat(auction).isNotNull();
         assertThat(auction.choosingPlayerId()).isEqualTo(player1.getId());
         assertThat(auction.pool()).hasSize(2);
+    }
+
+    private Card tokenCreature() {
+        Card token = new Card();
+        token.setName("Goblin Token");
+        token.setType(CardType.CREATURE);
+        token.setManaCost("");
+        token.setColor(CardColor.RED);
+        token.setPower(1);
+        token.setToughness(1);
+        token.setToken(true);
+        return token;
+    }
+
+    private static int firstMessageContaining(List<String> messages, String value) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).contains(value)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Test
@@ -187,26 +226,5 @@ class ThievesAuctionTest extends BaseCardTest {
         harness.handleListChoice(player2, "RED");
         assertThat(findPermanent(player2, "Jeweled Torque").getChosenColor())
                 .isEqualTo(CardColor.RED);
-    }
-
-    private Card tokenCreature() {
-        Card token = new Card();
-        token.setName("Goblin Token");
-        token.setType(CardType.CREATURE);
-        token.setManaCost("");
-        token.setColor(CardColor.RED);
-        token.setPower(1);
-        token.setToughness(1);
-        token.setToken(true);
-        return token;
-    }
-
-    private static int firstMessageContaining(List<String> messages, String value) {
-        for (int i = 0; i < messages.size(); i++) {
-            if (messages.get(i).contains(value)) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

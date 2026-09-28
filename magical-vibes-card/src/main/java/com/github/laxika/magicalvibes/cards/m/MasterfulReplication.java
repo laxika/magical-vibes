@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "65")
+@CardRegistration(set = "MOC", collectorNumber = "227")
 public class MasterfulReplication extends Card {
 
     private static final PermanentPredicate ARTIFACTS_YOU_CONTROL = new PermanentAllOfPredicate(List.of(

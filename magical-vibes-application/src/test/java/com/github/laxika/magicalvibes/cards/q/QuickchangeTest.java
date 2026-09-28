@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,47 +15,48 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Quickchange.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Quickchange.class, Watchwolf.class, Forest.class})
 class QuickchangeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Changes a target creature to one chosen color and draws a card")
     void changesColorAndDraws() {
-        Permanent bears = castQuickchangeOnCreature();
+        Permanent wolf = castQuickchangeOnCreature();
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "DONE");
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveColors(gd, wolf)).containsExactly(CardColor.RED);
+        harness.assertInHand(player1, "Watchwolf");
     }
 
     @Test
     @DisplayName("A target creature can become several chosen colors")
     void changesToSeveralColors() {
-        Permanent bears = castQuickchangeOnCreature();
+        Permanent wolf = castQuickchangeOnCreature();
 
         harness.handleListChoice(player1, "WHITE");
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "DONE");
 
-        assertThat(gqs.getEffectiveColors(gd, bears))
+        assertThat(gqs.getEffectiveColors(gd, wolf))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
     }
 
     @Test
     @DisplayName("The color change wears off at end of turn")
     void colorChangeWearsOffAtEndOfTurn() {
-        Permanent bears = castQuickchangeOnCreature();
+        Permanent wolf = castQuickchangeOnCreature();
 
         harness.handleListChoice(player1, "BLUE");
         harness.handleListChoice(player1, "DONE");
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLUE);
+        assertThat(gqs.getEffectiveColors(gd, wolf)).containsExactly(CardColor.BLUE);
 
-        bears.resetModifiers();
+        wolf.resetModifiers();
         gd.expireEndOfTurnFloatingEffects();
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, wolf))
+                .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
     }
 
     @Test
@@ -70,12 +71,12 @@ class QuickchangeTest extends BaseCardTest {
     }
 
     private Permanent castQuickchangeOnCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        harness.setLibrary(player1, List.of(new Watchwolf()));
         harness.setHand(player1, List.of(new Quickchange()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castAndResolveInstant(player1, 0, bears.getId());
-        return bears;
+        harness.castAndResolveInstant(player1, 0, wolf.getId());
+        return wolf;
     }
 }

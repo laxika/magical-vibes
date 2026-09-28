@@ -124,8 +124,7 @@ class DisruptTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, paradigmShift.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, paradigmShift.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(paradigmShift);
         assertThat(gd.stack).isEmpty();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutAttackingCreaturesOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "44")
+@CardRegistration(set = "C21", collectorNumber = "114")
 public class Aetherspouts extends Card {
 
     public Aetherspouts() {

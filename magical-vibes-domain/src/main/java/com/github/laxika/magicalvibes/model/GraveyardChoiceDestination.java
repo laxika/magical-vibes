@@ -11,5 +11,7 @@ public enum GraveyardChoiceDestination {
     EXILE,
     DREDGE,
     MAY_ABILITY_TARGET,
-    COPY_ON_ENTER
+    RANDOM_PLAYER_GRAVEYARD_COPY,
+    COPY_ON_ENTER,
+    COPY_FROM_LEAVING_GRAVEYARD
 }

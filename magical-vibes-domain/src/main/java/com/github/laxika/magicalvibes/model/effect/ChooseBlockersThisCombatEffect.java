@@ -7,5 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Registered by Melee. See {@code DelayedBlockerDeclarationControl}.
  */
-public record ChooseBlockersThisCombatEffect() implements CardEffect {
+public record ChooseBlockersThisCombatEffect(boolean untilEndOfTurn) implements CardEffect {
+
+    public ChooseBlockersThisCombatEffect() {
+        this(false);
+    }
 }

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,22 +13,30 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SvogthosTheRestlessTomb.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SvogthosTheRestlessTomb.class, BorosRecruit.class, Forest.class})
 class SvogthosTheRestlessTombTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Tapping Svogthos produces one colorless mana")
+    void tappingProducesColorlessMana() {
+        Permanent svogthos = addSvogthosReady(player1);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(svogthos.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("Svogthos becomes a black and green Plant Zombie with power and toughness equal to creature cards in its controller's graveyard")
     void activatesAsGraveyardSizedCreature() {
         Permanent svogthos = addSvogthosReady(player1);
-        List<Card> graveyard = new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new Forest()));
-        harness.setGraveyard(player1, graveyard);
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BorosRecruit(), new BorosRecruit(), new Forest()));
+        harness.setGraveyard(player2, List.of(new BorosRecruit(), new BorosRecruit(), new BorosRecruit()));
         activate(svogthos);
 
         assertThat(gqs.isCreature(gd, svogthos)).isTrue();
@@ -40,31 +47,41 @@ class SvogthosTheRestlessTombTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(svogthos.getTransientSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.PLANT, CardSubtype.ZOMBIE);
+        assertThat(svogthos.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Svogthos continuously tracks creature cards entering and leaving its controller's graveyard")
     void tracksGraveyardChangesDuringAnimation() {
         Permanent svogthos = addSvogthosReady(player1);
-        List<Card> graveyard = new ArrayList<>(List.of(new GrizzlyBears(), new Forest()));
-        harness.setGraveyard(player1, graveyard);
+        harness.setGraveyard(player1, List.of(new BorosRecruit(), new Forest()));
         activate(svogthos);
 
         assertThat(gqs.getEffectivePower(gd, svogthos)).isEqualTo(1);
-        graveyard = gd.playerGraveyards.get(player1.getId());
-        graveyard.add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new BorosRecruit(), new BorosRecruit(), new Forest()));
         assertThat(gqs.getEffectivePower(gd, svogthos)).isEqualTo(2);
 
-        graveyard.removeIf(card -> card instanceof GrizzlyBears);
-        graveyard.add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new BorosRecruit(), new Forest()));
         assertThat(gqs.getEffectiveToughness(gd, svogthos)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Svogthos dies as a 0/0 creature when its controller has no creature cards in their graveyard")
+    void diesWithNoCreatureCardsInGraveyard() {
+        Permanent svogthos = addSvogthosReady(player1);
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        activate(svogthos);
+
+        harness.assertNotOnBattlefield(player1, "Svogthos, the Restless Tomb");
+        harness.assertInGraveyard(player1, "Svogthos, the Restless Tomb");
     }
 
     @Test
     @DisplayName("Svogthos stops being animated at end of turn")
     void animationEndsAtEndOfTurn() {
         Permanent svogthos = addSvogthosReady(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BorosRecruit()));
         activate(svogthos);
 
         assertThat(gqs.isCreature(gd, svogthos)).isTrue();
@@ -73,6 +90,8 @@ class SvogthosTheRestlessTombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, svogthos)).isFalse();
+        assertThat(gqs.isLand(gd, svogthos)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, svogthos)).isEmpty();
         assertThat(svogthos.getTransientSubtypes()).isEmpty();
     }
 
@@ -85,9 +104,8 @@ class SvogthosTheRestlessTombTest extends BaseCardTest {
     }
 
     private Permanent addSvogthosReady(Player player) {
-        Permanent permanent = new Permanent(new SvogthosTheRestlessTomb());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SvogthosTheRestlessTomb());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

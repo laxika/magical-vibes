@@ -5,17 +5,20 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RainbowCrow.class})
 class RainbowCrowTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability prompts for a color without requiring a target")
     void activatingPromptsForColor() {
-        addReadyCrow();
+        addCreatureReady(player1, new RainbowCrow());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -27,7 +30,7 @@ class RainbowCrowTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen color replaces Rainbow Crow's color until end of turn")
     void becomesChosenColorUntilEndOfTurn() {
-        Permanent crow = addReadyCrow();
+        Permanent crow = addCreatureReady(player1, new RainbowCrow());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -40,7 +43,7 @@ class RainbowCrowTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen color wears off at end of turn")
     void chosenColorWearsOffAtEndOfTurn() {
-        Permanent crow = addReadyCrow();
+        Permanent crow = addCreatureReady(player1, new RainbowCrow());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -53,10 +56,12 @@ class RainbowCrowTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, crow)).containsExactly(CardColor.BLUE);
     }
 
-    private Permanent addReadyCrow() {
-        Permanent crow = new Permanent(new RainbowCrow());
-        crow.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(crow);
-        return crow;
+    @Test
+    @DisplayName("Activating the ability requires paying {1}")
+    void cannotActivateWithoutMana() {
+        addCreatureReady(player1, new RainbowCrow());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

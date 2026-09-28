@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -27,7 +27,7 @@ public class NezumiShortfang extends Card {
                 true, "{1}{B}",
                 List.of(
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false),
-                        new ConditionalEffect(new TargetPlayerHandEmpty(), new TransformSelfEffect())
+                        new ConditionalEffect(new TargetPlayerHandEmpty(), new TransformToBackFaceEffect())
                 ),
                 "{1}{B}, {T}: Target opponent discards a card. Then if that player has no cards in "
                         + "hand, flip this creature.",

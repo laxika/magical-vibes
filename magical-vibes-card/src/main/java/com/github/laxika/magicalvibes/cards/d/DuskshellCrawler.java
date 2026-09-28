@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MH2", collectorNumber = "156")
+@CardRegistration(set = "FIC", collectorNumber = "301")
 public class DuskshellCrawler extends Card {
 
     public DuskshellCrawler() {

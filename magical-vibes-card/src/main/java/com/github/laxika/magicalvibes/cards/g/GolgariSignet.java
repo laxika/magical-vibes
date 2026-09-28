@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "RVR", collectorNumber = "258")
 @CardRegistration(set = "CMD", collectorNumber = "249")
 @CardRegistration(set = "C15", collectorNumber = "255")
+@CardRegistration(set = "DSC", collectorNumber = "246")
 public class GolgariSignet extends Card {
 
     public GolgariSignet() {

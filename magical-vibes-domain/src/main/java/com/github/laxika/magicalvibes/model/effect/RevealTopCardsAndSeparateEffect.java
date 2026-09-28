@@ -34,7 +34,7 @@ public record RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDispo
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
                                            boolean controllerSeparates) {
         this(new Fixed(count), disposition, controllerSeparates, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
+                isFaceDownPileDisposition(disposition), false);
     }
 
     /** Fact-or-Fiction default: the unchosen pile goes to the controller's graveyard. */
@@ -48,12 +48,12 @@ public record RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDispo
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition) {
         this(new Fixed(count), disposition, false, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
+                isFaceDownPileDisposition(disposition), false);
     }
 
     public RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDisposition disposition) {
         this(count, disposition, false, false,
-                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false);
+                isFaceDownPileDisposition(disposition), false);
     }
 
     /** Steam Augury variant: the controller separates and an opponent chooses a pile. */
@@ -82,5 +82,10 @@ public record RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDispo
     @Override
     public TargetSpec targetSpec() {
         return targetedSeparator ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    private static boolean isFaceDownPileDisposition(CardPileDisposition disposition) {
+        return disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
+                || disposition == CardPileDisposition.HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE;
     }
 }

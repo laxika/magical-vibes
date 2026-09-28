@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "73")
 @CardRegistration(set = "GN3", collectorNumber = "41")
+@CardRegistration(set = "NCC", collectorNumber = "234")
 public class TalrandsInvocation extends Card {
 
     public TalrandsInvocation() {

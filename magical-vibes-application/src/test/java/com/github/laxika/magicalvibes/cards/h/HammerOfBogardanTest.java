@@ -24,6 +24,7 @@ class HammerOfBogardanTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Spell — deals 3 damage to any target")
+    @CardUsed({HammerOfBogardan.class, DwarvenNomad.class})
     class SpellTests {
 
         @Test
@@ -73,6 +74,7 @@ class HammerOfBogardanTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Graveyard activated ability")
+    @CardUsed({HammerOfBogardan.class, DwarvenNomad.class})
     class GraveyardAbilityTests {
 
         @Test
@@ -80,10 +82,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void returnsToHandDuringUpkeep() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
 
             harness.activateGraveyardAbility(player1, 0);
 
@@ -102,10 +103,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void returnsOnlyTheActivatedCard() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer, new DwarvenNomad()));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
 
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
@@ -121,10 +121,9 @@ class HammerOfBogardanTest extends BaseCardTest {
             HammerOfBogardan activatedHammer = new HammerOfBogardan();
             HammerOfBogardan otherHammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(activatedHammer, otherHammer));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
 
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
@@ -158,8 +157,7 @@ class HammerOfBogardanTest extends BaseCardTest {
             harness.setGraveyard(player1, List.of(hammer));
             harness.addMana(player1, ManaColor.RED, 3);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.UPKEEP);
+            advanceToUpkeep(player2);
 
             assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                     .isInstanceOf(IllegalStateException.class);
@@ -193,17 +191,18 @@ class HammerOfBogardanTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Cannot activate without two generic mana")
-        void cannotActivateWithoutTwoGenericMana() {
+        @DisplayName("Can pay the generic portion with red mana")
+        void paysGenericCostWithColoredMana() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
-            harness.addMana(player1, ManaColor.RED, 3);
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
+            advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 5);
 
-            assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
-                    .isInstanceOf(IllegalStateException.class);
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Hammer of Bogardan");
+            harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
         }
     }
 }

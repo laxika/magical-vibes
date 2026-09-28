@@ -51,9 +51,8 @@ class SelesnyaSignetTest extends BaseCardTest {
     }
 
     private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new SelesnyaSignet());
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new SelesnyaSignet());
         signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
         return signet;
     }
 }

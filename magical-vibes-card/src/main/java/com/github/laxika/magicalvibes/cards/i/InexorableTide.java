@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "35")
 @CardRegistration(set = "MM2", collectorNumber = "49")
 @CardRegistration(set = "HA2", collectorNumber = "6")
+@CardRegistration(set = "FIC", collectorNumber = "265")
 public class InexorableTide extends Card {
 
     public InexorableTide() {

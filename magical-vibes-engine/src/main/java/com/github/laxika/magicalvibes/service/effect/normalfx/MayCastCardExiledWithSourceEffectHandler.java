@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayin
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
 
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,7 +55,10 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
                 : amountEvaluationService.evaluate(gameData, castEffect.manaValue(),
                         AmountContext.forStackEntry(entry, null));
         List<Card> exiled = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
-                .filter(card -> !card.hasType(CardType.LAND))
+                .filter(card -> castEffect.filter() == null
+                        ? !card.hasType(CardType.LAND)
+                        : predicateEvaluationService.matchesCardPredicate(
+                        card, castEffect.filter(), null))
                 .filter(card -> manaValue == null || card.getManaValue() == manaValue)
                 .toList();
         if (exiled.isEmpty()) {

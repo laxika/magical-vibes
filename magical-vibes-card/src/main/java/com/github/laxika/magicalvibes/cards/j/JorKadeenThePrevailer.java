@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "128")
+@CardRegistration(set = "C21", collectorNumber = "220")
 public class JorKadeenThePrevailer extends Card {
 
     public JorKadeenThePrevailer() {

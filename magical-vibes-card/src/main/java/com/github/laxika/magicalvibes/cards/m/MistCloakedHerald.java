@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "43")
+@CardRegistration(set = "MSC", collectorNumber = "760")
 public class MistCloakedHerald extends Card {
 
     public MistCloakedHerald() {

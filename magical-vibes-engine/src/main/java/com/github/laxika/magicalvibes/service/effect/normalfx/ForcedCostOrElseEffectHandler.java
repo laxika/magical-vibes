@@ -798,6 +798,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     return;
                 }
+                if (!gameQueryService.canEffectCauseSacrifice(gameData, payerId, sourceControllerId)) {
+                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    return;
+                }
                 UUID sourcePermanentId = entry.getSourcePermanentId();
                 FilterContext costFilterContext = FilterContext.of(gameData)
                         .withSourceCardId(entry.getCard().getId())
@@ -806,6 +810,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
                 List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, payerId,
                         p -> (!sacrificePermanent.excludeSource() || !p.getId().equals(sourcePermanentId))
+                                && gameQueryService.canSacrificePermanentForCosts(gameData, p)
                                 && predicateEvaluationService.matchesPermanentPredicate(
                                 p, sacrificePermanent.filter(), costFilterContext));
 

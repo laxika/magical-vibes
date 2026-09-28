@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -276,6 +278,24 @@ class CreatureControlServiceTest {
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
             assertThat(gd.stolenCreatures).doesNotContainKey(bear.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears returns to Player2's control.")));
+        }
+
+        @Test
+        @DisplayName("Counter-conditioned control ends when the counter is removed")
+        void counterConditionedStealEndsWhenCounterIsRemoved() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            bear.setCounterCount(CounterType.SHIELD, 1);
+
+            creatureControlService.applyControlEffect(gd, player1Id, bear,
+                    new GainControlOfTargetWhileHasCounterEffect(CounterType.SHIELD),
+                    EffectDuration.PERMANENT, null, "Shield Broker");
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
+
+            bear.setCounterCount(CounterType.SHIELD, 0);
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
+            assertThat(gd.stolenCreatures).doesNotContainKey(bear.getId());
         }
 
         @Test

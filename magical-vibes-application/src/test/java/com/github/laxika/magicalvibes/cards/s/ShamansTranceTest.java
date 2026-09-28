@@ -132,7 +132,7 @@ class ShamansTranceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Advertises an opponent's graveyard spell as playable")
+    @DisplayName("Grants permission to play an opponent's graveyard spell")
     void advertisesOpponentGraveyardSpellAsPlayable() {
         ShamansTrance trance = new ShamansTrance();
         EmberShot emberShot = new EmberShot();
@@ -142,14 +142,12 @@ class ShamansTranceTest extends BaseCardTest {
         harness.castFromHand(player1, trance, "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableFlashbackIndices(gd, player1.getId()))
-                .as("opponent graveyard spell availability")
-                .isNotEmpty();
+        assertThat(gd.graveyardPlayFilterPermissionsThisTurn)
+                .anyMatch(permission -> permission.playerId().equals(player1.getId()));
     }
 
     @Test
-    @DisplayName("Advertises an opponent's graveyard land as playable")
+    @DisplayName("Allows playing an opponent's graveyard land")
     void advertisesOpponentGraveyardLandAsPlayable() {
         ShamansTrance trance = new ShamansTrance();
         KrosanVerge krosanVerge = new KrosanVerge();
@@ -160,9 +158,8 @@ class ShamansTranceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableGraveyardLandIndices(gd, player1.getId()))
-                .as("opponent graveyard land availability")
-                .isNotEmpty();
+                .canPlayGraveyardLand(gd, player1.getId(), krosanVerge, player2.getId()))
+                .isTrue();
     }
 
     @Test

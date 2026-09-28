@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HBG", collectorNumber = "199")
+@CardRegistration(set = "SLD", collectorNumber = "2487")
 public class AncientBronzeDragon extends Card {
 
     public AncientBronzeDragon() {

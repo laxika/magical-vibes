@@ -44,13 +44,10 @@ class BlindingBeamTest extends BaseCardTest {
 
         cast(player1, new int[]{1}, List.of(player2.getId()));
 
-        assertThat(targetCreature.getSkipUntapCount()).isEqualTo(1);
-        assertThat(otherCreature.getSkipUntapCount()).isEqualTo(1);
-        assertThat(artifact.getSkipUntapCount()).isZero();
-
         advanceToUpkeep(player2);
 
         assertThat(targetCreature.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
         assertThat(artifact.isTapped()).isFalse();
     }
 
@@ -62,7 +59,8 @@ class BlindingBeamTest extends BaseCardTest {
 
         cast(player1, new int[]{1}, List.of(player1.getId()));
 
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        advanceToUpkeep(player1);
+        assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
@@ -102,10 +100,12 @@ class BlindingBeamTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         assertThat(third.isTapped()).isFalse();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
-        assertThat(third.getSkipUntapCount()).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        third.tap();
+        advanceToUpkeep(player2);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BorosGarrison;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DimirAqueduct.class, Island.class})
+@CardUsed({DimirAqueduct.class, BorosGarrison.class})
 class DimirAqueductTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters the battlefield tapped and prompts to return a land")
     void entersTappedAndPromptsToReturnLand() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new BorosGarrison());
         harness.setHand(player1, List.of(new DimirAqueduct()));
         harness.playLand(player1, 0);
 
@@ -32,22 +32,41 @@ class DimirAqueductTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(aqueduct.getId(), island.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(aqueduct.getId(), garrison.getId());
     }
 
     @Test
     @DisplayName("The ETB ability returns the chosen land to its owner's hand")
     void returnsChosenLandToHand() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new BorosGarrison());
         harness.setHand(player1, List.of(new DimirAqueduct()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, island.getId());
+        harness.handlePermanentChosen(player1, garrison.getId());
 
         harness.assertOnBattlefield(player1, "Dimir Aqueduct");
-        harness.assertNotOnBattlefield(player1, "Island");
-        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Boros Garrison");
+        harness.assertInHand(player1, "Boros Garrison");
+    }
+
+    @Test
+    @DisplayName("The ETB ability can return Dimir Aqueduct itself when it is the only land")
+    void canReturnItselfWhenItIsOnlyLand() {
+        harness.setHand(player1, List.of(new DimirAqueduct()));
+        harness.playLand(player1, 0);
+
+        Permanent aqueduct = findPermanent(player1, "Dimir Aqueduct");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(aqueduct.getId());
+
+        harness.handlePermanentChosen(player1, aqueduct.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dimir Aqueduct");
+        harness.assertInHand(player1, "Dimir Aqueduct");
     }
 
     @Test

@@ -39,7 +39,7 @@ public class ReturnTargetPermanentAndAllWithSameNameToHandEffectHandler implemen
         }
 
         var sameNameEffect = (ReturnTargetPermanentAndAllWithSameNameToHandEffect) effect;
-        String targetName = target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
@@ -48,7 +48,7 @@ public class ReturnTargetPermanentAndAllWithSameNameToHandEffectHandler implemen
         List<Permanent> toReturn = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getName().equals(targetName)
+                if (gameQueryService.getEffectiveName(gameData, permanent).equals(targetName)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
                     toReturn.add(permanent);

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Resolves Well of Lost Dreams' optional pay-X life-gain trigger. */
+/** Resolves optional pay-X draw triggers. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -38,16 +38,15 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        PayXManaDrawXCardsEffect e = (PayXManaDrawXCardsEffect) effect;
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
-        PayXManaDrawXCardsEffect payEffect = (PayXManaDrawXCardsEffect) effect;
-        int lifeGained = payEffect.maximumX() == null
-                ? Math.max(0, entry.getEventValue())
-                : Math.max(0, amountEvaluationService.evaluate(gameData, payEffect.maximumX(),
-                        AmountContext.forStackEntry(entry, null)));
-
-        ManaCost cost = new ManaCost("{X}");
+        ManaCost cost = new ManaCost(e.manaCost());
+        int maximumX = e.maximumX() != null
+                ? Math.max(0, amountEvaluationService.evaluate(gameData, e.maximumX(),
+                        AmountContext.forStackEntry(entry, null)))
+                : e.capAtEventValue() ? Math.max(0, entry.getEventValue()) : Integer.MAX_VALUE;
 
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
@@ -61,17 +60,17 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             }
 
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            if (chosenValue > lifeGained || !cost.canPay(pool, chosenValue)) {
+            if (chosenValue > maximumX || !cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
-                        playerName + " can't pay {" + chosenValue + "} for " + cardName
+                        playerName + " can't pay " + formatCost(e.manaCost(), chosenValue) + " for " + cardName
                                 + " (tap mana sources, then choose X again)."));
-                beginXPrompt(gameData, controllerId, cardName, lifeGained);
+                beginXPrompt(gameData, controllerId, cost, e.manaCost(), cardName, maximumX);
                 return;
             }
 
             cost.pay(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " pays {" + chosenValue + "} for " + cardName
+                    playerName + " pays " + formatCost(e.manaCost(), chosenValue) + " for " + cardName
                             + " and draws " + chosenValue + " card"
                             + (chosenValue == 1 ? "." : "s.")));
             log.info("Game {} - {} pays {} mana and draws {} for {}", gameData.id, playerName,
@@ -80,11 +79,12 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        beginXPrompt(gameData, controllerId, cardName, lifeGained);
+        beginXPrompt(gameData, controllerId, cost, e.manaCost(), cardName, maximumX);
     }
 
-    private void beginXPrompt(GameData gameData, UUID controllerId, String cardName, int lifeGained) {
-        int maxX = maxPotentialX(gameData, controllerId, lifeGained);
+    private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost,
+                              String manaCost, String cardName, int maximumX) {
+        int maxX = maxPotentialX(gameData, controllerId, cost, maximumX);
         if (maxX <= 0) {
             return;
         }
@@ -92,16 +92,16 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                 new PendingInteraction.XValueChoice(
                         controllerId,
                         maxX,
-                        "You may pay {X} for " + cardName + " to draw X cards.",
+                        "You may pay " + manaCost + " for " + cardName + " to draw X cards.",
                         cardName,
-                        true));
+                        true,
+                        manaCost));
     }
 
-    private int maxPotentialX(GameData gameData, UUID controllerId, int lifeGained) {
+    private int maxPotentialX(GameData gameData, UUID controllerId, ManaCost cost, int maximumX) {
         ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, controllerId);
-        ManaCost cost = new ManaCost("{X}");
         int low = 0;
-        int high = lifeGained;
+        int high = maximumX;
         while (low < high) {
             int mid = low + (int) (((long) high - low + 1) / 2);
             if (cost.canPay(pool, mid)) {
@@ -111,5 +111,9 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             }
         }
         return low;
+    }
+
+    private static String formatCost(String manaCost, int chosenValue) {
+        return manaCost.replace("{X}", "{" + chosenValue + "}");
     }
 }

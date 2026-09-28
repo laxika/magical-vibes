@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "RAV", collectorNumber = "257")
 @CardRegistration(set = "MPS", collectorNumber = "10")
 @CardRegistration(set = "RVR", collectorNumber = "255")
+@CardRegistration(set = "LTC", collectorNumber = "349")
+@CardRegistration(set = "LTC", collectorNumber = "379")
 public class CloudstoneCurio extends Card {
 
     public CloudstoneCurio() {

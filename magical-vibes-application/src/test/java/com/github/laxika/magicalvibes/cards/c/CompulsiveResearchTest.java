@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,15 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CompulsiveResearch.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class})
+@CardUsed({BorosRecruit.class, CompulsiveResearch.class, Forest.class, Island.class, Mountain.class})
 class CompulsiveResearchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player draws three cards and may stop after discarding a land")
     void targetPlayerDrawsThreeAndMayStopAfterDiscardingLand() {
         harness.setHand(player1, List.of(new CompulsiveResearch()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
-        harness.setLibrary(player2, List.of(new Island(), new Mountain(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new CompulsiveResearch(), new Forest()));
+        harness.setLibrary(player2, List.of(new Island(), new Mountain(), new CompulsiveResearch()));
         addCompulsiveResearchMana();
 
         harness.castSorcery(player1, 0, player2.getId());
@@ -44,8 +44,9 @@ class CompulsiveResearchTest extends BaseCardTest {
     @DisplayName("Target player discards two cards when no land is discarded")
     void targetPlayerDiscardsTwoCardsWithoutLand() {
         harness.setHand(player1, List.of(new CompulsiveResearch()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new CompulsiveResearch(), new CompulsiveResearch()));
+        harness.setLibrary(player2, List.of(
+                new CompulsiveResearch(), new CompulsiveResearch(), new CompulsiveResearch()));
         addCompulsiveResearchMana();
 
         harness.castSorcery(player1, 0, player2.getId());
@@ -60,14 +61,35 @@ class CompulsiveResearchTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Targeting yourself draws three and stops after a land is discarded second")
+    void targetPlayerCanBeControllerAndStopAfterLand() {
+        harness.setHand(player1, List.of(new CompulsiveResearch(), new CompulsiveResearch(), new Forest()));
+        harness.setLibrary(player1, List.of(new Island(), new Mountain(), new BorosRecruit()));
+        addCompulsiveResearchMana();
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BorosRecruit());
         harness.setHand(player1, List.of(new CompulsiveResearch()));
         addCompulsiveResearchMana();
 
         assertThatThrownBy(() -> harness.castSorcery(
-                player1, 0, harness.getPermanentId(player2, "Grizzly Bears")))
+                player1, 0, harness.getPermanentId(player2, "Boros Recruit")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only target players");
     }

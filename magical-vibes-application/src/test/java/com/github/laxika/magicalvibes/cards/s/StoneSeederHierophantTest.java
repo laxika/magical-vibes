@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoneSeederHierophant.class, Forest.class, GrizzlyBears.class})
+@CardUsed({StoneSeederHierophant.class, Forest.class, BorosRecruit.class})
 class StoneSeederHierophantTest extends BaseCardTest {
 
     @Test
@@ -62,12 +62,27 @@ class StoneSeederHierophantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The activated ability taps Stone-Seeder Hierophant as a cost")
+    void activatedAbilityTapsSource() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(false);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(hierophant.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The activated ability cannot target a creature")
     void activatedAbilityCannotTargetCreature() {
-        harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(false);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

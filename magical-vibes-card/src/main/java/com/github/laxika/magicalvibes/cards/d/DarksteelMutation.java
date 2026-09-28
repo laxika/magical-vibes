@@ -19,6 +19,8 @@ import java.util.Set;
 @CardRegistration(set = "C13", collectorNumber = "9")
 @CardRegistration(set = "CMM", collectorNumber = "21")
 @CardRegistration(set = "CMM", collectorNumber = "623")
+@CardRegistration(set = "C21", collectorNumber = "87")
+@CardRegistration(set = "SOC", collectorNumber = "142")
 public class DarksteelMutation extends Card {
 
     public DarksteelMutation() {

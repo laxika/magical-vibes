@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,18 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NumaiOutcast.class, HumbleBudoka.class})
 class NumaiOutcastTest extends BaseCardTest {
 
     @Test
     @DisplayName("Bushido 2 triggers when Numai Outcast becomes blocked")
     void becomesBlockedGetsBushidoBonus() {
-        Permanent outcast = addReadyOutcast(player1);
-        outcast.setAttacking(true);
-        addReadyBears(player2);
+        Permanent outcast = addCreatureReady(player1, new NumaiOutcast());
+        addCreatureReady(player2, new HumbleBudoka());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(outcast.getPowerModifier()).isEqualTo(2);
         assertThat(outcast.getToughnessModifier()).isEqualTo(2);
@@ -35,13 +37,12 @@ class NumaiOutcastTest extends BaseCardTest {
     @Test
     @DisplayName("Bushido 2 triggers when Numai Outcast blocks")
     void blocksGetsBushidoBonus() {
-        Permanent attacker = addReadyBears(player1);
-        attacker.setAttacking(true);
-        Permanent outcast = addReadyOutcast(player2);
+        addCreatureReady(player1, new HumbleBudoka());
+        Permanent outcast = addCreatureReady(player2, new NumaiOutcast());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(outcast.getPowerModifier()).isEqualTo(2);
         assertThat(outcast.getToughnessModifier()).isEqualTo(2);
@@ -50,13 +51,12 @@ class NumaiOutcastTest extends BaseCardTest {
     @Test
     @DisplayName("The bushido bonus wears off at end of turn")
     void bushidoWearsOffAtEndOfTurn() {
-        Permanent attacker = addReadyBears(player1);
-        attacker.setAttacking(true);
-        Permanent outcast = addReadyOutcast(player2);
+        addCreatureReady(player1, new HumbleBudoka());
+        Permanent outcast = addCreatureReady(player2, new NumaiOutcast());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(outcast.getPowerModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -65,6 +65,52 @@ class NumaiOutcastTest extends BaseCardTest {
 
         assertThat(outcast.getPowerModifier()).isEqualTo(0);
         assertThat(outcast.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An unblocked Numai Outcast gets no Bushido bonus")
+    void unblockedGetsNoBushidoBonus() {
+        Permanent outcast = addCreatureReady(player1, new NumaiOutcast());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(outcast.getPowerModifier()).isZero();
+        assertThat(outcast.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Numai Outcast blocked by multiple creatures gets only one Bushido bonus")
+    void becomesBlockedByMultipleCreaturesGetsOneBushidoBonus() {
+        Permanent outcast = addCreatureReady(player1, new NumaiOutcast());
+        addCreatureReady(player2, new HumbleBudoka());
+        addCreatureReady(player2, new HumbleBudoka());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(outcast.getPowerModifier()).isEqualTo(2);
+        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Numai Outcast blocking multiple creatures gets only one Bushido bonus")
+    void blocksMultipleCreaturesGetsOneBushidoBonus() {
+        addCreatureReady(player1, new HumbleBudoka());
+        addCreatureReady(player1, new HumbleBudoka());
+        NumaiOutcast card = new NumaiOutcast();
+        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        Permanent outcast = addCreatureReady(player2, card);
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(outcast.getPowerModifier()).isEqualTo(2);
+        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
@@ -101,32 +147,13 @@ class NumaiOutcastTest extends BaseCardTest {
         outcast.setBlocking(true);
         outcast.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new HumbleBudoka());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Numai Outcast");
         assertThat(outcast.isTapped()).isTrue();
         assertThat(outcast.getRegenerationShield()).isEqualTo(0);
-    }
-
-    private Permanent addReadyOutcast(Player player) {
-        Permanent permanent = new Permanent(new NumaiOutcast());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

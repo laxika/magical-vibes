@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "131")
+@CardRegistration(set = "TDC", collectorNumber = "256")
 public class FrontierSiege extends Card {
 
     private static final String KHANS = "Khans";

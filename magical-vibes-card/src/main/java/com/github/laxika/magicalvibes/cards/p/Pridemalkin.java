@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "196")
+@CardRegistration(set = "MOC", collectorNumber = "308")
 public class Pridemalkin extends Card {
 
     public Pridemalkin() {

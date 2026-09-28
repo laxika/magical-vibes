@@ -17,47 +17,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RelicOfLegendsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Tapping Relic of Legends adds one mana of the chosen color")
-    void tapsRelicForMana() {
+    @DisplayName("Taps for one mana of any color")
+    void tapsForAnyColor() {
         Permanent relic = harness.addToBattlefieldAndReturn(player1, new RelicOfLegends());
 
-        harness.activateAbility(player1, battlefieldIndex(relic), 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(relic.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(relic.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Taps an untapped legendary creature for one mana of any color")
+    void tapsLegendaryCreatureForAnyColor() {
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new RelicOfLegends());
+        Permanent legendaryCreature = addCreatureReady(player1, new DanithaCapashenParagon());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Tapping an untapped legendary creature adds one mana")
-    void tapsLegendaryCreatureForMana() {
-        Permanent relic = harness.addToBattlefieldAndReturn(player1, new RelicOfLegends());
-        Permanent legendary = addCreatureReady(player1, new DanithaCapashenParagon());
-
-        harness.activateAbility(player1, battlefieldIndex(relic), 1, null, null);
-
         assertThat(relic.isTapped()).isFalse();
-        assertThat(legendary.isTapped()).isTrue();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, ManaColor.WHITE.name());
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(legendaryCreature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("The second ability requires an untapped legendary creature you control")
-    void secondAbilityRequiresMatchingCreature() {
+    @DisplayName("Cannot use the second ability without an untapped legendary creature")
+    void cannotTapNonLegendaryCreatureForMana() {
         Permanent relic = harness.addToBattlefieldAndReturn(player1, new RelicOfLegends());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonLegendaryCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(relic), 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough untapped permanents to tap");
-    }
-
-    private int battlefieldIndex(Permanent permanent) {
-        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+                .hasMessageContaining("No untapped matching creature to tap");
+        assertThat(relic.isTapped()).isFalse();
+        assertThat(nonLegendaryCreature.isTapped()).isFalse();
     }
 }

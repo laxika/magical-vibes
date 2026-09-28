@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,6 +74,7 @@ class MayCastHandlerServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private LifeSupport lifeSupport;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -80,6 +82,7 @@ class MayCastHandlerServiceTest {
     @Mock private SpellCastingService spellCastingService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -156,6 +159,27 @@ class MayCastHandlerServiceTest {
 
     private PendingMayAbility abilityFor(Card card) {
         return new PendingMayAbility(card, PLAYER1_ID, List.of(), "May cast " + card.getName());
+    }
+
+    @Test
+    void castsArtifactFromGraveyardByPayingManaValueLife() {
+        Card artifact = createArtifact("Mind Stone");
+        artifact.setManaCost("{2}");
+        gd.playerGraveyards.get(PLAYER1_ID).add(artifact);
+        gd.playerLifeTotals.put(PLAYER1_ID, 10);
+        when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(artifact);
+        when(gameQueryService.findGraveyardOwnerById(gd, artifact.getId())).thenReturn(PLAYER1_ID);
+        when(gameQueryService.canPlayerLifeChange(gd, PLAYER1_ID)).thenReturn(true);
+        when(gameQueryService.canPayLifeForCosts(gd)).thenReturn(true);
+
+        svc.handleMayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValue(
+                gd, player1, true, abilityFor(artifact));
+
+        verify(lifeSupport).applyLifePayment(eq(gd), eq(PLAYER1_ID), eq(2), anyString());
+        verify(permanentRemovalService).removeCardFromGraveyardById(gd, artifact.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(artifact);
+        assertThat(gd.stack.getFirst().getSourceZone()).isEqualTo(Zone.GRAVEYARD);
     }
 
     // ===== buildValidSpellTargets =====

@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "HBG", collectorNumber = "242")
 @CardRegistration(set = "HBG", collectorNumber = "284")
+@CardRegistration(set = "SLD", collectorNumber = "2500")
 public class MiirymSentinelWyrm extends Card {
 
     public MiirymSentinelWyrm() {

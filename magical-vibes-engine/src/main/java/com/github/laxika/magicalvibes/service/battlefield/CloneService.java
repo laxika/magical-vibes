@@ -182,6 +182,7 @@ public class CloneService {
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
         gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
+        gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
         gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = copyEffect.cardFilter();
@@ -295,6 +296,7 @@ public class CloneService {
                         GrantScope.SELF)))
                 : Map.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
@@ -371,6 +373,7 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.landPlay = false;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
@@ -535,6 +538,7 @@ public class CloneService {
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.entersTapped = false;
+        gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.ninjutsuEntry = false;
         gameData.cloneOperation.ninjutsuAttackTargetId = null;
         gameData.cloneOperation.landPlay = false;

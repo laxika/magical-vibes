@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,22 +14,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(CounselOfTheSoratami.class)
 class CounselOfTheSoratamiTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Counsel of the Soratami puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.castFromHand(player1, counsel, "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Counsel of the Soratami");
+        assertThat(entry.getCard()).isSameAs(counsel);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -42,59 +41,43 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving draws two cards")
     void resolvingDrawsTwoCards() {
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        CounselOfTheSoratami firstDraw = new CounselOfTheSoratami();
+        CounselOfTheSoratami secondDraw = new CounselOfTheSoratami();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
 
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Hand should have 2 cards (spell left hand, then drew 2)
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        // Deck should have lost 2 cards
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Counsel of the Soratami goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.castFromHand(player1, counsel, "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Counsel of the Soratami");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(counsel);
     }
 
     @Test
-    @DisplayName("Drawing with only one card in deck draws one and does not crash")
-    void drawsOneWhenOnlyOneCardInDeck() {
-        // Empty the deck except for one card
-        List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 1) {
-            deck.removeFirst();
-        }
-        int deckSizeBefore = deck.size();
-        assertThat(deckSizeBefore).isEqualTo(1);
-
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+    @DisplayName("Drawing with only one card in the library draws it, then loses the game")
+    void drawsAvailableCardThenLosesOnEmptyLibrary() {
+        CounselOfTheSoratami lastCard = new CounselOfTheSoratami();
+        harness.setLibrary(player1, List.of(lastCard));
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
         harness.passBothPriorities();
 
-        // Only 1 card was drawn (deck had only 1)
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }
 

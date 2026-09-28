@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -43,7 +41,8 @@ public class DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choiceEffect = (DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID defendingPlayerId = defendingPlayerId(gameData, entry.getAttackedTargetId());
+        UUID defendingPlayerId = defendingPlayerId(gameData,
+                entry.getAttackedTargetId() != null ? entry.getAttackedTargetId() : entry.getTargetId());
         List<Card> matchingCards = matchingCards(gameData, controllerId, choiceEffect.filter(),
                 entry.getCard().getId());
 
@@ -55,7 +54,7 @@ public class DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
             matchingCards.stream()
                     .filter(card -> card.getId().equals(chosenCardId))
                     .findFirst()
-                    .ifPresent(card -> returnCard(gameData, controllerId, card));
+                    .ifPresent(card -> returnCard(gameData, controllerId, card, choiceEffect));
             return;
         }
 
@@ -63,7 +62,7 @@ public class DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
             return;
         }
         if (matchingCards.size() == 1) {
-            returnCard(gameData, controllerId, matchingCards.getFirst());
+            returnCard(gameData, controllerId, matchingCards.getFirst(), choiceEffect);
             return;
         }
 
@@ -101,10 +100,11 @@ public class DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
                 .toList();
     }
 
-    private void returnCard(GameData gameData, UUID controllerId, Card card) {
+    private void returnCard(GameData gameData, UUID controllerId, Card card,
+                            DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect choiceEffect) {
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
         graveyardReturnSupport.putCardOntoBattlefield(
-                gameData, controllerId, card, null, CardSubtype.VAMPIRE, false, false,
-                CounterType.PLUS_ONE_PLUS_ONE);
+                gameData, controllerId, card, null, choiceEffect.grantSubtype(), false, false,
+                choiceEffect.enterCounter());
     }
 }

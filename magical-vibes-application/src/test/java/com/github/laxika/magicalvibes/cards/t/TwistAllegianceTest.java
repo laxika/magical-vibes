@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TwistAllegiance.class, GrizzlyBears.class, Mountain.class})
 class TwistAllegianceTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,25 @@ class TwistAllegianceTest extends BaseCardTest {
         assertThat(theirs.isTapped()).isFalse();
         assertThat(mine.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(theirs.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not exchange, untap, or give haste to noncreatures")
+    void doesNotAffectNoncreatures() {
+        enableAutoStop();
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mine.tap();
+        theirs.tap();
+
+        castAndResolve();
+
+        assertThat(controls(player1.getId(), mine.getId())).isTrue();
+        assertThat(controls(player2.getId(), theirs.getId())).isTrue();
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(theirs.isTapped()).isTrue();
+        assertThat(mine.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(theirs.hasKeyword(Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -76,8 +97,7 @@ class TwistAllegianceTest extends BaseCardTest {
     private void castAndResolve() {
         harness.setHand(player1, List.of(new TwistAllegiance()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void enableAutoStop() {

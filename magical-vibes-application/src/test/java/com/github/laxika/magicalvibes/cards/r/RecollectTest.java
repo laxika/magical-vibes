@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Recollect.class, HolyDay.class, GrizzlyBears.class})
 class RecollectTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Recollect puts a graveyard-targeted spell on the stack")
@@ -80,7 +80,7 @@ class RecollectTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castSorcery(player1, 0, target.getId());
-        harness.getGameData().playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

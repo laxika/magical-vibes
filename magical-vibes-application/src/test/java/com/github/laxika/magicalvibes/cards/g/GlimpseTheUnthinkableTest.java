@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,16 +22,26 @@ class GlimpseTheUnthinkableTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, glimpseLibrary(10));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(10);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and mills exactly ten cards")
+    void canTargetControllerAndMillsExactlyTenCards() {
+        harness.setHand(player1, List.of(new GlimpseTheUnthinkable()));
+        harness.setLibrary(player1, glimpseLibrary(11));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(11);
     }
 
     @Test
@@ -40,15 +51,17 @@ class GlimpseTheUnthinkableTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 3) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, glimpseLibrary(3));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    private List<Card> glimpseLibrary(int size) {
+        return IntStream.range(0, size)
+                .mapToObj(ignored -> (Card) new GlimpseTheUnthinkable())
+                .toList();
     }
 }

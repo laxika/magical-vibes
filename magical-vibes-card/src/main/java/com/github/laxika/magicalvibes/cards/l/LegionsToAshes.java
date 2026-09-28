@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllCon
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BRO", collectorNumber = "215")
+@CardRegistration(set = "FIC", collectorNumber = "326")
 public class LegionsToAshes extends Card {
 
     public LegionsToAshes() {

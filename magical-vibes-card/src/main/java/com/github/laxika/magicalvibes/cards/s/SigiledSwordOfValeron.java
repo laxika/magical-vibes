@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "244")
+@CardRegistration(set = "MOC", collectorNumber = "377")
 public class SigiledSwordOfValeron extends Card {
 
     public SigiledSwordOfValeron() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "176")
 @CardRegistration(set = "IMA", collectorNumber = "171")
+@CardRegistration(set = "TDC", collectorNumber = "260")
 public class JaddiOffshoot extends Card {
 
     public JaddiOffshoot() {

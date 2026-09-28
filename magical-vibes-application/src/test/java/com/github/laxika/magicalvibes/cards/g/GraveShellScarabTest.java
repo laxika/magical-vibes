@@ -32,6 +32,29 @@ class GraveShellScarabTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing Grave-Shell Scarab can dredge itself instead of drawing")
+    void sacrificesSelfAndDredgesIntoHand() {
+        Forest milled = new Forest();
+        Forest remaining = new Forest();
+        harness.setLibrary(player1, List.of(milled, remaining));
+        harness.addToBattlefield(player1, new GraveShellScarab());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grave-Shell Scarab");
+        harness.assertInHand(player1, "Grave-Shell Scarab");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
     @DisplayName("Dredging Grave-Shell Scarab mills one card and returns it to hand")
     void dredgesIntoHand() {
         GraveShellScarab scarab = new GraveShellScarab();

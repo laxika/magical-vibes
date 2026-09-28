@@ -190,6 +190,15 @@ public class GraveyardTargetValidators {
                         "Target card's mana value must be " + lifeGained + " or less");
             }
         }
+        if (effect.maxManaValueEqualsLifeLostThisTurn()) {
+            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            int lifeLost = sourceControllerId == null
+                    ? 0 : ctx.gameData().lifeLostThisTurn.getOrDefault(sourceControllerId, 0);
+            if (graveyardCard.getManaValue() > lifeLost) {
+                throw new IllegalStateException(
+                        "Target card's mana value must be " + lifeLost + " or less");
+            }
+        }
     }
 
     @ValidatesTarget(BecomeCopyOfTargetCreatureCardInGraveyardEffect.class)

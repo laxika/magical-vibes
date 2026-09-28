@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.c.CrimsonKobolds;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,11 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Rebirth.class, AirElemental.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Rebirth.class, BarbaryApes.class, CrimsonKobolds.class, DurkwoodBoars.class})
 class RebirthTest extends BaseCardTest {
 
     private void castRebirth() {
-        harness.castFromHand(player1, new Rebirth(), "{3}{G}{G}{G}");
+        castRebirth(player1);
+    }
+
+    private void castRebirth(Player caster) {
+        harness.castFromHand(caster, new Rebirth(), "{3}{G}{G}{G}");
         harness.passBothPriorities(); // resolve Rebirth -> active player prompted first (APNAP)
     }
 
@@ -27,8 +32,8 @@ class RebirthTest extends BaseCardTest {
     void bothPlayersAnte() {
         harness.setLife(player1, 30);
         harness.setLife(player2, 6);
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new HillGiant()));
-        harness.setLibrary(player2, List.of(new AirElemental()));
+        harness.setLibrary(player1, List.of(new BarbaryApes(), new DurkwoodBoars()));
+        harness.setLibrary(player2, List.of(new CrimsonKobolds()));
 
         castRebirth();
 
@@ -44,11 +49,11 @@ class RebirthTest extends BaseCardTest {
 
         // The anted top card leaves the library for exile.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(c -> c.getName()).containsExactly("Grizzly Bears");
+                .extracting(c -> c.getName()).containsExactly("Barbary Apes");
         assertThat(gd.playerDecks.get(player1.getId()))
-                .extracting(c -> c.getName()).containsExactly("Hill Giant");
+                .extracting(c -> c.getName()).containsExactly("Durkwood Boars");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .extracting(c -> c.getName()).containsExactly("Air Elemental");
+                .extracting(c -> c.getName()).containsExactly("Crimson Kobolds");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -57,8 +62,8 @@ class RebirthTest extends BaseCardTest {
     void decliningChangesNothing() {
         harness.setLife(player1, 25);
         harness.setLife(player2, 15);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new AirElemental()));
+        harness.setLibrary(player1, List.of(new BarbaryApes()));
+        harness.setLibrary(player2, List.of(new CrimsonKobolds()));
 
         castRebirth();
 
@@ -71,12 +76,12 @@ class RebirthTest extends BaseCardTest {
         harness.assertLife(player1, 25);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
-                .extracting(c -> c.getName()).containsExactly("Grizzly Bears");
+                .extracting(c -> c.getName()).containsExactly("Barbary Apes");
 
         // Player 2 anted.
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .extracting(c -> c.getName()).containsExactly("Air Elemental");
+                .extracting(c -> c.getName()).containsExactly("Crimson Kobolds");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -85,7 +90,7 @@ class RebirthTest extends BaseCardTest {
     void emptyLibraryNotPrompted() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 12);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BarbaryApes()));
         harness.setLibrary(player2, List.of());
 
         castRebirth();
@@ -102,7 +107,7 @@ class RebirthTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(c -> c.getName()).containsExactly("Grizzly Bears");
+                .extracting(c -> c.getName()).containsExactly("Barbary Apes");
 
         // Player2 could not ante: life unchanged, nothing exiled.
         harness.assertLife(player2, 12);
@@ -110,9 +115,41 @@ class RebirthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May choices are offered in active-player-first order")
+    void promptsActivePlayerFirst() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 6);
+        harness.setLife(player2, 30);
+        BarbaryApes player1Top = new BarbaryApes();
+        DurkwoodBoars player2Top = new DurkwoodBoars();
+        harness.setLibrary(player1, List.of(player1Top));
+        harness.setLibrary(player2, List.of(player2Top));
+
+        castRebirth(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(((PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(((PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 30);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(player1Top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(player2Top);
+    }
+
+    @Test
     @DisplayName("An accepted card is recorded as anted")
     void acceptedCardIsMarkedAsAnted() {
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BarbaryApes();
         harness.setLibrary(player1, List.of(topCard));
         harness.setLibrary(player2, List.of());
 

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.p.PsychicSurgery;
 import com.github.laxika.magicalvibes.cards.s.StalkingStones;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lobotomy.class, Forest.class, StalkingStones.class, TrainedArmodon.class})
+@CardUsed({Lobotomy.class, Forest.class, PsychicSurgery.class, StalkingStones.class, TrainedArmodon.class})
 class LobotomyTest extends BaseCardTest {
 
     @Test
@@ -88,6 +90,20 @@ class LobotomyTest extends BaseCardTest {
         castLobotomyAt(List.of(new Forest()));
 
         assertThat(gameLogContains("shuffles their library")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shuffling after a choice triggers an opponent's library-shuffle ability")
+    void successfulExileTriggersOpponentShuffleAbility() {
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new PsychicSurgery()));
+        harness.setLibrary(player2, List.of(new Forest(), new StalkingStones()));
+        castLobotomyAt(List.of(new TrainedArmodon()));
+
+        harness.handleListChoice(player1, "Trained Armodon");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
     }
 
     @Test

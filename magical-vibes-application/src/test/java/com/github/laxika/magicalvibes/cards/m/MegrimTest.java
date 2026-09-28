@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
@@ -191,8 +189,7 @@ class MegrimTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
-        Permanent specter = harness.addToBattlefieldAndReturn(player1, new HypnoticSpecter());
-        specter.setSummoningSick(false);
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         harness.forceActivePlayer(player1);
@@ -244,8 +241,7 @@ class MegrimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("triggers") && log.contains("2 damage"));
+        assertThat(gameLogContains("triggers — deals 2 damage")).isTrue();
     }
 
     // ===== Opponent controls Megrim — their discard does not trigger it =====

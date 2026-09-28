@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "149")
 @CardRegistration(set = "RVR", collectorNumber = "131")
+@CardRegistration(set = "TDC", collectorNumber = "245")
 public class ArborealGrazer extends Card {
 
     public ArborealGrazer() {

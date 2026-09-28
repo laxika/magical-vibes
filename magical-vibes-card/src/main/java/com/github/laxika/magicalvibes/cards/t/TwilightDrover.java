@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "33")
 @CardRegistration(set = "DDK", collectorNumber = "9")
+@CardRegistration(set = "TDC", collectorNumber = "136")
 public class TwilightDrover extends Card {
 
     public TwilightDrover() {

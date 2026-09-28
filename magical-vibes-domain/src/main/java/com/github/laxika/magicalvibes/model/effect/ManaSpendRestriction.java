@@ -19,6 +19,8 @@ public enum ManaSpendRestriction {
     /** Choose a color in the activating player's commander's color identity (Command Tower). */
     COMMANDER_COLOR_IDENTITY,
 
+    /** Mana carries Path of Ancestry's creature-type matching scry rider. */
+    PATH_OF_ANCESTRY,
     /** Choose a color in the commander's color identity; mana spent on the commander adds entry counters (Opal Palace). */
     COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS,
 
@@ -55,6 +57,9 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to cast instant and sorcery spells (Resonating Lute). */
     INSTANT_SORCERY_ONLY,
+
+    /** Spendable only to cast instant, sorcery, or one of the effect's printed subtypes (Séance Board). */
+    INSTANT_SORCERY_OR_SUBTYPES,
 
     /** Spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
     ARTIFACT_SPELLS_OR_ABILITIES,

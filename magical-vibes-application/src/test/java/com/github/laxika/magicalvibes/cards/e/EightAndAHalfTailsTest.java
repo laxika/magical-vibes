@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +18,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EightAndAHalfTails.class, Forest.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class EightAndAHalfTailsTest extends BaseCardTest {
 
     @Test
@@ -35,10 +39,74 @@ class EightAndAHalfTailsTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The first ability can target a noncreature permanent you control")
+    void canTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The first ability cannot target a permanent controlled by an opponent")
+    void cannotTargetOpponentsPermanent() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, harness.getPermanentId(player2, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("permanent you control");
+    }
+
+    @Test
+    @DisplayName("The first ability cannot target a permanent that already has protection from white")
+    void cannotTargetPermanentProtectedFromWhite() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @DisplayName("The second ability cannot target a permanent that already has protection from white")
+    void colorAbilityCannotTargetPermanentProtectedFromWhite() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
     }
 
     @Test
@@ -56,8 +124,7 @@ class EightAndAHalfTailsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
     }
@@ -81,8 +148,7 @@ class EightAndAHalfTailsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
     }

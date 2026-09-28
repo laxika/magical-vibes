@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEf
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesWithCountersEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2008")
+@CardRegistration(set = "MOC", collectorNumber = "35")
+@CardRegistration(set = "MOC", collectorNumber = "122")
 public class UncivilUnrest extends Card {
 
     public UncivilUnrest() {

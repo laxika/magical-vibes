@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TemptTheRingEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,10 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
     @Autowired
     @Lazy
     private TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    @Lazy
+    private EffectResolutionService effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,13 +67,13 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.RingBearerChoice(controllerId));
+                new PermanentChoiceContext.TemptTheRingBearerChoice(controllerId));
         playerInputService.beginPermanentChoice(gameData, controllerId, eligibleIds,
                 "Choose a creature you control to be your Ring-bearer.");
     }
 
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
-                               PermanentChoiceContext.RingBearerChoice context) {
+                               PermanentChoiceContext.TemptTheRingBearerChoice context) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (entry == null || !entry.getControllerId().equals(context.controllerId())) {
             throw new IllegalStateException("No effect is waiting for a Ring-bearer choice");
@@ -81,6 +86,10 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
         }
         setBearer(gameData, context.controllerId(), chosenPermanentId);
         triggerCollectionService.checkRingTemptTriggers(gameData, context.controllerId(), chosenPermanentId);
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+        }
     }
 
     private void setBearer(GameData gameData, UUID controllerId, UUID bearerId) {

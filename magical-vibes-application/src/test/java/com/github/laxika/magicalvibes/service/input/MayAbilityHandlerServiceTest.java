@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -108,6 +109,7 @@ class MayAbilityHandlerServiceTest {
                 mock(BendOrBreakEffectHandler.class),
                 mock(FightOrFlightSupport.class),
                 mock(StandOrFallSupport.class),
+                mock(MakeAnExampleEffectHandler.class),
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),
                 mock(MayAbilityTapCostService.class),
@@ -169,7 +171,7 @@ class MayAbilityHandlerServiceTest {
         acceptMayAbility(specEffect(TargetPredicates.land()));
 
         verify(playerInputService, org.mockito.Mockito.never())
-                .beginPermanentChoice(any(), any(), anyList(), anyString());
+                .beginAnyTargetChoice(any(), any(), anyList(), anyList(), anyString());
     }
 
     @Test
@@ -291,7 +293,8 @@ class MayAbilityHandlerServiceTest {
     private List<UUID> offeredTargets() {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<UUID>> captor = ArgumentCaptor.forClass(List.class);
-        verify(playerInputService).beginPermanentChoice(eq(gd), eq(PLAYER1_ID), captor.capture(), anyString());
+        verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(PLAYER1_ID), captor.capture(),
+                eq(List.of()), anyString());
         return captor.getValue();
     }
 

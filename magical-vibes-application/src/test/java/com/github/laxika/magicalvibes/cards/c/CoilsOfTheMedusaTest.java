@@ -41,8 +41,7 @@ class CoilsOfTheMedusaTest extends BaseCardTest {
         addCreatureReady(player2, new BenalishInfantry());
         addCreatureReady(player2, new CinderWall());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0),
@@ -71,8 +70,7 @@ class CoilsOfTheMedusaTest extends BaseCardTest {
         addCreatureReady(player2, new BenalishInfantry());
         addCreatureReady(player2, new BenalishInfantry());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
 
         harness.activateAbility(player1, 2, null, null);

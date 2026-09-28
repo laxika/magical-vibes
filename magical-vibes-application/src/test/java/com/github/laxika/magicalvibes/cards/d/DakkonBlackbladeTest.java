@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DakkonBlackblade.class, DiamondValley.class})
 class DakkonBlackbladeTest extends BaseCardTest {
 
     @Test
@@ -30,10 +29,10 @@ class DakkonBlackbladeTest extends BaseCardTest {
     @Test
     @DisplayName("Dakkon's power and toughness equal lands you control")
     void ptEqualsControlledLands() {
-        Permanent dakkon = addDakkonReady(player1);
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Plains());
+        Permanent dakkon = addCreatureReady(player1, new DakkonBlackblade());
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.addToBattlefield(player1, new DiamondValley());
 
         assertThat(gqs.getEffectivePower(gd, dakkon)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(3);
@@ -42,10 +41,10 @@ class DakkonBlackbladeTest extends BaseCardTest {
     @Test
     @DisplayName("Dakkon counts only its controller's lands")
     void countsOnlyControllersLands() {
-        Permanent dakkon = addDakkonReady(player1);
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player2, new Plains());
+        Permanent dakkon = addCreatureReady(player1, new DakkonBlackblade());
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.addToBattlefield(player2, new DiamondValley());
+        harness.addToBattlefield(player2, new DiamondValley());
 
         assertThat(gqs.getEffectivePower(gd, dakkon)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(1);
@@ -54,27 +53,19 @@ class DakkonBlackbladeTest extends BaseCardTest {
     @Test
     @DisplayName("Dakkon's power and toughness update when lands change")
     void ptUpdatesWhenLandsChange() {
-        Permanent dakkon = addDakkonReady(player1);
-        harness.addToBattlefield(player1, new Forest());
+        Permanent dakkon = addCreatureReady(player1, new DakkonBlackblade());
+        harness.addToBattlefield(player1, new DiamondValley());
 
         assertThat(gqs.getEffectivePower(gd, dakkon)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(1);
 
-        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new DiamondValley());
         assertThat(gqs.getEffectivePower(gd, dakkon)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().hasType(CardType.LAND));
         assertThat(gqs.getEffectivePower(gd, dakkon)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(0);
-    }
-
-    private Permanent addDakkonReady(Player player) {
-        DakkonBlackblade card = new DakkonBlackblade();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void addManaForDakkon() {

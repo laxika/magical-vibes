@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnConvokeCreaturesEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "30")
+@CardRegistration(set = "MOC", collectorNumber = "215")
 public class VeneratedLoxodon extends Card {
 
     public VeneratedLoxodon() {

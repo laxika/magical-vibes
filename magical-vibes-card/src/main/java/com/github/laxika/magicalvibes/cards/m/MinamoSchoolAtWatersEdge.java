@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "279")
+@CardRegistration(set = "LTC", collectorNumber = "369")
+@CardRegistration(set = "LTC", collectorNumber = "399")
 public class MinamoSchoolAtWatersEdge extends Card {
 
     public MinamoSchoolAtWatersEdge() {

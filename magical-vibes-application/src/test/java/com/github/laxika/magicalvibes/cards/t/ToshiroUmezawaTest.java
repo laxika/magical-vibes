@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ToshiroUmezawa.class, CruelEdict.class, GrizzlyBears.class, LavaSpike.class, Shock.class})
 class ToshiroUmezawaTest extends BaseCardTest {
 
     /** Player1 edicts away player2's only creature, firing Toshiro's trigger. */
@@ -101,6 +104,34 @@ class ToshiroUmezawaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bushido 1 gives Toshiro +1/+1 when it becomes blocked")
+    void bushidoOnBecomingBlocked() {
+        Permanent toshiro = addCreatureReady(player1, new ToshiroUmezawa());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
+        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bushido 1 gives Toshiro +1/+1 when it blocks")
+    void bushidoOnBlocking() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent toshiro = addCreatureReady(player2, new ToshiroUmezawa());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
+        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test

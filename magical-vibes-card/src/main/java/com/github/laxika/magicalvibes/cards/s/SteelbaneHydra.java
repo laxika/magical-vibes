@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "SOC", collectorNumber = "288")
 @CardRegistration(set = "TMC", collectorNumber = "52")
+@CardRegistration(set = "NCC", collectorNumber = "313")
 public class SteelbaneHydra extends Card {
 
     public SteelbaneHydra() {

@@ -32,6 +32,7 @@ public class FlashConscription extends Card {
                         new GrantEffectToTargetEffect(
                                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                                 new GainLifeEffect(new EventValue()),
-                                EffectDuration.UNTIL_END_OF_TURN)));
+                                EffectDuration.UNTIL_END_OF_TURN,
+                                false)));
     }
 }

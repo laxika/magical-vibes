@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "MAR", collectorNumber = "37")
 @CardRegistration(set = "OMB", collectorNumber = "37")
+@CardRegistration(set = "SOC", collectorNumber = "286")
 public class Silkguard extends Card {
 
     public Silkguard() {

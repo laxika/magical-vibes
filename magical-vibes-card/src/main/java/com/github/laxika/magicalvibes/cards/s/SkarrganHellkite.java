@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "114")
+@CardRegistration(set = "TDC", collectorNumber = "233")
 public class SkarrganHellkite extends Card {
 
     public SkarrganHellkite() {

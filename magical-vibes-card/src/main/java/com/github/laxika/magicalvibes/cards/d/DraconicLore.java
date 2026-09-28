@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HBG", collectorNumber = "116")
+@CardRegistration(set = "TDC", collectorNumber = "151")
 public class DraconicLore extends Card {
 
     public DraconicLore() {

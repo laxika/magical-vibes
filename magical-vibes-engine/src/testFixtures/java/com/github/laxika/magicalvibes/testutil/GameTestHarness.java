@@ -807,6 +807,13 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    public void castCreatureWithCounterCostReduction(Player player, int cardIndex,
+                                                      List<UUID> permanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, permanentIds, null, null, false);
+    }
+
     public void castEnchantment(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
@@ -1164,6 +1171,14 @@ public class GameTestHarness {
                 null, null, beholdPermanentIds, beholdHandCardIndices, null);
     }
 
+    public void castSorceryWithBehold(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, beholdPermanentIds, beholdHandCardIndices, null);
+    }
+
     public void castInstantWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
                                                           UUID chosenObjectId) {
         ensurePriority(player);
@@ -1469,6 +1484,12 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
     }
 
+    public void castFromLibraryTopWithAdditionalCost(Player player, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, List.of(),
+                List.of(sacrificePermanentId));
+    }
+
     public void castAndResolveFromLibraryTop(Player player) {
         castFromLibraryTop(player);
         passBothPriorities();
@@ -1481,6 +1502,11 @@ public class GameTestHarness {
 
     public void castAndResolveFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
         castFromLibraryTop(player, counterCostPermanentIds);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTopWithAdditionalCost(Player player, UUID sacrificePermanentId) {
+        castFromLibraryTopWithAdditionalCost(player, sacrificePermanentId);
         passBothPriorities();
     }
 

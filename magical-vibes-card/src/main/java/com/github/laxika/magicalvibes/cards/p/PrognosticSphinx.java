@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "60")
 @CardRegistration(set = "CP1", collectorNumber = "1")
+@CardRegistration(set = "DSC", collectorNumber = "124")
 public class PrognosticSphinx extends Card {
 
     public PrognosticSphinx() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "OPC2", collectorNumber = "33")
 @CardRegistration(set = "OPCA", collectorNumber = "69")
+@CardRegistration(set = "MOC", collectorNumber = "156")
 public class SelesnyaLoftGardens extends Card {
 
     public SelesnyaLoftGardens() {

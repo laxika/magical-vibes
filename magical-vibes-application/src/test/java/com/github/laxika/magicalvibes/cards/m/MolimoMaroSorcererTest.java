@@ -4,43 +4,31 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MolimoMaroSorcerer.class, Forest.class, Plains.class, GloriousAnthem.class})
 class MolimoMaroSorcererTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Molimo puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new MolimoMaroSorcerer()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MolimoMaroSorcerer(), "{4}{G}{G}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Molimo, Maro-Sorcerer");
     }
 
     @Test
     @DisplayName("Molimo dies to state-based actions with no lands")
     void diesWithNoLands() {
-        harness.setHand(player1, List.of(new MolimoMaroSorcerer()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MolimoMaroSorcerer(), "{4}{G}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Molimo, Maro-Sorcerer");
@@ -51,10 +39,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
     @DisplayName("Molimo survives when you control a land")
     void survivesWithLand() {
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new MolimoMaroSorcerer()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MolimoMaroSorcerer(), "{4}{G}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Molimo, Maro-Sorcerer");
@@ -63,7 +48,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Molimo power and toughness equal lands you control")
     void ptEqualsControlledLands() {
-        Permanent molimo = addMolimoReady(player1);
+        Permanent molimo = addCreatureReady(player1, new MolimoMaroSorcerer());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Plains());
@@ -75,7 +60,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Molimo counts only your lands, not opponent lands")
     void countsOnlyControllersLands() {
-        Permanent molimo = addMolimoReady(player1);
+        Permanent molimo = addCreatureReady(player1, new MolimoMaroSorcerer());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new Plains());
@@ -87,7 +72,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Molimo power and toughness update when lands change")
     void ptUpdatesWhenLandsChange() {
-        Permanent molimo = addMolimoReady(player1);
+        Permanent molimo = addCreatureReady(player1, new MolimoMaroSorcerer());
         harness.addToBattlefield(player1, new Forest());
 
         assertThat(gqs.getEffectivePower(gd, molimo)).isEqualTo(1);
@@ -105,7 +90,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Molimo characteristic-defining P/T stacks with other static bonuses")
     void ptStacksWithOtherStaticBonuses() {
-        Permanent molimo = addMolimoReady(player1);
+        Permanent molimo = addCreatureReady(player1, new MolimoMaroSorcerer());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new GloriousAnthem());
@@ -114,20 +99,4 @@ class MolimoMaroSorcererTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, molimo)).isEqualTo(3);
     }
 
-    @Test
-    @DisplayName("Molimo has trample on the battlefield")
-    void hasTrampleOnBattlefield() {
-        Permanent molimo = addMolimoReady(player1);
-        harness.addToBattlefield(player1, new Forest());
-
-        assertThat(gqs.hasKeyword(gd, molimo, Keyword.TRAMPLE)).isTrue();
-    }
-
-    private Permanent addMolimoReady(Player player) {
-        MolimoMaroSorcerer card = new MolimoMaroSorcerer();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

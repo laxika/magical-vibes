@@ -1,14 +1,20 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BrothersYamazaki.class, WanderingOnes.class})
 class BrothersYamazakiTest extends BaseCardTest {
 
     @Test
@@ -18,6 +24,7 @@ class BrothersYamazakiTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, brother)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, brother)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, brother, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -42,6 +49,33 @@ class BrothersYamazakiTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The static ability does not affect an unrelated creature")
+    void doesNotBoostUnrelatedCreature() {
+        addCreatureReady(player1, new BrothersYamazaki());
+        Permanent unrelated = addCreatureReady(player1, new WanderingOnes());
+
+        assertThat(gqs.getEffectivePower(gd, unrelated)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, unrelated)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, unrelated, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Bushido 1 gives each brother +1/+1 when one blocks the other")
+    void bothCopiesGetBushidoWhenTheyClash() {
+        Permanent attacker = addCreatureReady(player1, new BrothersYamazaki());
+        Permanent blocker = addCreatureReady(player2, new BrothersYamazaki());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test

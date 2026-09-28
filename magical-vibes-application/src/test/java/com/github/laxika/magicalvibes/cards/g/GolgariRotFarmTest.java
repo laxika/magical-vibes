@@ -24,9 +24,7 @@ class GolgariRotFarmTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
 
-        Permanent rotFarm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof GolgariRotFarm)
-                .findFirst().orElseThrow();
+        Permanent rotFarm = findPermanent(player1, "Golgari Rot Farm");
         assertThat(rotFarm.isTapped()).isTrue();
 
         harness.passBothPriorities();
@@ -40,6 +38,27 @@ class GolgariRotFarmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns a controlled land to its owner's hand")
+    void returnsControlledLandToItsOwnersHand() {
+        Forest forest = new Forest();
+        forest.setOwnerId(player2.getId());
+        Permanent forestPermanent = harness.addToBattlefieldAndReturn(player1, forest);
+        harness.setHand(player1, List.of(new GolgariRotFarm()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(forestPermanent.getId(), findPermanent(player1, "Golgari Rot Farm").getId());
+        harness.handlePermanentChosen(player1, forestPermanent.getId());
+
+        harness.assertOnBattlefield(player1, "Golgari Rot Farm");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("Can return itself when it is the only land")
     void canReturnItself() {
         harness.setHand(player1, List.of(new GolgariRotFarm()));
@@ -47,7 +66,7 @@ class GolgariRotFarmTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent rotFarm = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent rotFarm = findPermanent(player1, "Golgari Rot Farm");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactly(rotFarm.getId());
         harness.handlePermanentChosen(player1, rotFarm.getId());

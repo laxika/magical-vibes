@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileThenGrantFreeCastPermissionEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "45")
+@CardRegistration(set = "DSC", collectorNumber = "119")
 public class KheruSpellsnatcher extends Card {
 
     public KheruSpellsnatcher() {

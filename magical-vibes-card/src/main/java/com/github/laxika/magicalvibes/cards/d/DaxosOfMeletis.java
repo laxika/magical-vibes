@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLi
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "THS", collectorNumber = "191")
+@CardRegistration(set = "NCC", collectorNumber = "335")
 public class DaxosOfMeletis extends Card {
 
     public DaxosOfMeletis() {

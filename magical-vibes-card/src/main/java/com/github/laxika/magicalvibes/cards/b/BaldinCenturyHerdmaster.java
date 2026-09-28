@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "428")
 @CardRegistration(set = "SLX", collectorNumber = "10")
+@CardRegistration(set = "TDC", collectorNumber = "110")
 public class BaldinCenturyHerdmaster extends Card {
 
     public BaldinCenturyHerdmaster() {

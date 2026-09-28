@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "1793")
 @CardRegistration(set = "MH1", collectorNumber = "86")
+@CardRegistration(set = "40K", collectorNumber = "199")
 public class Defile extends Card {
 
     public Defile() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ParleyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,8 @@ class ParleyEffectHandlerTest {
     @Mock
     private AwardManaEffectHandler awardManaEffectHandler;
     @Mock
+    private CreateTokenEffectHandler createTokenEffectHandler;
+    @Mock
     private LifeSupport lifeSupport;
     @Mock
     private PlayerInteractionSupport playerInteractionSupport;
@@ -52,8 +55,8 @@ class ParleyEffectHandlerTest {
         gameData.playerIdToName.put(player2Id, "Player2");
         gameData.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gameData.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        handler = new ParleyEffectHandler(gameLogService, awardManaEffectHandler, lifeSupport,
-                playerInteractionSupport);
+        handler = new ParleyEffectHandler(gameLogService, awardManaEffectHandler, createTokenEffectHandler,
+                lifeSupport, playerInteractionSupport);
     }
 
     @Test
@@ -84,6 +87,23 @@ class ParleyEffectHandlerTest {
 
         handler.resolve(gameData, entry, effect);
 
+        verifyNoInteractions(awardManaEffectHandler, lifeSupport);
+        verify(playerInteractionSupport).applyDrawCards(gameData, player1Id, 1);
+        verify(playerInteractionSupport).applyDrawCards(gameData, player2Id, 1);
+    }
+
+    @Test
+    @DisplayName("Creates the token reward for each revealed nonland")
+    void createsTokenRewardForNonlands() {
+        gameData.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+        gameData.playerDecks.get(player2Id).add(createCard("Llanowar Elves", CardType.CREATURE));
+        CreateTokenEffect token = CreateTokenEffect.ofTappedTreasureToken(1);
+        ParleyEffect effect = new ParleyEffect(token);
+        StackEntry entry = createEntry(createCard("Cutthroat Negotiator", CardType.CREATURE), effect);
+
+        handler.resolve(gameData, entry, effect);
+
+        verify(createTokenEffectHandler).resolve(eq(gameData), eq(entry), eq(token.withAmount(2)));
         verifyNoInteractions(awardManaEffectHandler, lifeSupport);
         verify(playerInteractionSupport).applyDrawCards(gameData, player1Id, 1);
         verify(playerInteractionSupport).applyDrawCards(gameData, player2Id, 1);

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GlacialRay;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BileUrchin;
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IreOfKaminari.class, FirstVolley.class, BileUrchin.class})
 class IreOfKaminariTest extends BaseCardTest {
 
     private void giveCastingMana() {
@@ -23,12 +24,11 @@ class IreOfKaminariTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage to any target equal to Arcane cards in controller's graveyard")
     void dealsDamageEqualToArcaneCardsInGraveyard() {
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(new GlacialRay(), new GlacialRay(), new GlacialRay()));
+        harness.setGraveyard(player1, List.of(new FirstVolley(), new FirstVolley(), new FirstVolley()));
         harness.setHand(player1, List.of(new IreOfKaminari()));
         giveCastingMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -39,8 +39,7 @@ class IreOfKaminariTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IreOfKaminari()));
         giveCastingMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -48,12 +47,11 @@ class IreOfKaminariTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count non-Arcane cards in graveyard")
     void doesNotCountNonArcaneCards() {
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(new LlanowarElves(), new GlacialRay()));
+        harness.setGraveyard(player1, List.of(new BileUrchin(), new FirstVolley()));
         harness.setHand(player1, List.of(new IreOfKaminari()));
         giveCastingMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -64,8 +62,7 @@ class IreOfKaminariTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IreOfKaminari()));
         giveCastingMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.assertInGraveyard(player1, "Ire of Kaminari");
@@ -74,16 +71,27 @@ class IreOfKaminariTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature")
     void dealsDamageToTargetCreature() {
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(new GlacialRay(), new GlacialRay()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addToBattlefield(player2, new BileUrchin());
         harness.setHand(player1, List.of(new IreOfKaminari()));
         giveCastingMana();
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        UUID urchinId = harness.getPermanentId(player2, "Bile Urchin");
+        harness.castAndResolveInstant(player1, 0, urchinId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Bile Urchin");
+        harness.assertInGraveyard(player2, "Bile Urchin");
+    }
+
+    @Test
+    @DisplayName("Counts only Arcane cards in the spell controller's graveyard")
+    void doesNotCountOpponentsArcaneCards() {
+        harness.setGraveyard(player2, List.of(new FirstVolley()));
+        harness.setHand(player1, List.of(new IreOfKaminari()));
+        giveCastingMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

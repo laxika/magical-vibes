@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.Knighthood;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BeastOfBurden.class, GrizzlyBears.class, Knighthood.class})
+@CardUsed({BeastOfBurden.class, GrizzlyBears.class, HowlingMine.class})
 class BeastOfBurdenTest extends BaseCardTest {
 
     @Test
@@ -53,7 +53,7 @@ class BeastOfBurdenTest extends BaseCardTest {
     @DisplayName("Beast of Burden does not count noncreature permanents")
     void doesNotCountNoncreaturePermanents() {
         Permanent beast = addCreatureReady(player1, new BeastOfBurden());
-        harness.addToBattlefield(player2, new Knighthood());
+        harness.addToBattlefield(player2, new HowlingMine());
 
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);

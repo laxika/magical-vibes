@@ -44,6 +44,8 @@ public class StackEntry {
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -104,6 +106,8 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
+    /** Cards exiled from the graveyard to pay an escape cost, linked when the permanent enters. */
+    @Setter private List<UUID> escapeExiledCardIds = List.of();
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -255,6 +259,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
     */
     @Setter private int eventValue;
+    @Setter private Integer combatOpponentPowerAtTrigger;
+    @Setter private Integer combatOpponentToughnessAtTrigger;
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
@@ -319,6 +325,8 @@ public class StackEntry {
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion;
+    /** Graveyard entry chosen as this spell's primary target when it was cast. */
+    @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
@@ -339,6 +347,8 @@ public class StackEntry {
     private List<UUID> convokeCreatureIds = List.of();
     /** Remaining convoke creatures for a resolving effect that makes them connive one at a time. */
     private List<UUID> convokeConniveCreatureIdsToProcess;
+    /** Remaining target creatures for a resolving effect that makes them connive one at a time. */
+    private List<UUID> targetConniveCreatureIdsToProcess;
     /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
     private List<UUID> chosenCostPermanentIds = List.of();
     /** Last-known snapshots of permanents chosen to pay a tracked cost. */
@@ -679,6 +689,7 @@ public class StackEntry {
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -712,6 +723,8 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.castWithEscape = source.castWithEscape;
+        this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
@@ -771,6 +784,8 @@ public class StackEntry {
         this.attackedTargetId = source.attackedTargetId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
+        this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
+        this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
@@ -795,6 +810,7 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
@@ -819,6 +835,8 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
                 ? null : new ArrayList<>(source.convokeConniveCreatureIdsToProcess);
+        this.targetConniveCreatureIdsToProcess = source.targetConniveCreatureIdsToProcess == null
+                ? null : new ArrayList<>(source.targetConniveCreatureIdsToProcess);
         this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
         this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
@@ -1125,6 +1143,10 @@ public class StackEntry {
 
     public void setConvokeConniveCreatureIdsToProcess(List<UUID> creatureIds) {
         this.convokeConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
+    }
+
+    public void setTargetConniveCreatureIdsToProcess(List<UUID> creatureIds) {
+        this.targetConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
     }
 
     public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {

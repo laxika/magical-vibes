@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "ME3", collectorNumber = "208")
 @CardRegistration(set = "UMA", collectorNumber = "244")
 @CardRegistration(set = "EMA", collectorNumber = "240")
+@CardRegistration(set = "LTC", collectorNumber = "367")
+@CardRegistration(set = "LTC", collectorNumber = "397")
 public class Karakas extends Card {
 
     public Karakas() {

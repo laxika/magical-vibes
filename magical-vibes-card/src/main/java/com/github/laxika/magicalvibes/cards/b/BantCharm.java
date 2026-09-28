@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "155")
 @CardRegistration(set = "2X2", collectorNumber = "181")
+@CardRegistration(set = "NCC", collectorNumber = "330")
 public class BantCharm extends Card {
 
     public BantCharm() {

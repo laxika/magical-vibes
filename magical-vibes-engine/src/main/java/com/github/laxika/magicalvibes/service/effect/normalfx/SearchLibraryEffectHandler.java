@@ -167,6 +167,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .shuffleAfterSelection(effect.shuffleAfterSelection())
                                 .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                         ? entry.getBeholdChosenSubtype() : null)
+                                .battlefieldIfOpponentControlsMoreLands(effect.battlefieldIfOpponentControlsMoreLands())
                                 .build(),
                         prompt, true);
                 return;
@@ -209,7 +210,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .enterWithCounters(effect.enterWithCounters())
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
-                                ? entry.getBeholdChosenSubtype() : null);
+                                ? entry.getBeholdChosenSubtype() : null)
+                        .battlefieldIfOpponentControlsMoreLands(effect.battlefieldIfOpponentControlsMoreLands());
         if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
             params.battlefieldControllerId(entry.getTargetId());
         }

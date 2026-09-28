@@ -17,49 +17,63 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                                  e.g. "Exile an instant or sorcery card from your graveyard" (Disciple of the Ring)
  * @param trackExiledManaValue      if true, the exiled card's mana value is stored as the X value
  * @param anyGraveyard               if true, the card may be chosen from any player's graveyard
+ * @param manaValueEqualsX           if true, the exiled card's mana value must equal the ability's X value
  */
 public record ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                          boolean imprintOnSource, boolean trackExiledPower,
                                          CardSubtype requiredSubtype, CardType alternateType,
                                          boolean trackExiledManaValue,
-                                         boolean anyGraveyard) implements CostEffect {
+                                         boolean anyGraveyard,
+                                         boolean manaValueEqualsX) implements CostEffect {
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource, boolean trackExiledPower,
                                       CardSubtype requiredSubtype, CardType alternateType) {
         this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower,
-                requiredSubtype, alternateType, false, false);
+                requiredSubtype, alternateType, false, false, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType) {
-        this(requiredType, false, false, false, null, null, false, false);
+        this(requiredType, false, false, false, null, null, false, false, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, CardType alternateType) {
-        this(requiredType, false, false, false, null, alternateType, false, false);
+        this(requiredType, false, false, false, null, alternateType, false, false, false);
     }
 
     public ExileCardFromGraveyardCost(CardSubtype requiredSubtype) {
-        this(null, false, false, false, requiredSubtype, null, false, false);
+        this(null, false, false, false, requiredSubtype, null, false, false, false);
     }
 
     public ExileCardFromGraveyardCost(CardSubtype requiredSubtype, boolean anyGraveyard) {
-        this(null, false, false, false, requiredSubtype, null, false, anyGraveyard);
+        this(null, false, false, false, requiredSubtype, null, false, anyGraveyard, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null, null, false, false);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null, null, false, false, false);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource, boolean trackExiledPower) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null, null, false, false);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null, null, false, false, false);
     }
 
     public static ExileCardFromGraveyardCost trackingExiledManaValue(CardType requiredType,
                                                                       CardType alternateType) {
         return new ExileCardFromGraveyardCost(requiredType, false, false, false,
-                null, alternateType, true, false);
+                null, alternateType, true, false, false);
+    }
+
+    /** Creates a graveyard exile cost requiring the card's mana value to equal X. */
+    public static ExileCardFromGraveyardCost withManaValueEqualsX(CardType requiredType) {
+        return withManaValueEqualsX(requiredType, false);
+    }
+
+    /** Creates an X-relative graveyard exile cost, optionally imprinting the exiled card. */
+    public static ExileCardFromGraveyardCost withManaValueEqualsX(
+            CardType requiredType, boolean imprintOnSource) {
+        return new ExileCardFromGraveyardCost(requiredType, false, imprintOnSource, false,
+                null, null, false, false, true);
     }
 }

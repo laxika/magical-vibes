@@ -27,6 +27,7 @@ public enum CardSubtype {
     AETHERBORN("Aetherborn"),
     ALIEN("Alien"),
     ANTELOPE("Antelope"),
+    ASTARTES("Astartes"),
     AUROCHS("Aurochs"),
     APE("Ape"),
     MONKEY("Monkey"),
@@ -60,10 +61,12 @@ public enum CardSubtype {
     RANGER("Ranger"),
     SPIDER("Spider"),
     SYMBIOTE("Symbiote"),
+    GAMMA("Gamma"),
     VILLAIN("Villain"),
     SPIKE("Spike"),
     BEAST("Beast"),
     HUMAN("Human"),
+    KREE("Kree"),
     HERO("Hero"),
     CLERIC("Cleric"),
     TIEFLING("Tiefling"),
@@ -104,6 +107,7 @@ public enum CardSubtype {
     WEREWOLF("Werewolf"),
     WOLF("Wolf"),
     MONK("Monk"),
+    MOONFOLK("Moonfolk"),
     GRIFFIN("Griffin"),
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),
@@ -260,6 +264,7 @@ public enum CardSubtype {
     PENTAVITE("Pentavite"),
     TRISKELAVITE("Triskelavite"),
     PINCHER("Pincher"),
+    PERFORMER("Performer"),
     PEST("Pest"),
     PILOT("Pilot"),
     PIRATE("Pirate"),
@@ -321,7 +326,9 @@ public enum CardSubtype {
     SAND("Sand"),
     RIGGER("Rigger"),
     MIRRODIN("Mirrodin"),
-    SERRAS_REALM("Serra's Realm");
+    SERRAS_REALM("Serra's Realm"),
+    NECRON("Necron"),
+    TYRANID("Tyranid");
 
     private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);

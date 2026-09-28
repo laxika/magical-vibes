@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
+import com.github.laxika.magicalvibes.cards.c.CoastalTower;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FirebrandRanger.class, CoastalTower.class, Forest.class})
 class FirebrandRangerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating Firebrand Ranger taps it and pays green mana")
     void activatingTapsAndPaysGreenMana() {
-        Permanent ranger = addReadyRanger(player1);
+        Permanent ranger = addCreatureReady(player1, new FirebrandRanger());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +32,7 @@ class FirebrandRangerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability presents a may choice")
     void resolvingPresentsMayChoice() {
-        addReadyRanger(player1);
+        addCreatureReady(player1, new FirebrandRanger());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -41,9 +42,19 @@ class FirebrandRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate while Firebrand Ranger has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new FirebrandRanger());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Choosing a basic land puts it onto the battlefield untapped")
     void choosingBasicLandPutsItUntapped() {
-        addReadyRanger(player1);
+        addCreatureReady(player1, new FirebrandRanger());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -61,8 +72,8 @@ class FirebrandRangerTest extends BaseCardTest {
     @Test
     @DisplayName("Only basic lands are valid hand choices")
     void onlyBasicLandsAreValidChoices() {
-        addReadyRanger(player1);
-        harness.setHand(player1, List.of(new AdarkarWastes(), new Forest()));
+        addCreatureReady(player1, new FirebrandRanger());
+        harness.setHand(player1, List.of(new CoastalTower(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -75,9 +86,25 @@ class FirebrandRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without a basic land in hand does nothing")
+    void acceptingWithoutBasicLandDoesNothing() {
+        addCreatureReady(player1, new FirebrandRanger());
+        harness.setHand(player1, List.of(new CoastalTower()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Coastal Tower");
+        harness.assertNotOnBattlefield(player1, "Coastal Tower");
+    }
+
+    @Test
     @DisplayName("Declining the may choice leaves the basic land in hand")
     void decliningLeavesLandInHand() {
-        addReadyRanger(player1);
+        addCreatureReady(player1, new FirebrandRanger());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -92,16 +119,9 @@ class FirebrandRangerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without green mana")
     void cannotActivateWithoutGreenMana() {
-        addReadyRanger(player1);
+        addCreatureReady(player1, new FirebrandRanger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReadyRanger(Player player) {
-        Permanent ranger = new Permanent(new FirebrandRanger());
-        ranger.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ranger);
-        return ranger;
     }
 }

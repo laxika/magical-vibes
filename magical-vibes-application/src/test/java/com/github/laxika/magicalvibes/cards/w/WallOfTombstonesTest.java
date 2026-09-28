@@ -31,8 +31,26 @@ class WallOfTombstonesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
 
-        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each controller upkeep snapshots the current creature-card count")
+    void updatesSnapshotOnEachControllerUpkeep() {
+        Permanent wall = addWallReady(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Plains()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -48,10 +66,7 @@ class WallOfTombstonesTest extends BaseCardTest {
     }
 
     private Permanent addWallReady(Player player) {
-        Permanent wall = new Permanent(new WallOfTombstones());
-        wall.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(wall);
-        return wall;
+        return addCreatureReady(player, new WallOfTombstones());
     }
 
 }

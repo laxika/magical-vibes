@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "38")
 @CardRegistration(set = "MM2", collectorNumber = "90")
 @CardRegistration(set = "C14", collectorNumber = "156")
+@CardRegistration(set = "NCC", collectorNumber = "256")
 public class ProfaneCommand extends Card {
 
     public ProfaneCommand() {

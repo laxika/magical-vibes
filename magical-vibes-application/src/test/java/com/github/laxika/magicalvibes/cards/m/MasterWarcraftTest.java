@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,15 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MasterWarcraft.class, GrizzlyBears.class})
+@CardUsed({MasterWarcraft.class, BorosRecruit.class})
 class MasterWarcraftTest extends BaseCardTest {
 
     private Permanent addAttacker(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new BorosRecruit());
     }
 
     private Permanent addBlocker(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new BorosRecruit());
     }
 
     private void castMasterWarcraft(Player caster) {
@@ -86,6 +86,30 @@ class MasterWarcraftTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller may choose not to assign any blockers")
+    void controllerMayChooseNoBlockers() {
+        enterPrecombatMain(player1);
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addBlocker(player2);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareAttackers(gd, player1, List.of(attackerIndex));
+
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        PendingInteraction.BlockerDeclaration blockerPrompt =
+                gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        assertThat(blockerPrompt).isNotNull();
+        assertThat(blockerPrompt.decidingPlayerId()).isEqualTo(player1.getId());
+        gs.declareBlockers(gd, player1, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
     @DisplayName("A non-active controller chooses attackers from the active player's battlefield")
     void nonActiveControllerChoosesAttackers() {
         enterPrecombatMain(player2);
@@ -107,6 +131,70 @@ class MasterWarcraftTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(attackerIndex));
 
         assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller chooses attackers in every combat phase of the turn")
+    void controllerChoosesAttackersInEveryCombatPhaseOfTurn() {
+        enterPrecombatMain(player2);
+        Permanent firstAttacker = addAttacker(player2);
+        Permanent secondAttacker = addAttacker(player2);
+        addBlocker(player1);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        PendingInteraction.AttackerDeclaration firstPrompt =
+                gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        assertThat(firstPrompt.decidingPlayerId()).isEqualTo(player1.getId());
+
+        int firstAttackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(firstAttacker);
+        gs.declareAttackers(gd, player1, List.of(firstAttackerIndex));
+
+        assertThat(firstAttacker.isAttacking()).isTrue();
+        assertThat(secondAttacker.isAttacking()).isFalse();
+
+        gd.additionalCombatPhasesOnly = 1;
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+
+        gs.advanceStep(gd);
+        PendingInteraction.AttackerDeclaration secondPrompt =
+                gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        assertThat(secondPrompt).isNotNull();
+        assertThat(secondPrompt.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(secondPrompt.choosingForOpponent()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller chooses blockers in every combat phase of the turn")
+    void controllerChoosesBlockersInEveryCombatPhaseOfTurn() {
+        enterPrecombatMain(player1);
+        Permanent firstAttacker = addAttacker(player1);
+        Permanent secondAttacker = addAttacker(player1);
+        addBlocker(player2);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        int firstAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker);
+        gs.declareAttackers(gd, player1, List.of(firstAttackerIndex));
+
+        gd.additionalCombatPhasesOnly = 1;
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        gs.advanceStep(gd);
+
+        int secondAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker);
+        gs.declareAttackers(gd, player1, List.of(secondAttackerIndex));
+
+        PendingInteraction.BlockerDeclaration secondPrompt =
+                gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        assertThat(secondPrompt).isNotNull();
+        assertThat(secondPrompt.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(secondPrompt.choosingForOpponent()).isTrue();
+        assertThat(secondPrompt.defenderId()).isEqualTo(player2.getId());
     }
 
     @Test

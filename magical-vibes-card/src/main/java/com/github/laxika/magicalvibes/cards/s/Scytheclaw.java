@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "CMM", collectorNumber = "408")
 @CardRegistration(set = "CMM", collectorNumber = "615")
 @CardRegistration(set = "C15", collectorNumber = "53")
+@CardRegistration(set = "MOC", collectorNumber = "375")
 public class Scytheclaw extends Card {
 
     public Scytheclaw() {

@@ -58,11 +58,16 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
@@ -91,6 +96,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -188,6 +195,144 @@ class SpellCastTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstSpellCastTriggerEffect")
+    class FirstSpellCastTrigger {
+
+        @Test
+        @DisplayName("tracks the first spell independently for each player and excludes its caster")
+        void tracksEachPlayerIndependentlyAndExcludesCaster() {
+            Permanent perm = createPermanent("The Lord of Pain");
+            var effect = new FirstSpellCastTriggerEffect(List.of(
+                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)));
+            Card player1Spell = createCard("Player 1 Spell");
+            player1Spell.setManaCost("{1}{G}");
+            Card player2Spell = createCard("Player 2 Spell");
+            player2Spell.setManaCost("{2}");
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
+                    .thenReturn(true);
+
+            gd.recordSpellCast(player1Id, player1Spell);
+            boolean player1Result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(player1Spell, player1Id, true));
+
+            gd.recordSpellCast(player2Id, player2Spell);
+            boolean player2Result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(player2Spell, player2Id, true));
+
+            assertThat(player1Result).isTrue();
+            assertThat(player2Result).isTrue();
+            var pending = gd.pendingInteractions.stream()
+                    .filter(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
+                    .map(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::cast)
+                    .toList();
+            assertThat(pending).hasSize(2);
+            assertThat(pending).extracting(PermanentChoiceContext.SpellTargetTriggerAnyTarget::triggeringSpellManaValue)
+                    .containsExactly(2, 2);
+            assertThat(pending).allSatisfy(queued -> {
+                assertThat(queued.targetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
+                var filter = (PlayerPredicateTargetFilter) queued.targetFilter();
+                assertThat(filter.predicate()).isInstanceOf(PlayerOtherThanPredicate.class);
+            });
+            assertThat(pending).anySatisfy(queued -> assertThat(
+                    ((PlayerOtherThanPredicate) ((PlayerPredicateTargetFilter) queued.targetFilter()).predicate())
+                            .excludedPlayerId()).isEqualTo(player1Id));
+            assertThat(pending).anySatisfy(queued -> assertThat(
+                    ((PlayerOtherThanPredicate) ((PlayerPredicateTargetFilter) queued.targetFilter()).predicate())
+                            .excludedPlayerId()).isEqualTo(player2Id));
+        }
+
+        @Test
+        @DisplayName("does not trigger for a player's later spell")
+        void ignoresLaterSpell() {
+            Permanent perm = createPermanent("The Lord of Pain");
+            var effect = new FirstSpellCastTriggerEffect(List.of(
+                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)));
+            Card firstSpell = createCard("First Spell");
+            firstSpell.setManaCost("{1}");
+            Card secondSpell = createCard("Second Spell");
+            secondSpell.setManaCost("{2}");
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
+                    .thenReturn(true);
+
+            gd.recordSpellCast(player1Id, firstSpell);
+            registry.dispatch(match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(firstSpell, player1Id, true));
+            gd.recordSpellCast(player1Id, secondSpell);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true));
+
+            assertThat(result).isFalse();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
+                    .hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — single-target creature control trigger")
+    class SingleTargetCreatureControlTrigger {
+
+        @Test
+        @DisplayName("binds the triggering spell's sole creature target")
+        void bindsSoleCreatureTarget() {
+            Permanent source = createPermanent("Loki, God of Lies");
+            Permanent target = createPermanent("Grizzly Bears");
+            Card spell = createInstant("Giant Growth");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
+                    spell.getName(), List.of(), 0, target.getId(), java.util.Map.of()));
+            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(spell, player1Id, true));
+
+            assertThat(result).isTrue();
+            StackEntry triggeredAbility = gd.stack.getLast();
+            assertThat(triggeredAbility.getTargetId()).isEqualTo(target.getId());
+            assertThat(triggeredAbility.isNonTargeting()).isTrue();
+            assertThat(triggeredAbility.getTriggeringCardId()).isEqualTo(spell.getId());
+            assertThat(triggeredAbility.getEffectsToResolve()).hasSize(2);
+            assertThat(triggeredAbility.getEffectsToResolve().getFirst())
+                    .isEqualTo(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN));
+            ConditionalEffect rider = (ConditionalEffect) triggeredAbility.getEffectsToResolve().getLast();
+            assertThat(rider.wrapped()).isInstanceOf(SequenceEffect.class);
+            SequenceEffect sequence = (SequenceEffect) rider.wrapped();
+            assertThat(sequence.steps()).containsExactly(
+                    new UntapPermanentsEffect(com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET),
+                    new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE,
+                            com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET));
+        }
+
+        @Test
+        @DisplayName("does not trigger for multiple distinct targets")
+        void doesNotTriggerForMultipleDistinctTargets() {
+            Permanent source = createPermanent("Loki, God of Lies");
+            Permanent firstTarget = createPermanent("First creature");
+            Permanent secondTarget = createPermanent("Second creature");
+            Card spell = createInstant("Two-target spell");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
+                    spell.getName(), List.of(), null,
+                    List.of(firstTarget.getId(), secondTarget.getId())));
+            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                    new TriggerContext.SpellCast(spell, player1Id, true));
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
     }
 
     @Test
@@ -326,6 +471,33 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Shrine of Burning Rage");
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("caster-relative turn gate ignores spells cast by the active player")
+        void casterRelativeTurnGateUsesCastingPlayer() {
+            Permanent perm = createPermanent("Vision");
+            var effect = SpellCastTriggerEffect.whenCasterIsNotActiveTurn(
+                    List.of(new BoostSelfEffect(1, 1)));
+            Card spellCard = createInstant("Opt");
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
+                    .thenReturn(true);
+
+            gd.activePlayerId = player1Id;
+            boolean activeCasterResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+                    effect, new TriggerContext.SpellCast(spellCard, player1Id, true));
+
+            assertThat(activeCasterResult).isFalse();
+            assertThat(gd.stack).isEmpty();
+
+            boolean nonActiveCasterResult = registry.dispatch(
+                    match(perm, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+                    effect, new TriggerContext.SpellCast(spellCard, player2Id, true));
+
+            assertThat(nonActiveCasterResult).isTrue();
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

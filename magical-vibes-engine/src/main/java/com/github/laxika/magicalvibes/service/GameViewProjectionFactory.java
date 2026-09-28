@@ -389,6 +389,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PubliclyRevealedHandEffect reveal) {
                         if (!reveal.controllerOnly()) {
@@ -409,6 +410,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof RevealOpponentHandsEffect) {
                             fullHandRevealed = true;
@@ -1000,6 +1002,15 @@ public class GameViewProjectionFactory {
                 gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
+        }
+        var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
+        if (grantedBlitz.isPresent()) {
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostManaCost(grantedBlitz.get().getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElse(null))
+                    .build();
         }
         WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(
                 gameData, playerId, card);
