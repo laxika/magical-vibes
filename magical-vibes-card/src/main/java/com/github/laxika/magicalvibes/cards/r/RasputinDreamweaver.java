@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -51,6 +51,6 @@ public class RasputinDreamweaver extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceStartedTurnUntapped(),
-                        new PutCappedCountersOnSourceEffect(CounterType.DREAM, new Fixed(1), 7)));
+                        new PutCountersOnSourceCardEffect(CounterType.DREAM)));
     }
 }

@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TDC", collectorNumber = "143")
 @CardRegistration(set = "MKC", collectorNumber = "95")
+@CardRegistration(set = "LCC", collectorNumber = "143")
 public class AmphinMutineer extends Card {
 
     public AmphinMutineer() {

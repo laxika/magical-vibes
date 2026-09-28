@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AFR", collectorNumber = "208")
+@CardRegistration(set = "HBG", collectorNumber = "227")
 public class UnderdarkBasilisk extends Card {
 }

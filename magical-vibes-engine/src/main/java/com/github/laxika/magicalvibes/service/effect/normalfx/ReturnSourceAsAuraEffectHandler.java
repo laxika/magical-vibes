@@ -55,7 +55,8 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        Card auraCard = auraForm(sourceCard, returnEffect.enchantFilter(), returnEffect.retainedAbility());
+        Card auraCard = auraForm(sourceCard, returnEffect.enchantFilter(), returnEffect.retainedAbility(),
+                returnEffect.losesOtherAbilities());
         List<UUID> validTargetIds = new ArrayList<>();
         List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
         if (controlledPermanents != null) {
@@ -87,15 +88,19 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
 
     private Card auraForm(Card sourceCard,
                           com.github.laxika.magicalvibes.model.filter.TargetFilter enchantFilter,
-                          ActivatedAbility retainedAbility) {
+                          ActivatedAbility retainedAbility,
+                          boolean losesOtherAbilities) {
         Card copy = sourceCard.createRuntimeCopy();
         copy.setType(CardType.ENCHANTMENT);
         copy.setAdditionalTypes(Set.of());
         copy.setSubtypes(List.of(CardSubtype.AURA));
         copy.setPower(null);
         copy.setToughness(null);
-        if (retainedAbility != null) {
+        if (retainedAbility != null || losesOtherAbilities) {
             for (EffectSlot slot : EffectSlot.values()) {
+                if (retainedAbility == null && slot == EffectSlot.STATIC) {
+                    continue;
+                }
                 var registrations = copy.getEffectRegistrations(slot);
                 if (!registrations.isEmpty()) {
                     registrations.clear();
@@ -106,7 +111,9 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
             copy.getHandActivatedAbilities().clear();
             copy.getStackActivatedAbilities().clear();
             copy.setKeywords(Set.of());
-            copy.addActivatedAbility(retainedAbility);
+            if (retainedAbility != null) {
+                copy.addActivatedAbility(retainedAbility);
+            }
         }
         copy.clearRuntimeSpellTargets();
         copy.target(enchantFilter);

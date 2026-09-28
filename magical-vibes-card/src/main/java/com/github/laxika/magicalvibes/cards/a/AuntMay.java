@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "3")
 @CardRegistration(set = "OM1", collectorNumber = "24")
+@CardRegistration(set = "MSC", collectorNumber = "768")
 public class AuntMay extends Card {
 
     public AuntMay() {

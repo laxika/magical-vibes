@@ -12,11 +12,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param filter           predicate restricting valid graveyard targets; {@code null} means any card
  * @param ownGraveyardOnly when {@code true}, only the controller's graveyard can be targeted
+ * @param whileSourceControlled when {@code true}, the permission lasts while the source permanent
+ *                             remains under the controller's control instead of expiring next turn
  */
 public record ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
         CardPredicate filter,
-        boolean ownGraveyardOnly
+        boolean ownGraveyardOnly,
+        boolean whileSourceControlled
 ) implements CardEffect {
+
+    public ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
+            CardPredicate filter, boolean ownGraveyardOnly) {
+        this(filter, ownGraveyardOnly, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

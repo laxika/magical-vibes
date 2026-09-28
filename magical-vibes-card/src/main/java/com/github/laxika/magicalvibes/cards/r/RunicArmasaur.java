@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "200")
+@CardRegistration(set = "LCC", collectorNumber = "256")
 public class RunicArmasaur extends Card {
 
     public RunicArmasaur() {

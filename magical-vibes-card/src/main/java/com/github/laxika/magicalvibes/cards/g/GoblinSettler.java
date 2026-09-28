@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "VMA", collectorNumber = "172")
 @CardRegistration(set = "SLD", collectorNumber = "928")
 @CardRegistration(set = "SLD", collectorNumber = "1076")
+@CardRegistration(set = "MB2", collectorNumber = "131")
 public class GoblinSettler extends Card {
 
     public GoblinSettler() {

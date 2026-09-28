@@ -9,6 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCountersEffe
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "PIP", collectorNumber = "4")
+@CardRegistration(set = "PIP", collectorNumber = "1067")
+@CardRegistration(set = "PIP", collectorNumber = "343")
+@CardRegistration(set = "PIP", collectorNumber = "532")
+@CardRegistration(set = "PIP", collectorNumber = "871")
 @CardRegistration(set = "SLD", collectorNumber = "2455")
 public class TheWiseMothman extends Card {
 

@@ -52,9 +52,13 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                          ReturnAllCardsExiledWithSourceEffect returnEffect,
                          UUID excludedCardId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null && entry.getCard() != null) {
+            sourcePermanentId = entry.getCard().getId();
+        }
         if (sourcePermanentId == null) {
             return;
         }
+        UUID sourceId = sourcePermanentId;
 
         if (returnEffect.turnFaceUp()) {
             for (int i = 0; i < gameData.exiledCards.size(); i++) {
@@ -69,7 +73,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         }
 
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
-                .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .filter(e -> sourceId.equals(e.sourcePermanentId()))
                 .filter(e -> excludedCardId == null
                         || !excludedCardId.equals(e.card().getId()))
                 .filter(e -> returnEffect.filter() == null
@@ -80,6 +84,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         boolean underControllerControl = returnEffect.underControllerControl();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        entry.clearReturnedPermanentIds();
 
         for (ExiledCardEntry exiledEntry : toReturn) {
             Card card = exiledEntry.card();
@@ -97,6 +102,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
+            entry.rememberReturnedPermanent(perm.getId());
             simultaneouslyEntered.add(perm);
             if (returnEffect.sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),

@@ -39,7 +39,8 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BecomeCopyOfCardUntilEndOfTurnEffect copyEffect = (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
         Card card = copyEffect.card();
-        if (card == null || !card.hasType(CardType.CREATURE)) {
+        if (card == null || (!card.hasType(CardType.CREATURE)
+                && !card.hasType(CardType.ARTIFACT))) {
             return;
         }
 

@@ -24,6 +24,7 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final ReturnAllCardsExiledWithSourceEffectHandler returnHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +33,22 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var exileEffect = (ExileTriggeringCreatureUntilSourceLeavesEffect) effect;
+        resolve(gameData, entry, (ExileTriggeringCreatureUntilSourceLeavesEffect) effect, false);
+    }
+
+    void resolveAndReturnOthers(GameData gameData, StackEntry entry) {
+        UUID enteringPermanentId = entry.getTriggeringPermanentId();
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (enteringPermanent == null || !enteringPermanent.isCast()) {
+            return;
+        }
+        resolve(gameData, entry, new ExileTriggeringCreatureUntilSourceLeavesEffect(), true);
+    }
+
+    private void resolve(GameData gameData, StackEntry entry,
+                         ExileTriggeringCreatureUntilSourceLeavesEffect exileEffect,
+                         boolean returnOthers) {
         UUID enteringPermanentId = entry.getTriggeringPermanentId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null
@@ -61,6 +77,10 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
             if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
                 gameData.removeFromExile(card.getId());
                 gameData.addToExile(ownerId, card, sourcePermanentId);
+            }
+
+            if (returnOthers) {
+                returnHandler.returnAllCardsExiledWithSourceExcept(gameData, entry, card.getId());
             }
         }
 

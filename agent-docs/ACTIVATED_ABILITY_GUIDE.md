@@ -210,6 +210,13 @@ addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffe
 
 ---
 
+For modal abilities whose mode must be selected during activation, add
+`.withModalChoiceAtActivation()`; the activation's `xValue` is the zero-based mode index and
+the selected mode is placed on the stack immediately. For "choose one that hasn't been chosen",
+also add `.withModalModesMustBeUnused()`. The engine records the selected mode label on the
+source permanent after activation legality and costs succeed, so each mode is available once per
+permanent object.
+
 ### 4. Ability with timing restriction
 
 ```java
@@ -623,6 +630,12 @@ addActivatedAbility(new ActivatedAbility(true, "{X}",
 zero or has another printed lower bound. The activation legality check and dry-run availability
 query both use this bound; the chosen value still flows to the stack entry as normal.
 
+**Dynamic maximum target count:** use `.withDynamicMaxTargets(amount)` with a multi-target-capable
+full constructor when the maximum is computed from the battlefield as the ability is activated
+(for example, "up to X target creatures, where X is the number of Bobbleheads you control"). Keep
+the configured maximum as a generous static ceiling, such as `100`; target enumeration and
+activation legality both apply the evaluated amount.
+
 Test harness: `activateAbilityWithMultiTargets(player, permanentIndex, abilityIndex, xValue, targetIds)`.
 
 ---
@@ -897,7 +910,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` or `(PermanentPredicate filter, String description, boolean excludeSource)` | "Sacrifice an artifact or creature: ..." or "Sacrifice a Goblin: ..." — generic predicate-based sacrifice. Use `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))` and `excludeSource=false` for subtype creature costs that can sacrifice the source. The 4-arg form `(filter, description, excludeSource, trackSacrificedPower)` snapshots the sacrificed permanent's effective power into the ability's xValue at payment — Freyalise Supplicant (`PermanentAllOfPredicate(creature + PermanentColorInPredicate(RED, WHITE))` + `DealDamageToAnyTargetEffect(new Divided(new XValue(), 2))`). The 5-arg form adds `trackSacrificedManaValue` — Soldevi Adnate (`AwardManaEffect(ManaColor.BLACK, new XValue())`, a mana ability, `excludeSource=false` so it can eat itself). The 6-arg form adds `trackSacrificedToughness` — Korozda Guildmage (`creature + PermanentNotPredicate(PermanentIsTokenPredicate)` + `CreateTokenEffect(new XValue(), …)`) |
 | `ExilePermanentCost` | `(PermanentPredicate filter, String description[, boolean excludeSource[, boolean trackExiledManaValue[, boolean trackWithSource]]])` | "Exile a creature you control: ..." or another predicate-based permanent exile cost. `trackExiledManaValue=true` snapshots the exiled permanent's mana value into the ability's xValue; `trackWithSource=true` associates the exiled card with the activating permanent |
 | `ExileArtifactsWithTotalManaValueCost` | `()` | "Exile one or more other artifacts you control with total mana value X: ..."; prompts for a non-empty subset, sums the selected artifacts' mana values into the ability's xValue, and exiles them as the activation cost |
-| `CraftMaterialCost` | `()`, `(CardSubtype)`, or `(count, requiredType, nonlandOnly, requireActivatedAbility)` | Craft's alternative material. The default exiles exactly one other artifact permanent you control or artifact card in your graveyard; pass `null` for `requiredType` to allow any other permanent/card. The subtype form requires exactly one matching permanent/card. Use `oneOrMore()` or `oneOrMore(subtype)` for open-ended craft costs, and `nonlandsWithActivatedAbilities(N)` for N+ nonlands with activated abilities. Pair with `ExileSelfCost` and a return-from-exile transformed effect. |
+| `CraftMaterialCost` | `()`, `(CardSubtype)`, `(count, requiredType, nonlandOnly, requireActivatedAbility)`, or `fromGraveyard(count, CardPredicate)` | Craft's alternative material. The default exiles exactly one other artifact permanent you control or artifact card in your graveyard; pass `null` for `requiredType` to allow any other permanent/card. The subtype form requires exactly one matching permanent/card. Use `oneOrMore()` or `oneOrMore(subtype)` for open-ended craft costs, `nonlandsWithActivatedAbilities(N)` for N+ nonlands with activated abilities, or `fromGraveyard(count, predicate)` for a minimum number of matching cards from the controller's graveyard only. Pair with `ExileSelfCost` and a return-from-exile transformed effect. |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificeDistinctNamePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifact tokens with different names: ..." — matching permanents are chosen with distinct names and sacrificed together once all choices are made |
 | `SacrificeAllMatchingPermanentsCost` | `(PermanentPredicate filter)` | "Sacrifice all matching permanents you control: ..." — pays automatically, including the source when it matches; zero matching permanents is legal |
@@ -1113,7 +1126,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A permanent of **any** type **owned** by a player other than this permanent's controller is put into a graveyard from the battlefield. Ownership-based, not control-based (a stolen permanent still counts for its owner). Fired in `PermanentRemovalService.processGraveyardAndTriggers` via `TriggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers`. Used by Kothophed, Soul Hoarder with `SequenceEffect.of(DrawCardEffect(1), LoseLifeEffect(1))`. |
 | `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | A creature card is put into your graveyard from anywhere (battlefield, hand, library, stack, exile). Uses printed card types (tokens never fire; a creature card that was a noncreature permanent still does). Fires on permanents the graveyard owner controls. Checked in `GraveyardService.addCardToGraveyard`. Used by Soulcipher Board (`SequenceEffect` of `RemoveCounterFromSourceEffect(OMEN, 1)` + `ConditionalEffect(NotCondition(SourceCounterThreshold(1, OMEN)), TransformSelfEffect)`). |
 | `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` | A black card is put into an opponent's graveyard from anywhere (battlefield, hand, library, stack, exile). Only fires on permanents controlled by an opponent of the graveyard owner. Checked in `GraveyardService.addCardToGraveyard`. Supports MayEffect wrapping. Used by Compost. |
-| `ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` | A creature card is put into an opponent's graveyard from anywhere (battlefield, hand, library, stack, exile). Only fires on permanents controlled by an opponent of the graveyard owner; printed types, so tokens never trigger. Checked in `GraveyardService.addCardToGraveyard` via `TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers`. Used by Profane Memento. |
+| `ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` | A creature card is put into an opponent's graveyard from anywhere (battlefield, hand, library, stack, exile). Only fires on permanents controlled by an opponent of the graveyard owner; printed types, so tokens never trigger. Checked in `GraveyardService.addCardToGraveyard` via `TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers`. Used by Profane Memento and Lorcan, Warlock Collector. |
 | `ON_ANY_CARDS_PUT_INTO_LIBRARY` | One or more cards are put into any player's library from anywhere. Fires once per library-entry event across all battlefield sources. |
 | `ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD` | Any other creature enters battlefield |
 | `ON_PERMANENT_ENTERS_FROM_GRAVEYARD` | Any permanent (not just creatures) enters from ANY graveyard, checked via `enteredFromGraveyardOwnerId`. Queues a non-targeting stack entry for the source's controller (`TriggerCollectionService.checkPermanentEntersFromGraveyardTriggers`). Used by River Kelpie. Contrast `ON_CREATURE_ENTERS_FROM_GRAVEYARD` (Flayer of the Hatebound): creatures-only, controller's graveyard only, any-target pipeline |
@@ -1184,6 +1197,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_GAINS_LIFE` | Controller gains life |
 | `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE` | Opponent dealt noncombat damage |
 | `GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER` | Opponent dealt damage by your red instant/sorcery spell or red planeswalker, fired from your graveyard |
+| `GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT` | A source you control deals noncombat damage to an opponent, fired from your graveyard |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | A creature you control deals combat damage to a player |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE` | One or more matching creatures you control deal combat damage to a player or battle; `oneOrMoreDealers=true` batches separately for each damaged player or battle and passes the matching dealer ids through `CombatDamageDealerAwareEffect` wrappers |
 | `ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT` | One or more goaded creatures deal combat damage to one of this permanent's controller's opponents; the combat-damage batch checks active goad requirements across all creatures and fires once per damaged opponent |

@@ -235,6 +235,8 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(castingPermissionService.isFlashCastTargetPermissionSatisfied(
+                any(), any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);

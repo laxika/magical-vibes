@@ -15,6 +15,8 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                                boolean allControllers,
                                                boolean instantSorceryCastOrCopyOnly,
                                                boolean allyCreatureBecomesTarget,
+                                               boolean combatDamageToPlayerOnly,
+                                               boolean controlledCreatureDealtDamageOnly,
                                                boolean permanentTurnsFaceUpOnly)
         implements CardEffect {
 
@@ -22,7 +24,7 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                              boolean attackOnly, boolean includeSourcePermanent,
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, false, false);
+                allControllers, instantSorceryCastOrCopyOnly, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
@@ -30,7 +32,26 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly,
                                              boolean allyCreatureBecomesTarget) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false);
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false, false, false);
+    }
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget, boolean combatDamageToPlayerOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget,
+                combatDamageToPlayerOnly, false, false);
+    }
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget, boolean combatDamageToPlayerOnly,
+                                             boolean controlledCreatureDealtDamageOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget,
+                combatDamageToPlayerOnly, controlledCreatureDealtDamageOnly, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
@@ -59,12 +80,24 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
     /** Makes target-caused triggered abilities of your permanents trigger one additional time. */
     public static AdditionalTriggeredAbilityEffect forAllyCreatureBecomesTarget() {
         return new AdditionalTriggeredAbilityEffect(
-                new PermanentTruePredicate(), null, false, true, false, false, true);
+                new PermanentTruePredicate(), null, false, true, false, false, true, false);
+    }
+
+    /** Makes a triggered ability caused by a creature you control dealing combat damage to a player trigger one additional time. */
+    public static AdditionalTriggeredAbilityEffect forAllyCreatureCombatDamageToPlayer() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, false, true);
+    }
+
+    /** Makes damage-related triggers caused by a controlled creature being dealt damage trigger again. */
+    public static AdditionalTriggeredAbilityEffect forControlledCreatureBeingDealtDamage() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, false, false, true);
     }
 
     /** Makes triggered abilities caused by turning a face-down permanent face up trigger again. */
     public static AdditionalTriggeredAbilityEffect forPermanentTurnsFaceUp() {
         return new AdditionalTriggeredAbilityEffect(
-                new PermanentTruePredicate(), null, false, true, false, false, false, true);
+                new PermanentTruePredicate(), null, false, true, false, false, false, false, false, true);
     }
 }

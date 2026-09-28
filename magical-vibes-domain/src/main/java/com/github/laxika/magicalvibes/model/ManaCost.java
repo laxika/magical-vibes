@@ -41,6 +41,7 @@ public class ManaCost {
     private final Map<ManaColor, Integer> phyrexianCosts;
     private final List<HybridSymbol> hybridCosts;
     private final int snowCost;
+    private final int legendarySourceCost;
     private final int xSymbolCount;
     /** When true, canPay/pay may spend cumulative-upkeep-only mana buckets. */
     private final boolean cumulativeUpkeepPayment;
@@ -52,6 +53,7 @@ public class ManaCost {
     public ManaCost(String manaCostString, boolean cumulativeUpkeepPayment) {
         int generic = 0;
         int snow = 0;
+        int legendarySource = 0;
         int xCount = 0;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
         Map<ManaColor, Integer> phyrexian = new EnumMap<>(ManaColor.class);
@@ -64,6 +66,8 @@ public class ManaCost {
                 xCount++;
             } else if (symbol.equals("S")) {
                 snow++;
+            } else if (symbol.equals("L")) {
+                legendarySource++;
             } else if (symbol.endsWith("/P")) {
                 // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life. Hybrid
                 // Phyrexian symbols such as R/G/P can use either listed color or 2 life.
@@ -101,6 +105,8 @@ public class ManaCost {
                 ManaColor color = ManaColor.fromCode(symbol);
                 if (color != null) {
                     colored.merge(color, 1, Integer::sum);
+                } else if (symbol.equals("D")) {
+                    // {D} is a land-drop cost, not a mana component.
                 } else {
                     generic += Integer.parseInt(symbol);
                 }
@@ -112,6 +118,7 @@ public class ManaCost {
         this.phyrexianCosts = phyrexian;
         this.hybridCosts = hybrid;
         this.snowCost = snow;
+        this.legendarySourceCost = legendarySource;
         this.xSymbolCount = xCount;
         this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
     }
@@ -119,18 +126,27 @@ public class ManaCost {
     private ManaCost(int genericCost, Map<ManaColor, Integer> coloredCosts,
                      Map<ManaColor, Integer> phyrexianCosts, List<HybridSymbol> hybridCosts,
                      int snowCost, int xSymbolCount, boolean cumulativeUpkeepPayment) {
+        this(genericCost, coloredCosts, phyrexianCosts, hybridCosts, snowCost, 0,
+                xSymbolCount, cumulativeUpkeepPayment);
+    }
+
+    private ManaCost(int genericCost, Map<ManaColor, Integer> coloredCosts,
+                     Map<ManaColor, Integer> phyrexianCosts, List<HybridSymbol> hybridCosts,
+                     int snowCost, int legendarySourceCost, int xSymbolCount,
+                     boolean cumulativeUpkeepPayment) {
         this.genericCost = genericCost;
         this.coloredCosts = new EnumMap<>(coloredCosts);
         this.phyrexianCosts = new EnumMap<>(phyrexianCosts);
         this.hybridCosts = List.copyOf(hybridCosts);
         this.snowCost = snowCost;
+        this.legendarySourceCost = legendarySourceCost;
         this.xSymbolCount = xSymbolCount;
         this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
     }
 
     private ManaCost(ManaCost source, int snowCost) {
         this(source.genericCost, source.coloredCosts, source.phyrexianCosts, source.hybridCosts,
-                snowCost, source.xSymbolCount, source.cumulativeUpkeepPayment);
+                snowCost, source.legendarySourceCost, source.xSymbolCount, source.cumulativeUpkeepPayment);
     }
 
     /** Returns this cost with every component of {@code increase} added to it. */
@@ -150,6 +166,7 @@ public class ManaCost {
                 combinedPhyrexian,
                 combinedHybrid,
                 snowCost + increase.snowCost,
+                legendarySourceCost + increase.legendarySourceCost,
                 xSymbolCount + increase.xSymbolCount,
                 cumulativeUpkeepPayment);
     }
@@ -181,7 +198,7 @@ public class ManaCost {
         }
         return new ManaCost(
                 Math.max(0, genericCost - genericReduction),
-                remainingColored, phyrexianCosts, hybridCosts, snowCost, xSymbolCount,
+                remainingColored, phyrexianCosts, hybridCosts, snowCost, legendarySourceCost, xSymbolCount,
                 cumulativeUpkeepPayment);
     }
 
@@ -208,7 +225,7 @@ public class ManaCost {
         }
         return new ManaCost(
                 genericCost, remainingColored, remainingPhyrexian, remainingHybrid, snowCost,
-                xSymbolCount, cumulativeUpkeepPayment);
+                legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
     }
 
     private static int reduceColoredComponent(Map<ManaColor, Integer> components,
@@ -380,7 +397,7 @@ public class ManaCost {
         Map<ManaColor, Integer> updatedPhyrexian = new EnumMap<>(phyrexianCosts);
         updatedPhyrexian.merge(ManaColor.BLACK, blackCost, Integer::sum);
         return new ManaCost(genericCost, remainingColored, updatedPhyrexian, hybridCosts,
-                snowCost, xSymbolCount, cumulativeUpkeepPayment);
+                snowCost, legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
     }
 
     /** The generic (colorless-symbol) portion of the cost, e.g. 5 for "{5}" or "{5}{W}". */
@@ -389,7 +406,7 @@ public class ManaCost {
     }
 
     public int getManaValue() {
-        int total = genericCost + snowCost;
+        int total = genericCost + snowCost + legendarySourceCost;
         for (int count : coloredCosts.values()) {
             total += count;
         }
@@ -472,7 +489,7 @@ public class ManaCost {
                         : hybrid)
                 .toList();
         return new ManaCost(genericCost, remainingColored, additionalPhyrexian, remainingHybrids,
-                snowCost, xSymbolCount, cumulativeUpkeepPayment);
+                snowCost, legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
     }
 
     /**
@@ -783,11 +800,16 @@ public class ManaCost {
         pool.setWhiteSpendableAsAnyColorWithoutRestriction(false);
         pool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
         pool.setAllManaSpendableAsAnyColorForActivatedAbilities(false);
+        EnumMap<ManaColor, Integer> availableMana = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            availableMana.put(color, pool.get(color));
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            convertAnyManaTo(pool, entry.getKey(), entry.getValue());
+            convertAnyManaTo(pool, entry.getKey(), entry.getValue(), availableMana);
         }
         for (HybridSymbol hybrid : hybridCosts) {
-            hybrid.colors().stream().findFirst().ifPresent(color -> convertAnyManaTo(pool, color, 1));
+            hybrid.colors().stream().findFirst()
+                    .ifPresent(color -> convertAnyManaTo(pool, color, 1, availableMana));
         }
     }
 
@@ -814,6 +836,29 @@ public class ManaCost {
                 pool.remove(source);
                 pool.add(target);
             }
+            remaining -= amount;
+        }
+    }
+
+    /** Converts mana for one colored requirement without reusing mana converted for an earlier one. */
+    private static void convertAnyManaTo(ManaPool pool, ManaColor target, int count,
+                                         EnumMap<ManaColor, Integer> availableMana) {
+        if (target == null || count <= 0) {
+            return;
+        }
+        int nativeMana = Math.min(count, availableMana.getOrDefault(target, 0));
+        availableMana.merge(target, -nativeMana, Integer::sum);
+        int remaining = count - nativeMana;
+        for (ManaColor source : ManaColor.values()) {
+            if (remaining <= 0 || source == target) {
+                continue;
+            }
+            int amount = Math.min(remaining, availableMana.getOrDefault(source, 0));
+            for (int i = 0; i < amount; i++) {
+                pool.remove(source);
+                pool.add(target);
+            }
+            availableMana.merge(source, -amount, Integer::sum);
             remaining -= amount;
         }
     }
@@ -888,6 +933,11 @@ public class ManaCost {
         return new ManaCost(this, 0);
     }
 
+    private ManaCost withoutLegendarySourceCost() {
+        return new ManaCost(genericCost, coloredCosts, phyrexianCosts, hybridCosts, snowCost,
+                0, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
     private boolean canPayWithBlueAsAnyColor(ManaPool pool, Predicate<ManaPool> plainCheck) {
         return findBlueAsAnyColorPlan(pool, plainCheck) != null;
     }
@@ -957,6 +1007,14 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
+        if (legendarySourceCost > 0) {
+            if (pool.getLegendarySourceManaTotal() < legendarySourceCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeLegendarySourceMana(legendarySourceCost);
+            return withoutLegendarySourceCost().canPay(remaining, xValue);
+        }
         if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
             ManaPool promoted = copyManaPool(pool);
             promoted.promoteColorlessSpellOrPermanentAbilityMana();
@@ -1909,6 +1967,20 @@ public class ManaCost {
                                                     Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                                     boolean powerstoneContext,
                                                     Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (legendarySourceCost > 0) {
+            if (pool.getLegendarySourceManaTotal() < legendarySourceCost) {
+                return false;
+            }
+            ManaPool remaining = copyManaPool(pool);
+            remaining.removeLegendarySourceMana(legendarySourceCost);
+            return withoutLegendarySourceCost().canPayWithAdditionalGenericCost(
+                    remaining, xValue, additionalGenericCost, artifactContext, myrContext,
+                    restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                    subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext, subtypeSpellOnlyContext);
+        }
         if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
             ManaPool promoted = copyManaPool(pool);
             promoted.promoteColorlessSpellOrPermanentAbilityMana();
@@ -2500,6 +2572,14 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue) {
+        if (legendarySourceCost > 0) {
+            if (pool.getLegendarySourceManaTotal() < legendarySourceCost) {
+                throw new IllegalStateException("Not enough mana from legendary sources");
+            }
+            pool.removeLegendarySourceMana(legendarySourceCost);
+            withoutLegendarySourceCost().pay(pool, xValue);
+            return;
+        }
         if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
             pool.promoteColorlessSpellOrPermanentAbilityMana();
             try {
@@ -3425,6 +3505,20 @@ public class ManaCost {
                                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                              boolean powerstoneContext,
                                              Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (legendarySourceCost > 0) {
+            if (pool.getLegendarySourceManaTotal() < legendarySourceCost) {
+                throw new IllegalStateException("Not enough mana from legendary sources");
+            }
+            pool.removeLegendarySourceMana(legendarySourceCost);
+            withoutLegendarySourceCost().payWithAdditionalGenericCost(
+                    pool, xValue, additionalGenericCost, artifactContext, myrContext,
+                    restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                    subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext, subtypeSpellOnlyContext);
+            return;
+        }
         if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
             pool.promoteColorlessSpellOrPermanentAbilityMana();
             try {
@@ -3989,7 +4083,7 @@ public class ManaCost {
         EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
         return new ManaCost(
                 Math.max(0, genericCost + additionalGenericCost - genericOnlyContributions), coloredCosts,
-                noPhyrexianCosts, hybridCosts, 0, 0, cumulativeUpkeepPayment);
+                noPhyrexianCosts, hybridCosts, 0, legendarySourceCost, 0, cumulativeUpkeepPayment);
     }
 
     private static boolean canTreatConvokeAsRegularMana(ManaPool pool) {
@@ -4013,7 +4107,7 @@ public class ManaCost {
         EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
         ManaCost remainingCost = new ManaCost(
                 remainingGeneric, remainingColored, noPhyrexianCosts, canonicalHybrids, 0,
-                0, cumulativeUpkeepPayment);
+                legendarySourceCost, 0, cumulativeUpkeepPayment);
         if (remainingCost.canPay(pool)) {
             return remainingCost;
         }

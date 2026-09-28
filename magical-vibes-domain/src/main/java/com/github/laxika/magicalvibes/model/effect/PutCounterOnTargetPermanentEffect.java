@@ -31,33 +31,50 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
                                                 PermanentPredicate predicate,
                                                 PermanentPredicate targetPredicate,
                                                 boolean regenerateIfSurvives,
-                                                PermanentPredicate resolutionCondition)
+                                                PermanentPredicate resolutionCondition,
+                                                boolean optionalTarget)
         implements CardEffect {
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType) {
-        this(counterType, new Fixed(1), null, null, false, null);
+        this(counterType, new Fixed(1), null, null, false, null, false);
     }
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType, int count) {
-        this(counterType, new Fixed(count), null, null, false, null);
+        this(counterType, new Fixed(count), null, null, false, null, false);
     }
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount) {
-        this(counterType, amount, null, null, false, null);
+        this(counterType, amount, null, null, false, null, false);
+    }
+
+    /** Backward-compatible full constructor for a mandatory targeted counter effect. */
+    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+                                              PermanentPredicate predicate,
+                                              PermanentPredicate targetPredicate,
+                                              boolean regenerateIfSurvives,
+                                              PermanentPredicate resolutionCondition) {
+        this(counterType, amount, predicate, targetPredicate, regenerateIfSurvives,
+                resolutionCondition, false);
     }
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType, int count, PermanentPredicate predicate) {
-        this(counterType, new Fixed(count), predicate, null, false, null);
+        this(counterType, new Fixed(count), predicate, null, false, null, false);
     }
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType, int count, boolean regenerateIfSurvives) {
-        this(counterType, new Fixed(count), null, null, regenerateIfSurvives, null);
+        this(counterType, new Fixed(count), null, null, regenerateIfSurvives, null, false);
+    }
+
+    /** Targeting effect for "put counters on up to one target permanent" triggered abilities. */
+    public static PutCounterOnTargetPermanentEffect upToOneTarget(CounterType counterType,
+                                                                    DynamicAmount amount) {
+        return new PutCounterOnTargetPermanentEffect(counterType, amount, null, null, false, null, true);
     }
 
     /** Targeting effect whose legal targets are restricted to permanents matching {@code targetPredicate}. */
     public static PutCounterOnTargetPermanentEffect withTargetRestriction(CounterType counterType, int count,
                                                                           PermanentPredicate targetPredicate) {
-        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, targetPredicate, false, null);
+        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, targetPredicate, false, null, false);
     }
 
     /**
@@ -67,11 +84,16 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
      */
     public static PutCounterOnTargetPermanentEffect withResolutionCondition(CounterType counterType, int count,
                                                                             PermanentPredicate resolutionCondition) {
-        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, null, false, resolutionCondition);
+        return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, null, false, resolutionCondition, false);
     }
 
     @Override
     public TargetSpec targetSpec() {
         return predicate == null ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate) : TargetSpec.NONE;
+    }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return optionalTarget;
     }
 }

@@ -120,6 +120,14 @@ public record CreateTokenEffect(
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
     }
 
+    /** Copy of this blueprint with a different number of initial +1/+1 counters. */
+    public CreateTokenEffect withInitialPlusOnePlusOneCounters(int newCount) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
+                colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, newCount,
+                grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
+    }
+
     /** Copy of this blueprint with a different tapped state, all other fields preserved. */
     public CreateTokenEffect withTapped(boolean newTapped) {
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
@@ -135,6 +143,14 @@ public record CreateTokenEffect(
      */
     public CreateTokenEffect withPowerToughness(int newPower, int newToughness) {
         return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness),
+                color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
+    }
+
+    /** Copy of this blueprint with a different token name. */
+    public CreateTokenEffect withTokenName(String newTokenName) {
+        return new CreateTokenEffect(primaryType, amount, newTokenName, power, toughness,
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);

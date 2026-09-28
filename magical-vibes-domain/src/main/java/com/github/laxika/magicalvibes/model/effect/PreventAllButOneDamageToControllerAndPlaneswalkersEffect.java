@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /** Static effect that reduces damage to its controller or their planeswalkers to at most one. */
-public record PreventAllButOneDamageToControllerAndPlaneswalkersEffect() implements CardEffect {
+public record PreventAllButOneDamageToControllerAndPlaneswalkersEffect()
+        implements AllButOneDamagePreventionEffect {
+
+    @Override
+    public boolean protectsPlaneswalkers() {
+        return true;
+    }
 }

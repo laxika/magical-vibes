@@ -25,10 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -37,7 +39,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -177,6 +181,8 @@ public class Card {
     private String collectorNumber;
 
     private boolean token;
+    /** When true, this Saga adds its lore counter at the beginning of its controller's end step. */
+    private boolean bedtimeStory;
     /**
      * A token that is also a card, such as a Time Walk token card. Unlike ordinary tokens, these
      * remain in zones other than the battlefield.
@@ -197,6 +203,8 @@ public class Card {
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
      */
     private boolean enchantPlayer;
+    /** When true, this Aura enchants the shared zone rather than a player or permanent. */
+    private boolean enchantZone;
     private int additionalCostPerExtraTarget;
     /** Additional mana symbols required for each target beyond the first. */
     private String additionalManaCostPerExtraTarget;
@@ -387,6 +395,7 @@ public class Card {
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
+        this.bedtimeStory = source.bedtimeStory;
         this.tokenCard = source.tokenCard;
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
@@ -394,6 +403,7 @@ public class Card {
         this.requiresBasicLandMana = source.requiresBasicLandMana;
         this.requiresNoMana = source.requiresNoMana;
         this.enchantPlayer = source.enchantPlayer;
+        this.enchantZone = source.enchantZone;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
@@ -463,6 +473,7 @@ public class Card {
     public Card createRuntimeTextBoxCopy(Card textSource) {
         Card copy = new Card(this);
         copy.cardText = textSource.cardText;
+        copy.bedtimeStory = textSource.bedtimeStory;
         copy.keywords = textSource.keywords.isEmpty()
                 ? Set.of()
                 : EnumSet.copyOf(textSource.keywords);
@@ -524,6 +535,7 @@ public class Card {
         this.xValueCap = face.xValueCap;
         this.minimumXValue = face.minimumXValue;
         this.token = face.token;
+        this.bedtimeStory = face.bedtimeStory;
         this.tokenCard = face.tokenCard;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
@@ -531,6 +543,7 @@ public class Card {
         this.requiresBasicLandMana = face.requiresBasicLandMana;
         this.requiresNoMana = face.requiresNoMana;
         this.enchantPlayer = face.enchantPlayer;
+        this.enchantZone = face.enchantZone;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
@@ -638,6 +651,7 @@ public class Card {
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
@@ -645,6 +659,7 @@ public class Card {
     public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
     public void setRequiresNoMana(boolean requiresNoMana) { assertMutable(); this.requiresNoMana = requiresNoMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
+    public void setEnchantZone(boolean enchantZone) { assertMutable(); this.enchantZone = enchantZone; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
@@ -694,6 +709,7 @@ public class Card {
         setRequiresCreatureMana(false);
         setRequiresBasicLandMana(false);
         setEnchantPlayer(false);
+        setEnchantZone(false);
         setAdditionalCostPerExtraTarget(0);
         setAdditionalManaCostPerExtraTarget(null);
         setAdditionalLifeCostPerTarget(0);
@@ -742,6 +758,21 @@ public class Card {
     }
 
     // ── Target-first builder API ──────────────────────────────────────
+
+    /** Clears the rules text and ability registrations on a mutable runtime copy. */
+    public void clearRulesTextAndAbilities() {
+        assertMutable();
+        effectRegistrations.clear();
+        effectCache.clear();
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
+        sagaChapterTargetFilters.clear();
+        sagaChapterTargetGroups.clear();
+        activatedAbilities.clear();
+        graveyardActivatedAbilities.clear();
+        handActivatedAbilities.clear();
+        stackActivatedAbilities.clear();
+    }
 
     /**
      * Declares a required target (min=1, max=1) and returns a builder
@@ -867,6 +898,8 @@ public class Card {
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case ExileSourceCardFromGraveyardThenEffect e ->
                     registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case ExilePermanentYouControlAndTrackWithSourceEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case StateTriggerEffect e -> e.effects().forEach(innerEffect ->
@@ -879,6 +912,7 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.
@@ -889,6 +923,8 @@ public class Card {
                 if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
                 if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
             }
+            case RollD6Effect e -> e.branches().forEach(branch ->
+                    registerEffectTargetIndex(branch, targetIndex));
             case RollDiceEffect e -> {
                 if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
                 if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
@@ -1198,6 +1234,14 @@ public class Card {
     public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
         List<Integer> targetIndices = targetIndicesForEffect(effect);
         return targetIndices != null && targetIndices.contains(groupIndex);
+    }
+
+    /** Returns every effect registered against the target group, regardless of its effect slot. */
+    public List<CardEffect> getEffectsBoundToTargetGroup(int groupIndex) {
+        return effectTargetIndexMap.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(groupIndex))
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     private List<Integer> targetIndicesForEffect(CardEffect effect) {
@@ -1752,6 +1796,10 @@ public class Card {
                         && grant.scope() == GrantScope.SELF));
     }
 
+    public boolean hasAllCardNames() {
+        return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }
@@ -1775,6 +1823,11 @@ public class Card {
 
     public boolean isEnchantPlayer() {
         return isAura() && (subtypes.contains(CardSubtype.CURSE) || enchantPlayer);
+    }
+
+    /** Whether this Aura needs a player/permanent attachment target when cast or entering. */
+    public boolean isAuraThatRequiresAttachment() {
+        return isAura() && !enchantZone;
     }
 
 }

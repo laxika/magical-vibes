@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,17 +28,15 @@ class TakeTheBaitTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0, 1), Map.of(
-                0, player2.getId(),
-                1, planeswalker.getId()));
-
+        attackerToPlayer.setAttacking(true);
+        attackerToPlayer.setAttackTarget(player2.getId());
+        attackerToPlayer.tap();
+        attackerToPlaneswalker.setAttacking(true);
+        attackerToPlaneswalker.setAttackTarget(planeswalker.getId());
+        attackerToPlaneswalker.tap();
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.castFromHand(player2, new TakeTheBait(), "{2}{R}{W}");
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(attackerToPlayer.isTapped()).isFalse();

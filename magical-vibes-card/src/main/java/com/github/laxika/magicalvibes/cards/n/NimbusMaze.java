@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "178")
 @CardRegistration(set = "IMA", collectorNumber = "242")
+@CardRegistration(set = "AFC", collectorNumber = "252")
 public class NimbusMaze extends Card {
 
     public NimbusMaze() {

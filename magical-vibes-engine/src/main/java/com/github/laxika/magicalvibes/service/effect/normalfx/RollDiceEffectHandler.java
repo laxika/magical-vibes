@@ -60,6 +60,9 @@ public class RollDiceEffectHandler implements NormalEffectHandlerBean {
                 + entry.getCard().getName() + ": " + results + "."));
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                 gameData, entry.getControllerId(), diceCount);
+        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                gameData, entry.getControllerId(), rollEffect.sides(),
+                results.stream().mapToInt(Integer::intValue).toArray());
 
         if (branchEffects.isEmpty()) {
             return;

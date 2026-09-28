@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "SLD", collectorNumber = "1566")
 @CardRegistration(set = "KLR", collectorNumber = "93")
 @CardRegistration(set = "CMM", collectorNumber = "162")
+@CardRegistration(set = "AFC", collectorNumber = "100")
+@CardRegistration(set = "OTC", collectorNumber = "135")
 public class GontiLordOfLuxury extends Card {
 
     public GontiLordOfLuxury() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
@@ -73,6 +74,10 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
+            if (exileEffect.freeCastIfCastFromGraveyard()
+                    && entry.getSourceZone() == Zone.GRAVEYARD) {
+                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+            }
             exiledNames.add(topCard.getName());
         }
 

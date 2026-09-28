@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPG", collectorNumber = "6")
+@CardRegistration(set = "LCC", collectorNumber = "217")
 public class BreechesBrazenPlunderer extends Card {
 
     public BreechesBrazenPlunderer() {

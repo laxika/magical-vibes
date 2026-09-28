@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +42,7 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
     private final EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport eachPlayerRevealSupport;
+    private final PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
     private final com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
 
@@ -91,6 +94,13 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         if (abilityContext != null) {
             abilityActivationService.handleActivatedAbilityRevealCardsChosen(
                     gameData, player, interaction, selectedCardIds(chosenCardIds));
+            return;
+        }
+
+        PendingInteraction.DuplicateManaValueRevealContext duplicateManaValueContext =
+                interaction.duplicateManaValueRevealContext();
+        if (duplicateManaValueContext != null) {
+            handleDuplicateManaValueReveal(gameData, interaction, selectedCards, duplicateManaValueContext);
             return;
         }
 
@@ -155,6 +165,47 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
             throw new IllegalStateException("No effect resolution is waiting for this choice");
         }
         entry.setEventValue(selectedCards.size());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleDuplicateManaValueReveal(
+            GameData gameData,
+            PendingInteraction.RevealAnyNumberOfCardsFromHandChoice interaction,
+            List<Card> selectedCards,
+            PendingInteraction.DuplicateManaValueRevealContext context) {
+        String playerName = gameData.playerIdToName.get(interaction.playerId());
+        if (selectedCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals no cards."));
+        } else {
+            GameLog.Builder reveal = GameLog.builder().text(playerName + " reveals ");
+            for (int i = 0; i < selectedCards.size(); i++) {
+                if (i > 0) {
+                    reveal.text(", ");
+                }
+                reveal.card(selectedCards.get(i));
+            }
+            gameLogService.append(gameData, reveal.text(".").build());
+            cardRevealService.revealToAllPlayers(
+                    gameData, interaction.playerId(), GameEventFact.RevealZone.HAND, selectedCards);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect resolution is waiting for this choice");
+        }
+
+        Map<Integer, Long> countsByManaValue = selectedCards.stream()
+                .collect(Collectors.groupingBy(Card::getManaValue, Collectors.counting()));
+        int treasureCount = countsByManaValue.values().stream()
+                .filter(count -> count > 1)
+                .mapToInt(Long::intValue)
+                .sum();
+        if (treasureCount > 0) {
+            entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
+                    gameData, interaction.playerId(), context.token().withAmount(treasureCount),
+                    entry.getCard().getSetCode()));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

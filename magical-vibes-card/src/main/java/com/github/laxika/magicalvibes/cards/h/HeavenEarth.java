@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "AKH", collectorNumber = "224")
 @CardRegistration(set = "AKR", collectorNumber = "239")
 @CardRegistration(set = "MOC", collectorNumber = "328")
+@CardRegistration(set = "OTC", collectorNumber = "230")
 public class HeavenEarth extends Card {
 
     public HeavenEarth() {

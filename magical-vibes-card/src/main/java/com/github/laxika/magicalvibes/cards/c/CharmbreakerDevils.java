@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "103")
 @CardRegistration(set = "C15", collectorNumber = "145")
 @CardRegistration(set = "C21", collectorNumber = "162")
+@CardRegistration(set = "C20", collectorNumber = "147")
 public class CharmbreakerDevils extends Card {
 
     public CharmbreakerDevils() {

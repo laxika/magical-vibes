@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatur
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "79")
+@CardRegistration(set = "LCC", collectorNumber = "171")
 public class SirenStormtamer extends Card {
 
     public SirenStormtamer() {

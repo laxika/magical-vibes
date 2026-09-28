@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1094,7 +1095,8 @@ public class TriggeredAbilityQueueService {
             }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
-                    List.of(), pending.triggeringCardId(), pending.attackedTargetId());
+                    List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
+                    pending.triggeringPermanentId());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1153,6 +1155,13 @@ public class TriggeredAbilityQueueService {
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
             UUID attackedTargetId) {
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId, chosenModes,
+                triggeringCardId, attackedTargetId, null);
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
+            UUID attackedTargetId, UUID triggeringPermanentId) {
         if (chosenModes.isEmpty()) {
             return;
         }
@@ -1206,6 +1215,7 @@ public class TriggeredAbilityQueueService {
                 triggerTargetId,
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
+        entry.setTriggeringPermanentId(triggeringPermanentId);
         if (attackedTargetId != null) {
             entry.setAttackedTargetId(attackedTargetId);
         }
@@ -1217,6 +1227,11 @@ public class TriggeredAbilityQueueService {
         Card targetingCard = sourceCard.createRuntimeCopy();
         targetingCard.clearRuntimeSpellTargets();
         targetingCard.setCastTimeTargetFilter(null);
+        // Each chosen mode has its own target instruction. The same object may be chosen
+        // for different modes, while repeated choices within one mode must stay distinct.
+        if (chosenModes.size() > 1) {
+            targetingCard.setAllowSharedTargets(true);
+        }
         for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {
             if (mode.targetFilters() != null) {
                 for (int i = 0; i < mode.targetFilters().size(); i++) {
@@ -1261,25 +1276,48 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getTargetFilter(),
                     pending.controllerId(),
                     pending.sourceCard(),
-                    TriggerTargetCollector.Options.ATTACK);
+                    TriggerTargetCollector.Options.ATTACK,
+                    gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+            boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
-                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s discard trigger has no valid targets."));
-                log.info("Game {} - {} discard trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
+                if (optionalTarget) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(),
+                            pending.controllerId(),
+                            pending.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(pending.effects()),
+                            null,
+                            pending.sourcePermanentId()));
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s discard trigger triggers without a target."));
+                    log.info("Game {} - {} discard trigger pushed without a target",
+                            gameData.id, pending.sourceCard().getName());
+                } else {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s discard trigger has no valid targets."));
+                    log.info("Game {} - {} discard trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName());
+                }
                 continue;
             }
 
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
-                            : "target permanent";
+                            : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
-                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            if (optionalTarget) {
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), result.validTargets(),
+                        List.of(pending.controllerId()),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            } else {
+                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s discard trigger - choose " + targetDescription + "."));
@@ -2274,8 +2312,14 @@ public class TriggeredAbilityQueueService {
                 filter = graveyardFilter.predicate();
                 scope = graveyardFilter.scope();
             }
+            Integer aggregateManaValueCap = describedTarget != null && describedTarget.maximumManaValue() != null
+                    ? amountEvaluationService.evaluate(gameData, describedTarget.maximumManaValue(),
+                    new AmountContext(pending.controllerId(), null, null,
+                            pending.xValue(), pending.xValue()))
+                    : null;
             // "mana value X or less, where X is the life you gained or lost this turn"
-            int maxManaValue = lifeGainedCap
+            int maxManaValue = aggregateManaValueCap != null ? aggregateManaValueCap
+                    : lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId())
                     : lifeLostCap
                     ? gameData.lifeLostThisTurn.getOrDefault(pending.controllerId(), 0)
@@ -2292,6 +2336,11 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromBattlefieldThisTurn()
+                            && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
                             && gameData.cardsPutIntoGraveyardThisCombat
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
@@ -2361,6 +2410,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.totalManaValueCap = aggregateManaValueCap;
             gameData.graveyardTargetOperation.singleGraveyard =
                     describedTarget != null && describedTarget.singleGraveyard();
             gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
@@ -2398,10 +2448,18 @@ public class TriggeredAbilityQueueService {
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
             String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
-                    minTargets,
-                    pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
-                            + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".");
+            String prompt = pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
+                    + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".";
+            if (aggregateManaValueCap != null) {
+                prompt = prompt.substring(0, prompt.length() - 1)
+                        + " with total mana value " + aggregateManaValueCap + " or less.";
+                playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
+                        gameData, pending.controllerId(), matchingCards, maxTargets, minTargets,
+                        aggregateManaValueCap, prompt);
+            } else {
+                playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
+                        maxTargets, minTargets, prompt);
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability triggers — choose a graveyard target."));
@@ -2857,6 +2915,11 @@ public class TriggeredAbilityQueueService {
                 if (pending.chosenTargetsSoFar().contains(playerId)) {
                     continue;
                 }
+                if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                        && sagaChapterTargetControllerAlreadyChosen(
+                        pending.chosenTargetsSoFar(), playerId, gameData)) {
+                    continue;
+                }
                 if (targetLegalityService.matchesPlayerPredicate(
                         gameData, pending.controllerId(), playerId, playerFilter.predicate())) {
                     validTargets.add(playerId);
@@ -2899,6 +2962,20 @@ public class TriggeredAbilityQueueService {
             }
         }
         return validTargets;
+    }
+
+    private boolean sagaChapterTargetControllerAlreadyChosen(List<UUID> chosenTargets,
+                                                               UUID controllerId,
+                                                               GameData gameData) {
+        for (UUID chosenTarget : chosenTargets) {
+            UUID chosenController = gameData.playerIdToName.containsKey(chosenTarget)
+                    ? chosenTarget
+                    : gameQueryService.findPermanentController(gameData, chosenTarget);
+            if (controllerId.equals(chosenController)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int sagaChapterTargetManaValue(GameData gameData,

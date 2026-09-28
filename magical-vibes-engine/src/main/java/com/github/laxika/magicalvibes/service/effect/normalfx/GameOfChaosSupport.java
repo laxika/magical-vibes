@@ -44,9 +44,9 @@ public class GameOfChaosSupport {
                 + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")"
                 + coinFlipService.replacementDetails(result) + "."));
 
-        if (controllerWins) {
+        if (controllerWins && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        } else {
+        } else if (result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 

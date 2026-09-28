@@ -22,7 +22,12 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "469")
 @CardRegistration(set = "SLD", collectorNumber = "457")
 @CardRegistration(set = "YEOE", collectorNumber = "33")
+@CardRegistration(set = "PIP", collectorNumber = "262")
+@CardRegistration(set = "PIP", collectorNumber = "494")
+@CardRegistration(set = "PIP", collectorNumber = "790")
+@CardRegistration(set = "PIP", collectorNumber = "1022")
 @CardRegistration(set = "LTC", collectorNumber = "305")
+@CardRegistration(set = "OTC", collectorNumber = "290")
 public class DrownedCatacomb extends Card {
 
     public DrownedCatacomb() {

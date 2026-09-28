@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentChoosesCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -58,7 +60,8 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
             matchingCards.stream()
                     .filter(card -> card.getId().equals(chosenCardId))
                     .findFirst()
-                    .ifPresent(card -> putUnderControllerControl(gameData, entry, card, opponentId));
+                    .ifPresent(card -> putUnderControllerControl(
+                            gameData, entry, card, opponentId, e.battlefieldEffectGrants()));
             return;
         }
 
@@ -66,7 +69,8 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
             return;
         }
         if (matchingCards.size() == 1) {
-            putUnderControllerControl(gameData, entry, matchingCards.getFirst(), opponentId);
+            putUnderControllerControl(gameData, entry, matchingCards.getFirst(), opponentId,
+                    e.battlefieldEffectGrants());
             return;
         }
 
@@ -97,7 +101,8 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
                 .toList();
     }
 
-    private void putUnderControllerControl(GameData gameData, StackEntry entry, Card card, UUID opponentId) {
+    private void putUnderControllerControl(GameData gameData, StackEntry entry, Card card, UUID opponentId,
+                                           List<CardEffect> battlefieldEffectGrants) {
         UUID controllerId = entry.getControllerId();
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (!opponentId.equals(graveyardOwnerId)) {
@@ -116,6 +121,11 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
         Set<CardType> enterTappedTypes =
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        for (CardEffect grantedEffect : battlefieldEffectGrants) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    grantedEffect, permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, graveyardOwnerId);
 
         gameLogService.append(gameData, GameLog.textCardText(

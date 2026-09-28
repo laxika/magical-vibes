@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "FRF", collectorNumber = "110")
 @CardRegistration(set = "PIO", collectorNumber = "150")
 @CardRegistration(set = "NCC", collectorNumber = "272")
+@CardRegistration(set = "AFC", collectorNumber = "135")
+@CardRegistration(set = "C20", collectorNumber = "157")
 public class OutpostSiege extends Card {
 
     private static final String KHANS = "Khans";

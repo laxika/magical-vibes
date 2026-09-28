@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "73")
 @CardRegistration(set = "ME3", collectorNumber = "48")
+@CardRegistration(set = "MB2", collectorNumber = "170")
 public class Reset extends Card {
 
     public Reset() {

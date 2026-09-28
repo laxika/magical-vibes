@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.effect.HandCastCardCharacteristicsService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -195,11 +197,12 @@ public class GameActionAvailabilityService {
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
-                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                        || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
                     payable.add(i);
                     continue;
                 }
-                ManaPool pool = fullPool;
+                VirtualManaPool pool = fullPool;
                 if (gameQueryService.isLand(gameData, perm)) {
                     pool = new VirtualManaPool(fullPool);
                     pool.promoteLandAbilityOnlyMana();
@@ -216,6 +219,10 @@ public class GameActionAvailabilityService {
                         }
                     }
                     pool = poolWithoutSource;
+                }
+                if (ability.isPowerUpAbility()) {
+                    pool = new VirtualManaPool(pool);
+                    pool.promotePowerUpAbilityOnlyMana();
                 }
                 ManaCost manaCost = new ManaCost(abilityManaCost);
                 if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
@@ -280,7 +287,9 @@ public class GameActionAvailabilityService {
 
         SpellPlayabilityContext ctx = buildSpellPlayabilityContext(gameData, playerId);
         for (int i = 0; i < hand.size(); i++) {
-            if (isCardPlayable(gameData, playerId, hand.get(i), pool, extraConvokeMana, 0, ctx)) {
+            Card effectiveCard = HandCastCardCharacteristicsService.effectiveCard(
+                    gameData, playerId, hand.get(i), gameQueryService);
+            if (isCardPlayable(gameData, playerId, effectiveCard, pool, extraConvokeMana, 0, ctx)) {
                 playable.add(i);
             }
         }
@@ -289,7 +298,8 @@ public class GameActionAvailabilityService {
         // (matching the cost's predicate) to discard; the spell itself can never be its own discard.
         // Discard-or-pay-mana (Lightning Axe) stays playable when the mana option is affordable.
         playable.removeIf(i -> {
-            Card card = hand.get(i);
+            Card card = HandCastCardCharacteristicsService.effectiveCard(
+                    gameData, playerId, hand.get(i), gameQueryService);
             List<Integer> discardable = castingCostService.validDiscardCostIndices(gameData, playerId, card);
             if (discardable == null || !discardable.isEmpty()) {
                 return false;
@@ -331,12 +341,16 @@ public class GameActionAvailabilityService {
     }
 
     public boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalGenericCost) {
+        card = HandCastCardCharacteristicsService.effectiveCardIfInHand(
+                gameData, playerId, card, gameQueryService);
         return isCardPlayable(gameData, playerId, card, pool, 0, additionalGenericCost,
                 buildSpellPlayabilityContext(gameData, playerId));
     }
 
     public boolean isCardPlayableWithDeclaredTargets(GameData gameData, UUID playerId, Card card,
                                                      ManaPool pool, int additionalGenericCost) {
+        card = HandCastCardCharacteristicsService.effectiveCardIfInHand(
+                gameData, playerId, card, gameQueryService);
         return isCardPlayableForFace(gameData, playerId, card, pool, 0, additionalGenericCost,
                 buildSpellPlayabilityContext(gameData, playerId), true);
     }
@@ -385,6 +399,13 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteColorlessSpellOnlyMana();
         }
+        if (card.hasType(CardType.CREATURE)
+                && predicateEvaluationService.matchesCardPredicate(card, new CardHasNoAbilitiesPredicate(), null)
+                && pool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+        }
         boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         if (instantOrSorcery
                 && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
@@ -422,6 +443,11 @@ public class GameActionAvailabilityService {
         if (playerId.equals(gameData.commandCastPlayerId)) {
             pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNonHandSpellOnlyMana();
+        }
+        if (card.getOwnerId() != null && !playerId.equals(card.getOwnerId())
+                && pool.getNonOwnedSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteNonOwnedSpellOnlyMana();
         }
         if (gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(commander -> commander.getId().equals(card.getId()))) {
@@ -516,7 +542,8 @@ public class GameActionAvailabilityService {
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
-                && !castingPermissionService.isCardPlayRestrictedInHand(gameData, playerId, card);
+                && !castingPermissionService.isCardPlayRestrictedInHand(gameData, playerId, card)
+                && canPayLandPlayCost(card, pool);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -533,7 +560,7 @@ public class GameActionAvailabilityService {
         List<CardEffect> targetingSpellEffects = EffectResolution.resolveEffects(
                 card.getEffects(EffectSlot.SPELL), false, null);
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
-                targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
+                targetingSpellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         Integer maxXValue = maxAnnounceableX(card, pool);
         if (!targetsAlreadyDeclared
                 && card.getFlashCastTargetPredicate() != null
@@ -634,6 +661,10 @@ public class GameActionAvailabilityService {
         }
 
         return true;
+    }
+
+    private boolean canPayLandPlayCost(Card card, ManaPool pool) {
+        return card.getParsedManaCost() == null || card.getParsedManaCost().canPay(pool);
     }
 
     /**
@@ -764,6 +795,13 @@ public class GameActionAvailabilityService {
                 || card.hasKeyword(Keyword.FREERUNNING)) {
             subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.MERCENARY)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.PIRATE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.ROGUE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.WARLOCK)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.OUTLAW);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -778,6 +816,10 @@ public class GameActionAvailabilityService {
                 && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
             subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                     CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.AURA)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.EQUIPMENT)) {
+            subtypeOrPlaneswalkerSpellContext.add(ManaRestriction.SubtypeOrPlaneswalkerSpells.auraOrEquipmentSpells());
         }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
@@ -984,6 +1026,13 @@ public class GameActionAvailabilityService {
                 || card.hasKeyword(Keyword.FREERUNNING)) {
             subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.MERCENARY)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.PIRATE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.ROGUE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.WARLOCK)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.OUTLAW);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -998,6 +1047,10 @@ public class GameActionAvailabilityService {
                 && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
             subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                     CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.AURA)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.EQUIPMENT)) {
+            subtypeOrPlaneswalkerSpellContext.add(ManaRestriction.SubtypeOrPlaneswalkerSpells.auraOrEquipmentSpells());
         }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
@@ -1351,7 +1404,6 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
-        boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
         boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
@@ -1361,7 +1413,10 @@ public class GameActionAvailabilityService {
                         && card.getCastingOption(GraveyardCast.class)
                         .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                         .orElse(false));
-        if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
+        boolean hasStaticGraveyardLandPermission = graveyard.stream()
+                .filter(card -> card.hasType(CardType.LAND))
+                .anyMatch(card -> castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card));
+        if (!hasStaticGraveyardLandPermission && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
         }
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
@@ -1734,6 +1789,15 @@ public class GameActionAvailabilityService {
 
             if (isGrantedCyclingGraveyardCast) {
                 int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+                long availableCards = graveyard.stream().filter(c -> c != card).count();
+                if (availableCards < escapeExileCount) {
+                    continue;
+                }
+            }
+            if (grantedGraveyardCardCast) {
+                GameData.GraveyardCardCastPermission permission =
+                        gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
+                int escapeExileCount = permission == null ? 0 : permission.additionalGraveyardExileCount();
                 long availableCards = graveyard.stream().filter(c -> c != card).count();
                 if (availableCards < escapeExileCount) {
                     continue;

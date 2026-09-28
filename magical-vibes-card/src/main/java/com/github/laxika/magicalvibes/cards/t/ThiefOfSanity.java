@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 
 @CardRegistration(set = "GRN", collectorNumber = "205")
+@CardRegistration(set = "OTC", collectorNumber = "243")
 public class ThiefOfSanity extends Card {
 
     public ThiefOfSanity() {

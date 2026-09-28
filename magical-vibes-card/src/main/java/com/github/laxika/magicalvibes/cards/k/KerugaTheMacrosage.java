@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 @CardRegistration(set = "MUL", collectorNumber = "48")
 @CardRegistration(set = "MUL", collectorNumber = "113")
 @CardRegistration(set = "MUL", collectorNumber = "178")
+@CardRegistration(set = "MB2", collectorNumber = "84")
 public class KerugaTheMacrosage extends Card {
 
     public KerugaTheMacrosage() {

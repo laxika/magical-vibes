@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "C13", collectorNumber = "278")
 @CardRegistration(set = "CMD", collectorNumber = "267")
 @CardRegistration(set = "C14", collectorNumber = "285")
+@CardRegistration(set = "MB2", collectorNumber = "105")
 @CardRegistration(set = "MOC", collectorNumber = "391")
 @CardRegistration(set = "C21", collectorNumber = "281")
 @CardRegistration(set = "DSC", collectorNumber = "265")
@@ -27,6 +28,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "LTC", collectorNumber = "388")
 @CardRegistration(set = "TDC", collectorNumber = "341")
 @CardRegistration(set = "MKC", collectorNumber = "250")
+@CardRegistration(set = "AFC", collectorNumber = "226")
+@CardRegistration(set = "OTC", collectorNumber = "273")
+@CardRegistration(set = "LCC", collectorNumber = "320")
+@CardRegistration(set = "C20", collectorNumber = "259")
 public class BojukaBog extends Card {
 
     public BojukaBog() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ROE", collectorNumber = "65")
 @CardRegistration(set = "UMA", collectorNumber = "53")
 @CardRegistration(set = "2X2", collectorNumber = "48")
+@CardRegistration(set = "AFC", collectorNumber = "83")
 public class EelUmbra extends Card {
 
     public EelUmbra() {

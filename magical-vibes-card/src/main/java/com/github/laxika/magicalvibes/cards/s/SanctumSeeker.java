@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "120")
+@CardRegistration(set = "LCC", collectorNumber = "209")
 public class SanctumSeeker extends Card {
 
     public SanctumSeeker() {

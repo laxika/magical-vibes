@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 
 @CardRegistration(set = "LCI", collectorNumber = "249")
 @CardRegistration(set = "ECC", collectorNumber = "137")
+@CardRegistration(set = "LCC", collectorNumber = "106")
 public class ChimilTheInnerSun extends Card {
 
     public ChimilTheInnerSun() {

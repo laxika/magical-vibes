@@ -33,6 +33,9 @@ public class TargetPermanentControllerDrawsCardEffectHandler implements NormalEf
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
+        }
         if (controllerId != null) {
             Permanent source = entry.getSourcePermanentId() != null
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())

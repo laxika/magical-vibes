@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "120")
 @CardRegistration(set = "OM1", collectorNumber = "119")
+@CardRegistration(set = "MSC", collectorNumber = "819")
 public class TerrificTeamUp extends Card {
 
     public TerrificTeamUp() {

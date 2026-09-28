@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "PIP", collectorNumber = "21")
+@CardRegistration(set = "PIP", collectorNumber = "369")
+@CardRegistration(set = "PIP", collectorNumber = "549")
+@CardRegistration(set = "PIP", collectorNumber = "897")
 @CardRegistration(set = "SLD", collectorNumber = "2450")
 public class PreWarFormalwear extends Card {
 

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "133")
+@CardRegistration(set = "OTC", collectorNumber = "9")
+@CardRegistration(set = "OTC", collectorNumber = "45")
 public class AngelOfIndemnity extends Card {
 
     public AngelOfIndemnity() {

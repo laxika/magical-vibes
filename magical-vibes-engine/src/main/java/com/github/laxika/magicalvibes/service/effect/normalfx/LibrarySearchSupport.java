@@ -18,11 +18,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -136,7 +139,7 @@ public class LibrarySearchSupport {
             }
 
             List<Card> choices = creatureOnly
-                    ? deck.stream().filter(card -> card.hasType(CardType.CREATURE)).toList()
+                    ? deck.stream().filter(card -> card.hasAllCardNames() || card.hasType(CardType.CREATURE)).toList()
                     : deck;
 
             if (choices.isEmpty()) {
@@ -155,7 +158,10 @@ public class LibrarySearchSupport {
                     .canFailToFind(true)
                     .remainingCount(count)
                     .destination(LibrarySearchDestination.HAND)
-                    .filterPredicate(creatureOnly ? new CardTypePredicate(CardType.CREATURE) : null)
+                    .filterPredicate(creatureOnly
+                            ? new CardAnyOfPredicate(List.of(
+                            new CardTypePredicate(CardType.CREATURE), new CardHasAllCardNamesPredicate()))
+                            : null)
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
@@ -276,7 +282,7 @@ public class LibrarySearchSupport {
                 return false;
             }
             List<Card> matches = deck.stream()
-                    .filter(card -> name.equals(card.getName()))
+                    .filter(card -> card.hasAllCardNames() || name.equals(card.getName()))
                     .filter(card -> !queue.creatureOnly() || card.hasType(CardType.CREATURE))
                     .toList();
             if (matches.isEmpty()) {
@@ -332,7 +338,7 @@ public class LibrarySearchSupport {
 
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
             List<Card> nonland = deck == null ? List.of()
-                    : deck.stream().filter(card -> !card.hasType(CardType.LAND)).toList();
+                    : deck.stream().filter(card -> card.hasAllCardNames() || !card.hasType(CardType.LAND)).toList();
             if (nonland.isEmpty()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
                 gameLogService.append(gameData, GameLog.text(searcherName + " finds no nonland card in "
@@ -419,6 +425,9 @@ public class LibrarySearchSupport {
     }
 
     private static boolean matchesToHandPick(Card card, LibrarySearchFollowUp.ToHandPick pick) {
+        if (card.hasAllCardNames()) {
+            return true;
+        }
         if (pick.cardName() != null) {
             return pick.cardName().equals(card.getName());
         }
@@ -448,8 +457,8 @@ public class LibrarySearchSupport {
             int manaValue = remaining.remove(0);
             List<Card> matches = deck == null ? List.of()
                     : deck.stream()
-                            .filter(card -> card.hasType(CardType.INSTANT))
-                            .filter(card -> card.getManaValue() == manaValue)
+                            .filter(card -> card.hasAllCardNames()
+                                    || (card.hasType(CardType.INSTANT) && card.getManaValue() == manaValue))
                             .toList();
             if (matches.isEmpty()) {
                 continue;
@@ -589,7 +598,9 @@ public class LibrarySearchSupport {
             return false;
         }
 
-        List<Card> matchingCards = deck.stream().filter(filter).toList();
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> card.hasAllCardNames() || filter == null || filter.test(card))
+                .toList();
 
         if (matchingCards.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
@@ -728,6 +739,15 @@ public class LibrarySearchSupport {
     public boolean isLibrarySearchCastableCard(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(LibrarySearchCastPermission.class::isInstance);
+    }
+
+    /** Returns the library-ninjutsu permission carried by {@code card}, if any. */
+    public LibraryNinjutsuEffect libraryNinjutsuEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(LibraryNinjutsuEffect.class::isInstance)
+                .map(LibraryNinjutsuEffect.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     /** Returns the cards in {@code playerId}'s library that may be cast during that search. */

@@ -69,6 +69,10 @@ public class ConditionalManaEffectHandler implements NormalEffectHandlerBean, Ma
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE))) {
             pool.addCaveManaTag(effectiveColor, amount);
         }
+        if (predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT))) {
+            pool.addDesertManaTag(effectiveColor, amount);
+        }
         if (creatureSource) {
             pool.addCreatureMana(effectiveColor, amount);
         }

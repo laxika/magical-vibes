@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "107")
+@CardRegistration(set = "DMC", collectorNumber = "171")
 public class TajicBladeOfTheLegion extends Card {
 
     public TajicBladeOfTheLegion() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "FDN", collectorNumber = "387")
 @CardRegistration(set = "SLD", collectorNumber = "233")
 @CardRegistration(set = "MKC", collectorNumber = "138")
+@CardRegistration(set = "FIC", collectorNumber = "283")
 public class RiseOfTheDarkRealms extends Card {
 
     public RiseOfTheDarkRealms() {

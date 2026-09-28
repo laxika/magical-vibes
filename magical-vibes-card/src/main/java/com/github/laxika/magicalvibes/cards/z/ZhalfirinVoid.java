@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "249")
+@CardRegistration(set = "AFC", collectorNumber = "273")
 public class ZhalfirinVoid extends Card {
 
     public ZhalfirinVoid() {

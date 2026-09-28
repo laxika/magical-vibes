@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,9 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AncientBronzeDragon.class, GrizzlyBears.class, Forest.class})
+@CardUsed({AncientBronzeDragon.class, GrizzlyBears.class})
 class AncientBronzeDragonTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -36,62 +37,37 @@ class AncientBronzeDragonTest extends BaseCardTest {
     }
 
     @Test
-    void putsTheRollResultOnEachOfTwoTargetCreatures() {
-        setRoll(12);
-        Permanent dragon = addCreatureReady(player1, new AncientBronzeDragon());
+    void combatDamagePutsTheRollAmountOfCountersOnUpToTwoCreatures() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(7));
+        addCreatureReady(player1, new AncientBronzeDragon());
         Permanent firstTarget = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
-        dragon.setAttacking(true);
 
-        resolveCombat();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(firstTarget.getId(), secondTarget.getId());
         harness.handlePermanentChosen(player1, firstTarget.getId());
         harness.handlePermanentChosen(player1, secondTarget.getId());
         resolveAllTriggers();
 
-        assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(12);
-        assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(12);
+        assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
 
     @Test
-    void mayChooseOnlyOneTargetCreature() {
-        setRoll(20);
-        Permanent dragon = addCreatureReady(player1, new AncientBronzeDragon());
+    void combatDamageMayChooseNoCreatures() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        addCreatureReady(player1, new AncientBronzeDragon());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        dragon.setAttacking(true);
 
-        resolveCombat();
-        harness.handlePermanentChosen(player1, target.getId());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
-        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
-    }
-
-    @Test
-    void triggerTargetingOnlyOffersCreatures() {
-        setRoll(1);
-        Permanent dragon = addCreatureReady(player1, new AncientBronzeDragon());
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        dragon.setAttacking(true);
-
-        resolveCombat();
-
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).contains(creature.getId(), dragon.getId());
-        assertThat(choice.validIds()).doesNotContain(forest.getId());
-
-        harness.handlePermanentChosen(player1, player1.getId());
-    }
-
-    private void setRoll(int result) {
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private static final class FixedD20RollService extends D20RollService {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 
 @CardRegistration(set = "BRO", collectorNumber = "202")
+@CardRegistration(set = "OTC", collectorNumber = "262")
 public class PerennialBehemoth extends Card {
 
     public PerennialBehemoth() {

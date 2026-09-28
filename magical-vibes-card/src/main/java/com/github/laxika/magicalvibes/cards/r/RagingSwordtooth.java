@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "226")
+@CardRegistration(set = "LCC", collectorNumber = "283")
 public class RagingSwordtooth extends Card {
 
     public RagingSwordtooth() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "C14", collectorNumber = "26")
 @CardRegistration(set = "TDC", collectorNumber = "189")
+@CardRegistration(set = "AFC", collectorNumber = "103")
 public class NecromanticSelection extends Card {
 
     public NecromanticSelection() {

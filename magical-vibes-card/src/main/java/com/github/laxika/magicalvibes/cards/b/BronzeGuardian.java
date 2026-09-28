@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "FIC", collectorNumber = "234")
 @CardRegistration(set = "C21", collectorNumber = "13")
 public class BronzeGuardian extends Card {
 

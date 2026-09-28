@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "STX", collectorNumber = "243")
+@CardRegistration(set = "OTC", collectorNumber = "245")
 public class ThrillingDiscovery extends Card {
 
     public ThrillingDiscovery() {

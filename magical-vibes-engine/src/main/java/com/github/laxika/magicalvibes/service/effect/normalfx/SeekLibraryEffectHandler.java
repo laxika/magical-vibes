@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final ExileService exileService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,21 +63,30 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        UUID sourcePermanentId = seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE
+                ? resolveSourcePermanentId(gameData, entry, controllerId) : null;
+        if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE && sourcePermanentId == null) {
+            return;
+        }
+        boolean entersBattlefield = seek.destination() == LibrarySearchDestination.BATTLEFIELD
+                || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+
         List<Card> matchingCards = new ArrayList<>(deck.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, seek.filter(), null, gameData, controllerId)
                         && (manaValueBound == null || (seek.manaValueBound().exact()
                         ? card.getManaValue() == manaValueBound
                         : card.getManaValue() <= manaValueBound))
-                        && (seek.destination() == LibrarySearchDestination.HAND
+                        && (!entersBattlefield
                         || !gameQueryService.isCardBlockedFromEnteringFromZone(
-                        gameData, card, Zone.LIBRARY)))
+                                gameData, card, Zone.LIBRARY)))
                 .toList());
 
         int cardsToSeek = Math.min(count, matchingCards.size());
         if (cardsToSeek == 0 && seek.destination() != LibrarySearchDestination.HAND) {
             logNoMatch(gameData, entry);
         }
+        List<Card> soughtCards = new ArrayList<>(cardsToSeek);
         for (int i = 0; i < cardsToSeek; i++) {
             Card chosen = matchingCards.remove(ThreadLocalRandom.current().nextInt(matchingCards.size()));
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
@@ -90,14 +103,39 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 }
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                         .text("seeks and puts " + chosen.getName() + " onto the battlefield.").build());
+            } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+                if (seek.faceDown()) {
+                    exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
+                } else {
+                    exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
+                }
             } else {
                 throw new IllegalStateException("Unsupported Seek destination: " + seek.destination());
             }
+            soughtCards.add(chosen);
+        }
+        if (!soughtCards.isEmpty()) {
+            triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
         }
     }
 
     private void logNoMatch(GameData gameData, StackEntry entry) {
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks but finds no matching card.").build());
+    }
+
+    private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry, UUID controllerId) {
+        if (entry.getSourcePermanentId() != null) {
+            return entry.getSourcePermanentId();
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null && entry.getCard() != null) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(entry.getCard().getId())) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
     }
 }

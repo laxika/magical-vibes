@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "141")
+@CardRegistration(set = "DMC", collectorNumber = "192")
 public class SwordOfTheChosen extends Card {
 
     public SwordOfTheChosen() {

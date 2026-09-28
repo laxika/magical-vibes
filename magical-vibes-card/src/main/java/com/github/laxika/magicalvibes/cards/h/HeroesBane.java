@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "126")
 @CardRegistration(set = "IMA", collectorNumber = "166")
+@CardRegistration(set = "C20", collectorNumber = "175")
 public class HeroesBane extends Card {
 
     public HeroesBane() {

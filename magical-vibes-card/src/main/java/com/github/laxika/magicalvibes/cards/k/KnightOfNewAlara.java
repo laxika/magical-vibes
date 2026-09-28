@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "70")
+@CardRegistration(set = "DMC", collectorNumber = "156")
 public class KnightOfNewAlara extends Card {
 
     public KnightOfNewAlara() {

@@ -13,12 +13,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param requiredType the card type required (null = any)
  * @param predicate an additional card predicate (null = no additional filter)
  * @param onlyFromGraveyard whether this cost applies only when the spell is cast from a graveyard
+ * @param trackExiledCards whether to retain the exiled card ids on the activated ability
  */
 public record ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate,
-                                           boolean onlyFromGraveyard) implements CostEffect {
+                                           boolean onlyFromGraveyard, boolean trackExiledCards)
+        implements CostEffect {
 
     public ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate) {
-        this(count, requiredType, predicate, false);
+        this(count, requiredType, predicate, false, false);
+    }
+
+    public ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate,
+                                        boolean onlyFromGraveyard) {
+        this(count, requiredType, predicate, onlyFromGraveyard, false);
     }
 
     public ExileNCardsFromGraveyardCost(int count, CardType requiredType) {
@@ -33,6 +40,11 @@ public record ExileNCardsFromGraveyardCost(int count, CardType requiredType, Car
     @Override
     public CardType consumedGraveyardCardType() {
         return requiredType;
+    }
+
+    @Override
+    public boolean tracksExiledCards() {
+        return trackExiledCards;
     }
 
 }

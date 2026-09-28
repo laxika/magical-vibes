@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MoveCountersFromControlledPer
 
 @CardRegistration(set = "KLD", collectorNumber = "71")
 @CardRegistration(set = "KLR", collectorNumber = "76")
+@CardRegistration(set = "OTC", collectorNumber = "125")
 public class AetherbornMarauder extends Card {
 
     public AetherbornMarauder() {

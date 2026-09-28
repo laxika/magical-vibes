@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +62,7 @@ public class EffectResolutionService {
     private final EffectHandlerRegistry registry;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
     private final GameOutcomeService gameOutcomeService;
@@ -233,6 +236,27 @@ public class EffectResolutionService {
                 }
             }
 
+            if (effectToResolve instanceof MayPayLandDropEffect mayPayLandDrop
+                    && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted
+                        && entry.getControllerId().equals(gameData.activePlayerId)
+                        && gameData.landsPlayedThisTurn.getOrDefault(entry.getControllerId(), 0)
+                        < gameQueryService.getMaxLandsThisTurn(gameData, entry.getControllerId())) {
+                    gameData.landsPlayedThisTurn.merge(entry.getControllerId(), 1, Integer::sum);
+                    effectToResolve = mayPayLandDrop.wrapped();
+                    log.info("Game {} - Player accepted may-land-drop ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else if (!accepted && mayPayLandDrop.elseEffect() != null) {
+                    effectToResolve = mayPayLandDrop.elseEffect();
+                } else {
+                    log.info("Game {} - Player {} may-land-drop ability from {} — nothing to resolve",
+                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
+                    continue;
+                }
+            }
+
             // CR 603.5 — resolution-time "that player may pay {M} or N life" re-entry
             if (effectToResolve instanceof TargetPlayerMayPayManaOrLifeEffect mayPayManaOrLife
                     && gameData.resolvedMayAccepted != null) {
@@ -378,6 +402,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastDesertManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this

@@ -134,6 +134,7 @@ public class PotentialManaService {
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
                 virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
                 virtual.addLandAbilityOnlyMana(color, current.getLandAbilityOnlyMana(color));
+                virtual.addPowerUpAbilityOnlyMana(color, current.getPowerUpAbilityOnlyMana(color));
             }
         }
 

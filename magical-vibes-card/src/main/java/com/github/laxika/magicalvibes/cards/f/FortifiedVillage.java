@@ -17,6 +17,8 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "474")
 @CardRegistration(set = "TDC", collectorNumber = "366")
 @CardRegistration(set = "MKC", collectorNumber = "262")
+@CardRegistration(set = "AFC", collectorNumber = "239")
+@CardRegistration(set = "LCC", collectorNumber = "331")
 public class FortifiedVillage extends Card {
 
     public FortifiedVillage() {

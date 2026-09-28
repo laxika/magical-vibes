@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "158")
+@CardRegistration(set = "AFC", collectorNumber = "136")
 public class Rile extends Card {
 
     public Rile() {

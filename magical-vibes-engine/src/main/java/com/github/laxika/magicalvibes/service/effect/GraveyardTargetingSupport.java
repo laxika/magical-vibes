@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -218,7 +219,11 @@ public class GraveyardTargetingSupport {
                     : returnTargets.hasTotalManaValueCap() ? Integer.MAX_VALUE : returnTargets.maxTargets();
             int minTargets = returnTargets.xScaled() ? 1 : returnTargets.minTargets();
             return new Target(returnTargets.filter(), returnTargets.source(),
-                    "to the battlefield", maxTargets, minTargets);
+                    "to the battlefield", maxTargets, minTargets,
+                    returnTargets.dynamicMaxTotalManaValue() != null
+                            ? returnTargets.dynamicMaxTotalManaValue()
+                            : returnTargets.hasTotalManaValueCap()
+                            ? new Fixed(returnTargets.maxTotalManaValue()) : null);
         }
         if (effect instanceof TargetedGraveyardCardsEffect targetCards) {
             int maxTargets = targetCards.maxTargets() == 0

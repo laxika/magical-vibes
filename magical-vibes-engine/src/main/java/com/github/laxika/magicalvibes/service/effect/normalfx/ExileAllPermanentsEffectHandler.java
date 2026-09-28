@@ -61,10 +61,11 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
             for (Permanent perm : toExile) {
+                boolean removed;
                 if (sourcePermanentId != null) {
-                    permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
+                    removed = permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
                 } else {
-                    permanentRemovalService.removePermanentToExile(gameData, perm);
+                    removed = permanentRemovalService.removePermanentToExile(gameData, perm);
                 }
                 if (e.perpetualCastCostIncrease() != 0) {
                     gameData.perpetualGenericCastCostIncreases.merge(
@@ -77,6 +78,15 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                     UUID ownerId = gameQueryService.findExileOwnerById(gameData, perm.getOriginalCard().getId());
                     if (ownerId != null) {
                         exileSupport.grantPlayWhileExiled(gameData, perm.getOriginalCard().getId(), ownerId);
+                    }
+                }
+                if (e.controllerMayPlayWhileExiled()
+                        && removed
+                        && gameData.findExiledCard(perm.getOriginalCard().getId()) != null) {
+                    exileSupport.grantPlayWhileExiled(
+                            gameData, perm.getOriginalCard().getId(), entry.getControllerId());
+                    if (e.controllerMaySpendAnyManaType()) {
+                        gameData.exilePlayAnyManaTypeWhileExiled.add(perm.getOriginalCard().getId());
                     }
                 }
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));

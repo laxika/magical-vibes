@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "848")
 @CardRegistration(set = "GK2", collectorNumber = "33")
 @CardRegistration(set = "C14", collectorNumber = "155")
+@CardRegistration(set = "AFC", collectorNumber = "108")
 public class PontiffOfBlight extends Card {
 
     public PontiffOfBlight() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GoadTriggeringCreatureUntilNe
 
 @CardRegistration(set = "NCC", collectorNumber = "263")
 @CardRegistration(set = "MKC", collectorNumber = "145")
+@CardRegistration(set = "C20", collectorNumber = "49")
 public class AgitatorAnt extends Card {
 
     public AgitatorAnt() {

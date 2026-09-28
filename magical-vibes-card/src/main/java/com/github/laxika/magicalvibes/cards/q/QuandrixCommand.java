@@ -29,6 +29,7 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "217")
 @CardRegistration(set = "SOC", collectorNumber = "325")
+@CardRegistration(set = "LCC", collectorNumber = "280")
 public class QuandrixCommand extends Card {
 
     public QuandrixCommand() {

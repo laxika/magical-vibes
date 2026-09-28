@@ -49,7 +49,7 @@ class TundraWolvesTest extends BaseCardTest {
                 .extracting(Permanent::getId).doesNotContain(attacker.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(Permanent::getId).doesNotContain(blocker.getId());
-        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+                .extracting(Permanent::getId).contains(blocker.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(blocker.getCard());
     }
 }

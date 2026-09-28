@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "147")
 @CardRegistration(set = "UMA", collectorNumber = "222")
+@CardRegistration(set = "AFC", collectorNumber = "192")
 public class ShieldingPlax extends Card {
 
     public ShieldingPlax() {

@@ -1438,6 +1438,7 @@ public class GameSimulator {
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .limit(cost.maximumCount() > 0 ? cost.maximumCount() : Long.MAX_VALUE)
                         .map(Permanent::getId)
                         .toList();
             }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "89")
+@CardRegistration(set = "FIC", collectorNumber = "293")
 public class FlayerOfTheHatebound extends Card {
 
     public FlayerOfTheHatebound() {

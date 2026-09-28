@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1508")
 @CardRegistration(set = "SLD", collectorNumber = "1554")
 @CardRegistration(set = "SLD", collectorNumber = "1910")
+@CardRegistration(set = "MB2", collectorNumber = "362")
 public class RinAndSeriInseparable extends Card {
 
     public RinAndSeriInseparable() {

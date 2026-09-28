@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "18")
 @CardRegistration(set = "OM1", collectorNumber = "10")
+@CardRegistration(set = "MSC", collectorNumber = "778")
 public class StarlingAerialAlly extends Card {
 
     public StarlingAerialAlly() {

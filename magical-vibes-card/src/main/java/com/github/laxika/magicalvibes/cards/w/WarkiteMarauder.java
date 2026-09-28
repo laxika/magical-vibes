@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "60")
+@CardRegistration(set = "LCC", collectorNumber = "179")
 public class WarkiteMarauder extends Card {
 
     public WarkiteMarauder() {

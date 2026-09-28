@@ -84,7 +84,46 @@ public class PermanentCounterSupport {
         if (triggerCollectionService != null) {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
         }
+        fireYouPutCountersOnCreatureTriggers(gameData, target, amount, placingPlayerId);
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
+    }
+
+    /** Fires controller-scoped "whenever you put one or more counters on a creature" watchers. */
+    private void fireYouPutCountersOnCreatureTriggers(
+            GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
+        if (count <= 0 || creature == null || placingPlayerId == null
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            Card card = source.getCard();
+            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    placingPlayerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    creature.getId(),
+                    source.getId()
+            );
+            trigger.setEventValue(count);
+            trigger.setTriggeringPermanentId(creature.getId());
+            trigger.setTriggeringPermanentControllerId(creatureControllerId);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} creature counter trigger fires", gameData.id, card.getName());
+        }
     }
 
     /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
@@ -142,6 +181,7 @@ public class PermanentCounterSupport {
                 }
             }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+            fireYouPutCountersOnCreatureTriggers(gameData, target, amount, placingPlayerId);
         }
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
         fireYouPutCountersOnAnotherCreatureTriggers(
@@ -544,12 +584,13 @@ public class PermanentCounterSupport {
                 switch (counterType) {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
+                    case EGG -> perm.setCounterCount(CounterType.EGG, perm.getCounterCount(CounterType.EGG) + placed);
                     case HOUR -> perm.setCounterCount(CounterType.HOUR, perm.getCounterCount(CounterType.HOUR) + placed);
                     case HONE -> perm.setCounterCount(CounterType.HONE, perm.getCounterCount(CounterType.HONE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
                     case HASTE, DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF,
-                         INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE -> {
+                         INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE, PRIMEVAL -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
                     }
@@ -739,6 +780,7 @@ public class PermanentCounterSupport {
             case DESPAIR -> { target.setCounterCount(CounterType.DESPAIR, target.getCounterCount(CounterType.DESPAIR) + count); yield "despair"; }
             case DEATH -> { target.setCounterCount(CounterType.DEATH, target.getCounterCount(CounterType.DEATH) + count); yield "death"; }
             case DELAY -> { target.setCounterCount(CounterType.DELAY, target.getCounterCount(CounterType.DELAY) + count); yield "delay"; }
+            case EGG -> { target.setCounterCount(CounterType.EGG, target.getCounterCount(CounterType.EGG) + count); yield "egg"; }
             case DEVOTION -> { target.setCounterCount(CounterType.DEVOTION, target.getCounterCount(CounterType.DEVOTION) + count); yield "devotion"; }
             case DIVINITY -> { target.setCounterCount(CounterType.DIVINITY, target.getCounterCount(CounterType.DIVINITY) + count); yield "divinity"; }
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
@@ -796,6 +838,12 @@ public class PermanentCounterSupport {
             case PETRIFICATION -> { target.setCounterCount(CounterType.PETRIFICATION, target.getCounterCount(CounterType.PETRIFICATION) + count); yield "petrification"; }
             case PIN -> { target.setCounterCount(CounterType.PIN, target.getCounterCount(CounterType.PIN) + count); yield "pin"; }
             case PREY -> { target.setCounterCount(CounterType.PREY, target.getCounterCount(CounterType.PREY) + count); yield "prey"; }
+            case PRIMEVAL -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.PRIMEVAL, target.getCounterCount(CounterType.PRIMEVAL) + count);
+                target.setCounterTimestamp(CounterType.PRIMEVAL, gameData.nextTimestamp());
+                yield "primeval";
+            }
             case FUNGUS -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);
@@ -824,6 +872,12 @@ public class PermanentCounterSupport {
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
+            case BASE_POWER_FOUR, BASE_TOUGHNESS_FOUR -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
+                target.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                yield counterType == CounterType.BASE_POWER_FOUR ? "base power 4" : "base toughness 4";
+            }
             case HASTE, DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF,
                  INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
@@ -904,6 +958,8 @@ public class PermanentCounterSupport {
             case SLIME -> "slime";
             case AIM -> "aim";
             case DELAY -> "delay";
+            case BASE_POWER_FOUR -> "base power 4";
+            case BASE_TOUGHNESS_FOUR -> "base toughness 4";
             default -> counterType.name().toLowerCase();
         };
     }

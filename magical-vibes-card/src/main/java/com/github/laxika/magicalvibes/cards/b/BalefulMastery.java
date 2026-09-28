@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "64")
+@CardRegistration(set = "OTC", collectorNumber = "126")
 public class BalefulMastery extends Card {
 
     public BalefulMastery() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "RIX", collectorNumber = "168")
+@CardRegistration(set = "LCC", collectorNumber = "282")
 public class RagingRegisaur extends Card {
 
     public RagingRegisaur() {

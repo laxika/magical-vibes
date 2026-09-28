@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.AddFoodTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
@@ -118,6 +119,22 @@ public final class TokenCreationReplacementSupport {
             return 0;
         }
         return countActiveStaticEffects(gameData, controllerId, AddMutagenTokenToTokenCreationEffect.class);
+    }
+
+    /** Returns one additional Food token per active Tippy-Toe replacement for this event. */
+    static int additionalFoodTokenCount(GameData gameData, UUID controllerId, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        return countActiveStaticEffects(gameData, controllerId, AddFoodTokenToTokenCreationEffect.class);
+    }
+
+    static CreateTokenEffect additionalFoodToken(CreateTokenEffect original) {
+        return withEventModifiers(CreateTokenEffect.ofFoodToken(1), original);
+    }
+
+    static CreateTokenEffect additionalFoodToken(boolean tapped, boolean tappedAndAttacking) {
+        return CreateTokenEffect.ofFoodToken(1).withTapped(tapped || tappedAndAttacking);
     }
 
     static CreateTokenEffect additionalMutagenToken(CreateTokenEffect original) {

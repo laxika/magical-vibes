@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2802")
 @CardRegistration(set = "MAR", collectorNumber = "7")
 @CardRegistration(set = "OMB", collectorNumber = "7")
+@CardRegistration(set = "LCC", collectorNumber = "102")
 public class WeddingRing extends Card {
 
     public WeddingRing() {

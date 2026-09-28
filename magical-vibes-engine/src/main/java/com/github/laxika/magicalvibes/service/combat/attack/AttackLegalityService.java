@@ -92,6 +92,7 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
+        if (gameData.creaturesCantAttackThisCombat) return false;
         if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
             return false;
         }
@@ -322,7 +323,9 @@ public class AttackLegalityService {
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         if (targetIsPlayer
                 && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
-                && gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                && gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
             return false;
         }
@@ -1166,6 +1169,12 @@ public class AttackLegalityService {
             if (!(effect instanceof AttackerTargetRestrictionEffect restriction)
                     || attacker.isStaticEffectSuppressed(effect.getClass())) {
                 continue;
+            }
+            UUID sourceControllerId = gameData.findControllerOf(attacker);
+            if (restriction.restrictsSourceController()
+                    && sourceControllerId != null
+                    && sourceControllerId.equals(targetId)) {
+                return true;
             }
             UUID restrictedPlayerId = restriction.restrictedPlayerId(attacker);
             if (restrictedPlayerId == null) {

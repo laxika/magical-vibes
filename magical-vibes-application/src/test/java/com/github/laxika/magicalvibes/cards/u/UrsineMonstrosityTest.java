@@ -70,6 +70,10 @@ class UrsineMonstrosityTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ursine)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, ursine, Keyword.INDESTRUCTIBLE)).isTrue();
 
+        gs.declareAttackers(gd, player1, List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 

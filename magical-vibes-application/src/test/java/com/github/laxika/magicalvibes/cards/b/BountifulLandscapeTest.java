@@ -37,7 +37,7 @@ class BountifulLandscapeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BountifulLandscape());
         setupLibrary();
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Bountiful Landscape");

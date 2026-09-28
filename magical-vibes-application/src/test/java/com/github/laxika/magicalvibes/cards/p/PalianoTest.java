@@ -45,7 +45,7 @@ class PalianoTest extends BaseCardTest {
     }
 
     @Test
-    void combatDamageDoesNotMakeControllerTheMonarchWhenThereAlreadyIsOne() {
+    void combatDamageTakesTheMonarchFromTheDamagedPlayer() {
         gd.monarchPlayerId = player2.getId();
         addCreatureReady(player1, new GrizzlyBears());
 
@@ -53,7 +53,7 @@ class PalianoTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
 
     @Test

@@ -68,6 +68,7 @@ class CunningRhetoricTest extends BaseCardTest {
         Card topCard = new Divination();
         harness.setLibrary(player2, List.of(topCard));
         harness.setLibrary(player1, List.of(new Divination(), new Divination()));
+        harness.setHand(player1, List.of());
 
         declareAttackers(player2, List.of(0), null);
         harness.passBothPriorities();

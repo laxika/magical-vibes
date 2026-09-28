@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +34,7 @@ public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
         }
 
         String sourceName = entry.getCard().getName();
+        var filter = ((EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect) effect).filter();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
@@ -39,7 +42,11 @@ public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             int cardsInGraveyard = graveyard == null
                     ? 0
-                    : (int) graveyard.stream().filter(card -> !card.isToken()).count();
+                    : (int) graveyard.stream()
+                            .filter(card -> !card.isToken())
+                            .filter(card -> filter == null || predicateEvaluationService.matchesCardPredicate(
+                                    card, filter, null, gameData, playerId))
+                            .count();
             if (cardsInGraveyard > 0) {
                 lifeSupport.applyLifeLoss(gameData, playerId, cardsInGraveyard, sourceName);
             }

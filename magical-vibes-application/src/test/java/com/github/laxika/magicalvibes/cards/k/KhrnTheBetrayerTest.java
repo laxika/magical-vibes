@@ -39,6 +39,7 @@ class KhrnTheBetrayerTest extends BaseCardTest {
     @DisplayName("Damage to Khârn is prevented, transfers it, and its former controller draws")
     void damageTransfersKharnAndFormerControllerDraws() {
         Permanent kharn = harness.addToBattlefieldAndReturn(player1, new KhrnTheBetrayer());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
@@ -57,6 +58,7 @@ class KhrnTheBetrayerTest extends BaseCardTest {
     @DisplayName("Khârn's Sigil of Corruption triggers when it leaves the battlefield")
     void leavesBattlefieldAndFormerControllerDraws() {
         Permanent kharn = harness.addToBattlefieldAndReturn(player1, new KhrnTheBetrayer());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, kharn));

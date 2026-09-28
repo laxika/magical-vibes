@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "TSR", collectorNumber = "298")
 @CardRegistration(set = "MSC", collectorNumber = "140")
 @CardRegistration(set = "CMM", collectorNumber = "47")
+@CardRegistration(set = "FIC", collectorNumber = "247")
 @CardRegistration(set = "LTC", collectorNumber = "174")
 public class PalaceJailer extends Card {
 

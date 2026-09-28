@@ -15,6 +15,6 @@ public class MasterWarcraft extends Card {
     public MasterWarcraft() {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.BEFORE_ATTACKERS_DECLARED);
         addEffect(EffectSlot.SPELL, new ChooseAttackersThisCombatEffect());
-        addEffect(EffectSlot.SPELL, new ChooseBlockersThisCombatEffect());
+        addEffect(EffectSlot.SPELL, new ChooseBlockersThisCombatEffect(true));
     }
 }

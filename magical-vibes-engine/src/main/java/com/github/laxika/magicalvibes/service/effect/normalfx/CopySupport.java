@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,21 +30,80 @@ import java.util.UUID;
 public class CopySupport {
 
     private final TriggerCollectionService triggerCollectionService;
+    private final GameQueryService gameQueryService;
 
     public CopySupport() {
         this.triggerCollectionService = null;
+        this.gameQueryService = null;
     }
 
     @Autowired
-    public CopySupport(TriggerCollectionService triggerCollectionService) {
+    public CopySupport(TriggerCollectionService triggerCollectionService, GameQueryService gameQueryService) {
         this.triggerCollectionService = triggerCollectionService;
+        this.gameQueryService = gameQueryService;
+    }
+
+    public CopySupport(TriggerCollectionService triggerCollectionService) {
+        this(triggerCollectionService, null);
     }
 
     public void addCopyToStack(GameData gameData, StackEntry copyEntry) {
+        addCopyToStack(gameData, copyEntry, true);
+    }
+
+    /**
+     * Adds a copy and applies global spell-copy replacements once to this copy event.
+     *
+     * <p>The replacement is disabled for the extra copies created by this method, preventing
+     * recursive replacement. Counted copy effects use the overload with {@code false} and adjust
+     * their event count before creating the copies.</p>
+     */
+    public void addCopyToStack(GameData gameData, StackEntry copyEntry, boolean applySpellCopyReplacement) {
         gameData.stack.add(copyEntry);
         if (triggerCollectionService != null) {
             triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
         }
+
+        if (!applySpellCopyReplacement || !isSpellCopy(copyEntry) || gameQueryService == null) {
+            return;
+        }
+
+        int additionalCopies = gameQueryService.countAdditionalSpellCopies(gameData);
+        for (int i = 0; i < additionalCopies; i++) {
+            Card extraCopyCard = createCopyCard(copyEntry.getCard());
+            StackEntry extraCopy = createCopyStackEntry(
+                    copyEntry, extraCopyCard, copyEntry.getControllerId(), copyEntry.getTargetId());
+            addCopyToStack(gameData, extraCopy, false);
+            if (hasTargets(extraCopy)) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        extraCopy.getCard(),
+                        extraCopy.getControllerId(),
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the additional copy of "
+                                + extraCopy.getCard().getName() + "?",
+                        extraCopyCard.getId()));
+            }
+        }
+    }
+
+    /** Adjusts a counted spell-copy event for active global spell-copy replacements. */
+    public int adjustedSpellCopyCount(GameData gameData, int requestedCopies) {
+        if (requestedCopies <= 0 || gameQueryService == null) {
+            return requestedCopies;
+        }
+        return requestedCopies + gameQueryService.countAdditionalSpellCopies(gameData);
+    }
+
+    private static boolean isSpellCopy(StackEntry entry) {
+        return entry != null && entry.isCopy()
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY;
+    }
+
+    private static boolean hasTargets(StackEntry entry) {
+        return entry.getTargetId() != null
+                || !entry.getTargetIds().isEmpty()
+                || !entry.getTargetCardIds().isEmpty();
     }
 
     public StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "32")
+@CardRegistration(set = "MB2", collectorNumber = "38")
 public class UnnaturalSelection extends Card {
 
     public UnnaturalSelection() {

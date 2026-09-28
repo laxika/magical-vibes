@@ -499,7 +499,7 @@ public class ETBTokenTargetService {
                         !damagedPlayerIds.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
-            int aggregateManaValueLimit = aggregateManaValueLimit(groupEffects);
+            int aggregateManaValueLimit = aggregateManaValueLimit(gameData, pending, groupEffects);
             if (aggregateManaValueLimit >= 0) {
                 int selectedManaValue = currentGroupTargetIds(pending).stream()
                         .map(id -> gameQueryService.findPermanentById(gameData, id))
@@ -676,13 +676,26 @@ public class ETBTokenTargetService {
         return pending.chosenTargetsSoFar().subList(currentGroupStart, pending.chosenTargetsSoFar().size());
     }
 
-    private int aggregateManaValueLimit(List<CardEffect> effects) {
+    private int aggregateManaValueLimit(GameData gameData,
+                                        PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                        List<CardEffect> effects) {
         return effects.stream()
                 .filter(effect -> effect instanceof AggregateManaValueTargetEffect aggregateEffect
                         && aggregateEffect.hasAggregateManaValueLimit()
                         && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 .map(AggregateManaValueTargetEffect.class::cast)
-                .mapToInt(AggregateManaValueTargetEffect::maxTotalManaValue)
+                .mapToInt(effect -> {
+                    if (effect.dynamicMaxTotalManaValue() == null) {
+                        return effect.maxTotalManaValue();
+                    }
+                    Permanent source = pending.sourcePermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+                    return amountEvaluationService.evaluate(gameData, effect.dynamicMaxTotalManaValue(),
+                            new AmountContext(pending.controllerId(), source, null, pending.xValue(),
+                                    pending.eventValue(), false, null, pending.repeatedAdditionalCosts(),
+                                    pending.sourceCard()));
+                })
                 .min()
                 .orElse(-1);
     }

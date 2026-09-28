@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "PIP", collectorNumber = "164")
+@CardRegistration(set = "PIP", collectorNumber = "451")
+@CardRegistration(set = "PIP", collectorNumber = "692")
+@CardRegistration(set = "PIP", collectorNumber = "979")
 @CardRegistration(set = "MOC", collectorNumber = "191")
 @CardRegistration(set = "MKC", collectorNumber = "70")
 public class KeeperOfTheAccord extends Card {

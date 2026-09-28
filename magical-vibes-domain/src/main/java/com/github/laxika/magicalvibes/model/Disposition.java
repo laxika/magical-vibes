@@ -6,5 +6,6 @@ package com.github.laxika.magicalvibes.model;
 public enum Disposition {
     GRAVEYARD,
     EXILE,
-    RETURN_TO_HAND
+    RETURN_TO_HAND,
+    BOTTOM_OF_LIBRARY
 }

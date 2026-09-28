@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2494")
+@CardRegistration(set = "AFC", collectorNumber = "36")
 public class WildMagicSorcerer extends Card {
 
     public WildMagicSorcerer() {

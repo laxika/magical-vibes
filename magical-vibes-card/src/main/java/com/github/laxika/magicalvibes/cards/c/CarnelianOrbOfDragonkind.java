@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "534")
+@CardRegistration(set = "HBG", collectorNumber = "177")
 public class CarnelianOrbOfDragonkind extends Card {
 
     public CarnelianOrbOfDragonkind() {

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "17")
 @CardRegistration(set = "SLD", collectorNumber = "2514")
 @CardRegistration(set = "MKC", collectorNumber = "75")
+@CardRegistration(set = "OTC", collectorNumber = "83")
 public class MirrorEntity extends Card {
 
     public MirrorEntity() {

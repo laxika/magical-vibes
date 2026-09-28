@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -105,6 +106,7 @@ public class GameViewProjectionFactory {
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
         List<Integer> energyCounters = getEnergyCounters(gameData);
+        List<Integer> radCounters = getRadCounters(gameData);
         List<Integer> speeds = getSpeeds(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
@@ -178,6 +180,7 @@ public class GameViewProjectionFactory {
                             applyFaceDownReveals(battlefields, faceDownReveals, playerId),
                             collectFaceDownPermanentReveals(gameData, playerId)),
                     stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
+                    radCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
@@ -357,13 +360,21 @@ public class GameViewProjectionFactory {
                         var filteredPermission = viewerId != null && viewerId.equals(pid)
                                 ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
+                        var targetedPermission = viewerId != null && viewerId.equals(pid)
+                                ? data.graveyardCardCastPermissionsUntilEndOfTurn.get(c.getId())
+                                : null;
+                        int graveyardCastExileCount = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount()
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
+                                        .orElse(0);
+                        String graveyardCastExileLabel = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount() > 0 ? "other cards" : null
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
+                                        .orElse(null);
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
                                 gameQueryService.graveyardCardsHaveLostAllAbilities(data),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
-                                        .orElse(0),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
-                                        .orElse(null));
+                                graveyardCastExileCount, graveyardCastExileLabel);
                     }).toList()
                     : new ArrayList<>());
         }
@@ -574,6 +585,14 @@ public class GameViewProjectionFactory {
         return counters;
     }
 
+    List<Integer> getRadCounters(GameData gameData) {
+        List<Integer> counters = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            counters.add(gameData.playerRadCounters.getOrDefault(pid, 0));
+        }
+        return counters;
+    }
+
     List<Integer> getSpeeds(GameData gameData) {
         List<Integer> speeds = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -657,6 +676,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (card.hasType(CardType.CREATURE) && card.getCardText() == null && card.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
             if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -693,6 +717,7 @@ public class GameViewProjectionFactory {
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
             boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
+                    && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
                     && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
             if (hasSuspendedExileAbility) {
                 playable.add(cardViewFactory.create(card));
@@ -702,7 +727,10 @@ public class GameViewProjectionFactory {
             boolean hasPermission = fromOutsideGame || castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
-            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            FlashforwardCast flashforwardCast = !fromOutsideGame
+                    ? card.getCastingOption(FlashforwardCast.class).orElse(null) : null;
+            boolean hasFlashforward = flashforwardCast != null;
+            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent() || hasFlashforward;
             boolean hasExileAbility = card.getActivatedAbilities().stream()
                     .anyMatch(ActivatedAbility::isExileOnly);
             if (hasExileAbility && !hasPermission && !hasExileCast) {
@@ -763,6 +791,10 @@ public class GameViewProjectionFactory {
                             && gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
                     ManaCost baseCost = foretellPermission
                             ? foretoldCost
+                            : hasFlashforward
+                            ? new ManaCost(flashforwardCast.getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElseThrow())
                             : card.getParsedManaCost();
                     ManaCost cost = castingCostService.applyColoredManaCostReductions(
                             gameData, playerId, card, baseCost);
@@ -973,6 +1005,12 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (topCard.hasType(CardType.CREATURE) && topCard.getCardText() == null
+                    && topCard.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
             if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -1070,6 +1108,7 @@ public class GameViewProjectionFactory {
                 getLifeTotals(data),
                 getPoisonCounters(data),
                 getEnergyCounters(data),
+                getRadCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),

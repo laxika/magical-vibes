@@ -20,7 +20,9 @@ class ElrondOfTheWhiteCouncilTest extends BaseCardTest {
     @Test
     void fellowshipStealsChosenCreatureAndAidCountersAllControlledCreatures() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent firstOpponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears firstCard = new GrizzlyBears();
+        firstCard.setOwnerId(player2.getId());
+        Permanent firstOpponentCreature = harness.addToBattlefieldAndReturn(player2, firstCard);
         Permanent secondOpponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castElrond();

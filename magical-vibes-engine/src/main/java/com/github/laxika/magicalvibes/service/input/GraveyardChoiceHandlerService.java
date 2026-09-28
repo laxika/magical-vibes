@@ -410,7 +410,7 @@ public class GraveyardChoiceHandlerService {
                                 next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                                 next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                                 next.distinctManaValues(), next.distinctNames(), excludedManaValues,
-                                next.excludedCardIds()));
+                                next.excludedCardIds(), next.choosingPlayerId()));
                     }
                 }
                 case BATTLEFIELD -> {
@@ -647,7 +647,7 @@ public class GraveyardChoiceHandlerService {
                         next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                         next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                         next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
-                        excludedCardIds));
+                        excludedCardIds, next.choosingPlayerId()));
             }
         }
 
@@ -1154,7 +1154,13 @@ public class GraveyardChoiceHandlerService {
 
         if (gameData.cloneOperation.graveyardCopyChoicePending) {
             Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
-            if (selectedCard == null || !selectedCard.hasType(CardType.CREATURE)) {
+            UUID graveyardOwnerId = selectedCard == null
+                    ? null : gameQueryService.findGraveyardOwnerById(gameData, selectedCard.getId());
+            if (selectedCard == null || graveyardOwnerId == null || !selectedCard.hasType(CardType.CREATURE)
+                    || (gameData.cloneOperation.graveyardCopyEffect != null
+                    && !cloneService.isValidGraveyardCopyCard(
+                    gameData, gameData.cloneOperation.controllerId, graveyardOwnerId, selectedCard,
+                    gameData.cloneOperation.graveyardCopyEffect))) {
                 throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
             }
 
@@ -1207,12 +1213,17 @@ public class GraveyardChoiceHandlerService {
         if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {
             gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = false;
             gameData.interaction.clearAwaitingInput();
+            List<Card> cardsToReturn = new ArrayList<>();
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                    graveyardReturnSupport.putCardOntoBattlefield(gameData, player.getId(), card);
+                    cardsToReturn.add(card);
                 }
+            }
+            if (!cardsToReturn.isEmpty()) {
+                graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
+                        gameData, Map.of(player.getId(), cardsToReturn), false, null);
             }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;

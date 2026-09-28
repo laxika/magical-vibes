@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "337")
 @CardRegistration(set = "C21", collectorNumber = "3")
 @CardRegistration(set = "TDC", collectorNumber = "310")
+@CardRegistration(set = "OTC", collectorNumber = "248")
 public class VeyranVoiceOfDuality extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(List.of(

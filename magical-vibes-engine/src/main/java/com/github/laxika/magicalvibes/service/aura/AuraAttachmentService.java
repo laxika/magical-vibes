@@ -92,15 +92,18 @@ public class AuraAttachmentService {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
-                boolean isFortification = p.getCard().getSubtypes().contains(CardSubtype.FORTIFICATION);
+                boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA)
+                        && !p.getCard().isEnchantZone();
+                boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
+                boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
                 if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
                     continue;
                 }
                 boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
                         && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
-                        && gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null;
+                        && gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null
+                        && !isCardInHand(gameData, p.getAttachedTo());
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.isBestow()) {
                         p.setCard(p.getOriginalCard());
@@ -110,7 +113,7 @@ public class AuraAttachmentService {
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
-                    } else if (gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT) || isFortification) {
+                    } else if (isEquipment || isFortification) {
                         // Equipment and Fortification stay on the battlefield unattached when their host leaves
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
@@ -151,6 +154,11 @@ public class AuraAttachmentService {
                 entry.setSourcePermanentSnapshot(new Permanent(permanent));
             }
         }
+    }
+
+    private boolean isCardInHand(GameData gameData, UUID cardId) {
+        return gameData.playerHands.values().stream()
+                .anyMatch(hand -> hand.stream().anyMatch(card -> card.getId().equals(cardId)));
     }
 
     private boolean isAwaitingDayNightAttachment(GameData gameData, UUID permanentId) {
@@ -196,9 +204,9 @@ public class AuraAttachmentService {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 if (!p.isAttached()) continue;
-                boolean isAura = GameQueryService.permanentHasSubtype(p, CardSubtype.AURA);
+                boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA);
                 boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
-                boolean isFortification = GameQueryService.permanentHasSubtype(p, CardSubtype.FORTIFICATION);
+                boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
                 if (!isAura && !isEquipment && !isFortification) {
                     // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
@@ -349,6 +357,12 @@ public class AuraAttachmentService {
             return null;
         }
         if (gameQueryService.findCardInGraveyardById(gameData, attachedTo) != null) {
+            if (isFortification) {
+                return "it can only fortify a land";
+            }
+            return null;
+        }
+        if (isCardInHand(gameData, attachedTo)) {
             if (isFortification) {
                 return "it can only fortify a land";
             }

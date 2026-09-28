@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerDrawsCardEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "19")
+@CardRegistration(set = "HBG", collectorNumber = "118")
 public class DreamFracture extends Card {
 
     public DreamFracture() {

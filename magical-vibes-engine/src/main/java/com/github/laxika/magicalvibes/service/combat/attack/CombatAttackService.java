@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesGreaterThanSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
@@ -140,6 +141,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -403,7 +405,8 @@ public class CombatAttackService {
 
     private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices) {
-        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (castingCostService.hasAttackLifePaymentForAnyCreature(gameData, playerId)
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -781,6 +784,7 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
+        CombatHelper.validateCommandZoneAttackCount(gameData, playerId, attackerIndices.size());
         CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
                 gameQueryService);
 
@@ -788,11 +792,18 @@ public class CombatAttackService {
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
         // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
         int selfTaxTotal = 0;
+        int defenderTaxTotal = 0;
         int totalTax = 0;
+        int attackLifeTaxTotal = 0;
         for (int idx : attackerIndices) {
-            totalTax += castingCostService.getAttackPaymentPerCreature(
-                    gameData, playerId, resolvedTargets.get(idx), battlefield.get(idx));
-            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
+            Permanent attacker = battlefield.get(idx);
+            int defenderTax = castingCostService.getAttackPaymentPerCreature(
+                    gameData, playerId, resolvedTargets.get(idx), attacker);
+            defenderTaxTotal += defenderTax;
+            totalTax += defenderTax;
+            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, attacker);
+            attackLifeTaxTotal += castingCostService.getAttackLifePaymentPerCreature(
+                    gameData, playerId, resolvedTargets.get(idx), attacker);
         }
         totalTax += selfTaxTotal;
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
@@ -823,6 +834,16 @@ public class CombatAttackService {
                         + phyrexianLifeCost + " required)");
             }
         }
+        if (attackLifeTaxTotal > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Life total can't change to pay attack life cost");
+            }
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (currentLife < attackLifeTaxTotal) {
+                throw new IllegalStateException("Not enough life to pay attack life cost ("
+                        + attackLifeTaxTotal + " required)");
+            }
+        }
 
         // Validate attacking bands (CR 702.22c/d): ordinary bands need >=1 creature with banding
         // and <=1 without, while a "bands with other" band needs matching named creatures and at
@@ -840,6 +861,10 @@ public class CombatAttackService {
             payGenericManaPreservingPhyrexianColors(
                     gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, attackerIndices.size());
         }
+        if (defenderTaxTotal > 0) {
+            triggerCollectionService.checkTaxPaymentTriggers(
+                    gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), defenderTaxTotal);
+        }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
         if (!phyrexianPayments.isEmpty()) {
@@ -848,6 +873,12 @@ public class CombatAttackService {
             if (lifeCost > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, lifeCost, "Phyrexian attack tax");
             }
+        }
+        if (attackLifeTaxTotal > 0) {
+            lifeSupport.applyLifePayment(gameData, playerId, attackLifeTaxTotal, "attack life tax");
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " pays " + attackLifeTaxTotal
+                            + " life to declare attackers."));
         }
 
         combatTapCostService.payAttackCosts(gameData, playerId, declaredAttackers);
@@ -1226,16 +1257,18 @@ public class CombatAttackService {
                                         attacker.getId(), defendingPlayerId);
                             }
                         } else if (needsTarget) {
-                            // Multi-target / "up to N" attack triggers (Archon of the Triumvirate):
-                            // multi-group and dynamic groups use the slot-by-slot picker; a static
-                            // single group is handled by the ordinary attack-trigger target flow.
+                            // A static single "up to N" group uses the multi-permanent choice
+                            // flow. Equipment attachments need individual selections so each
+                            // chosen Equipment is attached when the trigger resolves.
                             Card attackCard = attacker.getCard();
                             boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
                                     && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
                                     && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
                                     && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
+                            boolean attachesEquipment = otherEffects.stream()
+                                    .anyMatch(AttachTargetEquipmentToTriggeringPermanentEffect.class::isInstance);
                             if (attackCard.getSpellTargets().size() > 1
-                                    || (!staticSingleMultiTargetGroup
+                                    || ((!staticSingleMultiTargetGroup || attachesEquipment)
                                     && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -1596,6 +1629,17 @@ public class CombatAttackService {
                     }
                     filteredEffects.add(ce.wrapped());
                 } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesGreaterThanSourceCounters) {
+                    boolean countGreaterThanCounters = conditionEvaluationService.isMet(
+                            gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                    if (!countGreaterThanCounters) {
+                        log.info("Game {} - {} attack trigger skipped (attacker count does not exceed source counters)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(effect);
+                } else if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
                     boolean exactCountMet = conditionEvaluationService.isMet(
                             gameData, ce.condition(),
@@ -1705,6 +1749,8 @@ public class CombatAttackService {
             }
         }
 
+        checkCommandZoneAllyCreatureAttackTriggers(gameData, playerId, attackerIndices.size());
+
         if (!attackerIndices.isEmpty()) {
             triggerCollectionService.checkTemporaryGlobalAllyCreatureAttackTriggers(gameData, playerId);
         }
@@ -1728,17 +1774,14 @@ public class CombatAttackService {
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
                         .withTargetId(attackedPlayerId);
-                Integer targetAttackerCount = null;
+                int targetAttackerCount = (int) attackerIndices.stream()
+                        .map(resolvedTargets::get)
+                        .filter(attackedPlayerId::equals)
+                        .count();
                 List<CardEffect> matchingEffects = new ArrayList<>();
                 for (CardEffect effect : effects) {
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof MinimumAttackers minimumAttackers) {
-                        if (targetAttackerCount == null) {
-                            targetAttackerCount = (int) attackerIndices.stream()
-                                    .map(resolvedTargets::get)
-                                    .filter(attackedPlayerId::equals)
-                                    .count();
-                        }
                         if (targetAttackerCount < minimumAttackers.minimumAttackers()) continue;
                         matchingEffects.add(conditional.wrapped());
                     } else if (effect instanceof ConditionalEffect conditional
@@ -1771,8 +1814,9 @@ public class CombatAttackService {
                                 playerId,
                                 perm.getCard().getName() + "'s attack trigger",
                                 matchingEffects,
-                                targetAttackerCount != null ? targetAttackerCount : 0,
+                                0,
                                 perm.getId());
+                        attackTrigger.setEventValue(targetAttackerCount);
                         attackTrigger.setAttackedTargetId(attackedPlayerId);
                         attackTrigger.setNonTargeting(true);
                         gameData.stack.add(attackTrigger);
@@ -1912,6 +1956,8 @@ public class CombatAttackService {
                             attackTrigger.setTargetId(attacker.getId());
                             attackTrigger.setNonTargeting(true);
                             attackTrigger.setTriggeringPermanentId(attacker.getId());
+                            attackTrigger.setTriggeringPermanentOwnerId(
+                                    gameData.defaultControllerOf(attacker.getId()));
                             if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
                                     && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
                                 attackTrigger.setEventValue(attacker.getCard().getManaValue());
@@ -2023,6 +2069,8 @@ public class CombatAttackService {
                     ? attackedTargetId
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
+            triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
+                    gameData, attacker, attackedPlayerId);
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
@@ -2502,6 +2550,49 @@ public class CombatAttackService {
         attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    private void checkCommandZoneAllyCreatureAttackTriggers(GameData gameData, UUID playerId,
+                                                              int attackerCount) {
+        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        if (commandZone == null) {
+            return;
+        }
+        for (Card card : new ArrayList<>(commandZone)) {
+            if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                continue;
+            }
+            List<CardEffect> effects = new ArrayList<>(
+                    card.getEffects(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            boolean needsTarget = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        card, playerId, effects, null, playerId, null, null, attackerCount));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s attack trigger",
+                        effects,
+                        attackerCount,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null));
+            }
+            gameLogService.append(gameData,
+                    GameLog.builder().card(card).text("'s attack ability triggers.").build());
+            log.info("Game {} - {} command-zone attack trigger queued", gameData.id, card.getName());
+        }
     }
 
     private boolean beginEnlistmentChoice(GameData gameData, UUID playerId, List<Permanent> battlefield,
@@ -3118,6 +3209,8 @@ public class CombatAttackService {
         return attackLegalityService.getValidAttackTargetIds(gameData, controllerId).stream()
                 .filter(targetId -> attackLegalityService.canAttackDefender(gameData, creature, targetId))
                 .filter(targetId -> castingCostService.getAttackPaymentPerCreature(
+                        gameData, controllerId, targetId, creature) == 0)
+                .filter(targetId -> castingCostService.getAttackLifePaymentPerCreature(
                         gameData, controllerId, targetId, creature) == 0)
                 .mapToInt(targetId -> attackLegalityService.getMustAttackRequirementCount(gameData, creature, targetId))
                 .max().orElse(0);

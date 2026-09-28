@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "50")
 @CardRegistration(set = "OM1", collectorNumber = "49")
+@CardRegistration(set = "MSC", collectorNumber = "791")
 public class AlienSymbiosis extends Card {
 
     public AlienSymbiosis() {
