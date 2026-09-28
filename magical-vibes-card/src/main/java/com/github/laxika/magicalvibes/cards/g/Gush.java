@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "DD2", collectorNumber = "27")
 @CardRegistration(set = "VMA", collectorNumber = "72")
 @CardRegistration(set = "JVC", collectorNumber = "27")
+@CardRegistration(set = "MB2", collectorNumber = "164")
 public class Gush extends Card {
 
     public Gush() {

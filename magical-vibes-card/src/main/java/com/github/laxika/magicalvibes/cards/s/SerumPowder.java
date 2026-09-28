@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "138")
 @CardRegistration(set = "IMA", collectorNumber = "228")
+@CardRegistration(set = "MB2", collectorNumber = "142")
 public class SerumPowder extends Card {
 
     public SerumPowder() {

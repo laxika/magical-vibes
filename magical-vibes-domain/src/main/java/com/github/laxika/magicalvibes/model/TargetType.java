@@ -5,5 +5,6 @@ public enum TargetType {
     PERMANENT,
     SPELL_ON_STACK,
     GRAVEYARD,
-    EXILE
+    EXILE,
+    HAND
 }

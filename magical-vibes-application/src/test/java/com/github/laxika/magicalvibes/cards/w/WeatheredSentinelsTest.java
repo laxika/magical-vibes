@@ -50,6 +50,7 @@ class WeatheredSentinelsTest extends BaseCardTest {
     void attackBonusExpiresAtEndOfTurn() {
         Permanent sentinels = addCreatureReady(player1, new WeatheredSentinels());
         gd.playersWhoAttackedPlayersLastTurn.put(player1.getId(), new HashSet<>(Set.of(player2.getId())));
+
         declareAttackers(List.of(0));
         resolveAllTriggers();
 

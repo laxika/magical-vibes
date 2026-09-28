@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "123")
+@CardRegistration(set = "MB2", collectorNumber = "178")
 public class Contamination extends Card {
 
     public Contamination() {

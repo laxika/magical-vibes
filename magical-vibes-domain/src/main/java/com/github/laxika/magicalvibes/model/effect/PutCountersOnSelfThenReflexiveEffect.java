@@ -14,16 +14,28 @@ public record PutCountersOnSelfThenReflexiveEffect(
         CounterType counterType,
         int count,
         Condition condition,
-        CardEffect reflexiveEffect
+        CardEffect reflexiveEffect,
+        boolean reflexiveOptionalTarget
 ) implements CardEffect {
 
     public PutCountersOnSelfThenReflexiveEffect(CounterType counterType, CardEffect reflexiveEffect) {
-        this(counterType, 1, null, reflexiveEffect);
+        this(counterType, 1, null, reflexiveEffect, false);
     }
 
     public PutCountersOnSelfThenReflexiveEffect(CounterType counterType, int count,
                                                 CardEffect reflexiveEffect) {
-        this(counterType, count, null, reflexiveEffect);
+        this(counterType, count, null, reflexiveEffect, false);
+    }
+
+    public PutCountersOnSelfThenReflexiveEffect(CounterType counterType, int count,
+                                                CardEffect reflexiveEffect,
+                                                boolean reflexiveOptionalTarget) {
+        this(counterType, count, null, reflexiveEffect, reflexiveOptionalTarget);
+    }
+
+    public PutCountersOnSelfThenReflexiveEffect(CounterType counterType, int count,
+                                                Condition condition, CardEffect reflexiveEffect) {
+        this(counterType, count, condition, reflexiveEffect, false);
     }
 
     public PutCountersOnSelfThenReflexiveEffect {

@@ -9,11 +9,21 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * trigger that fires on every player's turn). The recipient is the stack entry's target — the
  * active player recorded when the trigger was put on the stack — not the source's controller.
  * Not a {@link ManaProducingEffect}: a beginning-of-step trigger uses the stack (CR 605.1b) and
- * therefore is not a mana ability.
+ * therefore is not a mana ability. The optional restriction routes the mana into a restricted
+ * bucket before the active player can spend it.
  */
-public record AwardManaToActivePlayerEffect(ManaColor color, DynamicAmount amount) implements CardEffect {
+public record AwardManaToActivePlayerEffect(ManaColor color, DynamicAmount amount,
+                                            ManaRestriction restriction) implements CardEffect {
+
+    public AwardManaToActivePlayerEffect(ManaColor color, DynamicAmount amount) {
+        this(color, amount, null);
+    }
 
     public AwardManaToActivePlayerEffect(ManaColor color, int amount) {
-        this(color, new Fixed(amount));
+        this(color, new Fixed(amount), null);
+    }
+
+    public AwardManaToActivePlayerEffect(ManaColor color, int amount, ManaRestriction restriction) {
+        this(color, new Fixed(amount), restriction);
     }
 }

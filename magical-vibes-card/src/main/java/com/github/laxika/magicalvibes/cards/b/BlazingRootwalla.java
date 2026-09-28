@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "115")
+@CardRegistration(set = "MB2", collectorNumber = "54")
 public class BlazingRootwalla extends Card {
 
     public BlazingRootwalla() {

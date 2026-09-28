@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 @CardRegistration(set = "SLD", collectorNumber = "2004")
 @CardRegistration(set = "SLD", collectorNumber = "2023")
 @CardRegistration(set = "STA", collectorNumber = "34")
+@CardRegistration(set = "MB2", collectorNumber = "50")
 public class TendrilsOfAgony extends Card {
 
     public TendrilsOfAgony() {

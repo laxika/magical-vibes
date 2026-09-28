@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 
 @CardRegistration(set = "NPH", collectorNumber = "162")
 @CardRegistration(set = "BIG", collectorNumber = "27")
+@CardRegistration(set = "MB2", collectorNumber = "236")
 public class TorporOrb extends Card {
 
     public TorporOrb() {

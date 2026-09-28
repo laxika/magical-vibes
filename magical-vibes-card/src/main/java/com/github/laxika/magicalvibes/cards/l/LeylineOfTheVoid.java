@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DSK", collectorNumber = "106")
 @CardRegistration(set = "TSR", collectorNumber = "326")
 @CardRegistration(set = "WOT", collectorNumber = "30")
+@CardRegistration(set = "MB2", collectorNumber = "44")
 public class LeylineOfTheVoid extends Card {
 
     public LeylineOfTheVoid() {

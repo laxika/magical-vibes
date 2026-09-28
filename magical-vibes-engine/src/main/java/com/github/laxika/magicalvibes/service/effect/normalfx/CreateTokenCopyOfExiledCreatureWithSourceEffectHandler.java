@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 
 @Component
@@ -24,6 +27,7 @@ public class CreateTokenCopyOfExiledCreatureWithSourceEffectHandler implements N
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TokenCopySupport tokenCopySupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -83,7 +87,12 @@ public class CreateTokenCopyOfExiledCreatureWithSourceEffectHandler implements N
         CreateTokenCopyOfExiledCreatureWithSourceEffect copyEffect =
                 (CreateTokenCopyOfExiledCreatureWithSourceEffect) effect;
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(card), sourcePermanent,
+        int copyCount = amountEvaluationService.evaluate(
+                gameData, copyEffect.tokenCopyEffect().amount(), AmountContext.forStackEntry(entry, sourcePermanent));
+        if (copyCount <= 0) {
+            return;
+        }
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, card), sourcePermanent,
                 copyEffect.tokenCopyEffect());
     }
 }

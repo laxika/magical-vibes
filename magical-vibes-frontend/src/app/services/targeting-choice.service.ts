@@ -151,6 +151,7 @@ export class TargetingChoiceService {
     this.pendingGraveyardCastExileIndices = [];
     // Exile / library-top casting
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
@@ -304,6 +305,7 @@ export class TargetingChoiceService {
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
   validTargetIds = signal(new Set<string>());
+  validHandTargetIds = signal(new Set<string>());
   validTargetPlayerIds = signal(new Set<string>());
   targetingPrompt = '';
   pendingTargetRequest = false;
@@ -402,6 +404,7 @@ export class TargetingChoiceService {
 
   // --- Exile / library-top casting state ---
   private pendingFromExileCardId: string | null = null;
+  private pendingFromExileFlashforward = false;
   private pendingFromLibraryTop = false;
   private pendingZoneCard: Card | null = null;
   selectingExileCounterCost = false;
@@ -532,16 +535,18 @@ export class TargetingChoiceService {
 
     const hasGraveyardTargets = msg.validGraveyardCardIds && msg.validGraveyardCardIds.length > 0;
     const hasExileTargets = msg.validExiledCardIds && msg.validExiledCardIds.length > 0;
+    const hasHandTargets = msg.validHandCardIds && msg.validHandCardIds.length > 0;
 
     // No valid targets — auto-cancel to prevent stuck UI
     if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0
-        && !hasGraveyardTargets && !hasExileTargets && msg.minTargets > 0) {
+        && !hasGraveyardTargets && !hasExileTargets && !hasHandTargets && msg.minTargets > 0) {
       this.resetTargetingState();
       this.cancelMultiTargeting();
       return;
     }
 
     this.validTargetIds.set(new Set(msg.validPermanentIds));
+    this.validHandTargetIds.set(new Set(msg.validHandCardIds ?? []));
     this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
     this.targetingPrompt = msg.prompt;
     this.targetingGraveyard = false;
@@ -1219,6 +1224,7 @@ export class TargetingChoiceService {
     this.pendingKicked = false;
     this.pendingBuyback = false;
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
@@ -1479,6 +1485,7 @@ export class TargetingChoiceService {
     if (!card.id) return;
     this.pendingCommandCardId = card.id;
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.playCard(0, () => true);
   }
@@ -1486,6 +1493,7 @@ export class TargetingChoiceService {
     this.pendingCommandCardId = null;
     if (!card.id) return;
     this.pendingFromExileCardId = card.id;
+    this.pendingFromExileFlashforward = card.hasFlashforward === true;
     this.pendingFromLibraryTop = false;
     this.continueZonePlay(card);
   }
@@ -1494,6 +1502,7 @@ export class TargetingChoiceService {
   startLibraryTopPlay(card: Card): void {
     this.pendingCommandCardId = null;
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = true;
     this.continueZonePlay(card);
   }
@@ -1691,7 +1700,9 @@ export class TargetingChoiceService {
     }
     if (this.pendingFromExileCardId != null) {
       msg.fromExileCardId = this.pendingFromExileCardId;
+      if (this.pendingFromExileFlashforward) msg.alternateCost = true;
       this.pendingFromExileCardId = null;
+      this.pendingFromExileFlashforward = false;
     }
     if (this.pendingFromLibraryTop) {
       msg.fromLibraryTop = true;
@@ -2151,6 +2162,7 @@ export class TargetingChoiceService {
     this.targetingAbilityIndex = -1;
     this.pendingPhyrexianLifeCount = null;
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
@@ -2209,6 +2221,23 @@ export class TargetingChoiceService {
       } else {
         this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
       }
+    }
+    this.resetTargetingState();
+  }
+
+  selectHandTarget(handIndex: number): void {
+    if (!this.selectingTarget) return;
+    const card = this.gameSignal()?.hand?.[handIndex];
+    if (!card?.id || !this.validHandTargetIds().has(card.id)) return;
+    const extra: Record<string, any> = {};
+    if (this.pendingAbilityXValue != null) {
+      extra['xValue'] = this.pendingAbilityXValue;
+    }
+    if (this.pendingModalTargeting) {
+      extra['targetIds'] = [card.id];
+      this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+    } else {
+      this.sendPlayCardMessage(this.targetingCardIndex, card.id, extra);
     }
     this.resetTargetingState();
   }
@@ -2338,6 +2367,7 @@ export class TargetingChoiceService {
     this.targetingForGraveyardAbility = false;
     this.targetingAbilityIndex = -1;
     this.validTargetIds.set(new Set());
+    this.validHandTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = '';
     this.targetingExile = false;
@@ -2364,6 +2394,7 @@ export class TargetingChoiceService {
     this.graveyardCastExileSelectedIndices.set([]);
     this.pendingGraveyardCastExileIndices = [];
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
@@ -2427,6 +2458,7 @@ export class TargetingChoiceService {
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
   }
@@ -3211,6 +3243,7 @@ export class TargetingChoiceService {
     this.pendingExileCounterCostPermanentIds = [];
     this.pendingZoneCard = null;
     this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
   }
 
   // ========== Tap / ability activation ==========

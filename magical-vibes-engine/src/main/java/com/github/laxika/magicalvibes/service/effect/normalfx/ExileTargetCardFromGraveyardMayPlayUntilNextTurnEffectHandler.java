@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
@@ -31,6 +32,8 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect mayPlayEffect =
+                (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) effect;
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
             targetCardId = entry.getTargetCardIds().getFirst();
@@ -51,12 +54,30 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
 
         UUID controllerId = entry.getControllerId();
         UUID ownerId = graveyardOwnerId != null ? graveyardOwnerId : controllerId;
-        exileService.exileCard(gameData, ownerId, targetCard);
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        boolean sourceControlled = mayPlayEffect.whileSourceControlled()
+                && source != null
+                && controllerId.equals(gameData.findControllerOf(source));
+        if (sourceControlled) {
+            exileService.exileCard(gameData, ownerId, targetCard, sourcePermanentId);
+        } else {
+            exileService.exileCard(gameData, ownerId, targetCard);
+        }
 
-        // Grant the controller permission to play the exiled card until the end of their next turn.
-        exileSupport.grantPlayUntilOwnersNextTurn(gameData, targetCard.getId(), controllerId);
+        if (sourceControlled) {
+            exileSupport.grantPlayWhileExiled(gameData, targetCard.getId(), controllerId);
+            gameData.exilePlayPermissionSourcePermanents.put(targetCard.getId(), sourcePermanentId);
+        } else if (!mayPlayEffect.whileSourceControlled()) {
+            // Grant the controller permission to play the exiled card until the end of their next turn.
+            exileSupport.grantPlayUntilOwnersNextTurn(gameData, targetCard.getId(), controllerId);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard (may play until end of next turn)."));
+        String permissionText = mayPlayEffect.whileSourceControlled()
+                ? " from a graveyard (may play while controlling the source)."
+                : " from a graveyard (may play until end of next turn).";
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, permissionText));
     }
 }

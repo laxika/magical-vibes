@@ -410,7 +410,7 @@ public class GraveyardChoiceHandlerService {
                                 next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                                 next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                                 next.distinctManaValues(), next.distinctNames(), excludedManaValues,
-                                next.excludedCardIds()));
+                                next.excludedCardIds(), next.choosingPlayerId()));
                     }
                 }
                 case BATTLEFIELD -> {
@@ -647,7 +647,7 @@ public class GraveyardChoiceHandlerService {
                         next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                         next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                         next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
-                        excludedCardIds));
+                        excludedCardIds, next.choosingPlayerId()));
             }
         }
 

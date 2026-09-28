@@ -27,6 +27,7 @@ class MariTheKillingQuillTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castInstant(player1, 0, victim.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(victim.getCard());
         assertThat(gd.exiledCardHitCounters).containsEntry(victim.getCard().getId(), 1);
@@ -42,9 +43,11 @@ class MariTheKillingQuillTest extends BaseCardTest {
         Card exiled = new GrizzlyBears();
         gd.addToExile(player2.getId(), exiled);
         gd.exiledCardHitCounters.put(exiled.getId(), 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 

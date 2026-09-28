@@ -235,6 +235,12 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 false, Set.of(), false, false, List.of(), false, false, null, false, true);
     }
 
+    /** Creates a mandatory single-card graveyard target for a reflexive triggered ability. */
+    public static ReturnTargetCardsFromGraveyardToHandEffect exactlyOneForTriggeredAbility(CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, true, 1,
+                false, Set.of(), false, false, List.of(), false, false, null, false, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (declaresGraveyardTarget) {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "SLD", collectorNumber = "474")
 @CardRegistration(set = "2XM", collectorNumber = "82")
 @CardRegistration(set = "HA4", collectorNumber = "9")
+@CardRegistration(set = "MB2", collectorNumber = "180")
 public class DeathsShadow extends Card {
 
     public DeathsShadow() {

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 @CardRegistration(set = "ME4", collectorNumber = "243")
 @CardRegistration(set = "ARN", collectorNumber = "71")
 @CardRegistration(set = "TMC", collectorNumber = "62")
+@CardRegistration(set = "MB2", collectorNumber = "240")
 public class CityOfBrass extends Card {
 
     public CityOfBrass() {

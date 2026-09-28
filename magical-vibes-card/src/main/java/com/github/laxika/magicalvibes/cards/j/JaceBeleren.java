@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SS1", collectorNumber = "1")
 @CardRegistration(set = "SLD", collectorNumber = "746")
 @CardRegistration(set = "SLD", collectorNumber = "1454")
+@CardRegistration(set = "MB2", collectorNumber = "29")
 public class JaceBeleren extends Card {
 
     public JaceBeleren() {

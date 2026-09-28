@@ -622,6 +622,10 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
+            validTargets.removeAll(targetSpellEntry.getDeclaredTargetIds());
+            if (targetSpellEntry.getTargetId() != null) {
+                validTargets.remove(targetSpellEntry.getTargetId());
+            }
         }
 
         if (validTargets.isEmpty()) {
@@ -633,7 +637,10 @@ public class MayCopyHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(spellCardId));
+        Integer targetIndex = targetSpellEntry.getTargetId() == null
+                && !targetSpellEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for " + spellCard.getName() + ".");
     }

@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "82")
 @CardRegistration(set = "OM1", collectorNumber = "96")
+@CardRegistration(set = "MSC", collectorNumber = "807")
 public class MaskedMeower extends Card {
 
     public MaskedMeower() {

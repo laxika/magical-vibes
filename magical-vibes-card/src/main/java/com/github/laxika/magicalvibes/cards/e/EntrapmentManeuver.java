@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "PIP", collectorNumber = "160")
+@CardRegistration(set = "PIP", collectorNumber = "449")
+@CardRegistration(set = "PIP", collectorNumber = "688")
+@CardRegistration(set = "PIP", collectorNumber = "977")
 @CardRegistration(set = "40K", collectorNumber = "185")
 public class EntrapmentManeuver extends Card {
 

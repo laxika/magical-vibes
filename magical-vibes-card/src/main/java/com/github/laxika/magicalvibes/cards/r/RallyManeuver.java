@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "36")
+@CardRegistration(set = "HBG", collectorNumber = "100")
 public class RallyManeuver extends Card {
 
     public RallyManeuver() {

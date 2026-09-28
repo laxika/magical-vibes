@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "68")
 @CardRegistration(set = "SLZ", collectorNumber = "189")
 @CardRegistration(set = "SLZ", collectorNumber = "310")
+@CardRegistration(set = "MB2", collectorNumber = "61")
 public class SimianSpiritGuide extends Card {
 
     public SimianSpiritGuide() {

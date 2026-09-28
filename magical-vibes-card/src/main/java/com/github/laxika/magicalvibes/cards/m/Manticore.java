@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "113")
+@CardRegistration(set = "HBG", collectorNumber = "163")
+@CardRegistration(set = "HBG", collectorNumber = "314")
 public class Manticore extends Card {
 
     public Manticore() {

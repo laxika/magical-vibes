@@ -29,7 +29,7 @@ public class NicolBolas extends Card {
                         true));
 
         // Whenever Nicol Bolas deals damage to an opponent, that player discards their hand.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER));
     }
 }

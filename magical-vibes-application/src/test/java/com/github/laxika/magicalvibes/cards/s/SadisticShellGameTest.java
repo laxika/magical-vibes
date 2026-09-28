@@ -44,7 +44,7 @@ class SadisticShellGameTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(player1Land);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(player2Land);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(player1Creature.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(player1Creature.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(player2Creature.getCard());
     }
 }

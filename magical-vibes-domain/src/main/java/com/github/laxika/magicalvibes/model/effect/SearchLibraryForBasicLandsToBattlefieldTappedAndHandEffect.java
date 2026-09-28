@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Searches the controller's library for land cards, reveals them, puts the requested number onto
- * the battlefield tapped and the remainder into the controller's hand, then shuffles.
+ * Searches the controller's library for matching cards, reveals them, puts the requested number
+ * onto the battlefield tapped and the remainder into the controller's hand, then shuffles.
  *
  * @param subtype             when non-null, only cards with this subtype qualify
  * @param extraCardCondition  when non-null and met as the effect resolves, one additional card is
@@ -17,11 +18,15 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * @param battlefieldCount    number of cards that may be found for the battlefield portion; the
  *                            normal Cultivate-style flow uses one, while Viewpoint Synchronization
  *                            uses two and puts a third found card into hand
+ * @param filter              optional custom filter replacing the basic-land/subtype filter
+ * @param cardDescription     optional description for a custom filter
  */
 public record SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(CardSubtype subtype,
                                                                         Condition extraCardCondition,
                                                                         boolean basicOnly,
-                                                                        int battlefieldCount)
+                                                                        int battlefieldCount,
+                                                                        CardPredicate filter,
+                                                                        String cardDescription)
         implements CardEffect {
 
     public SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect {
@@ -32,28 +37,44 @@ public record SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(CardSub
 
     public SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(CardSubtype subtype,
                                                                        Condition extraCardCondition,
+                                                                       boolean basicOnly,
+                                                                       int battlefieldCount) {
+        this(subtype, extraCardCondition, basicOnly, battlefieldCount, null, null);
+    }
+
+    public SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(CardSubtype subtype,
+                                                                       Condition extraCardCondition,
                                                                        boolean basicOnly) {
-        this(subtype, extraCardCondition, basicOnly, 1);
+        this(subtype, extraCardCondition, basicOnly, 1, null, null);
     }
 
     /** Up to two basic land cards of any subtype: one to the battlefield tapped, one to hand (Cultivate). */
     public SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect() {
-        this(null, null, true);
+        this(null, null, true, 1, null, null);
     }
 
     public SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(CardSubtype subtype,
                                                                        Condition extraCardCondition) {
-        this(subtype, extraCardCondition, true);
+        this(subtype, extraCardCondition, true, 1, null, null);
+    }
+
+    /** Up to two cards matching a custom filter: one to the battlefield tapped, one to hand. */
+    public static SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect forCardsMatching(
+            CardPredicate filter, String cardDescription) {
+        return new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(
+                null, null, false, 1, filter, cardDescription);
     }
 
     /** Up to two cards with the given land subtype: one to the battlefield tapped, one to hand. */
     public static SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect landSubtype(
             CardSubtype subtype) {
-        return new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(subtype, null, false);
+        return new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(subtype, null, false,
+                1, null, null);
     }
 
     /** Up to three basic lands: two to the battlefield tapped and the third into hand (Viewpoint Synchronization). */
     public static SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect twoToBattlefieldTapped() {
-        return new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(null, null, true, 2);
+        return new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect(null, null, true, 2,
+                null, null);
     }
 }

@@ -35,17 +35,18 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Soldier")
-                        && permanent.getCard().hasType(CardType.CREATURE)
-                        && permanent.getCard().getColor() == CardColor.WHITE
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.SOLDIER)
-                        && permanent.getCard().getPower() == 1
-                        && permanent.getCard().getToughness() == 1);
-        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        var soldiers = findPermanents(player1, "Soldier");
+        assertThat(soldiers).hasSize(1);
+        var soldier = soldiers.getFirst().getCard();
+        assertThat(soldier.isToken()).isTrue();
+        assertThat(soldier.hasType(CardType.CREATURE)).isTrue();
+        assertThat(soldier.getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(soldier.getSubtypes()).contains(CardSubtype.SOLDIER);
+        assertThat(soldier.getPower()).isEqualTo(1);
+        assertThat(soldier.getToughness()).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +61,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         advanceToEndStep(player2);
 
         assertThat(soldierTokens(player1)).isZero();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -83,7 +84,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(soldierTokens(player1)).isZero();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Plains"))
                 .hasSize(1);
@@ -100,7 +101,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         advanceToEndStep(player1);
 
         assertThat(soldierTokens(player1)).isZero();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void advanceToEndStep(Player activePlayer) {

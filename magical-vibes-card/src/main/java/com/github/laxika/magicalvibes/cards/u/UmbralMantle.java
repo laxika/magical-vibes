@@ -12,6 +12,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "267")
+@CardRegistration(set = "MB2", collectorNumber = "101")
 public class UmbralMantle extends Card {
 
     public UmbralMantle() {

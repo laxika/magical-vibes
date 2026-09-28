@@ -27,10 +27,12 @@ public class InteractionState {
         InteractionState copy = new InteractionState();
         copy.activeInteraction = this.activeInteraction;
         if (activeInteraction instanceof PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal
-                && reveal.amplifyEntry() != null) {
+                && (reveal.amplifyEntry() != null || reveal.duplicateManaValueRevealContext() != null)) {
             copy.activeInteraction = new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
                     reveal.playerId(), reveal.validCardIds(), reveal.cardName(), reveal.manaAbilityContext(),
-                    reveal.activatedAbilityContext(), reveal.eachPlayerRevealContext(), reveal.amplifyEntry().deepCopy());
+                    reveal.activatedAbilityContext(), reveal.eachPlayerRevealContext(),
+                    reveal.amplifyEntry() == null ? null : reveal.amplifyEntry().deepCopy(),
+                    reveal.duplicateManaValueRevealContext());
         }
         copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger

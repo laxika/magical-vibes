@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AFR", collectorNumber = "148")
+@CardRegistration(set = "HBG", collectorNumber = "183")
 public class HobgoblinCaptain extends Card {
 
     public HobgoblinCaptain() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -362,7 +363,7 @@ public record ReturnCardFromGraveyardEffect(
         CardEffect grantOnDeathEffect,
         DynamicAmount randomCountAmount,
         boolean requiresPowerAtMostSacrificedPower) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
-        SacrificedPermanentManaValueAwareEffect {
+        SacrificedPermanentManaValueAwareEffect, TriggeringSpellManaValueEffect {
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
@@ -488,6 +489,28 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    @Override
+    public CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
+        if (!requiresManaValueEqualsX && !requiresManaValueAtMostX) {
+            return this;
+        }
+
+        CardPredicate manaValueFilter = requiresManaValueEqualsX
+                ? new CardAllOfPredicate(List.of(
+                        new CardMinManaValuePredicate(manaValue),
+                        new CardMaxManaValuePredicate(manaValue)))
+                : new CardMaxManaValuePredicate(manaValue);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder()
+                .filter(combinedFilter)
+                .requiresManaValueEqualsX(false)
+                .requiresManaValueAtMostX(false)
+                .manaValueXOffset(0)
+                .build();
     }
 
     /** Returns the effective mana-value bound for an X-based target restriction. */

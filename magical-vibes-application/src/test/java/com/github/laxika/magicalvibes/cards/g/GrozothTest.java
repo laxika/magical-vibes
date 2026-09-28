@@ -112,7 +112,7 @@ class GrozothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Grozoth()));
         harness.setLibrary(player1, List.of(drawnAndDiscardedCard, matchingCard));
         harness.setHand(player2, List.of(new Convolute()));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new Convolute()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

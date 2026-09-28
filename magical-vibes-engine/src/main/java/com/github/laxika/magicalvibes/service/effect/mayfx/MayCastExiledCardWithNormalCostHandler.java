@@ -39,6 +39,9 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
                     && pending.effects().stream()
                     .anyMatch(candidate -> candidate instanceof MayCastExiledCardWithNormalCostEffect other
                             && other.offerGroupId().equals(effect.offerGroupId())));
+            if (effect.anyManaType()) {
+                gameData.exilePlayAnyManaType.add(ability.targetCardId());
+            }
             exileReducedCastSupport.castFromExileWithCostReduction(
                     gameData, player, ability.targetCardId(), 0,
                     effect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());

@@ -37,6 +37,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * controller and can use the active player for effects such as Oath of Lieges.
  * {@code shuffleAfterSelection} controls whether the search interaction shuffles immediately after
  * the selected card is moved. Set it to false when a later effect must resolve before the shuffle.
+ * {@code battlefieldIfOpponentControlsMoreLands} lets a single selected hand-search card be put
+ * onto the battlefield tapped instead when an opponent controls more lands than the searcher.
  *
  * @param onlyIfSacrificed when true, an {@code ON_DEATH} trigger only fires when its source was
  *                         sacrificed
@@ -61,8 +63,23 @@ public record SearchLibraryEffect(
         boolean shuffleAfterSelection,
         CounterType battlefieldCounter,
         EnterWithCountersEffect enterWithCounters,
-        int topLibraryPosition
+        int topLibraryPosition,
+        boolean battlefieldIfOpponentControlsMoreLands
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
+                               CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
+                               int topLibraryPosition) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition, false);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
@@ -132,6 +149,14 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
                 LibrarySearchPlayer.CONTROLLER, false, false, true, null, null, 0);
+    }
+
+    /** Single-card search that may put the selected card onto the battlefield tapped when an opponent controls more lands. */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
+                               boolean battlefieldIfOpponentControlsMoreLands) {
+        this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
+                LibrarySearchPlayer.CONTROLLER, false, false, true, null, null, 0,
+                battlefieldIfOpponentControlsMoreLands);
     }
 
     /** Single card matching {@code filter} to the battlefield with one counter on it. */

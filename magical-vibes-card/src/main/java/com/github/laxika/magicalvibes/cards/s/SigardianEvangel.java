@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "YMID", collectorNumber = "9")
+@CardRegistration(set = "MB2", collectorNumber = "258")
 public class SigardianEvangel extends Card {
 
     private static final String NAME = "Sigardian Evangel";

@@ -150,8 +150,8 @@ class TempestEfreetTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With an empty hand, the source still moves from its current zone to its owner's graveyard")
-    void emptyHandReturnsSourceToOwnersGraveyardFromCurrentZone() {
+    @DisplayName("With an empty hand, no exchange moves the source from its current zone")
+    void emptyHandLeavesSourceInCurrentZone() {
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
         TempestEfreet efreet = new TempestEfreet();
@@ -166,8 +166,8 @@ class TempestEfreetTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(efreet);
-        harness.assertInGraveyard(player1, "Tempest Efreet");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(efreet);
+        harness.assertNotInGraveyard(player1, "Tempest Efreet");
         harness.assertNotInGraveyard(player2, "Tempest Efreet");
     }
 

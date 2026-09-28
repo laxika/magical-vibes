@@ -113,7 +113,8 @@ class MCTSEngineTest {
 
         assertThat(action).isNotNull();
         assertThat(engine.getLastSearchIterations()).isBetween(1, 100);
-        assertThat(elapsed).isLessThan(120000);
+        // The full build runs this beside the application suite, so allow for CPU contention.
+        assertThat(elapsed).isLessThan(180_000);
     }
 
     @Test

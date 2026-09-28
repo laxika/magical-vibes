@@ -66,12 +66,13 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
         PLAYER,
         GRAVEYARD_CARD,
         EXILED_CARD,
+        HAND_CARD,
         SPELL
     }
 
     /** A restriction over exactly one {@link Kind}; the only thing {@link AnyOf} may contain. */
     sealed interface Leaf extends TargetPredicate
-            permits Permanents, Players, GraveyardCards, ExiledCards, Spells {
+            permits Permanents, Players, GraveyardCards, ExiledCards, HandCards, Spells {
 
         /** The candidate domain this leaf draws from. */
         Kind kind();
@@ -127,6 +128,19 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
         @Override
         public Kind kind() {
             return Kind.EXILED_CARD;
+        }
+    }
+
+    /** A card in the controller's hand matching {@code inner}. */
+    record HandCards(CardPredicate inner) implements Leaf {
+
+        public HandCards {
+            Objects.requireNonNull(inner, "inner (use CardTruePredicate for any card)");
+        }
+
+        @Override
+        public Kind kind() {
+            return Kind.HAND_CARD;
         }
     }
 
@@ -238,5 +252,10 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
      * admits no exiled card target. */
     default Optional<CardPredicate> exiledCardPredicate() {
         return leaf(Kind.EXILED_CARD).map(leaf -> ((ExiledCards) leaf).inner());
+    }
+
+    /** The card predicate applied within a hand-card target. */
+    default Optional<CardPredicate> handCardPredicate() {
+        return leaf(Kind.HAND_CARD).map(leaf -> ((HandCards) leaf).inner());
     }
 }

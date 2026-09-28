@@ -59,12 +59,19 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Chosen card is no longer in the target's hand"));
 
-        gameData.playerHands.get(interaction.targetPlayerId()).remove(chosen);
-        exileService.exileCard(gameData, interaction.targetPlayerId(), chosen);
         gameData.interaction.clearAwaitingInput();
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " exiles ", chosen, " from "
-                        + gameData.playerIdToName.get(interaction.targetPlayerId()) + "'s hand."));
+        pendingEntry.setChosenObjectCard(chosen);
+        if (interaction.keepInHand()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " keeps ", chosen, " in "
+                            + gameData.playerIdToName.get(interaction.targetPlayerId()) + "'s hand."));
+        } else {
+            gameData.playerHands.get(interaction.targetPlayerId()).remove(chosen);
+            exileService.exileCard(gameData, interaction.targetPlayerId(), chosen);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", chosen, " from "
+                            + gameData.playerIdToName.get(interaction.targetPlayerId()) + "'s hand."));
+        }
 
         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                 List.of(interaction.thenEffect()));

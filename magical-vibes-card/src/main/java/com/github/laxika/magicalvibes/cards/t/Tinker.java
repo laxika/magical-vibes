@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ULG", collectorNumber = "45")
 @CardRegistration(set = "V09", collectorNumber = "14")
+@CardRegistration(set = "MB2", collectorNumber = "176")
 public class Tinker extends Card {
 
     public Tinker() {

@@ -182,6 +182,8 @@ public sealed interface TriggerContext {
     }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
+    /** Context for controller-conjure triggers. */
+    record Conjure(UUID conjuringPlayerId, int cardCount) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -346,6 +348,9 @@ public sealed interface TriggerContext {
 
     /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
     record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
+
+    /** Context for mana-tax payment triggers (ON_OPPONENT_PAYS_TAX). */
+    record TaxPayment(UUID payingPlayerId, UUID taxingPlayerId, int manaPaid) implements TriggerContext {}
 
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
@@ -837,8 +842,12 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a non-token card owned by a player other than the trigger controller entering exile. */
+    record OpponentOwnedCardExiled(UUID ownerId, Card card) implements TriggerContext {}
+
     /** Context for creatures exiled from the battlefield, regardless of controller. */
-    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId,
+                                         int exiledPowerAtTrigger)
             implements TriggerContext {}
 
     /** Context for artifacts exiled from the battlefield, regardless of controller. */

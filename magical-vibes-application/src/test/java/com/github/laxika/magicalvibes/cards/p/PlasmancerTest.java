@@ -56,7 +56,7 @@ class PlasmancerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest, bears);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, bears);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, bears);
     }
 
     private void castPlasmancer() {

@@ -50,7 +50,7 @@ public class DredgeSupport {
         if (cardIndex == -1) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " declines to dredge."));
-            drawServiceProvider.getObject().resolveDrawCardWithoutStaticReplacementCheck(gameData, playerId);
+            drawServiceProvider.getObject().continueDrawAfterDecliningDredge(gameData, playerId);
             inputCompletionServiceProvider.getObject().processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

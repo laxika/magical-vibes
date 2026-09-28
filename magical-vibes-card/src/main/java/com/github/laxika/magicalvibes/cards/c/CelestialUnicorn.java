@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "5")
+@CardRegistration(set = "HBG", collectorNumber = "86")
 public class CelestialUnicorn extends Card {
 
     public CelestialUnicorn() {

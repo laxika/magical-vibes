@@ -1,0 +1,80 @@
+package com.github.laxika.magicalvibes.cards.m;
+
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed(MisterImmortal.class)
+class MisterImmortalTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Returns from the graveyard to the battlefield tapped")
+    void returnsFromGraveyardTapped() {
+        MisterImmortal misterImmortal = new MisterImmortal();
+        harness.setGraveyard(player1, List.of(misterImmortal));
+        prepareActivation();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(misterImmortal.getId()));
+        assertReturnedTapped(misterImmortal);
+    }
+
+    @Test
+    @DisplayName("Returns from exile to the battlefield tapped")
+    void returnsFromExileTapped() {
+        MisterImmortal misterImmortal = new MisterImmortal();
+        harness.setExile(player1, List.of(misterImmortal));
+        prepareActivation();
+
+        harness.activateExileAbility(player1, misterImmortal.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(misterImmortal.getId())).isNull();
+        assertReturnedTapped(misterImmortal);
+    }
+
+    @Test
+    @DisplayName("Both abilities require sorcery-speed timing")
+    void abilitiesRequireSorcerySpeedTiming() {
+        MisterImmortal graveyardCard = new MisterImmortal();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        prepareActivation();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        MisterImmortal exiledCard = new MisterImmortal();
+        harness.setExile(player1, List.of(exiledCard));
+        assertThatThrownBy(() -> harness.activateExileAbility(player1, exiledCard.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    private void prepareActivation() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+    }
+
+    private void assertReturnedTapped(MisterImmortal card) {
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(returned.isTapped()).isTrue();
+    }
+}

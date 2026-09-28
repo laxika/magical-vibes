@@ -121,6 +121,16 @@ public class TokenCopySupport {
                     entry.getCard() == null ? null : entry.getCard().getSetCode());
             tokens.add(new Permanent(mutagenTokenCard));
         }
+        int additionalFoodTokenCount = TokenCreationReplacementSupport.additionalFoodTokenCount(
+                gameData, tokenControllerId, sourceCards.size());
+        for (int food = 0; food < additionalFoodTokenCount; food++) {
+            Card foodTokenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalFoodToken(effect.tapped(), effect.tappedAndAttacking()),
+                    0,
+                    0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(foodTokenCard));
+        }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();

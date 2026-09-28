@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "96")
+@CardRegistration(set = "HBG", collectorNumber = "151")
 public class DemogorgonsClutches extends Card {
 
     public DemogorgonsClutches() {

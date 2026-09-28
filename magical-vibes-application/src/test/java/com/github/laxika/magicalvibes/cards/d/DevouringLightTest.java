@@ -59,8 +59,8 @@ class DevouringLightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot use a summoning-sick creature for convoke")
-    void cannotConvokeWithSummoningSickCreature() {
+    @DisplayName("Can use a newly entered creature for convoke")
+    void canConvokeWithSummoningSickCreature() {
         Permanent target = addAttacker(player2);
         Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -68,10 +68,10 @@ class DevouringLightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevouringLight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castInstantWithConvoke(
-                player1, 0, List.of(target.getId()), List.of(convokeCreature.getId())))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(convokeCreature.isTapped()).isFalse();
+        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()), List.of(convokeCreature.getId()));
+        assertThat(convokeCreature.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertExiled(target);
     }
 
     @Test
