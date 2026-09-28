@@ -1508,7 +1508,10 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleDiscardControllerTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DiscardControllerTriggerTarget dct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
-        if (target != null || isPlayerTarget) {
+        boolean declined = hasOptionalSingleTarget(dct.sourceCard(), dct.effects())
+                && isPlayerTarget
+                && permanentId.equals(dct.controllerId());
+        if ((target != null || isPlayerTarget) && !declined) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     dct.sourceCard(),
@@ -1527,6 +1530,21 @@ public class PermanentChoiceTriggerHandlerService {
             String targetName = getTargetDisplayName(gameData, permanentId);
             gameLogService.append(gameData, GameLog.builder().card(dct.sourceCard()).text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} discard trigger targets {}", gameData.id, dct.sourceCard().getName(), targetName);
+        } else if (declined) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    dct.sourceCard(),
+                    dct.controllerId(),
+                    dct.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(dct.effects()),
+                    null,
+                    dct.sourcePermanentId());
+            if (dct.discardedCount() > 0) {
+                entry.setEventValue(dct.discardedCount());
+            }
+            pushTriggeredEntry(gameData, entry);
+            gameLogService.append(gameData, GameLog.cardThen(dct.sourceCard(), "'s ability targets nothing."));
+            log.info("Game {} - {} discard trigger declined targeting", gameData.id, dct.sourceCard().getName());
         } else {
             gameLogService.append(gameData, GameLog.cardThen(dct.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} discard trigger target no longer exists", gameData.id, dct.sourceCard().getName());

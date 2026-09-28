@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "50")
 @CardRegistration(set = "C21", collectorNumber = "130")
+@CardRegistration(set = "C20", collectorNumber = "124")
 public class SwarmIntelligence extends Card {
 
     public SwarmIntelligence() {

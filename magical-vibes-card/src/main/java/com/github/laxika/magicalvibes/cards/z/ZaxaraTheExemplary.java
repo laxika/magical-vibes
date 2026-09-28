@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1333")
 @CardRegistration(set = "DMC", collectorNumber = "176")
+@CardRegistration(set = "C20", collectorNumber = "20")
 public class ZaxaraTheExemplary extends Card {
 
     public ZaxaraTheExemplary() {

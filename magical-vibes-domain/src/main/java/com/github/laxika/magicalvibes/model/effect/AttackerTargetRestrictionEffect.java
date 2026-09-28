@@ -13,6 +13,11 @@ public interface AttackerTargetRestrictionEffect extends CardEffect {
     /** The player whose player target is restricted, derived from the source permanent. */
     UUID restrictedPlayerId(Permanent sourcePermanent);
 
+    /** Whether the source creature's current controller is restricted. */
+    default boolean restrictsSourceController() {
+        return false;
+    }
+
     /** Whether planeswalkers controlled by the restricted player are restricted too. */
     default boolean restrictsPlaneswalkers() {
         return false;

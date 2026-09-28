@@ -46,7 +46,8 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        for (int i = 0; i < e.copies(); i++) {
+        int copyCount = copySupport.adjustedSpellCopyCount(gameData, e.copies());
+        for (int i = 0; i < copyCount; i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
             if (e.tokenCopy()) {
                 copyCard.setToken(true);
@@ -60,7 +61,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 
-            copySupport.addCopyToStack(gameData, copyEntry);
+            copySupport.addCopyToStack(gameData, copyEntry, false);
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
 
@@ -77,6 +78,6 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
         }
 
         log.info("Game {} - spell-copy effect creates {} copies of {} for {}",
-                gameData.id, e.copies(), spellCard.getName(), castingPlayerId);
+                gameData.id, copyCount, spellCard.getName(), castingPlayerId);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCre
 import com.github.laxika.magicalvibes.model.effect.GoadTriggeringCreatureUntilNextTurnEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "263")
+@CardRegistration(set = "C20", collectorNumber = "49")
 public class AgitatorAnt extends Card {
 
     public AgitatorAnt() {

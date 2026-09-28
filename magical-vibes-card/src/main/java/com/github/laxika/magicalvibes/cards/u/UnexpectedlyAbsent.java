@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMA", collectorNumber = "33")
 @CardRegistration(set = "C13", collectorNumber = "25")
+@CardRegistration(set = "C20", collectorNumber = "106")
 public class UnexpectedlyAbsent extends Card {
 
     public UnexpectedlyAbsent() {

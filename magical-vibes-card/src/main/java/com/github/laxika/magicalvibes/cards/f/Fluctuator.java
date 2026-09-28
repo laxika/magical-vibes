@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "295")
+@CardRegistration(set = "C20", collectorNumber = "241")
 public class Fluctuator extends Card {
 
     public Fluctuator() {

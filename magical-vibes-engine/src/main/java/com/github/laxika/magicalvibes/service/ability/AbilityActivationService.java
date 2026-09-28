@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
@@ -2228,6 +2229,12 @@ public class AbilityActivationService {
         // being cycled still counts toward the hand-size condition, so check the current hand size
         // before it is discarded below as part of the cost.
         String abilityCost = ability.getManaCost();
+        UUID firstCardCycledFreeSourceId = abilityCost != null
+                ? findFirstCardCycledFreeSource(gameData, playerId, ability)
+                : null;
+        if (firstCardCycledFreeSourceId != null) {
+            abilityCost = null;
+        }
         if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
             abilityCost = null;
         }
@@ -2248,6 +2255,12 @@ public class AbilityActivationService {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, card.getName());
             }
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeCosts);
+        }
+
+        if (firstCardCycledFreeSourceId != null) {
+            gameData.firstCardCycledFreeUsesThisTurn
+                    .computeIfAbsent(firstCardCycledFreeSourceId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
         }
 
         if (ability.isSourceStaysInHand() && ability.isRevealsSourceFromHand()) {
@@ -2635,6 +2648,29 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", card, " from their hand for mana."));
         log.info("Game {} - {} exiles {} from hand for mana", gameData.id, player.getUsername(), card.getName());
+    }
+
+    /** Returns the unused source permanent granting Gavi-style first-card-free cycling, if any. */
+    private UUID findFirstCardCycledFreeSource(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (!ability.isCyclingAbility()) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstCardCycledFreeUsesThisTurn
+                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstCardCycledFreeEffect) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
     }
 
     /**

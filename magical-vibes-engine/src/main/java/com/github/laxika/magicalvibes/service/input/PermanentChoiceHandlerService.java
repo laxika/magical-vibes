@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLan
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHandler;
@@ -67,6 +68,8 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
+    private final PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler
+            kathrilEffectHandler;
     private final EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler
             gildedAmbusherEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
@@ -694,6 +697,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCuratorOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChooseOwnCreatureGrantKeyword grantKeyword) {
             grantChosenCreatureKeywordEffectHandler.completeChoice(gameData, permanentId, grantKeyword);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.KathrilKeywordCounterChoice kathrilChoice) {
+            kathrilEffectHandler.completeChoice(gameData, permanentId, kathrilChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.RingBearerChoice ringBearerChoice) {
             ringTemptsYouEffectHandler.completeChoice(gameData, permanentId, ringBearerChoice);

@@ -16,14 +16,17 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DMC", collectorNumber = "175")
+@CardRegistration(set = "C20", collectorNumber = "18")
 public class XyrisTheWrithingStorm extends Card {
 
     public XyrisTheWrithingStorm() {
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
                 new ExceptFirstDrawStepTriggerEffect(new CreateTokenEffect(
                         "Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of())));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
-                new DrawCardEffect(new EventValue()),
-                new DrawCardForDamagedPlayerEffect(new EventValue())));
+        EventValue damage = new EventValue();
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                SequenceEffect.of(
+                        new DrawCardEffect(damage),
+                        new DrawCardForDamagedPlayerEffect(damage)));
     }
 }
