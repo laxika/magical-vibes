@@ -97,6 +97,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Inventory Management: choose the creature for one selected Aura or Equipment. */
+    record InventoryManagementAttachment(UUID controllerId, UUID attachmentId,
+                                         List<UUID> remainingAttachmentIds)
+            implements PermanentChoiceContext {
+        public InventoryManagementAttachment {
+            remainingAttachmentIds = List.copyOf(remainingAttachmentIds);
+        }
+    }
+
     /** Attach one selected graveyard Aura to the chosen creature and continue the selection. */
     record AttachReturnedAuraToCreature(UUID controllerId, UUID auraCardId,
                                         List<UUID> remainingAuraCardIds)
@@ -179,6 +188,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
+
+    /** Entrapment Maneuver: the target player chooses an attacking creature to sacrifice. */
+    record TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
+            UUID sacrificingPlayerId, UUID tokenCreatingPlayerId, Card sourceCard,
+            CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
 
     /** Wasitora: the damaged player chooses a creature to sacrifice, or the source controller
      * creates the fallback token when no legal sacrifice is possible. */

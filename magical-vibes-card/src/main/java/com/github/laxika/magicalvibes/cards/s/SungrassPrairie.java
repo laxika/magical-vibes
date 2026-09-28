@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "328")
+@CardRegistration(set = "PIP", collectorNumber = "295")
+@CardRegistration(set = "PIP", collectorNumber = "513")
+@CardRegistration(set = "PIP", collectorNumber = "823")
+@CardRegistration(set = "PIP", collectorNumber = "1041")
 public class SungrassPrairie extends Card {
 
     public SungrassPrairie() {

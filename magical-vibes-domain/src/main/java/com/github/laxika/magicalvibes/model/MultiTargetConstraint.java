@@ -11,6 +11,8 @@ public enum MultiTargetConstraint {
     SHARE_NO_CREATURE_TYPES,
     /** The chosen creatures must share at least one creature type. */
     SHARE_CREATURE_TYPES,
+    /** The chosen creatures must have equal effective toughness. */
+    SHARE_TOUGHNESS,
     /**
      * The chosen permanents must share at least one of the card types artifact, creature, or land
      * (e.g. Gauntlets of Chaos: the opponent's permanent must share one of those types with your

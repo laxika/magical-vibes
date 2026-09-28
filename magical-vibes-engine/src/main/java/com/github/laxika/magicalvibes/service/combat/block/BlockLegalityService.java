@@ -175,6 +175,11 @@ public class BlockLegalityService {
             });
         }
         List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
+        UUID defenderPlayerId = gameData.playerBattlefields.entrySet().stream()
+                .filter(entry -> entry.getValue() == defenderBattlefield)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
             if (gameQueryService.isLand(gameData, defender)) {
@@ -183,7 +188,7 @@ public class BlockLegalityService {
                 defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
             }
         }
-        return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
+        return new BlockLegalityContext(gameData, defenders, defenderPlayerId, globalBlockRestrictions,
                 globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,
                 defenderCardSubtypes, ignoredLandwalkKeywords, allLandwalkIgnored[0],
                 landwalkIgnoredPermanentIds);
@@ -575,6 +580,7 @@ public class BlockLegalityService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
                             && (restriction.unblockableIfDefenderControls() != null
+                            || restriction.unblockableIfDefenderHasRadCounters()
                             || restriction.defenderControlsCreaturesSharingTypeMinimum() != null
                             || restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
                             || restriction.blockableOnlyBy() != null
@@ -608,6 +614,10 @@ public class BlockLegalityService {
             }
             if (restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
                     && gameQueryService.controlsMostCreaturesOrTied(gameData, defenderControllerId(context))) {
+                unblockable = true;
+                unblockableForOtherReason = true;
+            }
+            if (restriction.unblockableIfDefenderHasRadCounters() && defenderHasRadCounters(context)) {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
@@ -834,6 +844,9 @@ public class BlockLegalityService {
     }
 
     private UUID defenderControllerId(BlockLegalityContext context) {
+        if (context.defenderPlayerId != null) {
+            return context.defenderPlayerId;
+        }
         for (Permanent permanent : context.defenderBattlefield) {
             UUID controllerId = context.gameData.findControllerOf(permanent);
             if (controllerId != null) {
@@ -841,6 +854,11 @@ public class BlockLegalityService {
             }
         }
         return null;
+    }
+
+    private boolean defenderHasRadCounters(BlockLegalityContext context) {
+        UUID defenderId = defenderControllerId(context);
+        return defenderId != null && context.gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
     }
 
 }

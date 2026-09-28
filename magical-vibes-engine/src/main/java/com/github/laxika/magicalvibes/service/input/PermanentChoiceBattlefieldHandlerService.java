@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
@@ -176,6 +177,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final CoinFlipService coinFlipService;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
+    private final TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler
+            targetPlayerSacrificesAttackingCreatureThenCreateTokensHandler;
     private final TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler targetPlayerSacrificesCreatureThenDrawsPowerHandler;
     private final TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler targetPlayerSacrificesCreatureOrCreatesTokenHandler;
     private final TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler;
@@ -683,6 +686,20 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         targetPlayerSacrificesCreatureThenDrawsPowerHandler.sacrificeAndDraw(
                 gameData, target, context.sacrificingPlayerId(), context.drawingPlayerId(), context.sourceCard());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target attacking creature no longer exists");
+        }
+
+        targetPlayerSacrificesAttackingCreatureThenCreateTokensHandler.sacrificeAndCreateTokens(
+                gameData, target, context.sacrificingPlayerId(), context.tokenCreatingPlayerId(),
+                context.sourceCard(), context.tokenTemplate());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

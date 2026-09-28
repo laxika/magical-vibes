@@ -19,6 +19,10 @@ import java.util.List;
 @CardRegistration(set = "MP2", collectorNumber = "1")
 @CardRegistration(set = "2XM", collectorNumber = "7")
 @CardRegistration(set = "CMD", collectorNumber = "8")
+@CardRegistration(set = "PIP", collectorNumber = "156")
+@CardRegistration(set = "PIP", collectorNumber = "447")
+@CardRegistration(set = "PIP", collectorNumber = "684")
+@CardRegistration(set = "PIP", collectorNumber = "975")
 public class AustereCommand extends Card {
 
     public AustereCommand() {

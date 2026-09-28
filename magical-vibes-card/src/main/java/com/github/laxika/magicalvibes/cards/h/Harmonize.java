@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "C13", collectorNumber = "148")
 @CardRegistration(set = "TMC", collectorNumber = "51")
 @CardRegistration(set = "CMD", collectorNumber = "158")
+@CardRegistration(set = "PIP", collectorNumber = "201")
+@CardRegistration(set = "PIP", collectorNumber = "729")
 public class Harmonize extends Card {
 
     public Harmonize() {

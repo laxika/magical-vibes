@@ -388,6 +388,8 @@ public class GameData {
     public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
+    /** Rad counters are player counters introduced by Fallout. */
+    public final Map<UUID, Integer> playerRadCounters = new ConcurrentHashMap<>();
     /** Players for whom Melira's poison replacement effect has already applied this turn. */
     public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
@@ -607,6 +609,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithKickCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled creature card UUIDs that have memory counters (Altaïr Ibn-La'Ahad). */
     public final Set<UUID> exiledCardsWithMemoryCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have brain counters (Rex, Cyber-Hound). */
+    public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
     public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
@@ -830,6 +834,8 @@ public class GameData {
     public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
     public final ScytheSpecterState scytheSpecter = new ScytheSpecterState();
+    /** Progress state for Cait's two-player draw/discard mana-value comparison. */
+    public final CaitCageBrawlerState caitCageBrawler = new CaitCageBrawlerState();
     /** Progress state for collecting one discarded card from every player before drawing. */
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
@@ -851,6 +857,8 @@ public class GameData {
     public final GoblinGameState goblinGame = new GoblinGameState();
     /** Progress state for Wheel of Misfortune's hidden number choices. */
     public final WheelOfMisfortuneState wheelOfMisfortune = new WheelOfMisfortuneState();
+    /** Progress state for Expert-Level Safe's two-player hidden-number choice. */
+    public final ExpertLevelSafeState expertLevelSafe = new ExpertLevelSafeState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
@@ -1035,6 +1043,8 @@ public class GameData {
     public boolean onlyLandCreaturesCanAttackThisCombat;
     /** Whether only creatures with Aggressive may attack during the current additional combat. */
     public boolean onlyAggressiveCreaturesCanAttackThisCombat;
+    /** Whether creatures cannot attack during the current combat. */
+    public boolean creaturesCantAttackThisCombat;
     /** If non-null, only this permanent may attack during the current additional combat phase. */
     public UUID onlyPermanentCanAttackThisCombatId;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
@@ -1594,14 +1604,16 @@ public class GameData {
                                               boolean exileInsteadOfGraveyard,
                                               int additionalGenericCost,
                                               boolean anyManaType,
-                                              boolean withoutPayingManaCost) {
+                                              boolean withoutPayingManaCost,
+                                              int additionalGraveyardExileCount,
+                                              boolean escape) {
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
                                            boolean copySourceActivatedAbilities,
                                            boolean exileInsteadOfGraveyard,
                                            int additionalGenericCost,
                                            boolean anyManaType) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, additionalGenericCost, anyManaType, false);
+                    exileInsteadOfGraveyard, additionalGenericCost, anyManaType, false, 0, false);
         }
 
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
@@ -1609,7 +1621,7 @@ public class GameData {
                                            boolean exileInsteadOfGraveyard,
                                            boolean withoutPayingManaCost) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, 0, false, withoutPayingManaCost);
+                    exileInsteadOfGraveyard, 0, false, withoutPayingManaCost, 0, false);
         }
 
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
@@ -1617,14 +1629,33 @@ public class GameData {
                                            boolean exileInsteadOfGraveyard,
                                            int additionalGenericCost) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, additionalGenericCost, false, false);
+                    exileInsteadOfGraveyard, additionalGenericCost, false, false, 0, false);
         }
 
         public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
                                             boolean copySourceActivatedAbilities,
                                             boolean exileInsteadOfGraveyard) {
             this(sourcePermanentId, castingPlayerId, copySourceActivatedAbilities,
-                    exileInsteadOfGraveyard, 0, false, false);
+                    exileInsteadOfGraveyard, 0, false, false, 0, false);
+        }
+
+        public GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
+                                           boolean copySourceActivatedAbilities,
+                                           boolean exileInsteadOfGraveyard,
+                                           int additionalGenericCost,
+                                           boolean anyManaType,
+                                           boolean withoutPayingManaCost,
+                                           int additionalGraveyardExileCount,
+                                           boolean escape) {
+            this.sourcePermanentId = sourcePermanentId;
+            this.castingPlayerId = castingPlayerId;
+            this.copySourceActivatedAbilities = copySourceActivatedAbilities;
+            this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
+            this.additionalGenericCost = additionalGenericCost;
+            this.anyManaType = anyManaType;
+            this.withoutPayingManaCost = withoutPayingManaCost;
+            this.additionalGraveyardExileCount = additionalGraveyardExileCount;
+            this.escape = escape;
         }
     }
 
@@ -5108,6 +5139,7 @@ public class GameData {
             exiledCardsWithIntelCounters.remove(cardId);
             exiledCardsWithKickCounters.remove(cardId);
             exiledCardsWithMemoryCounters.remove(cardId);
+            exiledCardsWithBrainCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
@@ -5261,6 +5293,7 @@ public class GameData {
         removedIds.forEach(exiledCardsWithIntelCounters::remove);
         removedIds.forEach(exiledCardsWithKickCounters::remove);
         removedIds.forEach(exiledCardsWithMemoryCounters::remove);
+        removedIds.forEach(exiledCardsWithBrainCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
@@ -5708,6 +5741,12 @@ public class GameData {
         copy.scytheSpecter.currentPlayerId = this.scytheSpecter.currentPlayerId;
         copy.scytheSpecter.remaining.addAll(this.scytheSpecter.remaining);
         copy.scytheSpecter.discardedManaValues.putAll(this.scytheSpecter.discardedManaValues);
+        copy.caitCageBrawler.active = this.caitCageBrawler.active;
+        copy.caitCageBrawler.controllerId = this.caitCageBrawler.controllerId;
+        copy.caitCageBrawler.defendingPlayerId = this.caitCageBrawler.defendingPlayerId;
+        copy.caitCageBrawler.currentPlayerId = this.caitCageBrawler.currentPlayerId;
+        copy.caitCageBrawler.remaining.addAll(this.caitCageBrawler.remaining);
+        copy.caitCageBrawler.discardedManaValues.putAll(this.caitCageBrawler.discardedManaValues);
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =
@@ -5762,6 +5801,13 @@ public class GameData {
         copy.goblinGame.index = this.goblinGame.index;
         copy.goblinGame.itemCounts.putAll(this.goblinGame.itemCounts);
         copy.goblinGame.currentPlayerId = this.goblinGame.currentPlayerId;
+        copy.expertLevelSafe.active = this.expertLevelSafe.active;
+        copy.expertLevelSafe.sourcePermanentId = this.expertLevelSafe.sourcePermanentId;
+        copy.expertLevelSafe.controllerId = this.expertLevelSafe.controllerId;
+        copy.expertLevelSafe.opponentId = this.expertLevelSafe.opponentId;
+        copy.expertLevelSafe.currentPlayerId = this.expertLevelSafe.currentPlayerId;
+        copy.expertLevelSafe.controllerChoice = this.expertLevelSafe.controllerChoice;
+        copy.expertLevelSafe.opponentChoice = this.expertLevelSafe.opponentChoice;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;
@@ -5824,6 +5870,7 @@ public class GameData {
         copy.additionalCombatReturnActivePlayerId = this.additionalCombatReturnActivePlayerId;
         copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.onlyAggressiveCreaturesCanAttackThisCombat = this.onlyAggressiveCreaturesCanAttackThisCombat;
+        copy.creaturesCantAttackThisCombat = this.creaturesCantAttackThisCombat;
         copy.onlyPermanentCanAttackThisCombatId = this.onlyPermanentCanAttackThisCombatId;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
@@ -6005,6 +6052,7 @@ public class GameData {
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
         copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
+        copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -6140,6 +6188,7 @@ public class GameData {
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
+        copy.playerRadCounters.putAll(this.playerRadCounters);
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
                 .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
@@ -6342,6 +6391,7 @@ public class GameData {
         copy.exiledCardsWithStudyCounters.addAll(this.exiledCardsWithStudyCounters);
         copy.exiledCardsWithKickCounters.addAll(this.exiledCardsWithKickCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
+        copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
         copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);

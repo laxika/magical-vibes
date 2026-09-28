@@ -542,7 +542,7 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
-                1,
+                interaction.allowNoChoice() ? 0 : 1,
                 "Choose a card exiled this way to play " + duration + ".");
     }
 
@@ -775,11 +775,22 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectSearchLibraryAndOrGraveyardChoice(
             GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
         boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
+        boolean hasLibrary = !interaction.libraryCardIds().isEmpty();
+        boolean hasHand = !interaction.handCardIds().isEmpty();
+        boolean hasOutsideGame = !interaction.outsideGameCardIds().isEmpty();
+        String source = hasLibrary && hasHand && hasOutsideGame ? "library, hand, graveyard, or outside the game"
+                : hasLibrary && hasHand ? "library, hand, or graveyard"
+                : hasLibrary && hasOutsideGame ? "library, graveyard, or outside the game"
+                : hasHand && hasOutsideGame ? "hand, graveyard, or outside the game"
+                : hasLibrary ? "library or graveyard"
+                : hasHand ? "hand or graveyard"
+                : hasOutsideGame ? "graveyard or outside the game"
+                : "graveyard";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 1,
-                "Choose a " + interaction.cardLabel() + " from your library or graveyard to reveal and put it "
+                "Choose a " + interaction.cardLabel() + " from your " + source + " to reveal and put it "
                         + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 

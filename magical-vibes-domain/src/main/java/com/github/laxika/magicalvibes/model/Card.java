@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -864,6 +865,8 @@ public class Card {
                 if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
                 if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
             }
+            case RollD6Effect e -> e.branches().forEach(branch ->
+                    registerEffectTargetIndex(branch, targetIndex));
             case RollDiceEffect e -> {
                 if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
                 if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
@@ -1173,6 +1176,14 @@ public class Card {
     public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
         List<Integer> targetIndices = effectTargetIndexMap.get(effect);
         return targetIndices != null && targetIndices.contains(groupIndex);
+    }
+
+    /** Returns every effect registered against the target group, regardless of its effect slot. */
+    public List<CardEffect> getEffectsBoundToTargetGroup(int groupIndex) {
+        return effectTargetIndexMap.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(groupIndex))
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     /**

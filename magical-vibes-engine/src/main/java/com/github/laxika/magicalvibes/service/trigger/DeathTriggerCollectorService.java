@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureAttachmentsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
@@ -914,10 +915,31 @@ public class DeathTriggerCollectorService {
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         Permanent dyingPermanent = sd.dyingPermanent();
+        DyingCreatureAttachmentSnapshot attachmentSnapshot = dyingPermanent == null
+                ? null
+                : DyingCreatureAttachmentSnapshot.capture(match.gameData(), dyingPermanent.getId());
         if (dyingPermanent == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
                         match.gameData(), dyingPermanent, effect.predicate())) {
             return false;
+        }
+
+        CardEffect triggerEffect = effect.wrapped();
+        if (triggerEffect instanceof DyingCreatureAttachmentsAwareEffect aware
+                && attachmentSnapshot != null) {
+            triggerEffect = aware.boundToDyingCreatureAttachments(
+                    attachmentSnapshot.auraCardIds(), attachmentSnapshot.equipmentPermanentIds());
+        }
+
+        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), sd.dyingPower(),
+                    new Permanent(match.permanent())
+            ));
+            return true;
         }
 
         StackEntry entry = new StackEntry(
@@ -925,7 +947,7 @@ public class DeathTriggerCollectorService {
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
+                new ArrayList<>(List.of(triggerEffect)),
                 null,
                 match.permanent().getId()
         );

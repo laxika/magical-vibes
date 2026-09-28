@@ -13,6 +13,10 @@ import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "204")
 @CardRegistration(set = "SPG", collectorNumber = "108")
+@CardRegistration(set = "PIP", collectorNumber = "220")
+@CardRegistration(set = "PIP", collectorNumber = "478")
+@CardRegistration(set = "PIP", collectorNumber = "748")
+@CardRegistration(set = "PIP", collectorNumber = "1006")
 public class RuinousUltimatum extends Card {
 
     public RuinousUltimatum() {

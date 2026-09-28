@@ -147,6 +147,7 @@ public class TurnProgressionService {
             gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
+            gameData.creaturesCantAttackThisCombat = false;
             gameData.onlyPermanentCanAttackThisCombatId = null;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
@@ -813,7 +814,8 @@ public class TurnProgressionService {
         gameData.turnNumber++;
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 watcher.untilNextTurn()
-                        && nextActive.equals(watcher.controllerId())
+                        && nextActive.equals(watcher.expirationPlayerId() != null
+                        ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber());
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
                 trigger -> trigger.untilNextTurn()
@@ -1023,6 +1025,7 @@ public class TurnProgressionService {
         gameData.additionalCombatReturnActivePlayerId = null;
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
+        gameData.creaturesCantAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;

@@ -20,6 +20,10 @@ import java.util.Set;
 @CardRegistration(set = "XLN", collectorNumber = "257")
 @CardRegistration(set = "SLD", collectorNumber = "460")
 @CardRegistration(set = "YEOE", collectorNumber = "39")
+@CardRegistration(set = "PIP", collectorNumber = "297")
+@CardRegistration(set = "PIP", collectorNumber = "515")
+@CardRegistration(set = "PIP", collectorNumber = "825")
+@CardRegistration(set = "PIP", collectorNumber = "1043")
 public class SunpetalGrove extends Card {
 
     public SunpetalGrove() {

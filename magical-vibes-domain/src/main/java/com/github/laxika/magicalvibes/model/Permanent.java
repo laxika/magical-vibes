@@ -210,6 +210,8 @@ public class Permanent {
     @Setter private Card chosenCard;
     /** The creature card exiled with this permanent most recently chosen for ability copying. */
     @Setter private Card lastChosenExiledCard;
+    /** The card most recently exiled as an activated-ability cost when the resolving ability needs it. */
+    @Setter private Card chosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
@@ -793,6 +795,7 @@ public class Permanent {
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
         this.lastChosenExiledCard = source.lastChosenExiledCard;
+        this.chosenExiledCard = source.chosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;

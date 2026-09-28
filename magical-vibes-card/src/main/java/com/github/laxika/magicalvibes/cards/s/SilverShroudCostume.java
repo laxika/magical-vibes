@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "915")
+@CardRegistration(set = "PIP", collectorNumber = "142")
+@CardRegistration(set = "PIP", collectorNumber = "670")
 public class SilverShroudCostume extends Card {
 
     public SilverShroudCostume() {

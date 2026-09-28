@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "188")
+@CardRegistration(set = "PIP", collectorNumber = "217")
+@CardRegistration(set = "PIP", collectorNumber = "745")
 public class GeneralsEnforcer extends Card {
 
     public GeneralsEnforcer() {

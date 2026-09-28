@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
@@ -25,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -57,6 +61,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -84,6 +89,7 @@ public class LandTapTriggerCollectorService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
     private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
+    private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaAbilitySequence(TriggerMatchContext match,
@@ -296,6 +302,74 @@ public class LandTapTriggerCollectorService {
 
         log.warn("Unsupported mana effect in AddManaOnEnchantedLandTapEffect: {}", mana.getClass().getSimpleName());
         return false;
+    }
+
+    @CollectsTrigger(value = PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleCampLandTap(TriggerMatchContext match,
+            PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        Permanent source = match.permanent();
+        if (source == null || !source.isAttached()
+                || !lt.tappedLandId().equals(source.getAttachedTo())) {
+            return false;
+        }
+
+        if (lt.producedColors().isEmpty()
+                && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    match.controllerId(),
+                    source.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger)),
+                    null,
+                    source.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            match.gameData().pendingManaAbilityTriggers.add(entry);
+            return true;
+        }
+
+        if (lt.producedColors().isEmpty()) {
+            return false;
+        }
+
+        queueCampTargetChoice(match.gameData(), source.getCard(), match.controllerId(),
+                source.getId(), new Permanent(source), trigger.withProducedManaColors(lt.producedColors()));
+        return true;
+    }
+
+    /** Completes a C.A.M.P. trigger parked while an any-color mana choice was pending. */
+    public boolean queueResolvedProducedManaTriggerTarget(GameData gameData, StackEntry entry,
+            ManaColor manaColor) {
+        for (CardEffect effect : entry.getEffectsToResolve()) {
+            if (effect instanceof ProducedManaColorAwareEffect colorAware
+                    && colorAware.requiresTargetChoiceAfterProducedMana()) {
+                queueCampTargetChoice(gameData, entry.getCard(), entry.getControllerId(),
+                        entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(),
+                        colorAware.withProducedManaColors(Set.of(manaColor)));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void queueCampTargetChoice(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, CardEffect effect) {
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                sourceCard,
+                controllerId,
+                List.of(effect),
+                false,
+                TargetFilters.creatureYouControl(),
+                0,
+                sourcePermanentId,
+                sourcePermanentSnapshot));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionServiceProvider.getObject().processNextSpellTargetTrigger(gameData);
+        }
     }
 
     @CollectsTrigger(value = AddExtraManaOfChosenColorOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)

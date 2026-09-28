@@ -278,6 +278,17 @@ public class ValidTargetService {
                             .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_TOUGHNESS && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .anyMatch(sel -> !gameQueryService.haveEqualToughness(gameData, sel, candidate));
+                });
+            }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
                 List<Permanent> selected = excludeIds.stream()
                         .map(id -> gameQueryService.findPermanentById(gameData, id))
@@ -648,7 +659,8 @@ public class ValidTargetService {
                         validGraveyardCardIds);
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        targetLegalityService.getEffectiveMaxTargetsForAbility(
+                                gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue),
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
@@ -659,7 +671,8 @@ public class ValidTargetService {
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
                         validGraveyardCardIds, validExiledCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        targetLegalityService.getEffectiveMaxTargetsForAbility(
+                                gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue),
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
@@ -789,6 +802,18 @@ public class ValidTargetService {
                             .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
                 });
             }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_TOUGHNESS
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                List<Permanent> selected = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .anyMatch(sel -> !gameQueryService.haveEqualToughness(gameData, sel, candidate));
+                });
+            }
             if ((ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
                     || ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE)
                     && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
@@ -845,7 +870,8 @@ public class ValidTargetService {
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                     ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                    ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
+                    targetLegalityService.getEffectiveMaxTargetsForAbility(
+                            gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue), prompt);
         }
 
         boolean effectsDeclareTarget = targetingEffects.stream()

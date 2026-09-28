@@ -735,6 +735,10 @@ public class GameActionAvailabilityService {
             subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                     CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
         }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.AURA)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.EQUIPMENT)) {
+            subtypeOrPlaneswalkerSpellContext.add(ManaRestriction.SubtypeOrPlaneswalkerSpells.auraOrEquipmentSpells());
+        }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
@@ -947,6 +951,10 @@ public class GameActionAvailabilityService {
                 && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
             subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                     CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.AURA)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.EQUIPMENT)) {
+            subtypeOrPlaneswalkerSpellContext.add(ManaRestriction.SubtypeOrPlaneswalkerSpells.auraOrEquipmentSpells());
         }
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
@@ -1667,6 +1675,15 @@ public class GameActionAvailabilityService {
 
             if (isGrantedCyclingGraveyardCast) {
                 int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+                long availableCards = graveyard.stream().filter(c -> c != card).count();
+                if (availableCards < escapeExileCount) {
+                    continue;
+                }
+            }
+            if (grantedGraveyardCardCast) {
+                GameData.GraveyardCardCastPermission permission =
+                        gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
+                int escapeExileCount = permission == null ? 0 : permission.additionalGraveyardExileCount();
                 long availableCards = graveyard.stream().filter(c -> c != card).count();
                 if (availableCards < escapeExileCount) {
                     continue;

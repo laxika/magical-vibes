@@ -15,6 +15,10 @@ import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "233")
 @CardRegistration(set = "BRR", collectorNumber = "36")
+@CardRegistration(set = "PIP", collectorNumber = "236")
+@CardRegistration(set = "PIP", collectorNumber = "1012")
+@CardRegistration(set = "PIP", collectorNumber = "484")
+@CardRegistration(set = "PIP", collectorNumber = "764")
 public class MysticForge extends Card {
 
     public MysticForge() {

@@ -21,6 +21,8 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "661")
 @CardRegistration(set = "ECC", collectorNumber = "158")
 @CardRegistration(set = "TMC", collectorNumber = "70")
+@CardRegistration(set = "PIP", collectorNumber = "279")
+@CardRegistration(set = "PIP", collectorNumber = "807")
 public class PathOfAncestry extends Card {
 
     public PathOfAncestry() {

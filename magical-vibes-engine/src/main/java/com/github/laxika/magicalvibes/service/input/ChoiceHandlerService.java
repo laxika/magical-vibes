@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -48,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandType
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,6 +121,7 @@ public class ChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final LandTapTriggerCollectorService landTapTriggerCollectorService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
@@ -131,6 +133,8 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
             removeUpToCountersFromAllPermanentsEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler
+            forcedCostOrElseEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAnyNumberOfCountersFromAllPermanentsEffectHandler
             removeAnyNumberOfCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
@@ -218,6 +222,16 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.LockOrUnlockRoomDoorChoice ctx) {
             lockOrUnlockTargetRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveCountersFromForcedCostOrElse ctx) {
+            boolean complete = forcedCostOrElseEffectHandler.completeControlledCounterChoice(
+                    gameData, colorName, ctx);
+            if (complete) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            } else {
+                inputCompletionService.publishStateAfterInput(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.CappedCounterAmountChoice) {
@@ -1864,10 +1878,14 @@ public class ChoiceHandlerService {
     private void resolveProducedManaTriggers(GameData gameData, ManaColor manaColor) {
         List<StackEntry> triggers = gameData.pendingManaAbilityTriggers.stream()
                 .filter(entry -> entry.getEffectsToResolve().stream()
-                        .anyMatch(AddManaOfTypeProducedByTappedPermanentEffect.class::isInstance))
+                        .anyMatch(ProducedManaColorAwareEffect.class::isInstance))
                 .toList();
         gameData.pendingManaAbilityTriggers.removeAll(triggers);
         for (StackEntry trigger : triggers) {
+            if (landTapTriggerCollectorService.queueResolvedProducedManaTriggerTarget(
+                    gameData, trigger, manaColor)) {
+                continue;
+            }
             trigger.setProducedManaColor(manaColor);
             effectResolutionService.resolveEffects(gameData, trigger);
         }

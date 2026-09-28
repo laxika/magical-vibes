@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -2709,6 +2710,11 @@ public class TriggeredAbilityQueueService {
                 if (pending.chosenTargetsSoFar().contains(playerId)) {
                     continue;
                 }
+                if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                        && sagaChapterTargetControllerAlreadyChosen(
+                        pending.chosenTargetsSoFar(), playerId, gameData)) {
+                    continue;
+                }
                 if (targetLegalityService.matchesPlayerPredicate(
                         gameData, pending.controllerId(), playerId, playerFilter.predicate())) {
                     validTargets.add(playerId);
@@ -2722,6 +2728,11 @@ public class TriggeredAbilityQueueService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (pending.chosenTargetsSoFar().contains(permanent.getId())) {
+                    continue;
+                }
+                if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                        && sagaChapterTargetControllerAlreadyChosen(
+                        pending.chosenTargetsSoFar(), pid, gameData)) {
                     continue;
                 }
                 if (group.filter() == null && !gameQueryService.isCreature(gameData, permanent)) {
@@ -2740,6 +2751,20 @@ public class TriggeredAbilityQueueService {
             }
         }
         return validTargets;
+    }
+
+    private boolean sagaChapterTargetControllerAlreadyChosen(List<UUID> chosenTargets,
+                                                               UUID controllerId,
+                                                               GameData gameData) {
+        for (UUID chosenTarget : chosenTargets) {
+            UUID chosenController = gameData.playerIdToName.containsKey(chosenTarget)
+                    ? chosenTarget
+                    : gameQueryService.findPermanentController(gameData, chosenTarget);
+            if (controllerId.equals(chosenController)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int sagaChapterTargetManaValue(GameData gameData,

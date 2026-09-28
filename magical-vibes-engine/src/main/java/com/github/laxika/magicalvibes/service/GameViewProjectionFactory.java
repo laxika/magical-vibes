@@ -105,6 +105,7 @@ public class GameViewProjectionFactory {
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
         List<Integer> energyCounters = getEnergyCounters(gameData);
+        List<Integer> radCounters = getRadCounters(gameData);
         List<Integer> speeds = getSpeeds(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
@@ -178,6 +179,7 @@ public class GameViewProjectionFactory {
                             applyFaceDownReveals(battlefields, faceDownReveals, playerId),
                             collectFaceDownPermanentReveals(gameData, playerId)),
                     stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
+                    radCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
@@ -357,13 +359,21 @@ public class GameViewProjectionFactory {
                         var filteredPermission = viewerId != null && viewerId.equals(pid)
                                 ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
+                        var targetedPermission = viewerId != null && viewerId.equals(pid)
+                                ? data.graveyardCardCastPermissionsUntilEndOfTurn.get(c.getId())
+                                : null;
+                        int graveyardCastExileCount = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount()
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
+                                        .orElse(0);
+                        String graveyardCastExileLabel = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount() > 0 ? "other cards" : null
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
+                                        .orElse(null);
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
                                 gameQueryService.graveyardCardsHaveLostAllAbilities(data),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
-                                        .orElse(0),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
-                                        .orElse(null));
+                                graveyardCastExileCount, graveyardCastExileLabel);
                     }).toList()
                     : new ArrayList<>());
         }
@@ -568,6 +578,14 @@ public class GameViewProjectionFactory {
         List<Integer> counters = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             counters.add(gameData.playerEnergyCounters.getOrDefault(pid, 0));
+        }
+        return counters;
+    }
+
+    List<Integer> getRadCounters(GameData gameData) {
+        List<Integer> counters = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            counters.add(gameData.playerRadCounters.getOrDefault(pid, 0));
         }
         return counters;
     }
@@ -1059,6 +1077,7 @@ public class GameViewProjectionFactory {
                 getLifeTotals(data),
                 getPoisonCounters(data),
                 getEnergyCounters(data),
+                getRadCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),

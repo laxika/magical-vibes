@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesGreaterThanSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
@@ -1470,6 +1471,17 @@ public class CombatAttackService {
                         continue;
                     }
                     filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesGreaterThanSourceCounters) {
+                    boolean countGreaterThanCounters = conditionEvaluationService.isMet(
+                            gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                    if (!countGreaterThanCounters) {
+                        log.info("Game {} - {} attack trigger skipped (attacker count does not exceed source counters)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(effect);
                 } else if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
                     boolean exactCountMet = conditionEvaluationService.isMet(

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisT
 import com.github.laxika.magicalvibes.model.amount.CardsDelved;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZone
 import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.ControllerRadCounters;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -202,8 +204,11 @@ import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInE
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.TotalCountersAmongPlayersAndPermanents;
+import com.github.laxika.magicalvibes.model.amount.TotalRadCountersAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
@@ -317,6 +322,8 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastTreasureManaSpent(ctx.sourceCard().getId());
+            case TreasureManaSpentToActivate ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getActivationTreasureManaSpent();
             case CaveManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
@@ -371,6 +378,12 @@ public class AmountEvaluationService {
                     countPlayersWithCardsInHandAtLeast(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
+            case TotalCountersAmongPlayersAndPermanents ignored ->
+                    totalCountersAmongPlayersAndPermanents(gameData);
+            case TotalRadCountersAmongPlayers ignored ->
+                    gameData.orderedPlayerIds.stream()
+                            .mapToInt(playerId -> gameData.playerRadCounters.getOrDefault(playerId, 0))
+                            .sum();
             case PlayersWhoDiscardedThisTurn ignored ->
                     (int) gameData.orderedPlayerIds.stream()
                             .filter(playerId -> gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0) > 0)
@@ -393,6 +406,8 @@ public class AmountEvaluationService {
                     countCreatureTypesAmongControlledCreatures(gameData, ctx);
             case CardTypesAmongCardsDiscardedThisResolution ignored ->
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
+            case CardsDrawnThisResolution ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
@@ -630,6 +645,9 @@ public class AmountEvaluationService {
             case ControllerExperienceCounters ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.playerExperienceCounters.getOrDefault(ctx.controllerId(), 0);
+            case ControllerRadCounters ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.playerRadCounters.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
@@ -1014,6 +1032,8 @@ public class AmountEvaluationService {
             case ChosenCreatureOrRevealedCardPower ignored -> true;
             case SnowManaSpentToCast ignored -> false;
             case TreasureManaSpentToCast ignored -> false;
+            case TreasureManaSpentToActivate ignored -> false;
+            case CardsDrawnThisResolution ignored -> false;
             case Scaled s -> referencesXValue(s.amount());
             case Divided d -> referencesXValue(d.amount());
             case HalvedRoundedUp h -> referencesXValue(h.amount());
@@ -1035,6 +1055,8 @@ public class AmountEvaluationService {
             case EventValue ignored -> true;
             case SnowManaSpentToCast ignored -> false;
             case TreasureManaSpentToCast ignored -> false;
+            case TreasureManaSpentToActivate ignored -> false;
+            case CardsDrawnThisResolution ignored -> false;
             case Scaled s -> referencesEventValue(s.amount());
             case Divided d -> referencesEventValue(d.amount());
             case HalvedRoundedUp h -> referencesEventValue(h.amount());
@@ -1158,6 +1180,22 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int totalCountersAmongPlayersAndPermanents(GameData gameData) {
+        int playerCounters = gameData.orderedPlayerIds.stream()
+                .mapToInt(playerId -> gameData.playerPoisonCounters.getOrDefault(playerId, 0)
+                        + gameData.playerRadCounters.getOrDefault(playerId, 0)
+                        + gameData.playerEnergyCounters.getOrDefault(playerId, 0)
+                        + gameData.playerSparkCounters.getOrDefault(playerId, 0)
+                        + gameData.playerExperienceCounters.getOrDefault(playerId, 0))
+                .sum();
+        int permanentCounters = gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .mapToInt(Permanent::getTotalCounterCount)
+                .sum();
+        return playerCounters + permanentCounters;
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx,

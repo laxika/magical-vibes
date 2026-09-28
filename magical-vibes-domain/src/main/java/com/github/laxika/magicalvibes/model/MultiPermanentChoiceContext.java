@@ -257,6 +257,23 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Inventory Management: select the controlled Auras and Equipment to reattach individually. */
+    record InventoryManagementAttachmentSelection(UUID controllerId)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Selects any number of captured Auras and Equipment to move onto a death-trigger target. */
+    record ReturnAurasAndAttachEquipmentToTargetCreature(UUID targetCreatureId,
+                                                         List<UUID> auraCardIds,
+                                                         List<UUID> equipmentPermanentIds)
+            implements MultiPermanentChoiceContext {
+
+        public ReturnAurasAndAttachEquipmentToTargetCreature {
+            auraCardIds = List.copyOf(auraCardIds);
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
     /** The controller may choose an Equipment attached to a creature they control to unattach. */
     record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
@@ -497,6 +514,18 @@ public sealed interface MultiPermanentChoiceContext {
             StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** Each player chooses a creature before the chosen creatures are sacrificed together. */
+    record EachPlayerSacrificesCreature(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerSacrificesCreature {
             remainingChoosers = java.util.List.copyOf(remainingChoosers);
             accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
         }
@@ -1132,6 +1161,18 @@ public sealed interface MultiPermanentChoiceContext {
         }
 
         public WillOfTheCouncilChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Vault 11: Voter's Dilemma: the current player voted for up to one creature. */
+    record VoteForCreatureThenDestroyMostVotedChoice(
+            java.util.List<UUID> remainingPlayerIds,
+            java.util.Map<UUID, Integer> votes,
+            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public VoteForCreatureThenDestroyMostVotedChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
         }

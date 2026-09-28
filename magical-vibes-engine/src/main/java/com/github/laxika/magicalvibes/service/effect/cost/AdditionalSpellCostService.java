@@ -2753,6 +2753,45 @@ public class AdditionalSpellCostService {
         }
     }
 
+    /**
+     * Validates a repeatable graveyard-exile payment such as Squad. The request carries one
+     * flattened list of indices, so the individual payment groups are validated as one exact
+     * total; uniqueness makes the grouping immaterial.
+     */
+    public void validateRepeatableGraveyardExileCost(
+            GameData gameData, Player player, Card card, RepeatableAdditionalManaCost repeatableCost,
+            List<String> repeatedAdditionalCosts, List<Integer> exileGraveyardCardIndices) {
+        if (repeatableCost == null || repeatableCost.repeatedGraveyardCardCount() == 0
+                || repeatedAdditionalCosts == null || repeatedAdditionalCosts.isEmpty()) {
+            return;
+        }
+        ExileNCardsFromGraveyardCost expandedCost = new ExileNCardsFromGraveyardCost(
+                Math.multiplyExact(repeatableCost.repeatedGraveyardCardCount(), repeatedAdditionalCosts.size()), null);
+        validateExileNCardsFromGraveyardCost(
+                gameData, player, card, expandedCost, exileGraveyardCardIndices, -1);
+    }
+
+    /** Validates the hand cards discarded once per selected repeatable additional payment. */
+    public void validateRepeatableHandDiscardCost(
+            GameData gameData, Player player, Card card, RepeatableAdditionalManaCost repeatableCost,
+            List<String> repeatedAdditionalCosts, List<Integer> discardHandCardIndices,
+            int spellCardIndex) {
+        if (repeatableCost == null || repeatableCost.repeatedHandCardCount() == 0) {
+            return;
+        }
+        int paymentCount = repeatedAdditionalCosts == null ? 0 : repeatedAdditionalCosts.size();
+        int discardCount = Math.multiplyExact(repeatableCost.repeatedHandCardCount(), paymentCount);
+        if (discardCount == 0) {
+            if (discardHandCardIndices != null && !discardHandCardIndices.isEmpty()) {
+                throw new IllegalStateException("No repeatable additional payment was made for "
+                        + card.getName());
+            }
+            return;
+        }
+        validateDiscardCardsCost(gameData, player, card, new DiscardCardTypeCost(null, null, discardCount),
+                discardHandCardIndices, spellCardIndex);
+    }
+
     /** Validates the selected cards for a delve cost; the spell's generic mana limit is supplied by the cast path. */
     public void validateDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
                                   List<Integer> exileGraveyardCardIndices) {

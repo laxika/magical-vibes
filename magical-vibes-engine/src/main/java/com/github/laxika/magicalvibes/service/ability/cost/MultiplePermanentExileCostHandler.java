@@ -20,6 +20,7 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentExileAction exileAction;
     private final UUID sourcePermanentId;
+    private final UUID excludedSourcePermanentId;
     private final UUID trackingSourcePermanentId;
 
     public MultiplePermanentExileCostHandler(ExilePermanentCost cost,
@@ -29,7 +30,8 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
         this.exileAction = exileAction;
-        this.sourcePermanentId = cost.excludeSource() ? sourcePermanentId : null;
+        this.sourcePermanentId = sourcePermanentId;
+        this.excludedSourcePermanentId = cost.excludeSource() ? sourcePermanentId : null;
         this.trackingSourcePermanentId = cost.trackWithSource() ? sourcePermanentId : null;
     }
 
@@ -58,7 +60,7 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
         }
         return battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
+                .filter(p -> excludedSourcePermanentId == null || !p.getId().equals(excludedSourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -69,10 +71,21 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
         if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, filter)) {
             throw new IllegalStateException("Must exile a permanent matching: " + cost.description());
         }
-        if (sourcePermanentId != null && chosen.getId().equals(sourcePermanentId)) {
+        if (excludedSourcePermanentId != null && chosen.getId().equals(excludedSourcePermanentId)) {
             throw new IllegalStateException("Cannot exile this permanent to its own ability");
         }
+        if (cost.tracksChosenPermanents() && sourcePermanentId != null) {
+            recordChosenExiledCard(gameData, chosen);
+        }
         exileAction.exile(gameData, player, chosen, trackingSourcePermanentId);
+    }
+
+    private void recordChosenExiledCard(GameData gameData, Permanent chosen) {
+        gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> permanent.getId().equals(sourcePermanentId))
+                .findFirst()
+                .ifPresent(source -> source.setChosenExiledCard(chosen.getCard()));
     }
 
     @Override

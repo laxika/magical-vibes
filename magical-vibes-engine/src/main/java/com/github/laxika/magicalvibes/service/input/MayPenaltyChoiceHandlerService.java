@@ -1915,6 +1915,7 @@ public class MayPenaltyChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + energyCost.amount()
                                 + " energy counter(s). (", ability.sourceCard(), ")"));
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -2178,14 +2179,10 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
-            List<UUID> candidates =
-                    destructionSupport.collectPermanentIdsWithAnyCounter(gameData, sourceControllerId);
-            if (!candidates.isEmpty()) {
-                // More than one candidate pauses for a permanent choice, whose completion continues
-                // the game itself — only auto-pass when the counter came off immediately.
-                forcedCostOrElseEffectHandler.removeCounterFromChosenPermanent(gameData, sourceControllerId,
-                        candidates, ability.sourceCard(), ability.sourcePermanentId(), effect);
-                if (candidates.size() == 1) {
+            if (forcedCostOrElseEffectHandler.beginControlledCounterPayment(
+                    gameData, sourceControllerId, ability, effect)) {
+                if (!gameData.interaction.isAwaitingInput()) {
+                    clearAnyPlayerPayState(gameData);
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 }
                 return;

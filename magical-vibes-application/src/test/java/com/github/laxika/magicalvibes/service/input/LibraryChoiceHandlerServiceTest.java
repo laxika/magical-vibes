@@ -86,6 +86,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
 
     private LibraryChoiceHandlerService service;
 
@@ -119,6 +120,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
+                returnTwoExiledCardsWithSourceHandler,
                 permanentControlSupport, permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class));
         registry.register(new LibraryRevealChoiceInteractionHandler(service));

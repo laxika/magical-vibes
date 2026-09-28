@@ -31,6 +31,8 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1370")
 @CardRegistration(set = "2X2", collectorNumber = "155")
 @CardRegistration(set = "C15", collectorNumber = "199")
+@CardRegistration(set = "PIP", collectorNumber = "204")
+@CardRegistration(set = "PIP", collectorNumber = "732")
 public class RampantGrowth extends Card {
 
     public RampantGrowth() {

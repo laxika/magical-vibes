@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
@@ -263,6 +264,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerDifferentFromBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanActivePlayerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
@@ -658,6 +660,16 @@ public class PredicateEvaluationService {
                         ? sourcePermanentSnapshot.getEffectivePower()
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
+            }
+            case CardManaValueAtMostSourceCountersPredicate p -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                yield sourcePermanent != null
+                        && card.getManaValue() <= sourcePermanent.getCounterCount(p.counterType());
             }
             case CardManaValueLessThanSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -1415,6 +1427,19 @@ public class PredicateEvaluationService {
                         : permanent.getBasePower();
                 yield gameQueryService.getEffectivePower(gameData, permanent) > basePower;
             }
+            case PermanentPowerDifferentFromBasePowerPredicate ignored -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (gameData == null) {
+                    yield layered != null
+                            ? layered.getEffectivePower() != layered.getBasePower()
+                            : gameQueryService.powerForStaticFilter(permanent) != permanent.getBasePower();
+                }
+                GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                int basePower = bonus.basePTOverridden()
+                        ? bonus.basePowerOverride()
+                        : permanent.getBasePower();
+                yield gameQueryService.getEffectivePower(gameData, permanent) != basePower;
+            }
             case PermanentPowerAtMostControlledSubtypeCountPredicate subtypeCountPredicate -> {
                 if (gameData == null || sourceControllerId == null) {
                     yield false;
@@ -2073,9 +2098,11 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null) {
                     yield false;
                 }
-                // On an attached Aura the ability speaks about the enchanted creature ("creatures
-                // blocking enchanted creature", Coils of the Medusa): an Aura is never blocked itself.
-                UUID blockedId = sourcePermanent.getCard().isAura() && sourcePermanent.isAttached()
+                // On an attached Aura or Equipment the ability speaks about the attached creature
+                // ("creatures blocking enchanted/equipped creature"): the attachment is never blocked itself.
+                UUID blockedId = sourcePermanent.isAttached()
+                        && (sourcePermanent.getCard().isAura()
+                        || sourcePermanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                         ? sourcePermanent.getAttachedTo()
                         : sourcePermanent.getId();
                 yield permanent.isBlocking()

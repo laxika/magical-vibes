@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "2X2", collectorNumber = "170")
 @CardRegistration(set = "OTP", collectorNumber = "35")
 @CardRegistration(set = "OTP", collectorNumber = "74")
+@CardRegistration(set = "PIP", collectorNumber = "209")
+@CardRegistration(set = "PIP", collectorNumber = "473")
+@CardRegistration(set = "PIP", collectorNumber = "737")
+@CardRegistration(set = "PIP", collectorNumber = "1001")
 public class AnguishedUnmaking extends Card {
 
     public AnguishedUnmaking() {

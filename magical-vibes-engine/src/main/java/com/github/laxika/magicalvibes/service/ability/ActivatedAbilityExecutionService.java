@@ -73,7 +73,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
@@ -513,15 +515,20 @@ public class ActivatedAbilityExecutionService {
         // loss trigger must be deferred until the activated ability is on the stack, so it resolves
         // above the ability rather than below it.
         abilityEffects.stream()
-                .filter(PayLifeCost.class::isInstance)
-                .map(PayLifeCost.class::cast)
+                .filter(effect -> effect instanceof PayLifeCost
+                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
                 .findFirst()
                 .ifPresent(cost -> {
                     int currentLife = gameData.getLife(playerId);
-                    int sourceCounterCount = cost.perSourceCounter() == null
-                            ? 0
-                            : permanent.getCounterCount(cost.perSourceCounter());
-                    int amount = cost.effectiveAmount(currentLife, sourceCounterCount);
+                    int amount;
+                    if (cost instanceof PayLifeCost payLifeCost) {
+                        int sourceCounterCount = payLifeCost.perSourceCounter() == null
+                                ? 0
+                                : permanent.getCounterCount(payLifeCost.perSourceCounter());
+                        amount = payLifeCost.effectiveAmount(currentLife, sourceCounterCount);
+                    } else {
+                        amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+                    }
                     if (amount > 0) {
                         lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
                     }
@@ -559,6 +566,24 @@ public class ActivatedAbilityExecutionService {
                     String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
                     gameLogService.append(gameData,
                             GameLog.text(playerName + " pays " + cost.amount() + " energy counter(s)."));
+                });
+
+        int xEnergyCost = effectiveXValue;
+        abilityEffects.stream()
+                .filter(PayXEnergyCost.class::isInstance)
+                .findFirst()
+                .ifPresent(cost -> {
+                    if (xEnergyCost > 0) {
+                        int current = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+                        if (current < xEnergyCost) {
+                            throw new IllegalStateException("Not enough energy to pay");
+                        }
+                        int updated = current - xEnergyCost;
+                        gameData.playerEnergyCounters.put(playerId, updated);
+                        String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
+                        gameLogService.append(gameData,
+                                GameLog.text(playerName + " pays " + xEnergyCost + " energy counter(s)."));
+                    }
                 });
 
         ExileSelfCost exileSelfCost = abilityEffects.stream()

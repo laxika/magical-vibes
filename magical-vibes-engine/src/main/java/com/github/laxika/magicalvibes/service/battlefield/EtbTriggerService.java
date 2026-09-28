@@ -615,6 +615,7 @@ public class EtbTriggerService {
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .filter(e -> card.getEffectTargetIndex(e) < 0)
                 .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))

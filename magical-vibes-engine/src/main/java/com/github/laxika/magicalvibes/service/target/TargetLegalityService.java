@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AggregateManaValueTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -848,6 +849,21 @@ public class TargetLegalityService {
         }
     }
 
+    /** Returns an activated ability's target cap, including any amount evaluated at activation. */
+    int getEffectiveMaxTargetsForAbility(GameData gameData, UUID controllerId, ActivatedAbility ability,
+                                         Card sourceCard, int xValue) {
+        if (ability.getDynamicMaxTargets() == null) {
+            return ability.getEffectiveMaxTargets(xValue);
+        }
+        UUID sourcePermanentId = sourceCard == null
+                ? null : findSourcePermanentIdByCardId(gameData, sourceCard.getId());
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        int dynamicMaxTargets = amountEvaluationService.evaluate(gameData, ability.getDynamicMaxTargets(),
+                new AmountContext(controllerId, sourcePermanent, null, xValue, 0));
+        return ability.getEffectiveMaxTargets(xValue, dynamicMaxTargets);
+    }
+
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard) {
         validateMultiTargetAbility(gameData, playerId, ability, targetIds, sourceCard, 0);
     }
@@ -863,7 +879,8 @@ public class TargetLegalityService {
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability,
                                            List<UUID> targetIds, Card sourceCard, int xValue,
                                            List<CardEffect> abilityEffects) {
-        validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue),
+        validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue),
+                getEffectiveMaxTargetsForAbility(gameData, playerId, ability, sourceCard, xValue),
                 null, ability.isAllowSharedTargets());
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
@@ -2196,6 +2213,9 @@ public class TargetLegalityService {
             }
         }
 
+        validateAggregateManaValueTargetGroups(gameData, card, targetIds, perPositionGroups,
+                controllerId, xValue);
+
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
         if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             Set<UUID> targetedControllers = targetIds.stream()
@@ -2547,6 +2567,10 @@ public class TargetLegalityService {
             validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.SHARE_TOUGHNESS) {
+            validateEqualToughness(gameData, targetIds);
+            return;
+        }
         List<Permanent> targets = targetIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
@@ -2564,6 +2588,11 @@ public class TargetLegalityService {
                     case SHARE_NO_CREATURE_TYPES -> {
                         if (gameQueryService.shareCreatureType(gameData, a, b)) {
                             throw new IllegalStateException("Chosen creatures must share no creature types");
+                        }
+                    }
+                    case SHARE_TOUGHNESS -> {
+                        if (!gameQueryService.haveEqualToughness(gameData, a, b)) {
+                            throw new IllegalStateException("Chosen creatures must have equal toughness");
                         }
                     }
                     case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE -> {
@@ -2593,11 +2622,77 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
                          AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
-                         DIFFERENT_MANA_VALUES -> {
+                         DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST -> {
                         // Handled by early returns above.
                     }
                 }
             }
+        }
+    }
+
+    private void validateAggregateManaValueTargetGroups(GameData gameData, Card card,
+                                                        List<UUID> targetIds,
+                                                        List<SpellTarget> perPositionGroups,
+                                                        UUID controllerId, int xValue) {
+        for (int groupIndex = 0; groupIndex < card.getSpellTargets().size(); groupIndex++) {
+            SpellTarget group = card.getSpellTargets().get(groupIndex);
+            List<AggregateManaValueTargetEffect> aggregateEffects = card
+                    .getEffectsBoundToTargetGroup(group.getIndex()).stream()
+                    .filter(AggregateManaValueTargetEffect.class::isInstance)
+                    .map(AggregateManaValueTargetEffect.class::cast)
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    .toList();
+            if (aggregateEffects.isEmpty()) {
+                continue;
+            }
+
+            int limit = aggregateEffects.stream()
+                    .mapToInt(effect -> aggregateManaValueLimit(gameData, effect, controllerId, xValue, card))
+                    .min()
+                    .orElse(-1);
+            if (limit < 0) {
+                continue;
+            }
+
+            int totalManaValue = 0;
+            for (int i = 0; i < targetIds.size(); i++) {
+                if (perPositionGroups.get(i).getIndex() != group.getIndex()) {
+                    continue;
+                }
+                Permanent target = gameQueryService.findPermanentById(gameData, targetIds.get(i));
+                if (target != null) {
+                    totalManaValue += target.getCard().getManaValue();
+                }
+            }
+            if (totalManaValue > limit) {
+                throw new IllegalStateException("The total mana value of the targets cannot exceed " + limit);
+            }
+        }
+    }
+
+    private int aggregateManaValueLimit(GameData gameData, AggregateManaValueTargetEffect effect,
+                                        UUID controllerId, int xValue, Card sourceCard) {
+        if (effect.dynamicMaxTotalManaValue() == null) {
+            return effect.maxTotalManaValue();
+        }
+        return amountEvaluationService.evaluate(gameData, effect.dynamicMaxTotalManaValue(),
+                AmountContext.forCasting(controllerId, xValue, sourceCard));
+    }
+
+    private void validateEqualToughness(GameData gameData, List<UUID> targetIds) {
+        List<Permanent> targets = targetIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .toList();
+        if (targets.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalStateException("Chosen creatures must have equal toughness");
+        }
+        if (targets.size() < 2) {
+            return;
+        }
+        int toughness = gameQueryService.getEffectiveToughness(gameData, targets.getFirst());
+        if (targets.stream().skip(1)
+                .anyMatch(target -> gameQueryService.getEffectiveToughness(gameData, target) != toughness)) {
+            throw new IllegalStateException("Chosen creatures must have equal toughness");
         }
     }
 
@@ -3139,6 +3234,27 @@ public class TargetLegalityService {
                     if (targetLegal[i] && (!targetLegal[0] || !blockedIds.contains(declaredTargetIds.get(i)))) {
                         targetLegal[i] = false;
                         entry.markTargetIllegal(i);
+                    }
+                }
+            }
+            if (multiTargetConstraint == MultiTargetConstraint.SHARE_TOUGHNESS) {
+                int firstLegalIndex = -1;
+                for (int i = 0; i < targetLegal.length; i++) {
+                    if (targetLegal[i]) {
+                        firstLegalIndex = i;
+                        break;
+                    }
+                }
+                if (firstLegalIndex >= 0) {
+                    Permanent firstLegalTarget = gameQueryService.findPermanentById(
+                            gameData, declaredTargetIds.get(firstLegalIndex));
+                    for (int i = firstLegalIndex + 1; i < declaredTargetIds.size(); i++) {
+                        Permanent target = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
+                        if (targetLegal[i] && (target == null || firstLegalTarget == null
+                                || !gameQueryService.haveEqualToughness(gameData, firstLegalTarget, target))) {
+                            targetLegal[i] = false;
+                            entry.markTargetIllegal(i);
+                        }
                     }
                 }
             }

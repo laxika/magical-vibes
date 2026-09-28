@@ -247,6 +247,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermane
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RainOfGoreEffect;
+import com.github.laxika.magicalvibes.model.effect.RadiationLifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfAllZoneSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfBecomesCreatureOutsideBattlefieldEffect;
@@ -1639,6 +1640,11 @@ public class GameQueryService {
         return playerId != null
                 && playerId.equals(sourceControllerId)
                 && anyBattlefieldHasStaticEffect(gameData, RainOfGoreEffect.class);
+    }
+
+    /** Returns whether the player's radiation life loss is replaced by equal life gain. */
+    public boolean radiationLifeLossBecomesLifeGain(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, RadiationLifeGainReplacementEffect.class);
     }
 
     /**
@@ -8482,6 +8488,11 @@ public class GameQueryService {
     public boolean sharesCardType(GameData gameData, Permanent a, Permanent b) {
         Set<CardType> aTypes = getEffectiveCardTypes(gameData, a);
         return getEffectiveCardTypes(gameData, b).stream().anyMatch(aTypes::contains);
+    }
+
+    /** Returns whether two permanents currently have equal effective toughness. */
+    public boolean haveEqualToughness(GameData gameData, Permanent a, Permanent b) {
+        return getEffectiveToughness(gameData, a) == getEffectiveToughness(gameData, b);
     }
 
     /**

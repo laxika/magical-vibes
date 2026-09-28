@@ -20,6 +20,10 @@ import java.util.Set;
 @CardRegistration(set = "XLN", collectorNumber = "253")
 @CardRegistration(set = "SLD", collectorNumber = "457")
 @CardRegistration(set = "YEOE", collectorNumber = "33")
+@CardRegistration(set = "PIP", collectorNumber = "262")
+@CardRegistration(set = "PIP", collectorNumber = "494")
+@CardRegistration(set = "PIP", collectorNumber = "790")
+@CardRegistration(set = "PIP", collectorNumber = "1022")
 public class DrownedCatacomb extends Card {
 
     public DrownedCatacomb() {

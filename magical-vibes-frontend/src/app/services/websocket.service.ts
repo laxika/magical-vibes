@@ -380,6 +380,7 @@ export interface Game {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  radCounters?: number[];
   speeds: number[];
   stack: StackEntry[];
   graveyards: Card[][];
@@ -469,6 +470,7 @@ export interface GameStateNotification {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  radCounters?: number[];
   speeds: number[];
   hand: Card[];
   opponentHand: Card[];

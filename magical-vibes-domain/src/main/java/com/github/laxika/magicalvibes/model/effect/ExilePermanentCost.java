@@ -32,4 +32,9 @@ public record ExilePermanentCost(PermanentPredicate filter, String description, 
     public PermanentPredicate consumedPermanentFilter() {
         return filter;
     }
+
+    @Override
+    public boolean tracksChosenPermanents() {
+        return true;
+    }
 }

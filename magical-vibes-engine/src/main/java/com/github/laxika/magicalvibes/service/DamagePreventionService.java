@@ -457,6 +457,9 @@ public class DamagePreventionService {
                 if (preventRemoveEffect.dealsPreventedDamage()) {
                     queuePreventedDamageTrigger(gameData, permanent, countersToRemove, false);
                 }
+                if (preventRemoveEffect.givesEachPlayerRadCounters()) {
+                    giveEachPlayerRadCounters(gameData, countersToRemove);
+                }
             }
             int preventedDamage = preventRemoveEffect.preventOnlyIfCounterAvailable()
                     ? countersToRemove
@@ -935,6 +938,15 @@ public class DamagePreventionService {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
             gameData.addDelayedPlusOneCounters(permanent.getId(), countersRemoved * 2);
+        }
+    }
+
+    private void giveEachPlayerRadCounters(GameData gameData, int amount) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            gameData.playerRadCounters.merge(playerId, amount, Integer::sum);
+            String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
+            gameLogService.append(gameData,
+                    GameLog.text(playerName + " gets " + amount + " rad counter" + (amount == 1 ? "." : "s.")));
         }
     }
 

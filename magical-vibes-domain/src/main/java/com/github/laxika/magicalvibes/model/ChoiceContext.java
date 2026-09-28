@@ -1684,6 +1684,22 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Chooses controlled permanents from which an optional forced counter cost removes counters. */
+    record RemoveCountersFromForcedCostOrElse(PendingMayAbility ability,
+                                              com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
+                                              UUID payerId, int remaining, Map<String, UUID> permanentOptions)
+            implements ChoiceContext {
+
+        public RemoveCountersFromForcedCostOrElse {
+            permanentOptions = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(permanentOptions));
+        }
+
+        public List<String> options() {
+            return List.copyOf(permanentOptions.keySet());
+        }
+    }
+
     record CounterSelection(UUID permanentId, CounterType counterType) {
     }
 

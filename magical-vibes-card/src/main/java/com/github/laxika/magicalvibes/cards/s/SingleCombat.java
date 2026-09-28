@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "30")
+@CardRegistration(set = "PIP", collectorNumber = "172")
+@CardRegistration(set = "PIP", collectorNumber = "458")
+@CardRegistration(set = "PIP", collectorNumber = "700")
+@CardRegistration(set = "PIP", collectorNumber = "986")
 public class SingleCombat extends Card {
 
     public SingleCombat() {

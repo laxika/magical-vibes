@@ -79,6 +79,8 @@ public class PermanentChoiceHandlerService {
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
     private final ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler gutmornEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.InventoryManagementEffectHandler
+            inventoryManagementEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -133,6 +135,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
+        } else if (context instanceof PermanentChoiceContext.InventoryManagementAttachment attachmentChoice) {
+            inventoryManagementEffectHandler.completeCreatureChoice(gameData, permanentId, attachmentChoice);
         } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler.completeCreatureChoice(
                     gameData, permanentId, attachAura);
@@ -170,6 +174,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureThenDrawsPower(
+                    gameData, permanentId, targetPlayerSacrifice);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness targetPlayerSacrifice) {
+            battlefieldHandler.handleTargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
                     gameData, permanentId, targetPlayerSacrifice);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureOrCreatesToken targetPlayerSacrificeOrToken) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureOrCreatesToken(

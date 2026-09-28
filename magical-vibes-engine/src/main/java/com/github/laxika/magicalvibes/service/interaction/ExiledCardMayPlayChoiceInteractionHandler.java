@@ -43,6 +43,13 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         }
 
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (chosenIds.isEmpty() && interaction.allowNoChoice()) {
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " declines to play a card exiled this way."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (chosenIds.size() != 1 || !interaction.validCardIds().contains(chosenIds.getFirst())) {
             throw new IllegalStateException("Choose exactly one card exiled this way");
         }

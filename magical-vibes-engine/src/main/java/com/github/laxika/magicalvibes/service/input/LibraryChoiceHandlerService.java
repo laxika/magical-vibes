@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
+import com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -124,6 +125,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
@@ -2579,6 +2581,15 @@ public class LibraryChoiceHandlerService {
             } else {
                 handleDubiousChallengeOpponentChoice(gameData, allRevealedCards, cardIds, dubiousChallenge);
             }
+            return;
+        }
+
+        PendingReturnTwoExiledWithSourceCards returnTwoExiled =
+                gameData.pollPendingInteraction(PendingReturnTwoExiledWithSourceCards.class);
+        if (returnTwoExiled != null) {
+            returnTwoExiledCardsWithSourceHandler.completeChoice(
+                    gameData, returnTwoExiled, allRevealedCards, cardIds);
+            finishSearchAndResume(gameData);
             return;
         }
 

@@ -130,6 +130,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsTo
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1292,6 +1293,10 @@ public class SpellCastingService {
                 && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))) {
             subtypeOrPlaneswalkerSpellContext.add(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                     CardSubtype.ELEMENTAL, CardSubtype.CHANDRA));
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.AURA)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.EQUIPMENT)) {
+            subtypeOrPlaneswalkerSpellContext.add(ManaRestriction.SubtypeOrPlaneswalkerSpells.auraOrEquipmentSpells());
         }
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless,
                 subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, legendarySpellOnly,
@@ -4476,6 +4481,12 @@ public class SpellCastingService {
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection,
                     additionalCosts.tieredManaCost() != null ? modeEncoding : effectiveXValue,
                     waterbendCostPaid, collectEvidenceMinimumManaValue);
+            additionalSpellCostService.validateRepeatableGraveyardExileCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    costSelection.exileGraveyardCardIndices());
+            additionalSpellCostService.validateRepeatableHandDiscardCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    costSelection.discardHandCardIndices(), handCostIndex);
             AdditionalSpellCostService.ChosenCreatureOrWarpedCard chosenObject =
                     additionalCosts.chosenCreatureOrWarpedCardCost() == null ? null
                             : additionalSpellCostService.validateChosenCreatureOrWarpedCard(
@@ -4612,6 +4623,12 @@ public class SpellCastingService {
             AdditionalCostPayment additionalCostPayment = payAdditionalCosts(
                     gameData, player, card, additionalCosts, paymentCostSelection, 0, preManaPaymentPool,
                     effectiveXValue, collectEvidenceMinimumManaValue);
+            payRepeatableGraveyardExileCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    paymentCostSelection.exileGraveyardCardIndices());
+            payRepeatableHandDiscardCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    paymentCostSelection.discardHandCardIndices(), handCostIndex);
             addCreatureSpellAdditionalCounters(gameData, card, repeatedAdditionalCosts,
                     hasCreatureSpellAdditionalCountersCost);
             BeheldCardPayment beholdPayment = payBeholdCost(
@@ -4819,6 +4836,9 @@ public class SpellCastingService {
                     gameData, player, card, additionalCosts, costSelection,
                     additionalCosts.tieredManaCost() != null ? modeEncoding : effectiveXValue,
                     waterbendCostPaid, collectEvidenceMinimumManaValue);
+            additionalSpellCostService.validateRepeatableGraveyardExileCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    costSelection.exileGraveyardCardIndices());
             AdditionalSpellCostService.ChosenCreatureOrWarpedCard chosenObject =
                     additionalCosts.chosenCreatureOrWarpedCardCost() == null ? null
                             : additionalSpellCostService.validateChosenCreatureOrWarpedCard(
@@ -4949,6 +4969,12 @@ public class SpellCastingService {
                     gameData, player, card, additionalCosts, paymentCostSelection,
                     resolvedXValue, preManaPaymentPool, resolvedXValue,
                     collectEvidenceMinimumManaValue);
+            payRepeatableGraveyardExileCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    paymentCostSelection.exileGraveyardCardIndices());
+            payRepeatableHandDiscardCost(
+                    gameData, player, card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts,
+                    paymentCostSelection.discardHandCardIndices(), handCostIndex);
             resolvedXValue = additionalCostPayment.resolvedXValue();
             payCasualtyCosts(gameData, player, card, casualtyValues, casualtyCreatureIds);
             if (!casualtyCreatureIds.isEmpty()) {
@@ -7535,6 +7561,33 @@ public class SpellCastingService {
         }
     }
 
+    private void payRepeatableGraveyardExileCost(
+            GameData gameData, Player player, Card card, RepeatableAdditionalManaCost repeatableCost,
+            List<String> repeatedAdditionalCosts, List<Integer> exileGraveyardCardIndices) {
+        if (repeatableCost == null || repeatableCost.repeatedGraveyardCardCount() == 0
+                || repeatedAdditionalCosts == null || repeatedAdditionalCosts.isEmpty()) {
+            return;
+        }
+        ExileNCardsFromGraveyardCost expandedCost = new ExileNCardsFromGraveyardCost(
+                Math.multiplyExact(repeatableCost.repeatedGraveyardCardCount(), repeatedAdditionalCosts.size()), null);
+        payExileNCardsFromGraveyardCost(gameData, player, card, expandedCost, exileGraveyardCardIndices);
+    }
+
+    private void payRepeatableHandDiscardCost(
+            GameData gameData, Player player, Card card, RepeatableAdditionalManaCost repeatableCost,
+            List<String> repeatedAdditionalCosts, List<Integer> discardHandCardIndices, int spellCardIndex) {
+        if (repeatableCost == null || repeatableCost.repeatedHandCardCount() == 0) {
+            return;
+        }
+        int paymentCount = repeatedAdditionalCosts == null ? 0 : repeatedAdditionalCosts.size();
+        int discardCount = Math.multiplyExact(repeatableCost.repeatedHandCardCount(), paymentCount);
+        if (discardCount == 0) {
+            return;
+        }
+        payDiscardCardsCost(gameData, player, card, new DiscardCardTypeCost(null, null, discardCount),
+                discardHandCardIndices, spellCardIndex);
+    }
+
     private List<Integer> validateEscapeExileCost(GameData gameData, Player player, Card card,
                                                    List<Card> sourceGraveyard, int sourceGraveyardIndex,
                                                    int escapeExileCount, ExileNCardsFromGraveyardCost additionalCost,
@@ -8100,6 +8153,9 @@ public class SpellCastingService {
                 && !grantedFlashback
                 && !emblemFlashback
                 && castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId);
+        GameData.GraveyardCardCastPermission grantedGraveyardCardCastPermission = grantedGraveyardCardCast
+                ? gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId())
+                : null;
         boolean isGrantedGraveyardPlay = flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
@@ -8214,8 +8270,10 @@ public class SpellCastingService {
         }
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
         List<Integer> escapeExileIndices = null;
-        if (isGrantedCyclingGraveyardCast) {
-            int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+        if (isGrantedCyclingGraveyardCast || grantedGraveyardCardCastPermission != null) {
+            int escapeExileCount = isGrantedCyclingGraveyardCast
+                    ? filteredGraveyardPermission.get().permission().additionalGraveyardExileCount()
+                    : grantedGraveyardCardCastPermission.additionalGraveyardExileCount();
             if (escapeExileCount > 0) {
                 escapeExileIndices = validateEscapeExileCost(gameData, player, card, graveyard,
                         graveyardCardIndex, escapeExileCount, exileNCost, exileGraveyardCardIndices);
@@ -8592,6 +8650,8 @@ public class SpellCastingService {
                 }
             });
             if ((isGraveyardCast && graveyardCastOpt.orElseThrow().escape())
+                    || (grantedGraveyardCardCastPermission != null
+                    && grantedGraveyardCardCastPermission.escape())
                             || (isGrantedCyclingGraveyardCast
                             && filteredGraveyardPermission.orElseThrow().permission().escape())) {
                 stackEntry.setCastWithEscape(true);
@@ -8712,6 +8772,9 @@ public class SpellCastingService {
                             GameData.GraveyardCastFilterPermission::exileInsteadOfGraveyard)
                     .orElse(false)) {
                 stackEntry.setExileInsteadOfGraveyard(true);
+            }
+            if (grantedGraveyardCardCastPermission != null && grantedGraveyardCardCastPermission.escape()) {
+                stackEntry.setCastWithEscape(true);
             }
             if (grantedInstantOrSorceryCast) {
                 GameData.GraveyardCardCastPermission permission =

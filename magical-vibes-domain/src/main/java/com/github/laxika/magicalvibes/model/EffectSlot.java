@@ -639,6 +639,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers once whenever an opponent mills one or more cards. */
     ON_OPPONENT_MILLS,
+    /** Triggers once whenever one or more nonland cards are milled. */
+    ON_NONLAND_CARDS_MILLED,
+    /** Triggers once for each nonland card milled by an opponent while this card is in its owner's graveyard. */
+    GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).

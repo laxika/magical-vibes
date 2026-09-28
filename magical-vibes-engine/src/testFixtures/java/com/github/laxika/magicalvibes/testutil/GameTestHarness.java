@@ -416,6 +416,24 @@ public class GameTestHarness {
                 repeatedAdditionalCosts, false);
     }
 
+    public void castCreatureWithRepeatedCostsAndDiscards(Player player, int cardIndex,
+                                                          List<String> repeatedAdditionalCosts,
+                                                          List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, discardHandCardIndices, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
+    public void castCreatureWithRepeatedCostsAndGraveyardExile(
+            Player player, int cardIndex, List<String> repeatedAdditionalCosts,
+            List<Integer> exileGraveyardCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, exileGraveyardCardIndices, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,

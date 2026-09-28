@@ -42,6 +42,8 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasin
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldTargetCastCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
@@ -1162,7 +1164,8 @@ public class CastingCostService {
                         gameData, effect, permanent, activatingPlayerId);
                 if (reducer != null
                         && !reducer.appliesSymmetrically()
-                        && reducer.appliesTo(ability, permanent.getId(), targetId, targetIds)
+                        && appliesToActivatedAbilityCostReducer(
+                        reducer, ability, permanent, targetId, targetIds)
                         && predicateEvaluationService.matchesPermanentPredicate(
                         sourcePermanent, reducer.affectedPermanents(),
                         FilterContext.of(gameData)
@@ -1226,6 +1229,15 @@ public class CastingCostService {
             }
         }
         return reduction;
+    }
+
+    private boolean appliesToActivatedAbilityCostReducer(
+            ActivatedAbilityCostReducingEffect reducer, ActivatedAbility ability,
+            Permanent reducingPermanent, UUID targetId, List<UUID> targetIds) {
+        if (reducer instanceof AttachedPermanentActivatedAbilityCostReducingEffect attached) {
+            return attached.appliesTo(ability, reducingPermanent, targetId, targetIds);
+        }
+        return reducer.appliesTo(ability, reducingPermanent.getId(), targetId, targetIds);
     }
 
     /** Generic mana removed from ninjutsu abilities activated by {@code activatingPlayerId}. */
@@ -2167,6 +2179,19 @@ public class CastingCostService {
                 .mapToInt(effect -> targetIds.size() * effect.amount())
                 .sum();
 
+        int attachedPermanentReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .mapToInt(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(BattlefieldTargetCastCostReducingEffect.class::isInstance)
+                        .map(BattlefieldTargetCastCostReducingEffect.class::cast)
+                        .filter(effect -> effect.appliesTo(
+                                playerId, playerId, permanent, card, targetIds))
+                        .mapToInt(BattlefieldTargetCastCostReducingEffect::amount)
+                        .sum())
+                .sum();
+        if (attachedPermanentReduction != 0) {
+            return attachedPermanentReduction + targetCountReduction;
+        }
+
         int enchantedPlayerReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .mapToInt(permanent -> {
                     UUID enchantedPlayer = permanent.getAttachedTo();
@@ -2298,7 +2323,8 @@ public class CastingCostService {
     public boolean hasBattlefieldTargetBasedCastCostReduction(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof ReduceOwnCastCostIfTargetingPermanentEffect
+                        || effect instanceof BattlefieldTargetCastCostReducingEffect);
     }
 
     public boolean hasPerTargetCastCostReduction(GameData gameData, UUID playerId, Card card) {

@@ -724,6 +724,8 @@ public class LayerSystemService {
                 h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
             }
         }
+        h = mix(h, gameData.exiledCardsWithBrainCounters.hashCode());
+        h = mix(h, gameData.exiledCardsWithBrainCounters.size());
         long imprintedSum = 0;
         for (Map.Entry<UUID, Card> entry : gameData.imprintedCards.entrySet()) {
             imprintedSum += mix64(entry.getKey().hashCode());

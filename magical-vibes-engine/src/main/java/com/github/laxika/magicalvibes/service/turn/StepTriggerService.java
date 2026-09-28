@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpke
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -3054,6 +3055,8 @@ public class StepTriggerService {
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
 
+        handleRadCounterTrigger(gameData);
+
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
@@ -3103,6 +3106,26 @@ public class StepTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
+    }
+
+    private void handleRadCounterTrigger(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || gameData.playerRadCounters.getOrDefault(activePlayerId, 0) <= 0) {
+            return;
+        }
+
+        Card sourceCard = Card.namedRuntimePlaceholder("Rad counters");
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                activePlayerId,
+                "Rad counters ability",
+                new ArrayList<>(List.of(new RadCounterEffect()))));
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.getOrDefault(activePlayerId, "Player")
+                        + "'s rad counter ability triggers."));
+        log.info("Game {} - {}'s rad counter ability triggers", gameData.id,
+                gameData.playerIdToName.getOrDefault(activePlayerId, "Player"));
     }
 
     /**
@@ -6307,7 +6330,7 @@ public class StepTriggerService {
         }
 
         // For equipment triggers, only fire if the equipment is attached to a creature
-        if (perm.isAttached()) {
+        if (perm.isAttached() && perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
             if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
                 return;

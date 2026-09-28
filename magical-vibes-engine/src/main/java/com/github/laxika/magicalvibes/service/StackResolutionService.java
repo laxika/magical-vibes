@@ -832,6 +832,7 @@ public class StackResolutionService {
                         .text(" enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.")
                         .build());
                 log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, characteristics.getName(), targetPlayerName, playerName);
+                processResolvedPermanentEtb(gameData, controllerId, characteristics, targetPlayerId, entry);
             }
         // Aura fizzles if its target is no longer on the battlefield
         } else if (characteristics.isAura() && entry.getTargetId() != null) {

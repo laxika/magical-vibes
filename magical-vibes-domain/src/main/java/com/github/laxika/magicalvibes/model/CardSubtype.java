@@ -287,6 +287,7 @@ public enum CardSubtype {
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
     BOOK("Book"),
+    BOBBLEHEAD("Bobblehead"),
     CITIZEN("Citizen"),
     SCARECROW("Scarecrow"),
     CARIBOU("Caribou"),
@@ -318,7 +319,8 @@ public enum CardSubtype {
     SAND("Sand"),
     RIGGER("Rigger"),
     MIRRODIN("Mirrodin"),
-    SERRAS_REALM("Serra's Realm");
+    SERRAS_REALM("Serra's Realm"),
+    SYNTH("Synth");
 
     private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);

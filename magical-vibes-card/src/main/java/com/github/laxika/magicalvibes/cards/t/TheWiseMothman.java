@@ -1,0 +1,27 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+@CardRegistration(set = "PIP", collectorNumber = "4")
+@CardRegistration(set = "PIP", collectorNumber = "1067")
+@CardRegistration(set = "PIP", collectorNumber = "343")
+@CardRegistration(set = "PIP", collectorNumber = "532")
+@CardRegistration(set = "PIP", collectorNumber = "871")
+public class TheWiseMothman extends Card {
+
+    public TheWiseMothman() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GiveEachPlayerRadCounterEffect());
+        addEffect(EffectSlot.ON_ATTACK, new GiveEachPlayerRadCounterEffect());
+
+        targetUpTo(new EventValue(), TargetFilters.creature(), 100)
+                .addEffect(EffectSlot.ON_NONLAND_CARDS_MILLED,
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+    }
+}

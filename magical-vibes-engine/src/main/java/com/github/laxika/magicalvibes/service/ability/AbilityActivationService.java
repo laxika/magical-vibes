@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -85,8 +86,10 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
@@ -5913,6 +5916,14 @@ public class AbilityActivationService {
         if (xValue < ability.getMinimumXValue()) {
             throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
         }
+        if (ability.isModalModesMustBeUnused()) {
+            ChooseOneEffect modal = ability.modalEffectAtActivation();
+            int modeIndex = modal.decodeModeIndices(xValue).getFirst();
+            String modeLabel = modal.options().get(modeIndex).label();
+            if (permanent.getChosenModeLabels().contains(modeLabel)) {
+                throw new IllegalStateException("That mode has already been chosen");
+            }
+        }
         // Volrath's Curse: only the enchanted permanent's controller may activate this ability.
         if (ability.isActivatableOnlyByEnchantedPermanentController()) {
             UUID enchantedController = permanent.isAttached()
@@ -6055,7 +6066,8 @@ public class AbilityActivationService {
         if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                if ((effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
+                if ((effect instanceof PayLifeCost || effect instanceof PayLifeEqualToCommanderColorIdentityCost
+                        || effect instanceof PayLifeForEachCardInHandCost
                         || effect instanceof PayXLifeCost)
                         && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -6186,13 +6198,13 @@ public class AbilityActivationService {
         }
 
         // Pay-life cost
-        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
-                .filter(PayLifeCost.class::isInstance)
-                .map(PayLifeCost.class::cast)
+        Optional<CardEffect> payLifeCost = abilityEffects.stream()
+                .filter(effect -> effect instanceof PayLifeCost
+                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
                 .findFirst();
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = payLifeCost.get().effectiveAmount(life, sourceCounterCount(permanent, payLifeCost.get()));
+            int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -6210,6 +6222,13 @@ public class AbilityActivationService {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             if (life < xValue) {
                 throw new IllegalStateException("Not enough life to pay (need " + xValue + ", have " + life + ")");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayXEnergyCost.class::isInstance)) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            if (energy < xValue) {
+                throw new IllegalStateException("Not enough energy to pay (need " + xValue + ", have " + energy + ")");
             }
         }
 
@@ -6624,7 +6643,7 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments,
                                               List<UUID> sacrificedCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6654,7 +6673,7 @@ public class AbilityActivationService {
                                               List<UUID> chosenCostPermanentIds,
                                               Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6688,7 +6707,7 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               List<UUID> activatedAbilityExiledCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -6704,7 +6723,7 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
         }
@@ -7534,6 +7553,17 @@ public class AbilityActivationService {
      */
     private int sourceCounterCount(Permanent permanent, PayLifeCost cost) {
         return cost.perSourceCounter() == null ? 0 : permanent.getCounterCount(cost.perSourceCounter());
+    }
+
+    private int lifePaymentAmount(GameData gameData, UUID playerId, Permanent permanent, CardEffect cost) {
+        if (cost instanceof PayLifeCost payLifeCost) {
+            return payLifeCost.effectiveAmount(
+                    gameData.getLife(playerId), sourceCounterCount(permanent, payLifeCost));
+        }
+        if (cost instanceof PayLifeEqualToCommanderColorIdentityCost) {
+            return ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+        }
+        throw new IllegalArgumentException("Unsupported life-payment cost: " + cost.getClass().getSimpleName());
     }
 
     private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
@@ -8972,7 +9002,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex) {
+    private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex,
+                                            ActivatedAbility ability, int xValue) {
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
         perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
@@ -8980,6 +9011,12 @@ public class AbilityActivationService {
         gameData.activatedAbilityUsesThisGame
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>())
                 .merge(abilityIndex, 1, Integer::sum);
+
+        if (ability.isModalModesMustBeUnused()) {
+            ChooseOneEffect modal = ability.modalEffectAtActivation();
+            int modeIndex = modal.decodeModeIndices(xValue).getFirst();
+            permanent.getChosenModeLabels().add(modal.options().get(modeIndex).label());
+        }
     }
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {

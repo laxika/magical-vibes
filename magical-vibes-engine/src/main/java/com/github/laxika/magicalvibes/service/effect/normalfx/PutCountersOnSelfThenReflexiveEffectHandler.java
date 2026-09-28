@@ -61,6 +61,7 @@ public class PutCountersOnSelfThenReflexiveEffectHandler implements NormalEffect
                     "PutCountersOnSelfThenReflexiveEffect is not part of the resolving entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new QueueReflexiveAbilityEffect(reflexiveEffect)));
+                List.of(new QueueReflexiveAbilityEffect(reflexiveEffect,
+                        counterThen.reflexiveOptionalTarget())));
     }
 }

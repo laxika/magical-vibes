@@ -32,7 +32,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingAllureOfTheUnknownChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
-        PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
+        PendingReturnExiledWithSourceCard, PendingReturnTwoExiledWithSourceCards, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingRagingRiver, PendingBendOrBreak,
         PendingPsychoticEpisodeChoice,
         PendingTruthOrTaleCardChoice,
@@ -979,20 +979,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Choose one card among exiled cards and grant it a temporary play permission. */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                    ExilePlayDuration duration, boolean anyManaType,
-                                   boolean withoutPayingManaCost)
+                                   boolean withoutPayingManaCost, boolean allowNoChoice)
             implements PendingInteraction {
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        ExilePlayDuration duration) {
-            this(playerId, validCardIds, duration, false, false);
+            this(playerId, validCardIds, duration, false, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        ExilePlayDuration duration, boolean anyManaType) {
-            this(playerId, validCardIds, duration, anyManaType, false);
+            this(playerId, validCardIds, duration, anyManaType, false, false);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       ExilePlayDuration duration, boolean anyManaType,
+                                       boolean withoutPayingManaCost) {
+            this(playerId, validCardIds, duration, anyManaType, withoutPayingManaCost, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, boolean expiresAtEndOfTurn, boolean anyManaType) {
-            this(playerId, validCardIds, expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, anyManaType, false);
+            this(playerId, validCardIds, expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, anyManaType, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1000,17 +1006,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                        boolean withoutPayingManaCost) {
             this(playerId, validCardIds,
                     expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN,
-                    anyManaType, withoutPayingManaCost);
+                    anyManaType, withoutPayingManaCost, false);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       boolean expiresAtEndOfTurn, boolean anyManaType,
+                                       boolean withoutPayingManaCost, boolean allowNoChoice) {
+            this(playerId, validCardIds,
+                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN,
+                    anyManaType, withoutPayingManaCost, allowNoChoice);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
-            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN, false, false);
+            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN, false, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        boolean expiresAtEndOfTurn) {
             this(playerId, validCardIds,
-                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, false, false);
+                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, false, false, false);
         }
 
         public ExiledCardMayPlayChoice {
@@ -1028,7 +1042,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds, allowNoChoice ? 0 : 1, 1);
         }
     }
 
@@ -1536,11 +1550,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    record DuplicateManaValueRevealContext(CreateTokenEffect token) {
+    }
+
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                 String cardName, ManaAbilityRevealContext manaAbilityContext,
                                                 ActivatedAbilityRevealContext activatedAbilityContext,
                                                 EachPlayerRevealContext eachPlayerRevealContext,
-                                                BattlefieldEntryRequest amplifyEntry)
+                                                BattlefieldEntryRequest amplifyEntry,
+                                                DuplicateManaValueRevealContext duplicateManaValueRevealContext)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
@@ -1552,7 +1570,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                    ActivatedAbilityRevealContext activatedAbilityContext,
                                                    EachPlayerRevealContext eachPlayerRevealContext) {
             this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
-                    eachPlayerRevealContext, null);
+                    eachPlayerRevealContext, null, null);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                   ActivatedAbilityRevealContext activatedAbilityContext,
+                                                   EachPlayerRevealContext eachPlayerRevealContext,
+                                                   BattlefieldEntryRequest amplifyEntry) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
+                    eachPlayerRevealContext, amplifyEntry, null);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName,
+                                                   DuplicateManaValueRevealContext duplicateManaValueRevealContext) {
+            this(playerId, validCardIds, cardName, null, null, null, null,
+                    duplicateManaValueRevealContext);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1623,14 +1657,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              LibrarySearchDestination destination,
                                              UUID attachToPermanentId,
                                              CounterType enterWithCounterType,
-                                             int enterWithCounterCount) implements PendingInteraction {
+                                             int enterWithCounterCount,
+                                             boolean attachAuraOrEquipment) implements PendingInteraction {
+
+        /** Backward-compatible canonical constructor without the extended attachment mode. */
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> handCardIds,
+                                                 java.util.Set<UUID> outsideGameCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel,
+                                                 LibrarySearchDestination destination,
+                                                 UUID attachToPermanentId,
+                                                 CounterType enterWithCounterType,
+                                                 int enterWithCounterCount) {
+            this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
+                    librarySearchAllowed, cardLabel, destination, attachToPermanentId,
+                    enterWithCounterType, enterWithCounterCount, false);
+        }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                                  java.util.Set<UUID> libraryCardIds,
                                                  boolean librarySearchAllowed,
                                                  String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
-                    LibrarySearchDestination.HAND, null, null, 0);
+                    LibrarySearchDestination.HAND, null, null, 0, false);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -1640,7 +1691,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  LibrarySearchDestination destination,
                                                  UUID attachToPermanentId) {
             this(playerId, pool, libraryCardIds, handCardIds, java.util.Set.of(),
-                    librarySearchAllowed, cardLabel, destination, attachToPermanentId, null, 0);
+                    librarySearchAllowed, cardLabel, destination, attachToPermanentId, null, 0, false);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -1648,7 +1699,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  java.util.Set<UUID> outsideGameCardIds,
                                                  boolean librarySearchAllowed, String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), outsideGameCardIds,
-                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0);
+                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0, false);
         }
 
         public SearchLibraryAndOrGraveyardChoice {

@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "TD2", collectorNumber = "82")
 @CardRegistration(set = "DDM", collectorNumber = "78")
 @CardRegistration(set = "C15", collectorNumber = "312")
+@CardRegistration(set = "PIP", collectorNumber = "301")
+@CardRegistration(set = "PIP", collectorNumber = "829")
 public class TaintedWood extends Card {
 
     public TaintedWood() {

@@ -1511,7 +1511,13 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
-                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                        || !predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)) {
+                    continue;
+                }
+                if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                        && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                        .getOrDefault(playerId, Set.of()).contains(card.getId())) {
                     continue;
                 }
                 if (permission.availabilityCondition() != null

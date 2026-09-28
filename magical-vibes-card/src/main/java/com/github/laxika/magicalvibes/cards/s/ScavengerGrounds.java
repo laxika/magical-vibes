@@ -19,6 +19,10 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "82")
 @CardRegistration(set = "EOS", collectorNumber = "127")
 @CardRegistration(set = "EOS", collectorNumber = "172")
+@CardRegistration(set = "PIP", collectorNumber = "287")
+@CardRegistration(set = "PIP", collectorNumber = "506")
+@CardRegistration(set = "PIP", collectorNumber = "815")
+@CardRegistration(set = "PIP", collectorNumber = "1034")
 public class ScavengerGrounds extends Card {
 
     public ScavengerGrounds() {

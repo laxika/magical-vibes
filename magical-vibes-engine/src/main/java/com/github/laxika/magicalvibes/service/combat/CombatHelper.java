@@ -42,6 +42,10 @@ public final class CombatHelper {
                 if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                     return true;
                 }
+                if (restriction.unblockableIfDefenderHasRadCounters()
+                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
+                    return true;
+                }
                 if (hasDefenderCondition(restriction, landwalkIgnored)
                         && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
                         attacker, restriction.unblockableIfDefenderControls())) {
@@ -59,6 +63,10 @@ public final class CombatHelper {
                         attacker, restriction.unblockableIfDefenderControls())) {
                     return true;
                 }
+                if (restriction.unblockableIfDefenderHasRadCounters()
+                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
+                    return true;
+                }
             }
         }
         final boolean[] result = {false};
@@ -74,6 +82,11 @@ public final class CombatHelper {
                         return;
                     }
                     if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                        result[0] = true;
+                        return;
+                    }
+                    if (restriction.unblockableIfDefenderHasRadCounters()
+                            && defenderHasRadCounters(gameData, defenderBattlefield)) {
                         result[0] = true;
                         return;
                     }
@@ -175,6 +188,22 @@ public final class CombatHelper {
             }
         }
         return null;
+    }
+
+    private static boolean defenderHasRadCounters(GameData gameData, List<Permanent> defenderBattlefield) {
+        UUID defenderId = null;
+        if (defenderBattlefield != null) {
+            for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+                if (entry.getValue() == defenderBattlefield) {
+                    defenderId = entry.getKey();
+                    break;
+                }
+            }
+        }
+        if (defenderId == null) {
+            defenderId = defenderControllerId(gameData, defenderBattlefield);
+        }
+        return defenderId != null && gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
     }
 
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,

@@ -20,6 +20,10 @@ import java.util.Set;
 @CardRegistration(set = "XLN", collectorNumber = "255")
 @CardRegistration(set = "SLD", collectorNumber = "456")
 @CardRegistration(set = "YEOE", collectorNumber = "34")
+@CardRegistration(set = "PIP", collectorNumber = "266")
+@CardRegistration(set = "PIP", collectorNumber = "497")
+@CardRegistration(set = "PIP", collectorNumber = "794")
+@CardRegistration(set = "PIP", collectorNumber = "1025")
 public class GlacialFortress extends Card {
 
     public GlacialFortress() {

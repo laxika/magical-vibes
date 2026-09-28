@@ -261,6 +261,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
+            gameData.exiledCardsWithBrainCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
