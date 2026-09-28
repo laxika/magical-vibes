@@ -14,14 +14,23 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                                boolean attackOnly, boolean includeSourcePermanent,
                                                boolean allControllers,
                                                boolean instantSorceryCastOrCopyOnly,
-                                               boolean allyCreatureBecomesTarget)
+                                               boolean allyCreatureBecomesTarget,
+                                               boolean permanentTurnsFaceUpOnly)
         implements CardEffect {
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean attackOnly, boolean includeSourcePermanent,
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, false);
+                allControllers, instantSorceryCastOrCopyOnly, false, false);
+    }
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
@@ -51,5 +60,11 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
     public static AdditionalTriggeredAbilityEffect forAllyCreatureBecomesTarget() {
         return new AdditionalTriggeredAbilityEffect(
                 new PermanentTruePredicate(), null, false, true, false, false, true);
+    }
+
+    /** Makes triggered abilities caused by turning a face-down permanent face up trigger again. */
+    public static AdditionalTriggeredAbilityEffect forPermanentTurnsFaceUp() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, false, true);
     }
 }

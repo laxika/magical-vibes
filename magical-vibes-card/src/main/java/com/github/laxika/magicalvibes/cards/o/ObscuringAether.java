@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "194")
+@CardRegistration(set = "MKC", collectorNumber = "179")
 public class ObscuringAether extends Card {
 
     public ObscuringAether() {

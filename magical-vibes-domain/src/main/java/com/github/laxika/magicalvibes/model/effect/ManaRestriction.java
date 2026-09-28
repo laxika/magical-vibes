@@ -401,6 +401,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast colorless spells. */
+    record ColorlessSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSpellOnlyMana(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless spells only";
+        }
+    }
+
     /**
      * Mana spendable only to cast creature spells of the given subtype (Gnarlroot Trapper: "Add
      * {G}. Spend this mana only to cast an Elf creature spell."). Routes into the per-subtype

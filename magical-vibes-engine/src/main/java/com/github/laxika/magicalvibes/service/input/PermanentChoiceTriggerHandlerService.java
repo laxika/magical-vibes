@@ -1023,20 +1023,31 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean isExiledCardTarget = target == null
+                && gameQueryService.findCardInExileById(gameData, permanentId) != null;
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
         boolean declined = hasOptionalSingleTarget(att.sourceCard(), att.effects())
                 && isPlayerTarget
                 && permanentId.equals(att.controllerId());
-        if ((target != null || isPlayerTarget) && !declined) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    att.sourceCard(),
-                    att.controllerId(),
-                    att.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(att.effects()),
-                    null,
-                    att.sourcePermanentId()
-            );
+        if ((target != null || isPlayerTarget || isExiledCardTarget) && !declined) {
+            StackEntry entry = isExiledCardTarget
+                    ? new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            att.sourceCard(),
+                            att.controllerId(),
+                            att.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(att.effects()),
+                            permanentId,
+                            Zone.EXILE,
+                            att.sourcePermanentId())
+                    : new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            att.sourceCard(),
+                            att.controllerId(),
+                            att.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(att.effects()),
+                            null,
+                            att.sourcePermanentId());
             entry.setTargetId(permanentId);
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());

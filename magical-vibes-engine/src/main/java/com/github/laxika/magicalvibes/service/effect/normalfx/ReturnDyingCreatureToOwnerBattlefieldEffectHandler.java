@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -57,7 +61,8 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
 
         Permanent permanent = new Permanent(cardToReturn);
-        graveyardReturnSupport.applyPermanentGrants(permanent, null, returnEffect.grantSubtype());
+        graveyardReturnSupport.applyPermanentGrants(permanent, null,
+                returnEffect.subtypeOverride().isEmpty() ? returnEffect.grantSubtype() : null);
         permanent.getPersistentGrantedKeywords().addAll(returnEffect.grantKeywords());
         if (returnEffect.enterWithCounter() != null && returnEffect.enterWithCounterCount() > 0) {
             permanent.setCounterCount(returnEffect.enterWithCounter(),
@@ -70,6 +75,15 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, battlefieldControllerId, permanent, enterTappedTypes);
+
+        boolean overriding = true;
+        for (var subtype : returnEffect.subtypeOverride()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), cardToReturn.getName(), null, entry.getControllerId(),
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET, overriding),
+                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+            overriding = false;
+        }
 
         if (!ownerId.equals(battlefieldControllerId)) {
             graveyardReturnSupport.trackStolenCreature(

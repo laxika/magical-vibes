@@ -81,6 +81,7 @@ public enum Keyword {
     JUMP,
     JUMP_START,
     BANDING,
+    EXALTED,
     EMERGE,
     COVEN,
     MELD,

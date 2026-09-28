@@ -52,6 +52,7 @@ public sealed interface PermanentPredicate permits
         PermanentEnteredBattlefieldThisTurnPredicate,
         PermanentEnteredBattlefieldThisOrLastTurnPredicate,
         PermanentFoughtThisTurnPredicate,
+        PermanentTurnedFaceUpThisTurnPredicate,
         PermanentHasAnySubtypePredicate,
         PermanentHasAdventurePredicate,
         PermanentHasAttachedPermanentPredicate,

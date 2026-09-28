@@ -137,6 +137,8 @@ public class GameData {
     public final Map<UUID, List<Card>> faceDownPermanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Players who turned a permanent face up this turn. */
     public final Set<UUID> playersWhoTurnedPermanentsFaceUpThisTurn = ConcurrentHashMap.newKeySet();
+    /** Battlefield permanent identities that were turned face up this turn. */
+    public final Set<UUID> permanentsTurnedFaceUpThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of permanents that entered under each player's control during the immediately preceding turn. */
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
     /** Players who cast a spell or put a nontoken permanent onto the battlefield during the active player's own turn. */
@@ -494,6 +496,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard from a library this turn. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromLibraryThisTurn = new ConcurrentHashMap<>();
+    /** Tracks card IDs put into each player's graveyard by surveil this turn. */
+    public final Map<UUID, Set<UUID>> cardsSurveilledThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard from hand this turn. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromHandThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token creature card IDs put into graveyards from any zone this turn. */
@@ -1158,6 +1162,8 @@ public class GameData {
     public final Set<UUID> playersWithAllCreatureDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
     public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose combat damage and controlled planeswalker damage are prevented this turn (Take the Bait). */
+    public final Set<UUID> playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage is fully prevented until the beginning of their next turn (Morningtide's Light). */
     public final Set<UUID> playersWithAllPlayerDamagePreventedUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players whose combat damage is prevented this turn; creates one token per damage prevented. */
@@ -6172,6 +6178,8 @@ public class GameData {
         copy.playersRedirectingAllCreatureDamage.addAll(this.playersRedirectingAllCreatureDamage);
         copy.resolvingDeclinedAllCreatureDamageRedirect = this.resolvingDeclinedAllCreatureDamageRedirect;
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
+        copy.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented
+                .addAll(this.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
                 .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
         copy.combatDamagePreventionTokenShields.putAll(this.combatDamagePreventionTokenShields);
@@ -6398,6 +6406,7 @@ public class GameData {
         this.faceDownPermanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.faceDownPermanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         copy.playersWhoTurnedPermanentsFaceUpThisTurn.addAll(this.playersWhoTurnedPermanentsFaceUpThisTurn);
+        copy.permanentsTurnedFaceUpThisTurn.addAll(this.permanentsTurnedFaceUpThisTurn);
         this.permanentsEnteredBattlefieldLastTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
         copy.playersWhoActedDuringTheirTurn.addAll(this.playersWhoActedDuringTheirTurn);
@@ -6731,6 +6740,8 @@ public class GameData {
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromLibraryThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromLibraryThisTurn.put(k, new HashSet<>(v)));
+        this.cardsSurveilledThisTurn.forEach((k, v) ->
+                copy.cardsSurveilledThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromHandThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromHandThisTurn.put(k, new HashSet<>(v)));
         this.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->

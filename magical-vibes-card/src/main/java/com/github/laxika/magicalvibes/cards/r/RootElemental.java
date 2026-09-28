@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SCG", collectorNumber = "127")
+@CardRegistration(set = "MKC", collectorNumber = "182")
 public class RootElemental extends Card {
 
     public RootElemental() {

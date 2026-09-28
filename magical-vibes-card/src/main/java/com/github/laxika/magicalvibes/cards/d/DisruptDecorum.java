@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "215")
 @CardRegistration(set = "CMM", collectorNumber = "533")
+@CardRegistration(set = "MKC", collectorNumber = "151")
 public class DisruptDecorum extends Card {
 
     public DisruptDecorum() {

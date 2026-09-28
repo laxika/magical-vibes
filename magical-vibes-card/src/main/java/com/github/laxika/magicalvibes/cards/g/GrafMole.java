@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "207")
 @CardRegistration(set = "SIR", collectorNumber = "197")
+@CardRegistration(set = "MKC", collectorNumber = "170")
 public class GrafMole extends Card {
 
     public GrafMole() {

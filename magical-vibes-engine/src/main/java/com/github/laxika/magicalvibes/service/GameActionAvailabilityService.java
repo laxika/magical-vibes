@@ -378,6 +378,13 @@ public class GameActionAvailabilityService {
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
         if (card.getType() != null && card.getType().isPlanar()) return false;
+        if (!card.hasType(CardType.LAND)
+                && gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()
+                && pool.getColorlessSpellOnlyMana() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteColorlessSpellOnlyMana();
+        }
         boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         if (instantOrSorcery
                 && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
@@ -1680,6 +1687,9 @@ public class GameActionAvailabilityService {
                     ? reducedCost.withBlackManaAsPhyrexian() : reducedCost;
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, card, cardHasFlashback, 0, Zone.GRAVEYARD);
+            boolean paysLifeEqualToManaValue = isGrantedCyclingGraveyardCast
+                    && filteredGraveyardPermission.get().permission().alternateCost()
+                    instanceof PayLifeEqualToSpellManaValueCost;
             // Flashback-only mana and graveyard-only mana are exposed only for their matching
             // graveyard cast paths.
             ManaPool paymentPool = pool;
@@ -1689,7 +1699,13 @@ public class GameActionAvailabilityService {
                 paymentPool.promoteColoredSpellWithoutXOnlyMana();
             }
             ManaPool finalPaymentPool = paymentPool;
-            boolean canPayMana = card.isRequiresNoMana()
+            boolean canPayMana = paysLifeEqualToManaValue
+                    ? gameData.getLife(playerId) >= card.getManaValue()
+                    && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    && gameQueryService.canPayLifeForCosts(gameData)
+                    && new ManaCost("{0}").canPayWithAdditionalGenericCost(
+                    finalPaymentPool, 0, additionalCost)
+                    : card.isRequiresNoMana()
                     ? (card.hasKeyword(Keyword.CONVOKE)
                     || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE, Zone.GRAVEYARD))
                     && cost.canPayWithConvoke(new ManaPool(), additionalCost

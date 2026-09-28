@@ -106,6 +106,10 @@ public class ManaPool {
     private final Map<CardSubtype, Integer> colorlessSubtypeSpellOrAbilityMana = new HashMap<>();
     /** Mana spendable only for colorless spells, colorless permanent abilities, or costs containing {C}. */
     private int promotedColorlessSpellOrPermanentAbilityMana;
+    /** Colorless mana spendable only to cast colorless spells. */
+    private int colorlessSpellOnlyColorless;
+    /** The subset of colorless-spell-only mana temporarily exposed during an eligible spell payment. */
+    private int promotedColorlessSpellOnlyColorless;
     /** Colorless mana spendable only to cast legendary spells (Untaidake, the Cloud Keeper). */
     private int legendarySpellOnlyColorless;
     /** Per-color mana spendable only to cast legendary spells (Plaza of Heroes). */
@@ -369,6 +373,8 @@ public class ManaPool {
         this.myrOnlyColorless = source.myrOnlyColorless;
         colorlessSubtypeSpellOrAbilityMana.putAll(source.colorlessSubtypeSpellOrAbilityMana);
         this.promotedColorlessSpellOrPermanentAbilityMana = source.promotedColorlessSpellOrPermanentAbilityMana;
+        this.colorlessSpellOnlyColorless = source.colorlessSpellOnlyColorless;
+        this.promotedColorlessSpellOnlyColorless = source.promotedColorlessSpellOnlyColorless;
         this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
         legendarySpellOnlyMana.putAll(source.legendarySpellOnlyMana);
         this.restrictedRed = source.restrictedRed;
@@ -876,6 +882,8 @@ public class ManaPool {
         myrOnlyColorless = 0;
         colorlessSubtypeSpellOrAbilityMana.clear();
         promotedColorlessSpellOrPermanentAbilityMana = 0;
+        colorlessSpellOnlyColorless = 0;
+        promotedColorlessSpellOnlyColorless = 0;
         legendarySpellOnlyColorless = 0;
         legendarySpellOnlyMana.replaceAll((color, amount) -> 0);
         restrictedRed = 0;
@@ -1013,6 +1021,7 @@ public class ManaPool {
         total += powerstoneOnlyColorless;
         total += myrOnlyColorless;
         total += colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum();
+        total += colorlessSpellOnlyColorless;
         total += legendarySpellOnlyColorless;
         total += getLegendarySpellOnlyManaTotal();
         total += restrictedRed;
@@ -1976,6 +1985,43 @@ public class ManaPool {
         pool.merge(ManaColor.COLORLESS, -promotedColorlessSpellOrPermanentAbilityMana, Integer::sum);
         colorlessSubtypeSpellOrAbilityMana.merge(null, promotedColorlessSpellOrPermanentAbilityMana, Integer::sum);
         promotedColorlessSpellOrPermanentAbilityMana = 0;
+    }
+
+    public int getColorlessSpellOnlyMana() {
+        return colorlessSpellOnlyColorless;
+    }
+
+    public void addColorlessSpellOnlyMana(int amount) {
+        colorlessSpellOnlyColorless += amount;
+    }
+
+    public void removeColorlessSpellOnlyMana(int amount) {
+        colorlessSpellOnlyColorless = Math.max(0, colorlessSpellOnlyColorless - amount);
+    }
+
+    /** Temporarily exposes colorless-spell-only mana to the ordinary spell payment algorithm. */
+    public ColorlessSpellOnlyManaState promoteColorlessSpellOnlyMana() {
+        int promoted = colorlessSpellOnlyColorless;
+        int regularBefore = pool.getOrDefault(ManaColor.COLORLESS, 0);
+        colorlessSpellOnlyColorless = 0;
+        pool.merge(ManaColor.COLORLESS, promoted, Integer::sum);
+        promotedColorlessSpellOnlyColorless += promoted;
+        return new ColorlessSpellOnlyManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent colorless-spell-only mana after an eligible spell payment. */
+    public void restorePromotedColorlessSpellOnlyMana(ColorlessSpellOnlyManaState state) {
+        int spent = Math.max(0, state.regularBefore() + state.promoted()
+                - pool.getOrDefault(ManaColor.COLORLESS, 0));
+        int remaining = Math.max(0, state.promoted() - spent);
+        if (remaining > 0) {
+            pool.merge(ManaColor.COLORLESS, -remaining, Integer::sum);
+            colorlessSpellOnlyColorless += remaining;
+        }
+        promotedColorlessSpellOnlyColorless = Math.max(0, promotedColorlessSpellOnlyColorless - remaining - spent);
+    }
+
+    public record ColorlessSpellOnlyManaState(int regularBefore, int promoted) {
     }
 
     public int getLegendarySpellOnlyColorless() {
@@ -4100,6 +4146,8 @@ public class ManaPool {
                 powerstoneOnlyColorless, persistentPowerstoneOnlyColorless);
         moveManaToPool(replacementColor, myrOnlyColorless);
         myrOnlyColorless = 0;
+        moveManaToPool(replacementColor, colorlessSpellOnlyColorless);
+        colorlessSpellOnlyColorless = 0;
         moveManaToPool(replacementColor, legendarySpellOnlyColorless);
         legendarySpellOnlyColorless = 0;
         moveManaToPool(replacementColor, instantSorceryOnlyColorless);
@@ -4401,6 +4449,7 @@ public class ManaPool {
                     powerstoneOnlyColorless, persistentPowerstoneOnlyColorless);
             myrOnlyColorless = 0;
             colorlessSubtypeSpellOrAbilityMana.clear();
+            colorlessSpellOnlyColorless = 0;
             legendarySpellOnlyColorless = 0;
             kickedOrInstantSorceryOnlyColorless = 0;
             instantSorceryOnlyColorless = 0;
@@ -4486,7 +4535,7 @@ public class ManaPool {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
                 amount += artifactOnlyColorless + artifactSpellOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
-                        + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless
+                        + powerstoneOnlyColorless + colorlessSpellOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless
                         + foretellOrInstantSorceryOnlyColorless + disturbOrInstantSorceryOnlyColorless
                         + kickedOrInstantSorceryOnlyColorless
                         + foretellSpellOnlyColorless + xCostOnlyColorless + coloredSpellWithoutXOnlyColorless

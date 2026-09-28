@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "60")
 @CardRegistration(set = "SIR", collectorNumber = "66")
+@CardRegistration(set = "MKC", collectorNumber = "104")
 public class ErdwalIlluminator extends Card {
 
     public ErdwalIlluminator() {

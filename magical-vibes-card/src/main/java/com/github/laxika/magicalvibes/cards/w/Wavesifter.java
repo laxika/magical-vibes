@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "217")
+@CardRegistration(set = "MKC", collectorNumber = "220")
 public class Wavesifter extends Card {
 
     public Wavesifter() {

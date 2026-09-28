@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "198")
+@CardRegistration(set = "MKC", collectorNumber = "184")
 public class SaltRoadAmbushers extends Card {
 
     public SaltRoadAmbushers() {

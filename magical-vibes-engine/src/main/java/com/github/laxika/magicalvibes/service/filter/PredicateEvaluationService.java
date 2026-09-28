@@ -88,9 +88,11 @@ import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyard
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -168,6 +170,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceC
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTurnedFaceUpThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentFoughtThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -762,6 +765,20 @@ public class PredicateEvaluationService {
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getPower() != null && card.getPower() <= sourcePower;
             }
+            case CardPowerLessThanSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                Integer sourcePower = sourcePermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : sourcePowerAtTrigger != null
+                        ? sourcePowerAtTrigger
+                        : basePowerOfCardInAnyZone(gameData, sourceCardId);
+                yield sourcePower != null && card.getPower() != null && card.getPower() < sourcePower;
+            }
             case CardPowerToughnessTotalAtMostPredicate p ->
                     card.getPower() != null && card.getToughness() != null
                             && card.getPower() + card.getToughness() <= p.maxTotal();
@@ -828,6 +845,10 @@ public class PredicateEvaluationService {
                     p.cardName().equals(card.getName());
             case CardNameStartsWithPredicate p ->
                     card.getName() != null && card.getName().startsWith(p.prefix());
+            case CardSurveilledThisTurnPredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && gameData.cardsSurveilledThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
             case CardNameInControllerGraveyardPredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && gameData.playerGraveyards.getOrDefault(cardOwnerId, List.of()).stream()
@@ -1978,6 +1999,8 @@ public class PredicateEvaluationService {
                     !permanent.isSummoningSick();
             case PermanentEnteredBattlefieldThisTurnPredicate ignored ->
                     enteredBattlefieldThisTurn(gameData, permanent);
+            case PermanentTurnedFaceUpThisTurnPredicate ignored ->
+                    gameData != null && gameData.permanentsTurnedFaceUpThisTurn.contains(permanent.getId());
             case PermanentCrewedBySourceThisTurnPredicate ignored -> {
                 if (gameData != null && filterContext != null
                         && filterContext.sourcePermanentId() != null) {
@@ -2561,7 +2584,8 @@ public class PredicateEvaluationService {
                 || predicate instanceof PermanentHasSupertypePredicate
                 || predicate instanceof PermanentIsCommanderPredicate
                 || predicate instanceof PermanentHasAttachedPermanentPredicate
-                || predicate instanceof PermanentEnteredBattlefieldThisTurnPredicate) {
+                || predicate instanceof PermanentEnteredBattlefieldThisTurnPredicate
+                || predicate instanceof PermanentTurnedFaceUpThisTurnPredicate) {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
@@ -2857,6 +2881,10 @@ public class PredicateEvaluationService {
             }
             case PermanentEnteredBattlefieldThisTurnPredicate ignored ->
                     enteredBattlefieldThisTurn(context == null ? null : context.gameData(), permanent);
+            case PermanentTurnedFaceUpThisTurnPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameData.permanentsTurnedFaceUpThisTurn.contains(permanent.getId());
+            }
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasExhaustAbilityPredicate ignored ->
                     hasExhaustActivatedAbilityForStaticEvaluation(permanent, context);

@@ -444,6 +444,9 @@ public class MayMiscHandlerService {
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
+            gameData.cardsSurveilledThisTurn
+                    .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(topCard.getId());
             
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " into their graveyard (surveil)."));

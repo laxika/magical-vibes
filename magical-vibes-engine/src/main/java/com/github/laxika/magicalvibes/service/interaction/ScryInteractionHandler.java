@@ -130,7 +130,11 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             // Surveil: the reject pile goes into the graveyard in the chosen order.
             List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
             for (int idx : bottomCardOrder) {
-                graveyard.add(scryCards.get(idx));
+                Card card = scryCards.get(idx);
+                graveyard.add(card);
+                gameData.cardsSurveilledThisTurn
+                        .computeIfAbsent(player.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                        .add(card.getId());
             }
             setDirectSurveilEventValue(gameData, topCardOrder.size());
         } else {

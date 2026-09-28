@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1287")
 @CardRegistration(set = "TSR", collectorNumber = "150")
 @CardRegistration(set = "CMD", collectorNumber = "108")
+@CardRegistration(set = "MKC", collectorNumber = "146")
 public class AkromaAngelOfFury extends Card {
 
     public AkromaAngelOfFury() {

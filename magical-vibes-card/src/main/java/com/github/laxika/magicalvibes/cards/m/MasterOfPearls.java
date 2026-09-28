@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "18")
+@CardRegistration(set = "MKC", collectorNumber = "73")
 public class MasterOfPearls extends Card {
 
     public MasterOfPearls() {

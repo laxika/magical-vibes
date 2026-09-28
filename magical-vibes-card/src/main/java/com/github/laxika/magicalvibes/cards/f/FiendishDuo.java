@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsEffect;
 
 @CardRegistration(set = "GN2", collectorNumber = "4")
+@CardRegistration(set = "MKC", collectorNumber = "153")
 public class FiendishDuo extends Card {
 
     public FiendishDuo() {

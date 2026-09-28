@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DMR", collectorNumber = "36")
 @CardRegistration(set = "CMD", collectorNumber = "38")
 @CardRegistration(set = "C21", collectorNumber = "111")
+@CardRegistration(set = "MKC", collectorNumber = "92")
 public class WindbornMuse extends Card {
 
     public WindbornMuse() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "38")
 @CardRegistration(set = "DSC", collectorNumber = "116")
+@CardRegistration(set = "MKC", collectorNumber = "101")
 public class DreamEater extends Card {
 
     public DreamEater() {

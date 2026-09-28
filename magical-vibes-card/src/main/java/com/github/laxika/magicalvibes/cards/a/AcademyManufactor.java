@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplace
 @CardRegistration(set = "SLD", collectorNumber = "2195")
 @CardRegistration(set = "MH2", collectorNumber = "219")
 @CardRegistration(set = "MOC", collectorNumber = "346")
+@CardRegistration(set = "MKC", collectorNumber = "221")
 public class AcademyManufactor extends Card {
 
     public AcademyManufactor() {

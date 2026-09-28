@@ -3870,9 +3870,14 @@ public class SpellCastingService {
             ManaPool.ExactlyThreeColorSpellManaState exactlyThreeColorMana =
                     gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                             ? pool.promoteExactlyThreeColorSpellOnlyMana() : null;
-            ManaPool.MulticoloredSpellManaState multicoloredMana =
-                    gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
-                            ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.MulticoloredSpellManaState multicoloredMana =
+                gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                        ? pool.promoteMulticoloredSpellOnlyMana() : null;
+            ManaPool.ColorlessSpellOnlyManaState colorlessSpellOnlyMana =
+                    !card.hasType(CardType.LAND)
+                            && gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()
+                            && pool.getColorlessSpellOnlyMana() > 0
+                            ? pool.promoteColorlessSpellOnlyMana() : null;
             ManaPool.InstantSorceryOrSubtypeSpellManaState seanceBoardMana = isSeanceBoardSpell(
                     gameData, playerId, card)
                     ? pool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES) : null;
@@ -3979,6 +3984,9 @@ public class SpellCastingService {
                 }
                 if (seanceBoardMana != null) {
                     pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
+                }
+                if (colorlessSpellOnlyMana != null) {
+                    pool.restorePromotedColorlessSpellOnlyMana(colorlessSpellOnlyMana);
                 }
             }
         } else if (!usingAlternateCost && !escalateManaSuffix.isEmpty()) {
@@ -8718,7 +8726,7 @@ public class SpellCastingService {
             }
             if (isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()) {
                 var permission = filteredGraveyardPermission.get().permission();
-                if (permission.alternateManaCost() != null) {
+                if (permission.alternateManaCost() != null || permission.alternateCost() != null) {
                     stackEntry.setAlternateCost(true);
                     if (permission.sneak()) {
                         stackEntry.setEntersTapped(true);
@@ -8816,6 +8824,10 @@ public class SpellCastingService {
             }
             stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
+                stackEntry.setAlternateCost(true);
+            }
+            if (isGrantedCyclingGraveyardCast
+                    && filteredGraveyardPermission.orElseThrow().permission().alternateCost() != null) {
                 stackEntry.setAlternateCost(true);
             }
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution()) {
@@ -11054,9 +11066,14 @@ public class SpellCastingService {
         ManaPool.ExactlyThreeColorSpellManaState exactlyThreeColorMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                         ? pool.promoteExactlyThreeColorSpellOnlyMana() : null;
-        ManaPool.MulticoloredSpellManaState multicoloredMana =
-                gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
-                        ? pool.promoteMulticoloredSpellOnlyMana() : null;
+            ManaPool.MulticoloredSpellManaState multicoloredMana =
+                    gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                            ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.ColorlessSpellOnlyManaState colorlessSpellOnlyMana =
+                !card.hasType(CardType.LAND)
+                        && gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()
+                        && pool.getColorlessSpellOnlyMana() > 0
+                        ? pool.promoteColorlessSpellOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
@@ -11134,6 +11151,9 @@ public class SpellCastingService {
             }
             if (seanceBoardMana != null) {
                 pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
+            }
+            if (colorlessSpellOnlyMana != null) {
+                pool.restorePromotedColorlessSpellOnlyMana(colorlessSpellOnlyMana);
             }
         }
     }
@@ -12771,6 +12791,11 @@ public class SpellCastingService {
                 .flatMap(permission -> Optional.ofNullable(permission.permission().alternateManaCost()))
                 .orElse(null)
                 : null;
+        boolean paysLifeEqualToManaValue = isGrantedCyclingGraveyardCast
+                && castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                .map(permission -> permission.permission().alternateCost())
+                .filter(PayLifeEqualToSpellManaValueCost.class::isInstance)
+                .isPresent();
         boolean usesNormalManaCost = (isGraveyardCast && graveyardAlternateManaCost == null)
                 || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                 || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace || isJumpStart
@@ -12837,6 +12862,28 @@ public class SpellCastingService {
                         additionalCostSacrificePermanentIds, tapPermanentIds);
             }
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
+            return effectiveXValue;
+        }
+
+        if (paysLifeEqualToManaValue) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaCost additionalMana = new ManaCost("{0}");
+            if (gameData.getLife(playerId) < card.getManaValue()
+                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || !gameQueryService.canPayLifeForCosts(gameData)
+                    || !additionalMana.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
+                throw new IllegalStateException("Cannot pay life alternative cost");
+            }
+            int before = pool.getTotalAllMana();
+            additionalMana.payWithAdditionalGenericCost(pool, 0, additionalCost);
+            lifeSupport.applyLifePayment(gameData, playerId, card.getManaValue(), card.getName());
+            if (isRetrace) {
+                payRetraceDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
+            }
+            if (isJumpStart) {
+                payJumpStartDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
+            }
+            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
             return effectiveXValue;
         }
 
@@ -13888,8 +13935,15 @@ public class SpellCastingService {
             castEntry.setControlledFaerieAsCast(controlledFaerie);
             triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
         }
-        if (commandCast) triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, playerId, Zone.COMMAND, null);
-        else triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, playerId, castFromHand);
+        if (commandCast) {
+            triggerCollectionService.checkSpellCastTriggers(
+                    gameData, castCharacteristics, playerId, Zone.COMMAND, null, false);
+        } else {
+            triggerCollectionService.checkSpellCastTriggers(
+                    gameData, castCharacteristics, playerId,
+                    castFromHand ? Zone.HAND : Zone.GRAVEYARD, null,
+                    castEntry != null && castEntry.isCastFaceDown());
+        }
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         if (!gameData.pendingSpellCastCostTriggers.isEmpty()) {
             gameData.stack.addAll(gameData.pendingSpellCastCostTriggers);

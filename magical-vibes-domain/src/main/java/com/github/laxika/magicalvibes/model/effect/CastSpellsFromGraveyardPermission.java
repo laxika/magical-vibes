@@ -63,6 +63,11 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
         return null;
     }
 
+    /** Alternate non-mana cost used instead of the card's normal mana cost, if any. */
+    default CostEffect alternateCost() {
+        return null;
+    }
+
     /** Whether the permission's alternate cost is a sneak cost. */
     default boolean sneak() {
         return false;

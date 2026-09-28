@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "23")
+@CardRegistration(set = "MKC", collectorNumber = "69")
 public class HiddenDragonslayer extends Card {
 
     public HiddenDragonslayer() {

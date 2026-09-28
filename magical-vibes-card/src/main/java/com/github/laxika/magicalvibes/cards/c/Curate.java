@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "BRO", collectorNumber = "44")
 @CardRegistration(set = "STX", collectorNumber = "40")
+@CardRegistration(set = "MKC", collectorNumber = "99")
 public class Curate extends Card {
 
     public Curate() {

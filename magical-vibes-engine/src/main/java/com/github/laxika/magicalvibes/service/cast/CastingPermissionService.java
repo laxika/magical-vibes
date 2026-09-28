@@ -1581,7 +1581,8 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
-                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                        || !predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)) {
                     continue;
                 }
                 if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {

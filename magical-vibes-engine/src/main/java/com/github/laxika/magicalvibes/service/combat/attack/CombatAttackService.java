@@ -1193,7 +1193,9 @@ public class CombatAttackService {
                                         || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                         boolean needsTarget = otherEffects.stream()
                                 .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                        || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                        || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
                         UUID attackedTargetId = attacker.getAttackTarget();
                         UUID defendingPlayerId = attackedTargetId == null ? null
                                 : gameData.playerIds.contains(attackedTargetId)
@@ -1925,6 +1927,34 @@ public class CombatAttackService {
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
+            }
+        }
+
+        // Granted exalted abilities are keyword-driven, so each permanent with an effective
+        // granted Exalted keyword contributes its own +1/+1 trigger to a lone attacker.
+        if (attackerIndices.size() == 1) {
+            Permanent attacker = battlefield.get(attackerIndices.getFirst());
+            for (Permanent perm : battlefield) {
+                if (perm.getCard().getKeywords().contains(Keyword.EXALTED)
+                        || gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                        || !gameQueryService.hasKeyword(gameData, perm, Keyword.EXALTED)) {
+                    continue;
+                }
+
+                StackEntry exaltedTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s exalted ability",
+                        List.of(new BoostTargetCreatureEffect(1, 1)),
+                        null,
+                        perm.getId());
+                exaltedTrigger.setTargetId(attacker.getId());
+                exaltedTrigger.setNonTargeting(true);
+                exaltedTrigger.setTriggeringPermanentId(attacker.getId());
+                gameData.stack.add(exaltedTrigger);
+                gameLogService.append(gameData, GameLog.builder().card(perm.getCard())
+                        .text("'s exalted ability triggers.").build());
             }
         }
 

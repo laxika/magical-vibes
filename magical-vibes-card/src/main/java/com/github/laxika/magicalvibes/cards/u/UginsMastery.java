@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "718")
 @CardRegistration(set = "CMM", collectorNumber = "751")
+@CardRegistration(set = "MKC", collectorNumber = "53")
 public class UginsMastery extends Card {
 
     public UginsMastery() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "254")
 @CardRegistration(set = "SOC", collectorNumber = "402")
+@CardRegistration(set = "MKC", collectorNumber = "285")
 public class SacredPeaks extends Card {
 
     public SacredPeaks() {

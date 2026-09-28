@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "35")
 @CardRegistration(set = "NCC", collectorNumber = "136")
+@CardRegistration(set = "MKC", collectorNumber = "127")
 public class DoggedDetective extends Card {
 
     public DoggedDetective() {

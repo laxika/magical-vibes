@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -476,13 +477,18 @@ public class AnimationSupport {
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(source);
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, effect.filter())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), filterContext)) {
                 permanent.setAnimatedUntilEndOfTurn(true);
                 permanent.setAnimatedPower(power);
                 permanent.setAnimatedToughness(toughness);

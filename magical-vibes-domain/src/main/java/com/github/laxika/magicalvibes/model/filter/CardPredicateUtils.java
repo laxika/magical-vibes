@@ -162,6 +162,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardPowerAtMostSourcePowerPredicate) {
             return "card with power at most this creature's power";
         }
+        if (predicate instanceof CardPowerLessThanSourcePowerPredicate) {
+            return "card with power less than this creature's power";
+        }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value less than or equal to this creature's power";
         }

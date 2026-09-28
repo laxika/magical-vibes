@@ -1,0 +1,106 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({ShrineOfTheForsakenGods.class, Forest.class})
+class ShrineOfTheForsakenGodsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The first ability adds one colorless mana")
+    void firstAbilityAddsColorlessMana() {
+        addReadyShrine();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The second ability requires seven lands")
+    void secondAbilityRequiresSevenLands() {
+        addReadyShrine();
+        addForests(5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("7 or more lands");
+    }
+
+    @Test
+    @DisplayName("The second ability adds two mana restricted to colorless spells")
+    void secondAbilityAddsColorlessSpellOnlyMana() {
+        addReadyShrine();
+        addForests(6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getColorlessSpellOnlyMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Colorless-spell-only mana can cast colorless spells")
+    void manaCanCastColorlessSpells() {
+        addReadyShrine();
+        addForests(6);
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.setHand(player1, List.of(creature("Colorless spell", "{2}", null)));
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getColorlessSpellOnlyMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Colorless-spell-only mana cannot cast colored spells")
+    void manaCannotCastColoredSpells() {
+        addReadyShrine();
+        addForests(6);
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setHand(player1, List.of(creature("Colored spell", "{2}{R}", CardColor.RED)));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.playerManaPools.get(player1.getId()).getColorlessSpellOnlyMana()).isEqualTo(2);
+    }
+
+    private void addReadyShrine() {
+        harness.addToBattlefield(player1, new ShrineOfTheForsakenGods());
+        findPermanent(player1, "Shrine of the Forsaken Gods").setSummoningSick(false);
+    }
+
+    private void addForests(int count) {
+        for (int i = 0; i < count; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+    }
+
+    private static Card creature(String name, String manaCost, CardColor color) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost(manaCost);
+        card.setPower(2);
+        card.setToughness(2);
+        if (color != null) {
+            card.setColor(color);
+        }
+        return card;
+    }
+}
