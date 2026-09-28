@@ -135,4 +135,18 @@ class KarplusanYetiTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Source leaving before resolution prevents both creatures from fighting")
+    void sourceLeavingBeforeResolutionPreventsFight() {
+        Permanent yeti = addCreatureReady(player1, new KarplusanYeti());
+        Permanent target = addCreatureReady(player2, new KarplusanGiant());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(yeti);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(target.getId()));
+        assertThat(target.getMarkedDamage()).isZero();
+    }
 }

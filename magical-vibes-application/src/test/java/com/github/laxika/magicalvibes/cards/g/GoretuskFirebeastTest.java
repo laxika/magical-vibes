@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GoretuskFirebeast.class)
+@CardUsed({GoretuskFirebeast.class})
 class GoretuskFirebeastTest extends BaseCardTest {
 
     @Test

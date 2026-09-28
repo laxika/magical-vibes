@@ -36,8 +36,10 @@ class UtopiaTreeTest extends BaseCardTest {
 
         assertThat(tree.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     }
 
     @Test
@@ -53,11 +55,15 @@ class UtopiaTreeTest extends BaseCardTest {
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, null, null);
-            int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
             harness.handleListChoice(player1, color);
 
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
+            for (ManaColor existingColor : ManaColor.values()) {
+                int expected = existingColor == manaColor ? 2 : 1;
+                assertThat(gd.playerManaPools.get(player1.getId()).get(existingColor))
+                        .as("mana of %s", existingColor)
+                        .isEqualTo(expected);
+            }
             assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }

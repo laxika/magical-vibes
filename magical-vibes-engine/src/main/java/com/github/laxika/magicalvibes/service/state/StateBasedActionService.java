@@ -225,14 +225,15 @@ public class StateBasedActionService {
         List<Card> removedTokens = new ArrayList<>();
         Set<UUID> removedTokenIds = new HashSet<>();
 
-        gameData.playerDecks.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerHands.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerGraveyards.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerCommandZones.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        gameData.playerDecks.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerHands.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerGraveyards.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerCommandZones.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.removeIf(entry -> {
                 Card card = entry.card();
-                if (!card.isToken() || card.isTokenCard()) {
+                if ((!card.isToken() && !gameData.dynamicTokenCardIds.contains(card.getId()))
+                        || card.isTokenCard()) {
                     return false;
                 }
                 if (removedTokenIds.add(card.getId())) {
@@ -261,6 +262,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
+            gameData.exiledCardsWithBrainCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
@@ -278,6 +280,7 @@ public class StateBasedActionService {
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.graveyardCardsEnterTapped.remove(cardId);
         }
+        gameData.dynamicTokenCardIds.removeAll(removedTokenIds);
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
         gameData.clearDelayedActions(PendingExileReturn.class,
                 pending -> removedTokenIds.contains(pending.card().getId()));
@@ -293,9 +296,11 @@ public class StateBasedActionService {
         return true;
     }
 
-    private void removeTokensFromZone(List<Card> zone, List<Card> removedTokens, Set<UUID> removedTokenIds) {
+    private void removeTokensFromZone(GameData gameData, List<Card> zone,
+                                      List<Card> removedTokens, Set<UUID> removedTokenIds) {
         zone.removeIf(card -> {
-            if (!card.isToken() || card.isTokenCard()) {
+            if ((!card.isToken() && !gameData.dynamicTokenCardIds.contains(card.getId()))
+                    || card.isTokenCard()) {
                 return false;
             }
             if (removedTokenIds.add(card.getId())) {
@@ -361,12 +366,14 @@ public class StateBasedActionService {
                 } else if (gameQueryService.isCreature(gameData, p)
                         && isDestroyedByLethalDamage(gameData, p)
                         && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
-                    // CR 704.5g — creature with damage >= toughness is destroyed, and
+                    // CR 704.5g — creature with lethal damage is destroyed, and
                     // CR 704.5h — creature dealt damage by a deathtouch source since the last check
                     // is destroyed (regeneration can replace either)
                     lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
                 } else if (gameQueryService.isPlaneswalker(gameData, p)
-                        && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+                        && (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, p)
+                        ? gameQueryService.getEffectiveToughness(gameData, p) <= 0
+                        : p.getCounterCount(CounterType.LOYALTY) <= 0)) {
                     toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
                 } else if (gameQueryService.isBattle(gameData, p)
                         && p.getCounterCount(CounterType.DEFENSE) <= 0
@@ -433,7 +440,11 @@ public class StateBasedActionService {
 
             for (DeathEntry entry : toDie) {
                 processedIds.add(entry.permanent().getId());
-                permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                if (entry.reason() == DeathReason.LETHAL_DAMAGE) {
+                    permanentRemovalService.destroyPermanentByStateBasedAction(gameData, entry.permanent());
+                } else {
+                    permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                }
                 Card cardEntry = entry.permanent().getCard();
                 String name = cardEntry.getName();
                 switch (entry.reason()) {
@@ -699,8 +710,8 @@ public class StateBasedActionService {
      * {@link CantBeDestroyedByLethalDamageUnlessSingleSourceEffect}.
      */
     private boolean isDestroyedByLethalDamage(GameData gameData, Permanent p) {
-        int toughness = gameQueryService.getEffectiveToughness(gameData, p);
-        boolean totalLethal = p.getMarkedDamage() >= toughness || p.isDamagedByDeathtouch();
+        int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, p);
+        boolean totalLethal = p.getMarkedDamage() >= lethalDamageThreshold || p.isDamagedByDeathtouch();
         if (!totalLethal) {
             return false;
         }
@@ -714,6 +725,6 @@ public class StateBasedActionService {
             return true;
         }
         // Deathtouch from any single source is lethal damage from that source (CR 704.5h).
-        return p.isDamagedByDeathtouch() || p.hasLethalDamageFromSingleSource(toughness);
+        return p.isDamagedByDeathtouch() || p.hasLethalDamageFromSingleSource(lethalDamageThreshold);
     }
 }

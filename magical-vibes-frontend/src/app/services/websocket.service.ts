@@ -225,6 +225,8 @@ export interface Card {
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from a non-hand zone. */
   exileCastCounterCost: number;
+  hasFlashforward?: boolean;
+  flashforwardCost?: string | null;
   /** A mandatory creature-type choice made as an additional cast cost. */
   additionalChooseCreatureType?: boolean;
   additionalCreatureTypeChoices?: string[];
@@ -367,6 +369,7 @@ export interface Game {
   activePlayerId: string | null;
   turnNumber: number;
   dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
+  monarchPlayerId?: string | null;
   priorityPlayerId: string | null;
   hand: Card[];
   opponentHand: Card[];
@@ -379,6 +382,7 @@ export interface Game {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  radCounters?: number[];
   speeds: number[];
   stack: StackEntry[];
   graveyards: Card[][];
@@ -457,6 +461,7 @@ export interface GameStateNotification {
   activePlayerId: string;
   turnNumber: number;
   dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
+  monarchPlayerId?: string | null;
   currentStep: TurnStep;
   priorityPlayerId: string;
   battlefields: Permanent[][];
@@ -467,6 +472,7 @@ export interface GameStateNotification {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  radCounters?: number[];
   speeds: number[];
   hand: Card[];
   opponentHand: Card[];
@@ -650,7 +656,7 @@ export interface DraftFinishedNotification {
 export interface CombatDamageTargetView {
   id: string;
   name: string;
-  toughness: number;
+  lethalDamageThreshold: number;
   currentDamage: number;
   isPlayer: boolean;
 }
@@ -712,6 +718,7 @@ export interface ValidTargetsResponse {
   validPlayerIds: string[];
   validGraveyardCardIds: string[];
   validExiledCardIds: string[];
+  validHandCardIds?: string[];
   minTargets: number;
   maxTargets: number;
   prompt: string;

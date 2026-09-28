@@ -23,6 +23,8 @@ import java.util.Set;
 @CardRegistration(set = "ALA", collectorNumber = "60")
 @CardRegistration(set = "DDF", collectorNumber = "39")
 @CardRegistration(set = "MM2", collectorNumber = "62")
+@CardRegistration(set = "SLD", collectorNumber = "1111")
+@CardRegistration(set = "SLD", collectorNumber = "1619")
 public class TezzeretTheSeeker extends Card {
 
     public TezzeretTheSeeker() {

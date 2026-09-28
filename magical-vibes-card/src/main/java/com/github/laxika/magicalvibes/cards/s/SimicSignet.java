@@ -10,11 +10,17 @@ import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "166")
 @CardRegistration(set = "MM3", collectorNumber = "227")
+@CardRegistration(set = "SLD", collectorNumber = "295")
 @CardRegistration(set = "GK2", collectorNumber = "130")
 @CardRegistration(set = "AA1", collectorNumber = "12")
 @CardRegistration(set = "RVR", collectorNumber = "269")
 @CardRegistration(set = "C13", collectorNumber = "258")
+@CardRegistration(set = "C15", collectorNumber = "266")
 @CardRegistration(set = "CMD", collectorNumber = "259")
+@CardRegistration(set = "MOC", collectorNumber = "378")
+@CardRegistration(set = "C21", collectorNumber = "262")
+@CardRegistration(set = "DSC", collectorNumber = "252")
+@CardRegistration(set = "LCC", collectorNumber = "312")
 public class SimicSignet extends Card {
 
     public SimicSignet() {

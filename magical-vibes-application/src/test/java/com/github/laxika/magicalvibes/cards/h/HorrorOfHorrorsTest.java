@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import java.util.List;
 
-@CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Shock.class})
+@CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Shock.class, Forest.class})
 class HorrorOfHorrorsTest extends BaseCardTest {
 
     @Test
@@ -89,5 +89,32 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
         assertThat(zombie.isTapped()).isTrue();
         assertThat(zombie.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's black creature")
+    void canTargetOpponentsBlackCreature() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent opponentSkeleton = addCreatureReady(player2, new DrudgeSkeletons());
+
+        harness.activateAbility(player1, 0, null, opponentSkeleton.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentSkeleton.getRegenerationShield()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Cannot target a black noncreature permanent")
+    void cannotTargetBlackNoncreature() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent blackEnchantment = harness.addToBattlefieldAndReturn(player1, new HorrorOfHorrors());
+        harness.addToBattlefield(player1, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blackEnchantment.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("black creature");
+        harness.assertNotInGraveyard(player1, "Swamp");
     }
 }

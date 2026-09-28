@@ -34,6 +34,7 @@ class CardFreezeTest {
         assertThatThrownBy(() -> card.addActivatedAbility(null)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(card::clearRuntimeSpellTargets).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> card.setCastTimeTargetFilter(null)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.setFlashCastTargetPredicate(null)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -100,6 +101,6 @@ class CardFreezeTest {
         assertThat(instanceFields)
                 .as("Card's instance field count changed — copy the new field in Card(Card source) "
                         + "and update this expected count")
-                .isEqualTo(67);
+                .isEqualTo(70);
     }
 }

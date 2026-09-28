@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "81")
+@CardRegistration(set = "SOC", collectorNumber = "224")
 public class PlumbTheForbidden extends Card {
 
     public PlumbTheForbidden() {

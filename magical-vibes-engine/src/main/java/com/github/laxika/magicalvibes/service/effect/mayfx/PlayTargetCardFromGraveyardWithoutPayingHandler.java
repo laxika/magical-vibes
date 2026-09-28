@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Play-from-graveyard-without-paying — e.g. Horde of Notions.
+ * Play-from-graveyard-without-paying — e.g. Horde of Notions and Victor Timely, Wily Tycoon.
  */
 @Component
 @RequiredArgsConstructor

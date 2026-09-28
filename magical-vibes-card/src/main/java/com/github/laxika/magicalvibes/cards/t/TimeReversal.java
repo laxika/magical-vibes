@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "75")
 @CardRegistration(set = "M12", collectorNumber = "77")
+@CardRegistration(set = "SLD", collectorNumber = "1499")
 public class TimeReversal extends Card {
 
     public TimeReversal() {

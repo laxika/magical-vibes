@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "173")
 @CardRegistration(set = "AKR", collectorNumber = "290")
+@CardRegistration(set = "C21", collectorNumber = "287")
+@CardRegistration(set = "C20", collectorNumber = "267")
 public class DesertOfTheMindful extends Card {
 
     public DesertOfTheMindful() {

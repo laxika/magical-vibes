@@ -115,4 +115,11 @@ class JadeStatueTest extends BaseCardTest {
     private int indexOf(Permanent perm) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
     }
+
+    private Permanent addStatueReady() {
+        Permanent perm = new Permanent(new JadeStatue());
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(perm);
+        return perm;
+    }
 }

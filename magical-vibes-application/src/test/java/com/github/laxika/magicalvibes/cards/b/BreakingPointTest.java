@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreakingPoint.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BreakingPoint.class, DarksteelMyr.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class})
 class BreakingPointTest extends BaseCardTest {
 
     @Test
@@ -93,5 +94,23 @@ class BreakingPointTest extends BaseCardTest {
     private void castBreakingPoint() {
         harness.castFromHand(player1, new BreakingPoint(), "{1}{R}{R}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Declining destroys only destructible creatures")
+    void decliningLeavesNoncreaturesAndIndestructibleCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DarksteelMyr());
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

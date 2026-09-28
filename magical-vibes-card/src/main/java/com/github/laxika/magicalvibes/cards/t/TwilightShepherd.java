@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 @CardRegistration(set = "SHM", collectorNumber = "25")
 @CardRegistration(set = "DDC", collectorNumber = "11")
 @CardRegistration(set = "DVD", collectorNumber = "11")
+@CardRegistration(set = "C14", collectorNumber = "94")
 public class TwilightShepherd extends Card {
 
     public TwilightShepherd() {

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -33,10 +34,26 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
         var grant = (MakeCreatureBlockableOnlyByFilterThisTurnEffect) effect;
         // A self-targeting effect uses the source permanent even when targetId carries
         // separate context about the spell or player that caused the trigger.
+        if (!grant.selfTargeting()) {
+            List<UUID> targetIds = entry.targetsForEffect(effect);
+            if (!targetIds.isEmpty()) {
+                for (UUID targetId : targetIds) {
+                    applyRestriction(gameData, entry, grant,
+                            gameQueryService.findPermanentById(gameData, targetId));
+                }
+                return;
+            }
+        }
+
         UUID permanentId = grant.selfTargeting()
                 ? (entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId())
                 : entry.getTargetId();
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        applyRestriction(gameData, entry, grant, gameQueryService.findPermanentById(gameData, permanentId));
+    }
+
+    private void applyRestriction(GameData gameData, StackEntry entry,
+                                  MakeCreatureBlockableOnlyByFilterThisTurnEffect grant,
+                                  Permanent target) {
         if (target == null) {
             return;
         }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "WAR", collectorNumber = "202")
+@CardRegistration(set = "C21", collectorNumber = "222")
 public class LeylineProwler extends Card {
 
     public LeylineProwler() {

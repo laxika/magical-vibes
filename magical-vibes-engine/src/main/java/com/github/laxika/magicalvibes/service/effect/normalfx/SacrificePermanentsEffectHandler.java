@@ -77,15 +77,19 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             }
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
             case TARGET_PLAYER -> {
-                UUID targetPlayerId = entry.getTargetId();
-                if (targetPlayerId == null) {
-                    List<UUID> effectTargets = entry.targetsForEffect(e);
-                    targetPlayerId = effectTargets.isEmpty() ? null : effectTargets.getFirst();
-                }
+                UUID targetPlayerId = targetPlayerId(entry, e);
                 if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                     return;
                 }
                 resolveSinglePlayer(gameData, entry, e, targetPlayerId, creatureSingleSac);
+            }
+            case CONTROLLER_AND_TARGET_PLAYER -> {
+                UUID targetPlayerId = targetPlayerId(entry, e);
+                if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                    return;
+                }
+                resolveSelectedPlayers(gameData, entry, e,
+                        List.of(entry.getControllerId(), targetPlayerId), creatureSingleSac);
             }
             case ACTIVE_PLAYER -> {
                 UUID activePlayerId = gameData.activePlayerId;
@@ -244,11 +248,16 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             boolean opponentsOnly, boolean creatureSingleSac) {
         UUID controllerId = entry.getControllerId();
 
+        List<UUID> playerIds = apnapPlayers(gameData).stream()
+                .filter(playerId -> !opponentsOnly || !playerId.equals(controllerId))
+                .toList();
+        resolveSelectedPlayers(gameData, entry, e, playerIds, creatureSingleSac);
+    }
+
+    private void resolveSelectedPlayers(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
+            List<UUID> playerIds, boolean creatureSingleSac) {
         if (creatureSingleSac) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                if (opponentsOnly && playerId.equals(controllerId)) {
-                    continue;
-                }
+            for (UUID playerId : playerIds) {
                 if (isSacrificeProtected(gameData, entry, playerId)) {
                     continue;
                 }
@@ -265,10 +274,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
-        for (UUID playerId : apnapPlayers(gameData)) {
-            if (opponentsOnly && playerId.equals(controllerId)) {
-                continue;
-            }
+        for (UUID playerId : playerIds) {
             if (isSacrificeProtected(gameData, entry, playerId)) {
                 continue;
             }
@@ -319,6 +325,15 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             destructionSupport.beginNextForcedSacrificeFromQueue(
                     gameData, choosers, autoSacrificeIds, e.simultaneousChoices());
         }
+    }
+
+    private UUID targetPlayerId(StackEntry entry, SacrificePermanentsEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null) {
+            List<UUID> effectTargets = entry.targetsForEffect(effect);
+            targetPlayerId = effectTargets.isEmpty() ? null : effectTargets.getFirst();
+        }
+        return targetPlayerId;
     }
 
     /**

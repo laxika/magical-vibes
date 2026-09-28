@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "91")
+@CardRegistration(set = "SLD", collectorNumber = "1739")
 public class RiteOfPassage extends Card {
 
     public RiteOfPassage() {

@@ -15,6 +15,8 @@ public enum CardPileDisposition {
     HAND_AND_THOPTER,
     /** Curator of Destinies and Fortune's Favor: one pile is face down; the chosen pile goes to hand and the other to the graveyard. */
     HAND_WITH_FACE_DOWN_PILE,
+    /** The Celestial Toymaker: the chosen pile goes to hand and the other remains exiled, with one pile face down. */
+    HAND_AND_EXILE_WITH_FACE_DOWN_PILE,
     /**
      * Phyrexian Portal: the pile the controller picks is searched for one card to put into their
      * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The
@@ -23,6 +25,8 @@ public enum CardPileDisposition {
     SEARCH_ONE_TO_HAND,
     /** Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom of their library in any order. */
     HAND_AND_BOTTOM,
+    /** Choose Your Demise: chosen pile goes to hand; the other goes to the library bottom, with one pile face down. */
+    HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE,
     /** Truth or Tale: one card from the chosen pile → controller's hand; every other card → the bottom of their library in any order. */
     ONE_FROM_CHOSEN_HAND_AND_BOTTOM,
     /**
@@ -44,5 +48,9 @@ public enum CardPileDisposition {
     /** Stand or Fall: the chosen pile contains the only creatures that can block this turn. */
     BLOCKERS,
     /** Do or Die: target player chooses the pile whose creatures are destroyed without regeneration. */
-    DESTROY
+    DESTROY,
+    /** Make an Example: the spell controller chooses the pile each opponent sacrifices. */
+    MAKE_AN_EXAMPLE,
+    /** Abstract Performance: the chosen pile goes to the controller's graveyard; the other is offered for one free spell cast and then the rest go to hand. */
+    GRAVEYARD_AND_FREE_CAST_ONE_REST_TO_HAND
 }

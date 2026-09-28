@@ -26,8 +26,10 @@ import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "156")
 @CardRegistration(set = "SLD", collectorNumber = "81")
+@CardRegistration(set = "SLD", collectorNumber = "2061")
 @CardRegistration(set = "EA3", collectorNumber = "18")
 @CardRegistration(set = "PIO", collectorNumber = "318")
+@CardRegistration(set = "LCC", collectorNumber = "295")
 public class XenagosGodOfRevels extends Card {
 
     public XenagosGodOfRevels() {

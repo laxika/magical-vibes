@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyi
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "613")
 @CardRegistration(set = "TSR", collectorNumber = "34")
 public class PulmonicSliver extends Card {
 

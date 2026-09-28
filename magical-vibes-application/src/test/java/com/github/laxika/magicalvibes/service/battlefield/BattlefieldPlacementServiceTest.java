@@ -137,6 +137,20 @@ class BattlefieldPlacementServiceTest {
     }
 
     @Test
+    void enteringPermanentForgetsItsPreviousImprint() {
+        Card artifact = new Card();
+        artifact.setName("Returning imprint artifact");
+        artifact.setType(CardType.ARTIFACT);
+        Card oldImprint = new Card();
+        oldImprint.setName("Old imprint");
+        gd.setImprintedCard(artifact, oldImprint);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, new Permanent(artifact));
+
+        assertThat(gd.getImprintedCard(artifact)).isNull();
+    }
+
+    @Test
     void remembersTheOpponentAsThePermanentEnters() {
         UUID opponentId = UUID.randomUUID();
         gd.playerIds.add(player1Id);

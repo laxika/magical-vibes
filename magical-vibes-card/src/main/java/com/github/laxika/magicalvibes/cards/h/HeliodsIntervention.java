@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "19")
+@CardRegistration(set = "OTC", collectorNumber = "81")
 public class HeliodsIntervention extends Card {
 
     public HeliodsIntervention() {

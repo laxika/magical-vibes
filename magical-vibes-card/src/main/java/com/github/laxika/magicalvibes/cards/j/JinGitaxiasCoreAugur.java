@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffe
 
 @CardRegistration(set = "NPH", collectorNumber = "37")
 @CardRegistration(set = "IMA", collectorNumber = "62")
+@CardRegistration(set = "SLD", collectorNumber = "210")
 @CardRegistration(set = "HA5", collectorNumber = "5")
 @CardRegistration(set = "MUL", collectorNumber = "11")
 @CardRegistration(set = "MUL", collectorNumber = "76")

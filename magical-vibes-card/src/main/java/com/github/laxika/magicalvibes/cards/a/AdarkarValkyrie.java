@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "1")
 @CardRegistration(set = "MMA", collectorNumber = "1")
+@CardRegistration(set = "C14", collectorNumber = "63")
 public class AdarkarValkyrie extends Card {
 
     public AdarkarValkyrie() {

@@ -70,6 +70,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             case MANA_VALUE -> target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+            case TOTAL_COUNTERS -> target.getTotalCounterCount();
             case BASIC_LAND_SEARCH_COUNT -> 0;
         };
         FilterContext conditionContext = FilterContext.of(gameData)

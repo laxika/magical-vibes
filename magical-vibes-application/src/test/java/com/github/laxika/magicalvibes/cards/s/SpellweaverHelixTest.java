@@ -102,7 +102,7 @@ class SpellweaverHelixTest extends BaseCardTest {
     void etbCannotCombineDifferentGraveyards() {
         Fabricate first = new Fabricate();
         SylvanScrying second = new SylvanScrying();
-        harness.setGraveyard(player1, List.of(first));
+        harness.setGraveyard(player1, List.of(first, new SylvanScrying()));
         harness.setGraveyard(player2, List.of(second));
         harness.setHand(player1, List.of(new SpellweaverHelix()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -111,6 +111,7 @@ class SpellweaverHelixTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
                 player1, List.of(first.getId(), second.getId())))
                 .isInstanceOf(IllegalStateException.class);

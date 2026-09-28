@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrissNantukoPrimus.class, Brawn.class, KrosanVerge.class})
+@CardUsed({Brawn.class, KrosanVerge.class, ThrissNantukoPrimus.class})
 class ThrissNantukoPrimusTest extends BaseCardTest {
 
     @Test

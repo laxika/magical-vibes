@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5DN", collectorNumber = "32")
 @CardRegistration(set = "AA4", collectorNumber = "7")
+@CardRegistration(set = "C14", collectorNumber = "113")
 public class HoverguardSweepers extends Card {
 
     public HoverguardSweepers() {

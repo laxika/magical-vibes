@@ -16,18 +16,32 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                                         triggering permanent instead of the stack entry's
  *                                         controller; used by global damage triggers whose
  *                                         wording refers to the damaged creature's controller
+ * @param freeCastIfCastFromGraveyard whether cards exiled by this effect may be played without
+ *                                    paying their mana costs when the spell was cast from a graveyard
  */
 public record ExileTopCardsMayPlayUntilNextTurnEffect(
         DynamicAmount count,
-        boolean useTriggeringPermanentController
+        boolean useTriggeringPermanentController,
+        boolean freeCastIfCastFromGraveyard
 ) implements CardEffect {
 
     public ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count) {
-        this(count, false);
+        this(count, false, false);
+    }
+
+    public ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count,
+                                                    boolean useTriggeringPermanentController) {
+        this(count, useTriggeringPermanentController, false);
     }
 
     public ExileTopCardsMayPlayUntilNextTurnEffect(int count) {
         this(new Fixed(count));
+    }
+
+    public ExileTopCardsMayPlayUntilNextTurnEffect(int count,
+                                                    boolean useTriggeringPermanentController,
+                                                    boolean freeCastIfCastFromGraveyard) {
+        this(new Fixed(count), useTriggeringPermanentController, freeCastIfCastFromGraveyard);
     }
 
     public static ExileTopCardsMayPlayUntilNextTurnEffect forTriggeringPermanentController(

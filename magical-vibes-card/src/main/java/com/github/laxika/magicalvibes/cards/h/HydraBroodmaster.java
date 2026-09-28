@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "128")
 @CardRegistration(set = "CP1", collectorNumber = "4")
+@CardRegistration(set = "C21", collectorNumber = "194")
 public class HydraBroodmaster extends Card {
 
     public HydraBroodmaster() {

@@ -59,7 +59,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry, e);
             case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry, e);
-            case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry);
+            case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry, e);
             case EACH_OPPONENT_KEEP -> resolveEachOpponentKeep(gameData, entry, e);
         }
     }
@@ -192,8 +192,16 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         List<UUID> targetCardIds = new ArrayList<>();
         if (entry.getTargetId() != null) {
             targetCardIds.add(entry.getTargetId());
-        } else if (entry.getTargetCardIds() != null) {
-            targetCardIds.addAll(entry.getTargetCardIds());
+        }
+        for (UUID targetCardId : entry.getTargetCardIdsForEffect(e)) {
+            if (!targetCardIds.contains(targetCardId)) {
+                targetCardIds.add(targetCardId);
+            }
+        }
+        for (UUID targetCardId : entry.getTargetIds()) {
+            if (!targetCardIds.contains(targetCardId)) {
+                targetCardIds.add(targetCardId);
+            }
         }
         if (targetCardIds.isEmpty()) {
             return;
@@ -356,7 +364,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
         }
 
-        entry.setEventValue(toExile.size());
+        int eventValue = e.eventValueFilter() == null
+                ? toExile.size()
+                : (int) toExile.stream()
+                        .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                                card, e.eventValueFilter(), null))
+                        .count();
+        entry.setEventValue(eventValue);
 
         if (toExile.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
@@ -426,8 +440,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveAllOpponentsGraveyards(GameData gameData, StackEntry entry) {
+    private void resolveAllOpponentsGraveyards(GameData gameData, StackEntry entry,
+                                                ExileGraveyardCardsEffect effect) {
         UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = effect.trackWithSource() ? entry.getSourcePermanentId() : null;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
@@ -438,7 +454,11 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             List<Card> toExile = new ArrayList<>(graveyard);
             int count = toExile.size();
             for (Card card : toExile) {
-                gameData.addToExile(playerId, card);
+                if (sourcePermanentId == null) {
+                    exileService.exileCard(gameData, playerId, card);
+                } else {
+                    exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                }
             }
             graveyard.clear();
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);

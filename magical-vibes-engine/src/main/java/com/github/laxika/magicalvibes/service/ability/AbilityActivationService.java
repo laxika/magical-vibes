@@ -1,62 +1,18 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentExileCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.DistinctNamePermanentSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.SequencePermanentSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
-import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.PermanentExileAction;
-import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
-import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
-import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromPermanentCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromControlledPermanentsCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.PutCounterOnCreatureCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.UnattachEquipmentFromSourceCostHandler;
-
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BendingType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -66,132 +22,178 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingAbilityCounterCostActivation;
 import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DivisionMode;
-import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.HandCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
-import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
-import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
-import com.github.laxika.magicalvibes.model.effect.HandRevealCost;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromSingleGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
-import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
-import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
-import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.HandCardCost;
+import com.github.laxika.magicalvibes.model.effect.HandRevealCost;
+import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
+import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromPermanentOrSuspendedCardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromPermanentOrSuspendedCardCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
+import com.github.laxika.magicalvibes.model.effect.RevealChosenPlayerCost;
+import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeDistinctNamePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
-import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
+import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.DistinctNamePermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentExileCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentExileAction;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
+import com.github.laxika.magicalvibes.service.ability.cost.PutCounterOnCreatureCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromControlledPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromPermanentCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.SequencePermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
+import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.UnattachEquipmentFromSourceCostHandler;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -204,6 +206,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * Handles activation and cost payment for activated abilities and tap/sacrifice abilities on permanents.
@@ -321,6 +326,7 @@ public class AbilityActivationService {
         boolean isLandSource = gameQueryService.isLand(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = permanent.getCard().hasType(CardType.LAND)
                 && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         // Mana-production replacement effects are applied to the tapped permanent.
@@ -349,6 +355,7 @@ public class AbilityActivationService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withBasicLandSource(basicLandSource)
                             .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
@@ -378,6 +385,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(fixedLandColor, totalMana);
                 }
@@ -403,6 +413,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
@@ -435,6 +446,9 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(color, totalMana);
                     }
@@ -445,6 +459,7 @@ public class AbilityActivationService {
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource)
                                     .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
@@ -464,6 +479,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(overriddenManaColors.getFirst(), manaMultiplier);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
@@ -474,6 +492,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
@@ -501,6 +520,9 @@ public class AbilityActivationService {
                     manaPool.add(ManaColor.COLORLESS, manaMultiplier);
                     if (caveSource) {
                         manaPool.addCaveManaTag(ManaColor.COLORLESS, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(ManaColor.COLORLESS, manaMultiplier);
                     }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(ManaColor.COLORLESS, manaMultiplier);
@@ -532,11 +554,17 @@ public class AbilityActivationService {
                         if (caveSource) {
                             manaPool.addCaveManaTag(effectiveColor, amount);
                         }
+                        if (desertSource) {
+                            manaPool.addDesertManaTag(effectiveColor, amount);
+                        }
                         if (basicLandSource) {
                             manaPool.addBasicLandManaTag(effectiveColor, amount);
                         }
                         if (isCreatureSource) {
                             manaPool.addCreatureMana(effectiveColor, amount);
+                        }
+                        if (gameQueryService.isArtifact(gameData, permanent)) {
+                            manaPool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                         }
                     }
                 }
@@ -554,6 +582,13 @@ public class AbilityActivationService {
         // when mana is being tapped to pay a cost.
         int stackBeforeTriggers = gameData.stack.size();
         boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
+        if (!manaTypeChoicePending && gameQueryService.hasEffectiveSupertype(
+                gameData, permanent, CardSupertype.LEGENDARY)) {
+            for (ManaColor color : ManaColor.values()) {
+                int produced = Math.max(0, manaPool.get(color) - poolBefore.getOrDefault(color, 0));
+                manaPool.addLegendarySourceManaTag(color, produced);
+            }
+        }
         if (isLandSource) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
                     newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
@@ -684,6 +719,9 @@ public class AbilityActivationService {
             return true;
         }
         if (choice.context() instanceof ChoiceContext.RestrictedManaColorChoice) {
+            return true;
+        }
+        if (choice.context() instanceof ChoiceContext.CommanderManaColorChoice) {
             return true;
         }
         if (!(choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice)) {
@@ -889,6 +927,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
         boolean anyColorReplacement = fixedLandColor == null
@@ -917,6 +956,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
             }
         } else if (anyColorReplacement) {
             int totalMana = 0;
@@ -934,6 +976,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -962,11 +1005,15 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                 } else {
                     // Piracy + multi-type under Reality Twist: pick one color for all mana.
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -986,10 +1033,14 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(effectiveColor, 1);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(effectiveColor, 1);
+                }
             } else {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, 1)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1009,6 +1060,9 @@ public class AbilityActivationService {
                     }
                     if (caveSource) {
                         manaPool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(effectiveColor, amount);
                     }
                 }
             }
@@ -1239,6 +1293,35 @@ public class AbilityActivationService {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
     }
 
+    /** Activates an activated ability belonging to one of the activating player's emblems. */
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        List<Emblem> ownedEmblems = gameData.emblems.stream()
+                .filter(emblem -> player.getId().equals(emblem.controllerId()))
+                .toList();
+        if (emblemIndex < 0 || emblemIndex >= ownedEmblems.size()) {
+            throw new IllegalStateException("Invalid emblem index");
+        }
+        Emblem emblem = ownedEmblems.get(emblemIndex);
+        int effectiveAbilityIndex = effectiveAbilityIndex(abilityIndex);
+        if (effectiveAbilityIndex < 0 || effectiveAbilityIndex >= emblem.activatedAbilities().size()) {
+            throw new IllegalStateException("Emblem has no activated ability at that index");
+        }
+        if (emblem.sourceCard() == null) {
+            throw new IllegalStateException("Emblem has no source card");
+        }
+
+        // ActivatedAbilityExecutionService already handles the complete activation sequence for a
+        // Permanent. A mutable runtime copy gives the emblem ability that same path without
+        // mutating the frozen card that originally created the emblem.
+        Card sourceCopy = emblem.sourceCard().createRuntimeCopy();
+        sourceCopy.getActivatedAbilities().clear();
+        sourceCopy.getActivatedAbilities().addAll(emblem.activatedAbilities());
+        activateAbilityInternal(gameData, player, -1, effectiveAbilityIndex, xValue, targetId, targetZone,
+                null, null, targetIds, damageAssignments, new Permanent(sourceCopy), null);
+    }
+
     /** Activates an ability printed on a card in its controller's command zone. */
     public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
         List<Card> commandZone = gameData.playerCommandZones.getOrDefault(player.getId(), List.of());
@@ -1425,18 +1508,7 @@ public class AbilityActivationService {
         // Validate timing restrictions applicable to graveyard abilities (e.g. Raid, activation conditions)
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
-        // Pithing Needle check: block non-mana activated abilities of the chosen name
-        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
-            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
-                            && perm.getChosenName() != null
-                            && perm.getChosenName().equals(card.getName())) {
-                        throw new IllegalStateException("Activated abilities of " + card.getName() + " can't be activated (Pithing Needle)");
-                    }
-                }
-            }
-        }
+        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
@@ -1540,8 +1612,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileGraveyardCost != null
-                && collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType(),
-                exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype()).isEmpty()) {
+                && collectGraveyardIndicesForCost(graveyard, exileGraveyardCost, xValue).isEmpty()) {
             String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(),
                     exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
@@ -1551,18 +1622,25 @@ public class AbilityActivationService {
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
         // additional generic cost.
+        boolean maxSpeedFreeUnearth = ability.isUnearthAbility()
+                && gameQueryService.canUseMaxSpeedFreeUnearth(gameData, playerId);
         String abilityCost = ability.getManaCost();
-        if (abilityCost != null) {
+        if (abilityCost != null && !maxSpeedFreeUnearth) {
             ManaCost manaCost = new ManaCost(abilityCost);
             int genericCost = manaCost.getGenericCost();
             int additionalGenericCost = -Math.min(
                     castingCostService.getGraveyardActivatedAbilityCostReduction(gameData, playerId, card),
                     genericCost);
+            additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
+                    gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
             AmountContext activationCostContext = new AmountContext(
                     playerId, null, null, xValue, 0, false, null, List.of(), card);
             for (CardEffect effect : abilityEffects) {
                 if (effect instanceof ActivationCostModifierEffect modifier) {
                     int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                    if (!modifier.modifiesGenericCost()) {
+                        continue;
+                    }
                     if (modifier.reducesGenericCost()) {
                         int reduction = Math.min(
                                 amount, Math.max(0, genericCost + additionalGenericCost));
@@ -1574,6 +1652,9 @@ public class AbilityActivationService {
             }
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
                     additionalGenericCost);
+        }
+        if (maxSpeedFreeUnearth) {
+            gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.add(playerId);
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
@@ -1984,6 +2065,7 @@ public class AbilityActivationService {
                         targetId,
                         Map.of()
                 );
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
@@ -2045,19 +2127,6 @@ public class AbilityActivationService {
         targetLegalityService.validateActivatedAbilityTargeting(
                 gameData, playerId, ability, ability.getEffects(), targetId, null, card, effectiveXValue);
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
-
-        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
-            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
-                            && perm.getChosenName() != null
-                            && perm.getChosenName().equals(card.getName())) {
-                        throw new IllegalStateException("Activated abilities of " + card.getName()
-                                + " can't be activated (Pithing Needle)");
-                    }
-                }
-            }
-        }
 
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
@@ -2121,6 +2190,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
+        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
         validateNotBlockedByCyclingRestriction(gameData, ability);
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;
@@ -2195,6 +2265,12 @@ public class AbilityActivationService {
         // being cycled still counts toward the hand-size condition, so check the current hand size
         // before it is discarded below as part of the cost.
         String abilityCost = ability.getManaCost();
+        UUID firstCardCycledFreeSourceId = abilityCost != null
+                ? findFirstCardCycledFreeSource(gameData, playerId, ability)
+                : null;
+        if (firstCardCycledFreeSourceId != null) {
+            abilityCost = null;
+        }
         if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
             abilityCost = null;
         }
@@ -2215,6 +2291,12 @@ public class AbilityActivationService {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, card.getName());
             }
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeCosts);
+        }
+
+        if (firstCardCycledFreeSourceId != null) {
+            gameData.firstCardCycledFreeUsesThisTurn
+                    .computeIfAbsent(firstCardCycledFreeSourceId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
         }
 
         if (ability.isSourceStaysInHand() && ability.isRevealsSourceFromHand()) {
@@ -2280,11 +2362,16 @@ public class AbilityActivationService {
         ManaCost manaCost = new ManaCost(ability.getManaCost());
         int genericCost = manaCost.getGenericCost();
         int additionalGenericCost = baseAdditionalGenericCost;
+        additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
+                gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
         AmountContext activationCostContext = new AmountContext(
                 playerId, null, null, xValue, 0, false, null, List.of(), card);
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                if (!modifier.modifiesGenericCost()) {
+                    continue;
+                }
                 if (modifier.reducesGenericCost()) {
                     int reduction = Math.min(
                             amount, Math.max(0, genericCost + additionalGenericCost));
@@ -2381,7 +2468,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
                 discarded = true;
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
@@ -2518,6 +2605,65 @@ public class AbilityActivationService {
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
+    /** Activates a library-ninjutsu ability after its controller chose an unblocked attacker. */
+    public void activateLibraryNinjutsu(GameData gameData, Player player, Card card,
+                                        String manaCost, UUID ninjaTargetId) {
+        UUID playerId = player.getId();
+        if (ninjaTargetId == null) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacking creature to return");
+        }
+
+        Permanent attacker = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> permanent.getId().equals(ninjaTargetId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Library ninjutsu requires an unblocked attacker you control"));
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                gameData, attacker, new PermanentIsUnblockedAttackingPredicate())) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacker you control");
+        }
+
+        UUID attackTargetId = attacker.getAttackTarget();
+        int genericCost = new ManaCost(manaCost).getGenericCost();
+        int ninjutsuReduction = Math.min(
+                castingCostService.getNinjutsuAbilityCostReduction(gameData, playerId), genericCost);
+        payManaCostForSourceCard(gameData, playerId, card, manaCost, 0,
+                false, false, -ninjutsuReduction);
+        permanentRemovalService.removePermanentToLibraryShuffled(gameData, attacker);
+
+        LibraryNinjutsuEffect resolutionEffect = new LibraryNinjutsuEffect(manaCost, attackTargetId);
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s library ninjutsu ability",
+                List.<CardEffect>of(resolutionEffect),
+                0,
+                null,
+                null,
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        );
+        stackEntry.setSourceZone(Zone.LIBRARY);
+        gameData.stack.add(stackEntry);
+
+        ActivatedAbility libraryNinjutsuAbility = new ActivatedAbility(
+                false, manaCost, List.of(resolutionEffect), card.getName() + "'s library ninjutsu")
+                .withNinjutsu();
+        triggerCollectionService.checkControllerActivatesNinjutsuAbilityTriggers(
+                gameData, playerId, libraryNinjutsuAbility);
+        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " activates library ninjutsu on ", card, "."));
+        log.info("Game {} - {} activates library ninjutsu on {}", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
     /**
      * Resolves the mana produced by a hand-activated mana ability whose source card has just been
      * exiled to pay its cost (Elvish Spirit Guide). A mana ability never uses the stack (CR 605.1a),
@@ -2538,6 +2684,29 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", card, " from their hand for mana."));
         log.info("Game {} - {} exiles {} from hand for mana", gameData.id, player.getUsername(), card.getName());
+    }
+
+    /** Returns the unused source permanent granting Gavi-style first-card-free cycling, if any. */
+    private UUID findFirstCardCycledFreeSource(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (!ability.isCyclingAbility()) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstCardCycledFreeUsesThisTurn
+                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstCardCycledFreeEffect) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -2638,7 +2807,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
             }
@@ -2939,7 +3108,7 @@ public class AbilityActivationService {
                     .orElseThrow(() -> new IllegalStateException("Ability no longer has the graveyard exile cost"));
             gameData.interaction.clearAwaitingInput();
             gameData.pendingGraveyardAbilityActivation = null;
-            payGraveyardExileCost(gameData, player, cost, cardIndex);
+            payGraveyardExileCost(gameData, player, cost, cardIndex, pendingGraveyard.xValue());
             completeGraveyardAbilityActivation(gameData, player, pendingGraveyard.card(),
                     pendingGraveyard.ability(), pendingGraveyard.xValue(), pendingGraveyard.targetId(),
                     pendingGraveyard.graveyardTargetIds());
@@ -3087,7 +3256,9 @@ public class AbilityActivationService {
                 .orElse(null);
         if (anyGraveyardCost != null) {
             if (selectedIds.size() != 1
-                    || !collectAnyGraveyardExileCandidates(gameData, anyGraveyardCost).stream()
+                    || !collectAnyGraveyardExileCandidates(gameData, anyGraveyardCost,
+                    gameData.pendingAbilityActivation != null
+                            ? gameData.pendingAbilityActivation.xValue() : 0).stream()
                     .map(Card::getId)
                     .toList()
                     .contains(selectedIds.getFirst())) {
@@ -3573,6 +3744,9 @@ public class AbilityActivationService {
             if (pool != null && promotedAbilityOnlyMana) {
                 pool.restorePromotedAbilityOnlyMana();
             }
+            if (pool != null) {
+                pool.restorePromotedPowerUpAbilityOnlyMana();
+            }
             if (pool != null && promotedLandAbilityOnlyMana) {
                 pool.restorePromotedLandAbilityOnlyMana();
             }
@@ -3621,6 +3795,10 @@ public class AbilityActivationService {
 
         int effectiveIndex = effectiveAbilityIndex(abilityIndex);
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+        if (ability.getRequiredXSourceCounterType() != null
+                && effectiveXValue != permanent.getCounterCount(ability.getRequiredXSourceCounterType())) {
+            throw new IllegalStateException("X must equal the number of counters on the source");
+        }
         List<CardEffect> abilityEffects = ability.getEffects();
         if (ability.isSpecialAction() && abilityEffects.stream().noneMatch(CostEffect.class::isInstance)) {
             ManaCost cost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());
@@ -3634,17 +3812,24 @@ public class AbilityActivationService {
             activatedAbilityExecutionService.performSpecialAction(gameData, player, permanent, ability);
             return;
         }
+        if (activationPool != null && ability.isPowerUpAbility()) {
+            activationPool.promotePowerUpAbilityOnlyMana();
+        }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
-        ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
-        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
-            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
-        }
+        ManaCost effectiveManaCost = abilityCost == null
+                ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
+        }
+        effectiveManaCost = applyActivatedAbilityManaCostReductions(
+                gameData, playerId, permanent, ability, targetId, effectiveXValue, effectiveManaCost);
+        if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
         }
         List<CardEffect> activationEffects = abilityEffects;
         if (ability.isModalChoiceAtActivation()) {
@@ -3845,10 +4030,15 @@ public class AbilityActivationService {
 
         validatePreventDividedDamageAssignments(gameData, playerId, permanent, ability, activationEffects,
                 effectiveXValue, damageAssignments);
+        boolean hasPaymentDerivedXValue = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::derivesXValueFromPayment);
         boolean derivesDamageFromEquipment = abilityEffects.stream()
                 .anyMatch(UnattachEquipmentFromSourceCost.class::isInstance);
         validateDividedDamageAssignments(gameData, playerId, permanent, ability, activationEffects,
-                effectiveXValue, damageAssignments, derivesDamageFromEquipment);
+                effectiveXValue, damageAssignments,
+                derivesDamageFromEquipment || hasPaymentDerivedXValue);
 
         if (permanentChoiceCosts.isEmpty()
                 && ability.getTargetFilter() != null && ability.getEffectiveMinTargets(effectiveXValue) > 0
@@ -4092,7 +4282,8 @@ public class AbilityActivationService {
                 .orElse(null);
         if (exileGraveyardCost != null) {
             if (exileGraveyardCost.anyGraveyard()) {
-                List<Card> validCards = collectAnyGraveyardExileCandidates(gameData, exileGraveyardCost);
+                List<Card> validCards = collectAnyGraveyardExileCandidates(
+                        gameData, exileGraveyardCost, effectiveXValue);
                 if (exileAnyGraveyardCardIds == null) {
                     interactionHandlerRegistry.begin(gameData,
                             new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
@@ -4124,8 +4315,8 @@ public class AbilityActivationService {
                 }
             } else {
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType(),
-                        exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
+                List<Integer> validExileIndices = collectGraveyardIndicesForCost(
+                        graveyard, exileGraveyardCost, effectiveXValue);
                 if (exileGraveyardCardIndex == null) {
                     beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                             targetIds, damageAssignments, exileGraveyardCost, validExileIndices);
@@ -4137,6 +4328,13 @@ public class AbilityActivationService {
                 }
                 if (exileGraveyardCost.imprintOnSource()) {
                     gameData.setImprintedCard(permanent.getCard(), graveyard.get(exileGraveyardCardIndex));
+                }
+            }
+            if (exileGraveyardCost.payExiledCardManaCost()) {
+                effectiveManaCost = abilityCost == null ? null : applyActivatedAbilityManaCostReductions(
+                        gameData, playerId, permanent, ability, targetId, effectiveXValue, new ManaCost(abilityCost));
+                if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                    effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
                 }
             }
         }
@@ -4187,9 +4385,8 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (putExiledCardIntoGraveyardCost != null) {
-            List<UUID> validExiledCardIds = gameData.getCardsExiledByPermanent(permanent.getId()).stream()
-                    .map(Card::getId)
-                    .toList();
+            List<UUID> validExiledCardIds = matchingCardsExiledWithSource(
+                    gameData, permanent, putExiledCardIntoGraveyardCost);
             if (validExiledCardIds.isEmpty()) {
                 throw new IllegalStateException("No card is exiled with this permanent");
             }
@@ -4328,7 +4525,7 @@ public class AbilityActivationService {
                             subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
                             additionalGenericCost - creatureManaPaymentCount, ability.getXColorRestrictions(), colorlessPermanentContext);
                 } else {
-                    payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                    payManaCost(effectiveManaCost, gameData, playerId, effectiveXValue, artifactContext, myrContext,
                             subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
                             additionalGenericCost - creatureManaPaymentCount, ability.getXColorRestrictions(), colorlessPermanentContext);
                 }
@@ -4366,10 +4563,16 @@ public class AbilityActivationService {
             gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(), false);
         }
 
+        castingCostService.getActivatedAbilityTaxByController(
+                        gameData, playerId, permanent, ability, ability.isManaAbility())
+                .forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
+                        gameData, playerId, taxingPlayerId, amount));
+
         Card paidExiledCardSnapshot = null;
         if (putExiledCardIntoGraveyardCost != null) {
             paidExiledCardSnapshot = payPutCardExiledWithSourceIntoGraveyardCost(
-                    gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE);
+                    gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE,
+                    putExiledCardIntoGraveyardCost);
         }
         if (putOpponentOwnedExiledCardIntoGraveyard) {
             payPutOpponentOwnedExiledCardIntoGraveyardCost(
@@ -4393,10 +4596,10 @@ public class AbilityActivationService {
         if (exileGraveyardCost != null) {
             if (exileGraveyardCost.anyGraveyard()) {
                 exiledGraveyardCardSnapshot = payAnyGraveyardExileCost(
-                        gameData, player, exileGraveyardCost, exileAnyGraveyardCardIds);
+                        gameData, player, exileGraveyardCost, exileAnyGraveyardCardIds, effectiveXValue);
             } else {
                 exiledGraveyardCardSnapshot = payGraveyardExileCost(
-                        gameData, player, exileGraveyardCost, exileGraveyardCardIndex);
+                        gameData, player, exileGraveyardCost, exileGraveyardCardIndex, effectiveXValue);
             }
         }
 
@@ -4431,12 +4634,23 @@ public class AbilityActivationService {
                 .map(ExileNCardsFromGraveyardCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        List<UUID> activatedAbilityExiledCardIds = List.of();
         if (exileNGraveyardCostToPay != null) {
             if (exileAnyGraveyardCardIds == null) {
-                payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
+                if (exileNGraveyardCostToPay.tracksExiledCards()) {
+                    activatedAbilityExiledCardIds = payGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, null);
+                } else {
+                    payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
+                }
             } else {
-                payChosenGraveyardExileNCost(
-                        gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                if (exileNGraveyardCostToPay.tracksExiledCards()) {
+                    activatedAbilityExiledCardIds = payChosenGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                } else {
+                    payChosenGraveyardExileNCost(
+                            gameData, player, exileNGraveyardCostToPay, exileAnyGraveyardCardIds, null);
+                }
             }
         }
 
@@ -4456,7 +4670,6 @@ public class AbilityActivationService {
             }
         }
 
-        List<UUID> activatedAbilityExiledCardIds = List.of();
         CollectEvidenceCost collectEvidenceCostToPay = abilityEffects.stream()
                 .filter(CollectEvidenceCost.class::isInstance)
                 .map(CollectEvidenceCost.class::cast)
@@ -4812,11 +5025,19 @@ public class AbilityActivationService {
             List<UUID> candidates = collectSacrificeAnyNumberCostCandidates(
                     gameData, playerId, permanent, sacrificeAnyNumberCost);
             if (!candidates.isEmpty()) {
-                playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, candidates.size(),
+                int maximumCount = sacrificeAnyNumberCost.maximumCount() > 0
+                        ? Math.min(sacrificeAnyNumberCost.maximumCount(), candidates.size())
+                        : candidates.size();
+                String sacrificeChoiceDescription = sacrificeAnyNumberCost.maximumCount() > 0
+                        ? permanent.getCard().getName() + " — choose up to " + maximumCount
+                                + " permanents to sacrifice as a cost."
+                        : permanent.getCard().getName()
+                                + " — choose any number of permanents to sacrifice as a cost.";
+                playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, maximumCount,
                         new MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost(
                                 playerId, sourceId, effectiveIndex, effectiveXValue, targetId, targetZone,
                                 targetIds, damageAssignments, ability, new Permanent(permanent), sacrificeAnyNumberCost),
-                        permanent.getCard().getName() + " — choose any number of creatures to sacrifice as a cost.");
+                        sacrificeChoiceDescription);
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
@@ -4899,6 +5120,15 @@ public class AbilityActivationService {
                     chosenCostPermanentIds)) {
                 return;
             }
+            Integer paymentValue = handler.lastPaymentValue();
+            if (paymentValue != null) {
+                effectiveXValue = paymentValue;
+            }
+        }
+
+        if (hasPaymentDerivedXValue) {
+            validateDividedDamageAssignments(gameData, playerId, permanent, ability, activationEffects,
+                    effectiveXValue, damageAssignments, false);
         }
 
         CraftMaterialCost craftMaterialCost = abilityEffects.stream()
@@ -4931,7 +5161,9 @@ public class AbilityActivationService {
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
                 targetIds, damageAssignments, chosenCostPermanentIds, discardedCardSnapshot,
                 paidExiledCardSnapshot != null ? paidExiledCardSnapshot
-                        : exiledTopCardSnapshot != null ? exiledTopCardSnapshot : exiledGraveyardCardSnapshot,
+                        : exiledTopCardSnapshot != null ? exiledTopCardSnapshot
+                        : exiledGraveyardCardSnapshot != null ? exiledGraveyardCardSnapshot
+                        : trackedExiledCardSnapshot(activationEffects, permanent),
                 activatedAbilityExiledCardIds);
     }
 
@@ -5017,6 +5249,10 @@ public class AbilityActivationService {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         PermanentExileAction exileAction = this::exilePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
+        if (effect instanceof UnattachEquipmentFromSourceCost cost) {
+            return new UnattachEquipmentFromSourceCostHandler(
+                    cost, sourcePermanentId, gameQueryService, equipSupport, gameLogService);
+        }
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof ExilePermanentCost c) return new MultiplePermanentExileCostHandler(c, predicateEvaluationService, exileAction, sourcePermanentId);
@@ -5078,6 +5314,20 @@ public class AbilityActivationService {
         }
     }
 
+    private void recordTrackedExiledCard(CardEffect costEffect, Permanent source, Permanent chosen) {
+        if (costEffect instanceof CostEffect cost && cost.tracksExiledCard() && chosen != null) {
+            source.setChosenCard(chosen.getCard());
+        }
+    }
+
+    private Card trackedExiledCardSnapshot(List<CardEffect> abilityEffects, Permanent source) {
+        boolean tracksExiledCard = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::tracksExiledCard);
+        return tracksExiledCard ? source.getChosenCard() : null;
+    }
+
     /**
      * Remembers the land sacrificed to pay a {@link SacrificePermanentCost} when the ability adds
      * mana of a type that land could produce (Squandered Resources) or grants landwalk of its land
@@ -5089,8 +5339,8 @@ public class AbilityActivationService {
         if (costEffect instanceof CostEffect cost && cost.tracksSacrificedCard() && sacrificed != null) {
             source.setChosenCard(sacrificed.getCard());
         }
-        if (costEffect instanceof SacrificeCreatureCost creatureCost
-                && creatureCost.recordSacrificedPermanentSnapshot() && sacrificed != null) {
+        if (costEffect instanceof CostEffect cost
+                && cost.recordsSacrificedPermanentSnapshot() && sacrificed != null) {
             source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
         }
         if (!(costEffect instanceof SacrificePermanentCost)
@@ -5148,6 +5398,7 @@ public class AbilityActivationService {
                                     abilityEffects, costDerivedXValue, damageAssignments, false);
                         }
                         recordSacrificedLandCard(gameData, handler.costEffect(), source, abilityIndex, chosen);
+                        recordTrackedExiledCard(handler.costEffect(), source, chosen);
                         handler.validateAndPay(gameData, player, chosen);
                         recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                         recordTappedCostPermanent(handler.costEffect(), source, chosen.getId());
@@ -5342,8 +5593,10 @@ public class AbilityActivationService {
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
         recordSacrificedLandCard(gameData, context.costEffect(), sourcePermanent, effectiveIndex, chosen);
+        recordTrackedExiledCard(context.costEffect(), sourcePermanent, chosen);
 
         handler.validateAndPay(gameData, player, chosen);
+        Integer paymentValue = handler.lastPaymentValue();
         if (tracksChosenPermanents) {
             chosenCostPermanentIds.add(chosenPermanentId);
         }
@@ -5364,7 +5617,12 @@ public class AbilityActivationService {
                 for (UUID id : validIds) {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
+                        recordTrackedExiledCard(context.costEffect(), sourcePermanent, autoPay);
                         handler.validateAndPay(gameData, player, autoPay);
+                        paymentValue = handler.lastPaymentValue();
+                        if (paymentValue != null) {
+                            updatedXValue = paymentValue;
+                        }
                         if (tracksChosenPermanents) {
                             chosenCostPermanentIds.add(autoPay.getId());
                         }
@@ -5391,10 +5649,22 @@ public class AbilityActivationService {
         }
 
         int finalXValue = updatedXValue != null ? updatedXValue : (context.xValue() != null ? context.xValue() : 0);
+        if (paymentValue != null) {
+            finalXValue = paymentValue;
+        }
+        boolean hasPaymentDerivedXValue = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::derivesXValueFromPayment);
+        if (hasPaymentDerivedXValue) {
+            validateDividedDamageAssignments(gameData, playerId, sourcePermanent, ability, abilityEffects,
+                    finalXValue, context.damageAssignments(), true);
+        }
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecordWithChosenPermanents(gameData, player, sourcePermanent, ability, activationEffects,
                 finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex,
-                context.targetIds(), context.damageAssignments(), chosenCostPermanentIds, null, null);
+                context.targetIds(), context.damageAssignments(), chosenCostPermanentIds, null,
+                trackedExiledCardSnapshot(activationEffects, sourcePermanent));
     }
 
     public void validateActivatedAbilityExileArtifactsChoice(
@@ -5507,6 +5777,9 @@ public class AbilityActivationService {
                 .map(SacrificeAnyNumberOfPermanentsCost.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the required sacrifice cost"));
+        if (cost.maximumCount() > 0 && permanentIds.size() > cost.maximumCount()) {
+            throw new IllegalStateException("Too many permanents selected for the sacrifice cost");
+        }
         FilterContext filterContext = FilterContext.of(gameData).withSourcePermanentId(source.getId());
         for (UUID permanentId : permanentIds) {
             Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
@@ -5538,14 +5811,25 @@ public class AbilityActivationService {
                 .map(SacrificeAnyNumberOfPermanentsCost.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the required sacrifice cost"));
-        int totalPower = permanentIds.stream()
-                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
-                .filter(Objects::nonNull)
-                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
-                .sum();
-        int costDerivedXValue = cost.trackSacrificedPower()
-                ? Math.max(0, totalPower)
-                : permanentIds.size();
+        int costDerivedXValue;
+        if (cost.trackDistinctCardTypes()) {
+            Set<CardType> cardTypes = new HashSet<>();
+            permanentIds.stream()
+                    .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                    .filter(Objects::nonNull)
+                    .forEach(permanent -> cardTypes.addAll(
+                            gameQueryService.getEffectiveCardTypes(gameData, permanent)));
+            costDerivedXValue = cardTypes.size();
+        } else if (cost.trackSacrificedPower()) {
+            int totalPower = permanentIds.stream()
+                    .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                    .filter(Objects::nonNull)
+                    .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                    .sum();
+            costDerivedXValue = Math.max(0, totalPower);
+        } else {
+            costDerivedXValue = permanentIds.size();
+        }
         List<UUID> sacrificedCardIds = permanentIds.stream()
                 .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
                 .filter(Objects::nonNull)
@@ -5779,10 +6063,13 @@ public class AbilityActivationService {
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
         AmountContext activationCostContext = new AmountContext(
-                playerId, permanent, targetId, effectiveXValue, 0);
+                playerId, permanent, targetId, effectiveXValue, 0).withTargetIds(targetIds);
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                if (!modifier.modifiesGenericCost()) {
+                    continue;
+                }
                 if (modifier.reducesGenericCost()) {
                     int reduction = Math.min(
                             amount, Math.max(0, genericCost + additionalGenericCost));
@@ -5793,6 +6080,27 @@ public class AbilityActivationService {
             }
         }
         return additionalGenericCost;
+    }
+
+    private ManaCost applyActivatedAbilityManaCostReductions(
+            GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
+            UUID targetId, int xValue, ManaCost cost) {
+        if (cost == null) {
+            return null;
+        }
+        ManaCost effectiveCost = cost;
+        AmountContext context = new AmountContext(playerId, permanent, targetId, xValue, 0,
+                false, null, List.of(), permanent.getCard());
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ActivationCostModifierEffect modifier) {
+                int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), context);
+                ManaCost reduction = modifier.manaCostReduction(amount);
+                if (reduction != null) {
+                    effectiveCost = effectiveCost.reducedBy(reduction);
+                }
+            }
+        }
+        return effectiveCost;
     }
 
     /**
@@ -5831,6 +6139,11 @@ public class AbilityActivationService {
                                             List<UUID> selectedCreatureManaPaymentIds) {
         List<CardEffect> abilityEffects = ability.getEffects();
 
+        if (abilityEffects.stream().anyMatch(RevealChosenPlayerCost.class::isInstance)
+                && permanent.getProtectionFromPlayerIdsPermanently().isEmpty()) {
+            throw new IllegalStateException("No player was chosen as this permanent entered");
+        }
+
         if (abilityEffects.stream().anyMatch(effect -> effect instanceof UnattachEquipmentEffect unattach
                 && unattach.equipmentId() == null)
                 && !permanent.isAttached()) {
@@ -5839,6 +6152,14 @@ public class AbilityActivationService {
 
         if (xValue < ability.getMinimumXValue()) {
             throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
+        }
+        if (ability.isModalModesMustBeUnused()) {
+            ChooseOneEffect modal = ability.modalEffectAtActivation();
+            int modeIndex = modal.decodeModeIndices(xValue).getFirst();
+            String modeLabel = modal.options().get(modeIndex).label();
+            if (permanent.getChosenModeLabels().contains(modeLabel)) {
+                throw new IllegalStateException("That mode has already been chosen");
+            }
         }
         // Volrath's Curse: only the enchanted permanent's controller may activate this ability.
         if (ability.isActivatableOnlyByEnchantedPermanentController()) {
@@ -5982,7 +6303,8 @@ public class AbilityActivationService {
         if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                if ((effect instanceof PayLifeCost || effect instanceof PayLifeForEachCardInHandCost
+                if ((effect instanceof PayLifeCost || effect instanceof PayLifeEqualToCommanderColorIdentityCost
+                        || effect instanceof PayLifeForEachCardInHandCost
                         || effect instanceof PayXLifeCost)
                         && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -6063,7 +6385,8 @@ public class AbilityActivationService {
             }
         }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
+                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         if (ability.isManaCostOfEnchantedPermanent() && abilityCost == null) {
@@ -6072,7 +6395,10 @@ public class AbilityActivationService {
         int creatureManaPaymentCount = validateCreatureManaPayment(
                 gameData, playerId, permanent, ability, abilityCost, xValue,
                 additionalGenericCost, selectedCreatureManaPaymentIds);
-        ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        ManaCost effectiveManaCost = abilityCost == null
+                ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        effectiveManaCost = applyActivatedAbilityManaCostReductions(
+                gameData, playerId, permanent, ability, null, xValue, effectiveManaCost);
         CastingCostService.ImposedSacrificeRequirement imposedTax = ability.isPowerUpAbility()
                 ? castingCostService.getImposedSacrificeRequirement(gameData, effectiveManaCost, false, true)
                 : castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
@@ -6113,13 +6439,13 @@ public class AbilityActivationService {
         }
 
         // Pay-life cost
-        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
-                .filter(PayLifeCost.class::isInstance)
-                .map(PayLifeCost.class::cast)
+        Optional<CardEffect> payLifeCost = abilityEffects.stream()
+                .filter(effect -> effect instanceof PayLifeCost
+                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
                 .findFirst();
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = payLifeCost.get().effectiveAmount(life, sourceCounterCount(permanent, payLifeCost.get()));
+            int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -6133,10 +6459,26 @@ public class AbilityActivationService {
             }
         }
 
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+            if (life < needed) {
+                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
+
         if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance)) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             if (life < xValue) {
                 throw new IllegalStateException("Not enough life to pay (need " + xValue + ", have " + life + ")");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayXEnergyCost.class::isInstance)) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            if (energy < xValue) {
+                throw new IllegalStateException("Not enough energy to pay (need " + xValue + ", have " + energy + ")");
             }
         }
 
@@ -6236,9 +6578,9 @@ public class AbilityActivationService {
                 .orElse(null);
         boolean noMatchingGraveyardCard = exileGraveyardCost != null
                 && (exileGraveyardCost.anyGraveyard()
-                ? collectAnyGraveyardExileCandidates(gameData, exileGraveyardCost).isEmpty()
-                : collectGraveyardIndicesForType(gameData.playerGraveyards.get(playerId), exileGraveyardCost.requiredType(),
-                exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype()).isEmpty());
+                ? collectAnyGraveyardExileCandidates(gameData, exileGraveyardCost, xValue).isEmpty()
+                : collectGraveyardIndicesForCost(gameData.playerGraveyards.get(playerId), exileGraveyardCost,
+                xValue).isEmpty());
         if (noMatchingGraveyardCard) {
             String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(),
                     exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
@@ -6260,8 +6602,13 @@ public class AbilityActivationService {
             throw new IllegalStateException("No instant or sorcery spell you control to exile from the stack");
         }
 
-        if (abilityEffects.stream().anyMatch(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
-                && gameData.getCardsExiledByPermanent(permanent.getId()).isEmpty()) {
+        PutCardExiledWithSourceIntoGraveyardCost putExiledCardIntoGraveyardCost = abilityEffects.stream()
+                .filter(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
+                .map(PutCardExiledWithSourceIntoGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (putExiledCardIntoGraveyardCost != null
+                && matchingCardsExiledWithSource(gameData, permanent, putExiledCardIntoGraveyardCost).isEmpty()) {
             throw new IllegalStateException("No card is exiled with this permanent");
         }
 
@@ -6551,9 +6898,15 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments,
                                               List<UUID> sacrificedCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        revealChosenPlayerAsCost(gameData, player, permanent, abilityEffects);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting,
@@ -6581,9 +6934,15 @@ public class AbilityActivationService {
                                               List<UUID> chosenCostPermanentIds,
                                               Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        revealChosenPlayerAsCost(gameData, player, permanent, abilityEffects);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         if (chosenCostPermanentIds == null || chosenCostPermanentIds.isEmpty()) {
             activatedAbilityExecutionService.completeActivationAfterCosts(
@@ -6597,6 +6956,21 @@ public class AbilityActivationService {
                     chosenCostPermanentIds == null ? List.of() : chosenCostPermanentIds,
                     List.of(), discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds);
         }
+    }
+
+    private void revealChosenPlayerAsCost(GameData gameData, Player player, Permanent permanent,
+                                          List<CardEffect> abilityEffects) {
+        if (abilityEffects.stream().noneMatch(RevealChosenPlayerCost.class::isInstance)) {
+            return;
+        }
+        UUID chosenPlayerId = permanent.getProtectionFromPlayerIdsPermanently().stream()
+                .findFirst().orElseThrow(() -> new IllegalStateException(
+                        "No player was chosen as this permanent entered"));
+        String playerName = gameData.playerIdToName.getOrDefault(player.getId(), player.getUsername());
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " reveals " + gameData.playerIdToName.get(chosenPlayerId)
+                        + " as an activation cost.")
+                .build());
     }
 
     private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
@@ -6615,9 +6989,14 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               List<UUID> activatedAbilityExiledCardIds) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
@@ -6631,9 +7010,14 @@ public class AbilityActivationService {
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
                                               Card exiledCostCardSnapshot) {
-        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex, ability, xValue);
+        castingCostService.recordActivatedAbilityCostReductionUse(
+                gameData, player.getId(), permanent, ability, targetId, targetIds);
         if (ability.isEquipAbility()) {
             gameData.playersWhoActivatedEquipAbilityThisTurn.add(player.getId());
+        }
+        if (ability.isPowerUpAbility()) {
+            gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
@@ -6688,7 +7072,7 @@ public class AbilityActivationService {
                                                        CraftMaterialCost cost) {
         List<Card> candidates = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
+        if (battlefield != null && !cost.graveyardOnly()) {
             battlefield.stream()
                     .filter(permanent -> permanent != source)
                     .filter(permanent -> matchesCraftMaterial(gameData, permanent, cost))
@@ -6708,13 +7092,18 @@ public class AbilityActivationService {
                                                   CraftMaterialCost cost) {
         List<Card> candidates = collectCraftMaterialCandidates(gameData, playerId, source, cost);
         if (candidates.size() < cost.minimumCount()
-                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)) {
+                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)
+                || (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, candidates, playerId))) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
         return candidates;
     }
 
     private boolean matchesCraftMaterial(GameData gameData, Permanent permanent, CraftMaterialCost cost) {
+        if (cost.graveyardOnly()) {
+            return false;
+        }
         if (cost.nonlandOnly() && gameQueryService.isLand(gameData, permanent)) {
             return false;
         }
@@ -6733,6 +7122,12 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(subtype ->
                 predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, new PermanentHasSubtypePredicate(subtype)))) {
+            return false;
+        }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                permanent.getCard(), cost.requiredCardPredicate(), null,
+                gameData, gameQueryService.findPermanentController(gameData, permanent.getId()))) {
             return false;
         }
         return !cost.requireActivatedAbility() || hasActivatedAbility(gameData, permanent);
@@ -6754,6 +7149,11 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(card.getSubtypes()::contains)) {
             return false;
         }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                card, cost.requiredCardPredicate(), null)) {
+            return false;
+        }
         return !cost.requireActivatedAbility()
                 || !card.getActivatedAbilities().isEmpty()
                 || !card.getEffects(EffectSlot.ON_TAP).isEmpty();
@@ -6765,6 +7165,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialPrompt(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "two craft materials that share a card type to exile as craft materials";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "one of each required creature type to exile as craft materials";
         }
@@ -6772,6 +7175,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialError(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "Must have two craft materials that share a card type";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "Must have one of each required creature type to exile as craft materials";
         }
@@ -6794,6 +7200,9 @@ public class AbilityActivationService {
         }
         if (cost.requiredType() != null) {
             return cost.requiredType().name().toLowerCase() + "s";
+        }
+        if (cost.graveyardOnly()) {
+            return "matching cards from your graveyard";
         }
         return "matching craft materials";
     }
@@ -6877,6 +7286,7 @@ public class AbilityActivationService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Permanent> battlefieldChoices = new ArrayList<>();
         List<Card> graveyardChoices = new ArrayList<>();
+        List<Card> selectedMaterials = new ArrayList<>();
         List<Set<CardSubtype>> selectedSubtypes = new ArrayList<>();
         for (UUID cardId : cardIds) {
             Permanent battlefieldChoice = battlefield == null ? null : battlefield.stream()
@@ -6888,6 +7298,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Selected card is not a legal craft material");
                 }
                 battlefieldChoices.add(battlefieldChoice);
+                selectedMaterials.add(battlefieldChoice.getCard());
                 selectedSubtypes.add(craftSubtypesForPermanent(gameData, battlefieldChoice, cost));
                 continue;
             }
@@ -6899,11 +7310,16 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Selected card is not a legal craft material");
             }
             graveyardChoices.add(graveyardChoice);
+            selectedMaterials.add(graveyardChoice);
             selectedSubtypes.add(craftSubtypesForCard(graveyardChoice, cost));
         }
 
         if (!canAssignCraftSubtypes(selectedSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[selectedSubtypes.size()])) {
+            throw new IllegalStateException(craftMaterialError(cost));
+        }
+        if (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, selectedMaterials, playerId)) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
 
@@ -6944,6 +7360,34 @@ public class AbilityActivationService {
                 .toList();
         return canAssignCraftSubtypes(candidateSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[candidateSubtypes.size()]);
+    }
+
+    private boolean canSatisfySharedCraftCardType(GameData gameData, List<Card> candidates,
+                                                   UUID playerId) {
+        for (int first = 0; first < candidates.size(); first++) {
+            Set<CardType> firstTypes = craftCardTypes(gameData, candidates.get(first), playerId);
+            for (int second = first + 1; second < candidates.size(); second++) {
+                Set<CardType> secondTypes = craftCardTypes(gameData, candidates.get(second), playerId);
+                if (firstTypes.stream().anyMatch(secondTypes::contains)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Set<CardType> craftCardTypes(GameData gameData, Card card, UUID playerId) {
+        Permanent permanent = findBattlefieldPermanentByCardId(gameData, card.getId());
+        if (permanent != null) {
+            return gameQueryService.getEffectiveCardTypes(gameData, permanent);
+        }
+        Set<CardType> types = new HashSet<>();
+        for (CardType type : CardType.values()) {
+            if (gameQueryService.cardHasType(card, type, gameData, playerId)) {
+                types.add(type);
+            }
+        }
+        return types;
     }
 
     private Permanent findBattlefieldPermanentByCardId(GameData gameData, UUID cardId) {
@@ -7306,6 +7750,17 @@ public class AbilityActivationService {
     }
 
     private void validateHandTimingRestriction(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+            if (!playerId.equals(gameData.activePlayerId)) {
+                throw new IllegalStateException("This ability can only be activated at sorcery speed");
+            }
+            if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                throw new IllegalStateException("This ability can only be activated at sorcery speed during your main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("This ability can only be activated when the stack is empty");
+            }
+        }
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
                 && !playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("This ability can only be activated during your turn");
@@ -7425,15 +7880,21 @@ public class AbilityActivationService {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
-            if (effectiveXValue > permanent.getCounterCount(CounterType.LOYALTY)) {
-                throw new IllegalStateException("Not enough loyalty counters");
-            }
             loyaltyCost = -effectiveXValue;
         } else {
             loyaltyCost = ability.getLoyaltyCost();
-            // For negative loyalty costs, check sufficient loyalty
-            if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) {
-                throw new IllegalStateException("Not enough loyalty counters");
+        }
+        loyaltyCost += castingCostService.getLoyaltyAbilityCostIncrease(
+                gameData, playerId, permanent, ability);
+        // For negative costs, check the resource used by this ability after all cost modifications.
+        if (loyaltyCost < 0) {
+            int available = ability.isToughnessAsLoyalty()
+                    ? gameQueryService.getEffectiveToughness(gameData, permanent)
+                    : permanent.getCounterCount(CounterType.LOYALTY);
+            if (available < Math.abs(loyaltyCost)) {
+                throw new IllegalStateException(ability.isToughnessAsLoyalty()
+                        ? "Not enough toughness"
+                        : "Not enough loyalty counters");
             }
         }
         return loyaltyCost;
@@ -7464,9 +7925,26 @@ public class AbilityActivationService {
         return cost.perSourceCounter() == null ? 0 : permanent.getCounterCount(cost.perSourceCounter());
     }
 
+    private int lifePaymentAmount(GameData gameData, UUID playerId, Permanent permanent, CardEffect cost) {
+        if (cost instanceof PayLifeCost payLifeCost) {
+            return payLifeCost.effectiveAmount(
+                    gameData.getLife(playerId), sourceCounterCount(permanent, payLifeCost));
+        }
+        if (cost instanceof PayLifeEqualToCommanderColorIdentityCost) {
+            return ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+        }
+        throw new IllegalArgumentException("Unsupported life-payment cost: " + cost.getClass().getSimpleName());
+    }
+
     private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
         int loyaltyCost = validateLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
-        permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
+        if (ability.isToughnessAsLoyalty()) {
+            permanent.setToughnessAsLoyalty(
+                    gameQueryService.getToughnessAsLoyalty(permanent) + loyaltyCost);
+        } else {
+            permanent.setCounterCount(CounterType.LOYALTY,
+                    permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
+        }
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);
     }
@@ -7820,6 +8298,13 @@ public class AbilityActivationService {
         if (subtypes.contains(CardSubtype.ASSASSIN)) {
             subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
+        if (subtypes.contains(CardSubtype.ASSASSIN)
+                || subtypes.contains(CardSubtype.MERCENARY)
+                || subtypes.contains(CardSubtype.PIRATE)
+                || subtypes.contains(CardSubtype.ROGUE)
+                || subtypes.contains(CardSubtype.WARLOCK)) {
+            subtypes.add(CardSubtype.OUTLAW);
+        }
         return subtypes;
     }
 
@@ -8019,7 +8504,7 @@ public class AbilityActivationService {
             return new PaidHandCard(paid.getName(), manaValue);
         }
 
-        graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
+        graveyardService.addCardToGraveyard(gameData, player.getId(), paid, Zone.HAND);
         gameData.discardCausedByOpponent = false;
         collectDiscardTriggersAsAbilityCost(gameData, player.getId(), paid);
 
@@ -8093,7 +8578,7 @@ public class AbilityActivationService {
         hand.clear();
         gameData.discardCausedByOpponent = false;
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
             collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
         }
 
@@ -8114,7 +8599,7 @@ public class AbilityActivationService {
         for (int i = 0; i < count && !hand.isEmpty(); i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             lastDiscarded = discarded;
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
             gameData.discardCausedByOpponent = false;
             collectDiscardTriggersAsAbilityCost(gameData, playerId, discarded);
 
@@ -8174,13 +8659,18 @@ public class AbilityActivationService {
 
     private Card payPutCardExiledWithSourceIntoGraveyardCost(GameData gameData, Player player,
                                                               Permanent source, UUID targetId,
-                                                              Zone targetZone) {
+                                                              Zone targetZone,
+                                                              PutCardExiledWithSourceIntoGraveyardCost cost) {
         if (targetZone != Zone.EXILE || targetId == null) {
             throw new IllegalStateException("Choose a card exiled with this permanent");
         }
         ExiledCardEntry exiled = gameData.findExiledCard(targetId);
         if (exiled == null || !source.getId().equals(exiled.sourcePermanentId())) {
             throw new IllegalStateException("Card was not exiled with this permanent");
+        }
+        if (cost.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), cost.filter(), source.getCard().getId(), gameData, exiled.ownerId())) {
+            throw new IllegalStateException("Exiled card does not match the cost restriction");
         }
         if (!gameData.removeFromExile(targetId)) {
             throw new IllegalStateException("Card is no longer in exile");
@@ -8189,6 +8679,16 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", exiled.card(), " into its owner's graveyard as an activation cost."));
         return exiled.card();
+    }
+
+    private List<UUID> matchingCardsExiledWithSource(
+            GameData gameData, Permanent source, PutCardExiledWithSourceIntoGraveyardCost cost) {
+        return gameData.getCardsExiledByPermanent(source.getId()).stream()
+                .filter(card -> cost.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, cost.filter(), source.getCard().getId(), gameData,
+                        gameData.findExiledCard(card.getId()).ownerId()))
+                .map(Card::getId)
+                .toList();
     }
 
     private void payPutOpponentOwnedExiledCardIntoGraveyardCost(GameData gameData, Player player,
@@ -8290,7 +8790,7 @@ public class AbilityActivationService {
     }
 
     private List<Card> collectAnyGraveyardExileCandidates(
-            GameData gameData, ExileCardFromGraveyardCost cost) {
+            GameData gameData, ExileCardFromGraveyardCost cost, int xValue) {
         List<Card> candidates = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -8302,12 +8802,23 @@ public class AbilityActivationService {
                         || (cost.alternateType() != null && card.getType() == cost.alternateType());
                 boolean subtypeMatch = cost.requiredSubtype() == null
                         || card.getSubtypes().contains(cost.requiredSubtype());
-                if (typeMatch && subtypeMatch) {
+                boolean manaValueMatch = !cost.manaValueEqualsX() || card.getManaValue() == xValue;
+                if (typeMatch && subtypeMatch && manaValueMatch) {
                     candidates.add(card);
                 }
             }
         }
         return candidates;
+    }
+
+    private List<Integer> collectGraveyardIndicesForCost(
+            List<Card> graveyard, ExileCardFromGraveyardCost cost, int xValue) {
+        List<Integer> validIndices = collectGraveyardIndicesForType(
+                graveyard, cost.requiredType(), cost.alternateType(), cost.requiredSubtype());
+        if (cost.manaValueEqualsX() && graveyard != null) {
+            validIndices.removeIf(index -> graveyard.get(index).getManaValue() != xValue);
+        }
+        return validIndices;
     }
 
     private List<Card> matchingSingleGraveyardExileCandidates(
@@ -8424,7 +8935,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void payGraveyardExileNCost(GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
+    private List<UUID> payGraveyardExileNCost(
+            GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost, sourceCard);
@@ -8432,10 +8944,10 @@ public class AbilityActivationService {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
-        exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
+        return exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
     }
 
-    private void payChosenGraveyardExileNCost(
+    private List<UUID> payChosenGraveyardExileNCost(
             GameData gameData, Player player, ExileNCardsFromGraveyardCost cost,
             List<UUID> cardIds, Card sourceCard) {
         UUID playerId = player.getId();
@@ -8448,7 +8960,7 @@ public class AbilityActivationService {
                         .orElseThrow(() -> new IllegalStateException(
                                 "Selected graveyard card is no longer available")))
                 .toList();
-        exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
+        return exileGraveyardCardsAsActivationCost(gameData, player, cost, toExile);
     }
 
     private void validateControllerGraveyardExileSelection(
@@ -8467,7 +8979,7 @@ public class AbilityActivationService {
         }
     }
 
-    private void exileGraveyardCardsAsActivationCost(
+    private List<UUID> exileGraveyardCardsAsActivationCost(
             GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, List<Card> toExile) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -8482,6 +8994,7 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
                 gameData.id, player.getUsername(), toExile.size(), typeName);
+        return toExile.stream().map(Card::getId).toList();
     }
 
     private void payGraveyardExileXCost(GameData gameData, Player player, ExileXCardsFromGraveyardCost cost,
@@ -8741,15 +9254,14 @@ public class AbilityActivationService {
     }
 
     private Card payGraveyardExileCost(GameData gameData, Player player, ExileCardFromGraveyardCost cost,
-                                       Integer exileCardIndex) {
+                                       Integer exileCardIndex, int xValue) {
         if (exileCardIndex == null) {
             throw new IllegalStateException("Must choose a card to exile from graveyard");
         }
 
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, cost.requiredType(),
-                cost.alternateType(), cost.requiredSubtype());
+        List<Integer> validExileIndices = collectGraveyardIndicesForCost(graveyard, cost, xValue);
         Set<Integer> validSet = new HashSet<>(validExileIndices);
         if (!validSet.contains(exileCardIndex)) {
             String typeName = graveyardExileFilterLabel(cost.requiredType(), cost.alternateType(), cost.requiredSubtype());
@@ -8773,13 +9285,13 @@ public class AbilityActivationService {
 
     private Card payAnyGraveyardExileCost(GameData gameData, Player player,
                                            ExileCardFromGraveyardCost cost,
-                                           List<UUID> selectedCardIds) {
+                                           List<UUID> selectedCardIds, int xValue) {
         if (selectedCardIds == null || selectedCardIds.size() != 1) {
             throw new IllegalStateException("Must choose a card to exile from a graveyard");
         }
 
         UUID selectedCardId = selectedCardIds.getFirst();
-        Card selected = collectAnyGraveyardExileCandidates(gameData, cost).stream()
+        Card selected = collectAnyGraveyardExileCandidates(gameData, cost, xValue).stream()
                 .filter(card -> card.getId().equals(selectedCardId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Must exile a matching card from a graveyard"));
@@ -8900,7 +9412,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex) {
+    private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex,
+                                            ActivatedAbility ability, int xValue) {
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
         perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
@@ -8908,6 +9421,12 @@ public class AbilityActivationService {
         gameData.activatedAbilityUsesThisGame
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>())
                 .merge(abilityIndex, 1, Integer::sum);
+
+        if (ability.isModalModesMustBeUnused()) {
+            ChooseOneEffect modal = ability.modalEffectAtActivation();
+            int modeIndex = modal.decodeModeIndices(xValue).getFirst();
+            permanent.getChosenModeLabels().add(modal.options().get(modeIndex).label());
+        }
     }
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
@@ -9110,8 +9629,9 @@ public class AbilityActivationService {
         return predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
     }
+
+    private boolean isDesertSource(GameData gameData, Permanent permanent) {
+        return predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
+    }
 }
-
-
-
-

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "197")
+@CardRegistration(set = "SOC", collectorNumber = "317")
 public class KillianInkDuelist extends Card {
 
     public KillianInkDuelist() {

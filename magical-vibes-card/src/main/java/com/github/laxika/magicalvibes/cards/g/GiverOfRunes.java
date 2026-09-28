@@ -10,11 +10,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1463")
 @CardRegistration(set = "MH1", collectorNumber = "13")
 @CardRegistration(set = "HA7", collectorNumber = "2")
+@CardRegistration(set = "MB2", collectorNumber = "147")
 public class GiverOfRunes extends Card {
 
     public GiverOfRunes() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "84")
+@CardRegistration(set = "SLD", collectorNumber = "635")
 public class ToxinSliver extends Card {
 
     public ToxinSliver() {

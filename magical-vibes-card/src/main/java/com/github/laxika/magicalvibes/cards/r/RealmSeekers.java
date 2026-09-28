@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "226")
+@CardRegistration(set = "LTC", collectorNumber = "258")
 public class RealmSeekers extends Card {
 
     public RealmSeekers() {

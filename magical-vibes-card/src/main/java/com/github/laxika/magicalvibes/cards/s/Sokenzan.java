@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "OHOP", collectorNumber = "36")
 @CardRegistration(set = "OPCA", collectorNumber = "72")
+@CardRegistration(set = "MOC", collectorNumber = "157")
 public class Sokenzan extends Card {
 
     public Sokenzan() {

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,58 +15,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CageOfHands.class, Forest.class, LanternKami.class})
 class CageOfHandsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Cage of Hands attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent creature = addCreatureReady(player2, new LanternKami());
 
         harness.setHand(player1, List.of(new CageOfHands()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Cage of Hands")
                         && p.isAttached()
-                        && bears.getId().equals(p.getAttachedTo()));
+                        && creature.getId().equals(p.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Enchanted creature cannot attack or block")
     void enchantedCreatureCannotAttackOrBlock() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent attacker = addCreatureReady(player1, new LanternKami());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new LanternKami());
 
-        Permanent attackLock = new Permanent(new CageOfHands());
+        Permanent attackLock = harness.addToBattlefieldAndReturn(player2, new CageOfHands());
         attackLock.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player2.getId()).add(attackLock);
 
-        Permanent blockLock = new Permanent(new CageOfHands());
+        Permanent blockLock = harness.addToBattlefieldAndReturn(player1, new CageOfHands());
         blockLock.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(blockLock);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -75,25 +63,19 @@ class CageOfHandsTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability returns Cage of Hands to its owner's hand")
     void activatedAbilityReturnsSelfToHand() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent creature = addCreatureReady(player2, new LanternKami());
+        CageOfHands cage = new CageOfHands();
 
-        harness.setHand(player1, List.of(new CageOfHands()));
+        harness.setHand(player1, List.of(cage));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int auraIndex = -1;
         var battlefield = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Cage of Hands")) {
-                auraIndex = i;
-                break;
-            }
-        }
-        assertThat(auraIndex).isGreaterThanOrEqualTo(0);
+        Permanent aura = findPermanent(player1, "Cage of Hands");
+        int auraIndex = battlefield.indexOf(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, auraIndex, null, null);
@@ -101,5 +83,38 @@ class CageOfHandsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Cage of Hands");
         harness.assertInHand(player1, "Cage of Hands");
+    }
+
+    @Test
+    @DisplayName("Cage of Hands cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.setHand(player1, List.of(new CageOfHands()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cage of Hands goes to its owner's graveyard if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new LanternKami());
+        CageOfHands cage = new CageOfHands();
+
+        harness.setHand(player1, List.of(cage));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cage);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == cage);
     }
 }

@@ -14,8 +14,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
 
-@CardUsed({ElvishBard.class, GrizzlyBears.class, Humility.class})
+@CardUsed({ElvishBard.class, GrizzlyBears.class, Humility.class, AesthirGlider.class})
 class ElvishBardTest extends BaseCardTest {
 
     @Test
@@ -119,4 +120,15 @@ class ElvishBardTest extends BaseCardTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    void noBlockRequiredWhenNoCreatureCanBlock() {
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
+        addCreatureReady(player2, new AesthirGlider());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
 }

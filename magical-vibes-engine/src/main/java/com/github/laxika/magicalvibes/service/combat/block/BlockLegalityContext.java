@@ -37,6 +37,9 @@ public final class BlockLegalityContext {
     /** The defending player's battlefield; empty rather than {@code null} when there is none. */
     final List<Permanent> defenderBattlefield;
 
+    /** The player who owns {@link #defenderBattlefield}, when the list came from game state. */
+    final UUID defenderPlayerId;
+
     /** Board-wide "X can't block Y" restrictions, collected once. */
     final List<GlobalBlockRestriction> globalBlockRestrictions;
 
@@ -77,6 +80,7 @@ public final class BlockLegalityContext {
 
     BlockLegalityContext(GameData gameData,
                          List<Permanent> defenderBattlefield,
+                         UUID defenderPlayerId,
                          List<GlobalBlockRestriction> globalBlockRestrictions,
                          List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions,
                          List<TappedBlockPermission> tappedBlockPermissions,
@@ -87,6 +91,7 @@ public final class BlockLegalityContext {
                          Set<UUID> landwalkIgnoredPermanentIds) {
         this.gameData = gameData;
         this.defenderBattlefield = defenderBattlefield;
+        this.defenderPlayerId = defenderPlayerId;
         this.globalBlockRestrictions = globalBlockRestrictions;
         this.globalAttackOrBlockRestrictions = globalAttackOrBlockRestrictions;
         this.tappedBlockPermissions = tappedBlockPermissions;
@@ -147,6 +152,8 @@ public final class BlockLegalityContext {
                          boolean fear,
                          boolean intimidate,
                          boolean skulk,
+                         boolean nimble,
+                         boolean ringBearerCantBeBlockedByGreaterPower,
                          boolean shadow,
                          boolean cantBeBlockedByLessPower,
                          boolean cantBeBlockedByPowerLessThanIslandCount,

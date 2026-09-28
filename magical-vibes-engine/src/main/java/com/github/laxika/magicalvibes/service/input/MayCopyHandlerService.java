@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -13,35 +14,34 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -60,6 +60,7 @@ public class MayCopyHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
     private final LandCopyOnEnterService landCopyOnEnterService;
+    private final TargetRedirectionSupport targetRedirectionSupport;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
@@ -156,9 +157,10 @@ public class MayCopyHandlerService {
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
-                    .flatMap(List::stream)
-                    .filter(card -> card.hasType(CardType.CREATURE))
+            List<Card> creatureCards = gameData.playerGraveyards.entrySet().stream()
+                    .flatMap(entry -> entry.getValue().stream()
+                            .filter(card -> cloneService.isValidGraveyardCopyCard(
+                                    gameData, ability.controllerId(), entry.getKey(), card, copyEffect)))
                     .toList();
             int requiredCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
             if (creatureCards.size() >= requiredCards) {
@@ -181,6 +183,51 @@ public class MayCopyHandlerService {
                         : " has no creature card to copy; it enters without copying.")
                 : player.getUsername() + " declines to copy a creature card from a graveyard. ";
         gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
+        finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    private boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
+                                             Card graveyardCard,
+                                             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            return false;
+        }
+        if (copyEffect.controllerGraveyardOnly() && !controllerId.equals(graveyardOwnerId)) {
+            return false;
+        }
+        if (copyEffect.cardFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
+            return false;
+        }
+        return !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of())
+                .contains(graveyardCard.getId());
+    }
+
+    public void handleMimeoplasmCopyOnEnterChoice(GameData gameData, Player player, boolean accepted,
+                                                  PendingMayAbility ability) {
+        if (accepted) {
+            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
+                    .flatMap(List::stream)
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .toList();
+            if (creatureCards.size() >= 2) {
+                playerInputService.beginMultiGraveyardChoice(
+                        gameData, ability.controllerId(), creatureCards, 2, 2,
+                        "Choose two creature cards from graveyards to exile.");
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing two creature cards from graveyards to exile."));
+                return;
+            }
+        }
+
+        String message = accepted
+                ? player.getUsername() + " has fewer than two creature cards in graveyards; it enters without copying."
+                : player.getUsername() + " declines to exile creature cards for The Mimeoplasm. ";
+        gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(),
+                " It enters without copying."));
         finishCloneEntryWithoutFurtherChoice(gameData);
     }
 
@@ -576,6 +623,10 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
+            validTargets.removeAll(targetSpellEntry.getDeclaredTargetIds());
+            if (targetSpellEntry.getTargetId() != null) {
+                validTargets.remove(targetSpellEntry.getTargetId());
+            }
         }
 
         if (validTargets.isEmpty()) {
@@ -587,7 +638,10 @@ public class MayCopyHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(spellCardId));
+        Integer targetIndex = targetSpellEntry.getTargetId() == null
+                && !targetSpellEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for " + spellCard.getName() + ".");
     }

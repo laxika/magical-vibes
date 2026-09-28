@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 @CardRegistration(set = "ODY", collectorNumber = "113")
 @CardRegistration(set = "VMA", collectorNumber = "100")
 @CardRegistration(set = "V14", collectorNumber = "13")
+@CardRegistration(set = "MH2", collectorNumber = "270")
 public class Upheaval extends Card {
 
     public Upheaval() {

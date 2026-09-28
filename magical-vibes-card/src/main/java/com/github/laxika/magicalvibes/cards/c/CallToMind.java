@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "47")
+@CardRegistration(set = "C14", collectorNumber = "101")
 public class CallToMind extends Card {
 
     public CallToMind() {

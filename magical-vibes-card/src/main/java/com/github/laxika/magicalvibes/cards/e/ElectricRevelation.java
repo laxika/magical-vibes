@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "135")
 @CardRegistration(set = "DBL", collectorNumber = "135")
+@CardRegistration(set = "OTC", collectorNumber = "163")
 public class ElectricRevelation extends Card {
 
     public ElectricRevelation() {

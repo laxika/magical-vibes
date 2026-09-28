@@ -14,8 +14,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 
-@CardUsed({GrizzlyBears.class, Island.class, SeaMonster.class})
+@CardUsed({GrizzlyBears.class, Island.class, SeaMonster.class, AvianChangeling.class})
 class SeaMonsterTest extends BaseCardTest {
 
     @Test
@@ -102,5 +103,15 @@ class SeaMonsterTest extends BaseCardTest {
 
         harness.assertLife(player2, 14);
     }
-}
 
+    @Test
+    @DisplayName("Sea Monster cannot attack if defender controls only a changeling creature")
+    @CardUsed(AvianChangeling.class)
+    void cannotAttackWhenDefenderOnlyControlsChangelingCreature() {
+        harness.addToBattlefield(player2, new AvianChangeling());
+        addCreatureReady(player1, new SeaMonster());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+}

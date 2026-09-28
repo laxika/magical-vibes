@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "180")
+@CardRegistration(set = "DSC", collectorNumber = "176")
 public class DeathmistRaptor extends Card {
 
     public DeathmistRaptor() {

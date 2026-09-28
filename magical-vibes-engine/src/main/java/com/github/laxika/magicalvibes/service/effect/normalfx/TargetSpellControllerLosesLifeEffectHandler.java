@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,15 +33,19 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
         if (targetCardId == null && entry.getTriggeringPermanentControllerId() == null) return;
 
         for (StackEntry se : gameData.stack) {
-            if (targetCardId != null && se.getTargetableId().equals(targetCardId)) {
-                lifeSupport.applyLifeLoss(gameData, se.getControllerId(), e.amount(), entry.getCard().getName());
+            if (targetCardId != null && targetCardId.equals(se.getTargetableId())) {
+                int amount = amountEvaluationService.evaluate(
+                        gameData, e.amount(), AmountContext.forStackEntry(entry, null));
+                lifeSupport.applyLifeLoss(gameData, se.getControllerId(), amount, entry.getCard().getName());
                 return;
             }
         }
         UUID targetingSpellControllerId = entry.getTriggeringPermanentControllerId();
         if (targetingSpellControllerId != null) {
+            int amount = amountEvaluationService.evaluate(
+                    gameData, e.amount(), AmountContext.forStackEntry(entry, null));
             lifeSupport.applyLifeLoss(
-                    gameData, targetingSpellControllerId, e.amount(), entry.getCard().getName());
+                    gameData, targetingSpellControllerId, amount, entry.getCard().getName());
         } else {
             log.info("Game {} - Target spell no longer on stack for life loss", gameData.id);
         }

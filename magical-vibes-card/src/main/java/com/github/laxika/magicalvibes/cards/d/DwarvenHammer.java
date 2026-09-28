@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "133")
+@CardRegistration(set = "CMM", collectorNumber = "219")
 public class DwarvenHammer extends Card {
 
     public DwarvenHammer() {

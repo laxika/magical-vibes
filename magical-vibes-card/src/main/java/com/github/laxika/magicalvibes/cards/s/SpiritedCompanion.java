@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "NEO", collectorNumber = "38")
+@CardRegistration(set = "SLD", collectorNumber = "896")
+@CardRegistration(set = "MOC", collectorNumber = "208")
 public class SpiritedCompanion extends Card {
 
     public SpiritedCompanion() {

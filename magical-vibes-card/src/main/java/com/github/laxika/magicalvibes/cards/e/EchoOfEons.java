@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "821")
 @CardRegistration(set = "MH1", collectorNumber = "46")
+@CardRegistration(set = "MB2", collectorNumber = "160")
 public class EchoOfEons extends Card {
 
     public EchoOfEons() {

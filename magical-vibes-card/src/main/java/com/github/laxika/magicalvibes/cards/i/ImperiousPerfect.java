@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "EVG", collectorNumber = "8")
 @CardRegistration(set = "EMA", collectorNumber = "173")
 @CardRegistration(set = "HA1", collectorNumber = "15")
+@CardRegistration(set = "C14", collectorNumber = "202")
 public class ImperiousPerfect extends Card {
 
     public ImperiousPerfect() {

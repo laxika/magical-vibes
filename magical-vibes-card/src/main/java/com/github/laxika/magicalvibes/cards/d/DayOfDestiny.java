@@ -9,11 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "1")
+@CardRegistration(set = "DMC", collectorNumber = "99")
 public class DayOfDestiny extends Card {
 
     public DayOfDestiny() {
         // Legendary creatures you control get +2/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
     }
 }

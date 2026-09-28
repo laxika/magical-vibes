@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "79")
 @CardRegistration(set = "EOS", collectorNumber = "124")
 @CardRegistration(set = "EOS", collectorNumber = "169")
+@CardRegistration(set = "MH2", collectorNumber = "251")
 public class PowerDepot extends Card {
 
     public PowerDepot() {

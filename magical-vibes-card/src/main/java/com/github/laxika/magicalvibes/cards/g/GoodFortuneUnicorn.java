@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "240")
+@CardRegistration(set = "SLD", collectorNumber = "940")
+@CardRegistration(set = "SLD", collectorNumber = "1711")
 @CardRegistration(set = "MH1", collectorNumber = "201")
+@CardRegistration(set = "MOC", collectorNumber = "326")
 public class GoodFortuneUnicorn extends Card {
 
     public GoodFortuneUnicorn() {

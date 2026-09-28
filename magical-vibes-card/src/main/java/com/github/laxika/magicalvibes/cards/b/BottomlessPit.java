@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "STH", collectorNumber = "51")
+@CardRegistration(set = "SLD", collectorNumber = "1404")
 public class BottomlessPit extends Card {
 
     public BottomlessPit() {

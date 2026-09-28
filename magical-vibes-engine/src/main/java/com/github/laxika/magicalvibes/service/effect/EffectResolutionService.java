@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,7 @@ public class EffectResolutionService {
     private final EffectHandlerRegistry registry;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
     private final GameOutcomeService gameOutcomeService;
@@ -178,6 +182,14 @@ public class EffectResolutionService {
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded
             if (effectToResolve instanceof MayEffect may
+                    && may.wrapped() instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                    entry.getEventValue())) {
+                continue;
+            }
+
+            if (effectToResolve instanceof MayEffect may
                     && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
                 log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
                         entry.getCard().getName());
@@ -219,6 +231,27 @@ public class EffectResolutionService {
                 } else {
                     // Accepted with null wrapped (pay-to-avoid), or declined with no elseEffect.
                     log.info("Game {} - Player {} may-pay ability from {} — nothing to resolve",
+                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
+                    continue;
+                }
+            }
+
+            if (effectToResolve instanceof MayPayLandDropEffect mayPayLandDrop
+                    && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted
+                        && entry.getControllerId().equals(gameData.activePlayerId)
+                        && gameData.landsPlayedThisTurn.getOrDefault(entry.getControllerId(), 0)
+                        < gameQueryService.getMaxLandsThisTurn(gameData, entry.getControllerId())) {
+                    gameData.landsPlayedThisTurn.merge(entry.getControllerId(), 1, Integer::sum);
+                    effectToResolve = mayPayLandDrop.wrapped();
+                    log.info("Game {} - Player accepted may-land-drop ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else if (!accepted && mayPayLandDrop.elseEffect() != null) {
+                    effectToResolve = mayPayLandDrop.elseEffect();
+                } else {
+                    log.info("Game {} - Player {} may-land-drop ability from {} — nothing to resolve",
                             gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
                     continue;
                 }
@@ -278,6 +311,12 @@ public class EffectResolutionService {
             // Sequence expansion: splice the steps into this entry's effect list so they resolve
             // in order through this same loop (pause/resume and nested wrappers work unchanged).
             if (effectToResolve instanceof SequenceEffect sequence) {
+                if (!sequence.steps().isEmpty()
+                        && sequence.steps().getFirst() instanceof ExileSourceCardFromGraveyardEffect
+                        && gameData.playerGraveyards.values().stream().noneMatch(graveyard -> graveyard.stream()
+                                .anyMatch(card -> card.getId().equals(entry.getCard().getId())))) {
+                    continue;
+                }
                 entry.insertEffectsToResolve(i + 1, sequence.steps());
                 effects = entry.getEffectsToResolve();
                 continue;
@@ -312,6 +351,7 @@ public class EffectResolutionService {
             }
 
             if (!skipEffect) {
+                entry.setResolvingEffectIndex(i);
                 EffectHandler handler = registry.getHandler(effectToResolve);
                 if (handler != null) {
                     handler.resolve(gameData, entry, effectToResolve);
@@ -347,6 +387,7 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        entry.setResolvingEffectIndex(-1);
         entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
@@ -361,6 +402,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastArtifactManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
+            gameData.clearSpellCastDesertManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this
@@ -373,11 +415,15 @@ public class EffectResolutionService {
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
         if (entry.getSourcePermanentId() == null
-                || !(may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy)) {
+                || !entry.isMarkSourceOncePerTurnOnAcceptance()) {
             return false;
         }
-        return copy.markSourceOncePerTurnOnAccept()
-                && !copy.accepted()
+        if (may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy) {
+            return copy.markSourceOncePerTurnOnAccept()
+                    && !copy.accepted()
+                    && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+        }
+        return gameData.resolvedMayAccepted == null
                 && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

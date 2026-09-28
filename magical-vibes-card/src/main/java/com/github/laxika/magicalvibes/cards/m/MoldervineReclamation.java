@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "214")
+@CardRegistration(set = "SOC", collectorNumber = "320")
+@CardRegistration(set = "SLD", collectorNumber = "1716")
+@CardRegistration(set = "C21", collectorNumber = "225")
 public class MoldervineReclamation extends Card {
 
     public MoldervineReclamation() {

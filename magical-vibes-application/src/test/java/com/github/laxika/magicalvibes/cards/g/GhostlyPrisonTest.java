@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,27 +20,43 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GhostlyPrison.class, HumbleBudoka.class})
 class GhostlyPrisonTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Opponent pays {2} for each creature attacking the controller")
+    @DisplayName("Opponent pays {2} for one creature attacking the controller")
     void opponentPaysTwoPerAttacker() {
         harness.addToBattlefield(player1, new GhostlyPrison());
-        addReadyCreature(player2);
+        addCreatureReady(player2, new HumbleBudoka());
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        declareAttackers(player2, List.of(0), null);
+        declareAttackers(player2, List.of(0));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Opponent pays {2} for each creature attacking the controller")
+    void opponentPaysTwoForEachAttacker() {
+        harness.addToBattlefield(player1, new GhostlyPrison());
+        addCreatureReady(player2, new HumbleBudoka());
+        addCreatureReady(player2, new HumbleBudoka());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        declareAttackers(player2, List.of(0, 1));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Opponent cannot attack the controller without paying the tax")
     void opponentCannotAttackWithoutPayment() {
         harness.addToBattlefield(player1, new GhostlyPrison());
-        addReadyCreature(player2);
+        addCreatureReady(player2, new HumbleBudoka());
 
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0), null))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay attack tax");
     }
@@ -48,27 +66,21 @@ class GhostlyPrisonTest extends BaseCardTest {
     void planeswalkerIsNotTaxed() {
         harness.addToBattlefield(player1, new GhostlyPrison());
         Permanent planeswalker = addPlaneswalker(player1, 4);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new HumbleBudoka());
 
-        declareAttackers(player2, List.of(0), Map.of(0, planeswalker.getId()));
+        declareAttackersAtTarget(player2, List.of(0), Map.of(0, planeswalker.getId()));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
+    private void declareAttackersAtTarget(Player player, List<Integer> attackerIndices,
+                                          Map<Integer, UUID> attackTargets) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {

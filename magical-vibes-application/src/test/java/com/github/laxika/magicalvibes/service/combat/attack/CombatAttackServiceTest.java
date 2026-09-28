@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.Brainwash;
-import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
@@ -93,6 +93,21 @@ class CombatAttackServiceTest extends BaseCardTest {
 
     private CombatResult declare(List<Integer> attackerIndices) {
         return declare(attackerIndices, null);
+    }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.t.TotalWar.class)
+    void playerAttackSweepUsesTheAttackingPlayerWithoutTargetChoice() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.t.TotalWar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent stayedHome = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker).doesNotContain(stayedHome);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(defender);
     }
 
     @Test
@@ -484,20 +499,20 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @CardUsed({Okk.class, HillGiant.class, CrawWurm.class})
+        @CardUsed({Okk.class, HillGiant.class, ShivanDragon.class})
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
         void greaterPowerRestrictionNeedsABiggerAttacker() {
-            // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.
+            // Okk is 4/4; Hill Giant (3/3) is not enough, Shivan Dragon (5/5) is.
             Permanent okk = addCreatureReady(player1, new Okk());
             Permanent giant = addCreatureReady(player1, new HillGiant());
-            Permanent wurm = addCreatureReady(player1, new CrawWurm());
+            Permanent dragon = addCreatureReady(player1, new ShivanDragon());
             enterDeclareAttackers();
 
             assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(okk), index(giant))))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("a creature with greater power also attacks");
 
-            assertThatCode(() -> declare(List.of(index(okk), index(wurm)))).doesNotThrowAnyException();
+            assertThatCode(() -> declare(List.of(index(okk), index(dragon)))).doesNotThrowAnyException();
         }
 
         @Test

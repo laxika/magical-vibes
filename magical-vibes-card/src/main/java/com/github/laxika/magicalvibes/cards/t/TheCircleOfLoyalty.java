@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "9")
+@CardRegistration(set = "DMC", collectorNumber = "98")
 public class TheCircleOfLoyalty extends Card {
 
     public TheCircleOfLoyalty() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CentaurRootcaster;
 import com.github.laxika.magicalvibes.cards.e.Envelop;
+import com.github.laxika.magicalvibes.cards.g.GoretuskFirebeast;
 import com.github.laxika.magicalvibes.cards.k.KraulStinger;
 import com.github.laxika.magicalvibes.cards.p.PhantomNomad;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SelflessExorcist.class, CentaurRootcaster.class, KraulStinger.class, Envelop.class, PhantomNomad.class})
+@CardUsed({CentaurRootcaster.class, Envelop.class, GoretuskFirebeast.class, KraulStinger.class, PhantomNomad.class, SelflessExorcist.class})
 class SelflessExorcistTest extends BaseCardTest {
 
     @Test
@@ -110,5 +111,38 @@ class SelflessExorcistTest extends BaseCardTest {
 
     private Permanent addReadyExorcist() {
         return addCreatureReady(player1, new SelflessExorcist());
+    }
+
+    @Test
+    @DisplayName("Can target a creature card in its controller's graveyard")
+    void targetsCreatureCardInItsControllersGraveyard() {
+        Permanent exorcist = addCreatureReady(player1, new SelflessExorcist());
+        Card firebeast = new GoretuskFirebeast();
+        harness.setGraveyard(player1, List.of(firebeast));
+
+        harness.activateAbility(player1, 0, null, firebeast.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Goretusk Firebeast");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).contains(firebeast.getId());
+        assertThat(exorcist.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exiles the target but deals no damage if Selfless Exorcist leaves before resolution")
+    void sourceLeavingBattlefieldPreventsDamage() {
+        Permanent exorcist = addCreatureReady(player1, new SelflessExorcist());
+        Card firebeast = new GoretuskFirebeast();
+        harness.setGraveyard(player2, List.of(firebeast));
+
+        harness.activateAbility(player1, 0, null, firebeast.getId(), Zone.GRAVEYARD);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, exorcist));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Goretusk Firebeast");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).contains(firebeast.getId());
     }
 }

@@ -21,6 +21,8 @@ import java.util.Set;
 @CardRegistration(set = "UMA", collectorNumber = "155")
 @CardRegistration(set = "2X2", collectorNumber = "131")
 @CardRegistration(set = "TSR", collectorNumber = "353")
+@CardRegistration(set = "TDC", collectorNumber = "95")
+@CardRegistration(set = "OTC", collectorNumber = "185")
 public class YoungPyromancer extends Card {
 
     public YoungPyromancer() {

@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "202")
 @CardRegistration(set = "DDP", collectorNumber = "28")
+@CardRegistration(set = "CMM", collectorNumber = "380")
+@CardRegistration(set = "AFC", collectorNumber = "205")
+@CardRegistration(set = "PIP", collectorNumber = "231")
+@CardRegistration(set = "PIP", collectorNumber = "759")
+@CardRegistration(set = "FIC", collectorNumber = "344")
 public class ExplorersScope extends Card {
 
     public ExplorersScope() {

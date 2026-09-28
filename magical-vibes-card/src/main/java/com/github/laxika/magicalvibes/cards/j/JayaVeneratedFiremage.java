@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "135")
+@CardRegistration(set = "SLD", collectorNumber = "513")
 public class JayaVeneratedFiremage extends Card {
 
     public JayaVeneratedFiremage() {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,8 +82,25 @@ class ZombifyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Zombify");
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted creature when multiple creatures are in the graveyard")
+    void returnsOnlyTargetedCreature() {
+        Card targetedCreature = new GrizzlyBears();
+        Card otherCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(targetedCreature, otherCreature));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, targetedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(targetedCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(otherCreature.getId()));
     }
 }

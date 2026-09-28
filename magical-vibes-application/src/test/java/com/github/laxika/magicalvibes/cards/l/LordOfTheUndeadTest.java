@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -341,11 +342,11 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void nonZombieCardsNotSelectable() {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        HolyDay holyDay = new HolyDay();
-        harness.setGraveyard(player1, List.of(holyDay));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         assertThatThrownBy(() ->
-                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(holyDay.getId())))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -384,10 +385,8 @@ class LordOfTheUndeadTest extends BaseCardTest {
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
         // Add Lord with summoning sickness (creature with tap ability)
-        LordOfTheUndead card = new LordOfTheUndead();
-        Permanent lord = new Permanent(card);
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfTheUndead());
         lord.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(lord);
         harness.addMana(player1, ManaColor.BLACK, 2);
         Gravedigger target = new Gravedigger();
         harness.setGraveyard(player1, List.of(target));

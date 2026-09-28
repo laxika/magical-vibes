@@ -408,6 +408,32 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    public void castCreatureWithRepeatedCosts(Player player, int cardIndex,
+                                               List<String> repeatedAdditionalCosts) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
+    public void castCreatureWithRepeatedCostsAndDiscards(Player player, int cardIndex,
+                                                          List<String> repeatedAdditionalCosts,
+                                                          List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, discardHandCardIndices, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
+    public void castCreatureWithRepeatedCostsAndGraveyardExile(
+            Player player, int cardIndex, List<String> repeatedAdditionalCosts,
+            List<Integer> exileGraveyardCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, exileGraveyardCardIndices, false, null, null, null, null,
+                repeatedAdditionalCosts, false);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
@@ -644,6 +670,11 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
     }
 
+    public void castFromExileWithFlashforward(Player player, UUID exileCardId, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, targetId, true);
+    }
+
     public void castAdventure(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
@@ -797,6 +828,13 @@ public class GameTestHarness {
     public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
+    }
+
+    public void castCreatureWithCounterCostReduction(Player player, int cardIndex,
+                                                      List<UUID> permanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, permanentIds, null, null, false);
     }
 
     public void castEnchantment(Player player, int cardIndex) {
@@ -1156,6 +1194,14 @@ public class GameTestHarness {
                 null, null, beholdPermanentIds, beholdHandCardIndices, null);
     }
 
+    public void castSorceryWithBehold(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, beholdPermanentIds, beholdHandCardIndices, null);
+    }
+
     public void castInstantWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
                                                           UUID chosenObjectId) {
         ensurePriority(player);
@@ -1461,6 +1507,12 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
     }
 
+    public void castFromLibraryTopWithAdditionalCost(Player player, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, List.of(),
+                List.of(sacrificePermanentId));
+    }
+
     public void castAndResolveFromLibraryTop(Player player) {
         castFromLibraryTop(player);
         passBothPriorities();
@@ -1473,6 +1525,11 @@ public class GameTestHarness {
 
     public void castAndResolveFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
         castFromLibraryTop(player, counterCostPermanentIds);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTopWithAdditionalCost(Player player, UUID sacrificePermanentId) {
+        castFromLibraryTopWithAdditionalCost(player, sacrificePermanentId);
         passBothPriorities();
     }
 
@@ -1660,6 +1717,11 @@ public class GameTestHarness {
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
+    }
+
+    public void activateEmblemAbility(Player player, int emblemIndex, int abilityIndex, Integer xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue, targetId, null, null, null);
     }
 
     public void activateStackAbility(Player player, UUID stackCardId, int abilityIndex, int discardHandCardIndex) {

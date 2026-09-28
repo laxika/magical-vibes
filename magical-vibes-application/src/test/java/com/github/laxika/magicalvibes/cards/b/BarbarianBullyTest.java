@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BarbarianBully.class)
+@CardUsed({BarbarianBully.class, SuntailHawk.class})
 class BarbarianBullyTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,39 @@ class BarbarianBullyTest extends BaseCardTest {
     }
 
     private Permanent activateWithHand(BarbarianBully cardInHand) {
+        Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
+        harness.setHand(player1, List.of(cardInHand));
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        return bully;
+    }
+
+    @Test
+    void activationDiscardsOneCardAtRandomAsCost() {
+        activateWithHandForJudReview(new SuntailHawk());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
+    void activePlayerCanAcceptDamage() {
+        Permanent bully = activateWithHandForJudReview(new SuntailHawk());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bully.getPowerModifier()).isZero();
+        assertThat(bully.getToughnessModifier()).isZero();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private Permanent activateWithHandForJudReview(SuntailHawk cardInHand) {
         Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
         harness.setHand(player1, List.of(cardInHand));
         harness.forceActivePlayer(player1);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Trigger descriptor for ability-activation slots: copy an activated ability when its trigger
@@ -31,6 +32,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * @param targetPredicate      optional restriction on the activated ability's chosen targets
  * @param activationCostContainsX when {@code true}, the trigger fires only when the activated
  *                                ability's mana activation cost contains {@code X}
+ * @param exhaustAbilityOnly      when {@code true}, the trigger fires only for exhaust abilities
+ * @param sourcePermanentFilter   optional predicate evaluated against the activated ability's
+ *                                source permanent, with this trigger permanent as the source
+ * @param lifePaymentOnly         when {@code true}, the trigger fires only when life was paid to
+ *                                activate the ability and offers to pay that same amount again
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
@@ -38,30 +44,70 @@ public record CopyControllerActivatedAbilityTriggerEffect(
         boolean equippedCreatureOnly,
         boolean loyaltyAbilityOnly,
         StackEntryPredicate targetPredicate,
-        boolean activationCostContainsX
+        boolean activationCostContainsX,
+        boolean exhaustAbilityOnly,
+        PermanentPredicate sourcePermanentFilter,
+        boolean lifePaymentOnly
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
-        this(manaCost, null, false, false, null, false);
+        this(manaCost, null, false, false, null, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter) {
-        this(manaCost, sourceFilter, false, false, null, false);
+        this(manaCost, sourceFilter, false, false, null, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false, false, null, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
                                                        StackEntryPredicate targetPredicate) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false, false, null, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate,
+                                                       boolean activationCostContainsX) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
+                activationCostContainsX, false, null, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate,
+                                                       boolean activationCostContainsX,
+                                                       boolean exhaustAbilityOnly) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
+                activationCostContainsX, exhaustAbilityOnly, null, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
+                                                       StackEntryPredicate targetPredicate,
+                                                       boolean activationCostContainsX,
+                                                       boolean exhaustAbilityOnly,
+                                                       PermanentPredicate sourcePermanentFilter) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
+                activationCostContainsX, exhaustAbilityOnly, sourcePermanentFilter, false);
+    }
+
+    /** Trigger descriptor for Verrak, Warped Sengir's life-paid ability copy. */
+    public static CopyControllerActivatedAbilityTriggerEffect whenLifeIsPaid() {
+        return new CopyControllerActivatedAbilityTriggerEffect(
+                null, null, false, false, null, false, false, null, true);
+    }
+
+    public boolean requiresXInActivationCost() {
+        return activationCostContainsX;
     }
 }

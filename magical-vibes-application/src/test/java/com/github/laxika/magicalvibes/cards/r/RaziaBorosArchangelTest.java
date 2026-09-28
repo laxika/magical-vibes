@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,16 +17,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RaziaBorosArchangel.class, GrizzlyBears.class, ProdigalPyromancer.class, LightningBolt.class})
+@CardUsed({RaziaBorosArchangel.class, GrizzlyBears.class, ProdigalPyromancer.class, LightningBolt.class,
+        ImprisonedInTheMoon.class})
 class RaziaBorosArchangelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Redirects the next three damage from a controlled creature to another creature")
     void redirectsNextThreeDamage() {
-        Permanent razia = addReady(player1, new RaziaBorosArchangel());
+        Permanent razia = addCreatureReady(player1, new RaziaBorosArchangel());
         Permanent protectedCreature = addReadyStats(player1, 4, 4);
         Permanent destination = addReadyStats(player2, 5, 5);
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbilityWithMultiTargets(player1, indexOf(player1, razia), 0,
                 List.of(protectedCreature.getId(), destination.getId()));
@@ -48,9 +49,33 @@ class RaziaBorosArchangelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not redirect damage when a target stops being a creature before resolution")
+    void ignoresTargetThatIsNoLongerACreatureOnResolution() {
+        Permanent razia = addCreatureReady(player1, new RaziaBorosArchangel());
+        Permanent protectedCreature = addReadyStats(player1, 4, 4);
+        Permanent destination = addReadyStats(player2, 5, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(player1, razia), 0,
+                List.of(protectedCreature.getId(), destination.getId()));
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
+        aura.setAttachedTo(protectedCreature.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(3);
+        assertThat(destination.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Requires the protected and destination creatures to be different")
     void requiresDifferentTargets() {
-        Permanent razia = addReady(player1, new RaziaBorosArchangel());
+        Permanent razia = addCreatureReady(player1, new RaziaBorosArchangel());
         Permanent creature = addReadyStats(player1, 4, 4);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
@@ -58,18 +83,11 @@ class RaziaBorosArchangelTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);
         card.setToughness(toughness);
-        return addReady(player, card);
+        return addCreatureReady(player, card);
     }
 
     private int indexOf(Player player, Permanent permanent) {

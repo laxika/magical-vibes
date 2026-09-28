@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "220")
+@CardRegistration(set = "SLD", collectorNumber = "1690")
 public class GreasefangOkibaBoss extends Card {
 
     public GreasefangOkibaBoss() {

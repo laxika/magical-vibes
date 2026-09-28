@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(TalismanOfHierarchy.class)
+@CardUsed({TalismanOfHierarchy.class})
 class TalismanOfHierarchyTest extends BaseCardTest {
 
     @Test

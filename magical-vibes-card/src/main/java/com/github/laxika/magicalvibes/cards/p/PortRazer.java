@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SPG", collectorNumber = "33")
+@CardRegistration(set = "LCC", collectorNumber = "230")
 public class PortRazer extends Card {
 
     public PortRazer() {

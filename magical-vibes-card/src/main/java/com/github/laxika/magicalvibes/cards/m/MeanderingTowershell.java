@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextTurnDeclareAttackersEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "141")
+@CardRegistration(set = "SLD", collectorNumber = "236")
 public class MeanderingTowershell extends Card {
 
     public MeanderingTowershell() {

@@ -127,6 +127,19 @@ class MasterDecoyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate ability when Master Decoy is already tapped")
+    void cannotActivateWhenDecoyIsTapped() {
+        Permanent decoy = addReadyDecoy(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        decoy.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyDecoy(player1);

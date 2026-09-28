@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "42")
+@CardRegistration(set = "MOC", collectorNumber = "214")
 public class ValiantKnight extends Card {
 
     public ValiantKnight() {

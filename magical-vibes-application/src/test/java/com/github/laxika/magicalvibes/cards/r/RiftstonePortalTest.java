@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiftstonePortal.class, NantukoMonastery.class})
+@CardUsed({NantukoMonastery.class, RiftstonePortal.class})
 class RiftstonePortalTest extends BaseCardTest {
 
     @Test
@@ -88,5 +88,36 @@ class RiftstonePortalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("In the graveyard, grants your lands a green mana ability")
+    void grantsGreenManaAbilityFromGraveyard() {
+        harness.setGraveyard(player1, List.of(new RiftstonePortal()));
+        harness.addToBattlefield(player1, new RiftstonePortal());
+        harness.addToBattlefield(player2, new RiftstonePortal());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid ability index");
+    }
+
+    @Test
+    @DisplayName("In the graveyard, the granted ability can add white mana")
+    void grantsWhiteManaAbilityFromGraveyard() {
+        harness.setGraveyard(player1, List.of(new RiftstonePortal()));
+        harness.addToBattlefield(player1, new RiftstonePortal());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 }

@@ -14,6 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "61")
+@CardRegistration(set = "SLD", collectorNumber = "508")
+@CardRegistration(set = "SLD", collectorNumber = "1041")
+@CardRegistration(set = "SLD", collectorNumber = "1141")
+@CardRegistration(set = "MB2", collectorNumber = "32")
+@CardRegistration(set = "SLD", collectorNumber = "2397")
 public class NarsetParterOfVeils extends Card {
 
     public NarsetParterOfVeils() {

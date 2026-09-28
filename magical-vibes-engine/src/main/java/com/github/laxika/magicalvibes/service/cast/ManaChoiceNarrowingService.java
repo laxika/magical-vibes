@@ -140,7 +140,11 @@ public class ManaChoiceNarrowingService {
         if (index < 0 || index >= abilities.size()) {
             return null;
         }
-        String abilityCost = abilities.get(index).getManaCost();
+        ActivatedAbility ability = abilities.get(index);
+        if (ability.isPowerUpAbility()) {
+            pool.promotePowerUpAbilityOnlyMana();
+        }
+        String abilityCost = ability.getManaCost();
         if (abilityCost == null) {
             return null;
         }

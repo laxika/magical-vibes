@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TsabosDecree.class, AvianChangeling.class, Forest.class, GrizzlyBears.class, HillGiant.class,
+        NamelessInversion.class})
 class TsabosDecreeTest extends BaseCardTest {
 
     @Test
@@ -42,6 +46,7 @@ class TsabosDecreeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getName)
                 .contains("Grizzly Bears", "Avian Changeling");
+        assertThat(gameLogContains("Bob reveals their hand:")).isTrue();
     }
 
     @Test
@@ -60,6 +65,50 @@ class TsabosDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys a matching changeling creature on the target player's battlefield")
+    void destroysMatchingChangelingCreature() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player2, List.of(new Forest()));
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(changeling).isNotIn(gd.playerBattlefields.get(player2.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Still destroys matching creatures when the target player's hand is empty")
+    void destroysMatchingCreatureWithEmptyHand() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player2, new ArrayList<>());
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not discard a noncreature card that has the chosen subtype")
+    void doesNotDiscardNoncreatureCardOfChosenSubtype() {
+        harness.setHand(player2, List.of(new NamelessInversion()));
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Nameless Inversion");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Rejects a non-player target")
     void rejectsNonPlayerTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -75,7 +124,6 @@ class TsabosDecreeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.setHand(player1, List.of(new TsabosDecree()));
-        harness.castInstant(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetPlayerId);
     }
 }

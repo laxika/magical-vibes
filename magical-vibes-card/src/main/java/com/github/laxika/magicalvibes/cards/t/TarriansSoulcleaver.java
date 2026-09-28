@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "264")
 @CardRegistration(set = "LCI", collectorNumber = "389")
+@CardRegistration(set = "SLD", collectorNumber = "2224")
 public class TarriansSoulcleaver extends Card {
 
     public TarriansSoulcleaver() {

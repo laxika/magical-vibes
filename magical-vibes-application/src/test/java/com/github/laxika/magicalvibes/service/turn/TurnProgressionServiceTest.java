@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.UginNexusReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -680,6 +681,36 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Skips an opponent's extra turn with an opponent-only replacement")
+        void skipsOpponentsExtraTurnWithOpponentOnlyReplacement() {
+            Card stranglehold = new Card();
+            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
+            gd.extraTurns.addLast(player2Id);
+            int turnBefore = gd.turnNumber;
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        }
+
+        @Test
+        @DisplayName("Does not skip the controller's extra turn with an opponent-only replacement")
+        void doesNotSkipControllersExtraTurnWithOpponentOnlyReplacement() {
+            Card stranglehold = new Card();
+            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
+            gd.extraTurns.addLast(player1Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.extraTurns).isEmpty();
+        }
+
+        @Test
         @DisplayName("Increments turn number")
         void incrementsTurnNumber() {
             gd.turnNumber = 5;
@@ -838,6 +869,20 @@ class TurnProgressionServiceTest {
             assertThat(gd.spellsCastLastTurn).containsEntry(player1Id, 2);
             assertThat(gd.spellsCastLastTurn).containsEntry(player2Id, 1);
             assertThat(gd.isSpellsCastThisTurnEmpty()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Snapshots cards drawn this turn into cardsDrawnLastTurn before clearing")
+        void snapshotsCardsDrawnLastTurn() {
+            gd.cardsDrawnThisTurn.put(player1Id, 2);
+            gd.cardsDrawnThisTurn.put(player2Id, 1);
+            gd.cardsDrawnLastTurn.put(player1Id, 99);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player1Id, 2);
+            assertThat(gd.cardsDrawnLastTurn).containsEntry(player2Id, 1);
+            assertThat(gd.cardsDrawnThisTurn).isEmpty();
         }
 
         @Test

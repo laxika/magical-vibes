@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsultTheNecrosages.class, GrizzlyBears.class, Island.class, Peek.class})
+@CardUsed({ConsultTheNecrosages.class, GrayscaledGharial.class, Island.class})
 class ConsultTheNecrosagesTest extends BaseCardTest {
 
     @Test
@@ -28,8 +27,7 @@ class ConsultTheNecrosagesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island(), new Island()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -37,14 +35,27 @@ class ConsultTheNecrosagesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Draw mode can target the caster")
+    void drawModeCanTargetCaster() {
+        harness.setHand(player1, List.of(new ConsultTheNecrosages()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Consult the Necrosages");
+    }
+
+    @Test
     @DisplayName("Discard mode makes the target player discard two cards")
     void discardModeMakesTargetPlayerDiscardTwo() {
         harness.setHand(player1, List.of(new ConsultTheNecrosages()));
-        harness.setHand(player2, new ArrayList<>(List.of(new Peek(), new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, new ArrayList<>(List.of(new Island(), new Island(), new Island())));
         addMana();
 
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -59,12 +70,14 @@ class ConsultTheNecrosagesTest extends BaseCardTest {
     @Test
     @DisplayName("Both modes reject a permanent as a target")
     void rejectsPermanentTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrayscaledGharial());
         harness.setHand(player1, List.of(new ConsultTheNecrosages()));
         addMana();
 
-        UUID permanentId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID permanentId = harness.getPermanentId(player2, "Grayscaled Gharial");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, permanentId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, permanentId))
                 .isInstanceOf(IllegalStateException.class);
     }
 

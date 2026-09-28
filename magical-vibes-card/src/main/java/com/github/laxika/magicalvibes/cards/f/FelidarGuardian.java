@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "19")
+@CardRegistration(set = "SLD", collectorNumber = "1487")
 public class FelidarGuardian extends Card {
 
     public FelidarGuardian() {

@@ -17,6 +17,9 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "229")
 @CardRegistration(set = "KLR", collectorNumber = "264")
 @CardRegistration(set = "CMD", collectorNumber = "256")
+@CardRegistration(set = "CMM", collectorNumber = "404")
+@CardRegistration(set = "DMC", collectorNumber = "189")
+@CardRegistration(set = "HBG", collectorNumber = "264")
 public class PropheticPrism extends Card {
 
     public PropheticPrism() {

@@ -18,7 +18,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "104")
+@CardRegistration(set = "SLD", collectorNumber = "807")
 @CardRegistration(set = "PIO", collectorNumber = "128")
+@CardRegistration(set = "C20", collectorNumber = "145")
 public class ChandraFlamecaller extends Card {
 
     public ChandraFlamecaller() {

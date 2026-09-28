@@ -95,6 +95,7 @@ class ArcboundStingerTest extends BaseCardTest {
         Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
 
         harness.runStateBasedActions();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);

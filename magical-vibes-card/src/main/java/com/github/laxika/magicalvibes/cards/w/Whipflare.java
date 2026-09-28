@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "102")
+@CardRegistration(set = "C14", collectorNumber = "184")
 public class Whipflare extends Card {
 
     public Whipflare() {

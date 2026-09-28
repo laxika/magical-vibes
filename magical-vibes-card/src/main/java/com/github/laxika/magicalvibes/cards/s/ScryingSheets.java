@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "149")
+@CardRegistration(set = "SLD", collectorNumber = "1606")
 public class ScryingSheets extends Card {
 
     public ScryingSheets() {

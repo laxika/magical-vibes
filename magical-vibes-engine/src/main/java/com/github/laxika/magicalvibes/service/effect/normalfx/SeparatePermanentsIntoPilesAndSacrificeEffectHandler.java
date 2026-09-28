@@ -48,6 +48,7 @@ public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements Nor
                 List<UUID> allPermanentIds = permanents.stream().map(Permanent::getId).toList();
 
                 // Store pile separation state
+                gameData.recordPileGroupingOrGuess(entry);
                 gameData.queueInteraction(new PendingPileSeparation(controllerId, targetPlayerId,
                         allPermanentIds, List.of(), Map.of(), List.of(), List.of()));
 

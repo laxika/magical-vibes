@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "17")
 @CardRegistration(set = "OM1", collectorNumber = "18")
+@CardRegistration(set = "MSC", collectorNumber = "777")
 public class SpiderUK extends Card {
 
     public SpiderUK() {

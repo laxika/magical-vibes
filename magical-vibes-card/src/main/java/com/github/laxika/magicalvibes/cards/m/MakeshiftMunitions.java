@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "151")
+@CardRegistration(set = "CMM", collectorNumber = "242")
 public class MakeshiftMunitions extends Card {
 
     public MakeshiftMunitions() {

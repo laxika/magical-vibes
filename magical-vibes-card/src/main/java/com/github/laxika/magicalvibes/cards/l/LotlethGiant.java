@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "74")
+@CardRegistration(set = "CMM", collectorNumber = "171")
 public class LotlethGiant extends Card {
 
     public LotlethGiant() {

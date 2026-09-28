@@ -88,11 +88,19 @@ public class ExileSupport {
     }
 
     /** Exiles a permanent and keeps the card associated with the source permanent. */
-    public void exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
-                                                 UUID sourcePermanentId, Card sourceCard) {
+    public boolean exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
+                                                    UUID sourcePermanentId, Card sourceCard) {
         Card exiledCard = permanent.getOriginalCard();
         UUID fallbackOwnerId = gameData.findControllerOf(permanent);
-        permanentRemovalService.removePermanentToExile(gameData, permanent);
+        if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+            return false;
+        }
+
+        if (exiledCard.isToken()) {
+            gameData.removeFromExile(exiledCard.getId());
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return true;
+        }
 
         var exiledEntry = gameData.findExiledCard(exiledCard.getId());
         UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : fallbackOwnerId;
@@ -103,6 +111,7 @@ public class ExileSupport {
         log.info("Game {} - {} exiles {} (tracked with source)",
                 gameData.id, sourceCard.getName(), exiledCard.getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
+        return true;
     }
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
@@ -119,6 +128,14 @@ public class ExileSupport {
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped,
                                         TurnStep returnStep, int plusOnePlusOneCounters) {
+        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, returnStep,
+                plusOnePlusOneCounters, false, null);
+    }
+
+    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId, boolean returnTapped,
+                                        TurnStep returnStep, int plusOnePlusOneCounters,
+                                        boolean onlyOnControllersTurn, UUID timingControllerId) {
         List<Card> cards = permanent.cardsLeavingBattlefield();
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -130,7 +147,8 @@ public class ExileSupport {
 
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
-                cards.size() == 1 ? List.of() : cards.subList(1, cards.size())));
+                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
+                onlyOnControllersTurn, false, false, false, timingControllerId, null, false));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
@@ -144,9 +162,15 @@ public class ExileSupport {
      * that turn by {@code TurnCleanupService}.
      */
     public void grantPlayUntilOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        grantPlayUntilNextTurnOfPlayer(gameData, cardId, ownerId, ownerId);
+    }
+
+    /** Grants {@code permissionPlayerId} permission until the end of {@code expiryPlayerId}'s next turn. */
+    public void grantPlayUntilNextTurnOfPlayer(GameData gameData, UUID cardId,
+                                                UUID permissionPlayerId, UUID expiryPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
-        int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
-        gameData.exilePlayPermissions.put(cardId, ownerId);
+        int expireTurn = gameData.turnNumber + (expiryPlayerId.equals(gameData.activePlayerId) ? 2 : 1);
+        gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 

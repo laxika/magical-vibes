@@ -117,4 +117,17 @@ class GiantGrowthTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Giant Growth")
+    void cannotTargetNonCreatureUpstreamReview() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // legal creature target so the spell is castable (CR 601.2c)
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
 }

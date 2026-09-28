@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-
 import java.util.Collection;
+import java.util.Objects;
+import java.util.UUID;
 
 /** Describes a static replacement that changes the count of matching created tokens. */
 public interface TokenCreationReplacementEffect extends CardEffect {
@@ -21,6 +22,11 @@ public interface TokenCreationReplacementEffect extends CardEffect {
     /** Whether this replacement applies to token creation events controlled by any player. */
     default boolean appliesToAllPlayers() {
         return false;
+    }
+
+    /** Whether this replacement applies to tokens created by the given player. */
+    default boolean appliesToTokenCreator(UUID sourceControllerId, UUID tokenCreatorId) {
+        return appliesToAllPlayers() || Objects.equals(sourceControllerId, tokenCreatorId);
     }
 
     default boolean appliesTo(Collection<CardSubtype> tokenSubtypes) {

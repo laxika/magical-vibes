@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +37,8 @@ public class BasicLandSearchQueueSupport {
 
     private static final CardPredicate BASIC_LAND = new CardAllOfPredicate(List.of(
             new CardTypePredicate(CardType.LAND), new CardSupertypePredicate(CardSupertype.BASIC)));
+    private static final CardPredicate BASIC_LAND_SEARCH = new CardAnyOfPredicate(List.of(
+            BASIC_LAND, new CardHasAllCardNamesPredicate()));
 
     private final LibrarySearchSupport librarySearchSupport;
     private final DestructionSupport destructionSupport;
@@ -103,7 +107,8 @@ public class BasicLandSearchQueueSupport {
         }
 
         List<Card> basicLands = deck.stream()
-                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> card.hasAllCardNames()
+                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .toList();
         if (basicLands.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
@@ -115,19 +120,34 @@ public class BasicLandSearchQueueSupport {
         }
 
         int count = pick.count();
+        if (count <= 0) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " searches their library for up to zero basic land cards. Library is shuffled."));
+            return false;
+        }
         boolean enterTapped = pick.enterTapped();
-        String destinationText = enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
+        boolean destinationToHand = followUp.basicLandSearchQueue().destinationToHand();
+        String destinationText = destinationToHand
+                ? " into your hand"
+                : enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         String prompt = "You may search your library for up to " + count + " basic land card"
-                + (count == 1 ? "" : "s") + " and put them" + destinationText + " (" + count + " remaining).";
+                + (count == 1 ? "" : "s")
+                + (destinationToHand ? " to reveal and put them" : " and put them")
+                + destinationText + " (" + count + " remaining).";
 
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId,
                 LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
                         .remainingCount(count)
                         .canFailToFind(true)
-                        .destination(enterTapped
-                        ? LibrarySearchDestination.BATTLEFIELD_TAPPED
-                        : LibrarySearchDestination.BATTLEFIELD)
-                        .filterPredicate(BASIC_LAND)
+                        .reveals(destinationToHand)
+                        .destination(destinationToHand
+                                ? LibrarySearchDestination.HAND
+                                : enterTapped
+                                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                                : LibrarySearchDestination.BATTLEFIELD)
+                        .filterPredicate(BASIC_LAND_SEARCH)
                         .shuffleAfterSelection(!shuffleAfterQueue)
                         .followUp(followUp)
                         .build(), prompt, true);

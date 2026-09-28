@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "432")
+@CardRegistration(set = "SLD", collectorNumber = "2284")
 public class VojaJawsOfTheConclave extends Card {
 
     public VojaJawsOfTheConclave() {

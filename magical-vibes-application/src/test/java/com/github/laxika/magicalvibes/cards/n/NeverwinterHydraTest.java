@@ -1,0 +1,94 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.effect.entryfx.RollDiceAndEnterWithCountersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({NeverwinterHydra.class, Shock.class})
+class NeverwinterHydraTest extends BaseCardTest {
+
+    private RollDiceAndEnterWithCountersEffectHandler handler;
+    private DiceRollService originalDiceRollService;
+
+    @BeforeEach
+    void captureDiceRollService() {
+        handler = GameTestEngineContext.get().getBean(RollDiceAndEnterWithCountersEffectHandler.class);
+        originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(handler, "diceRollService");
+    }
+
+    @AfterEach
+    void restoreDiceRollService() {
+        ReflectionTestUtils.setField(handler, "diceRollService", originalDiceRollService);
+    }
+
+    @Test
+    void entersWithCountersEqualToTheTotalOfTheRolls() {
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService(1, 4, 6));
+        NeverwinterHydra hydra = new NeverwinterHydra();
+        harness.setHand(player1, List.of(hydra));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0, 3);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
+        assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(11);
+        assertThat(permanent.getEffectivePower()).isEqualTo(11);
+        assertThat(permanent.getEffectiveToughness()).isEqualTo(11);
+        assertThat(gameLogContains("rolls 3 d6 for Neverwinter Hydra: [1, 4, 6].")).isTrue();
+    }
+
+    @Test
+    void wardCountersAnOpponentSpellWhenTheyDoNotPay() {
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService(1));
+        NeverwinterHydra hydra = new NeverwinterHydra();
+        harness.setHand(player1, List.of(hydra));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, permanent.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Neverwinter Hydra");
+    }
+
+    private static final class FixedDiceRollService extends DiceRollService {
+
+        private final int[] results;
+        private int index;
+
+        private FixedDiceRollService(int... results) {
+            this.results = results;
+        }
+
+        @Override
+        public int roll(int sides) {
+            return results[index++];
+        }
+    }
+}

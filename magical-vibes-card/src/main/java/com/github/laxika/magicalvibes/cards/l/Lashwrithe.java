@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "143")
+@CardRegistration(set = "C14", collectorNumber = "245")
 public class Lashwrithe extends Card {
 
     public Lashwrithe() {

@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "254")
+@CardRegistration(set = "SLD", collectorNumber = "1055")
 @CardRegistration(set = "AA1", collectorNumber = "22")
+@CardRegistration(set = "TDC", collectorNumber = "332")
 public class TalismanOfImpulse extends Card {
 
     public TalismanOfImpulse() {

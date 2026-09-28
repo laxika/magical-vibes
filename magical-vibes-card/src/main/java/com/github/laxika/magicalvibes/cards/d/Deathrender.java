@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "255")
+@CardRegistration(set = "SLD", collectorNumber = "1573")
 public class Deathrender extends Card {
 
     public Deathrender() {

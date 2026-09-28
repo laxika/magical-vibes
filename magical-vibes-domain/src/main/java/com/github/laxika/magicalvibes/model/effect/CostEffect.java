@@ -21,6 +21,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public interface CostEffect extends CardEffect {
 
+    enum PermanentChoiceKind {
+        NONE,
+        UNATTACH_EQUIPMENT_FROM_SOURCE
+    }
+
     /**
      * True when paying this cost puts one card an opponent owns from exile into that player's
      * graveyard.
@@ -35,6 +40,26 @@ public interface CostEffect extends CardEffect {
      */
     default boolean tapsGrantingEquipment() {
         return false;
+    }
+
+    /**
+     * True when paying this cost derives the ability's X value from the selected permanent.
+     * The activation flow defers divided-damage amount validation until that payment is complete.
+     */
+    default boolean derivesXValueFromPayment() {
+        return false;
+    }
+
+    /**
+     * True when the payer may choose a permanent controlled by another player to pay this cost.
+     */
+    default boolean allowsOpponentControlledPermanentChoice() {
+        return false;
+    }
+
+    /** Identifies a non-sacrifice permanent-choice payment shape for the activation flow. */
+    default PermanentChoiceKind permanentChoiceKind() {
+        return PermanentChoiceKind.NONE;
     }
 
     /**
@@ -113,11 +138,24 @@ public interface CostEffect extends CardEffect {
         return false;
     }
 
+    /** True when the exact permanent exiled to pay this cost is retained for a later effect. */
+    default boolean tracksExiledCard() {
+        return false;
+    }
+
     /**
      * True when the permanents chosen to pay this cost must be retained on the ability's stack
      * entry for a later effect in that ability.
      */
     default boolean tracksChosenPermanents() {
+        return false;
+    }
+
+    /**
+     * True when cards exiled to pay this cost must be retained on the activated ability's stack
+     * entry for a later effect in that ability.
+     */
+    default boolean tracksExiledCards() {
         return false;
     }
 
@@ -135,6 +173,11 @@ public interface CostEffect extends CardEffect {
      */
     default int lifePaid(int currentLife) {
         return 0;
+    }
+
+    /** True when this cost pays one life for each color in the payer's commander color identity. */
+    default boolean paysLifeForEachCommanderColorIdentity() {
+        return false;
     }
 
     /**

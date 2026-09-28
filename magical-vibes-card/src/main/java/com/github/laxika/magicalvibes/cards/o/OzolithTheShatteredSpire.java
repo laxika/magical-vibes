@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "198")
+@CardRegistration(set = "SOC", collectorNumber = "281")
 public class OzolithTheShatteredSpire extends Card {
 
     public OzolithTheShatteredSpire() {

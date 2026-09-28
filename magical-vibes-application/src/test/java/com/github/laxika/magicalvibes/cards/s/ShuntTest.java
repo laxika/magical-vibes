@@ -87,11 +87,10 @@ class ShuntTest extends BaseCardTest {
         harness.addToBattlefield(player1, icyManipulator);
         UUID bearId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, bearId);
-        harness.passPriority(player1);
-
         harness.setHand(player2, List.of(new Shunt()));
         harness.addMana(player2, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, bearId);
+        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, icyManipulator.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -212,10 +211,9 @@ class ShuntTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, bears1PermId);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerangA.getId());
         harness.castInstant(player1, 0, bears2PermId);
         harness.passPriority(player1);
+        harness.castInstant(player2, 0, boomerangA.getId());
         harness.castInstant(player2, 0, cancel.getId());
         harness.passBothPriorities();
 

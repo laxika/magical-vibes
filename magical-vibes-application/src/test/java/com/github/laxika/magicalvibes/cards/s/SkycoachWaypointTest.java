@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkycoachWaypoint.class, BlazingFiresingerSeethingSong.class, SeethingSong.class,
-        GrizzlyBears.class})
+@CardUsed({SkycoachWaypoint.class, BlazingFiresingerSeethingSong.class, GrizzlyBears.class})
 class SkycoachWaypointTest extends BaseCardTest {
 
     

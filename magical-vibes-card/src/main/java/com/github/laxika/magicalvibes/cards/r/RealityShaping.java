@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "6")
 @CardRegistration(set = "OPCA", collectorNumber = "6")
+@CardRegistration(set = "MOC", collectorNumber = "155")
 public class RealityShaping extends Card {
 
     public RealityShaping() {

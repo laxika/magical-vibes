@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
-import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +28,7 @@ public record GameStateMessage(
         List<Integer> lifeTotals,
         List<Integer> poisonCounters,
         List<Integer> energyCounters,
+        List<Integer> radCounters,
         List<CardView> hand,
         List<CardView> opponentHand,
         int mulliganCount,
@@ -88,7 +88,7 @@ public record GameStateMessage(
         DayNight dayNight,
         PlanechaseView planechase,
         UUID monarchPlayerId) {
-        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, null);
+        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, List.of(), hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, null);
     }
 
     public GameStateMessage(MessageType type,

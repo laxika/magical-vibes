@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "47")
 @CardRegistration(set = "RVR", collectorNumber = "54")
+@CardRegistration(set = "OTC", collectorNumber = "109")
 public class Pteramander extends Card {
 
     public Pteramander() {

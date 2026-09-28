@@ -83,4 +83,17 @@ class BenevolentBodyguardTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("Targeting this creature is legal, but its sacrifice makes the ability fizzle")
+    void targetingThisCreatureFizzlesAfterSacrifice() {
+        Permanent bodyguard = addCreatureReady(player1, new BenevolentBodyguard());
+
+        harness.activateAbility(player1, 0, null, bodyguard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, bodyguard, CardColor.RED)).isFalse();
+        harness.assertInGraveyard(player1, "Benevolent Bodyguard");
+    }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "160")
+@CardRegistration(set = "HBG", collectorNumber = "188")
 public class RedDragon extends Card {
 
     public RedDragon() {

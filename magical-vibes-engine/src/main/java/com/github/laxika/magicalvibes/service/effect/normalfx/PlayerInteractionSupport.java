@@ -629,6 +629,25 @@ public class PlayerInteractionSupport {
                 chosenCardCondition, chosenCardThenEffect, null, null);
     }
 
+    public void resolveHandRevealAndChooseWithChosenCardThen(GameData gameData, StackEntry entry,
+                                                              int count, List<CardType> excludedTypes,
+                                                              List<CardType> includedTypes, CardPredicate filter,
+                                                              boolean discardMode, boolean exileMode,
+                                                              UUID sourcePermanentId, boolean optional,
+                                                              boolean exileAllCopiesOfChosenNames,
+                                                              int declineFallbackDiscardCount, boolean imprintOnSource,
+                                                              boolean revealHand, boolean grantPlayPermission,
+                                                              boolean returnAtNextEndStep, int exilePlayOpponentTax,
+                                                              CardPredicate chosenCardCondition,
+                                                              CardEffect chosenCardThenEffect,
+                                                              boolean keepInHand) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, false,
+                grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                chosenCardCondition, chosenCardThenEffect, null, null, keepInHand);
+    }
+
     public void resolveHandRevealAndChooseOrElse(GameData gameData, StackEntry entry,
                                                   int count, List<CardType> excludedTypes,
                                                   List<CardType> includedTypes, CardPredicate filter,
@@ -715,6 +734,28 @@ public class PlayerInteractionSupport {
                                              CardEffect chosenCardThenEffect,
                                              CardEffect declineEffect,
                                              CardEffect currentEffect) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, shuffleIntoLibraryMode,
+                grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                chosenCardCondition, chosenCardThenEffect, declineEffect, currentEffect, false);
+    }
+
+    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes,
+                                             List<CardType> includedTypes, CardPredicate filter,
+                                             boolean discardMode, boolean exileMode,
+                                             UUID sourcePermanentId, boolean optional,
+                                             boolean exileAllCopiesOfChosenNames,
+                                             int declineFallbackDiscardCount, boolean imprintOnSource,
+                                             boolean revealHand, boolean shuffleIntoLibraryMode,
+                                             boolean grantPlayPermission, boolean returnAtNextEndStep,
+                                             int exilePlayOpponentTax,
+                                             CardPredicate chosenCardCondition,
+                                             CardEffect chosenCardThenEffect,
+                                             CardEffect declineEffect,
+                                             CardEffect currentEffect,
+                                             boolean keepInHand) {
 
         boolean effectiveOptional = optional || declineFallbackDiscardCount > 0 || declineEffect != null;
         UUID targetPlayerId = entry.getTargetId();
@@ -728,7 +769,7 @@ public class PlayerInteractionSupport {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
-        String actionVerb = exileMode ? "exile"
+        String actionVerb = keepInHand ? "keep in hand" : exileMode ? "exile"
                 : shuffleIntoLibraryMode ? "shuffle into their library" : "discard";
 
         if (hand == null || hand.isEmpty()) {
@@ -804,7 +845,8 @@ public class PlayerInteractionSupport {
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
-                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0);
+                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0,
+                keepInHand);
         interactionHandlerRegistry.begin(gameData, interaction);
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
@@ -1027,10 +1069,9 @@ public class PlayerInteractionSupport {
     }
 
     /**
-     * Begins the Blackmail flow: "Target player reveals {@code revealCount} cards from their hand
-     * and you choose one of them. That player discards that card." The target picks which cards to
-     * reveal; if they hold {@code revealCount} or fewer, their whole hand is revealed and the
-     * controller's discard choice begins immediately.
+     * Begins the shared reveal-and-choose flow. The target picks which cards to reveal; if they
+     * hold {@code revealCount} or fewer, their whole hand is selected and the controller's choice
+     * begins immediately.
      */
     public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount) {
         beginRevealCardsChooseDiscard(gameData, entry, revealCount, discardCount, HandChoiceDestination.DISCARD);
@@ -1093,21 +1134,21 @@ public class PlayerInteractionSupport {
     }
 
     /**
-     * Logs the revealed cards and begins the controller's discard choice over exactly that
-     * revealed set (the rest of the target's hand stays hidden). The controller discards up to
-     * {@code discardCount} of the revealed cards (fewer if the hand held fewer).
+     * Reveals exactly the selected set and begins the controller's choice over it (the rest of the
+     * target's hand stays hidden). For {@link HandChoiceDestination#KEEP_IN_HAND}, the reveal is
+     * private and only nonland cards are offered for the follow-up free-cast choice.
      */
-    public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
-                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount,
-                                             HandChoiceDestination destination) {
-        beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount,
+    public boolean beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
+                                                UUID controllerId, List<UUID> revealedCardIds, int discardCount,
+                                                HandChoiceDestination destination) {
+        return beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount,
                 destination, null);
     }
 
     /** Begins the controller's pick while preserving a source permanent for source-linked exile. */
-    public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
-                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount,
-                                             HandChoiceDestination destination, UUID sourcePermanentId) {
+    public boolean beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
+                                                UUID controllerId, List<UUID> revealedCardIds, int discardCount,
+                                                HandChoiceDestination destination, UUID sourcePermanentId) {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -1116,20 +1157,33 @@ public class PlayerInteractionSupport {
                 .map(id -> hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .toList();
-        GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals ");
-        appendCardList(revealBuilder, revealedCards);
-        revealBuilder.text(".");
-        gameLogService.append(gameData, revealBuilder.build());
+        boolean privateCastChoice = destination == HandChoiceDestination.KEEP_IN_HAND;
+        if (privateCastChoice) {
+            cardRevealService.revealToPlayer(gameData, targetPlayerId, GameEventFact.RevealZone.HAND,
+                    revealedCards, controllerId);
+        } else {
+            GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals ");
+            appendCardList(revealBuilder, revealedCards);
+            revealBuilder.text(".");
+            gameLogService.append(gameData, revealBuilder.build());
+        }
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
-            validIndices.add(i);
+            Card card = revealedCards.size() > i ? revealedCards.get(i) : null;
+            if (!privateCastChoice || (card != null && !card.hasType(CardType.LAND))) {
+                validIndices.add(i);
+            }
         }
 
-        int toDiscard = Math.min(discardCount, revealedCardIds.size());
+        int toDiscard = Math.min(discardCount, validIndices.size());
+        if (toDiscard == 0) {
+            return false;
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, toDiscard,
                 new ArrayList<>(revealedCardIds), toDiscard, destination, sourcePermanentId));
+        return true;
     }
 
     /**
@@ -1200,6 +1254,9 @@ public class PlayerInteractionSupport {
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
             int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
+            if (amount <= 0) {
+                continue;
+            }
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             if (gameData.discardCausedByOpponent
                     && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {

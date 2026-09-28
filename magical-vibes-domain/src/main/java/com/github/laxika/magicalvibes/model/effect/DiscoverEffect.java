@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 
 /**
  * Discovers a card with mana value at most {@code discoverValue}, offering it for a free cast or
@@ -11,5 +12,10 @@ public record DiscoverEffect(DynamicAmount discoverValue) implements CardEffect 
 
     public DiscoverEffect(int discoverValue) {
         this(new Fixed(discoverValue));
+    }
+
+    @Override
+    public boolean usesEnteringPermanentReference() {
+        return discoverValue instanceof TriggeringPermanentToughness;
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "64")
+@CardRegistration(set = "C14", collectorNumber = "111")
 public class FoolsDemise extends Card {
 
     public FoolsDemise() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "45")
+@CardRegistration(set = "HBG", collectorNumber = "109")
 public class AirCultElemental extends Card {
 
     public AirCultElemental() {

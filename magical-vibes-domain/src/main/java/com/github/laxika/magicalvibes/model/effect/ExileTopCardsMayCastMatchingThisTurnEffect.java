@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -23,12 +25,26 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * wording and existing single-purpose callers.
  */
 public record ExileTopCardsMayCastMatchingThisTurnEffect(
-        int count,
+        DynamicAmount count,
         CardPredicate filter,
         boolean withoutPayingManaCost
-) implements CardEffect {
+) implements CardEffect, CombatDamageAmountAwareEffect {
 
     public ExileTopCardsMayCastMatchingThisTurnEffect(int count, CardPredicate filter) {
+        this(new Fixed(count), filter, false);
+    }
+
+    public ExileTopCardsMayCastMatchingThisTurnEffect(int count, CardPredicate filter,
+                                                       boolean withoutPayingManaCost) {
+        this(new Fixed(count), filter, withoutPayingManaCost);
+    }
+
+    public ExileTopCardsMayCastMatchingThisTurnEffect(DynamicAmount count, CardPredicate filter) {
         this(count, filter, false);
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return count;
     }
 }

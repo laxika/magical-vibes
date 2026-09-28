@@ -12,18 +12,18 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 
-@CardUsed({UrzasTower.class, UrzasMine.class, UrzasPowerPlant.class})
+@CardUsed({UrzasTower.class, UrzasMine.class, UrzasPowerPlant.class, SeasClaim.class})
 class UrzasTowerTest extends BaseCardTest {
 
     @Test
-    @CardUsed(SpreadingSeas.class)
     void turningMineIntoIslandRemovesTheManaBonus() {
         harness.addToBattlefield(player1, new UrzasTower());
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new UrzasMine());
         harness.addToBattlefield(player1, new UrzasPowerPlant());
-        harness.setHand(player1, List.of(new SpreadingSeas()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0, mine.getId());
         harness.passBothPriorities();
 
@@ -84,6 +84,17 @@ class UrzasTowerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrzasTower());
         harness.addToBattlefield(player1, new UrzasMine());
         harness.addToBattlefield(player1, new UrzasPowerPlant());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    void tapWithTappedTronLandsAddsThree() {
+        harness.addToBattlefield(player1, new UrzasTower());
+        harness.addToBattlefieldAndReturn(player1, new UrzasMine()).tap();
+        harness.addToBattlefieldAndReturn(player1, new UrzasPowerPlant()).tap();
 
         harness.activateAbility(player1, 0, null, null);
 

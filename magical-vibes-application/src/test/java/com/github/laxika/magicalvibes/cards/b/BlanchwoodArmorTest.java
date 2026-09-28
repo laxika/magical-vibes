@@ -13,8 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 
-@CardUsed({BlanchwoodArmor.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({BlanchwoodArmor.class, Forest.class, GrizzlyBears.class, Island.class, GloriousAnthem.class, GoblinRaider.class, Swamp.class})
 class BlanchwoodArmorTest extends BaseCardTest {
 
     @Test
@@ -266,5 +269,17 @@ class BlanchwoodArmorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Blanchwood Armor");
         harness.assertNotOnBattlefield(player1, "Blanchwood Armor");
+    }
+
+    @Test
+    @DisplayName("Blanchwood Armor counts Forests by subtype, not other lands")
+    void countsForestsBySubtypeOnly() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new BlanchwoodArmor());
+        armor.setAttachedTo(bears.getId());
+
+        harness.addToBattlefield(player1, new Swamp());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }

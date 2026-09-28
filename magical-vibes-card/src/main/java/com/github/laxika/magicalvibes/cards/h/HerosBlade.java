@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "160")
+@CardRegistration(set = "MSC", collectorNumber = "201")
+@CardRegistration(set = "CMM", collectorNumber = "391")
+@CardRegistration(set = "FIC", collectorNumber = "345")
+@CardRegistration(set = "DMC", collectorNumber = "186")
 public class HerosBlade extends Card {
 
     public HerosBlade() {

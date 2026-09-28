@@ -42,6 +42,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Casting Blaze targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -130,6 +131,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -145,6 +147,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GiantSpider.class)
     @DisplayName("Does not destroy creature with toughness greater than X")
     void doesNotDestroyCreatureWithHigherToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
@@ -188,6 +191,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Plains.class)
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
@@ -240,6 +244,7 @@ class BlazeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Mountain.class)
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandThenE
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FCA", collectorNumber = "60")
+@CardRegistration(set = "CMM", collectorNumber = "364")
+@CardRegistration(set = "CMM", collectorNumber = "597")
+@CardRegistration(set = "CMM", collectorNumber = "690")
 public class YurikoTheTigersShadow extends Card {
 
     public YurikoTheTigersShadow() {

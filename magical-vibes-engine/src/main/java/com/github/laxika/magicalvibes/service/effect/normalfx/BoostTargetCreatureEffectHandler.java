@@ -96,11 +96,14 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         // it is recorded as a floating continuous effect keyed to that controller instead — the
         // layered pass reads the sublayer-7c addition off it (same read path as Riding the Dilu
         // Horse's indefinite buff).
-        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                || duration == GrantDuration.UNTIL_END_OF_COMBAT) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
-                    target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    target.getId(), null, null,
+                    duration == GrantDuration.UNTIL_END_OF_COMBAT
+                            ? EffectDuration.UNTIL_END_OF_COMBAT : EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
         } else {
             target.setPowerModifier(target.getPowerModifier() + powerBoost);
             target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);

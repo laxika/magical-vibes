@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayWhileExiledEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokensEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect;
@@ -133,6 +134,26 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException("Target must be a card put into a graveyard this turn");
             }
         }
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()) {
+            boolean milled = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardFromLibraryThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId());
+            if (!milled) {
+                throw new IllegalStateException(
+                        "Target must be a card put into a graveyard from a library this turn");
+            }
+        }
+        if (effect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()) {
+            boolean discardedOrMilled = graveyardOwnerId != null
+                    && (ctx.gameData().cardsDiscardedOrCycledThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId())
+                    || ctx.gameData().cardsPutIntoGraveyardFromLibraryThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId()));
+            if (!discardedOrMilled) {
+                throw new IllegalStateException(
+                        "Target must have been discarded or put into a graveyard from a library this turn");
+            }
+        }
         if (effect.targetNotPutIntoGraveyardThisCombat()) {
             boolean tracked = graveyardOwnerId != null
                     && ctx.gameData().cardsPutIntoGraveyardThisCombat
@@ -168,6 +189,15 @@ public class GraveyardTargetValidators {
             if (graveyardCard.getManaValue() > lifeGained) {
                 throw new IllegalStateException(
                         "Target card's mana value must be " + lifeGained + " or less");
+            }
+        }
+        if (effect.maxManaValueEqualsLifeLostThisTurn()) {
+            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            int lifeLost = sourceControllerId == null
+                    ? 0 : ctx.gameData().lifeLostThisTurn.getOrDefault(sourceControllerId, 0);
+            if (graveyardCard.getManaValue() > lifeLost) {
+                throw new IllegalStateException(
+                        "Target card's mana value must be " + lifeLost + " or less");
             }
         }
     }
@@ -439,7 +469,8 @@ public class GraveyardTargetValidators {
     }
 
     @ValidatesTarget(ExileTargetCreatureCardCreateTokensEqualToToughnessEffect.class)
-    public void validateExileTargetCreatureCardCreateTokens(TargetValidationContext ctx) {
+    public void validateExileTargetCreatureCardCreateTokens(
+            TargetValidationContext ctx, ExileTargetCreatureCardCreateTokensEqualToToughnessEffect effect) {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Spell requires a graveyard target");
         }
@@ -449,6 +480,15 @@ public class GraveyardTargetValidators {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        if (effect.graveyardScope() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                && !ctx.sourceControllerId().equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
+        }
+        if (effect.graveyardScope() == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                && ctx.sourceControllerId().equals(graveyardOwnerId)) {
+            throw new IllegalStateException("Target must be in an opponent's graveyard");
         }
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be a creature card");
@@ -508,6 +548,33 @@ public class GraveyardTargetValidators {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String label = CardPredicateUtils.describeFilter(effect.filter());
+            throw new IllegalStateException("Target must be a " + label);
+        }
+        if (effect.ownGraveyardOnly()) {
+            UUID controllerId = tvs.findSourcePermanentController(ctx);
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            if (graveyardOwnerId != null && controllerId != null && !graveyardOwnerId.equals(controllerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
+        }
+    }
+
+    @ValidatesTarget(ExileTargetCardFromGraveyardMayPlayWhileExiledEffect.class)
+    public void validateExileTargetCardFromGraveyardMayPlayWhileExiled(
+            TargetValidationContext ctx, ExileTargetCardFromGraveyardMayPlayWhileExiledEffect effect) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Ability requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (effect.filter() != null
+                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target must be a " + label);
         }

@@ -22,6 +22,8 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "56")
 @CardRegistration(set = "DMR", collectorNumber = "77")
+@CardRegistration(set = "CMM", collectorNumber = "144")
+@CardRegistration(set = "CMM", collectorNumber = "505")
 public class ChainerDementiaMaster extends Card {
 
     public ChainerDementiaMaster() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "136")
+@CardRegistration(set = "SLD", collectorNumber = "2075")
 public class FontOfMythos extends Card {
 
     public FontOfMythos() {

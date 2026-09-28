@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "249")
 @CardRegistration(set = "OTJ", collectorNumber = "270")
+@CardRegistration(set = "SLD", collectorNumber = "1373")
 @CardRegistration(set = "KLR", collectorNumber = "286")
 public class SpirebluffCanal extends Card {
 

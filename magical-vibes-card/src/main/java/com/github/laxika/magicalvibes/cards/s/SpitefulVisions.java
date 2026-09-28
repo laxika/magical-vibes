@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 
 @CardRegistration(set = "SHM", collectorNumber = "198")
 @CardRegistration(set = "C13", collectorNumber = "233")
+@CardRegistration(set = "DSC", collectorNumber = "233")
 public class SpitefulVisions extends Card {
 
     public SpitefulVisions() {

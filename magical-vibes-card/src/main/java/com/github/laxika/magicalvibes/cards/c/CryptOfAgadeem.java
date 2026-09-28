@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "212")
+@CardRegistration(set = "C14", collectorNumber = "288")
+@CardRegistration(set = "TDC", collectorNumber = "354")
 public class CryptOfAgadeem extends Card {
 
     public CryptOfAgadeem() {

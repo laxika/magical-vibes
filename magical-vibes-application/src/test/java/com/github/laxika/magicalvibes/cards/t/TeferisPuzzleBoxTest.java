@@ -142,11 +142,9 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
         harness.setHand(player1, List.of(handCard));
         harness.setLibrary(player1, List.of(topLibraryCard));
 
-        harness.forceActivePlayer(player1);
         gd.turnNumber = 1;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passUntil(player1, TurnStep.DRAW);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLibraryCard);

@@ -44,18 +44,19 @@ public class ReturnThisSpellToHandThenDiscardAtRandomEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID ownerId = entry.getOwnerId();
-        String playerName = gameData.playerIdToName.get(ownerId);
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
         Card spellCard = entry.getCard();
         if (spellCard == null) {
             return;
         }
 
-        List<Card> hand = gameData.playerHands.get(ownerId);
+        List<Card> hand = gameData.playerHands.get(controllerId);
         int handSize = hand == null ? 0 : hand.size();
 
         // The extra slot is the spell card itself, which has just returned to the same hand. A
         // controller who is not the owner discards from their own hand, which the spell never joins.
-        boolean spellJoinsHand = ownerId.equals(entry.getControllerId());
+        boolean spellJoinsHand = ownerId.equals(controllerId);
         int candidates = handSize + (spellJoinsHand ? 1 : 0);
         if (candidates == 0) {
             entry.setReturnToHandAfterResolving(true);
@@ -73,14 +74,14 @@ public class ReturnThisSpellToHandThenDiscardAtRandomEffectHandler implements No
             discarded = spellCard;
         } else {
             discarded = hand.remove(randomIndex);
-            graveyardService.discardCard(gameData, ownerId, discarded);
+            graveyardService.discardCard(gameData, controllerId, discarded);
             entry.setReturnToHandAfterResolving(true);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(),
                 spellCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, ownerId, discarded);
+        triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics).
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {

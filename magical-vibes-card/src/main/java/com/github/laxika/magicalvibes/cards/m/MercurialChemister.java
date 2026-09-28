@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "180")
+@CardRegistration(set = "C20", collectorNumber = "221")
 public class MercurialChemister extends Card {
 
     public MercurialChemister() {

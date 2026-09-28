@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardTypeAssignedGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
@@ -66,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,7 +135,9 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
+                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -148,6 +152,28 @@ public class GraveyardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+
+        var dawnbreakContext = gameData.graveyardTargetOperation.dawnbreakReclaimer;
+        if (dawnbreakContext != null
+                && destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                && cardPool != null) {
+            Card chosen = cardPool.get(cardIndex);
+            boolean opponentChoice = dawnbreakContext.stage()
+                    == com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage.OPPONENT_CARD;
+            gameData.graveyardTargetOperation.dawnbreakReclaimer =
+                    new com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerContext(
+                            opponentChoice ? chosen.getId() : dawnbreakContext.opponentCardId(),
+                            opponentChoice
+                                    ? gameQueryService.findGraveyardOwnerById(gameData, chosen.getId())
+                                    : dawnbreakContext.opponentPlayerId(),
+                            opponentChoice ? null : chosen.getId(),
+                            opponentChoice
+                                    ? com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage.CONTROLLER_CARD
+                                    : com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage.READY);
+            gameData.rerunCurrentEffectAfterInteraction = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         if (graveyardChoice.returnEffect() != null) {
             if (cardIndex >= 0) {
@@ -242,6 +268,28 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume) {
+            gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentCardId = chosen.getId();
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOpponentId =
+                    gameQueryService.findGraveyardOwnerById(gameData, chosen.getId());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume) {
+            gameData.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.dawnbreakReclaimerChosenOwnCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();
@@ -265,7 +313,9 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
+                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -291,7 +341,8 @@ public class GraveyardChoiceHandlerService {
             // Owner of the graveyard the card is leaving — used to return it if a continuous effect
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
             UUID cardGraveyardOwnerId = null;
-            if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
+            if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY) {
                 // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
                 if (cardPool != null) {
                     card = cardPool.get(cardIndex);
@@ -299,6 +350,8 @@ public class GraveyardChoiceHandlerService {
                     card = gameData.playerGraveyards.get(playerId).get(cardIndex);
                 }
             } else if (destination == GraveyardChoiceDestination.COPY_ON_ENTER) {
+                card = cardPool.get(cardIndex);
+            } else if (destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD) {
                 card = cardPool.get(cardIndex);
             } else if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
@@ -357,7 +410,7 @@ public class GraveyardChoiceHandlerService {
                                 next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                                 next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                                 next.distinctManaValues(), next.distinctNames(), excludedManaValues,
-                                next.excludedCardIds()));
+                                next.excludedCardIds(), next.choosingPlayerId()));
                     }
                 }
                 case BATTLEFIELD -> {
@@ -448,6 +501,20 @@ public class GraveyardChoiceHandlerService {
                     }
                     return;
                 }
+                case COPY_FROM_LEAVING_GRAVEYARD -> {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            mayAbilitySourceCard,
+                            mayAbilityControllerId,
+                            mayAbilitySourceCard.getName() + "'s ability",
+                            new ArrayList<>(List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(card))),
+                            null,
+                            mayAbilitySourcePermanentId);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " chooses ", card, " for "
+                                    + mayAbilitySourceCard.getName() + "'s copy ability."));
+                }
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> {
                     // Card already removed from the graveyard above; shuffle it into the owner's library.
                     gameData.playerDecks.get(playerId).add(card);
@@ -507,6 +574,18 @@ public class GraveyardChoiceHandlerService {
                             return;
                         }
                     }
+                }
+                case RANDOM_PLAYER_GRAVEYARD_COPY -> {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry == null) {
+                        throw new IllegalStateException("No pending effect resolution for graveyard copy choice");
+                    }
+                    pendingEntry.setTargetId(card.getId());
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " chooses ", card,
+                            " to exile from their graveyard."));
+                    log.info("Game {} - {} chooses {} for a random-player graveyard copy ability",
+                            gameData.id, player.getUsername(), card.getName());
                 }
                 case MAY_ABILITY_TARGET -> {
                     // Resolution-time flow: set target on pending entry and resume resolution
@@ -568,7 +647,7 @@ public class GraveyardChoiceHandlerService {
                         next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                         next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                         next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
-                        excludedCardIds));
+                        excludedCardIds, next.choosingPlayerId()));
             }
         }
 
@@ -659,6 +738,70 @@ public class GraveyardChoiceHandlerService {
             if (!validIds.contains(cardId)) {
                 throw new IllegalStateException("Invalid card: " + cardId);
             }
+        }
+
+        validateCardTypeAssignedSelection(gameData, cardIds);
+        validateGraveyardMultiTargetConstraint(gameData, cardIds);
+
+        if (gameData.cloneOperation.mimeoplasmGraveyardChoicePending) {
+            List<Card> selectedCards = cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .toList();
+            if (selectedCards.stream().anyMatch(card -> card == null || !card.hasType(CardType.CREATURE))) {
+                throw new IllegalStateException("Chosen card is no longer a creature card in a graveyard");
+            }
+
+            gameData.cloneOperation.mimeoplasmGraveyardChoicePending = false;
+            gameData.cloneOperation.mimeoplasmCopyChoicePending = true;
+            gameData.cloneOperation.mimeoplasmSelectedCardIds = List.copyOf(cardIds);
+            gameData.interaction.clearAwaitingInput();
+            playerInputService.beginMultiGraveyardChoice(
+                    gameData, player.getId(), selectedCards, 1, 1,
+                    "Choose one of those creature cards to copy.");
+            return;
+        }
+
+        if (gameData.cloneOperation.mimeoplasmCopyChoicePending) {
+            Card copiedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
+            List<Card> selectedCards = gameData.cloneOperation.mimeoplasmSelectedCardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .toList();
+            Card otherCard = copiedCard == null ? null : selectedCards.stream()
+                    .filter(card -> card != null && !card.getId().equals(copiedCard.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (copiedCard == null || otherCard == null
+                    || selectedCards.stream().anyMatch(card -> card == null || !card.hasType(CardType.CREATURE))) {
+                throw new IllegalStateException("Chosen creature cards are no longer in graveyards");
+            }
+
+            exileMimeoplasmCards(gameData, selectedCards, player.getUsername());
+            gameData.cloneOperation.mimeoplasmCopyChoicePending = false;
+            gameData.cloneOperation.mimeoplasmSelectedCardIds = List.of();
+            gameData.interaction.clearAwaitingInput();
+            cloneService.completeMimeoplasmCloneEntry(gameData, copiedCard, otherCard);
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+                triggerCollectionService.processNextDeathTriggerTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
         }
 
         var opponentExileContext = gameData.graveyardTargetOperation.asEntersOpponentExileToGraveyard;
@@ -877,6 +1020,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.exileTwoAndAddOtherPowerCounters) {
             if (gameData.cloneOperation.selectedGraveyardCopyCardIds.isEmpty()) {
                 if (cardIds.size() != 2) {
@@ -956,6 +1109,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.milledCreatureExile != null) {
+            var context = gameData.graveyardTargetOperation.milledCreatureExile;
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreatureExile =
+                    new GraveyardTargetOperationState.MilledCreatureExileContext(
+                            context.eligibleCardIds(), List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         var milledSagaAndLandContext = gameData.graveyardTargetOperation.milledSagaAndLandReturn;
         if (milledSagaAndLandContext != null) {
             List<UUID> selectedCardIds = new ArrayList<>(milledSagaAndLandContext.selectedCardIds());
@@ -981,9 +1144,23 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.milledCreaturesToExileForToken != null) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreaturesToExileForToken =
+                    new GraveyardTargetOperationState.MilledCreaturesToExileForTokenContext(List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.graveyardCopyChoicePending) {
             Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
-            if (selectedCard == null || !selectedCard.hasType(CardType.CREATURE)) {
+            UUID graveyardOwnerId = selectedCard == null
+                    ? null : gameQueryService.findGraveyardOwnerById(gameData, selectedCard.getId());
+            if (selectedCard == null || graveyardOwnerId == null || !selectedCard.hasType(CardType.CREATURE)
+                    || (gameData.cloneOperation.graveyardCopyEffect != null
+                    && !cloneService.isValidGraveyardCopyCard(
+                    gameData, gameData.cloneOperation.controllerId, graveyardOwnerId, selectedCard,
+                    gameData.cloneOperation.graveyardCopyEffect))) {
                 throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
             }
 
@@ -1003,15 +1180,50 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        var eachPlayerExileContext = gameData.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
+        if (eachPlayerExileContext != null
+                && player.getId().equals(eachPlayerExileContext.currentPlayerId())) {
+            if (cardIds.size() != 1) {
+                throw new IllegalStateException("Choose exactly one card");
+            }
+            UUID chosenCardId = cardIds.getFirst();
+            Card chosenCard = gameData.playerGraveyards
+                    .getOrDefault(player.getId(), List.of()).stream()
+                    .filter(card -> card.getId().equals(chosenCardId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Selected card is no longer in your graveyard"));
+
+            gameData.interaction.clearAwaitingInput();
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosenCardId);
+            exileService.exileCard(gameData, player.getId(), chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", chosenCard, " from their graveyard."));
+            int nonlandCardsExiled = eachPlayerExileContext.nonlandCardsExiled()
+                    + (chosenCard.hasType(CardType.LAND) ? 0 : 1);
+            gameData.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard =
+                    new GraveyardTargetOperationState.EachPlayerExilesCardFromGraveyardContext(
+                            eachPlayerExileContext.controllerId(), eachPlayerExileContext.sourcePermanentId(),
+                            eachPlayerExileContext.thenEffect(), eachPlayerExileContext.remainingPlayerIds(),
+                            null, nonlandCardsExiled);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume) {
             gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = false;
             gameData.interaction.clearAwaitingInput();
+            List<Card> cardsToReturn = new ArrayList<>();
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                    graveyardReturnSupport.putCardOntoBattlefield(gameData, player.getId(), card);
+                    cardsToReturn.add(card);
                 }
+            }
+            if (!cardsToReturn.isEmpty()) {
+                graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
+                        gameData, Map.of(player.getId(), cardsToReturn), false, null);
             }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
@@ -1305,7 +1517,8 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.independentTargetGroupIndex++;
             gameData.interaction.clearAwaitingInput();
             if (graveyardTargetingService.beginIndependentGraveyardSpellTargeting(
-                    gameData, player.getId(), independentTargetEffect)) {
+                    gameData, player.getId(), independentTargetEffect,
+                    gameData.graveyardTargetOperation.kicked)) {
                 return;
             }
             cardIds = List.copyOf(gameData.graveyardTargetOperation.independentTargetCardIds);
@@ -1341,11 +1554,15 @@ public class GraveyardChoiceHandlerService {
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
+                    UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (ownerId == null) {
+                        continue;
+                    }
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
-                    exileService.exileCard(gameData, player.getId(), card, context.enteringPermanentId());
+                    exileService.exileCard(gameData, ownerId, card, context.enteringPermanentId());
                     exiledCount++;
                     gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " exiles ", card, " from their graveyard."));
+                        player.getUsername() + " exiles ", card, " from a graveyard."));
                 }
             }
             battlefieldEntryService.applyAsEntersExileCounters(gameData, context.controllerId(),
@@ -1716,6 +1933,8 @@ public class GraveyardChoiceHandlerService {
                         List.of()
                 );
             }
+            triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+            triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
             }
@@ -1758,6 +1977,55 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void validateCardTypeAssignedSelection(GameData gameData, List<UUID> cardIds) {
+        if (gameData.graveyardTargetOperation.effects == null) {
+            return;
+        }
+        CardTypeAssignedGraveyardCardChoosingEffect effect = gameData.graveyardTargetOperation.effects.stream()
+                .filter(CardTypeAssignedGraveyardCardChoosingEffect.class::isInstance)
+                .map(CardTypeAssignedGraveyardCardChoosingEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null) {
+            return;
+        }
+
+        List<Card> selectedCards = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card == null) {
+                throw new IllegalStateException("Selected card is no longer in a graveyard");
+            }
+            selectedCards.add(card);
+        }
+
+        Map<CardType, Card> assignedCards = new java.util.EnumMap<>(CardType.class);
+        for (Card card : selectedCards) {
+            if (!assignCardToTypeSlot(card, effect.graveyardChoiceCardTypeSlots(), assignedCards, new HashSet<>())) {
+                throw new IllegalStateException("Selected cards must have different card types");
+            }
+        }
+    }
+
+    private boolean assignCardToTypeSlot(Card card, Set<CardType> slots,
+            Map<CardType, Card> assignedCards, Set<UUID> visitedCards) {
+        if (!visitedCards.add(card.getId())) {
+            return false;
+        }
+        for (CardType type : slots) {
+            if (!card.hasType(type)) {
+                continue;
+            }
+            Card assignedCard = assignedCards.get(type);
+            if (assignedCard == null
+                    || assignCardToTypeSlot(assignedCard, slots, assignedCards, visitedCards)) {
+                assignedCards.put(type, card);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateMixedZoneSelection(GameData gameData, List<UUID> cardIds,
@@ -1898,6 +2166,31 @@ public class GraveyardChoiceHandlerService {
         return cards;
     }
 
+    private void exileMimeoplasmCards(GameData gameData, List<Card> selectedCards, String playerName) {
+        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
+        for (Card card : selectedCards) {
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+            if (ownerId == null) {
+                throw new IllegalStateException("Selected card is no longer in a graveyard");
+            }
+            cardsByOwner.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(card);
+        }
+
+        for (Map.Entry<UUID, List<Card>> entry : cardsByOwner.entrySet()) {
+            List<Card> graveyard = gameData.playerGraveyards.get(entry.getKey());
+            if (graveyard == null || !graveyard.containsAll(entry.getValue())) {
+                throw new IllegalStateException("Selected card is no longer in a graveyard");
+            }
+            graveyard.removeAll(entry.getValue());
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, entry.getKey(), entry.getValue());
+            for (Card card : entry.getValue()) {
+                exileService.exileCard(gameData, entry.getKey(), card);
+            }
+        }
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " exiles two creature cards from graveyards for The Mimeoplasm."));
+    }
+
     private void resolveUnpaidCumulativeUpkeep(GameData gameData,
                                                 GraveyardTargetOperationState.CumulativeUpkeepPaymentContext context) {
         gameData.graveyardTargetOperation.cumulativeUpkeepPayment = null;
@@ -1926,6 +2219,22 @@ public class GraveyardChoiceHandlerService {
                 context.sourcePermanentId());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, context.forcedCost());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void validateGraveyardMultiTargetConstraint(GameData gameData, List<UUID> cardIds) {
+        Card sourceCard = gameData.graveyardTargetOperation.card;
+        if (sourceCard == null
+                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+            return;
+        }
+
+        Set<UUID> graveyardOwners = new HashSet<>();
+        for (UUID cardId : cardIds) {
+            UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwner != null && !graveyardOwners.add(graveyardOwner)) {
+                throw new IllegalStateException("May target at most one card per graveyard");
+            }
+        }
     }
 
     private boolean canAssignEachFilter(GameData gameData, List<UUID> cardIds,

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "202")
 @CardRegistration(set = "SIR", collectorNumber = "193")
+@CardRegistration(set = "DSC", collectorNumber = "175")
 public class DeathcapCultivator extends Card {
 
     public DeathcapCultivator() {

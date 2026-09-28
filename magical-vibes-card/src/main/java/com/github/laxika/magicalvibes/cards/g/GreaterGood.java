@@ -13,7 +13,15 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "245")
 @CardRegistration(set = "USG", collectorNumber = "257")
+@CardRegistration(set = "SLD", collectorNumber = "959")
+@CardRegistration(set = "SLD", collectorNumber = "1087")
+@CardRegistration(set = "SLD", collectorNumber = "1121")
+@CardRegistration(set = "SLD", collectorNumber = "1693")
 @CardRegistration(set = "2XM", collectorNumber = "170")
+@CardRegistration(set = "MB2", collectorNumber = "207")
+@CardRegistration(set = "MSC", collectorNumber = "174")
+@CardRegistration(set = "MSC", collectorNumber = "380")
+@CardRegistration(set = "AFC", collectorNumber = "160")
 public class GreaterGood extends Card {
 
     public GreaterGood() {

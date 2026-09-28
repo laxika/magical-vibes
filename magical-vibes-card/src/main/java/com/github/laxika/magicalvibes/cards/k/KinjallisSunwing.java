@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "19")
+@CardRegistration(set = "LCC", collectorNumber = "130")
 public class KinjallisSunwing extends Card {
 
     public KinjallisSunwing() {

@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DisruptingShoal;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
+import com.github.laxika.magicalvibes.cards.s.SilverstormSamurai;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IsaoEnlightenedBushi.class, DisruptingShoal.class, GnarledMass.class,
+        SilverstormSamurai.class, HighGround.class})
 class IsaoEnlightenedBushiTest extends BaseCardTest {
 
     @Test
@@ -26,12 +27,13 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.addToBattlefield(player2, new SpiketailHatchling());
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new DisruptingShoal()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.activateAbility(player2, 0, null, isao.getId());
+        harness.castInstant(player2, 0, 3, isao.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -43,7 +45,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
 
     @Test
     void bushidoTriggersWhenBlocking() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
         attacker.setAttacking(true);
         Permanent isao = addCreatureReady(player2, new IsaoEnlightenedBushi());
 
@@ -56,10 +58,29 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
     }
 
     @Test
+    void bushidoTriggersOnlyOnceWhenBlockingMultipleCreatures() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent isao = addCreatureReady(player2, new IsaoEnlightenedBushi());
+        Permanent firstAttacker = addCreatureReady(player1, new GnarledMass());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new GnarledMass());
+        secondAttacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, isao)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, isao)).isEqualTo(3);
+    }
+
+    @Test
     void bushidoTriggersWhenBecomesBlocked() {
         Permanent isao = addCreatureReady(player1, new IsaoEnlightenedBushi());
         isao.setAttacking(true);
-        addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player2, new GnarledMass());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -72,7 +93,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
     @Test
     void regeneratesTargetSamurai() {
         harness.addToBattlefield(player1, new IsaoEnlightenedBushi());
-        Permanent samurai = addCreatureReady(player2, createSamurai());
+        Permanent samurai = addCreatureReady(player2, new SilverstormSamurai());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, samurai.getId());
@@ -84,21 +105,11 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
     @Test
     void cannotRegenerateNonSamurai() {
         harness.addToBattlefield(player1, new IsaoEnlightenedBushi());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonSamurai = addCreatureReady(player2, new GnarledMass());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonSamurai.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Samurai");
-    }
-
-    private Card createSamurai() {
-        Card card = new Card();
-        card.setName("Samurai");
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(CardSubtype.SAMURAI));
-        return card;
     }
 }

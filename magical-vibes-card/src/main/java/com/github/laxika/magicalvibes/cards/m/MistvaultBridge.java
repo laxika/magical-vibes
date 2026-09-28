@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "14")
+@CardRegistration(set = "MH2", collectorNumber = "249")
 public class MistvaultBridge extends Card {
 
     public MistvaultBridge() {

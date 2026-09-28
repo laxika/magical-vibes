@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 
 @CardRegistration(set = "CSP", collectorNumber = "115")
 @CardRegistration(set = "DDM", collectorNumber = "57")
+@CardRegistration(set = "C15", collectorNumber = "194")
 public class OhranViper extends Card {
 
     public OhranViper() {

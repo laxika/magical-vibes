@@ -75,6 +75,7 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
+        gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), exiledCards, cardOwners, List.of(), List.of(), CardPileDisposition.PLAY_FROM_EXILE));
 

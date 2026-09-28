@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "203")
 @CardRegistration(set = "GN2", collectorNumber = "50")
+@CardRegistration(set = "LCC", collectorNumber = "253")
 public class RipjawRaptor extends Card {
 
     public RipjawRaptor() {

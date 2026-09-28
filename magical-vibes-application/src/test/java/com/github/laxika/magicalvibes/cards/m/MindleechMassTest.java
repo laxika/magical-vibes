@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.ForceOfNature;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,19 +13,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MindleechMass.class)
+@CardUsed({MindleechMass.class, BorosRecruit.class, ElvesOfDeepShadow.class, Forest.class})
 class MindleechMassTest extends BaseCardTest {
 
     @Test
-    @CardUsed(GrizzlyBears.class)
+    @CardUsed(BorosRecruit.class)
     @DisplayName("Combat damage offers a spell from the damaged player's hand for free")
     void castsSpellFromDamagedPlayersHandForFree() {
         addAttackingMindleechMass(player1);
-        GrizzlyBears controllerCard = new GrizzlyBears();
-        GrizzlyBears damagedPlayerCard = new GrizzlyBears();
+        BorosRecruit controllerCard = new BorosRecruit();
+        BorosRecruit damagedPlayerCard = new BorosRecruit();
         harness.setHand(player1, new ArrayList<>(List.of(controllerCard)));
         harness.setHand(player2, new ArrayList<>(List.of(damagedPlayerCard)));
 
@@ -43,15 +44,15 @@ class MindleechMassTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(controllerCard.getId()));
 
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Boros Recruit");
     }
 
     @Test
-    @CardUsed(GrizzlyBears.class)
+    @CardUsed(BorosRecruit.class)
     @DisplayName("Declining leaves the damaged player's spell in hand")
     void decliningLeavesSpellInDamagedPlayersHand() {
         addAttackingMindleechMass(player1);
-        GrizzlyBears damagedPlayerCard = new GrizzlyBears();
+        BorosRecruit damagedPlayerCard = new BorosRecruit();
         harness.setHand(player2, new ArrayList<>(List.of(damagedPlayerCard)));
 
         resolveCombatAndTrigger();
@@ -77,19 +78,53 @@ class MindleechMassTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({ForceOfNature.class, GrizzlyBears.class})
+    @CardUsed({MindleechMass.class, BorosRecruit.class})
     @DisplayName("Blocked trample damage that does not reach a player does not trigger")
     void doesNotTriggerWithoutCombatDamageToPlayer() {
         addAttackingMindleechMass(player1);
-        Permanent blocker = addCreatureReady(player2, new ForceOfNature());
+        Permanent blocker = addCreatureReady(player2, new MindleechMass());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BorosRecruit()));
 
         resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({BorosRecruit.class, ElvesOfDeepShadow.class})
+    @DisplayName("Trample damage that reaches a player offers one of multiple hand spells")
+    void offersOnlyOneSpellAfterPartialTrampleDamage() {
+        addAttackingMindleechMass(player1);
+        Permanent blocker = addCreatureReady(player2, new ElvesOfDeepShadow());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        BorosRecruit firstCard = new BorosRecruit();
+        BorosRecruit secondCard = new BorosRecruit();
+        harness.setHand(player2, new ArrayList<>(List.of(firstCard, secondCard)));
+
+        resolveCombat();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class)).isNotNull();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 5
+        ));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.pendingMayAbilities).hasSize(2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(firstCard.getId());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondCard);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(firstCard.getId()));
     }
 
     private Permanent addAttackingMindleechMass(Player player) {

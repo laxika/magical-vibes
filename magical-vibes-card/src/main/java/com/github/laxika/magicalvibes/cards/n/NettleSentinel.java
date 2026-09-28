@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "71")
 @CardRegistration(set = "A25", collectorNumber = "182")
+@CardRegistration(set = "SLD", collectorNumber = "773")
 public class NettleSentinel extends Card {
 
     public NettleSentinel() {

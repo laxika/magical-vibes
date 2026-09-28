@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "83")
 @CardRegistration(set = "DDM", collectorNumber = "73")
+@CardRegistration(set = "C15", collectorNumber = "138")
 public class UnderworldConnections extends Card {
 
     public UnderworldConnections() {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "248")
+@CardRegistration(set = "SLD", collectorNumber = "1751")
+@CardRegistration(set = "LCC", collectorNumber = "339")
 public class KarnsBastion extends Card {
 
     public KarnsBastion() {

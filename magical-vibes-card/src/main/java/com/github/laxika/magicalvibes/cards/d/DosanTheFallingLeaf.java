@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDurin
  * abilities are unaffected.
  */
 @CardRegistration(set = "CHK", collectorNumber = "205")
+@CardRegistration(set = "SLD", collectorNumber = "2404")
 public class DosanTheFallingLeaf extends Card {
 
     public DosanTheFallingLeaf() {

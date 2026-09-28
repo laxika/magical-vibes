@@ -353,7 +353,8 @@ public record ConditionContext(
                 entry.getSourcePermanentSnapshot(), entry.getCard(), entry.isKicked(), entry.isBuyback(),
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
                 sourceZone, entry.getXValue(), entry.getTargetId(),
-                entry.getExiledCostCardSnapshot(), false,
+                entry.getDiscardedCardSnapshot() != null
+                        ? entry.getDiscardedCardSnapshot() : entry.getExiledCostCardSnapshot(), false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),
@@ -370,7 +371,8 @@ public record ConditionContext(
                 permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), permanent.isMadness(), false, false,
                 null, 0, null, null, false, false, false, null, null, null,
                 permanent.getRepeatedAdditionalCosts(), permanent.isAlternateCost(),
-                permanent.isSpectacle(), false, permanent.isCollectEvidenceCostPaid(), false, 0, false);
+                permanent.isSpectacle(), false, permanent.isCollectEvidenceCostPaid(), false, 0,
+                permanent.isWaterbendCostPaid());
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
@@ -378,7 +380,8 @@ public record ConditionContext(
                 source.getCard(), source.isKicked(), false, source.isProwl(), source.isMadness(), false, false,
                 null, 0, null, null, true, false, false, null, null, null,
                 source.getRepeatedAdditionalCosts(), source.isAlternateCost(),
-                source.isSpectacle(), false, source.isCollectEvidenceCostPaid(), false, 0, false);
+                source.isSpectacle(), false, source.isCollectEvidenceCostPaid(), false, 0,
+                source.isWaterbendCostPaid());
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {

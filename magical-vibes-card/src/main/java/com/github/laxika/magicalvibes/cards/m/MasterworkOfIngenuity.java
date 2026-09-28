@@ -7,7 +7,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "863")
 @CardRegistration(set = "2XM", collectorNumber = "271")
+@CardRegistration(set = "C14", collectorNumber = "57")
+@CardRegistration(set = "AFC", collectorNumber = "209")
+@CardRegistration(set = "PIP", collectorNumber = "234")
+@CardRegistration(set = "PIP", collectorNumber = "483")
+@CardRegistration(set = "PIP", collectorNumber = "762")
+@CardRegistration(set = "PIP", collectorNumber = "1011")
 public class MasterworkOfIngenuity extends Card {
 
     public MasterworkOfIngenuity() {

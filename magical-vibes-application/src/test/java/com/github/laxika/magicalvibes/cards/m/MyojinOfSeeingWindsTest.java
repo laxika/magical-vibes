@@ -1,33 +1,30 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyojinOfSeeingWinds.class, LanternKami.class, Forest.class})
 class MyojinOfSeeingWindsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cast from hand enters with a divinity counter and indestructible")
     void castFromHandEntersWithDivinityCounter() {
-        harness.setHand(player1, List.of(new MyojinOfSeeingWinds()));
-        harness.addMana(player1, ManaColor.BLUE, 10);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MyojinOfSeeingWinds(), "{7}{U}{U}{U}");
         harness.passBothPriorities();
 
         Permanent myojin = findPermanent(player1, "Myojin of Seeing Winds");
@@ -38,7 +35,7 @@ class MyojinOfSeeingWindsTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast from hand does not get a divinity counter")
     void enteringWithoutCastingDoesNotGetDivinityCounter() {
-        Permanent myojin = harness.addToBattlefieldAndReturn(player1, new MyojinOfSeeingWinds());
+        Permanent myojin = harness.enterBattlefieldAndReturn(player1, new MyojinOfSeeingWinds());
 
         assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -48,9 +45,9 @@ class MyojinOfSeeingWindsTest extends BaseCardTest {
     @DisplayName("Removing the divinity counter draws a card for each permanent you control")
     void removingDivinityCounterDrawsPerPermanent() {
         Permanent myojin = addReadyMyojin(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LanternKami());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LanternKami());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -62,6 +59,38 @@ class MyojinOfSeeingWindsTest extends BaseCardTest {
         assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Counts permanents controlled when the ability resolves")
+    void countsPermanentsAtResolution() {
+        addReadyMyojin(player1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player1, new LanternKami());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Removing one divinity counter leaves indestructible while another remains")
+    void removesOnlyOneDivinityCounter() {
+        Permanent myojin = addReadyMyojin(player1);
+        myojin.setCounterCount(CounterType.DIVINITY, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     @Test
@@ -79,8 +108,7 @@ class MyojinOfSeeingWindsTest extends BaseCardTest {
     }
 
     private Permanent addReadyMyojin(Player player) {
-        Permanent myojin = harness.addToBattlefieldAndReturn(player, new MyojinOfSeeingWinds());
-        myojin.setSummoningSick(false);
+        Permanent myojin = addCreatureReady(player, new MyojinOfSeeingWinds());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
         return myojin;
     }

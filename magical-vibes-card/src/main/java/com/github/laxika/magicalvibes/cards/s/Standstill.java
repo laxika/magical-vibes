@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "102")
 @CardRegistration(set = "TLE", collectorNumber = "19")
+@CardRegistration(set = "MB2", collectorNumber = "172")
 public class Standstill extends Card {
 
     public Standstill() {

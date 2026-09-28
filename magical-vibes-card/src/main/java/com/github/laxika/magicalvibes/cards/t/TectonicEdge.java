@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "145")
 @CardRegistration(set = "EXP", collectorNumber = "44")
+@CardRegistration(set = "C14", collectorNumber = "313")
 public class TectonicEdge extends Card {
 
     public TectonicEdge() {

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteri
 @CardRegistration(set = "FUT", collectorNumber = "171")
 @CardRegistration(set = "DDL", collectorNumber = "72")
 @CardRegistration(set = "C13", collectorNumber = "304")
+@CardRegistration(set = "C15", collectorNumber = "293")
+@CardRegistration(set = "LCC", collectorNumber = "341")
+@CardRegistration(set = "C21", collectorNumber = "296")
 public class LlanowarReborn extends Card {
 
     public LlanowarReborn() {

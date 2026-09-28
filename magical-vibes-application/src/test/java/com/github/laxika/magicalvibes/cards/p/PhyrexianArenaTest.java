@@ -29,6 +29,22 @@ class PhyrexianArenaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each copy triggers independently during its controller's upkeep")
+    void eachCopyTriggersIndependently() {
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.setLibrary(player1, List.of(new PhyrexianArena(), new PhyrexianArena()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
     @DisplayName("Does not trigger during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
         harness.addToBattlefield(player1, new PhyrexianArena());

@@ -47,6 +47,7 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // creatures don't see each other die and "whenever a creature dies" triggers under-count.
         List<Permanent> toDestroy = new ArrayList<>();
         Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
+        Map<UUID, Integer> manaValueByPermanentId = new HashMap<>();
         HashSet<UUID> seenTargetIds = new HashSet<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
@@ -68,22 +69,31 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
             if (controllerId != null) {
                 controllerByPermanentId.put(target.getId(), controllerId);
             }
+            manaValueByPermanentId.put(target.getId(), target.getCard().getManaValue());
         }
 
         List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchCollecting(
                 gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
 
         List<UUID> destroyedControllerIds = new ArrayList<>();
+        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
         for (Permanent perm : actuallyDestroyed) {
             UUID controllerId = controllerByPermanentId.get(perm.getId());
             if (controllerId != null) {
                 destroyedControllerIds.add(controllerId);
+                if (!perm.getCard().isToken()) {
+                    destroyedNontokenControllerIds.add(controllerId);
+                }
             }
         }
         entry.setEventValue(actuallyDestroyed.size());
+        entry.setEventManaValues(actuallyDestroyed.stream()
+                .map(permanent -> manaValueByPermanentId.getOrDefault(permanent.getId(), 0))
+                .toList());
         // Per-permanent controller tally for riders that need "the number of permanents THEY
         // controlled that were put into a graveyard this way" (Builder's Bane), which the single
         // event value can't express. Duplicates are meaningful: three artifacts lost = three entries.
         entry.setEventPlayerIds(destroyedControllerIds);
+        entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
     }
 }

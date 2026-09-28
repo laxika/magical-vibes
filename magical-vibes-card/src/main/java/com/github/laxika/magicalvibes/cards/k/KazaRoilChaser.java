@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "225")
+@CardRegistration(set = "OTC", collectorNumber = "232")
 public class KazaRoilChaser extends Card {
 
     public KazaRoilChaser() {

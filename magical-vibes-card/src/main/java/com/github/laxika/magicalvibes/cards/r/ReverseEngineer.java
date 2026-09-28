@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "42")
 @CardRegistration(set = "HA5", collectorNumber = "7")
+@CardRegistration(set = "CMM", collectorNumber = "116")
+@CardRegistration(set = "MOC", collectorNumber = "232")
 public class ReverseEngineer extends Card {
 
     public ReverseEngineer() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "159")
+@CardRegistration(set = "SLD", collectorNumber = "1699")
 public class HuatliRadiantChampion extends Card {
 
     public HuatliRadiantChampion() {

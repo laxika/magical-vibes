@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "149")
+@CardRegistration(set = "CMM", collectorNumber = "205")
+@CardRegistration(set = "CMM", collectorNumber = "528")
+@CardRegistration(set = "DMC", collectorNumber = "119")
 public class AshlingThePilgrim extends Card {
 
     public AshlingThePilgrim() {

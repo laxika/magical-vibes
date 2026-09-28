@@ -30,8 +30,8 @@ class AuriokSteelshaperTest extends BaseCardTest {
         Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         scimitar.setAttachedTo(steelshaper.getId());
 
-        assertThat(gqs.getEffectivePower(gd, steelshaper)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, steelshaper)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, steelshaper)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, steelshaper)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);

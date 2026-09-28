@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "93")
+@CardRegistration(set = "C14", collectorNumber = "178")
+@CardRegistration(set = "C21", collectorNumber = "173")
+@CardRegistration(set = "AFC", collectorNumber = "128")
 public class HoardSmelterDragon extends Card {
 
     public HoardSmelterDragon() {

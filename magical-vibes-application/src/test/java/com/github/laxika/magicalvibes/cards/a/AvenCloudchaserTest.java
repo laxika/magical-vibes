@@ -9,16 +9,17 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-@CardUsed({AvenCloudchaser.class, GloriousAnthem.class})
+@CardUsed({AvenCloudchaser.class, GloriousAnthem.class, AngelicChorus.class, GrizzlyBears.class})
 class AvenCloudchaserTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -33,7 +34,6 @@ class AvenCloudchaserTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
         harness.castCreature(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -55,7 +55,6 @@ class AvenCloudchaserTest extends BaseCardTest {
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Aven Cloudchaser");
 
         // ETB triggered ability should be on stack
@@ -81,7 +80,6 @@ class AvenCloudchaserTest extends BaseCardTest {
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");
@@ -154,19 +152,36 @@ class AvenCloudchaserTest extends BaseCardTest {
         // Resolve ETB → fizzles
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     // ===== No target scenarios =====
+
+    @Test
+    @DisplayName("Can choose an enchantment when the ETB trigger is put on the stack")
+    void canChooseEnchantmentAtTriggerTime() {
+        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.setHand(player1, List.of(new AvenCloudchaser()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+    }
 
     @Test
     @DisplayName("Can cast without a target when no enchantments on battlefield")
     void canCastWithoutTargetWhenNoEnchantments() {
         harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Cloudchaser");
     }
@@ -179,7 +194,6 @@ class AvenCloudchaserTest extends BaseCardTest {
         // Resolve creature spell
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Creature should be on battlefield
         harness.assertOnBattlefield(player1, "Aven Cloudchaser");
         // No triggered ability on stack
@@ -199,5 +213,5 @@ class AvenCloudchaserTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-}
 
+}

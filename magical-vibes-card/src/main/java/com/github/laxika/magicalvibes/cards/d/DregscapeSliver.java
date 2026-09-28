@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantGraveyardAbilityToCreatureCardsOfSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantGraveyardAbilityToSliverCreatureCardsEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "631")
 @CardRegistration(set = "MH1", collectorNumber = "88")
 public class DregscapeSliver extends Card {
 

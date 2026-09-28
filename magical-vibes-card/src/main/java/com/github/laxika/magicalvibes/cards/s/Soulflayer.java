@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "84")
 @CardRegistration(set = "PIO", collectorNumber = "110")
+@CardRegistration(set = "C20", collectorNumber = "138")
 public class Soulflayer extends Card {
 
     public Soulflayer() {

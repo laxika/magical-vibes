@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "177")
+@CardRegistration(set = "C14", collectorNumber = "211")
 public class PrimordialSage extends Card {
 
     public PrimordialSage() {

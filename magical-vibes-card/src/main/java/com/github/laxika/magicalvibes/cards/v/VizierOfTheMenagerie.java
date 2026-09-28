@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "192")
 @CardRegistration(set = "AKR", collectorNumber = "224")
+@CardRegistration(set = "SLD", collectorNumber = "1100")
 public class VizierOfTheMenagerie extends Card {
 
     public VizierOfTheMenagerie() {

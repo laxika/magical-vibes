@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,16 @@ public class InvestigateTriggerCollectorService {
     @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_INVESTIGATES)
     private boolean handleClueCreation(TriggerMatchContext match, CreateTokenEffect trigger,
                                        TriggerContext context) {
+        return enqueueTrigger(match, trigger);
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME)
+    private boolean handleEveryInvestigation(TriggerMatchContext match, CardEffect effect,
+                                             TriggerContext context) {
+        return enqueueTrigger(match, effect);
+    }
+
+    private boolean enqueueTrigger(TriggerMatchContext match, CardEffect trigger) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

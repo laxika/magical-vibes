@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "130")
 @CardRegistration(set = "2XM", collectorNumber = "206")
+@CardRegistration(set = "DMC", collectorNumber = "159")
 public class MaelstromNexus extends Card {
 
     public MaelstromNexus() {

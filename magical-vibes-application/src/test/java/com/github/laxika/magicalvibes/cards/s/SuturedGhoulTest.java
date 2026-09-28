@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
+import com.github.laxika.magicalvibes.cards.g.GoretuskFirebeast;
 import com.github.laxika.magicalvibes.cards.h.HarvesterDruid;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SuturedGhoul.class, SuntailHawk.class, GiantWarthog.class, MentalNote.class, HarvesterDruid.class})
+@CardUsed({GiantWarthog.class, GoretuskFirebeast.class, HarvesterDruid.class, MentalNote.class, SuntailHawk.class, SuturedGhoul.class})
 class SuturedGhoulTest extends BaseCardTest {
 
     private void castGhoul() {
@@ -154,5 +155,41 @@ class SuturedGhoulTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Sutured Ghoul"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sutured Ghoul"));
+    }
+
+    @Test
+    @DisplayName("The ghoul cannot exile creature cards from an opponent's graveyard")
+    void doesNotUseOpponentsGraveyard() {
+        GoretuskFirebeast firebeast = new GoretuskFirebeast();
+        harness.setGraveyard(player2, List.of(firebeast));
+
+        castGhoulForJudReview();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firebeast);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Sutured Ghoul"));
+    }
+
+    @Test
+    @DisplayName("Creature cards exiled with the ghoul remain in exile when it leaves")
+    void exiledCardsRemainWhenGhoulLeaves() {
+        GoretuskFirebeast firebeast = new GoretuskFirebeast();
+        harness.setGraveyard(player1, List.of(firebeast));
+
+        castGhoulForJudReview();
+        harness.handleMultipleCardsChosen(player1, List.of(firebeast.getId()));
+
+        Permanent ghoul = findPermanent(player1, "Sutured Ghoul");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ghoul));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firebeast);
+        assertThat(gd.getCardsExiledByPermanent(ghoul.getId())).containsExactly(firebeast);
+    }
+
+    private void castGhoulForJudReview() {
+        harness.castFromHand(player1, new SuturedGhoul(), "{4}{B}{B}{B}");
+        harness.passBothPriorities();
     }
 }

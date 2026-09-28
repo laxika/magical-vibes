@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "36")
+@CardRegistration(set = "C14", collectorNumber = "88")
 public class SilverbladePaladin extends Card {
 
     public SilverbladePaladin() {

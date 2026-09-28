@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "144")
 @CardRegistration(set = "KLR", collectorNumber = "153")
+@CardRegistration(set = "CMM", collectorNumber = "273")
+@CardRegistration(set = "MOC", collectorNumber = "291")
 public class ArmorcraftJudge extends Card {
 
     public ArmorcraftJudge() {

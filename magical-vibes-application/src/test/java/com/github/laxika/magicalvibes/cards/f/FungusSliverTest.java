@@ -28,6 +28,7 @@ class FungusSliverTest extends BaseCardTest {
         Permanent fungusSliver = addCreatureReady(player1, new FungusSliver());
         Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
 
+        assertThat(gqs.computeStaticBonus(gd, fungusSliver).grantedEffects()).hasSize(1);
         ping(pinger, fungusSliver);
 
         assertThat(fungusSliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -40,6 +41,7 @@ class FungusSliverTest extends BaseCardTest {
         Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
         Permanent sliver = addCreatureReady(player2, new BonescytheSliver());
 
+        assertThat(gqs.computeStaticBonus(gd, sliver).grantedEffects()).hasSize(1);
         ping(pinger, sliver);
 
         assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

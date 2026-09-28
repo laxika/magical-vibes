@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RainOfEmbers.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({RainOfEmbers.class, BorosRecruit.class, Watchwolf.class})
 class RainOfEmbersTest extends BaseCardTest {
 
     @Test
@@ -20,18 +17,16 @@ class RainOfEmbersTest extends BaseCardTest {
     void dealsDamageToAllCreaturesAndPlayers() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new FugitiveWizard());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new RainOfEmbers()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player1, new BorosRecruit());
+        harness.addToBattlefield(player2, new Watchwolf());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RainOfEmbers(), "{1}{R}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+        harness.assertOnBattlefield(player2, "Watchwolf");
+        assertThat(findPermanent(player2, "Watchwolf").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

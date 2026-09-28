@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,6 +40,31 @@ class FleetingImageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Activating the ability requires one generic mana in addition to blue")
+    void activateAbilityRequiresGenericMana() {
+        harness.addToBattlefield(player1, new FleetingImage());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while Fleeting Image is tapped")
+    void abilityDoesNotRequireUntappedSource() {
+        Permanent image = harness.addToBattlefieldAndReturn(player1, new FleetingImage());
+        image.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fleeting Image");
     }
 
     @Test
@@ -82,5 +108,22 @@ class FleetingImageTest extends BaseCardTest {
                         gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("The ability does nothing if Fleeting Image leaves before resolution")
+    void abilityDoesNothingIfSourceLeavesBeforeResolution() {
+        FleetingImage image = new FleetingImage();
+        harness.addToBattlefield(player1, image);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(image.getId()));
     }
 }

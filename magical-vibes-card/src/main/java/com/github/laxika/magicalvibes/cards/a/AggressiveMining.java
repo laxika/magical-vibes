@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "127")
+@CardRegistration(set = "SLD", collectorNumber = "2108")
 public class AggressiveMining extends Card {
 
     public AggressiveMining() {

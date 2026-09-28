@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "138")
+@CardRegistration(set = "SLD", collectorNumber = "1624")
 public class KaronaFalseGod extends Card {
 
     public KaronaFalseGod() {

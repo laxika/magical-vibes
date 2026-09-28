@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "183")
+@CardRegistration(set = "TDC", collectorNumber = "273")
 public class TearAsunder extends Card {
 
     public TearAsunder() {

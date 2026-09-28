@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "207")
+@CardRegistration(set = "SOC", collectorNumber = "321")
 public class MortalitySpear extends Card {
 
     public MortalitySpear() {

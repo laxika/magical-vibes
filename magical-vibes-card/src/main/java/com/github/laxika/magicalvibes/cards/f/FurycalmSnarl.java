@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "266")
+@CardRegistration(set = "LTC", collectorNumber = "313")
+@CardRegistration(set = "SOC", collectorNumber = "375")
+@CardRegistration(set = "MSC", collectorNumber = "247")
+@CardRegistration(set = "MSC", collectorNumber = "476")
+@CardRegistration(set = "LCC", collectorNumber = "333")
 public class FurycalmSnarl extends Card {
 
     public FurycalmSnarl() {

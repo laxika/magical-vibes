@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -37,12 +36,12 @@ class GluttonousZombieTest extends BaseCardTest {
     void canBeBlockedByBlackCreatures() {
         addCreatureReady(player1, new GluttonousZombie());
 
-        addCreatureReady(player2, new DrudgeSkeletons());
+        Permanent blocker = addCreatureReady(player2, new DrudgeSkeletons());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -53,9 +52,8 @@ class GluttonousZombieTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new DancingScimitar());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
         assertThat(blocker.isBlocking()).isTrue();
     }
 }

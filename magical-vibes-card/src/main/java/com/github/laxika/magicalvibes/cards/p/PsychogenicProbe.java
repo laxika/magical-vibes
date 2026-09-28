@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class PsychogenicProbe extends Card {
 
     public PsychogenicProbe() {
-        addEffect(EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY,
+        addEffect(EffectSlot.ON_ANY_PLAYER_SHUFFLES_LIBRARY,
                 new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "96")
+@CardRegistration(set = "SLD", collectorNumber = "2209")
 @CardRegistration(set = "SS3", collectorNumber = "7")
+@CardRegistration(set = "MB2", collectorNumber = "59")
 public class RiteOfFlame extends Card {
 
     public RiteOfFlame() {

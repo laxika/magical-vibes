@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "5")
+@CardRegistration(set = "SLD", collectorNumber = "497")
 public class BrimazKingOfOreskos extends Card {
 
     public BrimazKingOfOreskos() {

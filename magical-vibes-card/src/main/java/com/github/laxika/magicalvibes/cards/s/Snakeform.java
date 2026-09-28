@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeU
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "161")
+@CardRegistration(set = "C15", collectorNumber = "242")
 public class Snakeform extends Card {
 
     public Snakeform() {

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CavesOfKoilos.class)
+@CardUsed({CavesOfKoilos.class})
 class CavesOfKoilosTest extends BaseCardTest {
 
     @Test
@@ -102,5 +102,26 @@ class CavesOfKoilosTest extends BaseCardTest {
 
     private Permanent addReadyCaves(Player player) {
         return harness.addToBattlefieldAndReturn(player, new CavesOfKoilos());
+    }
+
+    @Test
+    @DisplayName("Multiple pain land activations across turns accumulate damage")
+    void cumulativeDamageAcrossTurns() {
+        harness.setLife(player1, 20);
+        Permanent caves = addReadyCaves(player1);
+
+        // Tap for white â€” 1 damage
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertLife(player1, 19);
+
+        // Untap and tap for black â€” 1 more damage
+        caves.untap();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.assertLife(player1, 18);
+
+        // Untap and tap for colorless â€” no damage
+        caves.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.assertLife(player1, 18);
     }
 }

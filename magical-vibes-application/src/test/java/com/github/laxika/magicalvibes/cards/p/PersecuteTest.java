@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GlitteringWish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
@@ -43,8 +44,7 @@ class PersecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persecute()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
@@ -75,8 +75,7 @@ class PersecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persecute()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -108,8 +107,7 @@ class PersecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persecute()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -188,8 +186,7 @@ class PersecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persecute()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "GREEN");
 
         harness.assertInGraveyard(player2, "Dryad Arbor");
@@ -232,8 +229,7 @@ class PersecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persecute(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.handleListChoice(player1, "GREEN");
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

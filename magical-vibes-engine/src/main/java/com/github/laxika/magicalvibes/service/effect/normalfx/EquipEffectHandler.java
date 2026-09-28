@@ -39,7 +39,12 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Permanent equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
+        Permanent equipment = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (equipment == null) {
+            equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
+        }
 
         if (equipment == null) {
             
@@ -49,7 +54,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Ruling (Haunted Plate Mail): equip while not an Equipment has no effect.
-        if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)) {
+        if (!gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s equip ability has no effect (it is not an Equipment)."));
             log.info("Game {} - Equip has no effect, {} is not Equipment", gameData.id, entry.getCard().getName());
@@ -73,7 +78,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " equips ", target.getCard(), "."));
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

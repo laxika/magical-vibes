@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,28 +13,56 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InstillFuror.class, GrizzlyBears.class})
+@CardUsed({InstillFuror.class, Watchwolf.class})
 class InstillFurorTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can be cast targeting a creature")
+    void castsAndAttachesToCreature() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        harness.setHand(player1, List.of(new InstillFuror()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Instill Furor");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot be cast targeting a noncreature permanent")
+    void cannotEnchantANoncreaturePermanent() {
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new InstillFuror());
+        harness.setHand(player1, List.of(new InstillFuror()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, noncreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
 
     @Test
     @DisplayName("Enchanted creature is sacrificed at its controller's end step if it did not attack")
     void sacrificesNonAttackerAtControllerEndStep() {
-        Permanent creature = addCreature(player1);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         attachAura(player1, creature);
 
         advanceToEndStep(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Watchwolf");
     }
 
     @Test
     @DisplayName("Enchanted creature survives its controller's end step if it attacked")
     void sparesAttacker() {
-        Permanent creature = addCreature(player1);
-        creature.setAttackedThisTurn(true);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         attachAura(player1, creature);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
 
         advanceToEndStep(player1);
 
@@ -43,7 +72,7 @@ class InstillFurorTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger uses the enchanted creature controller's end step")
     void triggersDuringEnchantedCreatureControllersEndStep() {
-        Permanent creature = addCreature(player2);
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
         attachAura(player1, creature);
 
         advanceToEndStep(player1);
@@ -56,7 +85,7 @@ class InstillFurorTest extends BaseCardTest {
     @Test
     @DisplayName("Removing the Aura after the trigger does not stop the sacrifice")
     void triggerSurvivesAuraRemoval() {
-        Permanent creature = addCreature(player1);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         Permanent aura = attachAura(player1, creature);
 
         harness.forceActivePlayer(player1);
@@ -69,17 +98,9 @@ class InstillFurorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
     }
 
-    private Permanent addCreature(Player controller) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(controller.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new InstillFuror());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new InstillFuror());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 

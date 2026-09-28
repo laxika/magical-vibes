@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "76")
+@CardRegistration(set = "SLD", collectorNumber = "1025")
+@CardRegistration(set = "LTC", collectorNumber = "204")
 public class MercilessExecutioner extends Card {
 
     public MercilessExecutioner() {

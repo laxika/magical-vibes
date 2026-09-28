@@ -9,8 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "67")
+@CardRegistration(set = "CMM", collectorNumber = "128")
+@CardRegistration(set = "CMM", collectorNumber = "501")
 @CardRegistration(set = "MPS", collectorNumber = "2")
 @CardRegistration(set = "KLR", collectorNumber = "70")
+@CardRegistration(set = "FIC", collectorNumber = "272")
 public class TorrentialGearhulk extends Card {
 
     public TorrentialGearhulk() {

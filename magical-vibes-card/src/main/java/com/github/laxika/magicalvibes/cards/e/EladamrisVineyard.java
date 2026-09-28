@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "223")
+@CardRegistration(set = "SLD", collectorNumber = "1692")
 public class EladamrisVineyard extends Card {
 
     public EladamrisVineyard() {

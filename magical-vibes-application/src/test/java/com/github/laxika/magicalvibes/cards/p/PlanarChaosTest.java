@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlanarChaos.class, FlaringPain.class})
+@CardUsed({FlaringPain.class, PlanarChaos.class})
 class PlanarChaosTest extends BaseCardTest {
 
     @Test
@@ -61,5 +61,16 @@ class PlanarChaosTest extends BaseCardTest {
 
         assertThat(gameLogContains("coin flip for Planar Chaos")).isFalse();
         harness.assertOnBattlefield(player1, "Planar Chaos");
+    }
+
+    @Test
+    @DisplayName("Planar Chaos does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new PlanarChaos());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Planar Chaos");
+        assertThat(gameLogContains("coin flip for Planar Chaos")).isFalse();
     }
 }

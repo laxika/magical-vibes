@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "7")
+@CardRegistration(set = "MOC", collectorNumber = "177")
 public class ChantOfVituGhazi extends Card {
 
     public ChantOfVituGhazi() {

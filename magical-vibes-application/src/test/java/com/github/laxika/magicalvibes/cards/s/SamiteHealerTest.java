@@ -17,8 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 
-@CardUsed({Earthquake.class, GrizzlyBears.class, SamiteHealer.class, VolcanicHammer.class})
+@CardUsed({Earthquake.class, GrizzlyBears.class, SamiteHealer.class, VolcanicHammer.class, Plains.class})
 class SamiteHealerTest extends BaseCardTest {
 
     @Test
@@ -46,6 +47,18 @@ class SamiteHealerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires a target");
+    }
+
+    @Test
+    @DisplayName("Activating ability cannot target a land")
+    void activatingCannotTargetLand() {
+        addReadyHealer(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

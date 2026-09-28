@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "217")
+@CardRegistration(set = "SLD", collectorNumber = "524")
 public class SorinVengefulBloodlord extends Card {
 
     private static final PermanentPredicate CREATURE_OR_PLANESWALKER = new PermanentAnyOfPredicate(List.of(

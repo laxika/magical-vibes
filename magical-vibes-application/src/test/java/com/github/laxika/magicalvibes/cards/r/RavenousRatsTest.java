@@ -17,8 +17,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 
-@CardUsed({RavenousRats.class, Forest.class})
+@CardUsed({RavenousRats.class, Forest.class, KavuTitan.class})
 class RavenousRatsTest extends BaseCardTest {
 
     
@@ -91,7 +92,10 @@ class RavenousRatsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast by targeting yourself")
     void cannotTargetYourself() {
-        assertThatThrownBy(() -> castRavenousRats(player1.getId()))
+        harness.setHand(player1, List.of(new RavenousRats()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -109,5 +113,22 @@ class RavenousRatsTest extends BaseCardTest {
     private void prepareRavenousRats() {
         harness.setHand(player1, List.of(new RavenousRats()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+    }
+
+    @Test
+    @DisplayName("ETB target is chosen after the creature enters when the spell was cast without one")
+    void choosesTargetWhenEtbTriggerIsPutOnStack() {
+        harness.setHand(player1, List.of(new RavenousRats()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 }

@@ -14,6 +14,8 @@ public class LibrarySearchDestinationChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.LibrarySearchDestinationChoice> {
 
     private static final String HAND = PendingInteraction.LibrarySearchDestinationChoice.OPTIONS.getFirst();
+    private static final String BATTLEFIELD_TAPPED =
+            PendingInteraction.LibrarySearchDestinationChoice.BATTLEFIELD_OPTIONS.getLast();
 
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
@@ -37,13 +39,16 @@ public class LibrarySearchDestinationChoiceInteractionHandler
 
         String choice = ((InteractionAnswer.ListChoiceMade) answer).choice();
         boolean toHand = HAND.equalsIgnoreCase(choice);
-        boolean toGraveyard = PendingInteraction.LibrarySearchDestinationChoice.OPTIONS.getLast()
+        boolean toBattlefieldTapped = interaction.allowBattlefieldTapped()
+                && BATTLEFIELD_TAPPED.equalsIgnoreCase(choice);
+        boolean toGraveyard = !interaction.allowBattlefieldTapped()
+                && PendingInteraction.LibrarySearchDestinationChoice.OPTIONS.getLast()
                 .equalsIgnoreCase(choice);
-        if (!toHand && !toGraveyard) {
+        if (!toHand && !toGraveyard && !toBattlefieldTapped) {
             throw new IllegalStateException("Invalid library search destination: " + choice);
         }
 
         libraryChoiceHandlerService.handleLibrarySearchDestinationChosen(
-                gameData, player, interaction.card(), toHand);
+                gameData, player, interaction.card(), toHand, toBattlefieldTapped);
     }
 }

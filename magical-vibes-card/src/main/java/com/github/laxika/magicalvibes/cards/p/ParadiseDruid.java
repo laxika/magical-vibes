@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "WAR", collectorNumber = "171")
+@CardRegistration(set = "SLD", collectorNumber = "775")
 @CardRegistration(set = "SPG", collectorNumber = "80")
+@CardRegistration(set = "LTC", collectorNumber = "255")
+@CardRegistration(set = "AFC", collectorNumber = "165")
 public class ParadiseDruid extends Card {
 
     public ParadiseDruid() {

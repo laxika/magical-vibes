@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,17 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CinderWall.class, BenalishInfantry.class})
+@CardUsed({CinderWall.class, GrizzlyBears.class})
 class CinderWallTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Cinder Wall blocks, it schedules itself for end-of-combat destruction")
     void blockingSchedulesSelfDestruction() {
-        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent cinderWall = addCreatureReady(player2, new CinderWall());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // A block trigger from Cinder Wall fires (non-targeting, references itself)
@@ -46,11 +45,10 @@ class CinderWallTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new CinderWall());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
@@ -63,11 +61,10 @@ class CinderWallTest extends BaseCardTest {
     @Test
     @DisplayName("Cinder Wall that never blocks is not scheduled for destruction")
     void notDestroyedWhenItDoesNotBlock() {
-        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new CinderWall());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of()); // Cinder Wall stays back
 
         harness.passBothPriorities();

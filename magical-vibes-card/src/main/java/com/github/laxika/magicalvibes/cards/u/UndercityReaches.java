@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 
 @CardRegistration(set = "OHOP", collectorNumber = "39")
 @CardRegistration(set = "OPCA", collectorNumber = "83")
+@CardRegistration(set = "MOC", collectorNumber = "163")
 public class UndercityReaches extends Card {
 
     public UndercityReaches() {

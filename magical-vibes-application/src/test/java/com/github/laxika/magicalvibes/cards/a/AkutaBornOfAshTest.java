@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AkutaBornOfAsh.class, GrizzlyBears.class, Swamp.class, Forest.class})
 class AkutaBornOfAshTest extends BaseCardTest {
 
     @Test
@@ -88,6 +90,24 @@ class AkutaBornOfAshTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns Akuta as part of the resolving ability after the Swamp is chosen")
+    void returnsAkutaWithoutSeparatePriorityWindow() {
+        AkutaBornOfAsh akuta = new AkutaBornOfAsh();
+        harness.setGraveyard(player1, List.of(akuta));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, swamp.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(akuta.getId()));
+    }
+
+    @Test
     @DisplayName("Declining the optional sacrifice leaves Akuta in the graveyard")
     void decliningSacrificeLeavesAkutaInGraveyard() {
         AkutaBornOfAsh akuta = new AkutaBornOfAsh();
@@ -104,5 +124,24 @@ class AkutaBornOfAshTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(akuta.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(swamp.getId()));
+    }
+
+    @Test
+    @DisplayName("Accepting without a Swamp does not return Akuta")
+    void acceptingWithoutSwampDoesNotReturnAkuta() {
+        AkutaBornOfAsh akuta = new AkutaBornOfAsh();
+        harness.setGraveyard(player1, List.of(akuta));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(akuta.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(akuta.getId()));
     }
 }

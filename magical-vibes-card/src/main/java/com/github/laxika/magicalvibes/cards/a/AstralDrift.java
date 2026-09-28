@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MH1", collectorNumber = "3")
+@CardRegistration(set = "C20", collectorNumber = "76")
 public class AstralDrift extends Card {
 
     public AstralDrift() {

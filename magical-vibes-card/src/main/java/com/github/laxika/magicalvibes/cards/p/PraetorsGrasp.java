@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "71")
+@CardRegistration(set = "SLD", collectorNumber = "1023")
+@CardRegistration(set = "SLD", collectorNumber = "1861")
 public class PraetorsGrasp extends Card {
 
     public PraetorsGrasp() {

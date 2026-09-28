@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "LEG", collectorNumber = "246")
 @CardRegistration(set = "ME3", collectorNumber = "163")
 @CardRegistration(set = "A25", collectorNumber = "209")
+@CardRegistration(set = "SLD", collectorNumber = "1069")
 public class NicolBolas extends Card {
 
     public NicolBolas() {
@@ -28,7 +29,7 @@ public class NicolBolas extends Card {
                         true));
 
         // Whenever Nicol Bolas deals damage to an opponent, that player discards their hand.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER));
     }
 }

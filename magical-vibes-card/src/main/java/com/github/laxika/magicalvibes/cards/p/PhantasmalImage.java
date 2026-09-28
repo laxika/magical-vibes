@@ -15,7 +15,9 @@ import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "72")
 @CardRegistration(set = "MM3", collectorNumber = "46")
+@CardRegistration(set = "SLD", collectorNumber = "2306")
 @CardRegistration(set = "SPG", collectorNumber = "67")
+@CardRegistration(set = "AFC", collectorNumber = "89")
 public class PhantasmalImage extends Card {
 
     public PhantasmalImage() {

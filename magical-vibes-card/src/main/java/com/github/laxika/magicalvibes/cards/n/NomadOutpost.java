@@ -13,6 +13,12 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "237")
 @CardRegistration(set = "TDM", collectorNumber = "263")
 @CardRegistration(set = "DDN", collectorNumber = "34")
+@CardRegistration(set = "SLD", collectorNumber = "465")
+@CardRegistration(set = "SLD", collectorNumber = "2275")
+@CardRegistration(set = "OTC", collectorNumber = "306")
+@CardRegistration(set = "C20", collectorNumber = "294")
+@CardRegistration(set = "PIP", collectorNumber = "277")
+@CardRegistration(set = "PIP", collectorNumber = "805")
 public class NomadOutpost extends Card {
 
     public NomadOutpost() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             targetId = entry.getTargetId();
         }
 
-        resolveForTarget(gameData, entry, targetId);
+        resolveForTarget(gameData, entry, targetId, revealEffect.randomizeBottom());
     }
 
     private void insertFollowUpEffects(StackEntry entry,
@@ -62,13 +63,14 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
         }
         List<CardEffect> followUps = targets.subList(1, targets.size()).stream()
                 .map(target -> new RevealUntilNonlandBottomThenDealManaValueDamageEffect(
-                        effect.targetPredicate(), target))
+                        effect.targetPredicate(), target, effect.randomizeBottom()))
                 .map(CardEffect.class::cast)
                 .toList();
         entry.insertEffectsToResolve(effectIndex + 1, followUps);
     }
 
-    private void resolveForTarget(GameData gameData, StackEntry entry, UUID targetId) {
+    private void resolveForTarget(GameData gameData, StackEntry entry, UUID targetId,
+                                  boolean randomizeBottom) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -108,6 +110,11 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             }
         }
 
-        libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
+        if (randomizeBottom) {
+            Collections.shuffle(revealed);
+            deck.addAll(revealed);
+        } else {
+            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
+        }
     }
 }

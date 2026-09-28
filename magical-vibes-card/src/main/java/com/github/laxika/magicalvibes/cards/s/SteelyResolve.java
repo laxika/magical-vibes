@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "286")
+@CardRegistration(set = "SLD", collectorNumber = "1326")
 @CardRegistration(set = "MAR", collectorNumber = "83")
 public class SteelyResolve extends Card {
 

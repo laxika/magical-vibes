@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillDefendingPlayerEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "28")
+@CardRegistration(set = "SLD", collectorNumber = "1302")
 public class NemesisOfReason extends Card {
 
     public NemesisOfReason() {

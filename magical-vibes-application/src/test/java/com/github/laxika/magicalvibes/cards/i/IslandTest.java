@@ -24,4 +24,14 @@ class IslandTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
+
+    @Test
+    void tapsForOneBlueMana() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(island.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
 }

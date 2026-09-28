@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "EMA", collectorNumber = "37")
 @CardRegistration(set = "TSR", collectorNumber = "50")
 @CardRegistration(set = "DMR", collectorNumber = "35")
+@CardRegistration(set = "C14", collectorNumber = "96")
 public class WhitemaneLion extends Card {
 
     public WhitemaneLion() {

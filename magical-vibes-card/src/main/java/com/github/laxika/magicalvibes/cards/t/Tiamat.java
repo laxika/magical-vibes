@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "235")
+@CardRegistration(set = "SLD", collectorNumber = "1017")
 public class Tiamat extends Card {
 
     public Tiamat() {

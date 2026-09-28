@@ -18,6 +18,8 @@ import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "45")
 @CardRegistration(set = "SPG", collectorNumber = "50")
+@CardRegistration(set = "MH2", collectorNumber = "67")
+@CardRegistration(set = "MH2", collectorNumber = "309")
 public class Subtlety extends Card {
 
     public Subtlety() {

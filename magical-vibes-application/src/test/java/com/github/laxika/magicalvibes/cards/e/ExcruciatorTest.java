@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SoulsFire;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -34,9 +35,7 @@ class ExcruciatorTest extends BaseCardTest {
     @DisplayName("Prevent all combat damage still prevents damage from other sources")
     void preventAllCombatDamageStillPreventsOtherSources() {
         addExcruciatorReady(player1);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GrizzlyBears());
         gd.preventAllCombatDamage = true;
 
         declareAttackers(List.of(0, 1));
@@ -49,10 +48,8 @@ class ExcruciatorTest extends BaseCardTest {
     @DisplayName("Its combat damage to a blocking creature can't be prevented")
     void combatDamageToBlockerCantBePrevented() {
         addExcruciatorReady(player1);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setDamagePreventionShield(10);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();
@@ -64,11 +61,23 @@ class ExcruciatorTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 
+    @Test
+    @CardUsed(SoulsFire.class)
+    @DisplayName("Its noncombat damage to a player can't be prevented")
+    void noncombatDamageToPlayerCantBePrevented() {
+        Permanent excruciator = addExcruciatorReady(player1);
+        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(excruciator.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+    }
+
     private Permanent addExcruciatorReady(Player player) {
-        Card card = new Excruciator();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new Excruciator());
     }
 }

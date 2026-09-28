@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- * "Enchanted creature has protection from the chosen color" (Ward of Lights). The colour is read at
- * evaluation time from the Aura's own {@code chosenColor}, so it tracks a later re-choice.
- * The self-scoped shape (Voice of All) is seeded directly by the layer system and never reaches here.
+ * "The attached creature has protection from the chosen color" (Ward of Lights, Sanctuary Blade).
+ * The colour is read at evaluation time from the source's own {@code chosenColor}, so it tracks a
+ * later re-choice. The self-scoped shape (Voice of All) is seeded directly by the layer system and
+ * never reaches here.
  */
 @Component
 public class ProtectionFromChosenColorEffectHandler implements StaticEffectHandlerBean {
@@ -25,7 +26,8 @@ public class ProtectionFromChosenColorEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromChosenColorEffect) effect;
-        if (protection.scope() != GrantScope.ENCHANTED_CREATURE) {
+        if (protection.scope() != GrantScope.ENCHANTED_CREATURE
+                && protection.scope() != GrantScope.EQUIPPED_CREATURE) {
             return;
         }
         CardColor chosen = context.source().getChosenColor();

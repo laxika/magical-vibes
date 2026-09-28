@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "66")
+@CardRegistration(set = "SLD", collectorNumber = "284")
 @CardRegistration(set = "MB1", collectorNumber = "66")
 @CardRegistration(set = "2X2", collectorNumber = "138")
 @CardRegistration(set = "ECL", collectorNumber = "166")

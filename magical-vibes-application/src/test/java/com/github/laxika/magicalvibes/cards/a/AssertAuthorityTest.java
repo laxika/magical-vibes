@@ -71,10 +71,9 @@ class AssertAuthorityTest extends BaseCardTest {
         harness.setHand(player1, List.of(transfixer));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
-
         harness.setHand(player2, List.of(new AssertAuthority()));
         harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, transfixer.getId());
 
         assertThat(gd.stack).hasSize(2);

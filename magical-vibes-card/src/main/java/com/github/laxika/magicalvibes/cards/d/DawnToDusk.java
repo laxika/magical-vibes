@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "6")
+@CardRegistration(set = "C15", collectorNumber = "66")
 public class DawnToDusk extends Card {
 
     public DawnToDusk() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "72")
+@CardRegistration(set = "SLD", collectorNumber = "621")
 public class PsionicSliver extends Card {
 
     public PsionicSliver() {

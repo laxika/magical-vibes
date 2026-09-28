@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,6 +19,7 @@ class OgreTaskmasterTest extends BaseCardTest {
     @DisplayName("Ogre Taskmaster cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new OgreTaskmaster());
+        addCreatureReady(player1, new GrizzlyBears());
 
         addCreatureReady(player1, new GrizzlyBears());
         declareAttackersAndPrepareBlockers(List.of(0));

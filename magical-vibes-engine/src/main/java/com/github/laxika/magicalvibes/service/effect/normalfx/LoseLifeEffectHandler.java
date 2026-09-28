@@ -64,8 +64,12 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (e.recipient() == LoseLifeRecipient.OWNER && ownerId == null) {
             ownerId = entry.getControllerId();
         }
+        UUID sourceControllerId = e.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
+                ? sourcePermanentControllerId(gameData, entry) : null;
         if (ownerId != null) {
             amountContext = amountContext.withControllerId(ownerId);
+        } else if (sourceControllerId != null) {
+            amountContext = amountContext.withControllerId(sourceControllerId);
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
 
@@ -75,8 +79,10 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
-            case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER ->
+            case SOURCE_CONTROLLER -> lifeSupport.applyLifeLoss(gameData, sourceControllerId, amount, sourceName);
+            case TARGET_PLAYER, TRIGGERING_PLAYER ->
                     loseTargetPlayerLife(gameData, entry, e, amount, sourceName, amountContext);
+            case ACTIVE_PLAYER -> loseActivePlayerLife(gameData, entry, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
@@ -88,6 +94,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 eachPlayerLosesLife(gameData, e, entry, owner, amount, sourceName, false);
             }
         }
+    }
+
+    private UUID sourcePermanentControllerId(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId != null) {
+            UUID liveControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+            if (liveControllerId != null) {
+                return liveControllerId;
+            }
+        }
+        return entry.getSourcePermanentControllerId();
     }
 
     private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
@@ -143,12 +160,23 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    private void loseActivePlayerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+        UUID activePlayerId = entry.getActivePlayerId() != null
+                ? entry.getActivePlayerId() : gameData.activePlayerId;
+        if (activePlayerId != null) {
+            lifeSupport.applyLifeLoss(gameData, activePlayerId, amount, sourceName);
+        }
+    }
+
     private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(targetId);
+        }
         if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
             controllerId = entry.getTriggeringPermanentControllerId();
         }

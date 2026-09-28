@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.TurnStep;
 
 @CardUsed({AncientSilverback.class, GrizzlyBears.class})
 class AncientSilverbackTest extends BaseCardTest {
@@ -122,5 +123,20 @@ class AncientSilverbackTest extends BaseCardTest {
 
         Permanent ape = findPermanent(player1, "Ancient Silverback");
         assertThat(ape.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Dies without a regeneration shield from lethal combat damage")
+    void diesWithoutRegenerationShieldUpstreamReview() {
+        Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
+        apePerm.setBlocking(true);
+        apePerm.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player2, new AncientSilverback());
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertNotOnBattlefield(player1, "Ancient Silverback");
+        harness.assertInGraveyard(player1, "Ancient Silverback");
     }
 }

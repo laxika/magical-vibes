@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 @CardRegistration(set = "M14", collectorNumber = "84")
 @CardRegistration(set = "BFZ", collectorNumber = "103")
 @CardRegistration(set = "DDR", collectorNumber = "37")
+@CardRegistration(set = "C15", collectorNumber = "112")
 public class AltarsReap extends Card {
 
     public AltarsReap() {

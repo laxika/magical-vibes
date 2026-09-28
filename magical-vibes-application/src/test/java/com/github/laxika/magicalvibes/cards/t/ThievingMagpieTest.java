@@ -111,6 +111,24 @@ class ThievingMagpieTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Magpie that deals damage draws a card")
+    void eachMagpieDrawsForItsDamage() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ThievingMagpie(), new ThievingMagpie()));
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new ThievingMagpie());
+        addCreatureReady(player1, new ThievingMagpie());
+
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Does not draw when blocked and no combat damage reaches the opponent")
     void doesNotDrawWhenBlocked() {
         prepareDrawState();

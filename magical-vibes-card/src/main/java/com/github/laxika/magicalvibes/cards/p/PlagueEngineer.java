@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "1215")
 @CardRegistration(set = "MH1", collectorNumber = "100")
 public class PlagueEngineer extends Card {
 

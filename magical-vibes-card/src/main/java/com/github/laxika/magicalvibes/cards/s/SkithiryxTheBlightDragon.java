@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "79")
+@CardRegistration(set = "SLD", collectorNumber = "1562")
 @CardRegistration(set = "2XM", collectorNumber = "107")
 @CardRegistration(set = "MUL", collectorNumber = "17")
 @CardRegistration(set = "MUL", collectorNumber = "82")

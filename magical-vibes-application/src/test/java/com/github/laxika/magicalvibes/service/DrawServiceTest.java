@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
@@ -24,11 +25,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawFourReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -136,6 +141,27 @@ class DrawServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(first, second);
         assertThat(gd.pendingCardDraws).isEmpty();
+    }
+
+    @Test
+    void opponentMultiCardDrawIsReplacedWithOneCardForEachPlayer() {
+        when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
+        Card almsCollector = createCard("Alms Collector", CardType.CREATURE);
+        almsCollector.addEffect(EffectSlot.STATIC, new OpponentDrawTwoOrMoreReplacedEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(almsCollector));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.playerHands.put(player2Id, new ArrayList<>());
+        Card player1Card = createCard("Player 1 card", CardType.CREATURE);
+        Card player2Card = createCard("Player 2 card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(player1Card)));
+        gd.playerDecks.put(player2Id, new ArrayList<>(List.of(player2Card)));
+
+        sut.resolveDrawCards(gd, player2Id, 2);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(player1Card);
+        assertThat(gd.playerHands.get(player2Id)).containsExactly(player2Card);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        assertThat(gd.playerDecks.get(player2Id)).isEmpty();
     }
 
     @Mock
@@ -291,6 +317,25 @@ class DrawServiceTest {
     }
 
     @Test
+    @DisplayName("pushes a graveyard opponent second-draw may trigger onto the stack")
+    void graveyardOpponentSecondDrawTriggerPushesMayAbility() {
+        Card detective = createCard("Dogged Detective", CardType.CREATURE);
+        detective.addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
+                new MayEffect(new BoostSelfEffect(1, 1), "Do it?"));
+        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
+        gd.cardsDrawnThisTurn.put(player2Id, 2);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard()).isEqualTo(detective);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .singleElement().isInstanceOf(MayEffect.class);
+    }
+
+    @Test
     void targetedSecondDrawTriggerQueuesPermanentTargetChoice() {
         Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
         AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
@@ -327,6 +372,23 @@ class DrawServiceTest {
 
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
                 .isNotNull();
+    }
+
+    @Test
+    void opponentDrawTriggerHonorsOncePerTurnWrapper() {
+        Card card = createCard("Tataru Taru", CardType.CREATURE);
+        card.addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+                new OncePerTurnTriggerEffect(new BoostSelfEffect(1, 1)));
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+        sut.checkOpponentDrawTriggers(gd, player2Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .containsExactly(new BoostSelfEffect(1, 1));
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(source.getId());
     }
 
     @Test
@@ -384,6 +446,29 @@ class DrawServiceTest {
         sut.resolveDrawCards(gd, player1Id, 2);
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(firstCard, secondCard, thirdCard);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+    }
+
+    @Test
+    void firstNonDrawStepReplacementAppliesOnlyOncePerTurn() {
+        Card sourceCard = createCard("Reed Richards, Smartest Man", CardType.CREATURE);
+        sourceCard.addEffect(EffectSlot.STATIC, new FirstNonDrawStepDrawFourReplacementEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card firstCard = createCard("First card", CardType.CREATURE);
+        Card secondCard = createCard("Second card", CardType.CREATURE);
+        Card thirdCard = createCard("Third card", CardType.CREATURE);
+        Card fourthCard = createCard("Fourth card", CardType.CREATURE);
+        Card fifthCard = createCard("Fifth card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(
+                firstCard, secondCard, thirdCard, fourthCard, fifthCard)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        sut.resolveDrawCard(gd, player1Id);
+        sut.resolveDrawCard(gd, player1Id);
+
+        assertThat(gd.playerHands.get(player1Id)).hasSize(5);
         assertThat(gd.playerDecks.get(player1Id)).isEmpty();
     }
 

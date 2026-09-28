@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BLB", collectorNumber = "253")
+@CardRegistration(set = "SLD", collectorNumber = "832")
 public class Fountainport extends Card {
 
     public Fountainport() {

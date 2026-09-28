@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "269")
+@CardRegistration(set = "SLD", collectorNumber = "438")
 public class HowltoothHollow extends Card {
 
     public HowltoothHollow() {

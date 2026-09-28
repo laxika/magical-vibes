@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -9,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,19 +46,26 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        for (int i = 0; i < e.copies(); i++) {
+        int copyCount = copySupport.adjustedSpellCopyCount(gameData, e.copies());
+        for (int i = 0; i < copyCount; i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
             if (e.tokenCopy()) {
                 copyCard.setToken(true);
             }
+            if (e.tokenCopy() && e.removeLegendary()) {
+                EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+                supertypes.addAll(copyCard.getSupertypes());
+                supertypes.remove(CardSupertype.LEGENDARY);
+                copyCard.setSupertypes(Set.copyOf(supertypes));
+            }
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 
-            copySupport.addCopyToStack(gameData, copyEntry);
+            copySupport.addCopyToStack(gameData, copyEntry, false);
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
 
-            if (!e.tokenCopy() && copyEntry.getTargetId() != null) {
+            if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(
                         entry.getCard(),
                         castingPlayerId,
@@ -68,6 +78,6 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
         }
 
         log.info("Game {} - spell-copy effect creates {} copies of {} for {}",
-                gameData.id, e.copies(), spellCard.getName(), castingPlayerId);
+                gameData.id, copyCount, spellCard.getName(), castingPlayerId);
     }
 }

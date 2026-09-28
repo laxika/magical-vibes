@@ -541,7 +541,8 @@ public class GameService {
                 if (pool == null || !cost.canPay(pool)) {
                     throw new IllegalStateException("Not enough mana to unlock that Room door");
                 }
-                cost.pay(pool);
+                spellCastingService.payManaCostWithPhyrexianAlternatives(
+                        gameData, player.getId(), cost, pool, 0);
             } finally {
                 if (roomMana != null) {
                     pool.restorePromotedRoomSpellsOrUnlocksMana(roomMana);
@@ -1499,14 +1500,22 @@ public class GameService {
                             AmountContext.forCasting(player.getId()));
                     morphCostModifier -= reduction;
                 }
-                if (!manifestedOrCloaked && castingCostService != null) {
-                    morphCostModifier += castingCostService.getMorphCostModifier(
-                            gameData, player.getId(), permanent.getCard());
+                if (castingCostService != null) {
+                    morphCostModifier += castingCostService.getTurnFaceUpCostModifier(
+                            gameData, player.getId(), permanent.getCard(), permanent.getId());
+                    if (!manifestedOrCloaked) {
+                        morphCostModifier += castingCostService.getMorphCostModifier(
+                                gameData, player.getId(), permanent.getCard());
+                    }
                 }
                 if (morphCostModifier > 0) {
                     cost = cost.increasedBy(new ManaCost("{" + morphCostModifier + "}"));
                 } else if (morphCostModifier < 0) {
                     cost = cost.reducedBy(new ManaCost("{" + -morphCostModifier + "}"));
+                }
+                if (castingCostService != null) {
+                    cost = castingCostService.applyManaCostPaymentAlternatives(
+                            gameData, player.getId(), cost);
                 }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null) {
@@ -1539,8 +1548,9 @@ public class GameService {
                             return;
                         }
                         throw new IllegalStateException("Not enough mana to turn the permanent face up");
-                    }
-                    cost.pay(pool, effectiveXValue);
+                }
+                    spellCastingService.payManaCostWithPhyrexianAlternatives(
+                            gameData, player.getId(), cost, pool, effectiveXValue);
                 } finally {
                     pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
@@ -1563,7 +1573,7 @@ public class GameService {
             if (!manifestedOrCloaked && morphLifeCost != null) {
                 spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
-            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
+            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true, true);
         }
     }
 
@@ -1594,12 +1604,12 @@ public class GameService {
             if (controllerId == null) {
                 return;
             }
-            finishTurningFaceUp(gameData, permanent, controllerId, null, false);
+            finishTurningFaceUp(gameData, permanent, controllerId, null, false, false);
         }
     }
 
     private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,
-                                     Integer xValue, boolean autoPass) {
+                                     Integer xValue, boolean autoPass, boolean paidTurnFaceUpCost) {
         permanent.turnFaceUp();
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
@@ -1608,10 +1618,13 @@ public class GameService {
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
         for (TurnFaceUpReplacementEffect replacement : replacements) {
+            if (!paidTurnFaceUpCost && !replacement.appliesWithoutPayingCost()) {
+                continue;
+            }
             int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
                     AmountContext.forEnteringPermanent(controllerId, permanent, xValue != null ? xValue : 0));
-            permanentCounterSupport.applyPlusOnePlusOneCounters(
-                    gameData, null, permanent, counterCount);
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, replacement.counterType(), counterCount);
         }
         if (turnFaceUpCopyService != null
                 && turnFaceUpCopyService.prepareChoice(gameData, permanent, controllerId)) {
@@ -1630,7 +1643,11 @@ public class GameService {
                     gameData, controllerId, permanent);
         }
 
-        List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+        List<CardEffect> effects = new java.util.ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects = effects.stream()
                 .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
@@ -1805,6 +1822,20 @@ public class GameService {
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, boolean flashforwardCast) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
+                        flashforwardCast))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                    flashforwardCast);
+        }
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId,
                 exileCounterCostPermanentIds, List.of());
@@ -1842,15 +1873,22 @@ public class GameService {
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds, List.of());
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
-                        counterCostPermanentIds))) return;
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
-                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of());
+                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of(),
+                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of());
         }
     }
 
@@ -1966,6 +2004,21 @@ public class GameService {
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
+    }
+
+    public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
+                                      Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                      Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateEmblemAbility(gameData, actionPlayer, emblemIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue,
+                    targetId, targetZone, targetIds, damageAssignments);
+        }
     }
 
     /**

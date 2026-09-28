@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 @CardRegistration(set = "9ED", collectorNumber = "7")
 @CardRegistration(set = "8ED", collectorNumber = "8")
 @CardRegistration(set = "NEM", collectorNumber = "3")
+@CardRegistration(set = "SLD", collectorNumber = "1379")
 public class BlindingAngel extends Card {
 
     public BlindingAngel() {

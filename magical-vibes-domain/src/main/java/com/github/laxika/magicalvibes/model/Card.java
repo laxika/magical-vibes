@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -24,9 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -35,7 +39,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -68,6 +74,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Card {
 
     private static final Map<String, OracleData> oracleRegistry = new ConcurrentHashMap<>();
+    private static final Map<String, OracleData> embeddedOracleRegistry = new ConcurrentHashMap<>();
     private static volatile OracleDataResolver oracleDataResolver;
 
     /**
@@ -86,6 +93,12 @@ public class Card {
         oracleRegistry.put(className, data);
     }
 
+    /** Keeps card-specific oracle data available across test registry resets. */
+    public static void registerEmbeddedOracle(String className, OracleData data) {
+        embeddedOracleRegistry.put(className, data);
+        oracleRegistry.putIfAbsent(className, data);
+    }
+
     /**
      * Registers oracle data only if the class has none yet. Used for back-face registrations: a
      * back face may name a standalone card class (prepare-spell cards reuse the real spell's
@@ -98,6 +111,7 @@ public class Card {
 
     public static void clearOracleRegistry() {
         oracleRegistry.clear();
+        oracleRegistry.putAll(embeddedOracleRegistry);
     }
 
     public static void installOracleDataResolver(OracleDataResolver resolver) {
@@ -167,6 +181,8 @@ public class Card {
     private String collectorNumber;
 
     private boolean token;
+    /** When true, this Saga adds its lore counter at the beginning of its controller's end step. */
+    private boolean bedtimeStory;
     /**
      * A token that is also a card, such as a Time Walk token card. Unlike ordinary tokens, these
      * remain in zones other than the battlefield.
@@ -187,6 +203,8 @@ public class Card {
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
      */
     private boolean enchantPlayer;
+    /** When true, this Aura enchants the shared zone rather than a player or permanent. */
+    private boolean enchantZone;
     private int additionalCostPerExtraTarget;
     /** Additional mana symbols required for each target beyond the first. */
     private String additionalManaCostPerExtraTarget;
@@ -204,6 +222,8 @@ public class Card {
      * "target Merfolk", where a Merfolk satisfies both).
      */
     private boolean allowSharedTargets;
+    /** Expanded target positions chosen by an opponent during this spell's announcement. */
+    private List<Integer> opponentChosenSpellTargetIndices = List.of();
     /** Whether this card's targeted attack trigger is chosen by the defending player. */
     private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
@@ -260,6 +280,8 @@ public class Card {
      * normal cost — only the timing permission changes. Swift Reckoning (spell mastery).
      */
     private Condition flashCastCondition;
+    /** Optional permanent predicate that makes this spell castable at instant speed when targeted. */
+    private PermanentPredicate flashCastTargetPredicate;
 
     /**
      * Card-specific "this Equipment can be attached only to …" restriction (Konda's Banner), or
@@ -338,7 +360,16 @@ public class Card {
      * fails on any newly declared field to force this update.
      */
     protected Card(Card source) {
-        this.id = source.id;
+        this(source, source.id);
+    }
+
+    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    public Card createCardCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
+    private Card(Card source, UUID id) {
+        this.id = id;
         this.ownerId = source.ownerId;
         this.name = source.name;
         this.type = source.type;
@@ -364,6 +395,7 @@ public class Card {
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
+        this.bedtimeStory = source.bedtimeStory;
         this.tokenCard = source.tokenCard;
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
@@ -371,10 +403,12 @@ public class Card {
         this.requiresBasicLandMana = source.requiresBasicLandMana;
         this.requiresNoMana = source.requiresNoMana;
         this.enchantPlayer = source.enchantPlayer;
+        this.enchantZone = source.enchantZone;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
@@ -398,6 +432,7 @@ public class Card {
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
+        this.flashCastTargetPredicate = source.flashCastTargetPredicate;
         this.attachRestriction = source.attachRestriction;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
@@ -419,6 +454,50 @@ public class Card {
      */
     public Card createRuntimeCopy() {
         return new Card(this);
+    }
+
+    /** Creates an unfrozen copy with a fresh identity, for a newly conjured card. */
+    public Card createRuntimeCopyWithNewId() {
+        return new Card(this, UUID.randomUUID());
+    }
+
+    /** Creates a new-identity copy for conjured duplicates. */
+    public Card createConjuredCopy() {
+        return new Card(this, UUID.randomUUID());
+    }
+
+    /**
+     * Creates a runtime copy that keeps this card's non-text-box characteristics and uses the
+     * supplied card's rules text, keywords, abilities, and targeting configuration.
+     */
+    public Card createRuntimeTextBoxCopy(Card textSource) {
+        Card copy = new Card(this);
+        copy.cardText = textSource.cardText;
+        copy.bedtimeStory = textSource.bedtimeStory;
+        copy.keywords = textSource.keywords.isEmpty()
+                ? Set.of()
+                : EnumSet.copyOf(textSource.keywords);
+
+        copy.effectRegistrations.clear();
+        textSource.effectRegistrations.forEach((slot, registrations) ->
+                copy.effectRegistrations.put(slot, new ArrayList<>(registrations)));
+        copy.effectCache.clear();
+
+        copy.spellTargets.clear();
+        copy.effectTargetIndexMap.clear();
+        copy.copyTargetingFrom(textSource);
+
+        copy.sagaChapterTargetFilters.clear();
+        copy.sagaChapterTargetFilters.putAll(textSource.sagaChapterTargetFilters);
+        copy.sagaChapterTargetGroups.clear();
+        textSource.sagaChapterTargetGroups.forEach((slot, groups) ->
+                copy.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
+
+        copy.activatedAbilities = new ArrayList<>(textSource.activatedAbilities);
+        copy.graveyardActivatedAbilities = new ArrayList<>(textSource.graveyardActivatedAbilities);
+        copy.handActivatedAbilities = new ArrayList<>(textSource.handActivatedAbilities);
+        copy.stackActivatedAbilities = new ArrayList<>(textSource.stackActivatedAbilities);
+        return copy;
     }
 
     /**
@@ -456,6 +535,7 @@ public class Card {
         this.xValueCap = face.xValueCap;
         this.minimumXValue = face.minimumXValue;
         this.token = face.token;
+        this.bedtimeStory = face.bedtimeStory;
         this.tokenCard = face.tokenCard;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
@@ -463,10 +543,12 @@ public class Card {
         this.requiresBasicLandMana = face.requiresBasicLandMana;
         this.requiresNoMana = face.requiresNoMana;
         this.enchantPlayer = face.enchantPlayer;
+        this.enchantZone = face.enchantZone;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = face.additionalLifeCostPerTarget;
         this.allowSharedTargets = face.allowSharedTargets;
+        this.opponentChosenSpellTargetIndices = face.opponentChosenSpellTargetIndices;
         this.multiTargetConstraint = face.multiTargetConstraint;
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
@@ -569,6 +651,7 @@ public class Card {
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
@@ -576,10 +659,15 @@ public class Card {
     public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
     public void setRequiresNoMana(boolean requiresNoMana) { assertMutable(); this.requiresNoMana = requiresNoMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
+    public void setEnchantZone(boolean enchantZone) { assertMutable(); this.enchantZone = enchantZone; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setOpponentChosenSpellTargetIndices(List<Integer> indices) {
+        assertMutable();
+        this.opponentChosenSpellTargetIndices = indices == null ? List.of() : List.copyOf(indices);
+    }
     public void setAttackTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
         assertMutable();
         this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
@@ -589,6 +677,7 @@ public class Card {
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
     public void setFlashCastCondition(Condition flashCastCondition) { assertMutable(); this.flashCastCondition = flashCastCondition; }
+    public void setFlashCastTargetPredicate(PermanentPredicate flashCastTargetPredicate) { assertMutable(); this.flashCastTargetPredicate = flashCastTargetPredicate; }
     public void setAttachRestriction(PermanentPredicate attachRestriction) { assertMutable(); this.attachRestriction = attachRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
@@ -620,16 +709,19 @@ public class Card {
         setRequiresCreatureMana(false);
         setRequiresBasicLandMana(false);
         setEnchantPlayer(false);
+        setEnchantZone(false);
         setAdditionalCostPerExtraTarget(0);
         setAdditionalManaCostPerExtraTarget(null);
         setAdditionalLifeCostPerTarget(0);
         setAllowSharedTargets(false);
+        setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
         setMultiTargetConstraint(null);
         setCastTimeTargetFilter(null);
         setSpellCastTimingRestriction(null);
         setCastCondition(null);
         setFlashCastCondition(null);
+        setFlashCastTargetPredicate(null);
         setAttachRestriction(null);
         setWatermark(null);
         setBackFaceCard(null);
@@ -666,6 +758,21 @@ public class Card {
     }
 
     // ── Target-first builder API ──────────────────────────────────────
+
+    /** Clears the rules text and ability registrations on a mutable runtime copy. */
+    public void clearRulesTextAndAbilities() {
+        assertMutable();
+        effectRegistrations.clear();
+        effectCache.clear();
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
+        sagaChapterTargetFilters.clear();
+        sagaChapterTargetGroups.clear();
+        activatedAbilities.clear();
+        graveyardActivatedAbilities.clear();
+        handActivatedAbilities.clear();
+        stackActivatedAbilities.clear();
+    }
 
     /**
      * Declares a required target (min=1, max=1) and returns a builder
@@ -789,6 +896,10 @@ public class Card {
                 registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case ExileSourceCardFromGraveyardThenEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case ExilePermanentYouControlAndTrackWithSourceEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case StateTriggerEffect e -> e.effects().forEach(innerEffect ->
@@ -801,13 +912,19 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
+            // preserve its target-group binding for deferred trigger-time target selection.
+            case AllyCombatDamageTriggerEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
                 if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);
                 if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
                 if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
             }
+            case RollD6Effect e -> e.branches().forEach(branch ->
+                    registerEffectTargetIndex(branch, targetIndex));
             case RollDiceEffect e -> {
                 if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
                 if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
@@ -852,6 +969,7 @@ public class Card {
     public void appendSpellTargetingFrom(Card source) {
         assertMutable();
         int targetIndexOffset = spellTargets.size();
+        int targetPositionOffset = getMultiTargetFilters().size();
         for (SpellTarget sourceTarget : source.spellTargets) {
             SpellTarget target = new SpellTarget(
                     this,
@@ -871,6 +989,13 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+        if (!source.opponentChosenSpellTargetIndices.isEmpty()) {
+            List<Integer> appendedIndices = new ArrayList<>(opponentChosenSpellTargetIndices);
+            source.opponentChosenSpellTargetIndices.stream()
+                    .map(index -> index + targetPositionOffset)
+                    .forEach(appendedIndices::add);
+            opponentChosenSpellTargetIndices = List.copyOf(appendedIndices);
+        }
     }
 
     /**
@@ -940,6 +1065,7 @@ public class Card {
         assertMutable();
         spellTargets.clear();
         effectTargetIndexMap.clear();
+        opponentChosenSpellTargetIndices = List.of();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────
@@ -1094,7 +1220,7 @@ public class Card {
      * group for each selection.
      */
     public int getEffectTargetIndex(CardEffect effect, int occurrence) {
-        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        List<Integer> targetIndices = targetIndicesForEffect(effect);
         if (targetIndices == null || occurrence < 0 || occurrence >= targetIndices.size()) {
             return -1;
         }
@@ -1102,12 +1228,31 @@ public class Card {
     }
 
     public boolean hasEffectTargetIndex(CardEffect effect) {
-        return effectTargetIndexMap.containsKey(effect);
+        return targetIndicesForEffect(effect) != null;
     }
 
     public boolean isEffectBoundToTargetGroup(CardEffect effect, int groupIndex) {
-        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        List<Integer> targetIndices = targetIndicesForEffect(effect);
         return targetIndices != null && targetIndices.contains(groupIndex);
+    }
+
+    /** Returns every effect registered against the target group, regardless of its effect slot. */
+    public List<CardEffect> getEffectsBoundToTargetGroup(int groupIndex) {
+        return effectTargetIndexMap.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(groupIndex))
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private List<Integer> targetIndicesForEffect(CardEffect effect) {
+        List<Integer> targetIndices = effectTargetIndexMap.get(effect);
+        if (targetIndices != null) {
+            return targetIndices;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return targetIndicesForEffect(conditional.wrapped());
+        }
+        return null;
     }
 
     /**
@@ -1170,6 +1315,7 @@ public class Card {
         }
         original.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
+        opponentChosenSpellTargetIndices = original.opponentChosenSpellTargetIndices;
         castTimeTargetFilter = original.castTimeTargetFilter;
     }
 
@@ -1650,6 +1796,10 @@ public class Card {
                         && grant.scope() == GrantScope.SELF));
     }
 
+    public boolean hasAllCardNames() {
+        return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }
@@ -1673,6 +1823,11 @@ public class Card {
 
     public boolean isEnchantPlayer() {
         return isAura() && (subtypes.contains(CardSubtype.CURSE) || enchantPlayer);
+    }
+
+    /** Whether this Aura needs a player/permanent attachment target when cast or entering. */
+    public boolean isAuraThatRequiresAttachment() {
+        return isAura() && !enchantZone;
     }
 
 }

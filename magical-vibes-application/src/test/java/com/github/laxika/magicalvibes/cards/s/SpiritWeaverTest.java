@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritWeaver.class, GrizzlyBears.class, FugitiveWizard.class, SteadfastGuard.class,
+        DrudgeSkeletons.class})
 class SpiritWeaverTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -25,7 +27,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack with target")
     void activatingPutsOnStackWithTarget() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -42,7 +44,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability does not tap Spirit Weaver")
     void activatingDoesNotTap() {
-        Permanent weaver = addReadyWeaver(player1);
+        Permanent weaver = addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -54,7 +56,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -69,7 +71,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability gives target creature +0/+1")
     void resolvingBoostsTargetToughness() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -87,7 +89,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times on same target")
     void canActivateMultipleTimes() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 6);
 
@@ -108,7 +110,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn")
     void boostResetsAtEndOfTurn() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -132,7 +134,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -146,7 +148,7 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Can target green creature")
     void canTargetGreenCreature() {
-        addReadyWeaver(player1);
+        addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -159,8 +161,8 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Can target blue creature")
     void canTargetBlueCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlueCreature(player1);
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player1, new FugitiveWizard());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -170,10 +172,23 @@ class SpiritWeaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's green creature")
+    void canTargetOpponentsGreenCreature() {
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Cannot target white creature")
     void cannotTargetWhiteCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyWhiteCreature(player1);
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player1, new SteadfastGuard());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -184,8 +199,8 @@ class SpiritWeaverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target black creature")
     void cannotTargetBlackCreature() {
-        addReadyWeaver(player1);
-        Permanent target = addReadyBlackCreature(player1);
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -193,38 +208,5 @@ class SpiritWeaverTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a");
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyWeaver(Player player) {
-        SpiritWeaver card = new SpiritWeaver();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBlueCreature(Player player) {
-        FugitiveWizard card = new FugitiveWizard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyWhiteCreature(Player player) {
-        SteadfastGuard card = new SteadfastGuard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBlackCreature(Player player) {
-        DrudgeSkeletons card = new DrudgeSkeletons();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
 

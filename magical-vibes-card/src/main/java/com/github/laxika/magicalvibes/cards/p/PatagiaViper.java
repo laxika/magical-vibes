@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "89")
+@CardRegistration(set = "C15", collectorNumber = "197")
 public class PatagiaViper extends Card {
 
     public PatagiaViper() {

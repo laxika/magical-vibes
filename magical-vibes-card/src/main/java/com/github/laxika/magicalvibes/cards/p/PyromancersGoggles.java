@@ -15,6 +15,8 @@ import java.util.List;
  * copy that spell and you may choose new targets for the copy.
  */
 @CardRegistration(set = "ORI", collectorNumber = "236")
+@CardRegistration(set = "SLD", collectorNumber = "1066")
+@CardRegistration(set = "C21", collectorNumber = "259")
 public class PyromancersGoggles extends Card {
 
     public PyromancersGoggles() {

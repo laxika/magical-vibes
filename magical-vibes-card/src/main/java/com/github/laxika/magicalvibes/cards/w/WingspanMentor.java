@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "72")
+@CardRegistration(set = "NCC", collectorNumber = "239")
 public class WingspanMentor extends Card {
 
     public WingspanMentor() {

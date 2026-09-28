@@ -17,8 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.c.CrystalRod;
 
-@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, WurmsTooth.class})
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, WurmsTooth.class, CrystalRod.class})
 class TemporalAdeptTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -156,6 +157,17 @@ class TemporalAdeptTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate ability without a target")
+    void cannotActivateWithoutTarget() {
+        addReadyAdept(player1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("requires a target");
+    }
+
+    @Test
     @DisplayName("Cannot activate with only two blue mana and one colorless mana")
     void cannotActivateWithInsufficientBlueMana() {
         addReadyAdept(player1);
@@ -232,5 +244,17 @@ class TemporalAdeptTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
         harness.assertInHand(player2, "Wurm's Tooth");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new TemporalAdept());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 }

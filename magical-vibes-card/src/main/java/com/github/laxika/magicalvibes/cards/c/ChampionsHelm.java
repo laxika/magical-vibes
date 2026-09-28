@@ -15,6 +15,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "MPS", collectorNumber = "7")
 @CardRegistration(set = "AA1", collectorNumber = "3")
 @CardRegistration(set = "CMD", collectorNumber = "244")
+@CardRegistration(set = "CMM", collectorNumber = "375")
+@CardRegistration(set = "CMM", collectorNumber = "601")
+@CardRegistration(set = "CMM", collectorNumber = "654")
+@CardRegistration(set = "PIP", collectorNumber = "228")
+@CardRegistration(set = "PIP", collectorNumber = "482")
+@CardRegistration(set = "PIP", collectorNumber = "756")
+@CardRegistration(set = "PIP", collectorNumber = "1010")
+@CardRegistration(set = "FIC", collectorNumber = "337")
 public class ChampionsHelm extends Card {
 
     public ChampionsHelm() {

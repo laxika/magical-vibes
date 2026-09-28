@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.t.TrainedPronghorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnquestionedAuthority.class, KrosanVerge.class, TrainedPronghorn.class})
+@CardUsed({GiantWarthog.class, KrosanVerge.class, SuntailHawk.class, TrainedPronghorn.class, UnquestionedAuthority.class})
 class UnquestionedAuthorityTest extends BaseCardTest {
 
     @Test
@@ -100,6 +102,31 @@ class UnquestionedAuthorityTest extends BaseCardTest {
     private Permanent enchant(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnquestionedAuthority());
         aura.setAttachedTo(creature.getId());
+        return aura;
+    }
+
+    @Test
+    @DisplayName("Enchanted creature takes no combat damage from a creature")
+    void enchantedCreatureTakesNoCombatDamageFromCreature() {
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        hawk.setAttacking(true);
+        enchantForJudReview(hawk);
+
+        Permanent blocker = addCreatureReady(player2, new GiantWarthog());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(hawk.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    private Permanent enchantForJudReview(Permanent creature) {
+        Permanent aura = new Permanent(new UnquestionedAuthority());
+        aura.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }

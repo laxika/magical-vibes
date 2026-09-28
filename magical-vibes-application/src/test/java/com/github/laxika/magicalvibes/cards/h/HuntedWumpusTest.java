@@ -1,27 +1,25 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.h.HornedTroll;
 
-@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class})
+@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class, HornedTroll.class})
 class HuntedWumpusTest extends BaseCardTest {
 
     /**
@@ -48,8 +46,7 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
 
         // Wumpus is NOT on the battlefield yet
-        List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(p1Battlefield).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Hunted Wumpus");
 
         // Hand is now empty (had 1 card, played it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -75,9 +72,7 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(etbEntry.getCard()).isInstanceOf(HuntedWumpus.class);
 
         // Wumpus IS on player1's battlefield
-        List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(p1Battlefield).hasSize(1);
-        assertThat(p1Battlefield.getFirst().getCard()).isInstanceOf(HuntedWumpus.class);
+        harness.assertOnBattlefield(player1, "Hunted Wumpus");
     }
 
     @Test
@@ -277,5 +272,22 @@ class HuntedWumpusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-}
 
+    @Test
+    @DisplayName("ETB ignores creatures in the Wumpus controller's hand")
+    void wumpusEtbOnlyUsesOtherPlayersHand() {
+        setupAndCastWumpus();
+        harness.passBothPriorities(); // resolve creature spell
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.passBothPriorities(); // resolve ETB
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+}

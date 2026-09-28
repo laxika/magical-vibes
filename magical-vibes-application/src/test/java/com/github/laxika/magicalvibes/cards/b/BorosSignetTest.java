@@ -51,9 +51,8 @@ class BorosSignetTest extends BaseCardTest {
     }
 
     private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new BorosSignet());
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new BorosSignet());
         signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
         return signet;
     }
 }

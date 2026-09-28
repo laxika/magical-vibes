@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpel
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
 import java.util.List;
+import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "2252")
 @CardRegistration(set = "SPG", collectorNumber = "13")
+@CardRegistration(set = "C20", collectorNumber = "9")
 public class KalamaxTheStormsire extends Card {
 
     public KalamaxTheStormsire() {

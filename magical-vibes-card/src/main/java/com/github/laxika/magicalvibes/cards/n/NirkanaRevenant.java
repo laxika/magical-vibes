@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "120")
+@CardRegistration(set = "SLD", collectorNumber = "1316")
 public class NirkanaRevenant extends Card {
 
     public NirkanaRevenant() {

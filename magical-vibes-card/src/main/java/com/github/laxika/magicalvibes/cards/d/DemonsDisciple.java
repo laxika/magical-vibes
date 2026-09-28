@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "97")
+@CardRegistration(set = "CMM", collectorNumber = "149")
 public class DemonsDisciple extends Card {
 
     public DemonsDisciple() {

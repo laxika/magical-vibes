@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "17")
+@CardRegistration(set = "MH2", collectorNumber = "255")
+@CardRegistration(set = "PIP", collectorNumber = "290")
+@CardRegistration(set = "PIP", collectorNumber = "818")
 public class SilverbluffBridge extends Card {
 
     public SilverbluffBridge() {

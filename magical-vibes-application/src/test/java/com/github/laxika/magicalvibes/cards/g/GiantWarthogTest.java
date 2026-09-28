@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantWarthog.class, AvenFogbringer.class})
+@CardUsed({AvenFogbringer.class, GiantWarthog.class})
 class GiantWarthogTest extends BaseCardTest {
 
     @Test

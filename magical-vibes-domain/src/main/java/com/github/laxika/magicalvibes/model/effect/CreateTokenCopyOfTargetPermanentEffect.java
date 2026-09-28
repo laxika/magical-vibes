@@ -318,10 +318,16 @@ public record CreateTokenCopyOfTargetPermanentEffect(
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingExiledAtEndOfCombat() {
+        return tappedAndAttackingExiledAtEndOfCombat(false);
+    }
+
+    /** Creates a tapped and attacking copy exiled at end of combat, optionally nonlegendary. */
+    public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingExiledAtEndOfCombat(
+            boolean removeLegendary) {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
                 false, false, null, Set.of(), false, Map.of(), List.of(), false,
-                false, new Fixed(1), true, Set.of(), false);
+                removeLegendary, new Fixed(1), true, Set.of(), false);
     }
 
     /** Creates a copy with the supplied overrides that is not legendary. */

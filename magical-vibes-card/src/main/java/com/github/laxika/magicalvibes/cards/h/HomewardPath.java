@@ -5,13 +5,17 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "1467")
+@CardRegistration(set = "SLD", collectorNumber = "1851")
 @CardRegistration(set = "CMD", collectorNumber = "277")
 @CardRegistration(set = "C13", collectorNumber = "295")
+@CardRegistration(set = "LTC", collectorNumber = "365")
+@CardRegistration(set = "LTC", collectorNumber = "395")
 public class HomewardPath extends Card {
 
     public HomewardPath() {

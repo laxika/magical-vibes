@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "18")
+@CardRegistration(set = "LCC", collectorNumber = "135")
 public class RadiantDestiny extends Card {
 
     public RadiantDestiny() {

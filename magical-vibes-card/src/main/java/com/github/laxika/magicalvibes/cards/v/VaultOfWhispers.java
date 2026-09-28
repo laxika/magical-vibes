@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "MRD", collectorNumber = "286")
 @CardRegistration(set = "HOP", collectorNumber = "141")
+@CardRegistration(set = "SLD", collectorNumber = "302")
+@CardRegistration(set = "40K", collectorNumber = "305")
+@CardRegistration(set = "DSC", collectorNumber = "322")
 public class VaultOfWhispers extends Card {
 
     public VaultOfWhispers() {

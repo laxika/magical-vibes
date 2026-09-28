@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -10,6 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public interface AsEntersGraveyardExileEffect extends ReplacementEffect {
 
     CardPredicate filter();
+
+    /** Which graveyards supply the cards offered by this entry replacement. */
+    default GraveyardSearchScope graveyardScope() {
+        return GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+    }
 
     int minimumCards();
 

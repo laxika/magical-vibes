@@ -34,6 +34,18 @@ class UrzasPowerPlantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped Mine and Tower still enable the two-mana bonus")
+    void tapWithTappedTronLandsAddsTwo() {
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefieldAndReturn(player1, new UrzasMine()).tap();
+        harness.addToBattlefieldAndReturn(player1, new UrzasTower()).tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Tapping with only a Mine adds one colorless mana")
     void tapWithPartialTronAddsOne() {
         harness.addToBattlefield(player1, new UrzasPowerPlant());

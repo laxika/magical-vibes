@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 
 @CardUsed({YawgmothDemon.class, Ornithopter.class, MycosynthLattice.class})
 class YawgmothDemonTest extends BaseCardTest {
@@ -135,5 +137,12 @@ class YawgmothDemonTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isFalse();
         harness.assertLife(player1, lifeBefore);
         harness.assertOnBattlefield(player1, "Ornithopter");
+    }
+
+    private Permanent demon(Player owner) {
+        UUID id = harness.getPermanentId(owner, "Yawgmoth Demon");
+        return gd.playerBattlefields.get(owner.getId()).stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst().orElseThrow();
     }
 }

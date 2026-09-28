@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "232")
+@CardRegistration(set = "NCC", collectorNumber = "328")
 public class AuraMutation extends Card {
 
     public AuraMutation() {

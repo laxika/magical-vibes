@@ -19,15 +19,22 @@ import java.util.UUID;
  */
 public record RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
                                              boolean requireCreatureSharingTypeWithYourCreatures,
-                                             UUID libraryOwnerId)
+                                             UUID libraryOwnerId,
+                                             boolean drawIfDeclined)
         implements CardEffect {
 
     public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination) {
-        this(notPlayedDestination, false, null);
+        this(notPlayedDestination, false, null, false);
     }
 
     public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
                                           boolean requireCreatureSharingTypeWithYourCreatures) {
-        this(notPlayedDestination, requireCreatureSharingTypeWithYourCreatures, null);
+        this(notPlayedDestination, requireCreatureSharingTypeWithYourCreatures, null, false);
+    }
+
+    public RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination,
+                                          boolean requireCreatureSharingTypeWithYourCreatures,
+                                          UUID libraryOwnerId) {
+        this(notPlayedDestination, requireCreatureSharingTypeWithYourCreatures, libraryOwnerId, false);
     }
 }

@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "82")
+@CardRegistration(set = "SLD", collectorNumber = "1116")
 @CardRegistration(set = "RVR", collectorNumber = "89")
+@CardRegistration(set = "AFC", collectorNumber = "107")
 public class Plaguecrafter extends Card {
 
     public Plaguecrafter() {

@@ -566,8 +566,10 @@ public class AnimationSupport {
             return;
         }
         AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
-        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        int power = effect.power() == null ? printedPower(chosen)
+                : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = effect.toughness() == null ? printedToughness(chosen)
+                : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
         animatePermanently(gameData, chosen, effect, power, toughness,
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }

@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "192")
+@CardRegistration(set = "SLD", collectorNumber = "1530")
 @CardRegistration(set = "RVR", collectorNumber = "207")
+@CardRegistration(set = "OTC", collectorNumber = "235")
 public class NivMizzetParun extends Card {
 
     public NivMizzetParun() {

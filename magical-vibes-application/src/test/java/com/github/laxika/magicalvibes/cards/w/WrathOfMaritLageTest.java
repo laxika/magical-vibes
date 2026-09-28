@@ -3,18 +3,17 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WrathOfMaritLage.class, BloodMoon.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({WrathOfMaritLage.class, BloodMoon.class, GrizzlyBears.class, HillGiant.class, ShiftingSky.class})
 class WrathOfMaritLageTest extends BaseCardTest {
 
     @Test
@@ -23,9 +22,7 @@ class WrathOfMaritLageTest extends BaseCardTest {
         Permanent redGiant = addCreatureReady(player1, new HillGiant());   // Red 3/3
         Permanent greenBears = addCreatureReady(player2, new GrizzlyBears()); // Green 2/2
 
-        harness.setHand(player1, List.of(new WrathOfMaritLage()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
 
         harness.passBothPriorities(); // enchantment resolves → ETB trigger on stack
         harness.passBothPriorities(); // ETB trigger resolves
@@ -37,9 +34,7 @@ class WrathOfMaritLageTest extends BaseCardTest {
     @Test
     @DisplayName("ETB taps red creatures that enter before the trigger resolves")
     void etbChecksRedCreaturesAtResolution() {
-        harness.setHand(player1, List.of(new WrathOfMaritLage()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
 
         harness.passBothPriorities(); // enchantment resolves, leaving its ETB trigger on the stack
 
@@ -50,13 +45,26 @@ class WrathOfMaritLageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB uses a creature's current effective color at resolution")
+    void etbUsesEffectiveColorAtResolution() {
+        Permanent shiftingSky = harness.addToBattlefieldAndReturn(player1, new ShiftingSky());
+        shiftingSky.setChosenColor(CardColor.RED);
+
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
+        harness.passBothPriorities(); // enchantment resolves, leaving its ETB trigger on the stack
+
+        Permanent greenBears = addCreatureReady(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(greenBears.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Red noncreatures are unaffected by both abilities")
     void redNoncreaturesAreUnaffected() {
         Permanent bloodMoon = harness.addToBattlefieldAndReturn(player2, new BloodMoon());
 
-        harness.setHand(player1, List.of(new WrathOfMaritLage()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new WrathOfMaritLage(), "{3}{U}{U}");
 
         harness.passBothPriorities(); // enchantment resolves -> ETB trigger on stack
         harness.passBothPriorities(); // ETB trigger resolves
@@ -103,6 +111,21 @@ class WrathOfMaritLageTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(opponentGiant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untap lock follows a creature's current effective color")
+    void untapLockUsesEffectiveColor() {
+        Permanent shiftingSky = harness.addToBattlefieldAndReturn(player1, new ShiftingSky());
+        shiftingSky.setChosenColor(CardColor.RED);
+        harness.addToBattlefield(player1, new WrathOfMaritLage());
+
+        Permanent greenBears = addCreatureReady(player2, new GrizzlyBears());
+        greenBears.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(greenBears.isTapped()).isTrue();
     }
 
     @Test

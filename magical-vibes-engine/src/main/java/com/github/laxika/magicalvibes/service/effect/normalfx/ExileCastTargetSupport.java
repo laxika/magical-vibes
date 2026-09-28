@@ -95,7 +95,7 @@ public class ExileCastTargetSupport {
         candidates.addAll(gameData.orderedPlayerIds);
         gameData.forEachPermanent((ignored, permanent) -> candidates.add(permanent.getId()));
         Set<TargetType> preparedTargetTypes = EffectResolution.computeAllowedTargets(
-                spellEffects, List.of(), card.isAura(), card.isEnchantPlayer());
+                spellEffects, List.of(), card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         if (preparedTargetTypes.contains(TargetType.GRAVEYARD)) {
             gameData.playerGraveyards.values().forEach(graveyard ->
                     graveyard.forEach(graveyardCard -> candidates.add(graveyardCard.getId())));
@@ -193,7 +193,12 @@ public class ExileCastTargetSupport {
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (targetLegalityService.checkSpellTargeting(
+                        gameData, card, playerId, null, controllerId).isEmpty()) {
+                    validTargets.add(playerId);
+                }
+            }
         }
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "165")
 @CardRegistration(set = "KLR", collectorNumber = "174")
+@CardRegistration(set = "CMM", collectorNumber = "311")
 public class OviyaPashiriSageLifecrafter extends Card {
 
     public OviyaPashiriSageLifecrafter() {

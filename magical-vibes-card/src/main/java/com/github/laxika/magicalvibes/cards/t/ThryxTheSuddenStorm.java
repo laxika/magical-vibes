@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "76")
+@CardRegistration(set = "CMM", collectorNumber = "127")
 public class ThryxTheSuddenStorm extends Card {
 
     public ThryxTheSuddenStorm() {

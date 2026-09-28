@@ -20,6 +20,13 @@ import java.util.Set;
 @CardRegistration(set = "UMA", collectorNumber = "76")
 @CardRegistration(set = "2X2", collectorNumber = "64")
 @CardRegistration(set = "TSR", collectorNumber = "318")
+@CardRegistration(set = "C15", collectorNumber = "109")
+@CardRegistration(set = "CMM", collectorNumber = "124")
+@CardRegistration(set = "CMM", collectorNumber = "499")
+@CardRegistration(set = "CMM", collectorNumber = "673")
+@CardRegistration(set = "C21", collectorNumber = "131")
+@CardRegistration(set = "OTC", collectorNumber = "116")
+@CardRegistration(set = "C20", collectorNumber = "125")
 public class TalrandSkySummoner extends Card {
 
     public TalrandSkySummoner() {

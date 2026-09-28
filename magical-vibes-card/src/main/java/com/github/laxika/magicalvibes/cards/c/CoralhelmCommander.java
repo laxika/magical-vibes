@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "57")
+@CardRegistration(set = "LCC", collectorNumber = "148")
 public class CoralhelmCommander extends Card {
 
     public CoralhelmCommander() {

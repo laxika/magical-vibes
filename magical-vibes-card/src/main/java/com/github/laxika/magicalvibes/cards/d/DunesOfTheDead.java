@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "175")
+@CardRegistration(set = "OTC", collectorNumber = "291")
 public class DunesOfTheDead extends Card {
 
     public DunesOfTheDead() {

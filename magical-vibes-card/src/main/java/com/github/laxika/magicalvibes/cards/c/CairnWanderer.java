@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "105")
+@CardRegistration(set = "C20", collectorNumber = "130")
 public class CairnWanderer extends Card {
 
     public CairnWanderer() {

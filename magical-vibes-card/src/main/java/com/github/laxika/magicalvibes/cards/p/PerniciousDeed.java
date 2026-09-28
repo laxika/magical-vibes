@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "114")
 @CardRegistration(set = "A25", collectorNumber = "212")
+@CardRegistration(set = "SLD", collectorNumber = "1777")
 public class PerniciousDeed extends Card {
 
     public PerniciousDeed() {

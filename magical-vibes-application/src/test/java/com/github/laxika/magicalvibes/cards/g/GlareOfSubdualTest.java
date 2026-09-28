@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SelesnyaSignet;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,12 +12,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlareOfSubdual.class, GrizzlyBears.class, AngelsFeather.class, Forest.class})
+@CardUsed({GlareOfSubdual.class, BorosRecruit.class, SelesnyaSignet.class, Forest.class})
 class GlareOfSubdualTest extends BaseCardTest {
 
     @Test
     void tapsTargetCreatureByTappingAnUntappedCreatureYouControl() {
-        Permanent glare = addPermanent(player1, new GlareOfSubdual());
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
         Permanent costCreature = addReadyCreature(player1);
         Permanent target = addReadyCreature(player2);
 
@@ -34,9 +33,9 @@ class GlareOfSubdualTest extends BaseCardTest {
 
     @Test
     void tapsTargetArtifact() {
-        Permanent glare = addPermanent(player1, new GlareOfSubdual());
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
         addReadyCreature(player1);
-        Permanent target = addPermanent(player2, new AngelsFeather());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SelesnyaSignet());
 
         harness.activateAbility(player1, battlefieldIndex(player1, glare), null, target.getId());
         harness.passBothPriorities();
@@ -46,7 +45,7 @@ class GlareOfSubdualTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutAnUntappedCreatureToTap() {
-        Permanent glare = addPermanent(player1, new GlareOfSubdual());
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
         Permanent costCreature = addReadyCreature(player1);
         costCreature.tap();
         Permanent target = addReadyCreature(player2);
@@ -57,10 +56,34 @@ class GlareOfSubdualTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetALand() {
-        Permanent glare = addPermanent(player1, new GlareOfSubdual());
+    void cannotPayCostWithAnOpponentsCreature() {
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
+        Permanent opponentCreature = addReadyCreature(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, glare), null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetAnAlreadyTappedCreature() {
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
         addReadyCreature(player1);
-        Permanent target = addPermanent(player2, new Forest());
+        Permanent target = addReadyCreature(player2);
+        target.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, glare), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotTargetALand() {
+        Permanent glare = harness.addToBattlefieldAndReturn(player1, new GlareOfSubdual());
+        addReadyCreature(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, glare), null, target.getId()))
@@ -69,17 +92,7 @@ class GlareOfSubdualTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addReadyPermanent(player, new GrizzlyBears());
-    }
-
-    private Permanent addPermanent(Player player, Card card) {
-        return addReadyPermanent(player, card);
-    }
-
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new BorosRecruit());
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

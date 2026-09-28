@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "38")
 @CardRegistration(set = "MUL", collectorNumber = "103")
 @CardRegistration(set = "MUL", collectorNumber = "168")
+@CardRegistration(set = "C15", collectorNumber = "44")
 public class EzuriClawOfProgress extends Card {
 
     public EzuriClawOfProgress() {

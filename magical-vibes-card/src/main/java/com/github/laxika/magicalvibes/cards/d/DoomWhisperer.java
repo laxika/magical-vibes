@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "69")
+@CardRegistration(set = "SLD", collectorNumber = "1763")
 public class DoomWhisperer extends Card {
 
     public DoomWhisperer() {

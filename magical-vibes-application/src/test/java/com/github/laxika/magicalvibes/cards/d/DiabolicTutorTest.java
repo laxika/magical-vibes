@@ -3,21 +3,22 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class})
+@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class, GrizzlyBears.class})
 class DiabolicTutorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,12 +26,14 @@ class DiabolicTutorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Diabolic Tutor puts it on the stack")
     void castingPutsItOnStack() {
-        harness.castFromHand(player1, new DiabolicTutor(), "{2}{B}{B}");
+        DiabolicTutor tutor = new DiabolicTutor();
+        harness.castFromHand(player1, tutor, "{2}{B}{B}");
 
+        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Diabolic Tutor");
+        assertThat(entry.getCard()).isSameAs(tutor);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -42,6 +45,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
+        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // All cards from library are presented (not just a subset)
@@ -58,14 +62,14 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
+        GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst();
 
         harness.handleCardChosen(player1, 0);
 
         // Card is in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals(chosenName));
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosenCard);
 
         // Library lost one card
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -84,19 +88,15 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Find Aven Fisher in the search cards
-        int fisherIndex = -1;
-        for (int i = 0; i < gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size(); i++) {
-            if (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().get(i).getName().equals("Aven Fisher")) {
-                fisherIndex = i;
-                break;
-            }
-        }
-        assertThat(fisherIndex).isGreaterThanOrEqualTo(0);
+        GameData gd = harness.getGameData();
+        // Aven Fisher is a non-land card in the search choices.
+        Card fisher = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream()
+                .filter(card -> card instanceof AvenFisher).findFirst().orElseThrow();
+        int fisherIndex = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().indexOf(fisher);
 
         harness.handleCardChosen(player1, fisherIndex);
 
-        harness.assertInHand(player1, "Aven Fisher");
+        assertThat(gd.playerHands.get(player1.getId())).contains(fisher);
     }
 
     @Test
@@ -121,13 +121,13 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isFalse();
 
         harness.handleCardChosen(player1, 0);
 
         // Log should NOT mention "reveals"
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
+        assertThat(gameLogContains("reveals")).isFalse();
         // Log should mention putting a card into hand
         assertThat(gameLogContains("puts a card into their hand")).isTrue();
     }
@@ -142,6 +142,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
@@ -153,9 +154,11 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot fail to find");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     // ===== Empty library =====
@@ -169,8 +172,9 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gameLogContains("it is empty")).isTrue();
+        assertThat(gameLogContains("it is empty. Library is shuffled.")).isTrue();
     }
 
     // ===== Completing the search fully finishes the paused resolution =====
@@ -183,6 +187,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
+        GameData gd = harness.getGameData();
         harness.handleCardChosen(player1, 0);
 
         // The search was the spell's last effect: the parked resolution entry must be cleared
@@ -201,6 +206,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
+        GameData gd = harness.getGameData();
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Diabolic Tutor");
@@ -217,4 +223,3 @@ class DiabolicTutorTest extends BaseCardTest {
                 new CavesOfKoilos(), new AvenFisher(), new CavesOfKoilos(), new AvenFisher()));
     }
 }
-

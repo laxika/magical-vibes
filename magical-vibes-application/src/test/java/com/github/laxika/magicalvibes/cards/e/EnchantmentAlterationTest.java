@@ -156,9 +156,8 @@ class EnchantmentAlterationTest extends BaseCardTest {
 
     private Permanent addAuraAttachedTo(Player player, com.github.laxika.magicalvibes.model.Card card,
                                         Permanent host) {
-        Permanent aura = new Permanent(card);
+        Permanent aura = harness.addToBattlefieldAndReturn(player, card);
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 

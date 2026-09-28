@@ -34,8 +34,8 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -63,8 +63,8 @@ class DuelistsHeritageTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
         assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

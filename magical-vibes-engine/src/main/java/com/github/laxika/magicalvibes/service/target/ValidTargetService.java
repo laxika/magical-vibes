@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -207,7 +208,7 @@ public class ValidTargetService {
                 etbEffects = EffectResolution.resolveEffects(etbEffects, kicked, modeSelection);
             }
             allowedTargets = EffectResolution.computeAllowedTargets(
-                    spellEffects, etbEffects, card.isAura(), card.isEnchantPlayer());
+                    spellEffects, etbEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         } else {
             allowedTargets = EffectResolution.computeAllowedTargets(card);
         }
@@ -216,6 +217,7 @@ public class ValidTargetService {
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
         List<UUID> validExiledCardIds = new ArrayList<>();
+        List<UUID> validHandCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !card.isAllowSharedTargets()
                 ? Set.copyOf(alreadySelectedIds) : Set.of();
 
@@ -276,6 +278,17 @@ public class ValidTargetService {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate == null || selected.stream()
                             .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
+                });
+            }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_TOUGHNESS && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .anyMatch(sel -> !gameQueryService.haveEqualToughness(gameData, sel, candidate));
                 });
             }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
@@ -459,6 +472,14 @@ public class ValidTargetService {
                     gameData, card, spellEffects, controllerId, excludeIds, effectiveXValue));
         }
 
+        if (allowedTargets.contains(TargetType.HAND)) {
+            TargetFilter handPositionFilter = isMultiTarget && positionIndex < targetFilters.size()
+                    ? targetFilters.get(positionIndex) : modeFilter;
+            validHandCardIds.addAll(computeValidHandTargetsForSpell(
+                    gameData, card, spellEffects, controllerId, excludeIds, effectiveXValue,
+                    handPositionFilter));
+        }
+
         enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
                 validPermanentIds, validPlayerIds);
 
@@ -490,7 +511,37 @@ public class ValidTargetService {
                     gameData, card, controllerId, effectiveX, isKicked);
         }
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
-                validExiledCardIds, responseMinTargets, responseMaxTargets, prompt);
+                validExiledCardIds, validHandCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private List<UUID> computeValidHandTargetsForSpell(GameData gameData, Card card,
+                                                        List<CardEffect> spellEffects,
+                                                        UUID controllerId, Set<UUID> excludeIds,
+                                                        int xValue, TargetFilter positionFilter) {
+        FilterContext context = targetFilterContext(gameData, card.getId(), controllerId, xValue);
+        List<UUID> validIds = new ArrayList<>();
+        for (Card candidate : gameData.playerHands.getOrDefault(controllerId, List.of())) {
+            if (excludeIds.contains(candidate.getId()) || candidate.getId().equals(card.getId())) {
+                continue;
+            }
+            if (positionFilter instanceof HandCardPredicateTargetFilter handFilter
+                    && !predicateEvaluationService.matchesCardPredicate(
+                    candidate, handFilter.predicate(), card.getId(), gameData, controllerId)) {
+                continue;
+            }
+            boolean valid = spellEffects.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.HAND_CARD))
+                    .anyMatch(effect -> targetPredicateEvaluationService.matchesHandCard(
+                            effect.targetSpec().targetPredicate(), candidate, controllerId, context)
+                            && targetValidationService.checkEffectTargets(List.of(effect),
+                            new TargetValidationContext(gameData, candidate.getId(),
+                                    com.github.laxika.magicalvibes.model.Zone.HAND, card, xValue,
+                                    controllerId, null)).isEmpty());
+            if (valid) {
+                validIds.add(candidate.getId());
+            }
+        }
+        return validIds;
     }
 
     private List<UUID> computeValidExiledTargetsForSpell(GameData gameData, Card card,
@@ -648,7 +699,8 @@ public class ValidTargetService {
                         validGraveyardCardIds);
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        targetLegalityService.getEffectiveMaxTargetsForAbility(
+                                gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue),
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
@@ -659,7 +711,8 @@ public class ValidTargetService {
                 return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
                         validGraveyardCardIds, validExiledCardIds,
                         ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        targetLegalityService.getEffectiveMaxTargetsForAbility(
+                                gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue),
                         "Select targets for " + sourceCard.getName() + " ability");
             }
 
@@ -789,6 +842,18 @@ public class ValidTargetService {
                             .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
                 });
             }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_TOUGHNESS
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                List<Permanent> selected = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .anyMatch(sel -> !gameQueryService.haveEqualToughness(gameData, sel, candidate));
+                });
+            }
             if ((ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
                     || ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE)
                     && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
@@ -845,7 +910,8 @@ public class ValidTargetService {
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                     ability.getEffectiveMinTargets(effectiveTargetScalingValue),
-                    ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
+                    targetLegalityService.getEffectiveMaxTargetsForAbility(
+                            gameData, controllerId, ability, sourceCard, effectiveTargetScalingValue), prompt);
         }
 
         boolean effectsDeclareTarget = targetingEffects.stream()
@@ -1458,6 +1524,14 @@ public class ValidTargetService {
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
                 e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
+            UUID sourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(
+                    gameData, sourceCard.getId());
+            Permanent sourcePermanent = sourcePermanentId == null
+                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (sourcePermanent != null
+                    && gameQueryService.hasProtectionFromSource(gameData, perm, sourcePermanent)) {
+                return false;
+            }
             if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
                 return false;
             }
@@ -1488,7 +1562,9 @@ public class ValidTargetService {
         if (!ability.isMultiTarget()
                 && targetValidationService.checkEffectTargets(ability.getEffects(),
                         new TargetValidationContext(gameData, perm.getId(), null, sourceCard,
-                                0, controllerId, null)).isPresent()) {
+                                0, controllerId, null, false,
+                                targetLegalityService.findSourcePermanentIdByCardId(
+                                        gameData, sourceCard.getId()), null)).isPresent()) {
             return false;
         }
 
@@ -1536,7 +1612,7 @@ public class ValidTargetService {
         }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
                 spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                card.isAura(), card.isEnchantPlayer());
+                card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
         boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()
                 == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET
@@ -1810,6 +1886,18 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetPutIntoGraveyardFromLibraryThisTurn()
+                                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
+                        if (rge.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                                && !gameData.cardsDiscardedOrCycledThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())
+                                && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         if (rge.targetNotPutIntoGraveyardThisCombat()
                                 && gameData.cardsPutIntoGraveyardThisCombat
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
@@ -2011,7 +2099,16 @@ public class ValidTargetService {
                     || c.getManaValue() <= amountEvaluationService.evaluate(
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
-            return matchesReturnCardFilter(gameData, e, c, sourceCardId, controllerId, xValue);
+            if (!matchesReturnCardFilter(gameData, e, c, sourceCardId, controllerId, xValue)) {
+                return false;
+            }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+            return !e.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
+                    || (graveyardOwnerId != null
+                    && (gameData.cardsDiscardedOrCycledThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId())
+                    || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId())));
         } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
             return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
         } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
@@ -2031,11 +2128,17 @@ public class ValidTargetService {
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,
                                              Card card, UUID sourceCardId, UUID controllerId, Integer xValue) {
+        UUID cardOwnerId = card.getOwnerId() != null
+                ? card.getOwnerId()
+                : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
         if (effect.sourceChosenSubtype()) {
             CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, sourceCardId);
-            UUID cardOwnerId = card.getOwnerId() != null
-                    ? card.getOwnerId()
-                    : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             return chosenSubtype != null
                     && (card.hasKeyword(Keyword.CHANGELING)
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));

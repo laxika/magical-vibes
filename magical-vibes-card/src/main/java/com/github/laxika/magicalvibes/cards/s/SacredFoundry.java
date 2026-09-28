@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "RAV", collectorNumber = "280")
 @CardRegistration(set = "EOE", collectorNumber = "256")
 @CardRegistration(set = "EXP", collectorNumber = "14")
+@CardRegistration(set = "SLD", collectorNumber = "131")
 @CardRegistration(set = "RVR", collectorNumber = "285")
 @CardRegistration(set = "RVR", collectorNumber = "297")
 public class SacredFoundry extends Card {

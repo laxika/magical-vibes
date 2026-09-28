@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
+@CardRegistration(set = "SLD", collectorNumber = "1241")
 @CardRegistration(set = "SLX", collectorNumber = "29")
 public class CasalLurkwoodPathfinder extends Card {
 

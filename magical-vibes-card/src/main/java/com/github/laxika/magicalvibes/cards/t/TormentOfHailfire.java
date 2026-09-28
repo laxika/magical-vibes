@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "77")
 @CardRegistration(set = "AKR", collectorNumber = "128")
+@CardRegistration(set = "SLD", collectorNumber = "2287")
 public class TormentOfHailfire extends Card {
 
     public TormentOfHailfire() {

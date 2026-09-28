@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "6")
 @CardRegistration(set = "WTH", collectorNumber = "7")
 @CardRegistration(set = "MB1", collectorNumber = "60")
+@CardRegistration(set = "C15", collectorNumber = "60")
 public class AuraOfSilence extends Card {
 
     public AuraOfSilence() {

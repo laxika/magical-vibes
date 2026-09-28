@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,9 +9,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -33,16 +36,19 @@ public class LifeSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentRemovalService permanentRemovalService;
     @Lazy
     private final DrawService drawService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
                        TriggerCollectionService triggerCollectionService,
+                       @Lazy PermanentRemovalService permanentRemovalService,
                        @Lazy DrawService drawService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
+        this.permanentRemovalService = permanentRemovalService;
         this.drawService = drawService;
     }
 
@@ -99,7 +105,12 @@ public class LifeSupport {
         }
         // Life-gain replacement effects (e.g. Boon Reflection) replace the amount before it is applied.
         amount *= gameQueryService.lifeGainMultiplier(gameData, controllerId);
-        Integer currentLife = gameData.playerLifeTotals.get(controllerId);
+        int currentLife = gameData.getLife(controllerId);
+        amount = (int) Math.min((long) amount,
+                Math.max(0L, (long) gameData.getMaximumLifeTotal(controllerId) - currentLife));
+        if (amount <= 0) {
+            return;
+        }
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
         if (amount > 0) {
             gameData.lifeGainedThisTurn.merge(controllerId, amount, Integer::sum);
@@ -130,6 +141,7 @@ public class LifeSupport {
         }
 
         int currentLife = gameData.getLife(playerId);
+        newLife = gameData.capLifeTotal(playerId, newLife);
         if (newLife == currentLife) return true;
 
         if (newLife > currentLife) {
@@ -153,10 +165,18 @@ public class LifeSupport {
             int gained = newLife - currentLife;
             gained += gameQueryService.additionalLifeGain(gameData, playerId);
             gained *= gameQueryService.lifeGainMultiplier(gameData, playerId);
+            gained = (int) Math.min((long) gained,
+                    Math.max(0L, (long) gameData.getMaximumLifeTotal(playerId) - currentLife));
+            if (gained <= 0) {
+                return true;
+            }
             gameData.playerLifeTotals.put(playerId, currentLife + gained);
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
+            if (replaceLifeLossWithShield(gameData, playerId)) {
+                return true;
+            }
             int lifeLoss = (currentLife - newLife)
                     * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
@@ -170,6 +190,9 @@ public class LifeSupport {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+            return;
+        }
+        if (replaceLifeLossWithShield(gameData, playerId)) {
             return;
         }
         amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
@@ -190,6 +213,9 @@ public class LifeSupport {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+            return;
+        }
+        if (replaceLifeLossWithShield(gameData, playerId)) {
             return;
         }
 
@@ -242,11 +268,68 @@ public class LifeSupport {
         triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
     }
 
+    public void applyRadCounters(GameData gameData, UUID playerId, int amount, String sourceName,
+                                 UUID placingPlayerId) {
+        if (amount <= 0) return;
+
+        int currentRad = gameData.playerRadCounters.getOrDefault(playerId, 0);
+        gameData.playerRadCounters.put(playerId, currentRad + amount);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets " + amount + " rad counter" + (amount > 1 ? "s" : "")
+                + " (" + sourceName + ").";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} gets {} rad counter(s) from {}", gameData.id, playerName, amount, sourceName);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+    }
+
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream().anyMatch(permanent ->
                 permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+    }
+
+    private boolean replaceLifeLossWithShield(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+
+        List<Permanent> masters = battlefield.stream()
+                .filter(source -> !source.isFaceDown() && !source.isLosesAllAbilitiesUntilEndOfTurn())
+                .filter(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(LichDuelMasteryLifeLossReplacementEffect.class::isInstance))
+                .toList();
+        for (Permanent source : masters) {
+            ExiledCardEntry shield = gameData.exiledCards.stream()
+                    .filter(entry -> source.getId().equals(entry.sourcePermanentId())
+                            && playerId.equals(entry.ownerId())
+                            && entry.faceDown())
+                    .findFirst()
+                    .orElse(null);
+            if (shield != null && gameData.removeFromExile(shield.card().getId())) {
+                gameData.addCardToHand(playerId, shield.card());
+                gameLogService.append(gameData, GameLog.text(
+                        gameData.playerIdToName.get(playerId)
+                                + " puts a shield into their hand instead of losing life."));
+                return true;
+            }
+        }
+
+        for (Permanent source : masters) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            if (gameQueryService.cantBeSacrificed(gameData, source)
+                    || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
+                continue;
+            }
+            if (controllerId != null) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, controllerId, source.getCard());
+            }
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return true;
+        }
+        return false;
     }
 
     private UUID resolveSpellOrAbilityControllerId(GameData gameData) {

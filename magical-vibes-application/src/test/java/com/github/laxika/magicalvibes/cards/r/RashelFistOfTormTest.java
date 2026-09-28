@@ -2,16 +2,17 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarkOfTheVampire;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RashelFistOfTorm.class, GrizzlyBears.class, MarkOfTheVampire.class})
+@CardUsed({RashelFistOfTorm.class, Pacifism.class, GrizzlyBears.class, MarkOfTheVampire.class})
 class RashelFistOfTormTest extends BaseCardTest {
 
     @Test

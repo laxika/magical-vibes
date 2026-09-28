@@ -491,6 +491,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.energyCounters?.[playerIndex] ?? 0;
   }
 
+  getRadCounters(playerIndex: number): number {
+    return this.game()?.radCounters?.[playerIndex] ?? 0;
+  }
+
   getPlayerId(playerIndex: number): string {
     return this.game()?.playerIds?.[playerIndex] ?? '';
   }
@@ -514,6 +518,7 @@ export class GameComponent implements OnInit, OnDestroy {
       commander: state.commander,
       activePlayerId: state.activePlayerId,
       turnNumber: state.turnNumber,
+      monarchPlayerId: state.monarchPlayerId ?? null,
       currentStep: state.currentStep,
       priorityPlayerId: state.priorityPlayerId,
       battlefields: state.battlefields,
@@ -524,6 +529,7 @@ export class GameComponent implements OnInit, OnDestroy {
       lifeTotals: state.lifeTotals,
       poisonCounters: state.poisonCounters,
       energyCounters: state.energyCounters,
+      radCounters: state.radCounters ?? [0, 0],
       speeds: state.speeds ?? [0, 0],
       hand: state.hand,
       opponentHand: state.opponentHand ?? [],
@@ -624,6 +630,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
+    const handCard = this.hand[index];
+    if (this.choice.targeting.selectingTarget && handCard?.id
+        && this.choice.targeting.validHandTargetIds().has(handCard.id)) {
+      this.choice.targeting.selectHandTarget(index);
+      return;
+    }
     if (this.choice.targeting.selectingGraveyardCastDiscard) {
       this.choice.targeting.selectGraveyardCastDiscardHandCard(index);
       return;

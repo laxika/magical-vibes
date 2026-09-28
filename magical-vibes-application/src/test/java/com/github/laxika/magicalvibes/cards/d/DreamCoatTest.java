@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -62,5 +63,35 @@ class DreamCoatTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, auraIndex, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Dream Coat can be activated again on a later turn")
+    void activatesAgainOnLaterTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DreamCoat()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Dream Coat"));
+        harness.activateAbility(player1, auraIndex, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "DONE");
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, auraIndex, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "DONE");
+
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.BLUE);
     }
 }

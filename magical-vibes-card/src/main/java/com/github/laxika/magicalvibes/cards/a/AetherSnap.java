@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromAllPerma
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "37")
+@CardRegistration(set = "C14", collectorNumber = "133")
+@CardRegistration(set = "NCC", collectorNumber = "241")
 public class AetherSnap extends Card {
 
     public AetherSnap() {

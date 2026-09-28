@@ -179,4 +179,8 @@ class FirebreathingTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    private void attachFirebreathing(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Firebreathing());
+        aura.setAttachedTo(creature.getId());
+    }
 }

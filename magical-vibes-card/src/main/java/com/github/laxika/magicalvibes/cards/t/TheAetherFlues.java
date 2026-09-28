@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "2")
 @CardRegistration(set = "OPCA", collectorNumber = "10")
+@CardRegistration(set = "MOC", collectorNumber = "139")
 public class TheAetherFlues extends Card {
 
     public TheAetherFlues() {

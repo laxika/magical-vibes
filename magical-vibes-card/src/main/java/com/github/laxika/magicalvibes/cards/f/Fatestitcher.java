@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "43")
+@CardRegistration(set = "SLD", collectorNumber = "835")
 public class Fatestitcher extends Card {
 
     public Fatestitcher() {

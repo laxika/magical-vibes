@@ -1,23 +1,21 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GaleForce.class, AirElemental.class, SerraAngel.class, GrizzlyBears.class, GiantSpider.class,
+        MahamotiDjinn.class})
 class GaleForceTest extends BaseCardTest {
 
     private void castGaleForce() {
-        harness.setHand(player1, List.of(new GaleForce()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GaleForce(), "{4}{G}");
         harness.passBothPriorities();
     }
 
@@ -31,6 +29,17 @@ class GaleForceTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Air Elemental");
         harness.assertNotOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Gale Force deals exactly 5 damage to a surviving flying creature")
+    void dealsExactlyFiveDamageToSurvivingFlyer() {
+        var mahamotiDjinn = harness.addToBattlefieldAndReturn(player2, new MahamotiDjinn());
+
+        castGaleForce();
+
+        harness.assertOnBattlefield(player2, "Mahamoti Djinn");
+        assertThat(mahamotiDjinn.getMarkedDamage()).isEqualTo(5);
     }
 
     @Test
@@ -50,8 +59,7 @@ class GaleForceTest extends BaseCardTest {
     void dealsNoDamageToPlayers() {
         castGaleForce();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

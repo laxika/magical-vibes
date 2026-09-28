@@ -34,6 +34,35 @@ class ElderSpawnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Island cannot pay for Elder Spawn")
+    void opponentIslandCannotPay() {
+        harness.addToBattlefield(player1, new ElderSpawn());
+        harness.addToBattlefield(player2, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elder Spawn");
+        harness.assertInGraveyard(player1, "Elder Spawn");
+        harness.assertLife(player1, 14);
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Elder Spawn does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new ElderSpawn());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elder Spawn");
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Sacrificing an Island keeps Elder Spawn")
     void sacrificingIslandKeepsElderSpawn() {
         harness.addToBattlefield(player1, new ElderSpawn());

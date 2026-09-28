@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "79")
+@CardRegistration(set = "SLD", collectorNumber = "396")
 public class TamiyoTheMoonSage extends Card {
 
     public TamiyoTheMoonSage() {

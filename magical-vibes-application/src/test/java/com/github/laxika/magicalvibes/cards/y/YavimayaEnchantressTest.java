@@ -67,7 +67,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player2, new Telepathy());
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -136,7 +136,8 @@ class YavimayaEnchantressTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
 
         // Remove the enchantment
-        gd.playerBattlefields.get(player1.getId()).remove(enchantment);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchantment));
 
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "59")
+@CardRegistration(set = "LCC", collectorNumber = "158")
 public class HeraldOfSecretStreams extends Card {
 
     public HeraldOfSecretStreams() {

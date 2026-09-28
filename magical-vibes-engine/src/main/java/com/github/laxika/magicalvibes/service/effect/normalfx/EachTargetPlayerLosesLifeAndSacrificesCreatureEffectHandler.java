@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerLosesLifeAndSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -38,21 +40,19 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
         if (targetPlayerIds == null || targetPlayerIds.isEmpty()) {
             if (entry.getTargetId() == null) {
                 beginNextTarget(gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                        List.of(), List.of());
+                        List.of(), List.of(), List.of(), loseLifeAndSacrifice);
                 return;
             }
             targetPlayerIds = List.of(entry.getTargetId());
         }
 
-        for (UUID targetPlayerId : targetPlayerIds) {
-            if (gameData.playerIds.contains(targetPlayerId)) {
-                lifeSupport.applyLifeLoss(gameData, targetPlayerId, loseLifeAndSacrifice.lifeLoss(),
-                        entry.getCard().getName());
-            }
+        List<UUID> allTargetPlayerIds = List.copyOf(targetPlayerIds);
+        if (!loseLifeAndSacrifice.sacrificeBeforeLifeLoss()) {
+            applyLifeLoss(gameData, allTargetPlayerIds, loseLifeAndSacrifice.lifeLoss(), entry.getCard().getName());
         }
 
         beginNextTarget(gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                apnapTargets(gameData, targetPlayerIds), List.of());
+                allTargetPlayerIds, apnapTargets(gameData, allTargetPlayerIds), List.of(), loseLifeAndSacrifice);
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,
@@ -60,19 +60,25 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
         Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
         if (chosen == null || !context.choosingPlayerId().equals(
                 gameQueryService.findPermanentController(gameData, permanentId))
-                || !gameQueryService.isCreature(gameData, chosen)) {
-            throw new IllegalStateException("Chosen permanent is not a creature controlled by the choosing player");
+                || !gameQueryService.isCreature(gameData, chosen)
+                || gameQueryService.cantBeSacrificed(gameData, chosen)
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, chosen, context.sacrificeFilter())) {
+            throw new IllegalStateException("Chosen permanent does not match the sacrifice requirement");
         }
 
         List<UUID> chosenCreatureIds = new ArrayList<>(context.chosenCreatureIds());
         chosenCreatureIds.add(permanentId);
         beginNextTarget(gameData, context.sourceControllerId(), context.sourceCard(), context.sourcePermanentId(),
-                context.remainingTargetPlayerIds(), chosenCreatureIds);
+                context.targetPlayerIds(), context.remainingTargetPlayerIds(), chosenCreatureIds,
+                new EachTargetPlayerLosesLifeAndSacrificesCreatureEffect(
+                        context.lifeLoss(), context.sacrificeFilter(), context.sacrificeBeforeLifeLoss()));
     }
 
     private void beginNextTarget(GameData gameData, UUID sourceControllerId, Card sourceCard,
-                                 UUID sourcePermanentId, List<UUID> remainingTargetPlayerIds,
-                                 List<UUID> chosenCreatureIds) {
+                                 UUID sourcePermanentId, List<UUID> targetPlayerIds,
+                                 List<UUID> remainingTargetPlayerIds, List<UUID> chosenCreatureIds,
+                                 EachTargetPlayerLosesLifeAndSacrificesCreatureEffect effect) {
         List<UUID> remaining = new ArrayList<>(remainingTargetPlayerIds);
         List<UUID> chosen = new ArrayList<>(chosenCreatureIds);
 
@@ -84,7 +90,9 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
             }
 
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId,
-                    ignored -> true);
+                    permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, effect.sacrificeFilter()));
             if (creatureIds.isEmpty()) {
                 continue;
             }
@@ -96,13 +104,25 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature(
                             targetPlayerId, sourceControllerId, sourceCard, sourcePermanentId,
-                            List.copyOf(remaining), List.copyOf(chosen)));
+                            List.copyOf(targetPlayerIds), List.copyOf(remaining), List.copyOf(chosen),
+                            effect.lifeLoss(), effect.sacrificeFilter(), effect.sacrificeBeforeLifeLoss()));
             playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                     sourceCard.getName() + " - Choose a creature to sacrifice.");
             return;
         }
 
         destructionSupport.performSimultaneousSacrifice(gameData, chosen);
+        if (effect.sacrificeBeforeLifeLoss()) {
+            applyLifeLoss(gameData, targetPlayerIds, effect.lifeLoss(), sourceCard.getName());
+        }
+    }
+
+    private void applyLifeLoss(GameData gameData, List<UUID> targetPlayerIds, int amount, String cardName) {
+        for (UUID targetPlayerId : targetPlayerIds) {
+            if (gameData.playerIds.contains(targetPlayerId)) {
+                lifeSupport.applyLifeLoss(gameData, targetPlayerId, amount, cardName);
+            }
+        }
     }
 
     private List<UUID> apnapTargets(GameData gameData, List<UUID> targetPlayerIds) {

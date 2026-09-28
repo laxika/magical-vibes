@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.c.CircleOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,9 +25,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.Player;
 
-@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class,
-        GrizzlyBears.class, JaceBeleren.class, SerraAngel.class, SkyhunterSkirmisher.class})
+@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SerraAngel.class, SkyhunterSkirmisher.class})
 class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -423,6 +424,27 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
+    @Test
+    @DisplayName("Does not double damage after Furnace loses all abilities")
+    void losesAllAbilitiesStopsDoubling() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        UUID furnaceId = harness.getPermanentId(player1, "Furnace of Rath");
+
+        harness.setHand(player1, List.of(new MinimusContainment()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, furnaceId);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        // Minimus Containment removes Furnace's ability, so 3 damage remains 3.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
     // ===== No damage means no doubling =====
 
     @Test
@@ -439,5 +461,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    private void addReadyInvoker(Player player) {
+        addCreatureReady(player, new FlamewaveInvoker());
+    }
 }
-

@@ -12,7 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "1748")
 @CardRegistration(set = "PIO", collectorNumber = "30")
+@CardRegistration(set = "PIP", collectorNumber = "171")
+@CardRegistration(set = "PIP", collectorNumber = "457")
+@CardRegistration(set = "PIP", collectorNumber = "699")
+@CardRegistration(set = "PIP", collectorNumber = "985")
+@CardRegistration(set = "MOC", collectorNumber = "203")
 public class SecureTheWastes extends Card {
 
     public SecureTheWastes() {

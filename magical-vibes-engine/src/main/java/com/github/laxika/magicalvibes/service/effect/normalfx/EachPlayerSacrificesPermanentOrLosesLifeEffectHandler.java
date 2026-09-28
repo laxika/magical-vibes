@@ -1,0 +1,151 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EachPlayerSacrificeOrLoseLifeState;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+/** Resolves an APNAP each-player choice between sacrificing a permanent and losing life. */
+@Component
+@RequiredArgsConstructor
+public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements NormalEffectHandlerBean {
+
+    private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final LifeSupport lifeSupport;
+    private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return EachPlayerSacrificesPermanentOrLosesLifeEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var sacrificeEffect = (EachPlayerSacrificesPermanentOrLosesLifeEffect) effect;
+        EachPlayerSacrificeOrLoseLifeState state = gameData.eachPlayerSacrificeOrLoseLife;
+
+        if (!state.active) {
+            state.reset();
+            state.active = true;
+            state.remaining.addAll(apnapPlayers(gameData));
+        }
+
+        if (state.chosenMode != null) {
+            String chosenMode = state.chosenMode;
+            state.chosenMode = null;
+            applyChoice(gameData, entry, sacrificeEffect, state, chosenMode);
+            return;
+        }
+
+        advance(gameData, entry, sacrificeEffect, state);
+    }
+
+    private void advance(GameData gameData, StackEntry entry,
+            EachPlayerSacrificesPermanentOrLosesLifeEffect effect,
+            EachPlayerSacrificeOrLoseLifeState state) {
+        String sourceName = entry.getCard().getName();
+        while (!state.remaining.isEmpty()) {
+            UUID playerId = state.remaining.removeFirst();
+            if (!gameData.playerIds.contains(playerId)) {
+                continue;
+            }
+            state.currentPlayerId = playerId;
+
+            List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
+            if (matchingIds.isEmpty()) {
+                lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), sourceName);
+                continue;
+            }
+
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    playerId, null, null,
+                    new ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice(playerId, sourceName),
+                    List.of(
+                            ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.sacrifice(
+                                    effect.sacrificeDescription()),
+                            ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.loseLife(effect.lifeLoss())
+                    ),
+                    sourceName + " — sacrifice " + effect.sacrificeDescription()
+                            + " or lose " + effect.lifeLoss() + " life."));
+            return;
+        }
+
+        state.reset();
+        gameData.rerunCurrentEffectAfterInteraction = false;
+    }
+
+    private void applyChoice(GameData gameData, StackEntry entry,
+            EachPlayerSacrificesPermanentOrLosesLifeEffect effect,
+            EachPlayerSacrificeOrLoseLifeState state, String chosenMode) {
+        UUID playerId = state.currentPlayerId;
+        if (ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.sacrifice(
+                effect.sacrificeDescription()).equals(chosenMode)) {
+            List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
+            if (matchingIds.isEmpty()) {
+                lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), entry.getCard().getName());
+                advance(gameData, entry, effect, state);
+            } else if (matchingIds.size() == 1) {
+                sacrifice(gameData, matchingIds.getFirst(), playerId);
+                advance(gameData, entry, effect, state);
+            } else {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginPermanentChoice(gameData, playerId, matchingIds,
+                        new PermanentChoiceContext.SacrificeCreature(playerId),
+                        "Choose " + effect.sacrificeDescription() + " to sacrifice.");
+            }
+            return;
+        }
+
+        lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), entry.getCard().getName());
+        advance(gameData, entry, effect, state);
+    }
+
+    private List<UUID> matchingPermanentIds(GameData gameData, StackEntry entry,
+            EachPlayerSacrificesPermanentOrLosesLifeEffect effect, UUID playerId) {
+        if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) {
+            return List.of();
+        }
+        return destructionSupport.collectPermanentIds(gameData, playerId,
+                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, effect.filter()));
+    }
+
+    private void sacrifice(GameData gameData, UUID permanentId, UUID playerId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (permanent != null) {
+            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+        }
+    }
+
+    private List<UUID> apnapPlayers(GameData gameData) {
+        List<UUID> players = new ArrayList<>();
+        if (gameData.activePlayerId != null && gameData.playerIds.contains(gameData.activePlayerId)) {
+            players.add(gameData.activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!players.contains(playerId) && gameData.playerIds.contains(playerId)) {
+                players.add(playerId);
+            }
+        }
+        return players;
+    }
+}

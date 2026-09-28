@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "73")
+@CardRegistration(set = "SLD", collectorNumber = "1280")
+@CardRegistration(set = "MB2", collectorNumber = "175")
 public class ThassasOracle extends Card {
 
     public ThassasOracle() {

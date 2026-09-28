@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "134")
+@CardRegistration(set = "SOC", collectorNumber = "236")
+@CardRegistration(set = "TDC", collectorNumber = "204")
 public class AtsushiTheBlazingSky extends Card {
 
     public AtsushiTheBlazingSky() {

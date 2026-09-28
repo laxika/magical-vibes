@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDra
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -50,22 +52,32 @@ public class PlayedCardNameTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    })
     private boolean handleControllerCastsExiledCard(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return sc.castZone() == Zone.EXILE
-                && collectTransform(match, sc.exiledSourcePermanentId(), sc.spellCard());
+                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.castingPlayerId(),
+                sc.spellCard(), trigger.followUpEffect());
     }
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
     private boolean handleControllerPlaysExiledCardLand(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return lp.fromExile()
-                && collectTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
+                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.playingPlayerId(),
+                lp.landCard(), trigger.followUpEffect());
     }
 
     @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
@@ -238,6 +250,9 @@ public class PlayedCardNameTriggerCollectorService {
                 match.permanent().getId());
         entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
+        if (effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on playing a land",
@@ -245,8 +260,8 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
-    private boolean collectTransform(TriggerMatchContext match, UUID exiledSourcePermanentId,
-                                     Card playedCard) {
+    private boolean collectFollowUp(TriggerMatchContext match, UUID exiledSourcePermanentId,
+                                    UUID playingPlayerId, Card playedCard, CardEffect followUpEffect) {
         if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
             return false;
         }
@@ -257,9 +272,10 @@ public class PlayedCardNameTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new TransformSelfEffect())),
+                new ArrayList<>(List.of(followUpEffect)),
                 null,
                 match.permanent().getId());
+        entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

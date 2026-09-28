@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "6")
+@CardRegistration(set = "SLD", collectorNumber = "1585")
 public class ElspethTirel extends Card {
 
     public ElspethTirel() {

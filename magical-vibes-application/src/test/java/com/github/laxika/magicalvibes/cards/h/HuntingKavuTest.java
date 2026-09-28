@@ -1,25 +1,26 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HuntingKavu.class, RazorfootGriffin.class})
 class HuntingKavuTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability exiles both the attacker and Hunting Kavu")
     void exilesAttackerAndSelf() {
-        Permanent kavu = addReadyKavu(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent kavu = addCreatureReady(player1, new HuntingKavu());
+        Permanent attacker = addAttacker(player2, player1, new HuntingKavu());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -34,8 +35,8 @@ class HuntingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability taps Hunting Kavu")
     void activatingTapsKavu() {
-        Permanent kavu = addReadyKavu(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent kavu = addCreatureReady(player1, new HuntingKavu());
+        Permanent attacker = addAttacker(player2, player1, new HuntingKavu());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -46,8 +47,8 @@ class HuntingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an attacking creature with flying")
     void cannotTargetFlyer() {
-        addReadyKavu(player1);
-        Permanent flyer = addAttacker(player2, player1, new SuntailHawk());
+        addCreatureReady(player1, new HuntingKavu());
+        Permanent flyer = addAttacker(player2, player1, new RazorfootGriffin());
         payMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flyer.getId()))
@@ -58,8 +59,8 @@ class HuntingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking you")
     void cannotTargetNonAttacker() {
-        addReadyKavu(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new HuntingKavu());
+        Permanent creature = addCreatureReady(player2, new HuntingKavu());
         payMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -67,10 +68,22 @@ class HuntingKavuTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a creature attacking a different player")
+    void cannotTargetCreatureAttackingDifferentPlayer() {
+        addCreatureReady(player1, new HuntingKavu());
+        Permanent attacker = addAttacker(player1, player2, new HuntingKavu());
+        payMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacking you");
+    }
+
+    @Test
     @DisplayName("Hunting Kavu stays on the battlefield when the target leaves before resolution")
     void kavuSurvivesFizzle() {
-        Permanent kavu = addReadyKavu(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent kavu = addCreatureReady(player1, new HuntingKavu());
+        Permanent attacker = addAttacker(player2, player1, new HuntingKavu());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -79,13 +92,6 @@ class HuntingKavuTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kavu);
         assertThat(gd.exiledCards).isEmpty();
-    }
-
-    private Permanent addReadyKavu(Player player) {
-        Permanent perm = new Permanent(new HuntingKavu());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {

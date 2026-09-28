@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.filter;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -88,6 +87,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasUnearthPredicate) {
+            return "card with unearth";
+        }
         if (predicate instanceof CardHasXInManaCostPredicate) {
             return "card with {X} in its mana cost";
         }
@@ -121,6 +123,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
+        if (predicate instanceof CardManaValueAtMostSourceCountersPredicate) {
+            return "card with mana value at most this permanent's counters";
+        }
         if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
             return "card with mana value less than this creature's power";
         }
@@ -148,6 +153,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueLessThanXPredicate) {
             return "card with mana value less than X";
         }
+        if (predicate instanceof CardManaValueEqualsXPredicate) {
+            return "card with mana value X";
+        }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
@@ -171,6 +179,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardNameStartsWithPredicate p) {
             return "card whose name starts with " + p.prefix();
+        }
+        if (predicate instanceof CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate) {
+            return "card put into a graveyard from a non-battlefield zone this turn";
         }
         if (predicate instanceof CardNotPredicate p) {
             String inner = describeFilter(p.predicate());

@@ -16,6 +16,7 @@ public enum DelayedPermanentActionKind {
     SACRIFICE_AT_NEXT_UPKEEP(Op.SACRIFICE, " is sacrificed."),
     DESTROY_AT_END_STEP(Op.DESTROY, " is destroyed at end step."),
     RETURN_TO_HAND_AT_END_STEP(Op.RETURN_TO_HAND, " is returned to its owner's hand."),
+    RETURN_TO_COMMAND_ZONE_AT_END_STEP(Op.RETURN_TO_COMMAND_ZONE, " is returned to the command zone."),
     EXILE_TOKEN_AT_END_OF_COMBAT(Op.EXILE, " token is exiled."),
     DESTROY_AT_END_OF_COMBAT(Op.DESTROY, " is destroyed."),
     RETURN_TO_HAND_AT_END_OF_COMBAT(Op.RETURN_TO_HAND, " is returned to its owner's hand."),
@@ -23,7 +24,7 @@ public enum DelayedPermanentActionKind {
             " is put on top of its owner's library.");
 
     /** The zone-change operation the drain loop applies to the scheduled permanent. */
-    public enum Op { EXILE, SACRIFICE, DESTROY, RETURN_TO_HAND, PUT_ON_TOP_OF_LIBRARY }
+    public enum Op { EXILE, SACRIFICE, DESTROY, RETURN_TO_HAND, RETURN_TO_COMMAND_ZONE, PUT_ON_TOP_OF_LIBRARY }
 
     private final Op op;
     private final String logSuffix;

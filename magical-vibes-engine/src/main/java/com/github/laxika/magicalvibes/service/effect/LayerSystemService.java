@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCard
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnLandsAndLandCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
@@ -614,6 +616,7 @@ public class LayerSystemService {
      *     animation state, granted/removed keywords, colors, subtypes, card types, the
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
+     * <li>commander designations, which are read by commander-filtered static effects;</li>
      * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus its printed
      *     stats/types/keywords and relevant ability-slot counts as insurance for tests that mutate an
      *     unfrozen card in place ({@code TestCards.mutableCard});</li>
@@ -643,9 +646,23 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         h = mix(h, gameData.stolenCreatures.hashCode());
         h = mix(h, gameData.stolenCreatures.size());
+        h = mix(h, gameData.ringStates.hashCode());
+        h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.cardIntensities.hashCode());
+        h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, playerId.hashCode());
+            h = mix(h, commanders == null ? 0 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
+        }
         if (gameData.planechase != null) {
             h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
             for (var planar : gameData.planechase.faceUp) {
@@ -656,8 +673,16 @@ public class LayerSystemService {
         h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            List<Card> commanders = gameData.playerCommanders.get(playerId);
+            h = mix(h, commanders == null ? -1 : commanders.size());
+            if (commanders != null) {
+                for (Card commander : commanders) {
+                    h = mix(h, commander.getId().hashCode());
+                }
+            }
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
             h = mix(h, gameData.turnsTakenByPlayer.getOrDefault(playerId, 0));
+            h = mix(h, gameData.commanderCastsFromCommandZoneThisGame.getOrDefault(playerId, 0));
             h = mix(h, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
             List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
             h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
@@ -671,6 +696,14 @@ public class LayerSystemService {
                 h = mix(h, battlefield.size());
                 for (Permanent permanent : battlefield) {
                     h = hashPermanent(h, permanent);
+                }
+            }
+            List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+            h = mix(h, commandZone == null ? -1 : commandZone.size());
+            if (commandZone != null) {
+                for (Card card : commandZone) {
+                    h = mix(h, System.identityHashCode(card));
+                    h = mix(h, card.getColorIdentity().hashCode());
                 }
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -694,12 +727,20 @@ public class LayerSystemService {
                 h = mix(h, floating.timestamp());
             }
         }
+        h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.hashCode());
+        h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.size());
+        h = mix(h, gameData.perpetualCardPowerToughnessModifiers.hashCode());
+        h = mix(h, gameData.perpetualCardPowerToughnessModifiers.size());
+        h = mix(h, gameData.perpetualCardKeywords.hashCode());
+        h = mix(h, gameData.perpetualCardKeywords.size());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
                 h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
             }
         }
+        h = mix(h, gameData.exiledCardsWithBrainCounters.hashCode());
+        h = mix(h, gameData.exiledCardsWithBrainCounters.size());
         long imprintedSum = 0;
         for (Map.Entry<UUID, Card> entry : gameData.imprintedCards.entrySet()) {
             imprintedSum += mix64(entry.getKey().hashCode());
@@ -715,6 +756,8 @@ public class LayerSystemService {
         h = mix(h, p.getId().hashCode());
         h = mix(h, p.getTimestamp());
         h = hashCard(h, p.getCard());
+        h = mix(h, System.identityHashCode(p.getOriginalCard()));
+        h = mix(h, p.getOriginalCard().getColorIdentity().hashCode());
 
         long flags = 0;
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
@@ -728,6 +771,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isSuspected() ? 1 : 0);
+        flags = flags << 1 | (p.isCommander() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
@@ -741,12 +785,15 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
+        h = mix(h, p.getAttackTarget() == null ? 0 : p.getAttackTarget().hashCode());
         h = mix(h, p.getAttacksThisTurn());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
         }
 
         h = mix(h, p.getAttachedTo() == null ? 0 : p.getAttachedTo().hashCode());
+        h = mix(h, p.getHostedByRealmIds().hashCode());
+        h = mix(h, p.getHostedByRealmIds().size());
         h = mix(h, p.getPairedWithId() == null ? 0 : p.getPairedWithId().hashCode());
         h = mix(h, enumOrdinal(p.getChosenColor()));
         h = mix(h, enumOrdinal(p.getChosenSubtype()));
@@ -761,6 +808,7 @@ public class LayerSystemService {
         h = mix(h, chosenModeByPlayerSum);
         h = mix(h, p.getChosenModeByPlayer().size());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
+        h = mix(h, p.getRememberedTargetPlayerId() == null ? 0 : p.getRememberedTargetPlayerId().hashCode());
         h = mix(h, p.getLastChosenExiledCard() == null
                 ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
 
@@ -772,6 +820,7 @@ public class LayerSystemService {
             h = mix(h, timestamp.getKey().ordinal());
             h = mix(h, timestamp.getValue());
         }
+        h = mix(h, p.getPersistentPowerModifier());
         h = mix(h, p.getPowerModifier());
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
@@ -1002,7 +1051,7 @@ public class LayerSystemService {
             // Legacy one-shot color/keyword state is seeded before ANY layer runs so filter
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
-            seedLegacyColorAndAbilityState(permanent, state, globalWordChange);
+            seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
             // Layer 3 on the object's own type line: a text change replacing a basic land
             // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
             // and with it the land's intrinsic mana ability (CR 612, 305.6).
@@ -1181,6 +1230,15 @@ public class LayerSystemService {
         if (layer == Layer.L6_ABILITIES) {
             for (PermanentSlot slot : slots) {
                 Permanent permanent = slot.permanent();
+                if (permanent.getCounterCount(CounterType.PRIMEVAL) > 0) {
+                    PrimevalCounterEffect primeval = new PrimevalCounterEffect();
+                    FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
+                            UUID.randomUUID(), "primeval counter", null, slot.controllerId(),
+                            primeval, permanent.getId(), null, null, EffectDuration.PERMANENT,
+                            permanent.getCounterTimestamp(CounterType.PRIMEVAL));
+                    instances.add(new EffectInstance(null, primeval, primeval, counterEffect, false,
+                            counterEffect.timestamp(), slot.position()));
+                }
                 for (CounterType counterType : CounterType.values()) {
                     Keyword keyword = counterType.grantedKeyword();
                     if (keyword == null || permanent.getCounterCount(counterType) <= 0) {
@@ -1244,7 +1302,8 @@ public class LayerSystemService {
     private static int abilityRemovalRank(CardEffect effect) {
         if (effect instanceof LosesAllAbilitiesEffect
                 || effect instanceof LosesAllNonManaAbilitiesEffect
-                || effect instanceof BecomeEnchantmentUntilCreatureSpellCastEffect) return 0;
+                || effect instanceof BecomeEnchantmentUntilCreatureSpellCastEffect
+                || effect instanceof PrimevalCounterEffect) return 0;
         if (effect instanceof RemoveKeywordEffect) return 1;
         return 2;
     }
@@ -1722,6 +1781,17 @@ public class LayerSystemService {
                                     subtype, false, false, null, null));
                         }));
             }
+            case GrantSubtypeToOwnLandsAndLandCardsEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedSubtypes().stream().findFirst().ifPresent(subtype -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addSubtype(subtype);
+                            record(board, instance, target, new L4Contribution(
+                                    subtype, false, false, null, null));
+                        }));
+            }
             case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {
                 manage(board, instance);
                 if (instance.source() == null) return;
@@ -2129,9 +2199,10 @@ public class LayerSystemService {
             }
             case ALL_PERMANENTS -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() != source.permanent()
+                    if ((source == null || slot.permanent() != source.permanent())
                             && matchesL4Filter(slot, filter, board, gameData,
-                            source.permanent(), source.controllerId())) {
+                            source == null ? null : source.permanent(),
+                            source == null ? null : source.controllerId())) {
                         targets.add(slot);
                     }
                 }
@@ -2340,7 +2411,8 @@ public class LayerSystemService {
      * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
      * later-timestamp layered grants still apply, matching the old accumulator behavior).
      */
-    private void seedLegacyColorAndAbilityState(Permanent permanent, CharacteristicState state,
+    private void seedLegacyColorAndAbilityState(GameData gameData, Permanent permanent,
+                                                CharacteristicState state,
                                                 List<TextReplacement> globalWordChange) {
         if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
                 && permanent.getAnimatedColor() != null) {
@@ -2391,7 +2463,12 @@ public class LayerSystemService {
             state.addKeywords(permanent.getGrantedKeywords());
             state.addKeywords(permanent.getPersistentGrantedKeywords());
             state.addKeywords(permanent.getUntilNextTurnKeywords());
+            state.addKeywords(gameData.perpetualCardKeywords.getOrDefault(
+                    permanent.getCard().getId(), Set.of()));
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
+            gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of())
+                    .forEach(state::removeKeyword);
         }
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             // Losing all creature types nullifies the Changeling grant (legacy semantics).
@@ -2548,6 +2625,13 @@ public class LayerSystemService {
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
                     }
+                    case PrimevalCounterEffect ignored -> {
+                        state.loseAllAbilities(instance.timestamp());
+                        state.preventAbilityGain();
+                        board.clearGrantedEffects(target.permanent().getId());
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                    }
                     case LosesAllNonManaAbilitiesEffect ignored -> {
                         state.loseAllNonManaAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());
@@ -2593,6 +2677,12 @@ public class LayerSystemService {
                         state.addProtectionColors(protection.colors());
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), protection);
+                    }
+                    case CantHaveOrGainKeywordEffect restriction -> {
+                        state.blockKeyword(restriction.keyword());
+                        state.addStaticEffect(restriction);
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), restriction);
                     }
                     case GrantEffectEffect grant -> {
                         if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
@@ -2776,6 +2866,16 @@ public class LayerSystemService {
         // for pre-migration state and hand-built test setups).
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
+            if (permanent.getCounterCount(CounterType.BASE_POWER_FOUR) > 0) {
+                entries.add(new BasePtEntry(permanent.getId(), 4, null,
+                        permanent.getCounterTimestamp(CounterType.BASE_POWER_FOUR), slot.position(),
+                        "base power 4 counter"));
+            }
+            if (permanent.getCounterCount(CounterType.BASE_TOUGHNESS_FOUR) > 0) {
+                entries.add(new BasePtEntry(permanent.getId(), null, 4,
+                        permanent.getCounterTimestamp(CounterType.BASE_TOUGHNESS_FOUR), slot.position(),
+                        "base toughness 4 counter"));
+            }
             if (permanent.isBasePowerOverriddenPermanently()) {
                 entries.add(new BasePtEntry(permanent.getId(), permanent.getPermanentBasePowerOverride(),
                         null, permanent.getPermanentBasePowerOverrideTimestamp(), slot.position(),
@@ -3036,7 +3136,9 @@ public class LayerSystemService {
         }
         if (handler != null) {
             for (PermanentSlot target : slots) {
-                if (target.permanent() == source.permanent()) continue;
+                if (target.permanent() == source.permanent()
+                        && !(instance.effect() instanceof GrantActivatedAbilityEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS)) continue;
                 StaticBonusAccumulator harvested = new StaticBonusAccumulator();
                 handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
                         source.controllerId().equals(target.controllerId()), gameData),

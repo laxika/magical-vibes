@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.List;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final TokenCopySupport tokenCopySupport;
 
     @Override
@@ -28,7 +31,13 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(copyEffect.sourceCard()),
+        int copyCount = amountEvaluationService.evaluate(
+                gameData, copyEffect.tokenCopyEffect().amount(), AmountContext.forStackEntry(entry, sourcePermanent));
+        if (copyCount <= 0) {
+            return;
+        }
+        tokenCopySupport.createTokenCopies(gameData, entry,
+                Collections.nCopies(copyCount, copyEffect.sourceCard()),
                 sourcePermanent, copyEffect.tokenCopyEffect());
     }
 }

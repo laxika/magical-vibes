@@ -647,7 +647,7 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly(
                     "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
-                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON");
+                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON", "SCHEME");
             assertThat(msg.prompt()).isEqualTo("Choose a card type.");
         }
 

@@ -248,10 +248,7 @@ class SevenLayerTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Layer 1: copy effects")
-    @CardUsed({Clone.class, GrizzlyBears.class, GloriousAnthem.class, GiantGrowth.class,
-            Dub.class, AirElemental.class, Lignify.class, CoralMerfolk.class, TwistedImage.class,
-            PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Maro.class,
-            ElvishChampion.class, LlanowarElves.class})
+    @CardUsed({Clone.class, GrizzlyBears.class, GloriousAnthem.class, GiantGrowth.class, Dub.class, AirElemental.class, Lignify.class, CoralMerfolk.class, TwistedImage.class, PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Maro.class, ElvishChampion.class, LlanowarElves.class, Diminish.class, TurtleshellChangeling.class})
     class Layer1Copy {
 
         @Test
@@ -337,8 +334,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Copy does not include text changes (CR 707.2)")
         @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Clone.class})
+        @DisplayName("Copy does not include text changes (CR 707.2)")
         void copyIgnoresTextChanges() {
             Permanent paladin = addReady(player1, new PaladinEnVec());
             addPermanent(player2, new Swamp());
@@ -565,9 +562,8 @@ class SevenLayerTest extends BaseCardTest {
     class Layer3Text {
 
         @Test
+        @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, AirElemental.class, MindBend.class})
         @DisplayName("Changing a protection color word changes what the creature is protected from")
-        @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, AirElemental.class,
-                MindBend.class})
         void textChangeRewritesProtectionColor() {
             Permanent paladin = addReady(player1, new PaladinEnVec()); // pro black, pro red
             addPermanent(player2, new Swamp());
@@ -595,8 +591,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Changing the land type word on an Aura changes the type it grants in layer 4")
         @CardUsed({Forest.class, SeasClaim.class, MindBend.class})
+        @DisplayName("Changing the land type word on an Aura changes the type it grants in layer 4")
         void textChangeOnAuraChangesGrantedLandType() {
             Permanent forest = addPermanent(player1, new Forest());
             attach(player1, new SeasClaim(), forest);
@@ -610,8 +606,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Changing Mountain to Island on Blood Moon makes nonbasics tap for blue")
         @CardUsed({Glimmerpost.class, BloodMoon.class, MindBend.class})
+        @DisplayName("Changing Mountain to Island on Blood Moon makes nonbasics tap for blue")
         void textChangeOnBloodMoon() {
             Permanent glimmerpost = addPermanent(player1, new Glimmerpost());
             Permanent moon = addPermanent(player1, new BloodMoon());
@@ -625,8 +621,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("A text change does not change the object's actual color")
         @CardUsed({GrizzlyBears.class, MindBend.class})
+        @DisplayName("A text change does not change the object's actual color")
         void textChangeDoesNotChangeColor() {
             Permanent bears = addReady(player1, new GrizzlyBears());
 
@@ -636,8 +632,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Text changes are not part of the copiable values")
         @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Clone.class})
+        @DisplayName("Text changes are not part of the copiable values")
         void textChangeIsNotCopiable() {
             Permanent paladin = addReady(player1, new PaladinEnVec());
             addPermanent(player2, new Swamp());
@@ -664,8 +660,8 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Changing Swamp to Forest on Evil Presence makes the enchanted land tap for green")
         @CardUsed({Mountain.class, EvilPresence.class, MindBend.class})
+        @DisplayName("Changing Swamp to Forest on Evil Presence makes the enchanted land tap for green")
         void textChangeOnEvilPresence() {
             Permanent mountain = addPermanent(player1, new Mountain());
             attach(player1, new EvilPresence(), mountain);

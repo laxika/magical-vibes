@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTopCardOfTargetLibraryOnBottomEffect;
@@ -15,10 +18,12 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -70,6 +75,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CardRevealService cardRevealService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -124,6 +130,10 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             case EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
                     targetName, true, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
+            case MAY_PUT_NONLAND_PERMANENT_WITH_MANA_VALUE_X_ONTO_BATTLEFIELD ->
+                    resolveMayPutNonlandPermanentOntoBattlefield(
+                            gameData, controllerId, targetPlayerId, deck, actual,
+                            controllerName, targetName, requested);
             case MAY_EXILE_ANY_NUMBER -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, true, true);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
@@ -139,6 +149,61 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             case KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD -> resolveKeepOneOnTopRestToGraveyard(gameData, entry,
                     controllerId, targetPlayerId, deck, actual, controllerName, targetName);
         }
+    }
+
+    private void resolveMayPutNonlandPermanentOntoBattlefield(GameData gameData,
+            UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
+            String controllerName, String targetName, int manaValueBound) {
+        List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
+        GameLog.Builder revealLog = GameLog.builder().text(targetName + " reveals the top ")
+                .text(LibraryRevealSupport.pluralCards(actual)).text(" of their library: ");
+        for (int i = 0; i < topCards.size(); i++) {
+            if (i > 0) {
+                revealLog.text(", ");
+            }
+            revealLog.card(topCards.get(i));
+        }
+        gameLogService.append(gameData, revealLog.text(".").build());
+        cardRevealService.revealToAllPlayers(
+                gameData, targetPlayerId, GameEventFact.RevealZone.LIBRARY, topCards);
+
+        List<Card> matchingCards = topCards.stream()
+                .filter(card -> card.getType().isPermanentType())
+                .filter(card -> !card.hasType(CardType.LAND))
+                .filter(card -> card.getManaValue() <= manaValueBound)
+                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(
+                        gameData, card, Zone.LIBRARY))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(topCards);
+            deck.addAll(topCards);
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " finds no eligible permanent card. The revealed cards are put "
+                            + "on the bottom of " + targetName + "'s library in a random order."));
+            return;
+        }
+
+        String prompt = "You may put a nonland permanent card with mana value " + manaValueBound
+                + " or less onto the battlefield under your control. The rest go on the bottom "
+                + "of " + targetName + "'s library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
+                        .reveals(true)
+                        .canFailToFind(true)
+                        .targetPlayerId(targetPlayerId)
+                        .sourceCards(new ArrayList<>(topCards))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.BATTLEFIELD)
+                        .battlefieldControllerId(controllerId)
+                        .followUp(LibrarySearchFollowUp.forBoundedPick(
+                                LibrarySearchFollowUp.SecondBoundedPick.terminal(
+                                        true, LibrarySearchDestination.BATTLEFIELD)))
+                        .build(),
+                prompt,
+                true));
     }
 
     /**

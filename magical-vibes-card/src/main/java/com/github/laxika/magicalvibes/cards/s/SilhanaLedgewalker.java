@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "PC2", collectorNumber = "77")
 @CardRegistration(set = "PCA", collectorNumber = "77")
 @CardRegistration(set = "RVR", collectorNumber = "156")
+@CardRegistration(set = "OTC", collectorNumber = "206")
 public class SilhanaLedgewalker extends Card {
 
     public SilhanaLedgewalker() {

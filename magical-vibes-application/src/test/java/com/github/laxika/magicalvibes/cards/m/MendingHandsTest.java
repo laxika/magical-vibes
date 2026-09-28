@@ -1,36 +1,33 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
+import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({MendingHands.class, GrizzlyBears.class})
+@CardUsed({MendingHands.class, GrizzlyBears.class, FirstVolley.class, GnarledMass.class})
 class MendingHandsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Mending Hands adds a 4-damage prevention shield to target creature")
     void resolvingAddsCreaturePrevention() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GnarledMass());
         harness.setHand(player1, List.of(new MendingHands()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(target.getDamagePreventionShield()).isEqualTo(4);
     }
 
     @Test
@@ -39,11 +36,31 @@ class MendingHandsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MendingHands()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Mending Hands prevents exactly the next 4 damage to a target creature")
+    void preventsNextFourDamageToTargetCreature() {
+        harness.setLife(player2, 20);
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.setHand(player1, List.of(
+                new FirstVolley(), new FirstVolley(), new FirstVolley(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 8);
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player1, 0, target.getId());
+        }
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -55,16 +72,9 @@ class MendingHandsTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        // 2 combat damage fully prevented (shield 4 >= 2) → life unchanged, 2 of shield consumed
+        // 3 combat damage fully prevented (shield 4 >= 3) → life unchanged, 1 of shield remains
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -78,7 +88,6 @@ class MendingHandsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(0);

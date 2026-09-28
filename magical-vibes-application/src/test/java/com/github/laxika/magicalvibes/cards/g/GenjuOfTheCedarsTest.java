@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GenjuOfTheCedars.class, Forest.class, Swamp.class})
 class GenjuOfTheCedarsTest extends BaseCardTest {
 
     @Test
@@ -27,13 +30,14 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.activateAbility(player1, 0, 0, null, null);
+        activateGenju(player1);
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
         assertThat(forest.getTransientSubtypes()).containsExactly(CardSubtype.SPIRIT);
         assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
     }
@@ -46,7 +50,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.activateAbility(player1, 0, 0, null, null);
+        activateGenju(player1);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -58,12 +62,12 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When the enchanted Forest dies, Genju may return from the graveyard to its owner's hand")
+    @DisplayName("When the enchanted Forest dies, Genju may return from your graveyard to your hand")
     void returnsToHandWhenEnchantedForestDies() {
         Permanent forest = addEnchantedForest(player1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest));
-        resolveStackFully();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Genju of the Cedars");
@@ -77,7 +81,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         Permanent forest = addEnchantedForest(player1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest));
-        resolveStackFully();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Genju of the Cedars");
@@ -87,27 +91,53 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
     @Test
     @DisplayName("Genju can enchant only a Forest")
     void cannotEnchantNonForest() {
-        harness.addToBattlefield(player1, new Island());
-        Permanent island = findPermanent(player1, "Island");
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent swamp = findPermanent(player1, "Swamp");
         harness.setHand(player1, List.of(new GenjuOfTheCedars()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Genju controller can activate it on an opponent's Forest")
+    void controllerCanAnimateOpponentsForest() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new GenjuOfTheCedars()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateGenju(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+    }
+
     private Permanent addEnchantedForest(Player controller) {
-        harness.addToBattlefield(controller, new Forest());
-        Permanent forest = findPermanent(controller, "Forest");
-        Permanent aura = new Permanent(new GenjuOfTheCedars());
-        aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
+        Permanent forest = harness.addToBattlefieldAndReturn(controller, new Forest());
+        GenjuOfTheCedars genju = new GenjuOfTheCedars();
+        genju.setOwnerId(controller.getId());
+        harness.setHand(controller, List.of(genju));
+        harness.addMana(controller, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(controller);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(controller, 0, forest.getId());
+        harness.passBothPriorities();
         return forest;
     }
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
+    private void activateGenju(Player controller) {
+        int genjuIndex = gd.playerBattlefields.get(controller.getId()).indexOf(
+                findPermanent(controller, "Genju of the Cedars"));
+        harness.activateAbility(controller, genjuIndex, 0, null, null);
     }
+
 }

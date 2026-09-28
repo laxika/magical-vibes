@@ -20,6 +20,10 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "234")
 @CardRegistration(set = "2X2", collectorNumber = "322")
 @CardRegistration(set = "CMD", collectorNumber = "270")
+@CardRegistration(set = "DSC", collectorNumber = "270")
+@CardRegistration(set = "AFC", collectorNumber = "234")
+@CardRegistration(set = "OTC", collectorNumber = "288")
+@CardRegistration(set = "C20", collectorNumber = "270")
 public class DimirAqueduct extends Card {
 
     public DimirAqueduct() {

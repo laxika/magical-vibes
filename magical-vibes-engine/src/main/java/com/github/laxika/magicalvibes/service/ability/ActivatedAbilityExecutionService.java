@@ -1,116 +1,121 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
+import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
+import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeUntappedLandCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
-import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.ActivationCount;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
-import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
-import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
-import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingManaActivation;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -118,25 +123,20 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -147,6 +147,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -514,15 +517,20 @@ public class ActivatedAbilityExecutionService {
         // loss trigger must be deferred until the activated ability is on the stack, so it resolves
         // above the ability rather than below it.
         abilityEffects.stream()
-                .filter(PayLifeCost.class::isInstance)
-                .map(PayLifeCost.class::cast)
+                .filter(effect -> effect instanceof PayLifeCost
+                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
                 .findFirst()
                 .ifPresent(cost -> {
                     int currentLife = gameData.getLife(playerId);
-                    int sourceCounterCount = cost.perSourceCounter() == null
-                            ? 0
-                            : permanent.getCounterCount(cost.perSourceCounter());
-                    int amount = cost.effectiveAmount(currentLife, sourceCounterCount);
+                    int amount;
+                    if (cost instanceof PayLifeCost payLifeCost) {
+                        int sourceCounterCount = payLifeCost.perSourceCounter() == null
+                                ? 0
+                                : permanent.getCounterCount(payLifeCost.perSourceCounter());
+                        amount = payLifeCost.effectiveAmount(currentLife, sourceCounterCount);
+                    } else {
+                        amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+                    }
                     if (amount > 0) {
                         lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
                     }
@@ -530,6 +538,14 @@ public class ActivatedAbilityExecutionService {
 
         if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)) {
             int amount = gameData.playerHands.getOrDefault(playerId, List.of()).size();
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())) {
+            int amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
             if (amount > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
             }
@@ -560,6 +576,24 @@ public class ActivatedAbilityExecutionService {
                     String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
                     gameLogService.append(gameData,
                             GameLog.text(playerName + " pays " + cost.amount() + " energy counter(s)."));
+                });
+
+        int xEnergyCost = effectiveXValue;
+        abilityEffects.stream()
+                .filter(PayXEnergyCost.class::isInstance)
+                .findFirst()
+                .ifPresent(cost -> {
+                    if (xEnergyCost > 0) {
+                        int current = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+                        if (current < xEnergyCost) {
+                            throw new IllegalStateException("Not enough energy to pay");
+                        }
+                        int updated = current - xEnergyCost;
+                        gameData.playerEnergyCounters.put(playerId, updated);
+                        String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
+                        gameLogService.append(gameData,
+                                GameLog.text(playerName + " pays " + xEnergyCost + " energy counter(s)."));
+                    }
                 });
 
         ExileSelfCost exileSelfCost = abilityEffects.stream()
@@ -657,7 +691,8 @@ public class ActivatedAbilityExecutionService {
             equipSupport.expireAttachedCopyEffects(gameData, equipment);
         }
 
-        int loyaltyCountersAdded = ability.getLoyaltyCost() != null && ability.getLoyaltyCost() > 0
+        int loyaltyCountersAdded = ability.getLoyaltyCost() != null
+                && !ability.isToughnessAsLoyalty() && ability.getLoyaltyCost() > 0
                 ? ability.getLoyaltyCost()
                 : 0;
         permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
@@ -753,6 +788,7 @@ public class ActivatedAbilityExecutionService {
             boolean manaTypeChoicePending = AbilityActivationService.isAwaitingOwnManaColorChoice(
                     gameData, playerId);
             if (!manaTypeChoicePending) {
+                tagLegendarySourceMana(gameData, permanent, pool, manaTypesBefore);
                 int stackBeforeManaResolutionTriggers = gameData.stack.size();
                 triggerCollectionService.checkManaAbilityResolutionTriggers(
                         gameData, permanent, playerId,
@@ -788,7 +824,8 @@ public class ActivatedAbilityExecutionService {
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
-            if (ability.isRequiresTap() && gameQueryService.isLand(gameData, permanent)) {
+            if (ability.isRequiresTap() && (gameQueryService.isLand(gameData, permanent)
+                    || permanent.getCard().hasType(CardType.LAND))) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
                         manaTypesBefore, pool.getAllManaTotals());
@@ -840,13 +877,14 @@ public class ActivatedAbilityExecutionService {
                 || abilityEffects.stream().anyMatch(
                         com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
-                .filter(SacrificeCreatureCost.class::isInstance)
-                .map(SacrificeCreatureCost.class::cast)
-                .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::recordsSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds);
+                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds,
+                activatedPermanentControllerId);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -933,7 +971,7 @@ public class ActivatedAbilityExecutionService {
     }
 
     private static Set<ManaColor> newlyProducedManaTypes(Map<ManaColor, Integer> before,
-                                                          Map<ManaColor, Integer> after) {
+                                                           Map<ManaColor, Integer> after) {
         Set<ManaColor> produced = EnumSet.noneOf(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             if (after.getOrDefault(color, 0) > before.getOrDefault(color, 0)) {
@@ -941,6 +979,17 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return produced;
+    }
+
+    private void tagLegendarySourceMana(GameData gameData, Permanent source, ManaPool pool,
+                                        Map<ManaColor, Integer> before) {
+        if (!gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.LEGENDARY)) {
+            return;
+        }
+        for (ManaColor color : ManaColor.values()) {
+            int produced = Math.max(0, pool.get(color) - before.getOrDefault(color, 0));
+            pool.addLegendarySourceManaTag(color, produced);
+        }
     }
 
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
@@ -1068,6 +1117,8 @@ public class ActivatedAbilityExecutionService {
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+        boolean desertSource = predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
         boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
                 && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
@@ -1091,6 +1142,7 @@ public class ActivatedAbilityExecutionService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1109,6 +1161,9 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
                 if (caveSource) {
                     gameData.playerManaPools.get(playerId).addCaveManaTag(ManaColor.COLORLESS, 1);
+                }
+                if (desertSource) {
+                    gameData.playerManaPools.get(playerId).addDesertManaTag(ManaColor.COLORLESS, 1);
                 }
                 
                 gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
@@ -1143,6 +1198,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, totalMana);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(effectiveColor, totalMana);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(effectiveColor, totalMana);
                     }
@@ -1165,6 +1223,9 @@ public class ActivatedAbilityExecutionService {
                             pool.add(color, totalMana);
                             if (caveSource) {
                                 pool.addCaveManaTag(color, totalMana);
+                            }
+                            if (desertSource) {
+                                pool.addDesertManaTag(color, totalMana);
                             }
                             if (isCreatureSource) {
                                 pool.addCreatureMana(color, totalMana);
@@ -1244,7 +1305,11 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, amount);
                     }
-                    if (award.tracksProducingSourceForSpellCastTriggers()) {
+                    if (desertSource) {
+                        pool.addDesertManaTag(effectiveColor, amount);
+                    }
+                    if (award.tracksProducingSourceForSpellCastTriggers()
+                            || gameQueryService.isArtifact(gameData, permanent)) {
                         pool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                     }
                     if (isCreatureSource) {
@@ -1337,11 +1402,26 @@ public class ActivatedAbilityExecutionService {
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
                         permanent.getId(), null, snowSource,
                         caveSource, gameQueryService.getEffectiveColors(gameData, permanent),
-                        GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE));
+                        GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE), desertSource);
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
                 }
+            } else if (effect instanceof EmpowerNextCreatureSpellThisTurnEffect empower) {
+                // Mana abilities resolve inline rather than through the normal effect-handler path.
+                // Grand Summon's mana ability uses this rider to register its one-shot creature
+                // spell empowerment alongside the mana it produces.
+                gameData.addNextCreatureSpellEmpowerment(playerId,
+                        new CreatureSpellEmpowerment(
+                                empower.uncounterable(), empower.additionalPlusOneCounters()));
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(permanent.getCard())
+                        .text(" empowers its controller's next creature spell this turn.")
+                        .build());
+                log.info("Game {} - {} empowers the next creature spell of player {} "
+                                + "(uncounterable={}, +1/+1 counters={})",
+                        gameData.id, permanent.getCard().getName(), playerId,
+                        empower.uncounterable(), empower.additionalPlusOneCounters());
             } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
                 int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
@@ -1379,11 +1459,17 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, picks);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(manaColor, picks);
+                    }
                     if (ofColors.grantsRiot()) {
                         pool.addRiotGrantingMana(manaColor, picks);
                     }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, picks);
+                    }
+                    if (gameQueryService.isArtifact(gameData, permanent)) {
+                        pool.addSpellCastTriggerMana(permanent.getId(), manaColor, picks);
                     }
                 } else {
                     // Each of the `picks` mana is chosen individually from the fixed color list; the
@@ -1391,6 +1477,7 @@ public class ActivatedAbilityExecutionService {
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource)
                             .withSourcePermanentId(permanent.getId());
                     if (ofColors.grantsRiot()) {
@@ -1410,6 +1497,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(arm.color(), amount);
                     }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(arm.color(), amount);
+                    }
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
@@ -1428,6 +1518,9 @@ public class ActivatedAbilityExecutionService {
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
@@ -1463,6 +1556,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, manaMultiplier);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(manaColor, manaMultiplier);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, manaMultiplier);
                     }
@@ -1486,6 +1582,9 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
@@ -1567,7 +1666,7 @@ public class ActivatedAbilityExecutionService {
                 // here rather than on the stack.
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.recipient())) {
+                for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
@@ -1655,7 +1754,7 @@ public class ActivatedAbilityExecutionService {
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
                     int opponentDamage = damage + gameQueryService.getControllerDamageToOpponentBonus(
-                            gameData, playerId, opponentId);
+                            gameData, playerId, opponentId, false, permanent.getId());
                     dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, opponentDamage);
                 }
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
@@ -1676,6 +1775,7 @@ public class ActivatedAbilityExecutionService {
                         new Permanent(permanent),
                         null,
                         delayed.untilNextTurn(),
+                        delayed.persistsUntilConsumed(),
                         gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
@@ -1893,6 +1993,7 @@ public class ActivatedAbilityExecutionService {
      */
     private static boolean isNonTargetedLifeLoss(LoseLifeEffect effect) {
         return effect.recipient() == LoseLifeRecipient.CONTROLLER
+                || effect.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
                 || effect.recipient() == LoseLifeRecipient.EACH_PLAYER
                 || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
     }
@@ -1904,9 +2005,14 @@ public class ActivatedAbilityExecutionService {
     }
 
     /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
-    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, LoseLifeRecipient recipient) {
+    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, Permanent source,
+                                                  LoseLifeRecipient recipient) {
         return switch (recipient) {
             case CONTROLLER -> List.of(controllerId);
+            case SOURCE_CONTROLLER -> {
+                UUID sourceControllerId = source == null ? null : gameData.findControllerOf(source);
+                yield sourceControllerId == null ? List.of() : List.of(sourceControllerId);
+            }
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
@@ -2156,7 +2262,8 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> sacrificedAttachedEquipmentIds,
                                     List<UUID> sacrificedCardIds,
                                     Card discardedCardSnapshot,
-                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
+                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds,
+                                    UUID activatedPermanentControllerId) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -2225,6 +2332,7 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        stackEntry.setSourcePermanentControllerId(activatedPermanentControllerId);
         List<UUID> trackedIds = chosenCostPermanentIds == null ? List.of() : List.copyOf(chosenCostPermanentIds);
         stackEntry.setChosenCostPermanentIds(trackedIds);
         List<Permanent> trackedSnapshots = new ArrayList<>();
@@ -2240,13 +2348,21 @@ public class ActivatedAbilityExecutionService {
         }
         if (discardedCardSnapshot != null) {
             stackEntry.setDiscardedCardSnapshot(discardedCardSnapshot);
+        } else if (ability.getEffects().stream().anyMatch(effect -> effect instanceof
+                com.github.laxika.magicalvibes.model.effect.HandCardCost cost && cost.imprintOnSource())) {
+            stackEntry.setDiscardedCardSnapshot(gameData.getImprintedCard(permanent.getCard()));
         }
         if (exiledCostCardSnapshot != null) {
             stackEntry.setExiledCostCardSnapshot(exiledCostCardSnapshot);
             stackEntry.setExiledCostCardId(exiledCostCardSnapshot.getId());
         }
         if (recordsSacrificedPermanentSnapshot) {
-            stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());
+            Permanent sacrificed = permanent.getChosenSacrificedPermanentSnapshot();
+            stackEntry.setSacrificedPermanentSnapshot(sacrificed);
+            if (sacrificed != null) {
+                stackEntry.setSacrificedPower(sacrificed.getEffectivePower());
+                stackEntry.setSacrificedToughness(sacrificed.getEffectiveToughness());
+            }
         }
         if (sacrificedSourceSnapshot != null) {
             stackEntry.setSacrificedPermanentSnapshot(sacrificedSourceSnapshot);

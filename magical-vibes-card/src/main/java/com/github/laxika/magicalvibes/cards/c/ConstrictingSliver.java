@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "611")
 public class ConstrictingSliver extends Card {
 
     private static final PermanentAllOfPredicate OPPONENT_CREATURE = new PermanentAllOfPredicate(List.of(

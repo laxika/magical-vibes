@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "191")
+@CardRegistration(set = "MOC", collectorNumber = "317")
+@CardRegistration(set = "DMC", collectorNumber = "141")
 public class ArvadTheCursed extends Card {
 
     public ArvadTheCursed() {

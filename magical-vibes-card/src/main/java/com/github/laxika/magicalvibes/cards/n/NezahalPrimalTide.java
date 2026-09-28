@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "45")
+@CardRegistration(set = "SLD", collectorNumber = "1268")
+@CardRegistration(set = "SLD", collectorNumber = "2236")
 public class NezahalPrimalTide extends Card {
 
     public NezahalPrimalTide() {

@@ -79,5 +79,18 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
-}
 
+    @Test
+    @DisplayName("Drawing with only one card in the library draws it, then loses the game")
+    void drawsAvailableCardThenLosesOnEmptyLibrary() {
+        CounselOfTheSoratami lastCard = new CounselOfTheSoratami();
+        harness.setLibrary(player1, List.of(lastCard));
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+}

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "AA3", collectorNumber = "21")
+@CardRegistration(set = "MH2", collectorNumber = "227")
 public class KaldraCompleat extends Card {
 
     public KaldraCompleat() {

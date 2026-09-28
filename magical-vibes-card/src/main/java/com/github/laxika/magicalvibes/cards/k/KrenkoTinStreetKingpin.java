@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "137")
+@CardRegistration(set = "SLD", collectorNumber = "1027")
+@CardRegistration(set = "MOC", collectorNumber = "287")
+@CardRegistration(set = "DMC", collectorNumber = "124")
 public class KrenkoTinStreetKingpin extends Card {
 
     public KrenkoTinStreetKingpin() {

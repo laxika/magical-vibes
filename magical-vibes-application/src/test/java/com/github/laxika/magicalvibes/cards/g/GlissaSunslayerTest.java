@@ -14,6 +14,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Player;
 
 @CardUsed({GlissaSunslayer.class, FleshlessGladiator.class, PhyrexianArena.class})
 class GlissaSunslayerTest extends BaseCardTest {
@@ -108,5 +111,17 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.handleListChoice(player1, "Done");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    private Permanent addReadyGlissa() {
+        Permanent glissa = new Permanent(new GlissaSunslayer());
+        glissa.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(glissa);
+        return glissa;
+    }
+
+    private void setDeck(Player player, List<Card> cards) {
+        gd.playerDecks.get(player.getId()).clear();
+        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }

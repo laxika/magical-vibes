@@ -28,6 +28,8 @@ import java.util.Set;
 
 @CardRegistration(set = "SLC", collectorNumber = "21")
 @CardRegistration(set = "SLC", collectorNumber = "48")
+@CardRegistration(set = "MH2", collectorNumber = "259")
+@CardRegistration(set = "MB2", collectorNumber = "114")
 public class UrzasSaga extends Card {
 
     public UrzasSaga() {

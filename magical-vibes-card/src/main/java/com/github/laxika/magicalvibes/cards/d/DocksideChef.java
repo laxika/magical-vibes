@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "93")
+@CardRegistration(set = "SLD", collectorNumber = "1629")
 public class DocksideChef extends Card {
 
     public DocksideChef() {

@@ -20,6 +20,6 @@ public class BlinkmothUrn extends Card {
                         new SourceUntapped(),
                         new AwardManaToActivePlayerEffect(
                                 ManaColor.COLORLESS,
-                                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER))));
+                                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.TARGET_PLAYER))));
     }
 }

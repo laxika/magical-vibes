@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "180")
+@CardRegistration(set = "CMM", collectorNumber = "393")
+@CardRegistration(set = "CMM", collectorNumber = "608")
 public class TheImmortalSun extends Card {
 
     public TheImmortalSun() {

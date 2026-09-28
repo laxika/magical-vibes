@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "238")
 @CardRegistration(set = "MMQ", collectorNumber = "236")
+@CardRegistration(set = "C14", collectorNumber = "187")
 public class CollectiveUnconscious extends Card {
 
     public CollectiveUnconscious() {

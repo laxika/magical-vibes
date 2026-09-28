@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "33")
+@CardRegistration(set = "HBG", collectorNumber = "98")
 public class PortableHole extends Card {
 
     private static final PermanentAllOfPredicate TARGET_PREDICATE = new PermanentAllOfPredicate(List.of(

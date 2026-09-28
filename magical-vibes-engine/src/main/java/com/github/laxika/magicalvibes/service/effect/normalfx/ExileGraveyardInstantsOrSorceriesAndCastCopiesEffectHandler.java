@@ -15,12 +15,14 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Exiles every targeted instant or sorcery card from its graveyard, then casts a copy of each without
- * paying its mana cost (Spelltwine).
+ * paying its mana cost (Spelltwine), or one random copy when configured for that mode (Mysterious
+ * Stranger).
  *
  * <p>The copies go through {@link ExileFreeCastQueueSupport} so a copy that needs a target pauses for
  * the choice and the remaining copies are still cast afterwards. A target that left its graveyard is
@@ -48,7 +50,7 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
         ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect copyEffect =
                 (ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect) effect;
 
-        List<UUID> copyIds = new ArrayList<>();
+        List<Card> exiledCards = new ArrayList<>();
         List<UUID> targetCardIds = entry.targetsForEffect(effect);
         if (targetCardIds.isEmpty()) {
             targetCardIds = entry.getTargetCardIds();
@@ -66,11 +68,22 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
                 continue;
             }
 
-        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
             exileService.exileCard(gameData, graveyardOwnerId, targetCard);
             gameLogService.append(gameData, GameLog.isExiled(targetCard));
+            exiledCards.add(targetCard);
+        }
 
-            Card copy = copySupport.createCopyCard(targetCard);
+        List<Card> cardsToCopy = exiledCards;
+        if (copyEffect.randomSingleCopy()) {
+            cardsToCopy = exiledCards.size() >= 2
+                    ? List.of(exiledCards.get(ThreadLocalRandom.current().nextInt(exiledCards.size())))
+                    : List.of();
+        }
+
+        List<UUID> copyIds = new ArrayList<>();
+        for (Card exiledCard : cardsToCopy) {
+            Card copy = copySupport.createCopyCard(exiledCard);
             exileService.exileCard(gameData, controllerId, copy);
             copyIds.add(copy.getId());
         }

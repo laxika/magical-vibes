@@ -74,7 +74,7 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
                     e.exilePlayOpponentTax(), e.landsEnterTapped());
         } else {
             playerInputService.beginExileFromHandChoice(gameData, first, entry.getSourcePermanentId(),
-                    null, e.amount(), remaining, e.amount());
+                    null, e.amount(), remaining, e.amount(), false, e.returnOnSourceLeave());
         }
     }
 }

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "149")
 @CardRegistration(set = "VIS", collectorNumber = "66")
 @CardRegistration(set = "BRB", collectorNumber = "46")
+@CardRegistration(set = "C14", collectorNumber = "152")
 public class Nekrataal extends Card {
 
     public Nekrataal() {

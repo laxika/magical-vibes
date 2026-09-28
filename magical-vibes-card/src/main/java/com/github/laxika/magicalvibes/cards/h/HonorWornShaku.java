@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "254")
+@CardRegistration(set = "DMC", collectorNumber = "187")
 public class HonorWornShaku extends Card {
 
     public HonorWornShaku() {

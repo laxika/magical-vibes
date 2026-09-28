@@ -16,9 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-
 import java.util.List;
 
+@CardRegistration(set = "SLD", collectorNumber = "2103")
 @CardRegistration(set = "MH1", collectorNumber = "128")
 @CardRegistration(set = "TSR", collectorNumber = "345")
 public class GoblinEngineer extends Card {

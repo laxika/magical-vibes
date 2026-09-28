@@ -110,4 +110,32 @@ class DwarvenBloodboilerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Another untapped Dwarf you control can pay the cost")
+    void canTapAnotherControlledDwarfAsCost() {
+        Permanent bloodboiler = addCreatureReady(player1, new DwarvenBloodboiler());
+        Permanent otherDwarf = addCreatureReady(player1, new DwarvenDriller());
+        Permanent target = addCreatureReady(player2, new DwarvenDriller());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, otherDwarf.getId());
+        harness.passBothPriorities();
+
+        assertThat(bloodboiler.isTapped()).isFalse();
+        assertThat(otherDwarf.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's Dwarf cannot pay the cost")
+    void cannotTapOpponentsDwarfAsCost() {
+        Permanent bloodboiler = addCreatureReady(player1, new DwarvenBloodboiler());
+        Permanent target = addCreatureReady(player2, new DwarvenDriller());
+        bloodboiler.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
+    }
 }

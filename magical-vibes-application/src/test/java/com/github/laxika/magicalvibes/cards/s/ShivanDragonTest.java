@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShivanDragon.class, GrizzlyBears.class})
+@CardUsed({ShivanDragon.class, GrizzlyBears.class, AirElemental.class})
 class ShivanDragonTest extends BaseCardTest {
 
     @Test
@@ -182,5 +183,17 @@ class ShivanDragonTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature with flying can block Shivan Dragon")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new ShivanDragon());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

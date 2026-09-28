@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -226,6 +227,22 @@ class ZursWeirdingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Zur's Weirding does not reveal hands while it has lost its abilities")
+    void abilityLossDisablesHandReveal() {
+        Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
+        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setHand(player1, List.of(new AirElemental()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.clearMessages();
+
+        harness.passPriority(player1);
+
+        List<String> p2Messages = harness.getConn2().getSentMessages();
+        assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
+        assertThat(p2Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Air Elemental"));
+    }
+
+    @Test
     @DisplayName("Hands are no longer revealed after Zur's Weirding leaves the battlefield")
     void handsHiddenAfterRemoval() {
         harness.addToBattlefield(player1, new ZursWeirding());
@@ -240,5 +257,20 @@ class ZursWeirdingTest extends BaseCardTest {
         List<String> p2Messages = harness.getConn2().getSentMessages();
         assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         assertThat(p2Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Air Elemental"));
+    }
+
+    @Test
+    @DisplayName("Zur's Weirding does not replace draws while it has lost its abilities")
+    void abilityLossDisablesDrawReplacement() {
+        Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

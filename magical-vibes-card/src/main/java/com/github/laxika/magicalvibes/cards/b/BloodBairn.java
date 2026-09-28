@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "87")
+@CardRegistration(set = "C15", collectorNumber = "117")
 public class BloodBairn extends Card {
 
     public BloodBairn() {

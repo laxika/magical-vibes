@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlay
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "158")
+@CardRegistration(set = "DSC", collectorNumber = "168")
+@CardRegistration(set = "AFC", collectorNumber = "144")
 public class TectonicGiant extends Card {
 
     public TectonicGiant() {

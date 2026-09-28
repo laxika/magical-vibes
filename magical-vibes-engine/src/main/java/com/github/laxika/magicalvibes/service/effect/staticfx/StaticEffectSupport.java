@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -275,6 +276,9 @@ public class StaticEffectSupport {
                 && setPT.scope() == GrantScope.SELF
                 && matchesStaticFilter(context, context.target(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
+        } else if (wrapped instanceof SetNameEffect setName
+                && setName.scope() == GrantScope.SELF) {
+            accumulator.setName(setName.name());
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                     || matchesStaticFilter(context, context.target(), grant.filter())) {
@@ -303,7 +307,9 @@ public class StaticEffectSupport {
      * attachment scopes (equipped/enchanted) never cover the source.
      */
     private boolean selfInScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) return true;
+        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) {
+            return matchesStaticFilter(context, context.target(), filter);
+        }
         boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF

@@ -88,7 +88,12 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
             throw new IllegalStateException("Creature does not match the required predicate");
         }
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         chosen.tap();
+        if (cost.stationCost() && sourcePermanent != null) {
+            triggerCollectionService.checkStationedTriggers(gameData, sourcePermanent, chosen, player.getId());
+        }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
     }

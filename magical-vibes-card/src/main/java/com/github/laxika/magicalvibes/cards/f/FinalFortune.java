@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MIR", collectorNumber = "173")
 @CardRegistration(set = "7ED", collectorNumber = "182")
 @CardRegistration(set = "6ED", collectorNumber = "175")
+@CardRegistration(set = "SLD", collectorNumber = "753")
+@CardRegistration(set = "SLD", collectorNumber = "1956")
+@CardRegistration(set = "MB2", collectorNumber = "190")
 public class FinalFortune extends Card {
 
     public FinalFortune() {

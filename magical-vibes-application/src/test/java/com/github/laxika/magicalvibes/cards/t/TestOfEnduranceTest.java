@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TestOfEndurance.class)
+@CardUsed({TestOfEndurance.class})
 class TestOfEnduranceTest extends BaseCardTest {
 
     @Test
@@ -42,6 +42,19 @@ class TestOfEnduranceTest extends BaseCardTest {
     void doesNotTriggerOnOpponentsUpkeep() {
         harness.addToBattlefield(player1, new TestOfEndurance());
         harness.setLife(player1, 50);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep even when both players have 50 life")
+    void doesNotTriggerOnOpponentsUpkeepWhenOpponentAlsoHasFiftyLife() {
+        harness.addToBattlefield(player1, new TestOfEndurance());
+        harness.setLife(player1, 50);
+        harness.setLife(player2, 50);
 
         advanceToUpkeep(player2);
 

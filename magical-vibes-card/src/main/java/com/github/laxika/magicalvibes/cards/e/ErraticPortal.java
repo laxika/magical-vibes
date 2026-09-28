@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "132")
 @CardRegistration(set = "TPR", collectorNumber = "222")
+@CardRegistration(set = "MB2", collectorNumber = "220")
 public class ErraticPortal extends Card {
 
     public ErraticPortal() {

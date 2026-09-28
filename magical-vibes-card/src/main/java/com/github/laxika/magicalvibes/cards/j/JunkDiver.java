@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "132")
+@CardRegistration(set = "C14", collectorNumber = "244")
 public class JunkDiver extends Card {
 
     public JunkDiver() {

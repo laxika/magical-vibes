@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
@@ -181,10 +183,15 @@ public class CreatureControlService {
         if (derived == null || derived.equals(current)) {
             return;
         }
+        gameData.ringStates.replaceAll((playerId, ringState) ->
+                permanent.getId().equals(ringState.bearerId())
+                        ? new RingState(ringState.level(), null)
+                        : ringState);
         if (triggerCollectionService != null) {
             triggerCollectionService.checkOpponentGainsControlTriggers(
                     gameData, permanent, current, derived);
         }
+        queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
         boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
                 gameData, permanent, current);
@@ -330,6 +337,29 @@ public class CreatureControlService {
         }
     }
 
+    private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
+                                              UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
+    }
+
     private void removeFromCombat(GameData gameData, Permanent permanent) {
         List<UUID> blockedAttackerIds = new ArrayList<>(permanent.getBlockingTargetIds());
         permanent.clearCombatState();
@@ -397,9 +427,13 @@ public class CreatureControlService {
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present) {
                 UUID auraController = gameData.findControllerOf(aura);
+                CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElseThrow();
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
-                        new ControlEnchantedCreatureEffect(), enchanted.getId(), null, null,
+                        controlEffect, enchanted.getId(), null, null,
                         EffectDuration.WHILE_ATTACHED, 0));
             }
         }
@@ -463,7 +497,12 @@ public class CreatureControlService {
                         gameData, source.getCard().getId(), fe.controllerId(), null, source, source.getId());
                 stale = affected == null || source == null || predicateEvaluationService == null
                         || !predicateEvaluationService.matchesPermanentPredicate(
-                                affected, control.targetPredicate(), context);
+                        affected, control.targetPredicate(), context);
+            }
+            if (!stale && fe.effect() instanceof CounterConditionedControlEffect counterConditioned) {
+                Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
+                stale = affected == null
+                        || affected.getCounterCount(counterConditioned.counterType()) <= 0;
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

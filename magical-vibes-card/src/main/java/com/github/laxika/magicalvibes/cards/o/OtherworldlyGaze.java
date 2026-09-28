@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MID", collectorNumber = "67")
+@CardRegistration(set = "SLD", collectorNumber = "2069")
 @CardRegistration(set = "DBL", collectorNumber = "67")
+@CardRegistration(set = "DSC", collectorNumber = "122")
 public class OtherworldlyGaze extends Card {
 
     public OtherworldlyGaze() {

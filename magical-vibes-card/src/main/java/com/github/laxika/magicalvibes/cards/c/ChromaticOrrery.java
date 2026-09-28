@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "97")
 @CardRegistration(set = "SLZ", collectorNumber = "218")
 @CardRegistration(set = "SLZ", collectorNumber = "339")
+@CardRegistration(set = "LCC", collectorNumber = "107")
 public class ChromaticOrrery extends Card {
 
     public ChromaticOrrery() {

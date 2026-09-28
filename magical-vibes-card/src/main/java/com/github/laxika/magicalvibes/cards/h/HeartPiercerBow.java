@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "228")
 @CardRegistration(set = "KTK", collectorNumber = "221")
+@CardRegistration(set = "CMM", collectorNumber = "390")
 public class HeartPiercerBow extends Card {
 
     public HeartPiercerBow() {

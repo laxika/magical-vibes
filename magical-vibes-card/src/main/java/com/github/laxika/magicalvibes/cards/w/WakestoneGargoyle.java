@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreatur
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "21")
+@CardRegistration(set = "TDC", collectorNumber = "137")
 public class WakestoneGargoyle extends Card {
 
     public WakestoneGargoyle() {

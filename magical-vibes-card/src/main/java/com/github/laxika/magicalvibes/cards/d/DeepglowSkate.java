@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "SLD", collectorNumber = "1093")
+@CardRegistration(set = "SLD", collectorNumber = "2362")
 @CardRegistration(set = "2XM", collectorNumber = "48")
 public class DeepglowSkate extends Card {
 

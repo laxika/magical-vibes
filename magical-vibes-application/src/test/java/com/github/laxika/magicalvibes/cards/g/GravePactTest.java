@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,13 +24,14 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 
-@CardUsed({GravePact.class, CruelEdict.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class,
-        Mountain.class, PlanarCleansing.class})
+@CardUsed({GravePact.class, DarkBanishing.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class, Mountain.class, PlanarCleansing.class})
 class GravePactTest extends BaseCardTest {
 
     /**
-     * Makes player2 the active player in main phase 1, ready to cast sorceries.
+     * Makes player2 the active player in main phase 1, ready to cast spells.
      */
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
@@ -83,11 +85,9 @@ class GravePactTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GiantSpider());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
-        // Resolve Cruel Edict → player1 auto-sacrifices creature → Grave Pact triggers
+        // Resolve Dark Banishing → player1's creature dies → Grave Pact triggers
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -106,17 +106,17 @@ class GravePactTest extends BaseCardTest {
     void opponentWithOneCreatureAutoSacrifices() {
         harness.addToBattlefield(player1, new GravePact());
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GiantSpider());
         harness.addToBattlefield(player2, new GiantSpider());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Giant Spider");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
     }
@@ -153,11 +153,9 @@ class GravePactTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GiantSpider());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.passBothPriorities(); // Resolve Dark Banishing
         harness.passBothPriorities(); // Resolve Grave Pact trigger
 
         GameData gd = harness.getGameData();
@@ -177,11 +175,9 @@ class GravePactTest extends BaseCardTest {
         UUID spiderId = harness.getPermanentId(player2, "Giant Spider");
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.passBothPriorities(); // Resolve Dark Banishing
         harness.passBothPriorities(); // Resolve Grave Pact trigger → prompted
 
         // Player2 chooses to sacrifice Giant Spider
@@ -200,9 +196,7 @@ class GravePactTest extends BaseCardTest {
         // Player2 has no creatures
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
         resolveAllTriggers();
 
@@ -219,9 +213,7 @@ class GravePactTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
         resolveAllTriggers();
 
@@ -257,12 +249,10 @@ class GravePactTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GravePact());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        // Player1 casts Cruel Edict targeting player2 — opponent's creature dies
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
+        // Player1 casts Dark Banishing targeting player2's Grizzly Bears — opponent's creature dies
+        castDarkBanishingAtGrizzlyBears(player1, player2);
 
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.passBothPriorities(); // Resolve Dark Banishing
 
         GameData gd = harness.getGameData();
         // No Grave Pact trigger on the stack
@@ -282,11 +272,9 @@ class GravePactTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GiantSpider());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        castDarkBanishingAtGrizzlyBears(player2, player1);
 
-        // Resolve Cruel Edict → player1 sacrifices → two Grave Pact triggers
+        // Resolve Dark Banishing → player1's creature dies → two Grave Pact triggers
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -309,7 +297,7 @@ class GravePactTest extends BaseCardTest {
         setupCombatWhereAttackerDies();
 
         // Pass priority → combat damage → GrizzlyBears (2/2) dies to Giant Spider (2/4)
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
         // Player1's Grizzly Bears should be dead
@@ -375,5 +363,10 @@ class GravePactTest extends BaseCardTest {
         // Player2's creature died to Wrath, not to Grave Pact sacrifice
         assertThat(gameLogContains("no creatures to sacrifice")).isTrue();
     }
-}
 
+    private void castDarkBanishingAtGrizzlyBears(Player caster, Player target) {
+        harness.setHand(caster, List.of(new DarkBanishing()));
+        harness.addMana(caster, ManaColor.BLACK, 3);
+        harness.castInstant(caster, 0, harness.getPermanentId(target, "Grizzly Bears"));
+    }
+}

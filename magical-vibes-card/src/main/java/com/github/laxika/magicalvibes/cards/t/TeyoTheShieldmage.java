@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "32")
+@CardRegistration(set = "SLD", collectorNumber = "504")
 public class TeyoTheShieldmage extends Card {
 
     public TeyoTheShieldmage() {

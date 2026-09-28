@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattleScreech.class, SuntailHawk.class, Brawn.class, KrosanVerge.class})
+@CardUsed({AvenFogbringer.class, BattleScreech.class, Brawn.class, KrosanVerge.class, SuntailHawk.class})
 class BattleScreechTest extends BaseCardTest {
 
     @Test
@@ -158,5 +159,55 @@ class BattleScreechTest extends BaseCardTest {
         assertThat(second.isTapped()).isFalse();
         assertThat(third.isTapped()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback rejects a nonwhite creature for its tap cost")
+    void flashbackRejectsNonwhiteCreatureForTapCost() {
+        Permanent blueCreature = addCreatureReady(player1, new AvenFogbringer());
+        Permanent whiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent anotherWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(blueCreature.getId(), whiteCreature.getId(), anotherWhiteCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Tap target does not match the required filter");
+
+        assertThat(blueCreature.isTapped()).isFalse();
+        assertThat(whiteCreature.isTapped()).isFalse();
+        assertThat(anotherWhiteCreature.isTapped()).isFalse();
+        assertThat(birdTokensForJudReview()).isEmpty();
+        harness.assertInGraveyard(player1, "Battle Screech");
+    }
+
+    @Test
+    @DisplayName("Flashback rejects an already-tapped white creature for its tap cost")
+    void flashbackRejectsAlreadyTappedWhiteCreatureForTapCost() {
+        Permanent tappedWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        tappedWhiteCreature.tap();
+        Permanent whiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Permanent anotherWhiteCreature = addCreatureReady(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(tappedWhiteCreature.getId(), whiteCreature.getId(), anotherWhiteCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent is already tapped");
+
+        assertThat(tappedWhiteCreature.isTapped()).isTrue();
+        assertThat(whiteCreature.isTapped()).isFalse();
+        assertThat(anotherWhiteCreature.isTapped()).isFalse();
+        assertThat(birdTokensForJudReview()).isEmpty();
+        harness.assertInGraveyard(player1, "Battle Screech");
+    }
+
+    private List<Permanent> birdTokensForJudReview() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> permanent.getCard().getName().equals("Bird"))
+                .toList();
     }
 }

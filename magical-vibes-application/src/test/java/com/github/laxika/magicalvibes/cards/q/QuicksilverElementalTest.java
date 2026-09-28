@@ -62,7 +62,7 @@ class QuicksilverElementalTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, 0, null, copperMyr.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         harness.activateAbility(player1, 0, 1, null, null);
 

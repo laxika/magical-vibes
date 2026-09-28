@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
 import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
+import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,11 +17,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhantomNantuko.class, Cagemail.class, DwarvenDriller.class, FlaringPain.class,
-        LavaDart.class})
+@CardUsed({Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, HaplessResearcher.class, LavaDart.class, PhantomNantuko.class})
 class PhantomNantukoTest extends BaseCardTest {
 
     @Test
@@ -118,5 +121,52 @@ class PhantomNantukoTest extends BaseCardTest {
 
         assertThat(nantuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(nantuko.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prevents damage and removes one +1/+1 counter")
+    void preventsDamageAndRemovesOneCounter() {
+        Permanent nantuko = addCreatureReady(player2, new PhantomNantuko());
+        nantuko.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castEmberShotForJudReview(nantuko);
+
+        assertThat(nantuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nantuko.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent nantuko = addCreatureReady(player1, new PhantomNantuko());
+        nantuko.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent blocker = addCreatureReady(player2, new HaplessResearcher());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 1
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(nantuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nantuko.getMarkedDamage()).isZero();
+    }
+
+    private void castEmberShotForJudReview(Permanent target) {
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.setLibrary(player1, List.of(new PhantomNantuko()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
     }
 }

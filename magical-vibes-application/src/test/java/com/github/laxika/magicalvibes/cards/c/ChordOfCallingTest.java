@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BrambleElemental;
+import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChordOfCalling.class, ElvesOfDeepShadow.class, DimirInfiltrator.class,
+        BrambleElemental.class, Plains.class})
 class ChordOfCallingTest extends BaseCardTest {
 
     @Test
@@ -34,7 +36,7 @@ class ChordOfCallingTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Elves of Deep Shadow", "Dimir Infiltrator");
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -48,7 +50,7 @@ class ChordOfCallingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears", "Air Elemental");
+                .containsExactlyInAnyOrder("Elves of Deep Shadow", "Dimir Infiltrator", "Bramble Elemental");
     }
 
     @Test
@@ -64,7 +66,7 @@ class ChordOfCallingTest extends BaseCardTest {
         String chosen = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards().getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals(chosen));
@@ -81,9 +83,25 @@ class ChordOfCallingTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
+        harness.assertInGraveyard(player1, "Chord of Calling");
+    }
+
+    @Test
+    @DisplayName("The search may fail to find a qualifying creature")
+    void mayFailToFindCreature() {
+        castChord(2);
+        setupLibrary();
+
+        harness.passBothPriorities();
+
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Chord of Calling");
     }
 
@@ -102,18 +120,18 @@ class ChordOfCallingTest extends BaseCardTest {
     @Test
     @DisplayName("Convoke lets tapped creatures pay for the spell")
     void convokePaysForTheSpell() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
         harness.setHand(player1, List.of(new ChordOfCalling()));
-        // {X}{G}{G}{G} with X=1: three green mana plus the convoked Grizzly Bears paying the {1}.
+        // {X}{G}{G}{G} with X=1: three green mana plus the convoked Elf paying the {1}.
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 1, null, null,
-                List.of(), List.of(bears.getId()));
+                List.of(), List.of(elves.getId()));
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chord of Calling");
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(elves.isTapped()).isTrue();
     }
 
     private void castChord(int xValue) {
@@ -123,9 +141,9 @@ class ChordOfCallingTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // Llanowar Elves: MV 1, Grizzly Bears: MV 2, Air Elemental: MV 5, Plains: MV 0 (not a creature).
-        deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains()));
+        // Elves of Deep Shadow: MV 1, Dimir Infiltrator: MV 2, Bramble Elemental: MV 5,
+        // Plains: MV 0 (not a creature).
+        harness.setLibrary(player1, List.of(new ElvesOfDeepShadow(), new DimirInfiltrator(),
+                new BrambleElemental(), new Plains()));
     }
 }

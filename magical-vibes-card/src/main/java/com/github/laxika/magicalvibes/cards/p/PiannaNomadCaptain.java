@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "ODY", collectorNumber = "39")
 @CardRegistration(set = "VMA", collectorNumber = "39")
+@CardRegistration(set = "CMM", collectorNumber = "50")
 public class PiannaNomadCaptain extends Card {
 
     public PiannaNomadCaptain() {

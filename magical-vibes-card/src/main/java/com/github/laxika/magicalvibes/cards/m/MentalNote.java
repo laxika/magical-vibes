@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "JUD", collectorNumber = "46")
+@CardRegistration(set = "SLD", collectorNumber = "2154")
 public class MentalNote extends Card {
 
     public MentalNote() {

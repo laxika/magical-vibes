@@ -24,7 +24,11 @@ public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
                 (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
-        if (copyEffect.maxManaValue() == null) {
+        if (copyEffect.dynamicCopyCount() != null) {
+            gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts
+                    .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
+                    .add(copyEffect.dynamicCopyCount());
+        } else if (copyEffect.maxManaValue() == null) {
             gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
         } else {
             gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues

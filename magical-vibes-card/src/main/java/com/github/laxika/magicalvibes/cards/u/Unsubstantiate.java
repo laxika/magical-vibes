@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrCreatureTo
 
 @CardRegistration(set = "EMN", collectorNumber = "79")
 @CardRegistration(set = "M21", collectorNumber = "82")
+@CardRegistration(set = "SLD", collectorNumber = "2158")
 public class Unsubstantiate extends Card {
 
     public Unsubstantiate() {

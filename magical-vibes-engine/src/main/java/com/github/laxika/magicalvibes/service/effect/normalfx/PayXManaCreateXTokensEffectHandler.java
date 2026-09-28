@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,13 +54,14 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
 
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             ManaCost cost = new ManaCost(e.manaCost());
-            if (!cost.canPay(pool, chosenValue)) {
+            int maximumX = maximumX(gameData, entry, e);
+            if (chosenValue > maximumX || !cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay " + e.manaCost().replace("{X}", "{" + chosenValue + "}")
                                 + " for " + cardName + " (tap mana sources, then choose X again)."));
                 log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
                         gameData.id, playerName, chosenValue, cardName);
-                beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost());
+                beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost(), maximumX);
                 return;
             }
             cost.pay(pool, chosenValue);
@@ -71,20 +75,31 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
         }
 
         ManaCost cost = new ManaCost(e.manaCost());
-        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+        int maxX = maximumX(gameData, entry, e);
+        maxX = Math.min(maxX, cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId)));
         if (maxX <= 0) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no mana to pay for " + cardName + "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X token ability", gameData.id, playerName, cardName);
             return;
         }
-        beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost());
+        beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost(), maxX);
     }
 
-    private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost, String cardName, String manaCost) {
-        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+    private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost, String cardName,
+                              String manaCost, int maximumX) {
+        int maxX = Math.min(maximumX,
+                cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId)));
         String prompt = "You may pay " + manaCost + " for " + cardName
                 + ". Choose X (0 = don't pay). Create X tokens.";
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true, manaCost));
+    }
+
+    private int maximumX(GameData gameData, StackEntry entry, PayXManaCreateXTokensEffect effect) {
+        if (effect.maximumX() == null) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, amountEvaluationService.evaluate(gameData, effect.maximumX(),
+                AmountContext.forStackEntry(entry, null)));
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "157")
+@CardRegistration(set = "C15", collectorNumber = "237")
 public class UnderworldCoinsmith extends Card {
 
     public UnderworldCoinsmith() {

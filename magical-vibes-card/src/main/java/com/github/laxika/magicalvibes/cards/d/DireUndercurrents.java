@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "159")
+@CardRegistration(set = "SLD", collectorNumber = "1578")
 public class DireUndercurrents extends Card {
 
     public DireUndercurrents() {

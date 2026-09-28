@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DevouringLight.class, BorosRecruit.class})
 class DevouringLightTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,6 @@ class DevouringLightTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1);
 
         castDevouringLight(TurnStep.DECLARE_ATTACKERS, attacker.getId());
-        harness.passBothPriorities();
 
         assertExiled(attacker);
     }
@@ -35,7 +36,6 @@ class DevouringLightTest extends BaseCardTest {
         Permanent blocker = addBlocker(player1);
 
         castDevouringLight(TurnStep.DECLARE_BLOCKERS, blocker.getId());
-        harness.passBothPriorities();
 
         assertExiled(blocker);
     }
@@ -44,7 +44,7 @@ class DevouringLightTest extends BaseCardTest {
     @DisplayName("Convoke taps a creature to help cast Devouring Light")
     void convokeTapsCreature() {
         Permanent target = addAttacker(player2);
-        Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent convokeCreature = addCreatureReady(player1, new BorosRecruit());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DevouringLight()));
@@ -59,9 +59,25 @@ class DevouringLightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can use a newly entered creature for convoke")
+    void canConvokeWithSummoningSickCreature() {
+        Permanent target = addAttacker(player2);
+        Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DevouringLight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()), List.of(convokeCreature.getId()));
+        assertThat(convokeCreature.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertExiled(target);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
         Permanent attacker = addAttacker(player2);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -78,18 +94,18 @@ class DevouringLightTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new BorosRecruit());
         attacker.setAttacking(true);
         attacker.setAttackTarget(owner.getId().equals(player1.getId()) ? player2.getId() : player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(Player owner) {
-        Permanent blocker = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Player attackerOwner = owner.getId().equals(player1.getId()) ? player2 : player1;
+        Permanent attacker = addAttacker(attackerOwner);
+        Permanent blocker = addCreatureReady(owner, new BorosRecruit());
         blocker.setBlocking(true);
-        blocker.addBlockingTargetId(UUID.randomUUID());
+        blocker.addBlockingTargetId(attacker.getId());
         return blocker;
     }
 
@@ -100,7 +116,7 @@ class DevouringLightTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 
     private void assertExiled(Permanent target) {

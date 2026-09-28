@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "277")
+@CardRegistration(set = "SLD", collectorNumber = "427")
 public class HallOfTheBanditLord extends Card {
 
     public HallOfTheBanditLord() {

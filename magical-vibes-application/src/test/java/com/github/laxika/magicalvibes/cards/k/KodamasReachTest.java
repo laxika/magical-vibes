@@ -1,19 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KodamasReach.class, Forest.class, HumbleBudoka.class, Island.class, Plains.class})
 class KodamasReachTest extends BaseCardTest {
 
     @Test
@@ -39,6 +38,22 @@ class KodamasReachTest extends BaseCardTest {
         assertThat(search.params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
+        assertThat(search.params().reveals()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With only one basic land, it enters tapped and no hand pick is offered")
+    void oneBasicLandGoesToBattlefieldWithoutHandPick() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest(), new HumbleBudoka()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Forest && permanent.isTapped());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -53,8 +68,8 @@ class KodamasReachTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -77,7 +92,7 @@ class KodamasReachTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -88,9 +103,7 @@ class KodamasReachTest extends BaseCardTest {
     @DisplayName("No basic lands in library resolves without prompting")
     void noBasicLandsNoPrompt() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HumbleBudoka(), new HumbleBudoka()));
 
         harness.passBothPriorities();
 
@@ -101,14 +114,10 @@ class KodamasReachTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new KodamasReach()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new KodamasReach(), "{2}{G}");
     }
 
     private void setupLibraryWithMultipleBasicLands() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new HumbleBudoka()));
     }
 }

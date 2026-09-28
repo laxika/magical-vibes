@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "242")
+@CardRegistration(set = "C20", collectorNumber = "288")
 public class MemorialToFolly extends Card {
 
     public MemorialToFolly() {

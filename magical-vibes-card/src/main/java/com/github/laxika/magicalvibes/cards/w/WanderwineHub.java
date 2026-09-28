@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 
 
 @CardRegistration(set = "LRW", collectorNumber = "280")
+@CardRegistration(set = "SLD", collectorNumber = "1324")
 public class WanderwineHub extends Card {
 
     public WanderwineHub() {

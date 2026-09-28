@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 
 
 @CardRegistration(set = "LRW", collectorNumber = "267")
+@CardRegistration(set = "SLD", collectorNumber = "1321")
 public class AuntiesHovel extends Card {
 
     public AuntiesHovel() {

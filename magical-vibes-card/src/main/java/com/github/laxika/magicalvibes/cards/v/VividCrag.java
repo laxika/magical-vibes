@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "MMA", collectorNumber = "225")
 @CardRegistration(set = "C13", collectorNumber = "333")
 @CardRegistration(set = "CMD", collectorNumber = "293")
+@CardRegistration(set = "C15", collectorNumber = "316")
 public class VividCrag extends Card {
 
     public VividCrag() {

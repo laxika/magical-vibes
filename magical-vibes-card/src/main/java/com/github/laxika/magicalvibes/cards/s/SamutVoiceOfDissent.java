@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "205")
 @CardRegistration(set = "AKR", collectorNumber = "258")
+@CardRegistration(set = "SLD", collectorNumber = "1451")
 public class SamutVoiceOfDissent extends Card {
 
     public SamutVoiceOfDissent() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "AKH", collectorNumber = "123")
 @CardRegistration(set = "AKR", collectorNumber = "144")
+@CardRegistration(set = "SLD", collectorNumber = "1086")
 public class ByForce extends Card {
 
     public ByForce() {

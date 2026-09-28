@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "249")
+@CardRegistration(set = "SLD", collectorNumber = "1965")
 public class MechtitanCore extends Card {
 
     public MechtitanCore() {

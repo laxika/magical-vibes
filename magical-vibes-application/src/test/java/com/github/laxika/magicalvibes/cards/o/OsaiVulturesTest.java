@@ -37,6 +37,23 @@ class OsaiVulturesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A real creature death satisfies the morbid end-step trigger")
+    void gainsCounterAfterCreatureDiesThroughStateBasedActions() {
+        Permanent vultures = addReadyVultures(player1);
+        Permanent dyingCreature = addReadyVultures(player2);
+        dyingCreature.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(dyingCreature.getCard());
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(vultures.getCounterCount(CounterType.CARRION)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Gains no counter at end step when no creature died this turn")
     void noCounterWhenNoDeath() {
         Permanent vultures = addReadyVultures(player1);

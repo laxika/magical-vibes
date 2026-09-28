@@ -22,11 +22,14 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "358")
 @CardRegistration(set = "FDN", collectorNumber = "156")
 @CardRegistration(set = "EMN", collectorNumber = "65")
+@CardRegistration(set = "SLD", collectorNumber = "1102")
 @CardRegistration(set = "SIR", collectorNumber = "74")
 @CardRegistration(set = "TLE", collectorNumber = "14")
 @CardRegistration(set = "SLZ", collectorNumber = "20")
 @CardRegistration(set = "SLZ", collectorNumber = "141")
 @CardRegistration(set = "SLZ", collectorNumber = "262")
+@CardRegistration(set = "MOC", collectorNumber = "224")
+@CardRegistration(set = "AFC", collectorNumber = "85")
 public class ImprisonedInTheMoon extends Card {
 
     public ImprisonedInTheMoon() {

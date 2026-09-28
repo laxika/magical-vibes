@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "40")
+@CardRegistration(set = "SLD", collectorNumber = "2155")
 public class Metamorphose extends Card {
 
     public Metamorphose() {

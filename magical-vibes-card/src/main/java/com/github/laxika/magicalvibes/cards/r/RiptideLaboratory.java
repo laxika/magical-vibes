@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "322")
+@CardRegistration(set = "MH2", collectorNumber = "303")
 public class RiptideLaboratory extends Card {
 
     public RiptideLaboratory() {

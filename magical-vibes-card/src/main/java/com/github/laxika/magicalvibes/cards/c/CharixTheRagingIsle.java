@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "49")
+@CardRegistration(set = "SLD", collectorNumber = "1927")
 public class CharixTheRagingIsle extends Card {
 
     public CharixTheRagingIsle() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "92")
+@CardRegistration(set = "CMM", collectorNumber = "143")
+@CardRegistration(set = "DSC", collectorNumber = "134")
 public class CarrionGrub extends Card {
 
     public CarrionGrub() {

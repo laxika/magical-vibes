@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
+@CardRegistration(set = "SLD", collectorNumber = "1544")
 @CardRegistration(set = "SPG", collectorNumber = "156")
+@CardRegistration(set = "C21", collectorNumber = "9")
 public class AdrixAndNevTwincasters extends Card {
 
     public AdrixAndNevTwincasters() {

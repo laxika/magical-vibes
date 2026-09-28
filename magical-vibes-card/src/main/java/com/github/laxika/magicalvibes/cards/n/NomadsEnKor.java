@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "9")
 @CardRegistration(set = "TPR", collectorNumber = "20")
+@CardRegistration(set = "MB2", collectorNumber = "149")
 public class NomadsEnKor extends Card {
 
     public NomadsEnKor() {

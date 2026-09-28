@@ -39,7 +39,7 @@ class QuicksilverFountainTest extends BaseCardTest {
     void floodedLandBecomesIsland() {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(forest);
 
         assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
@@ -54,7 +54,7 @@ class QuicksilverFountainTest extends BaseCardTest {
     void floodedLandRemainsIslandAfterFountainLeaves() {
         Permanent fountain = harness.addToBattlefieldAndReturn(player1, new QuicksilverFountain());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(forest);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, fountain));
 
@@ -90,7 +90,7 @@ class QuicksilverFountainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent floodedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent freshForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        floodedForest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(floodedForest);
 
         advanceToUpkeep(player1);
 
@@ -138,7 +138,7 @@ class QuicksilverFountainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentIsland = harness.addToBattlefieldAndReturn(player2, new Island());
-        forest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(forest);
         opponentIsland.setCounterCount(CounterType.FLOOD, 2);
 
         advanceToEndStep(player1);
@@ -153,7 +153,7 @@ class QuicksilverFountainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent floodedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent nonIslandLand = harness.addToBattlefieldAndReturn(player2, new Forest());
-        floodedForest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(floodedForest);
 
         advanceToEndStep(player1);
 
@@ -166,7 +166,7 @@ class QuicksilverFountainTest extends BaseCardTest {
     void keepsFloodCountersWhenConditionFailsBeforeResolution() {
         harness.addToBattlefield(player1, new QuicksilverFountain());
         Permanent floodedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        floodedForest.setCounterCount(CounterType.FLOOD, 1);
+        floodLand(floodedForest);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -177,6 +177,12 @@ class QuicksilverFountainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(floodedForest.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+    }
+
+    private void floodLand(Permanent land) {
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
     }
 
     private void advanceToEndStep(Player activePlayer) {

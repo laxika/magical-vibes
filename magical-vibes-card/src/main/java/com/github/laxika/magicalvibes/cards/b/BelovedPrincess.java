@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "7")
+@CardRegistration(set = "SLD", collectorNumber = "184")
+@CardRegistration(set = "SLD", collectorNumber = "804")
 public class BelovedPrincess extends Card {
 
     public BelovedPrincess() {

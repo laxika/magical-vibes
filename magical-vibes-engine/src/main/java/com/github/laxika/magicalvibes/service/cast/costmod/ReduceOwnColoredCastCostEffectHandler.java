@@ -49,7 +49,10 @@ public class ReduceOwnColoredCastCostEffectHandler implements CostModificationHa
         int genericReductionRemainder = amount
                 - printedCost.countColorSymbols(reduce.color())
                 - printedCost.getGenericCost();
-        return -Math.min(Math.max(0, genericReductionRemainder), Math.max(0, accumulatedModifier));
+        int coveredPrintedMana = Math.min(amount,
+                printedCost.countColorSymbols(reduce.color()) + printedCost.getGenericCost());
+        return -Math.min(Math.max(0, genericReductionRemainder),
+                Math.max(0, accumulatedModifier + coveredPrintedMana));
     }
 
     @Override

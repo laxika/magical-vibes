@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MAR", collectorNumber = "17")
 @CardRegistration(set = "OMB", collectorNumber = "17")
 @CardRegistration(set = "CMD", collectorNumber = "87")
+@CardRegistration(set = "NCC", collectorNumber = "252")
+@CardRegistration(set = "AFC", collectorNumber = "101")
+@CardRegistration(set = "OTC", collectorNumber = "136")
 public class Hex extends Card {
 
     public Hex() {

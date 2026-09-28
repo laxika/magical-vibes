@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
+import com.github.laxika.magicalvibes.cards.c.CoralEel;
 
-@CardUsed({CrawWurm.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({CrawWurm.class, GloriousAnthem.class, GrizzlyBears.class, CanyonWildcat.class, CoralEel.class})
 class GloriousAnthemTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -32,8 +34,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof GloriousAnthem);
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
     }
 
     // ===== Static effect: buffs own creatures =====
@@ -164,5 +165,15 @@ class GloriousAnthemTest extends BaseCardTest {
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7); // 6 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Does not buff creatures controlled by another player")
+    void doesNotBuffCreaturesControlledByAnotherPlayer() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        Permanent eel = harness.addToBattlefieldAndReturn(player1, new CoralEel());
+
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(1);
     }
 }

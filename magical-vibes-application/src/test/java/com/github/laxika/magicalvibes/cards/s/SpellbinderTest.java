@@ -93,7 +93,8 @@ class SpellbinderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ImprintFromHandChoice.class)).isNull();
         harness.assertInHand(player1, "Myr Moonvessel");
         Permanent spellbinder = findPermanent(player1, "Spellbinder");
         assertThat(gd.getImprintedCard(spellbinder.getCard())).isNull();

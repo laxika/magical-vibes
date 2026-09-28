@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MB1", collectorNumber = "181")
 @CardRegistration(set = "HA4", collectorNumber = "22")
 @CardRegistration(set = "2X2", collectorNumber = "301")
+@CardRegistration(set = "C15", collectorNumber = "249")
 public class ColdsteelHeart extends Card {
 
     public ColdsteelHeart() {

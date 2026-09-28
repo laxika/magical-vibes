@@ -1,24 +1,23 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import java.util.List;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
-
-@CardUsed({ForceOfVigor.class, FountainOfYouth.class, PhyrexianArena.class, GrizzlyBears.class})
+@CardUsed({ForceOfVigor.class, GrizzlyBears.class, GloriousAnthem.class, Ornithopter.class, FountainOfYouth.class, PhyrexianArena.class})
 class ForceOfVigorTest extends BaseCardTest {
 
     @Test
@@ -82,7 +81,6 @@ class ForceOfVigorTest extends BaseCardTest {
     }
 }
 
-@CardUsed({ForceOfVigor.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class})
 class Mh1ForceOfVigorTest extends BaseCardTest {
 
     @Test

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "65")
 @CardRegistration(set = "STA", collectorNumber = "25")
+@CardRegistration(set = "FIC", collectorNumber = "275")
 public class CruxOfFate extends Card {
 
     public CruxOfFate() {

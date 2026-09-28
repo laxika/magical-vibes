@@ -52,7 +52,7 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers on the opponent's end step too")
     void triggersOnOpponentsEndStep() {
-        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
+        harness.addToBattlefield(player1, new ViashinoSandstalker());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -65,6 +65,23 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Viashino Sandstalker");
         harness.assertInHand(player1, "Viashino Sandstalker");
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's hand when controlled by another player")
+    void returnsToOwnersHandWhenControlledByAnotherPlayer() {
+        ViashinoSandstalker card = new ViashinoSandstalker();
+        card.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, card);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Viashino Sandstalker");
+        harness.assertInHand(player1, "Viashino Sandstalker");
+        harness.assertNotInHand(player2, "Viashino Sandstalker");
     }
 
     @Test

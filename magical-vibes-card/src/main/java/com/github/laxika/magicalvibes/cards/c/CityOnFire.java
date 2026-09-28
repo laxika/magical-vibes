@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplierEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "135")
+@CardRegistration(set = "SLD", collectorNumber = "1803")
 public class CityOnFire extends Card {
 
     public CityOnFire() {

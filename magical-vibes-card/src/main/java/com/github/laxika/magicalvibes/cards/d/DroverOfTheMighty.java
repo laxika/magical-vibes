@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 
 @CardRegistration(set = "XLN", collectorNumber = "187")
+@CardRegistration(set = "LCC", collectorNumber = "239")
 public class DroverOfTheMighty extends Card {
 
     public DroverOfTheMighty() {

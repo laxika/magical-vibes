@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "271")
+@CardRegistration(set = "CMM", collectorNumber = "411")
+@CardRegistration(set = "C21", collectorNumber = "265")
 public class SpectralSearchlight extends Card {
 
     public SpectralSearchlight() {

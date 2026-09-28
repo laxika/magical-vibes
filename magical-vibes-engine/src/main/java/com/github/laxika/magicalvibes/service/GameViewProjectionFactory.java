@@ -1,65 +1,65 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.ExileCast;
-import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ForetellCast;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.Retrace;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileCast;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.FlashforwardCast;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.VirtualManaPool;
-import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
-import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * Pure player-specific projection of authoritative game state into immutable networking views.
@@ -73,7 +73,6 @@ public class GameViewProjectionFactory {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseViewService planarViews;
-
 
     private final CardViewFactory cardViewFactory;
     private final GameLogViewFactory gameLogViewFactory;
@@ -107,6 +106,7 @@ public class GameViewProjectionFactory {
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
         List<Integer> energyCounters = getEnergyCounters(gameData);
+        List<Integer> radCounters = getRadCounters(gameData);
         List<Integer> speeds = getSpeeds(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
@@ -180,6 +180,7 @@ public class GameViewProjectionFactory {
                             applyFaceDownReveals(battlefields, faceDownReveals, playerId),
                             collectFaceDownPermanentReveals(gameData, playerId)),
                     stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
+                    radCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
@@ -359,13 +360,21 @@ public class GameViewProjectionFactory {
                         var filteredPermission = viewerId != null && viewerId.equals(pid)
                                 ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
+                        var targetedPermission = viewerId != null && viewerId.equals(pid)
+                                ? data.graveyardCardCastPermissionsUntilEndOfTurn.get(c.getId())
+                                : null;
+                        int graveyardCastExileCount = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount()
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
+                                        .orElse(0);
+                        String graveyardCastExileLabel = targetedPermission != null
+                                ? targetedPermission.additionalGraveyardExileCount() > 0 ? "other cards" : null
+                                : filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
+                                        .orElse(null);
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
                                 gameQueryService.graveyardCardsHaveLostAllAbilities(data),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
-                                        .orElse(0),
-                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
-                                        .orElse(null));
+                                graveyardCastExileCount, graveyardCastExileLabel);
                     }).toList()
                     : new ArrayList<>());
         }
@@ -391,6 +400,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PubliclyRevealedHandEffect reveal) {
                         if (!reveal.controllerOnly()) {
@@ -411,6 +421,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof RevealOpponentHandsEffect) {
                             fullHandRevealed = true;
@@ -574,6 +585,14 @@ public class GameViewProjectionFactory {
         return counters;
     }
 
+    List<Integer> getRadCounters(GameData gameData) {
+        List<Integer> counters = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            counters.add(gameData.playerRadCounters.getOrDefault(pid, 0));
+        }
+        return counters;
+    }
+
     List<Integer> getSpeeds(GameData gameData) {
         List<Integer> speeds = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -581,7 +600,6 @@ public class GameViewProjectionFactory {
         }
         return speeds;
     }
-
 
     List<CardView> getPlayableExileCards(GameData gameData, UUID playerId) {
         List<CardView> playable = new ArrayList<>();
@@ -658,6 +676,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (card.hasType(CardType.CREATURE) && card.getCardText() == null && card.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
             if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -694,6 +717,7 @@ public class GameViewProjectionFactory {
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
             boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
+                    && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
                     && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
             if (hasSuspendedExileAbility) {
                 playable.add(cardViewFactory.create(card));
@@ -703,7 +727,10 @@ public class GameViewProjectionFactory {
             boolean hasPermission = fromOutsideGame || castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
-            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            FlashforwardCast flashforwardCast = !fromOutsideGame
+                    ? card.getCastingOption(FlashforwardCast.class).orElse(null) : null;
+            boolean hasFlashforward = flashforwardCast != null;
+            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent() || hasFlashforward;
             boolean hasExileAbility = card.getActivatedAbilities().stream()
                     .anyMatch(ActivatedAbility::isExileOnly);
             if (hasExileAbility && !hasPermission && !hasExileCast) {
@@ -764,6 +791,10 @@ public class GameViewProjectionFactory {
                             && gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
                     ManaCost baseCost = foretellPermission
                             ? foretoldCost
+                            : hasFlashforward
+                            ? new ManaCost(flashforwardCast.getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElseThrow())
                             : card.getParsedManaCost();
                     ManaCost cost = castingCostService.applyColoredManaCostReductions(
                             gameData, playerId, card, baseCost);
@@ -974,6 +1005,12 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (topCard.hasType(CardType.CREATURE) && topCard.getCardText() == null
+                    && topCard.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
             if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -1002,6 +1039,15 @@ public class GameViewProjectionFactory {
                 gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
+        }
+        var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
+        if (grantedBlitz.isPresent()) {
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostManaCost(grantedBlitz.get().getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElse(null))
+                    .build();
         }
         WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(
                 gameData, playerId, card);
@@ -1062,6 +1108,7 @@ public class GameViewProjectionFactory {
                 getLifeTotals(data),
                 getPoisonCounters(data),
                 getEnergyCounters(data),
+                getRadCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),

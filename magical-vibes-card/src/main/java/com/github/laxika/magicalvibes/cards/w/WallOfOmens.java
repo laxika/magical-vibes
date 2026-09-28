@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "ROE", collectorNumber = "53")
 @CardRegistration(set = "DDK", collectorNumber = "4")
 @CardRegistration(set = "EMA", collectorNumber = "34")
+@CardRegistration(set = "SLD", collectorNumber = "1518")
 @CardRegistration(set = "2X2", collectorNumber = "33")
 @CardRegistration(set = "FCA", collectorNumber = "27")
 @CardRegistration(set = "CMD", collectorNumber = "37")
+@CardRegistration(set = "TDC", collectorNumber = "138")
+@CardRegistration(set = "AFC", collectorNumber = "77")
 public class WallOfOmens extends Card {
 
     public WallOfOmens() {

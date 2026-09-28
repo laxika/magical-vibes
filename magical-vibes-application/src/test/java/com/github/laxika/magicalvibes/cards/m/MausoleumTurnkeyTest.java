@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,16 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MausoleumTurnkey.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({MausoleumTurnkey.class, GrayscaledGharial.class, LastGasp.class})
 class MausoleumTurnkeyTest extends BaseCardTest {
 
     private void castAndResolveEtb() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new MausoleumTurnkey()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MausoleumTurnkey(), "{3}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -32,8 +28,8 @@ class MausoleumTurnkeyTest extends BaseCardTest {
     @Test
     @DisplayName("The opponent chooses a creature card from the controller's graveyard")
     void opponentChoosesCreatureCard() {
-        GrizzlyBears creature = new GrizzlyBears();
-        HolyDay noncreature = new HolyDay();
+        GrayscaledGharial creature = new GrayscaledGharial();
+        LastGasp noncreature = new LastGasp();
         harness.setGraveyard(player1, List.of(creature, noncreature));
         castAndResolveEtb();
 
@@ -48,19 +44,42 @@ class MausoleumTurnkeyTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInHand(player1, "Grayscaled Gharial");
+        harness.assertInGraveyard(player1, "Last Gasp");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The opponent chooses exactly one of multiple creature cards")
+    void opponentChoosesAmongMultipleCreatureCards() {
+        GrayscaledGharial firstCreature = new GrayscaledGharial();
+        GrayscaledGharial secondCreature = new GrayscaledGharial();
+        harness.setGraveyard(player1, List.of(firstCreature, secondCreature));
+        castAndResolveEtb();
+
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(firstCreature.getId(), secondCreature.getId());
+
+        harness.handleMultipleCardsChosen(player2, List.of(secondCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCreature);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("No creature card in the graveyard produces no choice")
     void noCreatureCardDoesNothing() {
-        harness.setGraveyard(player1, List.of(new HolyDay()));
+        harness.setGraveyard(player1, List.of(new LastGasp()));
         castAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Mausoleum Turnkey");
-        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player1, "Last Gasp");
     }
 }

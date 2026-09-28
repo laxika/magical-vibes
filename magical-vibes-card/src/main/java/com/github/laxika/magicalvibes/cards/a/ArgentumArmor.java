@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "137")
 @CardRegistration(set = "GN3", collectorNumber = "113")
+@CardRegistration(set = "C14", collectorNumber = "228")
+@CardRegistration(set = "AFC", collectorNumber = "198")
 public class ArgentumArmor extends Card {
 
     public ArgentumArmor() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
+import com.github.laxika.magicalvibes.cards.c.CoastalTower;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
 import com.github.laxika.magicalvibes.cards.k.KarplusanForest;
@@ -16,13 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloodMoon.class, Forest.class, Glimmerpost.class, KarplusanForest.class})
+@CardUsed({BloodMoon.class, Forest.class, Glimmerpost.class, KarplusanForest.class, CityOfBrass.class, CoastalTower.class})
 class BloodMoonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Nonbasic land taps for red instead of its normal mana")
     void nonbasicLandProducesRed() {
-        harness.addToBattlefield(player1, new Glimmerpost());
+        harness.addToBattlefield(player1, new CityOfBrass());
         harness.addToBattlefield(player1, new BloodMoon());
 
         harness.tapPermanent(player1, 0);
@@ -34,10 +36,10 @@ class BloodMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Nonbasic land's subtypes are overridden to Mountain")
     void nonbasicLandSubtypesOverriddenToMountain() {
-        Permanent glimmerpost = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
+        Permanent cityOfBrass = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
         harness.addToBattlefield(player1, new BloodMoon());
 
-        assertThat(gqs.effectiveLandTypes(gd, glimmerpost))
+        assertThat(gqs.effectiveLandTypes(gd, cityOfBrass))
                 .containsExactly(CardSubtype.MOUNTAIN);
     }
 
@@ -66,14 +68,13 @@ class BloodMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Nonbasic land produces its normal mana once Blood Moon leaves")
     void normalManaResumesWhenBloodMoonLeaves() {
-        harness.addToBattlefield(player1, new Glimmerpost());
-        harness.addToBattlefield(player1, new BloodMoon());
-        Permanent bloodMoon = gd.playerBattlefields.get(player1.getId()).get(1);
+        harness.addToBattlefield(player1, new CoastalTower());
+        Permanent bloodMoon = harness.addToBattlefieldAndReturn(player1, new BloodMoon());
 
         gd.playerBattlefields.get(player1.getId()).remove(bloodMoon);
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
     }
 
@@ -115,6 +116,33 @@ class BloodMoonTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands controlled by an opponent also become Mountains")
+    void opponentsNonbasicLandIsAffected() {
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.addToBattlefield(player2, new CityOfBrass());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands lose their printed triggered abilities")
+    void nonbasicLandLosesPrintedTriggeredAbilities() {
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.addToBattlefield(player1, new CityOfBrass());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
+
+        harness.passBothPriorities();
         harness.assertLife(player1, 20);
     }
 }

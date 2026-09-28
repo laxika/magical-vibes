@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,13 +16,13 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreathOfFury.class, GrizzlyBears.class})
+@CardUsed({BreathOfFury.class, GrayscaledGharial.class})
 class BreathOfFuryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchant creature you control rejects an opponent's creature")
     void rejectsOpponentCreatureAsAuraTarget() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrayscaledGharial());
         harness.setHand(player1, List.of(new BreathOfFury()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -35,15 +34,16 @@ class BreathOfFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices the enchanted creature, reattaches, untaps creatures, and adds a combat phase")
     void reattachesAndAddsCombatPhase() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent nextAttacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent nextAttacker = addCreatureReady(player1, new GrayscaledGharial());
         nextAttacker.tap();
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(aura, nextAttacker);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grayscaled Gharial"));
         assertThat(aura.getAttachedTo()).isEqualTo(nextAttacker.getId());
         assertThat(nextAttacker.isTapped()).isFalse();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
@@ -52,14 +52,14 @@ class BreathOfFuryTest extends BaseCardTest {
     @Test
     @DisplayName("With no creature to reattach to, the Aura goes to its owner's graveyard without an extra combat")
     void noCreatureToReattach() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrayscaledGharial());
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker, aura);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"))
+                .anyMatch(card -> card.getName().equals("Grayscaled Gharial"))
                 .anyMatch(card -> card.getName().equals("Breath of Fury"));
         assertThat(gd.additionalCombatPhasesOnly).isZero();
     }
@@ -67,10 +67,12 @@ class BreathOfFuryTest extends BaseCardTest {
     @Test
     @DisplayName("The controller chooses among creatures to reattach the Aura to")
     void choosesCreatureToReattachTo() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent firstChoice = addReadyCreature(player1);
-        Permanent secondChoice = addReadyCreature(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent firstChoice = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent secondChoice = addCreatureReady(player1, new GrayscaledGharial());
+        firstChoice.tap();
+        secondChoice.tap();
+        Permanent opponentCreature = addCreatureReady(player2, new GrayscaledGharial());
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
@@ -84,20 +86,14 @@ class BreathOfFuryTest extends BaseCardTest {
 
         assertThat(aura.getAttachedTo()).isEqualTo(secondChoice.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(aura);
+        assertThat(firstChoice.isTapped()).isFalse();
+        assertThat(secondChoice.isTapped()).isFalse();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
     }
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent attachBreath(Permanent creature) {
-        Permanent aura = new Permanent(new BreathOfFury());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BreathOfFury());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 

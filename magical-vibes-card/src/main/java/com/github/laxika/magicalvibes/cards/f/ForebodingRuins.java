@@ -12,6 +12,13 @@ import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "272")
 @CardRegistration(set = "SIR", collectorNumber = "265")
+@CardRegistration(set = "40K", collectorNumber = "279")
+@CardRegistration(set = "LTC", collectorNumber = "310")
+@CardRegistration(set = "MSC", collectorNumber = "244")
+@CardRegistration(set = "MSC", collectorNumber = "473")
+@CardRegistration(set = "DSC", collectorNumber = "277")
+@CardRegistration(set = "AFC", collectorNumber = "238")
+@CardRegistration(set = "LCC", collectorNumber = "330")
 public class ForebodingRuins extends Card {
 
     public ForebodingRuins() {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "194")
+@CardRegistration(set = "LCC", collectorNumber = "258")
 public class ShiftingCeratops extends Card {
 
     public ShiftingCeratops() {

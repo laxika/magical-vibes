@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Mountain.class)
+@CardUsed({Mountain.class})
 class MountainTest extends BaseCardTest {
 
     @Test
@@ -23,5 +23,15 @@ class MountainTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void tapsForOneRedMana() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }

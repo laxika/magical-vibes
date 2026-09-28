@@ -15,6 +15,17 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "234")
 @CardRegistration(set = "HA7", collectorNumber = "19")
 @CardRegistration(set = "C13", collectorNumber = "270")
+@CardRegistration(set = "C14", collectorNumber = "281")
+@CardRegistration(set = "C15", collectorNumber = "274")
+@CardRegistration(set = "PIP", collectorNumber = "252")
+@CardRegistration(set = "PIP", collectorNumber = "780")
+@CardRegistration(set = "MOC", collectorNumber = "389")
+@CardRegistration(set = "40K", collectorNumber = "261")
+@CardRegistration(set = "40K", collectorNumber = "262")
+@CardRegistration(set = "LTC", collectorNumber = "290")
+@CardRegistration(set = "TDC", collectorNumber = "335")
+@CardRegistration(set = "AFC", collectorNumber = "222")
+@CardRegistration(set = "LCC", collectorNumber = "317")
 public class WayfarersBauble extends Card {
 
     public WayfarersBauble() {

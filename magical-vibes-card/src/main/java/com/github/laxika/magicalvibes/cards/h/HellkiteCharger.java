@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "ZEN", collectorNumber = "131")
 @CardRegistration(set = "MM2", collectorNumber = "118")
+@CardRegistration(set = "CMM", collectorNumber = "232")
+@CardRegistration(set = "CMM", collectorNumber = "540")
 public class HellkiteCharger extends Card {
 
     public HellkiteCharger() {

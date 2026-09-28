@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RogueKavu.class, GrizzlyBears.class, FireNavyTrebuchet.class})
+@CardUsed({RogueKavu.class, GrizzlyBears.class, FireNavyTrebuchet.class, RagingKavu.class})
 class RogueKavuTest extends BaseCardTest {
 
     @Test
@@ -64,8 +64,7 @@ class RogueKavuTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
@@ -75,7 +74,7 @@ class RogueKavuTest extends BaseCardTest {
     @DisplayName("Attacking with another creature — trigger does not fire and P/T stays 1/1")
     void attackingWithOtherCreatureNoTrigger() {
         Permanent kavu = addCreatureReady(player1, new RogueKavu());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RagingKavu());
 
         declareAttackers(player1, List.of(0, 1));
 

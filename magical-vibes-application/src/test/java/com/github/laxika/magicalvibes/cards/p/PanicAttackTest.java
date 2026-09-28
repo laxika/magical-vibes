@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -144,6 +145,26 @@ class PanicAttackTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Restriction ends at the end of the turn")
+    void restrictionEndsAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
     @Test

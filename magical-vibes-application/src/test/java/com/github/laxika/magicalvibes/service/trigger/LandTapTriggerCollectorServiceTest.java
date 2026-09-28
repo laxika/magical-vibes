@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -34,10 +35,12 @@ import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntap
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -129,6 +132,9 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @Mock
     private PermanentControlSupport permanentControlSupport;
@@ -613,6 +619,53 @@ class LandTapTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("resolves a tapped-source conditional mana-and-damage ability immediately")
+        void resolvesTappedSourceConditionalSequenceImmediately() {
+            Permanent triggerPerm = createPermanent("Barbflare Gremlin");
+            triggerPerm.tap();
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var sequence = SequenceEffect.of(
+                    new AddOneOfEachManaTypeProducedByLandEffect(false),
+                    new DealDamageOnLandTapEffect(1));
+            var effect = new ConditionalEffect(new SourceIsTapped(), sequence);
+            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
+
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
+
+            boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+            verify(dealDamageHandler).resolve(
+                    eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
+                            1, DamageRecipient.TARGET_PLAYER)));
+        }
+
+        @Test
+        @DisplayName("does not resolve a conditional mana-and-damage ability when its condition fails")
+        void skipsConditionalSequenceWhenConditionFails() {
+            Permanent triggerPerm = createPermanent("Barbflare Gremlin");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new ConditionalEffect(new SourceIsTapped(), SequenceEffect.of(
+                    new AddOneOfEachManaTypeProducedByLandEffect(false),
+                    new DealDamageOnLandTapEffect(1)));
+
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player2Id, forest.getId()));
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("adds one additional mana of the type produced by the tapped land")
         void addsOneAdditionalMana() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
@@ -957,6 +1010,36 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
+        }
+
+        @Test
+        @DisplayName("source-only form triggers only when the source land is tapped")
+        void sourceOnlyTriggersForSourceLand() {
+            Permanent sourceLand = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN, false, true);
+
+            boolean result = registry.dispatch(
+                    match(sourceLand, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, sourceLand.getId()));
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isOne();
+        }
+
+        @Test
+        @DisplayName("source-only form ignores another land")
+        void sourceOnlyIgnoresAnotherLand() {
+            Permanent sourceLand = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN, false, true);
+
+            boolean result = registry.dispatch(
+                    match(sourceLand, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isZero();
         }
     }
 }

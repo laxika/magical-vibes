@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
  * Sliver creatures you control have "{T}: Add one mana of any color."
  */
 @CardRegistration(set = "M14", collectorNumber = "184")
+@CardRegistration(set = "SLD", collectorNumber = "650")
 public class ManaweftSliver extends Card {
 
     public ManaweftSliver() {

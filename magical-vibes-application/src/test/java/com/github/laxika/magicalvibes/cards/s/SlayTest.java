@@ -15,8 +15,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.a.ArcticMerfolk;
 
-@CardUsed({Slay.class, GrizzlyBears.class, AirElemental.class, GloriousAnthem.class})
+@CardUsed({Slay.class, GrizzlyBears.class, AirElemental.class, GloriousAnthem.class, AlphaKavu.class, ArcticMerfolk.class})
 class SlayTest extends BaseCardTest {
 
     @Test
@@ -51,6 +53,22 @@ class SlayTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Slay can target a green creature you control")
+    void canTargetOwnGreenCreature() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AlphaKavu());
+
+        harness.setHand(player1, List.of(new Slay()));
+        harness.setLibrary(player1, List.of(new ArcticMerfolk()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, kavu.getId());
+
+        harness.assertNotOnBattlefield(player1, "Alpha Kavu");
+        harness.assertInGraveyard(player1, "Alpha Kavu");
+        harness.assertInHand(player1, "Arctic Merfolk");
     }
 
     @Test
@@ -98,5 +116,22 @@ class SlayTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("green creature");
+    }
+
+    @Test
+    @DisplayName("Slay does not draw when its only target leaves before resolution")
+    void fizzlesWithoutDrawingIfTargetLeavesBeforeResolution() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new AlphaKavu());
+
+        harness.setHand(player1, List.of(new Slay()));
+        harness.setLibrary(player1, List.of(new ArcticMerfolk()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, kavu.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Slay");
     }
 }

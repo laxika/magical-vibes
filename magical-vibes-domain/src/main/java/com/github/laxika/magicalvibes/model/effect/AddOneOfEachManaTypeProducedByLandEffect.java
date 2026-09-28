@@ -18,24 +18,33 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param matchesImprintedCardName when {@code true}, only lands whose names match the card
  *                                imprinted on the source trigger
+ * @param monarchOnly when {@code true}, the source controller must be the monarch when the land
+ *                    is tapped
  */
 public record AddOneOfEachManaTypeProducedByLandEffect(
         boolean controllerOnly,
         boolean matchesImprintedCardName,
-        PermanentPredicate landFilter
+        PermanentPredicate landFilter,
+        boolean monarchOnly
 ) implements CardEffect {
 
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly) {
-        this(controllerOnly, false, null);
+        this(controllerOnly, false, null, false);
     }
 
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly,
                                                      boolean matchesImprintedCardName) {
-        this(controllerOnly, matchesImprintedCardName, null);
+        this(controllerOnly, matchesImprintedCardName, null, false);
     }
 
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly,
                                                      PermanentPredicate landFilter) {
-        this(controllerOnly, false, landFilter);
+        this(controllerOnly, false, landFilter, false);
+    }
+
+    public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly,
+                                                     PermanentPredicate landFilter,
+                                                     boolean monarchOnly) {
+        this(controllerOnly, false, landFilter, monarchOnly);
     }
 }

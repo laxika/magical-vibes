@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "73")
+@CardRegistration(set = "TDC", collectorNumber = "164")
+@CardRegistration(set = "LCC", collectorNumber = "168")
 public class ReflectionsOfLittjara extends Card {
 
     public ReflectionsOfLittjara() {

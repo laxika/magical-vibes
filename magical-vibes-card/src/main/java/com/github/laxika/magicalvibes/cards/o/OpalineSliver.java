@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "244")
+@CardRegistration(set = "SLD", collectorNumber = "667")
 public class OpalineSliver extends Card {
 
     public OpalineSliver() {

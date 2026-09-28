@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCos
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -28,14 +30,21 @@ import java.util.stream.Collectors;
  * @param costs the splice cost components
  * @param splicedEffects additional effects to add only when this card is spliced; the card's
  *                      SPELL effects are included as well
+ * @param splicedKeywords keywords the host spell gains while it is on the stack when this card
+ *                        is spliced
  */
 public record SpliceEffect(SpliceHost host, List<CastingCost> costs,
-                           List<CardEffect> splicedEffects) implements CardEffect {
+                           List<CardEffect> splicedEffects, Set<Keyword> splicedKeywords) implements CardEffect {
 
     public SpliceEffect {
         Objects.requireNonNull(host);
         costs = List.copyOf(Objects.requireNonNull(costs));
         splicedEffects = List.copyOf(Objects.requireNonNull(splicedEffects));
+        splicedKeywords = Set.copyOf(Objects.requireNonNull(splicedKeywords));
+    }
+
+    public SpliceEffect(SpliceHost host, List<CastingCost> costs, List<CardEffect> splicedEffects) {
+        this(host, costs, splicedEffects, Set.of());
     }
 
     public SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs, List<CardEffect> splicedEffects) {
@@ -58,6 +67,11 @@ public record SpliceEffect(SpliceHost host, List<CastingCost> costs,
     /** Splice onto any instant or sorcery spell. */
     public static SpliceEffect ontoInstantOrSorcery(String manaCost) {
         return new SpliceEffect(SpliceHost.INSTANT_OR_SORCERY, manaCosts(manaCost), List.of());
+    }
+
+    /** Splice onto any instant or sorcery spell and grant keywords while that spell is on the stack. */
+    public static SpliceEffect ontoInstantOrSorcery(String manaCost, Set<Keyword> splicedKeywords) {
+        return new SpliceEffect(SpliceHost.INSTANT_OR_SORCERY, manaCosts(manaCost), List.of(), splicedKeywords);
     }
 
     /** Splice cost whose only component is returning a matching permanent you control to hand. */

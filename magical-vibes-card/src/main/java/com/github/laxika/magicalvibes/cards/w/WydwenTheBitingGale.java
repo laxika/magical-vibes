@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "253")
+@CardRegistration(set = "C20", collectorNumber = "235")
 public class WydwenTheBitingGale extends Card {
 
     public WydwenTheBitingGale() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "36")
+@CardRegistration(set = "SLD", collectorNumber = "1381")
 @CardRegistration(set = "UMA", collectorNumber = "38")
 public class SublimeArchangel extends Card {
 

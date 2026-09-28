@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "SNC", collectorNumber = "160")
+@CardRegistration(set = "LCC", collectorNumber = "261")
 public class TopiaryStomper extends Card {
 
     public TopiaryStomper() {

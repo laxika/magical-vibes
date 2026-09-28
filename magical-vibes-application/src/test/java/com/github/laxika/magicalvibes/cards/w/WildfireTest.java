@@ -15,8 +15,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
+import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 
-@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, Wildfire.class})
+@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, Wildfire.class, ShivanHellkite.class, ThunderingGiant.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -174,5 +176,22 @@ class WildfireTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ancient Silverback");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
+    void dealsFourDamageToEachCreatureUpstreamReview() {
+        addLands(4);
+        harness.addToBattlefield(player1, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ShivanHellkite());
+
+        castWildfire();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Thundering Giant");
+        harness.assertNotOnBattlefield(player2, "Thundering Giant");
+        harness.assertOnBattlefield(player2, "Shivan Hellkite");
     }
 }

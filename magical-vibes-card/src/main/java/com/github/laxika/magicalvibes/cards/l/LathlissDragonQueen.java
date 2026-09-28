@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M19", collectorNumber = "149")
+@CardRegistration(set = "SLD", collectorNumber = "1145")
+@CardRegistration(set = "SLD", collectorNumber = "1146")
 @CardRegistration(set = "GN2", collectorNumber = "41")
+@CardRegistration(set = "TDC", collectorNumber = "219")
 public class LathlissDragonQueen extends Card {
 
     public LathlissDragonQueen() {

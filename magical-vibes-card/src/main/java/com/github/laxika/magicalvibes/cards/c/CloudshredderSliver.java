@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "660")
 @CardRegistration(set = "MH1", collectorNumber = "195")
 @CardRegistration(set = "TSR", collectorNumber = "373")
 public class CloudshredderSliver extends Card {

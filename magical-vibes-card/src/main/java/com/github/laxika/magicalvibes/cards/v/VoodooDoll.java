@@ -30,6 +30,6 @@ public class VoodooDoll extends Card {
                 "{X}{X}",
                 List.of(new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.PIN))),
                 "{X}{X}, {T}: This artifact deals damage equal to the number of pin counters on it to any target."
-        ));
+        ).withXEqualToSourceCounters(CounterType.PIN));
     }
 }

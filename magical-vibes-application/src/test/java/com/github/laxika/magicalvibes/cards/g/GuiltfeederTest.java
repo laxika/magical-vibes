@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Guiltfeeder.class, BalthorTheDefiled.class, GiantWarthog.class})
+@CardUsed({BalthorTheDefiled.class, GiantWarthog.class, Guiltfeeder.class})
 class GuiltfeederTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -74,5 +74,44 @@ class GuiltfeederTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("fear");
+    }
+
+    @Test
+    @DisplayName("An empty defending graveyard causes no life loss")
+    void emptyDefendingGraveyardCausesNoLifeLoss() {
+        harness.setGraveyard(player1, List.of(new Guiltfeeder()));
+        harness.setGraveyard(player2, List.of());
+        addAttackerForJudReview();
+
+        int startingLife = gd.getLife(player2.getId());
+        int controllerStartingLife = gd.getLife(player1.getId());
+        declareBlockers(List.of());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerStartingLife);
+    }
+
+    @Test
+    @DisplayName("The trigger counts the defending graveyard when it resolves")
+    void countsDefendingGraveyardAtResolution() {
+        harness.setGraveyard(player2, List.of(new Guiltfeeder()));
+        addAttackerForJudReview();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.setGraveyard(player2, List.of(
+                new Guiltfeeder(), new Guiltfeeder(), new Guiltfeeder(), new Guiltfeeder()));
+
+        int startingLife = gd.getLife(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 4);
+    }
+
+    private Permanent addAttackerForJudReview() {
+        Permanent attacker = addCreatureReady(player1, new Guiltfeeder());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        return attacker;
     }
 }

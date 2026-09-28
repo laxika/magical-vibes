@@ -14,8 +14,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.s.SkirgeFamiliar;
 
-@CardUsed({PegasusCharger.class, GrizzlyBears.class, SuntailHawk.class, GiantSpider.class})
+@CardUsed({PegasusCharger.class, GrizzlyBears.class, SuntailHawk.class, GiantSpider.class, GorillaWarrior.class, SkirgeFamiliar.class})
 class PegasusChargerTest extends BaseCardTest {
 
     @Test
@@ -69,5 +71,20 @@ class PegasusChargerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(charger);
         harness.assertInGraveyard(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("First strike defeats Skirge Familiar before it deals combat damage")
+    void firstStrikeDefeatsSkirgeFamiliarBeforeItDealsCombatDamage() {
+        Permanent charger = addCreatureReady(player1, new PegasusCharger());
+        addCreatureReady(player2, new SkirgeFamiliar());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(charger);
+        harness.assertInGraveyard(player2, "Skirge Familiar");
     }
 }

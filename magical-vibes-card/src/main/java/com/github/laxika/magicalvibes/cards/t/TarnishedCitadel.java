@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "329")
 @CardRegistration(set = "TLE", collectorNumber = "59")
+@CardRegistration(set = "MB2", collectorNumber = "112")
 public class TarnishedCitadel extends Card {
 
     public TarnishedCitadel() {

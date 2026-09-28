@@ -22,7 +22,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param chosenCount 0 = tap every permanent in scope; &gt;0 = the controller chooses up to N
  */
 public record TapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
-        implements CardEffect {
+        implements CardEffect, CombatOpponentReferencingEffect {
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS;
+    }
 
     public TapPermanentsEffect(TapUntapScope scope) {
         this(scope, null, 0);

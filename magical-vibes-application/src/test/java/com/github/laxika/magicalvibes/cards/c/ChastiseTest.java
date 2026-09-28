@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,11 +53,12 @@ class ChastiseTest extends BaseCardTest {
 
         castAndResolveChastise(attacker.getId());
 
+        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) destroyed -> into owner's graveyard
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         // Caster gains life equal to power (2): 15 + 2 = 17
-        harness.assertLife(player2, 17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
@@ -113,9 +115,10 @@ class ChastiseTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         // No life gain when the spell fizzles
-        harness.assertLife(player2, 20);
-        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Chastise");
     }
 

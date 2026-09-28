@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CON", collectorNumber = "115")
+@CardRegistration(set = "DMC", collectorNumber = "158")
 public class MaelstromArchangel extends Card {
 
     public MaelstromArchangel() {

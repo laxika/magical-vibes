@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SLD", collectorNumber = "144")
 @CardRegistration(set = "SLX", collectorNumber = "22")
 public class HanskSlayerZealot extends Card {
 

@@ -7,15 +7,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.GameData;
 
-@CardUsed({IvoryMask.class, LavaAxe.class, AnabaShaman.class})
+@CardUsed({IvoryMask.class, LavaAxe.class, AnabaShaman.class, Millstone.class, Shock.class, BeaconOfImmortality.class})
 class IvoryMaskTest extends BaseCardTest {
 
     @Test
@@ -96,5 +99,17 @@ class IvoryMaskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents activated abilities from targeting the controller")
+    void activatedAbilityCannotTargetController() {
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 }

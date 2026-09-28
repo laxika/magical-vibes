@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CHK", collectorNumber = "122")
 @CardRegistration(set = "MMA", collectorNumber = "89")
 @CardRegistration(set = "IMA", collectorNumber = "95")
+@CardRegistration(set = "SLD", collectorNumber = "1528")
 public class KokushoTheEveningStar extends Card {
 
     public KokushoTheEveningStar() {

@@ -31,6 +31,7 @@ public class PutCounterOnTargetForEachDyingSourceCounterEffectHandler implements
         if (target == null) {
             return;
         }
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, e.counterType(), e.count());
+        permanentCounterSupport.placeCounterOnPermanent(
+                gameData, entry, target, e.counterType(), e.count(), e.modular());
     }
 }

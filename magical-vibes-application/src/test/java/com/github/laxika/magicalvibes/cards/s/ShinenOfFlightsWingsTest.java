@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShinenOfFlightsWings.class, GrizzlyBears.class, Forest.class})
 class ShinenOfFlightsWingsTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,21 @@ class ShinenOfFlightsWingsTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Shinen of Flight's Wings");
+    }
+
+    @Test
+    @DisplayName("Channel can target a creature an opponent controls")
+    void channelCanTargetOpposingCreature() {
+        harness.setHand(player1, List.of(new ShinenOfFlightsWings()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -44,7 +59,20 @@ class ShinenOfFlightsWingsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Channel requires blue mana")
+    void channelRequiresBlueMana() {
+        harness.setHand(player1, List.of(new ShinenOfFlightsWings()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Shinen of Flight's Wings");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

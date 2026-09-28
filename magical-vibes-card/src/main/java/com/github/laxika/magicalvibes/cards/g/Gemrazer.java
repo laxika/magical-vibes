@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "155")
+@CardRegistration(set = "PIP", collectorNumber = "351")
+@CardRegistration(set = "PIP", collectorNumber = "879")
 public class Gemrazer extends Card {
 
     public Gemrazer() {

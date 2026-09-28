@@ -11,6 +11,9 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "31")
 @CardRegistration(set = "MP2", collectorNumber = "9")
+@CardRegistration(set = "MB2", collectorNumber = "157")
+@CardRegistration(set = "SLD", collectorNumber = "1220")
+@CardRegistration(set = "SLD", collectorNumber = "2066")
 public class Counterbalance extends Card {
 
     public Counterbalance() {

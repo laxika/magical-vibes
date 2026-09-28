@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "175")
+@CardRegistration(set = "C15", collectorNumber = "296")
+@CardRegistration(set = "C21", collectorNumber = "305")
 public class NovijenHeartOfProgress extends Card {
 
     public NovijenHeartOfProgress() {

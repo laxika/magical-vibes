@@ -17,5 +17,6 @@ public enum HandChoiceDestination {
     EXILE,
     TOP_OF_LIBRARY,
     /** Put the chosen cards into the target's library, then shuffle that library. */
-    SHUFFLE_INTO_LIBRARY
+    SHUFFLE_INTO_LIBRARY,
+    KEEP_IN_HAND
 }

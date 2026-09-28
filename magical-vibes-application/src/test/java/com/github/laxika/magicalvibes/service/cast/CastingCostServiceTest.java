@@ -52,6 +52,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceNinjutsuCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostForTargetingAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceAuraCastCostForTargetingAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceTargetedCostEffect;
@@ -889,6 +891,23 @@ class CastingCostServiceTest {
         }
 
         @Test
+        void minimumSpellCostIsAppliedAfterColoredReductions() {
+            evaluateCardTypePredicates();
+            Card artifact = new Card();
+            artifact.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            artifact.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.CREATURE),
+                            new com.github.laxika.magicalvibes.model.ManaCost("{B}"), CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(artifact));
+            Card spell = new Card();
+            spell.setType(CardType.CREATURE);
+            spell.setManaCost("{1}{B}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Tapped minimum-cost source does not affect spells")
         void tappedMinimumCostSourceDoesNotAffectSpells() {
             Card trinisphere = new Card();
@@ -1154,6 +1173,31 @@ class CastingCostServiceTest {
                     .isEqualTo(1);
             assertThat(svc.getActivatedAbilityCostReduction(
                     gd, player1Id, equipment, ability, UUID.randomUUID(), List.of()))
+                    .isZero();
+        }
+
+        @Test
+        @DisplayName("Attached-target Equip reduction follows the source Aura's attachment")
+        void attachedTargetEquipReductionUsesSourceAttachment() {
+            Card strongBack = new Card();
+            strongBack.addEffect(EffectSlot.STATIC,
+                    new ReduceEquipCostForTargetingAttachedPermanentEffect(3));
+            Permanent reducer = new Permanent(strongBack);
+            Permanent enchantedCreature = new Permanent(new Card());
+            reducer.setAttachedTo(enchantedCreature.getId());
+            gd.playerBattlefields.get(player1Id).add(reducer);
+
+            Permanent equipment = new Permanent(new Card());
+            ActivatedAbility equipAbility = new EquipActivatedAbility("{3}");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, equipment, equipAbility, enchantedCreature.getId(), List.of()))
+                    .isEqualTo(3);
+            assertThat(svc.getActivatedAbilityCostReduction(
+                    gd, player1Id, equipment, equipAbility, UUID.randomUUID(), List.of()))
                     .isZero();
         }
     }
@@ -1717,6 +1761,29 @@ class CastingCostServiceTest {
 
         assertThat(svc.computeTargetBasedCostReduction(
                 gd, player1Id, new Card(), List.of(player2Id))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Aura spell reduction follows the source Aura's attachment")
+    void auraSpellTargetReductionUsesSourceAttachment() {
+        Card strongBack = new Card();
+        strongBack.addEffect(EffectSlot.STATIC,
+                new ReduceAuraCastCostForTargetingAttachedPermanentEffect(3));
+        Permanent reducer = new Permanent(strongBack);
+        Permanent enchantedCreature = new Permanent(new Card());
+        reducer.setAttachedTo(enchantedCreature.getId());
+        gd.playerBattlefields.get(player1Id).add(reducer);
+
+        Card aura = new Card();
+        aura.setSubtypes(List.of(CardSubtype.AURA));
+        Card nonAura = new Card();
+
+        assertThat(svc.computeTargetBasedCostReduction(
+                gd, player1Id, aura, List.of(enchantedCreature.getId()))).isEqualTo(3);
+        assertThat(svc.computeTargetBasedCostReduction(
+                gd, player1Id, aura, List.of(UUID.randomUUID()))).isZero();
+        assertThat(svc.computeTargetBasedCostReduction(
+                gd, player1Id, nonAura, List.of(enchantedCreature.getId()))).isZero();
     }
 
     @Nested
