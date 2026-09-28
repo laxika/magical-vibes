@@ -2227,6 +2227,9 @@ public class AdditionalSpellCostService {
                                                                       SacrificeAnyNumberOfPermanentsCost cost,
                                                                       List<UUID> sacrificePermanentIds) {
         List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
+        if (cost.maximumCount() > 0 && ids.size() > cost.maximumCount()) {
+            throw new IllegalStateException("Too many permanents chosen to sacrifice for " + card.getName());
+        }
         if (ids.stream().distinct().count() != ids.size()) {
             throw new IllegalStateException("Duplicate permanents chosen to sacrifice for " + card.getName());
         }

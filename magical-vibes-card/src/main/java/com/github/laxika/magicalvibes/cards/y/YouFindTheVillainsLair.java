@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "84")
+@CardRegistration(set = "HBG", collectorNumber = "137")
 public class YouFindTheVillainsLair extends Card {
 
     public YouFindTheVillainsLair() {

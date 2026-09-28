@@ -1187,7 +1187,8 @@ public class CardChoiceHandlerService {
                     exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
             return;
         }
 
@@ -1237,6 +1238,13 @@ public class CardChoiceHandlerService {
         }
         log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
 
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null && exileChoice.chosenCardThenEffect() != null) {
+            pendingEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(exileChoice.chosenCardThenEffect().withChosenCard(card)));
+        }
+
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
@@ -1247,7 +1255,8 @@ public class CardChoiceHandlerService {
                     exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -1261,7 +1270,8 @@ public class CardChoiceHandlerService {
                     exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
                     exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
         } else {
             gameData.interaction.clearAwaitingInput();
 

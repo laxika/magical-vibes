@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -62,6 +63,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
+        int maxTotalManaValue = effect.maxTotalManaValue();
+        if (effect.dynamicMaxTotalManaValue() != null) {
+            maxTotalManaValue = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, effect.dynamicMaxTotalManaValue(), AmountContext.forStackEntry(entry, null)));
+        }
         for (UUID targetCardId : targets(entry, effect)) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
@@ -74,7 +80,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     card, effect.filter(), entry.getCard().getId(), gameData, graveyardOwnerId,
                     null, null, entry.getXValue())
                     && (!effect.hasTotalManaValueCap()
-                    || totalManaValue + card.getManaValue() <= effect.maxTotalManaValue())) {
+                    || totalManaValue + card.getManaValue() <= maxTotalManaValue)) {
                 cardsToReturn.add(new GraveyardCard(graveyardOwnerId, card));
                 totalManaValue += card.getManaValue();
             }
@@ -227,6 +233,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         if (effect.sacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
+        if (effect.sacrificeAtEndStepIfManaValueAtLeast() > 0) {
+            gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast(
+                    permanent.getId(), gameQueryService.findPermanentController(gameData, permanent.getId()),
+                    effect.sacrificeAtEndStepIfManaValueAtLeast()));
         }
     }
 }

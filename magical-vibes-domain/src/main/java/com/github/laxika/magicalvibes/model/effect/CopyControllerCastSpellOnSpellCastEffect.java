@@ -48,8 +48,11 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         boolean excludeHandCast,
         Condition triggerCondition,
         List<CardPredicate> firstSpellFilters,
-        CardEffect beforeCopyEffect
-, com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter, String sacrificeDescription) implements CardEffect {
+        CardEffect beforeCopyEffect,
+        com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+        String sacrificeDescription,
+        boolean permanentSpellToken,
+        boolean sacrificeAtEndStep) implements CardEffect {
     public CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,
@@ -68,7 +71,35 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         List<CardPredicate> firstSpellFilters,
         CardEffect beforeCopyEffect
 ) {
-        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters, beforeCopyEffect, null, null);
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords,
+                intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets,
+                grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters,
+                beforeCopyEffect, null, null, false, false);
+    }
+
+    public CopyControllerCastSpellOnSpellCastEffect(
+            CardPredicate spellFilter,
+            TapMultiplePermanentsCost tapCost,
+            String manaCost,
+            Zone requiredCastZone,
+            StackEntryPredicate castSpellTargetCondition,
+            Set<Keyword> grantedKeywords,
+            Condition intervening,
+            boolean requiredCastWithAdventure,
+            Set<CardType> additionalTypes,
+            boolean tokenCopy,
+            boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell,
+            boolean excludeHandCast,
+            Condition triggerCondition,
+            List<CardPredicate> firstSpellFilters,
+            CardEffect beforeCopyEffect,
+            boolean permanentSpellToken,
+            boolean sacrificeAtEndStep) {
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords,
+                intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets,
+                grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters,
+                beforeCopyEffect, null, null, permanentSpellToken, sacrificeAtEndStep);
     }
 
 
@@ -208,6 +239,14 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 Set.of(), false, true, true, true, null);
     }
 
+    /** Mandatory copy trigger for spells cast from exile whose permanent copies become hasty tokens
+     * sacrificed at the next end step (Nalfeshnee). */
+    public static CopyControllerCastSpellOnSpellCastEffect fromExileWithPermanentSpellHasteAndSacrifice() {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                null, null, null, Zone.EXILE, null, Set.of(), null, false,
+                Set.of(), false, true, true, false, null, List.of(), null, true, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return beforeCopyEffect == null ? TargetSpec.NONE : beforeCopyEffect.targetSpec();
@@ -218,6 +257,6 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             String sacrificeDescription) {
         return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
                 Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
-                sacrificeFilter, sacrificeDescription);
+                sacrificeFilter, sacrificeDescription, false, false);
     }
 }

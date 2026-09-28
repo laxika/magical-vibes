@@ -92,6 +92,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_PERMANENTS -> resolvePlayersPermanentsAtStep(gameData, entry, e);
             case CONTROLLERS_PERMANENTS -> resolveControllersPermanentsAtStep(gameData, entry, e);
             case ALL_PLAYERS_PERMANENTS -> resolveAllPlayersPermanentsAtStep(gameData, entry, e);
+            case RETURNED_PERMANENTS -> resolveReturnedPermanentsAtStep(gameData, entry, e);
             case ENCHANTED_CREATURE_AND_AURAS -> resolveEnchantedCreatureAndAurasAtStep(gameData, entry, e);
         }
     }
@@ -293,6 +294,15 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             }
         });
         exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
+    }
+
+    private void resolveReturnedPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
+        List<Permanent> toExile = entry.getReturnedPermanentIds().stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(permanent -> permanent != null)
+                .toList();
+        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
+        entry.clearReturnedPermanentIds();
     }
 
     private void exileAllPlayersPermanentsAtStep(

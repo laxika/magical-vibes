@@ -61,8 +61,12 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         }
 
         Card copyCard = copySupport.createCopyCard(spellCard);
-        if (e.tokenCopy()) {
+        boolean permanentSpell = isPermanentSpell(spellSnapshot.getEntryType());
+        if (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell)) {
             copyCard.setToken(true);
+        }
+        if (e.sacrificeAtEndStep() && (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell))) {
+            copyCard.setSacrificeAtEndStep(true);
         }
         if (!e.additionalTypes().isEmpty()) {
             EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
@@ -80,7 +84,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (e.startingLoyaltyFromX()) {
             copyEntry.setStartingLoyalty(copyEntry.getXValue());
         }
-        if (e.grantHasteToPermanentSpell() && isPermanentSpell(spellSnapshot.getEntryType())) {
+        if (e.grantHasteToPermanentSpell() && permanentSpell) {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 

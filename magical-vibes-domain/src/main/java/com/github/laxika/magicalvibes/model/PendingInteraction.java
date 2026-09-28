@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
@@ -678,7 +679,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** The controller chooses one of the matching cards revealed from a target player's hand. */
     record RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                           java.util.List<Card> cards, CardEffect thenEffect,
-                                          String prompt) implements PendingInteraction {
+                                          String prompt, boolean keepInHand) implements PendingInteraction {
+
+        public RevealedMatchingHandCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                              java.util.List<Card> cards, CardEffect thenEffect,
+                                              String prompt) {
+            this(choosingPlayerId, targetPlayerId, cards, thenEffect, prompt, false);
+        }
 
         public RevealedMatchingHandCardChoice {
             cards = java.util.List.copyOf(cards);
@@ -3923,7 +3930,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean faceDown, boolean returnOnSourceLeave,
                                UUID untapPermanentId, boolean playPermissionToChooser,
                                UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
-                               boolean landsEnterTapped)
+                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3931,7 +3938,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, java.util.List.of(), 0, false, false, null,
-                    false, null, 0, false);
+                    false, null, 0, false, null);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3940,7 +3947,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null,
-                    false, null, 0, false);
+                    false, null, 0, false, null);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3950,7 +3957,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
-                    faceDown, returnOnSourceLeave, null, false, null, 0, false);
+                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null);
         }
 
         @Override

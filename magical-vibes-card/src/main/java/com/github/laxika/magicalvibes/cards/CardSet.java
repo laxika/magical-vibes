@@ -34,6 +34,7 @@ public enum CardSet {
     SET_10E("10E"),
     SET_M10("M10"),
     SET_H09("H09"),
+    SET_HBG("HBG"),
     SET_HOP("HOP"),
     SET_HOC("HOC"),
     SET_V09("V09"),

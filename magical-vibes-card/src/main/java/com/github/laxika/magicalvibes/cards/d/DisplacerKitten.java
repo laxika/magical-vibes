@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MB2", collectorNumber = "27")
+@CardRegistration(set = "HBG", collectorNumber = "115")
 public class DisplacerKitten extends Card {
 
     public DisplacerKitten() {

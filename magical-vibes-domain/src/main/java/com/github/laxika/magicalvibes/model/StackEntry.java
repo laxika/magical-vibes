@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +64,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
+    private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
     /** Effective colors of declared targets just before they left the battlefield. */
     private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
@@ -685,6 +688,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.returnedPermanentIds.addAll(source.returnedPermanentIds);
         this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
@@ -1441,6 +1445,16 @@ public class StackEntry {
 
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
+    }
+
+    public void clearReturnedPermanentIds() {
+        returnedPermanentIds.clear();
+    }
+
+    public void rememberReturnedPermanent(UUID permanentId) {
+        if (permanentId != null) {
+            returnedPermanentIds.add(permanentId);
+        }
     }
 
     /**

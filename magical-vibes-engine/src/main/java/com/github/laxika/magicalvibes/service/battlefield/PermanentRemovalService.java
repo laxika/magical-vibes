@@ -136,6 +136,7 @@ public class PermanentRemovalService {
         gameData.permanentLeaveBatchWatchers.clear();
         gameData.permanentLeaveBatchWatcherControllers.clear();
         gameData.permanentLeaveBatchPendingCreatures.clear();
+        gameData.permanentLeaveBatchPendingPermanents.clear();
         gameData.forEachPermanent((controllerId, permanent) -> {
             gameData.permanentLeaveBatchWatchers.put(permanent.getId(), permanent);
             gameData.permanentLeaveBatchWatcherControllers.put(permanent.getId(), controllerId);
@@ -157,9 +158,14 @@ public class PermanentRemovalService {
                 gameData, Map.copyOf(gameData.permanentLeaveBatchWatchers),
                 Map.copyOf(gameData.permanentLeaveBatchWatcherControllers),
                 Map.copyOf(gameData.permanentLeaveBatchPendingCreatures));
+        triggerCollectionService.checkAllyPermanentsLeaveBattlefieldBatchTriggers(
+                gameData, Map.copyOf(gameData.permanentLeaveBatchWatchers),
+                Map.copyOf(gameData.permanentLeaveBatchWatcherControllers),
+                Map.copyOf(gameData.permanentLeaveBatchPendingPermanents));
         gameData.permanentLeaveBatchWatchers.clear();
         gameData.permanentLeaveBatchWatcherControllers.clear();
         gameData.permanentLeaveBatchPendingCreatures.clear();
+        gameData.permanentLeaveBatchPendingPermanents.clear();
     }
 
     private void notifyCreatureLeftWithoutDying(GameData gameData, Permanent leavingPermanent,
@@ -1368,7 +1374,9 @@ public class PermanentRemovalService {
                 && !perpetualGraveyardReplacement) {
             return false;
         }
-        boolean exiled = removePermanentToExile(gameData, target);
+        UUID sourcePermanentId = checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn()
+                ? target.getExileInsteadOfDieSourcePermanentId() : null;
+        boolean exiled = removePermanentToExile(gameData, target, sourcePermanentId);
         if (exiled) {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is exiled instead of " + destinationDescription + "."));
@@ -1471,6 +1479,7 @@ public class PermanentRemovalService {
      */
     private RemovedPermanentInfo processRemovalCleanup(
             GameData gameData, Permanent target, UUID controllerId, boolean wasCreature, boolean wasLand) {
+        notifyPermanentLeftBattlefield(gameData, target, controllerId);
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         if (!wasLand) {
             gameData.nonlandPermanentLeftBattlefieldThisTurn = true;
@@ -1501,6 +1510,19 @@ public class PermanentRemovalService {
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId);
+    }
+
+    private void notifyPermanentLeftBattlefield(GameData gameData, Permanent leavingPermanent,
+                                                UUID controllerId) {
+        if (controllerId == null) {
+            return;
+        }
+        if (gameData.permanentLeaveNotificationDepth > 0) {
+            gameData.permanentLeaveBatchPendingPermanents.put(leavingPermanent.getId(), controllerId);
+            return;
+        }
+        triggerCollectionService.checkAllyPermanentsLeaveBattlefieldTriggers(
+                gameData, leavingPermanent, controllerId);
     }
 
     private UUID resolvePermanentOwner(GameData gameData, Permanent permanent, UUID controllerId) {

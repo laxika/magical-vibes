@@ -177,6 +177,9 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesPermanentThenDealsManaValueDamage(
                     gameData, permanentId, targetPlayerSacrifice);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate targetPlayerSacrifice) {
+            battlefieldHandler.handleTargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
+                    gameData, permanentId, targetPlayerSacrifice);
         } else if (context instanceof PermanentChoiceContext.TormentSacrifice tormentSacrifice) {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
@@ -256,6 +259,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAnimateChosenOwnPermanent(gameData, permanentId, animateChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers zenosChoice) {
             battlefieldHandler.handleChooseOpponentCreatureThenBoostOthers(gameData, permanentId, zenosChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureAndPerpetuallyBoost aloraChoice) {
+            battlefieldHandler.handleChooseOpponentCreatureAndPerpetuallyBoost(gameData, permanentId, aloraChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {
             guidedPassageEffectHandler.completeOpponentChoice(gameData, permanentId, guidedPassageChoice);
         } else if (context instanceof PermanentChoiceContext.MausoleumTurnkeyOpponentChoice mausoleumTurnkeyChoice) {

@@ -985,10 +985,11 @@ public class AmountEvaluationService {
             boolean isTriggeringSpell = triggeringCardId != null
                     && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
-                return se.getCard().getManaValue() + se.getXValue();
+                Card spellCard = se.getTargetingCard();
+                return (spellCard == null ? se.getCard() : spellCard).getManaValue() + se.getXValue();
             }
         }
-        return 0;
+        return ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventValue();
     }
 
     /** Printed power of the targeted creature spell on the stack (Essence Backlash); 0 if gone. */
@@ -1041,6 +1042,21 @@ public class AmountEvaluationService {
             case Sum s -> s.amounts().stream().anyMatch(this::referencesEventValue);
             case Min m -> m.amounts().stream().anyMatch(this::referencesEventValue);
             case Max m -> m.amounts().stream().anyMatch(this::referencesEventValue);
+            default -> false;
+        };
+    }
+
+    /** Whether the amount reads the mana value of the spell that caused a trigger. */
+    public boolean referencesTargetSpellManaValue(DynamicAmount amount) {
+        return switch (amount) {
+            case null -> false;
+            case TargetSpellManaValue ignored -> true;
+            case Scaled scaled -> referencesTargetSpellManaValue(scaled.amount());
+            case Divided divided -> referencesTargetSpellManaValue(divided.amount());
+            case HalvedRoundedUp halved -> referencesTargetSpellManaValue(halved.amount());
+            case Sum sum -> sum.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
+            case Min min -> min.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
+            case Max max -> max.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
             default -> false;
         };
     }

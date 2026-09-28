@@ -261,6 +261,8 @@ public class Permanent {
     @Setter private boolean exileDamagedCreaturesInsteadOfDyingThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
+    /** Source permanent to associate with this turn's exile replacement, when applicable. */
+    @Setter private UUID exileInsteadOfDieSourcePermanentId;
     /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
      *  the Mirage flash clause ({@code FlashCastWithCleanupSacrificeEffect}) when the spell was cast
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
@@ -815,6 +817,7 @@ public class Permanent {
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
+        this.exileInsteadOfDieSourcePermanentId = source.exileInsteadOfDieSourcePermanentId;
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
@@ -1681,6 +1684,7 @@ public class Permanent {
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
+        this.exileInsteadOfDieSourcePermanentId = null;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();
         this.saddled = false;

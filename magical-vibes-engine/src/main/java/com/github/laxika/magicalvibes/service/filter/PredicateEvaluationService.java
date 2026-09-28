@@ -284,6 +284,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWi
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentThatSaddledSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
@@ -301,6 +302,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
@@ -473,7 +475,9 @@ public class PredicateEvaluationService {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
-                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                Permanent source = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source == null) {
                     source = sourcePermanentSnapshot;
                 }
@@ -523,8 +527,20 @@ public class PredicateEvaluationService {
                 CardColor chosenColor = source == null ? null : source.getChosenColor();
                 yield chosenColor != null && card.getColors().contains(chosenColor);
             }
-            case CardKeywordPredicate p ->
-                    card.getKeywords().contains(p.keyword());
+            case CardKeywordPredicate p -> {
+                boolean removed = gameData != null
+                        && gameData.perpetualCardRemovedKeywords
+                        .getOrDefault(card.getId(), java.util.Set.of())
+                        .contains(p.keyword());
+                boolean granted = gameData != null
+                        && (gameData.perpetualCardKeywords
+                        .getOrDefault(card.getId(), java.util.Set.of())
+                        .contains(p.keyword())
+                        || gameData.perpetualKeywords
+                        .getOrDefault(card.getId(), java.util.Set.of())
+                        .contains(p.keyword()));
+                yield !removed && (card.getKeywords().contains(p.keyword()) || granted);
+            }
             case CardHasAwakenPredicate ignored ->
                     card.getCardText() != null && AWAKEN_ABILITY_PATTERN.matcher(card.getCardText()).find();
             case CardIsSelfPredicate ignored ->
@@ -1032,7 +1048,8 @@ public class PredicateEvaluationService {
                 yield gameQueryService.isCreature(gameData, permanent);
             }
             case PermanentIsCommanderPredicate ignored ->
-                    gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
+                    permanent.isCommander()
+                            || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
             case PermanentIsLandPredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.LAND);
@@ -2178,6 +2195,28 @@ public class PredicateEvaluationService {
                         .anyMatch(other -> !other.getId().equals(permanent.getId())
                                 && name.equals(effectiveName(other, filterContext)));
             }
+            case PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID controllerId = sourceControllerId != null
+                        ? sourceControllerId : gameData.findControllerOf(permanent);
+                if (controllerId == null) {
+                    yield false;
+                }
+                String name = effectiveName(permanent, filterContext);
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+                boolean sharesWithControlledCreature = controllerBattlefield != null
+                        && controllerBattlefield.stream().anyMatch(other ->
+                        !other.getId().equals(permanent.getId())
+                                && gameQueryService.isCreature(gameData, other)
+                                && namesMatch(name, effectiveName(other, filterContext)));
+                boolean sharesWithGraveyardCreature = gameData.playerGraveyards
+                        .getOrDefault(controllerId, List.of()).stream()
+                        .anyMatch(card -> card.hasType(CardType.CREATURE)
+                                && namesMatch(name, card.getName()));
+                yield sharesWithControlledCreature || sharesWithGraveyardCreature;
+            }
             case PermanentSharesNameWithControlledTokenPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) {
                     yield false;
@@ -2405,6 +2444,7 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentHasExhaustAbilityPredicate
                 || predicate instanceof PermanentOwnedBySourceControllerPredicate
                 || predicate instanceof PermanentSharesCreatureTypeWithEquippedCreaturePredicate
+                || predicate instanceof PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate
                 || predicate instanceof PermanentHasSupertypePredicate
                 || predicate instanceof PermanentIsCommanderPredicate
                 || predicate instanceof PermanentHasAttachedPermanentPredicate) {
@@ -2604,10 +2644,13 @@ public class PredicateEvaluationService {
                     controllerControlsAtMostMatchingStatic(permanent, p, context);
             case PermanentIsCommanderPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
-                yield gameData != null && gameData.isCommander(permanent.getOriginalCard().getId());
+                yield permanent.isCommander()
+                        || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
             }
             case PermanentSharesNameWithAnotherControlledPermanentPredicate ignored ->
                     sharesNameWithAnotherControlledPermanentStatic(permanent, context);
+            case PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate ignored ->
+                    sharesNameWithControlledCreatureOrGraveyardCreatureStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
@@ -2683,6 +2726,8 @@ public class PredicateEvaluationService {
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasExhaustAbilityPredicate ignored ->
                     hasExhaustActivatedAbilityForStaticEvaluation(permanent, context);
+            case PermanentHasManaAbilityPredicate ignored ->
+                    hasManaAbilityForStaticEvaluation(permanent, context);
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasMorphAbilityPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -3022,6 +3067,28 @@ public class PredicateEvaluationService {
                         && name.equals(effectiveName(other, context)));
     }
 
+    private boolean sharesNameWithControlledCreatureOrGraveyardCreatureStatic(
+            Permanent permanent, FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null) return false;
+        UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+        UUID controllerId = sourceControllerId != null
+                ? sourceControllerId : gameData.findControllerOf(permanent);
+        if (controllerId == null) return false;
+        String name = effectiveName(permanent, context);
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        boolean sharesWithControlledCreature = controllerBattlefield != null
+                && controllerBattlefield.stream().anyMatch(other ->
+                !other.getId().equals(permanent.getId())
+                        && isCreatureForStaticEvaluation(other)
+                        && namesMatch(name, effectiveName(other, context)));
+        boolean sharesWithGraveyardCreature = gameData.playerGraveyards
+                .getOrDefault(controllerId, List.of()).stream()
+                .anyMatch(card -> card.hasType(CardType.CREATURE)
+                        && namesMatch(name, card.getName()));
+        return sharesWithControlledCreature || sharesWithGraveyardCreature;
+    }
+
     /**
      * The creature the source Equipment is attached to, on the fully layered path, or {@code null}
      * while the Equipment is unattached or unfindable. The source is located by card id when the
@@ -3321,6 +3388,36 @@ public class PredicateEvaluationService {
                     .anyMatch(ActivatedAbility::isExhaustAbility);
         }
         return hasExhaustActivatedAbility(context == null ? null : context.gameData(), permanent);
+    }
+
+    private boolean hasManaAbilityForStaticEvaluation(Permanent permanent, FilterContext context) {
+        CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+        if (state != null) {
+            if (state.getGrantedActivatedAbilities().stream()
+                    .anyMatch(AbilityActivationService::isManaAbility)) {
+                return true;
+            }
+            if (state.isLosesAllAbilities()) {
+                return false;
+            }
+            if (state.isLosesAllNonManaAbilities()) {
+                return hasPrintedManaAbility(permanent.getCard())
+                        || hasOutOfBandManaAbility(permanent)
+                        || hasBasicLandIntrinsicManaAbility(state);
+            }
+            if (hasOutOfBandManaAbility(permanent)) {
+                return true;
+            }
+            if (state.isPrintedAbilitiesRemoved()) {
+                return hasBasicLandIntrinsicManaAbility(state);
+            }
+            return hasPrintedManaAbility(permanent.getCard())
+                    || hasBasicLandIntrinsicManaAbility(state);
+        }
+        if (GameQueryService.isStaticEvaluationActive()) {
+            return hasOutOfBandManaAbility(permanent) || hasPrintedManaAbility(permanent.getCard());
+        }
+        return hasManaAbility(context == null ? null : context.gameData(), permanent);
     }
 
     private boolean hasTapActivatedAbility(GameData gameData, Permanent permanent) {
@@ -3768,6 +3865,7 @@ public class PredicateEvaluationService {
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastWithAdventurePredicate ignored -> entry.isCastWithAdventure();
             case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
             case StackEntryIsCopyPredicate ignored -> entry.isCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();

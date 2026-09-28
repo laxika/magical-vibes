@@ -3980,7 +3980,8 @@ public class SpellCastingService {
                         && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToHandEffect)
                         && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect)
                         && !(e instanceof ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect)
-                        && !(e instanceof TargetedGraveyardCardsEffect))
+                        && !(e instanceof TargetedGraveyardCardsEffect)
+                        && !(e instanceof ExileTargetGraveyardCardsAndSeparateIntoPilesEffect))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
@@ -5062,18 +5063,19 @@ public class SpellCastingService {
                         null, Map.of(), null, List.of(), List.of()
                 ));
             } else if (pileSeparationEffect != null) {
-                // Target up to N creature cards from ALL graveyards
+                // Target up to N matching cards from the effect's declared graveyard scope
                 long matchingCount = 0;
-                for (UUID pid : gameData.orderedPlayerIds) {
+                for (UUID pid : pileSeparationEffect.graveyardScope()
+                        .graveyardOwners(gameData.orderedPlayerIds, playerId)) {
                     matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
                             .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                             .filter(c -> predicateEvaluationService.matchesCardPredicate(c, pileSeparationEffect.filter(), card.getId()))
                             .count();
                 }
                 if (matchingCount > 0) {
-                    graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
-                            entryType, pileSeparationEffect.filter(),
-                            pileSeparationEffect.maxTargets(), filteredSpellEffects);
+                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                            entryType, pileSeparationEffect.filter(), pileSeparationEffect.maxTargets(),
+                            filteredSpellEffects, pileSeparationEffect.graveyardScope());
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards in any graveyard — put spell on stack with 0 targets
@@ -6807,11 +6809,19 @@ public class SpellCastingService {
         List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
         List<Permanent> toSacrifice = additionalSpellCostService.validateSacrificeAnyNumberOfPermanentsCost(
                 gameData, player, card, cost, ids);
-        int resolvedXValue = cost.trackSacrificedPower()
-                ? toSacrifice.stream()
-                        .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
-                        .sum()
-                : toSacrifice.size();
+        int resolvedXValue;
+        if (cost.trackDistinctCardTypes()) {
+            Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
+            toSacrifice.forEach(permanent ->
+                    cardTypes.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent)));
+            resolvedXValue = cardTypes.size();
+        } else if (cost.trackSacrificedPower()) {
+            resolvedXValue = toSacrifice.stream()
+                    .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                    .sum();
+        } else {
+            resolvedXValue = toSacrifice.size();
+        }
         for (Permanent permanent : toSacrifice) {
             paySingleSacrificeCost(gameData, player, card, permanent.getId(), "a matching permanent",
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
@@ -9068,7 +9078,8 @@ public class SpellCastingService {
         UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, graveyardCard.getId());
         Optional<CastingPermissionService.GraveyardLandPermission> graveyardLandPermission =
                 playerId.equals(graveyardOwnerId)
-                        ? castingPermissionService.findGraveyardLandPermission(gameData, playerId)
+                        ? castingPermissionService.findGraveyardLandPermission(
+                        gameData, playerId, graveyardCard)
                         : Optional.empty();
         graveyardLandPermission.ifPresent(permission ->
                 castingPermissionService.markGraveyardLandPermissionUsed(

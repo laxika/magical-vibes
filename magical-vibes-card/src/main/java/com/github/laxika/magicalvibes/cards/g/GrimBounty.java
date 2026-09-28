@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "106")
+@CardRegistration(set = "HBG", collectorNumber = "157")
 public class GrimBounty extends Card {
 
     public GrimBounty() {

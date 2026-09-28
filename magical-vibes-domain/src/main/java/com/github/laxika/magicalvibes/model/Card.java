@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -723,6 +724,21 @@ public class Card {
 
     // ── Target-first builder API ──────────────────────────────────────
 
+    /** Clears the rules text and ability registrations on a mutable runtime copy. */
+    public void clearRulesTextAndAbilities() {
+        assertMutable();
+        effectRegistrations.clear();
+        effectCache.clear();
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
+        sagaChapterTargetFilters.clear();
+        sagaChapterTargetGroups.clear();
+        activatedAbilities.clear();
+        graveyardActivatedAbilities.clear();
+        handActivatedAbilities.clear();
+        stackActivatedAbilities.clear();
+    }
+
     /**
      * Declares a required target (min=1, max=1) and returns a builder
      * whose {@code addEffect()} associates effects with this target.
@@ -857,6 +873,7 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);

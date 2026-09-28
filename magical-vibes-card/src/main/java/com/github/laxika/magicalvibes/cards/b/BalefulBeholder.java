@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "89")
+@CardRegistration(set = "HBG", collectorNumber = "143")
 public class BalefulBeholder extends Card {
 
     public BalefulBeholder() {

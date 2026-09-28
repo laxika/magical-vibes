@@ -149,6 +149,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler keepOneOfEachTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesPartyThenSacrificesRestEffectHandler eachPlayerChoosesPartyHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseCreatureForEachPlayerThenSacrificeNonsharingCreaturesEffectHandler winnowingHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
@@ -928,6 +930,13 @@ public class MultiPermanentChoiceHandlerService {
             handleFadeAwaySacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
             handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice ctx) {
+            eachPlayerChoosesPartyHandler.completeChoice(gameData, permanentIds, ctx);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.WinnowingChoice ctx) {
             handleWinnowingChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx) {

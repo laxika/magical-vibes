@@ -359,6 +359,9 @@ the slot whenever a creature is exiled from the battlefield, checked after the c
 counters before the trigger is queued.
 `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
+`ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD` is the batched controller-scoped watcher for "one or more"
+permanents, including the source permanent when it leaves; the removal service snapshots a batch
+before dispatching one trigger per source.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,

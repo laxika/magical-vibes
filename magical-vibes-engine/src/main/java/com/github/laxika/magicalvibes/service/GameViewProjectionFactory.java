@@ -691,6 +691,7 @@ public class GameViewProjectionFactory {
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
             boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
+                    && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
                     && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
             if (hasSuspendedExileAbility) {
                 playable.add(cardViewFactory.create(card));

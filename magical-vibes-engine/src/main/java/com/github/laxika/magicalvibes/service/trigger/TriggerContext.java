@@ -164,6 +164,8 @@ public sealed interface TriggerContext {
     }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
+    /** Context for controller-conjure triggers. */
+    record Conjure(UUID conjuringPlayerId, int cardCount) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).

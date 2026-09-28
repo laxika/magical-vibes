@@ -1014,6 +1014,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Carries one player's optional party-role choice until the next role or final sacrifice. */
+    record EachPlayerChoosesPartyThenSacrificesRestChoice(
+            List<UUID> playerIds, int playerIndex, int roleIndex, List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesPartyThenSacrificesRestChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
+    }
+
     /**
      * Winnowing: the spell's controller chose a creature for the player at {@code playerIndex}.
      * The choices are retained by player so every player's other non-sharing creatures can be

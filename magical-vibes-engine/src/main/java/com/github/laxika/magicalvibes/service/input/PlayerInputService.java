@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -2489,6 +2490,13 @@ public class PlayerInputService {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, null, remainingCount);
     }
 
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId,
+                                         ChosenCardAwareEffect chosenCardThenEffect) {
+        beginExileFromHandChoice(gameData, playerId, null, null, 1,
+                List.of(), 0, false, false, null, false, null, 0, false,
+                chosenCardThenEffect);
+    }
+
     public void beginExileFromHandWithRefineCountersChoice(GameData gameData, UUID playerId,
                                                             List<Integer> validIndices, String prompt,
                                                             int counterCount) {
@@ -2542,6 +2550,20 @@ public class PlayerInputService {
                                          UUID untapPermanentId, boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                exilePlayOpponentTax, landsEnterTapped, null);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown, boolean returnOnSourceLeave,
+                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         UUID playPermissionTaxSourceControllerId,
+                                         int exilePlayOpponentTax, boolean landsEnterTapped,
+                                         ChosenCardAwareEffect chosenCardThenEffect) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
@@ -2550,7 +2572,7 @@ public class PlayerInputService {
                 "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
                 cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
                 playPermissionToChooser, playPermissionTaxSourceControllerId,
-                exilePlayOpponentTax, landsEnterTapped));
+                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "24")
+@CardRegistration(set = "HBG", collectorNumber = "95")
 public class MinimusContainment extends Card {
 
     public MinimusContainment() {

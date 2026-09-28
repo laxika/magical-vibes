@@ -68,6 +68,7 @@ public sealed interface Condition permits
         CardDirectlyAboveSelfInGraveyard,
         CardsAboveSelfInGraveyard,
         CardsInLibraryAtLeast,
+        ControllerHasMoreCardsInLibraryThanTargetPlayer,
         StartingDeckAtLeast,
         CardsInHandAtLeast,
         CardsInHandAtMost,

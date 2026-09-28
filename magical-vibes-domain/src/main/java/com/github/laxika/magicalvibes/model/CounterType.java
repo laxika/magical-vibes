@@ -145,6 +145,7 @@ public enum CounterType {
     REVIVAL,
     REJECTION,
     RITUAL,
+    ROPE,
     RUST,
     PLUS_ONE_PLUS_ONE,
     PLUS_ONE_PLUS_ZERO,
