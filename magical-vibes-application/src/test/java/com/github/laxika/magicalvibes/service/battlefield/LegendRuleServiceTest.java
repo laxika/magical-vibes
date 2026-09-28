@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -257,6 +258,29 @@ class LegendRuleServiceTest {
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Controlled token legend rule exemption")
+    class ControlledTokenExemption {
+
+        @Test
+        @DisplayName("Protects duplicate legendary tokens")
+        void protectsDuplicateLegendaryTokens() {
+            Card source = createCreature("Cadric, Soul Kindler");
+            source.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledTokensEffect());
+            addPermanent(player1Id, source);
+
+            Card firstToken = createLegendaryCreature("Test Legend");
+            firstToken.setToken(true);
+            Card secondToken = createLegendaryCreature("Test Legend");
+            secondToken.setToken(true);
+            addPermanent(player1Id, firstToken);
+            addPermanent(player1Id, secondToken);
 
             assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());

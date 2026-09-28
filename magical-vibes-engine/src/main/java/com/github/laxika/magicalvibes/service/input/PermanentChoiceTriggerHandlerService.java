@@ -143,6 +143,9 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTargetId(permanentId);
             }
         }
+        if (stt.triggeringCardId() != null) {
+            entry.setTriggeringCardId(stt.triggeringCardId());
+        }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         Permanent triggeringPermanent = stt.triggeringPermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, stt.triggeringPermanentId());

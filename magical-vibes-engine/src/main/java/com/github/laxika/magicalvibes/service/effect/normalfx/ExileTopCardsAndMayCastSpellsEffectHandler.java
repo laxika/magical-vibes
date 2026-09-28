@@ -140,7 +140,10 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
                         controllerId, castableSpellIds, maxCastCount,
                         "You may cast up to " + maxCastCount
-                                + " of these spells without paying their mana costs."));
+                                + " of these spells without paying their mana costs."
+                                + (e.totalManaValueLimit() == null ? ""
+                                : " Their total mana value can't exceed " + e.totalManaValueLimit() + "."),
+                        false, e.totalManaValueLimit()));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, entry.getCard().getName(), castableSpellIds.size());
     }

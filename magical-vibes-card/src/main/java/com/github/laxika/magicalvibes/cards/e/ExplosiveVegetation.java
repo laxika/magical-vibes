@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "DDO", collectorNumber = "46")
 @CardRegistration(set = "CMD", collectorNumber = "153")
 @CardRegistration(set = "DSC", collectorNumber = "177")
+@CardRegistration(set = "DMC", collectorNumber = "132")
 public class ExplosiveVegetation extends Card {
 
     public ExplosiveVegetation() {

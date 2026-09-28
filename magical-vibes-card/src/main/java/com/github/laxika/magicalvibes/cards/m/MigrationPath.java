@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "NCC", collectorNumber = "301")
 @CardRegistration(set = "TDC", collectorNumber = "262")
 @CardRegistration(set = "LCC", collectorNumber = "246")
+@CardRegistration(set = "DMC", collectorNumber = "135")
 public class MigrationPath extends Card {
 
     public MigrationPath() {

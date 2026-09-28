@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "TDC", collectorNumber = "105")
 @CardRegistration(set = "LCC", collectorNumber = "104")
 @CardRegistration(set = "LCC", collectorNumber = "299")
+@CardRegistration(set = "DMC", collectorNumber = "177")
 public class ArcaneSignet extends Card {
 
     public ArcaneSignet() {

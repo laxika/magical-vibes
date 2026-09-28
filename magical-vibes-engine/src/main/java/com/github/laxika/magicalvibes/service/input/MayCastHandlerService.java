@@ -1631,8 +1631,9 @@ public class MayCastHandlerService {
         CardEffect afterSuccessfulCastEffect = ability.effects().stream()
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
-                .findFirst()
                 .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
+                .filter(Objects::nonNull)
+                .findFirst()
                 .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
                 revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,

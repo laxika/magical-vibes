@@ -273,6 +273,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAtta
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.LandPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
@@ -655,6 +656,10 @@ public class ConditionEvaluationService {
             case EnchantmentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn
+                            .contains(ctx.controllerId());
+            case LandPutIntoGraveyardFromBattlefieldThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn
                             .contains(ctx.controllerId());
             case PermanentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn;
@@ -2784,7 +2789,7 @@ public class ConditionEvaluationService {
     }
 
     private boolean targetPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,
-                                                          PermanentPredicate filter) {
+                                                           PermanentPredicate filter) {
         UUID targetPlayerId = ctx.targetId();
         if (targetPlayerId == null) return false;
 

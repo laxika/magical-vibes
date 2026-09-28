@@ -16,17 +16,21 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCC", collectorNumber = "155")
+@CardRegistration(set = "DMC", collectorNumber = "23")
+@CardRegistration(set = "DMC", collectorNumber = "73")
 public class EmperorMihailII extends Card {
 
     public EmperorMihailII() {
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
-                new CardSubtypePredicate(CardSubtype.MERFOLK)));
+        addEffect(EffectSlot.STATIC,
+                new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
+
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.MERFOLK),
-                List.of(new MayPayManaEffect("{1}",
+                List.of(new MayPayManaEffect(
+                        "{1}",
                         new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
                                 List.of(CardSubtype.MERFOLK), Set.of(), Set.of()),
-                        "Pay {1} to create a 1/1 blue Merfolk token?"))));
+                        "Pay {1} to create a 1/1 blue Merfolk creature token?"))));
     }
 }

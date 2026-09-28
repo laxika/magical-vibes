@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LCC", collectorNumber = "285")
+@CardRegistration(set = "DMC", collectorNumber = "38")
+@CardRegistration(set = "DMC", collectorNumber = "60")
 public class RamirezDePietroPillager extends Card {
 
     public RamirezDePietroPillager() {

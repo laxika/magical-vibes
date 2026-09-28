@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+@CardRegistration(set = "DMC", collectorNumber = "139")
 @CardRegistration(set = "C20", collectorNumber = "200")
 public class AdrianaCaptainOfTheGuard extends Card {
 

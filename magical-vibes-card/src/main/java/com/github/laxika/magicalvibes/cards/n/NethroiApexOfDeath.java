@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "197")
+@CardRegistration(set = "DMC", collectorNumber = "163")
 public class NethroiApexOfDeath extends Card {
 
     public NethroiApexOfDeath() {

@@ -359,6 +359,9 @@ public class EnterTriggerCollectorService {
                 filterContext)) {
             return false;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         if (conditional.wrapped() instanceof MayEffect may
                 && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
@@ -389,11 +392,17 @@ public class EnterTriggerCollectorService {
                 filterContext)) {
             return false;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         return enqueueAllyPermanentEnter(match, conditional.wrapped(), pe);
     }
 
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
+        if (effect instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         if (effect instanceof ConditionalEffect conditional
                 && conditional.interveningIf()
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
@@ -1279,6 +1288,10 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class,
+                    slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class,
+                    slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),

@@ -126,8 +126,10 @@ import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValu
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttachedEquipment;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueNotedForSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -650,10 +652,16 @@ public class AmountEvaluationService {
                     greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestManaValueAmongAttachedEquipment ignored ->
+                    greatestManaValueAmongAttachedEquipment(gameData, ctx);
             case GreatestManaValueAmongOwnedCommanders ignored ->
                     greatestManaValueAmongOwnedCommanders(gameData, ctx);
             case GreatestManaValueAmongSpellsCastThisTurn a ->
                     greatestManaValueAmongSpellsCastThisTurn(gameData, a, ctx);
+            case GreatestManaValueNotedForSourceThisTurn ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : gameData.getGreatestManaValueNotedForPermanentThisTurn(
+                                    ctx.sourcePermanent().getId());
             case GreatestStackSourceCountThisTurn ignored ->
                     gameData.getGreatestStackSourceCountThisTurn();
             case GreatestCreatureCountAmongPlayers ignored ->
@@ -2362,6 +2370,24 @@ public class AmountEvaluationService {
                 continue;
             }
             greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+        }
+        return greatest;
+    }
+
+    private int greatestManaValueAmongAttachedEquipment(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+
+        UUID sourcePermanentId = ctx.sourcePermanent().getId();
+        int greatest = 0;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (!sourcePermanentId.equals(permanent.getAttachedTo())
+                        || permanent.isFaceDown()
+                        || !gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.EQUIPMENT)) {
+                    continue;
+                }
+                greatest = Math.max(greatest, permanent.getCard().getManaValue());
+            }
         }
         return greatest;
     }
