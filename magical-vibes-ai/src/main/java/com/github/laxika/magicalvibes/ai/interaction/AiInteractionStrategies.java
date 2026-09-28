@@ -17,6 +17,7 @@ public final class AiInteractionStrategies {
 
     static {
         register(new XValueChoiceAiStrategy());
+        register(new DrawFromLibraryPositionChoiceAiStrategy());
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());

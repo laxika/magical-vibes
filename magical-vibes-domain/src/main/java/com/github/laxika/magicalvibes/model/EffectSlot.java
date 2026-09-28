@@ -165,6 +165,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** End-step trigger fired from a card in its owner's graveyard during that owner's end step. */
     GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
+    /** End-step trigger fired from a card in its owner's command zone. */
+    COMMAND_ZONE_END_STEP_TRIGGERED,
     /** "At the beginning of each opponent's end step" — fires during the end step of any player who
      *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
      *  Checked in {@code StepTriggerService.handleEndStepTriggers}, which bakes the end-step player
@@ -198,6 +200,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers whenever this permanent's controller searches their own library. */
+    ON_CONTROLLER_SEARCHES_LIBRARY,
     /** Triggers after all players finish a voting event. */
     ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
@@ -664,6 +668,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers once whenever an opponent mills one or more cards. */
     ON_OPPONENT_MILLS,
+    /** Triggers once whenever one or more nonland cards are milled. */
+    ON_NONLAND_CARDS_MILLED,
+    /** Triggers once for each nonland card milled by an opponent while this card is in its owner's graveyard. */
+    GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED,
     /** Triggers once whenever one or more nonland cards are milled by any player. */
     ON_ANY_NONLAND_CARDS_MILLED,
     ON_OPPONENT_CREATURE_CARD_MILLED,
@@ -807,6 +815,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_COUNTERS_ON_CREATURE,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
+    /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
+    ON_OPPONENT_PAYS_TAX,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
     ON_SELF_LEAVES_BATTLEFIELD,
@@ -1038,6 +1048,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
     ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
+    /** Triggers whenever one or more cards owned by an opponent are put into exile. */
+    ON_OPPONENT_OWNED_CARD_EXILED,
     /** Triggers during your turn whenever one or more cards are exiled from graveyards and/or the battlefield. */
     ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN,
     /** Triggers whenever this permanent's controller proliferates. */

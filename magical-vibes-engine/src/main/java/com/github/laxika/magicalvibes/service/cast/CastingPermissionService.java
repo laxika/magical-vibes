@@ -1531,6 +1531,22 @@ public class CastingPermissionService {
                 && !isCardPlayRestrictedInHand(gameData, playerId, card);
     }
 
+    /**
+     * Returns true when a land discarded with madness may be played. Madness permits the land
+     * play outside the normal main-phase/empty-stack timing window, but it still requires the
+     * active player's turn, an available land play, and the usual land-play restrictions.
+     */
+    public boolean canPlayLandForMadness(GameData gameData, UUID playerId, Card card) {
+        return card.hasType(CardType.LAND)
+                && playerId.equals(gameData.activePlayerId)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
+                < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
+                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !isLandPlayRestricted(gameData, playerId)
+                && !isLandPlayForbiddenByChosenName(gameData, card)
+                && !isCardPlayRestrictedInHand(gameData, playerId, card);
+    }
+
     public boolean canPlayLandFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
         if (!card.hasType(CardType.LAND)) {
             return false;
@@ -1608,7 +1624,13 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
-                        || !matchesGraveyardPlayPermission(gameData, playerId, card, permission)) {
+                        || !predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)) {
+                    continue;
+                }
+                if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                        && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                        .getOrDefault(playerId, Set.of()).contains(card.getId())) {
                     continue;
                 }
                 if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {
@@ -1664,7 +1686,8 @@ public class CastingPermissionService {
     }
 
     private static boolean isCastableSpellCard(Card card) {
-        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
+        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)
+                || card.hasType(CardType.EMBLEM)) {
             return true;
         }
         CardType primary = card.getType();

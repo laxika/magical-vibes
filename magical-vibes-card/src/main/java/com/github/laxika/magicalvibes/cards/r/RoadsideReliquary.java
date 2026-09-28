@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "272")
+@CardRegistration(set = "PIP", collectorNumber = "282")
+@CardRegistration(set = "PIP", collectorNumber = "810")
 public class RoadsideReliquary extends Card {
 
     public RoadsideReliquary() {

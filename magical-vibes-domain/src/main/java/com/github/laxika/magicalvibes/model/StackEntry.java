@@ -43,6 +43,8 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
+    /** Effects to evaluate once this stack entry has finished resolving. */
+    private List<CardEffect> postResolutionEffects = List.of();
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
     /** Index of the effect currently being dispatched by EffectResolutionService. */
     @Setter private int resolvingEffectIndex = -1;
@@ -687,6 +689,8 @@ public class StackEntry {
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
+        this.postResolutionEffects = source.postResolutionEffects.isEmpty()
+                ? List.of() : new ArrayList<>(source.postResolutionEffects);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
         this.resolvingEffectIndex = source.resolvingEffectIndex;
@@ -954,6 +958,19 @@ public class StackEntry {
 
     public void replaceEffectsToResolve(List<CardEffect> effects) {
         effectsToResolve = List.copyOf(effects);
+    }
+
+    public void addPostResolutionEffect(CardEffect effect) {
+        List<CardEffect> updated = new ArrayList<>(postResolutionEffects);
+        updated.add(effect);
+        postResolutionEffects = updated;
+    }
+
+    /** Returns and clears the one-shot effects waiting for this entry to finish resolving. */
+    public List<CardEffect> takePostResolutionEffects() {
+        List<CardEffect> effects = postResolutionEffects;
+        postResolutionEffects = List.of();
+        return effects;
     }
 
     /**

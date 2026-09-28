@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEf
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChampionOfTheHareishTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -177,6 +178,54 @@ public class EnterTriggerCollectorService {
             queuedEffect = new MayEffect(queuedEffect, may.prompt(), may.elseEffect(), may.choicePlayer());
         }
 
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(queuedEffect)),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ChampionOfTheHareishTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleChampionOfTheHareishEnter(TriggerMatchContext match,
+                                                     ChampionOfTheHareishTriggerEffect effect,
+                                                     TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+        if (enteringPermanent == null || !gameQueryService.isCreature(match.gameData(), enteringPermanent)) {
+            return true;
+        }
+
+        Set<CardSubtype> enteringTypes = new HashSet<>(
+                gameQueryService.effectiveCreatureSubtypes(match.gameData(), enteringPermanent));
+        if (gameQueryService.hasKeyword(match.gameData(), enteringPermanent, Keyword.CHANGELING)) {
+            for (CardSubtype subtype : CardSubtype.values()) {
+                if (gameQueryService.isCreatureSubtype(subtype)) {
+                    enteringTypes.add(subtype);
+                }
+            }
+        }
+        if (enteringTypes.isEmpty()) {
+            return true;
+        }
+
+        ChampionOfTheHareishTriggerEffect queuedEffect =
+                new ChampionOfTheHareishTriggerEffect(new ArrayList<>(enteringTypes));
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

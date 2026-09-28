@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCommanderColorC
 
 import java.util.List;
 
+@CardRegistration(set = "PIP", collectorNumber = "1068")
 @CardRegistration(set = "SOC", collectorNumber = "422")
 public class WarRoom extends Card {
 

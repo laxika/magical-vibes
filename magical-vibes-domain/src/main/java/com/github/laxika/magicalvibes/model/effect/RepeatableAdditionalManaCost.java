@@ -18,10 +18,17 @@ import java.util.List;
  * @param multikicker whether the repeated payments are multikicker payments and therefore count
  *                    as kicks for kicked-spell triggers
  * @param maxPaymentsPerCost maximum number of times each declared cost may be paid
+ * @param repeatedGraveyardCardCount when positive, each payment also exiles this many cards
+ *                                   from the controller's graveyard; the payment option should
+ *                                   use a zero-mana symbol such as {@code {0}}
+ * @param repeatedHandCardCount when positive, each payment also discards this many cards from
+ *                              the controller's hand
  */
 public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
                                             int maxPaymentsPerCost,
-                                            List<PaymentOption> paymentOptions) implements CostEffect {
+                                            List<PaymentOption> paymentOptions,
+                                            int repeatedGraveyardCardCount,
+                                            int repeatedHandCardCount) implements CostEffect {
 
     public record PaymentOption(String manaCost, boolean multikicker, int maxPayments) {
     }
@@ -33,23 +40,54 @@ public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multi
                         .map(manaCost -> new PaymentOption(manaCost, multikicker, maxPaymentsPerCost))
                         .toList()
                 : List.copyOf(paymentOptions);
+        if (repeatedGraveyardCardCount < 0) {
+            throw new IllegalArgumentException("repeatedGraveyardCardCount cannot be negative");
+        }
+        if (repeatedHandCardCount < 0) {
+            throw new IllegalArgumentException("repeatedHandCardCount cannot be negative");
+        }
+    }
+
+    public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
+                                        int maxPaymentsPerCost, List<PaymentOption> paymentOptions,
+                                        int repeatedGraveyardCardCount) {
+        this(manaCosts, multikicker, maxPaymentsPerCost, paymentOptions,
+                repeatedGraveyardCardCount, 0);
     }
 
     public RepeatableAdditionalManaCost(List<String> manaCosts) {
-        this(manaCosts, false, Integer.MAX_VALUE, null);
+        this(manaCosts, false, Integer.MAX_VALUE, null, 0);
     }
 
     public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker) {
-        this(manaCosts, multikicker, Integer.MAX_VALUE, null);
+        this(manaCosts, multikicker, Integer.MAX_VALUE, null, 0);
     }
 
     public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
                                         int maxPaymentsPerCost) {
-        this(manaCosts, multikicker, maxPaymentsPerCost, null);
+        this(manaCosts, multikicker, maxPaymentsPerCost, null, 0);
+    }
+
+    public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
+                                        int maxPaymentsPerCost, List<PaymentOption> paymentOptions) {
+        this(manaCosts, multikicker, maxPaymentsPerCost, paymentOptions, 0);
     }
 
     public static RepeatableAdditionalManaCost multikicker(List<String> manaCosts) {
         return new RepeatableAdditionalManaCost(manaCosts, true, Integer.MAX_VALUE);
+    }
+
+    /** Creates a repeatable zero-mana cost that exiles N cards from the caster's graveyard per payment. */
+    public static RepeatableAdditionalManaCost graveyardExile(int cardCount) {
+        if (cardCount < 1) {
+            throw new IllegalArgumentException("cardCount must be positive");
+        }
+        return new RepeatableAdditionalManaCost(List.of("{0}"), false, Integer.MAX_VALUE, null, cardCount, 0);
+    }
+
+    /** Creates a repeatable additional mana cost that also discards one card per payment. */
+    public static RepeatableAdditionalManaCost withDiscard(List<String> manaCosts) {
+        return new RepeatableAdditionalManaCost(manaCosts, false, Integer.MAX_VALUE, null, 0, 1);
     }
 
     /** Creates an optional additional cost that may be paid at most once. */
@@ -70,7 +108,12 @@ public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multi
                 .mapToInt(PaymentOption::maxPayments)
                 .min()
                 .orElse(Integer.MAX_VALUE);
-        return new RepeatableAdditionalManaCost(manaCosts, multikicker, maxPaymentsPerCost, options);
+        int repeatedHandCardCount = costs.stream()
+                .mapToInt(RepeatableAdditionalManaCost::repeatedHandCardCount)
+                .max()
+                .orElse(0);
+        return new RepeatableAdditionalManaCost(
+                manaCosts, multikicker, maxPaymentsPerCost, options, 0, repeatedHandCardCount);
     }
 
     /** Counts payments assigned to options that are multikicker payments. */

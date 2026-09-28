@@ -994,6 +994,29 @@ public class CombatDamageService {
                 throw new IllegalStateException("Cannot combine normal and alternative combat damage assignments");
             }
         }
+        boolean hasTantrum = gameQueryService.hasKeyword(gameData, blk, Keyword.TANTRUM);
+        if (hasTantrum) {
+            validTargetIds.add(activeId);
+            if (assignments.getOrDefault(activeId, 0) > 0) {
+                boolean blockerHasDeathtouch = gameQueryService.hasKeyword(gameData, blk, Keyword.DEATHTOUCH);
+                for (var bEntry : p1.blockerMap.entrySet()) {
+                    int atkIdx = bEntry.getKey();
+                    if (p1.deadAttackerIndices.contains(atkIdx) || !bEntry.getValue().contains(blockerIndex)) {
+                        continue;
+                    }
+                    Permanent attacker = atkBf.get(atkIdx);
+                    int alreadyTaken = attacker.getMarkedDamage() + p1.atkDamageTaken.getOrDefault(atkIdx, 0);
+                    int lethal = blockerHasDeathtouch
+                            ? Math.max(0, 1 - alreadyTaken)
+                            : Math.max(0, gameQueryService.getLethalDamageThreshold(gameData, attacker) - alreadyTaken);
+                    int assigned = assignments.getOrDefault(attacker.getId(), 0);
+                    if (assigned < lethal) {
+                        throw new IllegalStateException("Tantrum: must assign lethal damage to "
+                                + attacker.getCard().getName() + " before assigning damage to its controller");
+                    }
+                }
+            }
+        }
         for (UUID targetId : assignments.keySet()) {
             if (!validTargetIds.contains(targetId)) {
                 throw new IllegalStateException("Invalid damage target: " + targetId);
@@ -1163,10 +1186,20 @@ public class CombatDamageService {
             Permanent blocker = defBf.get(blockerIndex);
             CombatantStats stats = snap.defenderStats().get(blockerIndex);
             if (!assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, blocker)
+                    && !gameQueryService.hasKeyword(gameData, blocker, Keyword.TANTRUM)
                     || stats == null || !stats.participatesInDamagePhase(phase)
                     || stats.preventedFromDealingCombatDamage()
                     || (phase == DamagePhase.REGULAR && state.deadDefenderIndices.contains(blockerIndex))) continue;
             Map<UUID, Integer> assignments = assignmentEntry.getValue();
+            if (gameQueryService.hasKeyword(gameData, blocker, Keyword.TANTRUM)) {
+                int playerDamage = gameQueryService.applyCombatDamageMultiplier(
+                        gameData, assignments.getOrDefault(activeId, 0), blocker, null);
+                if (playerDamage > 0 && phase != DamagePhase.FIRSTEST_STRIKE
+                        && !isCombatDamagePreventedByGlobalEffect(gameData, blocker, null)) {
+                    accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, activeId, null, state, false);
+                }
+                continue;
+            }
             int playerDamage = gameQueryService.applyCombatDamageMultiplier(
                     gameData, assignments.getOrDefault(defenderId, 0), blocker, null);
             if (playerDamage > 0 && phase != DamagePhase.FIRSTEST_STRIKE
@@ -1833,6 +1866,27 @@ public class CombatDamageService {
                                 creature.getCard(), attackerId, List.of(targeted),
                                 creature.getId(), attackerId, defenderId));
                     }
+                    continue;
+                }
+                if (specialEffect instanceof ExilePermanentDamagedPlayerControlsEffect exileEffect) {
+                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                    boolean hasValidTargets = defenderBf != null && defenderBf.stream()
+                            .anyMatch(permanent -> exileEffect.predicate() == null
+                                    || predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, permanent, exileEffect.predicate()));
+                    if (!hasValidTargets) {
+                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                "'s ability does not trigger \u2014 " + gameData.playerIdToName.get(defenderId)
+                                        + " has no valid targets."));
+                        continue;
+                    }
+                    StackEntry exileEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(),
+                            attackerId, creature.getCard().getName() + "'s triggered ability", List.of(effect),
+                            defenderId, creature.getId());
+                    exileEntry.setNonTargeting(true);
+                    gameData.stack.add(exileEntry);
+                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                            "'s combat damage trigger goes on the stack."));
                     continue;
                 }
 
@@ -3290,11 +3344,13 @@ public class CombatDamageService {
         Set<UUID> processed = new HashSet<>();
         for (UUID permanentId : state.damageToPlaneswalkers.keySet()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent == null || !permanent.getCard().hasType(CardType.PLANESWALKER)) continue;
+            if (permanent == null || !gameQueryService.isPlaneswalker(gameData, permanent)) continue;
             int damage = gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanentId, 0)
                     - state.damageDealtToPermanentsBeforeStep.getOrDefault(permanentId, 0);
             if (damage <= 0) continue;
-            int lethalDamage = state.loyaltyBeforeStep.getOrDefault(permanentId, 0);
+            int lethalDamage = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, permanent)
+                    ? state.toughnessBeforeStep.getOrDefault(permanentId, 0)
+                    : state.loyaltyBeforeStep.getOrDefault(permanentId, 0);
             triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
                     gameData, permanent, gameQueryService.findPermanentController(gameData, permanentId),
                     Math.max(0, damage - lethalDamage));
@@ -3391,7 +3447,14 @@ public class CombatDamageService {
                     : Math.max(unpreventable, effectiveDamage);
             if (dmg > 0) {
                 damagePreventionService.applyDamageHealingReplacement(gameData, perm, dmg);
-                Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(perm, dmg, bySource);
+                boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, perm);
+                if (toughnessAsLoyalty) {
+                    perm.setToughnessAsLoyalty(
+                            gameQueryService.getToughnessAsLoyalty(perm) - dmg);
+                }
+                Map<UUID, Integer> attributedDamage = toughnessAsLoyalty
+                        ? Map.of()
+                        : recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
                 attributedDamage.forEach((sourceId, amount) -> {
@@ -3406,7 +3469,7 @@ public class CombatDamageService {
                         .forEach(sourceId -> recordQualifyingCombatDamageBySourceId(gameData, sourceId, perm));
                 // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
                 // not when a prevention shield consumed the whole step's damage.
-                if (deathtouchIndices.contains(idx)) {
+                if (!toughnessAsLoyalty && deathtouchIndices.contains(idx)) {
                     perm.setDamagedByDeathtouch(true);
                 }
             }
@@ -3732,12 +3795,19 @@ public class CombatDamageService {
             }
             gameData.recordDamageToPermanent(pw.getId(), damage);
             triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, pw, damage);
-            int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
-                    gameData, pw, damage);
-            pw.setCounterCount(CounterType.LOYALTY,
-                    pw.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
+            if (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, pw)) {
+                pw.setToughnessAsLoyalty(
+                        gameQueryService.getToughnessAsLoyalty(pw) - damage);
+            } else {
+                int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                        gameData, pw, damage);
+                pw.setCounterCount(CounterType.LOYALTY,
+                        pw.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
+            }
             gameLogService.append(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
-                    + pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+                    + (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, pw)
+                    ? gameQueryService.getEffectiveToughness(gameData, pw) + " toughness remaining)."
+                    : pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining).")));
         }
     }
 
@@ -3828,7 +3898,11 @@ public class CombatDamageService {
                         gameData, targetPerm, channelHarmAdjusted, true, damageSource);
                 if (effectiveDamage > 0) {
                     damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
-                    if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+                    boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm);
+                    if (toughnessAsLoyalty) {
+                        targetPerm.setToughnessAsLoyalty(
+                                gameQueryService.getToughnessAsLoyalty(targetPerm) - effectiveDamage);
+                    } else if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
                         int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                                 gameData, targetPerm, effectiveDamage);
                         targetPerm.setCounterCount(CounterType.LOYALTY,
@@ -3839,7 +3913,8 @@ public class CombatDamageService {
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
                     }
                     boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
-                    if (isCreature || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)
+                    if ((isCreature && !toughnessAsLoyalty)
+                            || (!toughnessAsLoyalty && !targetPerm.getCard().hasType(CardType.PLANESWALKER)
                             && !targetPerm.getCard().hasType(CardType.BATTLE))) {
                         targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
                     }
@@ -4744,7 +4819,8 @@ public class CombatDamageService {
             for (var countEntry : livingAttackersPerBlocker.entrySet()) {
                 int blkIdx = countEntry.getKey();
                 if (countEntry.getValue() < 2
-                        && !assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, defBf.get(blkIdx))) continue;
+                        && !assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, defBf.get(blkIdx))
+                        && !gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.TANTRUM)) continue;
                 if (state.deadDefenderIndices.contains(blkIdx)) continue;
                 Permanent blk = defBf.get(blkIdx);
                 boolean blkFirstStrike = gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE);
@@ -5067,6 +5143,9 @@ public class CombatDamageService {
                             gameQueryService.getLethalDamageThreshold(gameData, permanent), permanent.getMarkedDamage(), false));
                 }
             }
+        }
+        if (gameQueryService.hasKeyword(gameData, blk, Keyword.TANTRUM)) {
+            domainTargets.add(new CombatDamageTarget(activeId, gameData.playerIdToName.get(activeId), 0, 0, true));
         }
 
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, blk);

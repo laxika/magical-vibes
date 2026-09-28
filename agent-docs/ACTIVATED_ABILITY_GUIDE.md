@@ -210,6 +210,13 @@ addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffe
 
 ---
 
+For modal abilities whose mode must be selected during activation, add
+`.withModalChoiceAtActivation()`; the activation's `xValue` is the zero-based mode index and
+the selected mode is placed on the stack immediately. For "choose one that hasn't been chosen",
+also add `.withModalModesMustBeUnused()`. The engine records the selected mode label on the
+source permanent after activation legality and costs succeed, so each mode is available once per
+permanent object.
+
 ### 4. Ability with timing restriction
 
 ```java
@@ -622,6 +629,12 @@ addActivatedAbility(new ActivatedAbility(true, "{X}",
 **Minimum X:** chain `.withMinimumXValue(n)` when an activated ability says that X cannot be
 zero or has another printed lower bound. The activation legality check and dry-run availability
 query both use this bound; the chosen value still flows to the stack entry as normal.
+
+**Dynamic maximum target count:** use `.withDynamicMaxTargets(amount)` with a multi-target-capable
+full constructor when the maximum is computed from the battlefield as the ability is activated
+(for example, "up to X target creatures, where X is the number of Bobbleheads you control"). Keep
+the configured maximum as a generous static ceiling, such as `100`; target enumeration and
+activation legality both apply the evaluated amount.
 
 Test harness: `activateAbilityWithMultiTargets(player, permanentIndex, abilityIndex, xValue, targetIds)`.
 

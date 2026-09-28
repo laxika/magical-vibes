@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "198")
+@CardRegistration(set = "MB2", collectorNumber = "135")
 public class TriumphOfFerocity extends Card {
 
     public TriumphOfFerocity() {

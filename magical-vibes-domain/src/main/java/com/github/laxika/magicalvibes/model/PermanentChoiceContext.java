@@ -27,6 +27,9 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    /** Panglacial Shinobi: choose the unblocked attacker returned for library ninjutsu. */
+    record LibraryNinjutsu(PendingInteraction.LibrarySearch search, Card card, String manaCost)
+            implements PermanentChoiceContext {}
     record BackdraftPlayerChoice() implements PermanentChoiceContext {}
 
     record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready)
@@ -43,6 +46,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TurnFaceUpCopy(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     record CipherEncode() implements PermanentChoiceContext {}
+
+    record Teach() implements PermanentChoiceContext {}
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
@@ -105,6 +110,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
+
+    /** Inventory Management: choose the creature for one selected Aura or Equipment. */
+    record InventoryManagementAttachment(UUID controllerId, UUID attachmentId,
+                                         List<UUID> remainingAttachmentIds)
+            implements PermanentChoiceContext {
+        public InventoryManagementAttachment {
+            remainingAttachmentIds = List.copyOf(remainingAttachmentIds);
+        }
+    }
 
     /** Attach one selected graveyard Aura to the chosen creature and continue the selection. */
     record AttachReturnedAuraToCreature(UUID controllerId, UUID auraCardId,
@@ -1424,6 +1438,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  {@code controllerId} (offered as a player option) declines, sending the card to the graveyard. */
     record SacrificePermanentToEnter(UUID controllerId, Permanent enteringPermanent) implements PermanentChoiceContext {}
 
+    /** Land casualty: the controller may sacrifice a matching creature, or choose their own player
+     *  id to decline. The entering land remains parked until the choice is completed. */
+    record LandCasualty(UUID controllerId, Permanent enteringPermanent) implements PermanentChoiceContext {}
+
     /** Champion a creature: exile the chosen creature until the source permanent leaves the battlefield. */
     record ChampionCreature(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -1664,21 +1682,32 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                 boolean resolutionCast, int lifeLossAfterCast,
                                 boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost,
-                                CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) implements PermanentChoiceContext {
+                                CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId,
+                                int xValue) implements PermanentChoiceContext {
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                     boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                     boolean resolutionCast, int lifeLossAfterCast,
                                     boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost) {
             this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction,
                     resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard,
-                    payManaCost, null, null);
+                    payManaCost, null, null, 0);
+        }
+
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
+                                    boolean copy, List<UUID> chosenTargets, int genericCostReduction,
+                                    boolean resolutionCast, int lifeLossAfterCast,
+                                    boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost,
+                                    int xValue) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction,
+                    resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard,
+                    payManaCost, null, null, xValue);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                 boolean resolutionCast, int lifeLossAfterCast,
                                 boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard, false);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard, false, null, null, 0);
         }
 
         // {@code copy=true} marks a Paradigm copy that must cease to exist rather than being placed in
@@ -1688,15 +1717,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         // order, while a multi-target spell walks its target slots one at a time. Empty for the
         // single-target path (which stores its lone target as the StackEntry's {@code targetId}).
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false, 0, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false, 0, false, false, null, null, 0);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy, List<UUID> chosenTargets, int genericCostReduction, boolean payManaCost) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, false, 0, false, payManaCost);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, false, 0, false, payManaCost, null, null, 0);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false, 0, false, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false, 0, false, false, null, null, 0);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -1734,7 +1763,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                                UUID sourcePermanentId) {
             return new ExileCastSpellTarget(cardToCast, controllerId, spellEffects, spellType,
                     true, List.of(), 0, true, lifeLossAfterCast, false, false,
-                    afterSuccessfulCastEffect, sourcePermanentId);
+                    afterSuccessfulCastEffect, sourcePermanentId, 0);
         }
     }
 

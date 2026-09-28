@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1169,6 +1170,30 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life payment (put counter on self)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_PAYS_TAX)
+    private boolean handleOpponentTaxPayment(TriggerMatchContext match,
+            CreateTokenEffect effect, TriggerContext ctx) {
+        TriggerContext.TaxPayment taxPayment = (TriggerContext.TaxPayment) ctx;
+        var gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(taxPayment.manaPaid());
+        }
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers when an opponent pays a tax ({})", gameData.id,
+                match.permanent().getCard().getName(), taxPayment.manaPaid());
         return true;
     }
 
@@ -2327,6 +2352,111 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on opponent mill (put counters on matching permanents)",
                 gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    private boolean handleGainLifeOnNonlandCardsMilled(TriggerMatchContext match,
+            GainLifeEffect effect, TriggerContext ctx) {
+        int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
+        Card sourceCard = match.permanent().getCard();
+
+        for (int i = 0; i < nonlandCardCount; i++) {
+            match.gameData().enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        }
+
+        log.info("Game {} - {} triggers once for each of {} nonland cards milled",
+                match.gameData().id, sourceCard.getName(), nonlandCardCount);
+        return nonlandCardCount > 0;
+    }
+
+    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
+            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    private boolean handlePutCountersOnNonlandCardsMilled(TriggerMatchContext match,
+            PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
+
+        if (sourceCard.getSpellTargets().stream()
+                .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    match.permanent().getId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    0,
+                    List.of(),
+                    false,
+                    null,
+                    null,
+                    nonlandCardCount));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers on nonland cards milled (multi-target counter placement)",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
+
+        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                sourceCard, match.controllerId(), List.of(effect), match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on nonland cards milled", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SequenceEffect.class,
+            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    private boolean handleNonlandCardsMilledSequence(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on nonland cards milled",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokensForNonlandCardsMilledEffect.class,
+            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    private boolean handleCreateTokensForNonlandCardsMilled(TriggerMatchContext match,
+            CreateTokensForNonlandCardsMilledEffect effect, TriggerContext ctx) {
+        TriggerContext.NonlandCardsMilled milled = (TriggerContext.NonlandCardsMilled) ctx;
+        CardEffect queuedEffect = match.rawEffect();
+        if (queuedEffect instanceof OncePerTurnTriggerEffect oncePerTurn) {
+            queuedEffect = oncePerTurn.wrapped();
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(queuedEffect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(milled.nonlandCardCount());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on nonland cards milled (create tokens)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 
@@ -3510,6 +3640,28 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards exiled during turn)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_OWNED_CARD_EXILED)
+    boolean handleOpponentOwnedCardExiled(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.OpponentOwnedCardExiled exiled)
+                || match.controllerId().equals(exiled.ownerId())) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (opponent-owned card exiled)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

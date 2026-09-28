@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
@@ -134,6 +135,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerDifferentFromBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
@@ -361,6 +363,25 @@ class PredicateEvaluationServiceTest {
         assertThat(evaluator.matchesStackEntryPredicate(fixedEntry, predicate, null)).isFalse();
     }
 
+    @Test
+    void powerDifferentFromBaseMatchesBothPositiveAndNegativeModifiers() {
+        Permanent permanent = addPermanent(player1Id,
+                createCreature("Test Creature", 2, 2, CardColor.GREEN));
+        PermanentPowerDifferentFromBasePowerPredicate predicate =
+                new PermanentPowerDifferentFromBasePowerPredicate();
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+
+        permanent.setPowerModifier(1);
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+
+        permanent.setPowerModifier(-1);
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+
+        permanent.setPowerModifier(0);
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+    }
+
     @Nested
     @DisplayName("matchesCardPredicate")
     class MatchesCardPredicate {
@@ -500,6 +521,30 @@ class PredicateEvaluationServiceTest {
                     belowCounters, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(
                     equalToCounters, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueAtMostSourceCountersPredicate includes equal mana value")
+        void cardManaValueAtMostSourceCountersPredicateIncludesEqualValue() {
+            Card sourceCard = createCreature("Arcade Gannon", 2, 3, CardColor.WHITE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setCounterCount(CounterType.QUEST, 1);
+
+            Card zeroMana = createCreature("Zero Mana", 0, 0, CardColor.BLUE);
+            zeroMana.setManaCost("{0}");
+            Card oneMana = createCreature("One Mana", 1, 1, CardColor.BLUE);
+            oneMana.setManaCost("{1}");
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.BLUE);
+            twoMana.setManaCost("{2}");
+            CardManaValueAtMostSourceCountersPredicate predicate =
+                    new CardManaValueAtMostSourceCountersPredicate(CounterType.QUEST);
+
+            assertThat(evaluator.matchesCardPredicate(
+                    zeroMana, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(
+                    oneMana, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(
+                    twoMana, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
         }
 
         @Test

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToCreatureSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
@@ -146,6 +147,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final CloneService cloneService;
     private final TurnFaceUpCopyService turnFaceUpCopyService;
     private final CipherSupport cipherSupport;
+    private final TeachSupport teachSupport;
     private final WarpWorldService warpWorldService;
     private final GameLogService gameLogService;
     private final AuraCopyService auraCopyService;
@@ -423,6 +425,10 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleCipherEncode(GameData gameData, UUID permanentId) {
         cipherSupport.encode(gameData, permanentId);
+    }
+
+    public void handleTeach(GameData gameData, UUID permanentId) {
+        teachSupport.teach(gameData, permanentId);
     }
 
     public void handleAttachEquipmentToCreature(GameData gameData, UUID creatureId,
@@ -1728,6 +1734,36 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** Completes a land casualty choice. Declining simply lets the original land enter; paying
+     *  creates the copy through the land's conditional ETB effect. */
+    public void handleLandCasualty(GameData gameData, UUID permanentId,
+                                   PermanentChoiceContext.LandCasualty context) {
+        boolean declined = context.controllerId().equals(permanentId);
+        if (!declined) {
+            Permanent sacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+            if (sacrifice == null) {
+                throw new IllegalStateException("Target permanent no longer exists");
+            }
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacrifice);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(sacrifice.getCard(), " is sacrificed."));
+        }
+
+        battlefieldEntryService.completeLandCasualtyToEnter(
+                gameData, context.controllerId(), context.enteringPermanent(), !declined);
+        if (!gameData.interaction.isAwaitingInput()) {
+            battlefieldEntryService.processLandETBEffects(
+                    gameData, context.controllerId(), context.enteringPermanent().getCard());
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.checkControllerPlaysLandTriggers(
+                    gameData, context.controllerId(), context.enteringPermanent().getCard());
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
     public void handleChampionCreature(GameData gameData, UUID championedPermanentId,
                                        PermanentChoiceContext.ChampionCreature context) {
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
@@ -2285,9 +2321,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                 : playerName + " loses the coin flip for Desperate Gambit"
                         + coinFlipService.replacementDetails(result) + "."));
 
-        if (wonFlip) {
+        if (wonFlip && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, ctx.controllerId());
-        } else {
+        } else if (result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, ctx.controllerId());
         }
 

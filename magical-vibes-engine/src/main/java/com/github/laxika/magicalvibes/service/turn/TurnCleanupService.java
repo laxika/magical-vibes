@@ -238,6 +238,7 @@ public class TurnCleanupService {
                 }
             }
         }
+        gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.clear();
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
@@ -382,6 +383,7 @@ public class TurnCleanupService {
         gameData.playersCantGainLifeThisTurn = false;
         gameData.playersCantSearchLibrariesThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
+        gameData.creaturesCantAttackThisCombat = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
@@ -392,7 +394,8 @@ public class TurnCleanupService {
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 (!watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
                         || (watcher.untilEndOfNextTurn()
-                        && gameData.activePlayerId.equals(watcher.controllerId())
+                        && gameData.activePlayerId.equals(watcher.expirationPlayerId() != null
+                        ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.damagedCreatureDeathTriggerWatchers.clear();
@@ -485,6 +488,7 @@ public class TurnCleanupService {
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.outsideGamePlayPermissions.clear();
+        gameData.outsideGameAdditionalModalModePermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
@@ -789,6 +793,13 @@ public class TurnCleanupService {
                 if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
+                }
+                if (gameQueryService != null) {
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus != null && staticBonus.grantedEffects().stream()
+                            .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                        return true;
+                    }
                 }
             }
         }

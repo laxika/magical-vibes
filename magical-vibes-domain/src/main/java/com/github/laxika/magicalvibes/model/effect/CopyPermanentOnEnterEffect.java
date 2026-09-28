@@ -143,6 +143,15 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                 Set.of(), false, false, null, false);
     }
 
+    /** Clone that adds both card types and subtypes to the resulting permanent. */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardType> additionalTypesOverride,
+                                      Set<CardSubtype> additionalSubtypesOverride) {
+        this(filter, typeLabel, null, null, additionalTypesOverride, List.of(), null, null, false, null,
+                additionalSubtypesOverride, Map.of(), false, false, null, Set.of(), Set.of(), false, true,
+                Set.of(), false, false, null, false);
+    }
+
     /** Clone that also adds copy exceptions to the resulting permanent and may omit its color. */
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       Set<CardSubtype> additionalSubtypesOverride,

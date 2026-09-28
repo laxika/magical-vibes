@@ -349,6 +349,9 @@ public sealed interface TriggerContext {
     /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
     record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
 
+    /** Context for mana-tax payment triggers (ON_OPPONENT_PAYS_TAX). */
+    record TaxPayment(UUID payingPlayerId, UUID taxingPlayerId, int manaPaid) implements TriggerContext {}
+
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
      * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
@@ -838,6 +841,9 @@ public sealed interface TriggerContext {
             creatureCards = List.copyOf(creatureCards);
         }
     }
+
+    /** Context for a non-token card owned by a player other than the trigger controller entering exile. */
+    record OpponentOwnedCardExiled(UUID ownerId, Card card) implements TriggerContext {}
 
     /** Context for creatures exiled from the battlefield, regardless of controller. */
     record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId,

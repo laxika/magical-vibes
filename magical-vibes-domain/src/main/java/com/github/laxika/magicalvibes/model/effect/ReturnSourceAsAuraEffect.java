@@ -8,10 +8,19 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * An optional retained ability lets a transforming card lose all other abilities as it becomes
  * the Aura.
  */
-public record ReturnSourceAsAuraEffect(TargetFilter enchantFilter, ActivatedAbility retainedAbility)
+public record ReturnSourceAsAuraEffect(TargetFilter enchantFilter, ActivatedAbility retainedAbility,
+                                       boolean losesOtherAbilities)
         implements CardEffect {
 
     public ReturnSourceAsAuraEffect(TargetFilter enchantFilter) {
-        this(enchantFilter, null);
+        this(enchantFilter, null, false);
+    }
+
+    public ReturnSourceAsAuraEffect(TargetFilter enchantFilter, ActivatedAbility retainedAbility) {
+        this(enchantFilter, retainedAbility, false);
+    }
+
+    public static ReturnSourceAsAuraEffect losingOtherAbilities(TargetFilter enchantFilter) {
+        return new ReturnSourceAsAuraEffect(enchantFilter, null, true);
     }
 }

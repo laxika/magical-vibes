@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "264")
 @CardRegistration(set = "3ED", collectorNumber = "264")
 @CardRegistration(set = "MPS", collectorNumber = "40")
+@CardRegistration(set = "MB2", collectorNumber = "227")
 public class Meekstone extends Card {
 
     public Meekstone() {

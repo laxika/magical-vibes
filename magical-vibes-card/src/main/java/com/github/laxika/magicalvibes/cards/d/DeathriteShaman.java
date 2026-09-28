@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "SLC", collectorNumber = "74")
 @CardRegistration(set = "EA3", collectorNumber = "15")
 @CardRegistration(set = "RVR", collectorNumber = "175")
+@CardRegistration(set = "MB2", collectorNumber = "81")
 public class DeathriteShaman extends Card {
 
     public DeathriteShaman() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "35")
 @CardRegistration(set = "SLD", collectorNumber = "2067")
+@CardRegistration(set = "MB2", collectorNumber = "28")
 public class GitaxianProbe extends Card {
 
     public GitaxianProbe() {

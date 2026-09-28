@@ -18,6 +18,10 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 
 import java.util.List;
 
+@CardRegistration(set = "PIP", collectorNumber = "145")
+@CardRegistration(set = "PIP", collectorNumber = "673")
+@CardRegistration(set = "PIP", collectorNumber = "437")
+@CardRegistration(set = "PIP", collectorNumber = "965")
 @CardRegistration(set = "SLD", collectorNumber = "2452")
 public class T45PowerArmor extends Card {
 

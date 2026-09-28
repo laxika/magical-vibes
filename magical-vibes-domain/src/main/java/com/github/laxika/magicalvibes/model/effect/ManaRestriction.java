@@ -460,6 +460,11 @@ public sealed interface ManaRestriction {
             this(null, null);
         }
 
+        /** Mana spendable only to cast Aura or Equipment spells. */
+        public static SubtypeOrPlaneswalkerSpells auraOrEquipmentSpells() {
+            return new SubtypeOrPlaneswalkerSpells(CardSubtype.AURA, CardSubtype.EQUIPMENT);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
@@ -469,6 +474,9 @@ public sealed interface ManaRestriction {
         public String description() {
             if (spellSubtype == null && planeswalkerSubtype == null) {
                 return "planeswalker spells only";
+            }
+            if (spellSubtype == CardSubtype.AURA && planeswalkerSubtype == CardSubtype.EQUIPMENT) {
+                return "Aura or Equipment spells only";
             }
             return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
         }

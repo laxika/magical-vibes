@@ -34,7 +34,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean grantHaste,
         boolean sacrificeAtEndStep,
         int minTargets,
-        int sacrificeAtEndStepIfManaValueAtLeast
+        int sacrificeAtEndStepIfManaValueAtLeast,
+        boolean attachToSourceHost
 ) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -170,7 +171,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean grantHaste,
                                                               boolean sacrificeAtEndStep,
                                                               int minTargets,
-                                                              int sacrificeAtEndStepIfManaValueAtLeast) {
+                                                              int sacrificeAtEndStepIfManaValueAtLeast,
+                                                              boolean attachToSourceHost) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -200,6 +202,51 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.sacrificeAtEndStep = sacrificeAtEndStep;
         this.minTargets = minTargets;
         this.sacrificeAtEndStepIfManaValueAtLeast = sacrificeAtEndStepIfManaValueAtLeast;
+        this.attachToSourceHost = attachToSourceHost;
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets,
+                                                              int sacrificeAtEndStepIfManaValueAtLeast) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, dynamicMaxTotalManaValue, grantColor, grantSubtype,
+                counterType, counterCount, source, singleGraveyard, grantHaste,
+                sacrificeAtEndStep, minTargets, sacrificeAtEndStepIfManaValueAtLeast, false);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets,
+                                                              boolean attachToSourceHost) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, dynamicMaxTotalManaValue, grantColor, grantSubtype,
+                counterType, counterCount, source, singleGraveyard, grantHaste,
+                sacrificeAtEndStep, minTargets, 0, attachToSourceHost);
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
@@ -221,6 +268,14 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 maxTotalManaValue, dynamicMaxTotalManaValue, grantColor, grantSubtype,
                 counterType, counterCount, source, singleGraveyard, grantHaste,
                 sacrificeAtEndStep, minTargets, 0);
+    }
+
+    /** Returns any number of Auras and Equipment attached to the source Aura's host. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect anyNumberAttachedToSourceHost(
+            CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, Integer.MAX_VALUE, false, false, null, 0, null, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, 0, true);
     }
 
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(CardPredicate filter) {

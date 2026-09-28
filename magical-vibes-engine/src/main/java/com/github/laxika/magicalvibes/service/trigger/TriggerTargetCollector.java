@@ -380,9 +380,7 @@ public class TriggerTargetCollector {
                                             sourcePermanentSnapshot,
                                             false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null,
-                                            null,
-                                            triggeringPermanentId)).isPresent()) {
+                                            null, defendingPlayerId, triggeringPermanentId)).isPresent()) {
                         continue;
                     }
 

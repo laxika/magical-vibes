@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 @CardRegistration(set = "VMA", collectorNumber = "106")
 @CardRegistration(set = "V16", collectorNumber = "2")
 @CardRegistration(set = "SLD", collectorNumber = "2199")
+@CardRegistration(set = "MB2", collectorNumber = "177")
 public class CabalRitual extends Card {
 
     public CabalRitual() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermane
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -43,6 +44,8 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final AmountEvaluationService amountEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -186,11 +189,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         Set<CardType> enterTappedTypes =
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        Permanent sourceHost = e.attachToSourceHost() ? sourceHost(gameData, entry) : null;
+        List<Permanent> equipmentToAttach = new ArrayList<>();
         List<Card> returnedCards = new ArrayList<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Card card : cardsToReturn) {
                 if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    continue;
+                }
+                if (e.attachToSourceHost() && card.isAura()
+                        && (sourceHost == null
+                        || !auraAttachmentService.canEnchant(gameData, card, graveyardOwnerId, sourceHost))) {
                     continue;
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -199,10 +209,16 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.enterTapped()) {
                     permanent.tap();
                 }
+                if (e.attachToSourceHost() && card.isAura()) {
+                    permanent.setAttachedTo(sourceHost.getId());
+                }
                 permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
+                if (e.attachToSourceHost() && !card.isAura()) {
+                    equipmentToAttach.add(permanent);
+                }
                 applyReturnRiders(gameData, permanent, e);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
@@ -215,11 +231,31 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
+        if (sourceHost != null) {
+            for (Permanent equipment : equipmentToAttach) {
+                equipSupport.attachEquipment(gameData, equipment, sourceHost);
+            }
+        }
+
         if (!returnedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(graveyardOwnerId) + " returns " + returnedCards.size()
                             + " card(s) from the graveyard to the battlefield."));
         }
+    }
+
+    private Permanent sourceHost(GameData gameData, StackEntry entry) {
+        Permanent snapshot = entry.getAttachedPermanentSnapshot();
+        if (snapshot != null) {
+            return gameQueryService.findPermanentById(gameData, snapshot.getId());
+        }
+        if (entry.getSourcePermanentId() == null) {
+            return null;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null && source.isAttached()
+                ? gameQueryService.findPermanentById(gameData, source.getAttachedTo())
+                : null;
     }
 
     private record GraveyardCard(UUID ownerId, Card card) {

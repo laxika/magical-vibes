@@ -360,7 +360,8 @@ public class GraveyardTargetingService {
             int maxTargets, Integer maxTotalManaValue, int xValue) {
         handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
                 returnEffect.filter(), maxTargets, 0,
-                " from your graveyard to return to the battlefield.", maxTotalManaValue, xValue);
+                " from your graveyard to return to the battlefield.", maxTotalManaValue, xValue,
+                returnEffect.attachToSourceHost() ? sourcePermanentId(gameData, controllerId, card) : null);
     }
 
     /**
@@ -440,6 +441,13 @@ public class GraveyardTargetingService {
     private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
             String promptSuffix, Integer maxTotalManaValue, int xValue) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects, filter,
+                requestedMaxTargets, minTargets, promptSuffix, maxTotalManaValue, xValue, null);
+    }
+
+    private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
+            String promptSuffix, Integer maxTotalManaValue, int xValue, UUID sourcePermanentId) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
         if (graveyard != null) {
@@ -482,6 +490,7 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
             gameData.graveyardTargetOperation.xValue = xValue;
             gameData.graveyardTargetOperation.totalManaValueCap = maxTotalManaValue;
+            gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
             String choicePrompt = minTargets > 0
                     ? "Choose " + minTargets + " target card" + (minTargets != 1 ? "s" : "") + promptSuffix
                     : "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
@@ -489,6 +498,14 @@ public class GraveyardTargetingService {
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                     minTargets, choicePrompt);
         }
+    }
+
+    private UUID sourcePermanentId(GameData gameData, UUID controllerId, Card card) {
+        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .map(Permanent::getId)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

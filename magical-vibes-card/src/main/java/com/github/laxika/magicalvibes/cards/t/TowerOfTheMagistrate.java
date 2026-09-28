@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "330")
+@CardRegistration(set = "MB2", collectorNumber = "242")
 public class TowerOfTheMagistrate extends Card {
 
     public TowerOfTheMagistrate() {

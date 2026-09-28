@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "879")
+@CardRegistration(set = "MB2", collectorNumber = "88")
 @CardRegistration(set = "HBG", collectorNumber = "243")
 @CardRegistration(set = "HBG", collectorNumber = "285")
 public class MinscBooTimelessHeroes extends Card {

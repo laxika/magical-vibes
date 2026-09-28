@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "EMA", collectorNumber = "50")
 @CardRegistration(set = "SLD", collectorNumber = "1178")
 @CardRegistration(set = "MH1", collectorNumber = "53")
+@CardRegistration(set = "MB2", collectorNumber = "122")
 public class FutureSight extends Card {
 
     public FutureSight() {

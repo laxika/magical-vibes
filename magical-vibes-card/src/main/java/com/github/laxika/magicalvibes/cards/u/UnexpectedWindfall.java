@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "SLD", collectorNumber = "2092")
 @CardRegistration(set = "MAR", collectorNumber = "29")
 @CardRegistration(set = "OMB", collectorNumber = "29")
+@CardRegistration(set = "PIP", collectorNumber = "193")
+@CardRegistration(set = "PIP", collectorNumber = "721")
 @CardRegistration(set = "HBG", collectorNumber = "192")
 public class UnexpectedWindfall extends Card {
 

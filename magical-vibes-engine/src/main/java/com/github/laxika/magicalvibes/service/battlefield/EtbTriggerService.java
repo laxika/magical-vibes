@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
@@ -148,6 +149,17 @@ public class EtbTriggerService {
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && independentModeChoice != null
+                && enteringPermanent.getChosenModeLabels().size() < independentModeChoice.modeGroups().size()) {
+            playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), independentModeChoice.modeGroups(),
+                    enteringPermanent.getChosenModeLabels().size());
+            return;
+        }
         ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
@@ -184,7 +196,10 @@ public class EtbTriggerService {
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+        if (enteringPermanent != null && subtypeChoice != null
+                && (subtypeChoice.writesToBuddyList()
+                ? !enteringPermanent.isBuddyListChoiceMade()
+                : enteringPermanent.getChosenSubtype() == null)) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
                     subtypeChoice, true);
             return;
@@ -239,6 +254,17 @@ public class EtbTriggerService {
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && independentModeChoice != null
+                && enteringPermanent.getChosenModeLabels().size() < independentModeChoice.modeGroups().size()) {
+            playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), independentModeChoice.modeGroups(),
+                    enteringPermanent.getChosenModeLabels().size());
+            return;
+        }
         ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
@@ -260,7 +286,10 @@ public class EtbTriggerService {
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+        if (enteringPermanent != null && subtypeChoice != null
+                && (subtypeChoice.writesToBuddyList()
+                ? !enteringPermanent.isBuddyListChoiceMade()
+                : enteringPermanent.getChosenSubtype() == null)) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(), subtypeChoice);
             return;
         }
@@ -312,6 +341,7 @@ public class EtbTriggerService {
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
+                .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
                 .filter(e -> !isEntryReplacementEffect(e))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
@@ -654,6 +684,7 @@ public class EtbTriggerService {
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .filter(e -> card.getEffectTargetIndex(e) < 0)
                 .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))

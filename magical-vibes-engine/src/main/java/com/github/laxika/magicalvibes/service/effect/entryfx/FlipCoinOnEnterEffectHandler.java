@@ -49,9 +49,9 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
-        if (heads) {
+        if (heads && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        } else {
+        } else if (result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 

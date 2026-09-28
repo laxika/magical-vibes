@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "PIP", collectorNumber = "137")
+@CardRegistration(set = "PIP", collectorNumber = "358")
+@CardRegistration(set = "PIP", collectorNumber = "665")
+@CardRegistration(set = "PIP", collectorNumber = "886")
 @CardRegistration(set = "SLD", collectorNumber = "2462")
 public class NukaColaVendingMachine extends Card {
 

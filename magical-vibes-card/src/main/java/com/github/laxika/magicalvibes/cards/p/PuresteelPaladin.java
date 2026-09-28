@@ -19,6 +19,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "CMM", collectorNumber = "51")
 @CardRegistration(set = "CMM", collectorNumber = "469")
 @CardRegistration(set = "CMM", collectorNumber = "627")
+@CardRegistration(set = "PIP", collectorNumber = "170")
+@CardRegistration(set = "PIP", collectorNumber = "456")
+@CardRegistration(set = "PIP", collectorNumber = "698")
+@CardRegistration(set = "PIP", collectorNumber = "984")
 @CardRegistration(set = "FIC", collectorNumber = "250")
 public class PuresteelPaladin extends Card {
 

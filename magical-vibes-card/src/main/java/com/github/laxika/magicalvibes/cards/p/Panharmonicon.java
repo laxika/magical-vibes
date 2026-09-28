@@ -15,6 +15,10 @@ import java.util.List;
 @CardRegistration(set = "TSR", collectorNumber = "399")
 @CardRegistration(set = "KLR", collectorNumber = "258")
 @CardRegistration(set = "2X2", collectorNumber = "310")
+@CardRegistration(set = "PIP", collectorNumber = "237")
+@CardRegistration(set = "PIP", collectorNumber = "485")
+@CardRegistration(set = "PIP", collectorNumber = "765")
+@CardRegistration(set = "PIP", collectorNumber = "1013")
 public class Panharmonicon extends Card {
 
     public Panharmonicon() {

@@ -84,6 +84,8 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
 
         int newLifeA = aCantGain ? lifeA : lifeB;
         int newLifeB = bCantGain ? lifeB : lifeA;
+        newLifeA = gameData.capLifeTotal(playerA, newLifeA);
+        newLifeB = gameData.capLifeTotal(playerB, newLifeB);
 
         if (newLifeA < lifeA) {
             newLifeA = lifeA - (lifeA - newLifeA)
