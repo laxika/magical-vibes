@@ -70,12 +70,16 @@ class WreckAndRebuildTest extends BaseCardTest {
 
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         PendingInteraction.GraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice.cardPool()).containsExactly(land);
+        assertThat(choice.validIndices()).containsExactly(0);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -97,7 +101,9 @@ class WreckAndRebuildTest extends BaseCardTest {
 
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, -1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof Forest);
@@ -115,6 +121,7 @@ class WreckAndRebuildTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, 0, findPermanent(player2, "Millstone").getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Destroy target artifact or enchantment");
 
         harness.assertNotOnBattlefield(player2, "Millstone");
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);

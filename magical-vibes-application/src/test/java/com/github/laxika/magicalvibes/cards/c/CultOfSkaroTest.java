@@ -19,6 +19,7 @@ class CultOfSkaroTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         Permanent cult = addCreatureReady(player1, new CultOfSkaro());
+        int initialHandSize = gd.playerHands.get(player1.getId()).size();
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
@@ -26,13 +27,13 @@ class CultOfSkaroTest extends BaseCardTest {
         if (cult.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 1) {
             resolvedModes++;
         }
-        if (gd.playerHands.get(player1.getId()).size() == 2) {
+        if (gd.playerHands.get(player1.getId()).size() == initialHandSize + 2) {
             resolvedModes++;
         }
         if (countPermanents(player1, "Dalek") == 1) {
             resolvedModes++;
         }
-        if (gd.getLife(player2.getId()) == 16) {
+        if (gd.getLife(player2.getId()) == 12) {
             resolvedModes++;
         }
 
