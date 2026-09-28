@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
  * you choose which creatures block this combat and how those creatures block.
  */
 @CardRegistration(set = "M13", collectorNumber = "23")
+@CardRegistration(set = "C20", collectorNumber = "96")
 @CardRegistration(set = "CMM", collectorNumber = "46")
 @CardRegistration(set = "CMM", collectorNumber = "468")
 public class OdricMasterTactician extends Card {

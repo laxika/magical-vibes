@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "DDO", collectorNumber = "7")
 @CardRegistration(set = "A25", collectorNumber = "11")
 @CardRegistration(set = "C14", collectorNumber = "70")
+@CardRegistration(set = "C20", collectorNumber = "85")
 public class DecreeOfJustice extends Card {
 
     public DecreeOfJustice() {

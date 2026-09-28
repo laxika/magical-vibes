@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -866,6 +867,8 @@ public class Card {
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case ExileSourceCardFromGraveyardThenEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case ExilePermanentYouControlAndTrackWithSourceEffect e ->
                     registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);

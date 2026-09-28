@@ -1669,6 +1669,7 @@ public class StepTriggerService {
                             activePlayerId,
                             perm.getId()
                     );
+                    entry.setActivePlayerId(activePlayerId);
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.stack.add(entry);
                 }

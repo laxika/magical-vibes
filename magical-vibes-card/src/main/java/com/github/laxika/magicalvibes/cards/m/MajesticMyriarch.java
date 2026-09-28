@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "122")
 @CardRegistration(set = "AKR", collectorNumber = "200")
+@CardRegistration(set = "C20", collectorNumber = "182")
 public class MajesticMyriarch extends Card {
 
     private static final Set<Keyword> COMBAT_KEYWORDS = Set.of(

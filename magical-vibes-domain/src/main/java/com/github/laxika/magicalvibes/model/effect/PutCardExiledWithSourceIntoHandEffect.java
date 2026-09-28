@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
 /**
  * The controller puts one card they own that is exiled "with" the source permanent (tracked via
  * {@code GameData.exiledCards} / {@code sourcePermanentId}) into their hand. When several such cards
@@ -13,10 +15,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Companion to {@link SearchLibraryForCardsToExileWithSourceEffect}. Used by Endless Horizons's
  * upkeep trigger.
  */
-public record PutCardExiledWithSourceIntoHandEffect(String requiredName) implements CardEffect {
+public record PutCardExiledWithSourceIntoHandEffect(String requiredName, CardPredicate filter) implements CardEffect {
 
     /** "Put a card exiled with this permanent into your hand" — no name restriction. */
     public PutCardExiledWithSourceIntoHandEffect() {
-        this(null);
+        this(null, null);
+    }
+
+    /** "Put a matching card exiled with this permanent into your hand." */
+    public PutCardExiledWithSourceIntoHandEffect(CardPredicate filter) {
+        this(null, filter);
+    }
+
+    /** "Put one of those cards with that name into your hand." */
+    public PutCardExiledWithSourceIntoHandEffect(String requiredName) {
+        this(requiredName, null);
     }
 }

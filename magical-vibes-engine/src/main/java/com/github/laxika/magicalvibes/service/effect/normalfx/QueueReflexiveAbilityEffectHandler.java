@@ -52,7 +52,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
                     entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
-                    precedingGroupSizes, entry.getXValue(), List.of(), false));
+                    precedingGroupSizes, entry.getXValue(), List.of(), false, null, null,
+                    entry.getEventValue()));
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }

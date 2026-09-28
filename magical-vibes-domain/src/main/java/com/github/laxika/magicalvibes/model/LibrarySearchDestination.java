@@ -58,6 +58,10 @@ public enum LibrarySearchDestination {
     CAST_ONE_AND_PUT_OTHER_INTO_HAND,
     /** Cast one eligible card from a held-out pile for free, then put every other card into hand. */
     CAST_ONE_AND_PUT_REST_INTO_HAND,
+    /** Hold selected cards out of every zone until the bounded-pick follow-up completes. */
+    HOLD_OUT,
+    /** Put one selected held-out card onto the battlefield and the rest into hand. */
+    BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND,
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,

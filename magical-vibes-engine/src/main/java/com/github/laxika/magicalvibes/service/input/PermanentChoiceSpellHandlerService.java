@@ -609,12 +609,12 @@ public class PermanentChoiceSpellHandlerService {
             entry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(entry);
 
-            for (int i = 0; i < gct.copyCount(); i++) {
+            int copyCount = copySupport.adjustedSpellCopyCount(gameData, gct.copyCount());
+            for (int i = 0; i < copyCount; i++) {
                 Card copyCard = copySupport.createCopyCard(gct.cardToCast());
                 StackEntry copyEntry = copySupport.createCopyStackEntry(
                         entry, copyCard, gct.controllerId(), entry.getTargetId());
-                gameData.stack.add(copyEntry);
-                copySupport.checkSpellCopyTriggers(gameData, copyEntry);
+                copySupport.addCopyToStack(gameData, copyEntry, false);
                 if (copyEntry.getTargetId() != null) {
                     gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                             gct.cardToCast(), gct.controllerId(), List.of(new CopySpellEffect()),

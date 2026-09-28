@@ -250,9 +250,23 @@ public class LibraryChoiceHandlerService {
                     : deck;
         }
 
-        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
+        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile
+                || destination == LibrarySearchDestination.HOLD_OUT
+                || destination == LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
+            }
+
+            if (destination == LibrarySearchDestination.HOLD_OUT) {
+                handleHeldOutCardChoice(gameData, player, cardIndex, searchCards, sourceCards,
+                        accumulatedCards, followUp);
+                return;
+            }
+
+            if (destination == LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND) {
+                handleBattlefieldOneAndPutRestIntoHandChoice(
+                        gameData, player, cardIndex, searchCards, sourceCards);
+                return;
             }
 
             // Sunbird's Invocation: cast chosen card without paying, rest to bottom in random order
@@ -1659,6 +1673,9 @@ public class LibraryChoiceHandlerService {
                         "CAST_ONE_AND_PUT_OTHER_INTO_HAND should be handled earlier");
                 case CAST_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
                         "CAST_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
+                case HOLD_OUT -> throw new IllegalStateException("HOLD_OUT should be handled earlier");
+                case BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
+                        "BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
                 case PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException(
                         "PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
@@ -2341,6 +2358,15 @@ public class LibraryChoiceHandlerService {
                                 : card.hasType(spec.type()))
                 .toList();
         if (eligible.isEmpty()) {
+            if (!spec.remainingPredicatePicks().isEmpty()) {
+                LibrarySearchFollowUp.SecondBoundedPick.PredicatePick next =
+                        spec.remainingPredicatePicks().getFirst();
+                return startSecondBoundedPick(gameData, controllerId, lookedAtCards, accumulatedCards,
+                        LibrarySearchFollowUp.SecondBoundedPick.predicate(
+                                next.predicate(), next.prompt(), spec.randomRest(), spec.destination(),
+                                spec.remainingPredicatePicks().subList(1,
+                                        spec.remainingPredicatePicks().size())));
+            }
             if (!spec.remainingSubtypes().isEmpty()) {
                 return startSecondBoundedPick(gameData, controllerId, lookedAtCards, accumulatedCards,
                         LibrarySearchFollowUp.SecondBoundedPick.subtype(
@@ -2364,11 +2390,21 @@ public class LibraryChoiceHandlerService {
         String destinationPhrase = spec.destination() == LibrarySearchDestination.BATTLEFIELD
                 ? "onto the battlefield" : "into your hand";
         String prompt = spec.prompt() != null
-                ? "You may reveal " + category + " from among them and put it " + destinationPhrase + "."
+                ? (spec.destination() == LibrarySearchDestination.HOLD_OUT
+                        ? "Choose " + category + " from among them."
+                        : "You may reveal " + category + " from among them and put it " + destinationPhrase + ".")
                 : "You may reveal a " + category
-                + " card from among them and put it " + destinationPhrase + ".";
+                        + " card from among them and put it " + destinationPhrase + ".";
         LibrarySearchFollowUp nextFollowUp;
-        if (spec.subtype() != null) {
+        if (spec.predicate() != null && !spec.remainingPredicatePicks().isEmpty()) {
+            LibrarySearchFollowUp.SecondBoundedPick.PredicatePick next =
+                    spec.remainingPredicatePicks().getFirst();
+            nextFollowUp = LibrarySearchFollowUp.forBoundedPick(
+                    LibrarySearchFollowUp.SecondBoundedPick.predicate(
+                            next.predicate(), next.prompt(), spec.randomRest(), spec.destination(),
+                            spec.remainingPredicatePicks().subList(1,
+                                    spec.remainingPredicatePicks().size())));
+        } else if (spec.subtype() != null) {
             nextFollowUp = LibrarySearchFollowUp.forSubtypeBoundedPick(
                     spec.remainingSubtypes(), spec.randomRest(), spec.destination());
         } else if (!spec.remainingTypes().isEmpty()) {
@@ -2382,7 +2418,7 @@ public class LibraryChoiceHandlerService {
         }
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
-                .canFailToFind(true)
+                .canFailToFind(spec.destination() != LibrarySearchDestination.HOLD_OUT)
                 .destination(spec.destination())
                 .sourceCards(new ArrayList<>(lookedAtCards))
                 .accumulatedCards(new ArrayList<>(accumulatedCards))
@@ -2394,6 +2430,70 @@ public class LibraryChoiceHandlerService {
                 .build();
         beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
+    }
+
+    private void handleHeldOutCardChoice(GameData gameData, Player player, int cardIndex,
+                                          List<Card> searchCards, List<Card> sourceCards,
+                                          List<Card> accumulatedCards,
+                                          LibrarySearchFollowUp followUp) {
+        if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+            throw new IllegalStateException("A held-out card choice is mandatory");
+        }
+
+        Card chosenCard = searchCards.get(cardIndex);
+        sourceCards.removeIf(card -> card.getId().equals(chosenCard.getId()));
+        accumulatedCards.add(chosenCard);
+
+        if (followUp.secondBoundedPick() != null
+                && startSecondBoundedPick(gameData, player.getId(), sourceCards, accumulatedCards,
+                        followUp.secondBoundedPick())) {
+            return;
+        }
+
+        for (Card card : sourceCards) {
+            graveyardService.addCardToGraveyard(gameData, player.getId(), card, Zone.LIBRARY);
+        }
+
+        if (accumulatedCards.isEmpty()) {
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        String prompt = "Choose one of the selected cards to put onto the battlefield; put the rest into your hand.";
+        LibrarySearchParams params = LibrarySearchParams.builder(player.getId(), new ArrayList<>(accumulatedCards))
+                .reveals(true)
+                .canFailToFind(false)
+                .destination(LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND)
+                .sourceCards(new ArrayList<>(accumulatedCards))
+                .restToGraveyard(true)
+                .shuffleAfterSelection(false)
+                .prompt(prompt)
+                .build();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, false));
+    }
+
+    private void handleBattlefieldOneAndPutRestIntoHandChoice(GameData gameData, Player player,
+                                                               int cardIndex, List<Card> searchCards,
+                                                               List<Card> sourceCards) {
+        if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+            throw new IllegalStateException("A battlefield card choice is mandatory");
+        }
+
+        Card chosenCard = searchCards.get(cardIndex);
+        List<Card> handCards = sourceCards.stream()
+                .filter(card -> !card.getId().equals(chosenCard.getId()))
+                .toList();
+        placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), player.getId(),
+                false, false, false, false, null, null, null);
+        for (Card card : handCards) {
+            gameData.addCardToHand(player.getId(), card);
+        }
+        if (!handCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts the other selected cards into their hand."));
+        }
+        performStateBasedActionsIfResolutionComplete(gameData);
+        finishSearchAndResume(gameData);
     }
 
     /**

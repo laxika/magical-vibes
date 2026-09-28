@@ -116,6 +116,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
+import com.github.laxika.magicalvibes.model.condition.ControllerCycledAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
@@ -228,6 +229,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsVillainWithGreater
 import com.github.laxika.magicalvibes.model.condition.CoolnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
+import com.github.laxika.magicalvibes.model.condition.SourceAttacksActivatingPlayer;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGraveyardThisTurnAtLeast;
@@ -540,6 +542,14 @@ public class ConditionEvaluationService {
                     c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx, eventValue));
             case CreatureAttackingController ignored ->
                     ctx.controllerId() != null && creatureAttackingPlayer(gameData, ctx.controllerId());
+            case SourceAttacksActivatingPlayer ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && source.isAttacking()
+                        && ctx.controllerId() != null
+                        && gameData.playerIds.contains(ctx.controllerId())
+                        && ctx.controllerId().equals(source.getAttackTarget());
+            }
             case AllOf c ->
                     c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx, eventValue));
             case AnyOf c ->
@@ -1327,6 +1337,9 @@ public class ConditionEvaluationService {
             case ControllerCycledCardNamedAtLeastThisGame c ->
                     ctx.controllerId() != null
                             && gameData.getCardsCycledThisGameByNameCount(ctx.controllerId(), c.cardName()) >= c.minimum();
+            case ControllerCycledAtLeastCardsThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.cardsCycledThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), null, c.filter(), c.fromHandOnly());

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "225")
 @CardRegistration(set = "DDI", collectorNumber = "37")
+@CardRegistration(set = "C20", collectorNumber = "315")
 public class SoaringSeacliff extends Card {
 
     public SoaringSeacliff() {

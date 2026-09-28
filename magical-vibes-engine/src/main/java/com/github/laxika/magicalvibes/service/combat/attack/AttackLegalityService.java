@@ -1167,6 +1167,12 @@ public class AttackLegalityService {
                     || attacker.isStaticEffectSuppressed(effect.getClass())) {
                 continue;
             }
+            UUID sourceControllerId = gameData.findControllerOf(attacker);
+            if (restriction.restrictsSourceController()
+                    && sourceControllerId != null
+                    && sourceControllerId.equals(targetId)) {
+                return true;
+            }
             UUID restrictedPlayerId = restriction.restrictedPlayerId(attacker);
             if (restrictedPlayerId == null) {
                 continue;

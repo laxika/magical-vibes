@@ -139,25 +139,30 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<CardType> remainingTypes,
                                     LibrarySearchDestination destination,
                                     CardPredicate predicate,
-                                    String prompt) {
+                                    String prompt,
+                                    List<PredicatePick> remainingPredicatePicks) {
+
+        public record PredicatePick(CardPredicate predicate, String prompt) {
+        }
 
         public SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
                                  List<CardSubtype> remainingSubtypes, boolean randomRest,
                                  List<CardType> remainingTypes, LibrarySearchDestination destination) {
             this(type, restToGraveyard, subtype, remainingSubtypes, randomRest, remainingTypes,
-                    destination, null, null);
+                    destination, null, null, List.of());
         }
 
         public SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
                                  List<CardSubtype> remainingSubtypes, boolean randomRest,
                                  List<CardType> remainingTypes) {
             this(type, restToGraveyard, subtype, remainingSubtypes, randomRest, remainingTypes,
-                    LibrarySearchDestination.HAND, null, null);
+                    LibrarySearchDestination.HAND, null, null, List.of());
         }
 
         public SecondBoundedPick {
             remainingSubtypes = List.copyOf(remainingSubtypes);
             remainingTypes = List.copyOf(remainingTypes);
+            remainingPredicatePicks = List.copyOf(remainingPredicatePicks);
         }
 
         public SecondBoundedPick(CardType type, boolean restToGraveyard) {
@@ -203,8 +208,15 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         public static SecondBoundedPick predicate(CardPredicate predicate, String prompt,
                                                   boolean randomRest,
                                                   LibrarySearchDestination destination) {
+            return predicate(predicate, prompt, randomRest, destination, List.of());
+        }
+
+        public static SecondBoundedPick predicate(CardPredicate predicate, String prompt,
+                                                  boolean randomRest,
+                                                  LibrarySearchDestination destination,
+                                                  List<PredicatePick> remainingPredicatePicks) {
             return new SecondBoundedPick(null, false, null, List.of(), randomRest, List.of(),
-                    destination, predicate, prompt);
+                    destination, predicate, prompt, remainingPredicatePicks);
         }
     }
 

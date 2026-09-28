@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "ZEN", collectorNumber = "77")
 @CardRegistration(set = "HOP", collectorNumber = "16")
 @CardRegistration(set = "DDN", collectorNumber = "70")
+@CardRegistration(set = "C20", collectorNumber = "127")
 public class WhiplashTrap extends Card {
 
     public WhiplashTrap() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ROE", collectorNumber = "167")
 @CardRegistration(set = "IMA", collectorNumber = "148")
 @CardRegistration(set = "2X2", collectorNumber = "127")
+@CardRegistration(set = "C20", collectorNumber = "161")
 public class SurrealMemoir extends Card {
 
     public SurrealMemoir() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "321")
+@CardRegistration(set = "C20", collectorNumber = "290")
 public class MossfireValley extends Card {
 
     public MossfireValley() {

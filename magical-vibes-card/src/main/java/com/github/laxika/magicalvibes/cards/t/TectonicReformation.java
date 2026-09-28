@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "149")
 @CardRegistration(set = "HA3", collectorNumber = "18")
+@CardRegistration(set = "C20", collectorNumber = "162")
 public class TectonicReformation extends Card {
 
     public TectonicReformation() {

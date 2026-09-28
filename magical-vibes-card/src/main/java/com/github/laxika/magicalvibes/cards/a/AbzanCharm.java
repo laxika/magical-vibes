@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "161")
 @CardRegistration(set = "2X2", collectorNumber = "166")
+@CardRegistration(set = "C20", collectorNumber = "199")
 public class AbzanCharm extends Card {
 
     public AbzanCharm() {

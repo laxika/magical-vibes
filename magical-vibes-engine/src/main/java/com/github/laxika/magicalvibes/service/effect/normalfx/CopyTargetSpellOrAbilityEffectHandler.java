@@ -74,7 +74,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
         copyEntry.setNonTargeting(targetEntry.isNonTargeting());
         copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
         copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
         queueRetargetChoice(gameData, entry, targetEntry, copyEntry);

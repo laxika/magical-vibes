@@ -1,8 +1,11 @@
 # CARD_PATTERN_INDEX
+| artifact gains all activated abilities of lands on the battlefield and may spend mana as any color for them | `m/ManascapeRefractor.java` + STATIC `GainActivatedAbilitiesOfAllLandsEffect()` + `SpendManaAsAnyColorForActivatedAbilitiesEffect()` + `EntersTappedEffect()` |
+- chosen creature type, copy each matching nontoken creature entering under your control, temporary hasty copy | `ChooseSubtypeOnEnterEffect` + `TriggeringPermanentConditionalEffect(PermanentAllOfPredicate(PermanentHasSourceChosenSubtypePredicate, PermanentNotPredicate(PermanentIsTokenPredicate)), CreateTokenCopyOfEnteringPermanentEffect(true, true))`
 | ETB compares the entering creature's power with the source's power at resolution and counters the lower-power creature, with equality favoring the source | `s/ShelindaYevonAcolyte.java` + `EnteringCreatureSourcePowerBranchEffect` |
 | Attack Mug trigger: each player mills one, land rider creates Treasure, and one exact milled spell may be cast from any graveyard this turn | `l/LockeTreasureHunter.java` + `MugEffect` |
 | planar arrival and upkeep token, then targeted-player chaos sacrifice with a toughness-based token rider | `t/TheWilds.java` + `TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffect` |
 | target player sacrifices an attacking creature, then the spell controller creates Soldier tokens equal to its toughness | `e/EntrapmentManeuver.java` + `TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffect` |
+| optional attack-trigger exile of another attacking creature you control, then reveal a creature onto the battlefield tapped and attacking | `f/FirefluxSquad.java` + `ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect` + `RevealUntilCardPredicateRestOnBottomRandomEffect.tappedAndAttacking(...)` |
 | attack trigger offers one artifact spell from hand or graveyard, cast by paying life equal to its mana value | `a/AnrakyrTheTraveller.java` + `MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffect` |
 | spell costs less for each distinct graveyard mana value and discard trigger casts the exact discarded card | `o/OskarRubbishReclaimer.java` + `ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard())` + `CastDiscardedCardFromGraveyardEffect` |
 | one-or-more ally creatures with base P/T 1/1 enter; attack boosts other base 1/1 creatures by source counters | `b/BessSoulNourisher.java` + `ON_ALLY_CREATURES_ENTERS_BATTLEFIELD TriggeringPermanentConditionalEffect` + filtered `BoostAllOwnCreaturesEffect` |
@@ -152,6 +155,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
+| each opponent chooses a creature from their graveyard and the chosen cards enter under your control | `d/DredgeTheMire.java` + `EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffect` |
 | targeted opponent-graveyard reanimation followed by exiling that player's graveyard | `n/NurglesConscription.java` + `ExileGraveyardOfTargetCardOwnerEffect` |
 | exile any number of graveyard cards with a collective card-type threshold, then return a permanent from among them with a counter | `w/WinterCynicalOpportunist.java` + `ExileAnyNumberOfOwnGraveyardCardsWithFourCardTypesThenPutPermanentOntoBattlefieldEffect` |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
@@ -233,6 +237,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | protection from modified creatures | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | as-enters card-type choice, controller and own creatures gain protection from chosen card type | `ChooseCardTypeOnEnterEffect` + `GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect` |
+| as-enters card-type choice, players can't cast the chosen type | `ChooseCardTypeOnEnterEffect` + `PlayersCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenCardTypePredicate())` |
 | postcombat main may-pay-life draw based on opponents dealt combat damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | create a token this turn, conditional draw artifact ability | `i/IdolOfOblivion.java` |

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "18")
+@CardRegistration(set = "C20", collectorNumber = "24")
 public class CartographersHawk extends Card {
 
     public CartographersHawk() {
