@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,13 +19,14 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Chaos Wand's targeted library reveal and free-cast effect. */
+/** Resolves a targeted library reveal and free-cast effect. */
 @Component
 @RequiredArgsConstructor
 public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -35,6 +36,7 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var typedEffect = (RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect) effect;
         UUID controllerId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = targetPlayerId == null ? null : gameData.playerDecks.get(targetPlayerId);
@@ -52,7 +54,9 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
             gameLogService.append(gameData, GameLog.builder()
                     .text(targetName + " exiles ").card(card).text(" from the top of their library.")
                     .build());
-            if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId,
+                    entry.getSourcePermanentId(), null)) {
                 hit = card;
                 break;
             }
@@ -73,6 +77,8 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
                         .sourceCards(exiled)
                         .reorderRemainingToBottom(true)
                         .shuffleAfterSelection(false)
+                        .grantHaste(typedEffect.grantHaste())
+                        .sacrificeAtEndStep(typedEffect.sacrificeAtEndStep())
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
                         .build(),

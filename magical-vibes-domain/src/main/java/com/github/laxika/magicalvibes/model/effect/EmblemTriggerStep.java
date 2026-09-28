@@ -15,6 +15,9 @@ public enum EmblemTriggerStep {
     /** "At the beginning of each opponent's draw step, …" */
     OPPONENT_DRAW_STEP,
 
+    /** "At the beginning of your precombat main phase, …" */
+    PRECOMBAT_MAIN,
+
     /** "At the beginning of combat on your turn, …" */
     BEGINNING_OF_COMBAT,
 

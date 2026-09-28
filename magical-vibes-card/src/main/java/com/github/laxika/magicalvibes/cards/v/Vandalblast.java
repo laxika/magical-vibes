@@ -37,6 +37,9 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "267")
 @CardRegistration(set = "CMM", collectorNumber = "646")
 @CardRegistration(set = "AFC", collectorNumber = "148")
+@CardRegistration(set = "PIP", collectorNumber = "355")
+@CardRegistration(set = "PIP", collectorNumber = "883")
+@CardRegistration(set = "FIC", collectorNumber = "298")
 public class Vandalblast extends Card {
 
     public Vandalblast() {

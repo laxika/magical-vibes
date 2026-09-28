@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "SLD", collectorNumber = "2045")
 @CardRegistration(set = "SPG", collectorNumber = "9")
 @CardRegistration(set = "PZA", collectorNumber = "10")
+@CardRegistration(set = "MB2", collectorNumber = "200")
 public class UnderworldBreach extends Card {
 
     public UnderworldBreach() {

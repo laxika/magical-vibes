@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "SUM", collectorNumber = "57")
 @CardRegistration(set = "ATQ", collectorNumber = "9")
 @CardRegistration(set = "3ED", collectorNumber = "57")
+@CardRegistration(set = "MB2", collectorNumber = "161")
 public class EnergyFlux extends Card {
 
     public EnergyFlux() {

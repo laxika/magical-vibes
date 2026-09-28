@@ -87,6 +87,19 @@ public class TargetPredicateEvaluationService {
                 .orElse(false);
     }
 
+    /** Whether a card in the controller's hand is a legal target. */
+    public boolean matchesHandCard(TargetPredicate predicate, Card card, UUID controllerId,
+                                   FilterContext context) {
+        requireGameData(context);
+        return leaf(predicate, TargetPredicate.Kind.HAND_CARD, TargetPredicate.HandCards.class)
+                .map(hand -> controllerId != null
+                        && context.gameData().playerHands.getOrDefault(controllerId, java.util.List.of())
+                        .stream().anyMatch(candidate -> candidate.getId().equals(card.getId()))
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, hand.inner(), context.sourceCardId(), context.gameData(), controllerId))
+                .orElse(false);
+    }
+
     /**
      * Whether the stack entry {@code entry} is a legal target for a source controlled by
      * {@code controllerId}. {@code source} is the source permanent when the predicate is

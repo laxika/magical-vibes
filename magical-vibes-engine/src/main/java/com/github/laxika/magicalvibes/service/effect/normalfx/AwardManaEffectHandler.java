@@ -62,6 +62,10 @@ public class AwardManaEffectHandler implements NormalEffectHandlerBean {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, controllerId, e.color());
         pool.add(effectiveColor, amount);
+        if (source != null && gameQueryService.hasEffectiveSupertype(
+                gameData, source, com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)) {
+            pool.addLegendarySourceManaTag(effectiveColor, amount);
+        }
         if (source != null && gameQueryService.isArtifact(gameData, source)
                 && !GameQueryService.permanentHasSubtype(source, com.github.laxika.magicalvibes.model.CardSubtype.TREASURE)) {
             pool.addArtifactSourceManaTag(effectiveColor, amount);

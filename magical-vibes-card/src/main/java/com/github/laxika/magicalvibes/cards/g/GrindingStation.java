@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "127")
+@CardRegistration(set = "MB2", collectorNumber = "223")
 public class GrindingStation extends Card {
 
     public GrindingStation() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "120")
+@CardRegistration(set = "HBG", collectorNumber = "169")
 public class SkullportMerchant extends Card {
 
     public SkullportMerchant() {

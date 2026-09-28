@@ -55,7 +55,7 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
 
         StackEntry spellSnapshot = new StackEntry(triggeringSpell);
         int manaValue = triggeringSpell.getCard().getManaValue() + triggeringSpell.getXValue();
-        if (wonFlip) {
+        if (wonFlip && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
             CardEffect copyEffect = new CopyControllerCastSpellEffect(
                     spellSnapshot,

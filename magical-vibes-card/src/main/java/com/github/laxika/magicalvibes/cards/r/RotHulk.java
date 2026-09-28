@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "851")
 @CardRegistration(set = "GNT", collectorNumber = "3")
+@CardRegistration(set = "MB2", collectorNumber = "128")
 public class RotHulk extends Card {
 
     public RotHulk() {

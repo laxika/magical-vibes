@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "30")
 @CardRegistration(set = "OM1", collectorNumber = "35")
+@CardRegistration(set = "MSC", collectorNumber = "784")
 public class DocOcksHenchmen extends Card {
 
     public DocOcksHenchmen() {

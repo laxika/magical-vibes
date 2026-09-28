@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDH", collectorNumber = "28")
 @CardRegistration(set = "C13", collectorNumber = "178")
 @CardRegistration(set = "AFC", collectorNumber = "180")
+@CardRegistration(set = "PIP", collectorNumber = "211")
+@CardRegistration(set = "PIP", collectorNumber = "739")
+@CardRegistration(set = "FIC", collectorNumber = "320")
 public class BehemothSledge extends Card {
 
     public BehemothSledge() {

@@ -22,14 +22,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFC", collectorNumber = "44")
+@CardRegistration(set = "HBG", collectorNumber = "233")
 public class CattiBrieOfMithralHall extends Card {
 
     public CattiBrieOfMithralHall() {
-        addEffect(EffectSlot.ON_ATTACK,
-                new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new AttachmentsOnSource(false, true)));
+        // Whenever Catti-brie attacks, put a +1/+1 counter on it for each Equipment attached to it.
+        addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfEffect(
+                CounterType.PLUS_ONE_PLUS_ONE,
+                new AttachmentsOnSource(false, true)
+        ));
 
+        // {1}, Remove all +1/+1 counters from Catti-brie: It deals X damage to target attacking or
+        // blocking creature an opponent controls, where X is the number of counters removed this way.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

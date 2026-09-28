@@ -29,6 +29,7 @@ class BoreasChargerTest extends BaseCardTest {
     @Test
     @DisplayName("Chooses an opponent and searches the land-count difference")
     void choosesOpponentAndSearchesLandDifference() {
+        harness.setHand(player1, List.of());
         addThirdPlayer();
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player3, new Forest());
@@ -68,6 +69,7 @@ class BoreasChargerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not search when no opponent controls more lands")
     void doesNotSearchWithoutEligibleOpponent() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Plains()));
         Permanent charger = harness.addToBattlefieldAndReturn(player1, new BoreasCharger());
 

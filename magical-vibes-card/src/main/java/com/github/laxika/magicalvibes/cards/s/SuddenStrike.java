@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "19")
 @CardRegistration(set = "OM1", collectorNumber = "20")
+@CardRegistration(set = "MSC", collectorNumber = "779")
 public class SuddenStrike extends Card {
 
     public SuddenStrike() {

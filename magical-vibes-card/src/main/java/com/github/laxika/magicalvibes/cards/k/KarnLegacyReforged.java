@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "49")
+@CardRegistration(set = "MB2", collectorNumber = "255")
 public class KarnLegacyReforged extends Card {
 
     public KarnLegacyReforged() {

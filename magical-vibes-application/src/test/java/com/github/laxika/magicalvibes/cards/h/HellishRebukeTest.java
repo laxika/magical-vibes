@@ -29,7 +29,7 @@ class HellishRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         attacker.setAttacking(true);
-        resolveCombat(player2);
+        resolveRebukeCombat(player2);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player1, 18);
@@ -78,7 +78,7 @@ class HellishRebukeTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
-    private void resolveCombat(Player attacker) {
+    private void resolveRebukeCombat(Player attacker) {
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

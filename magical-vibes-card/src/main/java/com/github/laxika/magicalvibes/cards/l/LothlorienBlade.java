@@ -22,7 +22,6 @@ public class LothlorienBlade extends Card {
             new PermanentHasSubtypePredicate(CardSubtype.ELF);
 
     public LothlorienBlade() {
-        setAttachRestriction(ELF);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

@@ -18,19 +18,19 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AFC", collectorNumber = "28")
+@CardRegistration(set = "HBG", collectorNumber = "173")
 public class WandOfOrcus extends Card {
 
     public WandOfOrcus() {
         addEffect(EffectSlot.ON_ATTACK, deathtouchGrant());
         addEffect(EffectSlot.ON_BLOCK, deathtouchGrant());
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
-                new CreateTokenEffect(
-                        new EventValue(), "Zombie", 2, 2, CardColor.BLACK,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+                new CreateTokenEffect(new EventValue(), "Zombie", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 
-    private static SequenceEffect deathtouchGrant() {
+    private SequenceEffect deathtouchGrant() {
         return SequenceEffect.of(
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.EQUIPPED_CREATURE),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,

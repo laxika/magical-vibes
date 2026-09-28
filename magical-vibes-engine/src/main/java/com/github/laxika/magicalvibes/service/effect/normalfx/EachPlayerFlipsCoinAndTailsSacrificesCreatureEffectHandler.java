@@ -47,7 +47,9 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (result.heads()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
+                }
                 continue;
             }
 

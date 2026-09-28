@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "768")
+@CardRegistration(set = "FIC", collectorNumber = "305")
 public class GenerousPatron extends Card {
 
     public GenerousPatron() {

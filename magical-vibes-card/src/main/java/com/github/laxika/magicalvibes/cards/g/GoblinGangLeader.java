@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "XANA", collectorNumber = "40")
 @CardRegistration(set = "ANB", collectorNumber = "70")
+@CardRegistration(set = "MB2", collectorNumber = "144")
 public class GoblinGangLeader extends Card {
 
     public GoblinGangLeader() {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "SLZ", collectorNumber = "54")
 @CardRegistration(set = "SLZ", collectorNumber = "175")
 @CardRegistration(set = "SLZ", collectorNumber = "296")
+@CardRegistration(set = "FIC", collectorNumber = "289")
 @CardRegistration(set = "LTC", collectorNumber = "210")
 @CardRegistration(set = "AFC", collectorNumber = "113")
 public class Anger extends Card {

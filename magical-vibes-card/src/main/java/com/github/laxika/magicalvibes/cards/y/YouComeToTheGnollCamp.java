@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "168")
+@CardRegistration(set = "HBG", collectorNumber = "195")
 public class YouComeToTheGnollCamp extends Card {
 
     public YouComeToTheGnollCamp() {

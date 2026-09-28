@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "MP2", collectorNumber = "18")
 @CardRegistration(set = "SLD", collectorNumber = "1787")
 @CardRegistration(set = "HA5", collectorNumber = "8")
+@CardRegistration(set = "MB2", collectorNumber = "173")
 public class Stifle extends Card {
 
     public Stifle() {

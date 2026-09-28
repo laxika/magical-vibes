@@ -49,10 +49,9 @@ class FainTheBrokerTest extends BaseCardTest {
     @Test
     void sacrificesArtifactAndCreatesFlyingInkling() {
         Permanent fain = addReadyFain();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
 
         harness.activateAbility(player1, 0, 2, null, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         Permanent inkling = findPermanent(player1, "Inkling");

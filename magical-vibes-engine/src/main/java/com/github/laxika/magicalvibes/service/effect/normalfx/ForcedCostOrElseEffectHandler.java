@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,14 +28,19 @@ import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottom
 import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -131,6 +138,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
+                && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
                 && pendingIndex <= pendingEntry.getEffectsToResolve().size()) {
@@ -810,6 +818,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
                 List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, payerId,
                         p -> (!sacrificePermanent.excludeSource() || !p.getId().equals(sourcePermanentId))
+                                && gameQueryService.canSacrificePermanentForCosts(gameData, p)
                                 && predicateEvaluationService.matchesPermanentPredicate(
                                 p, sacrificePermanent.filter(), costFilterContext));
 
@@ -909,6 +918,159 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 ? 0
                 : source.getCounterCount(cost.perSourceCounter());
         return cost.effectiveAmount(gameData.getLife(payer), sourceCounterCount);
+    }
+
+    /** Begins an exact counter payment for an optional forced cost, or completes it immediately. */
+    public boolean beginControlledCounterPayment(GameData gameData, UUID payerId,
+            PendingMayAbility ability, ForcedCostOrElseEffect effect) {
+        RemoveCounterFromControlledPermanentCost cost =
+                (RemoveCounterFromControlledPermanentCost) effect.forcedCost();
+        List<Permanent> candidates = matchingCounterPermanents(gameData, payerId, ability, cost);
+        if (totalMatchingCounters(candidates, cost) < cost.count()) {
+            return false;
+        }
+
+        if (candidates.size() == 1) {
+            removeAllowedCounters(gameData, candidates.getFirst(), cost, cost.count());
+            resolvePaidEffects(gameData, ability, effect, 0);
+            return true;
+        }
+
+        beginControlledCounterChoice(gameData, payerId, ability, effect, cost, candidates);
+        return true;
+    }
+
+    /** Completes one selection in an exact counter payment for an optional forced cost. */
+    public boolean completeControlledCounterChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveCountersFromForcedCostOrElse context) {
+        UUID permanentId = context.permanentOptions().get(choice);
+        if (permanentId == null) {
+            throw new IllegalArgumentException("Invalid permanent choice: " + choice);
+        }
+        RemoveCounterFromControlledPermanentCost cost =
+                (RemoveCounterFromControlledPermanentCost) context.effect().forcedCost();
+        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (permanent == null
+                || !context.payerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
+                || !matchesCounterPayment(gameData, permanent, context.ability(), cost)
+                || counterCount(permanent, cost) < 1) {
+            throw new IllegalArgumentException("Permanent is no longer eligible for this counter payment");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        removeAllowedCounter(gameData, permanent, cost);
+        int remaining = context.remaining() - 1;
+        if (remaining == 0) {
+            resolvePaidEffects(gameData, context.ability(), context.effect(), 0);
+            return true;
+        }
+
+        List<Permanent> candidates = matchingCounterPermanents(
+                gameData, context.payerId(), context.ability(), cost);
+        if (totalMatchingCounters(candidates, cost) < remaining) {
+            throw new IllegalStateException("Counter payment became unaffordable");
+        }
+        beginControlledCounterChoice(gameData, context.payerId(), context.ability(), context.effect(), cost,
+                candidates, remaining);
+        return false;
+    }
+
+    private void beginControlledCounterChoice(GameData gameData, UUID payerId, PendingMayAbility ability,
+            ForcedCostOrElseEffect effect, RemoveCounterFromControlledPermanentCost cost,
+            List<Permanent> candidates) {
+        beginControlledCounterChoice(gameData, payerId, ability, effect, cost, candidates, cost.count());
+    }
+
+    private void beginControlledCounterChoice(GameData gameData, UUID payerId, PendingMayAbility ability,
+            ForcedCostOrElseEffect effect, RemoveCounterFromControlledPermanentCost cost,
+            List<Permanent> candidates, int remaining) {
+        playerInputService.beginRemoveCountersFromForcedCostOrElseChoice(
+                gameData, ability, effect, payerId, remaining, counterPaymentOptions(candidates));
+    }
+
+    private List<Permanent> matchingCounterPermanents(GameData gameData, UUID payerId,
+            PendingMayAbility ability, RemoveCounterFromControlledPermanentCost cost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(payerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        return battlefield.stream()
+                .filter(permanent -> matchesCounterPayment(gameData, permanent, ability, cost))
+                .filter(permanent -> counterCount(permanent, cost) > 0)
+                .toList();
+    }
+
+    private boolean matchesCounterPayment(GameData gameData, Permanent permanent, PendingMayAbility ability,
+            RemoveCounterFromControlledPermanentCost cost) {
+        return !(cost.excludeSource() && ability.sourcePermanentId() != null
+                && ability.sourcePermanentId().equals(permanent.getId()))
+                && (cost.permanentFilter() == null
+                || predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, cost.permanentFilter()));
+    }
+
+    private int totalMatchingCounters(List<Permanent> candidates,
+            RemoveCounterFromControlledPermanentCost cost) {
+        return candidates.stream().mapToInt(permanent -> counterCount(permanent, cost)).sum();
+    }
+
+    private int counterCount(Permanent permanent, RemoveCounterFromControlledPermanentCost cost) {
+        if (cost.allows(CounterType.ANY)) {
+            return permanent.getCounters().entrySet().stream()
+                    .filter(entry -> entry.getKey() != CounterType.ANY
+                            && entry.getKey() != CounterType.SILVER)
+                    .mapToInt(Map.Entry::getValue)
+                    .sum();
+        }
+        return cost.allowedCounterTypes().stream()
+                .filter(counterType -> counterType != CounterType.ANY && counterType != CounterType.SILVER)
+                .mapToInt(permanent::getCounterCount)
+                .sum();
+    }
+
+    private void removeAllowedCounters(GameData gameData, Permanent permanent,
+            RemoveCounterFromControlledPermanentCost cost, int count) {
+        for (int i = 0; i < count; i++) {
+            removeAllowedCounter(gameData, permanent, cost);
+        }
+    }
+
+    private void removeAllowedCounter(GameData gameData, Permanent permanent,
+            RemoveCounterFromControlledPermanentCost cost) {
+        for (CounterType counterType : cost.allowedCounterTypes()) {
+            if (counterType == CounterType.ANY) {
+                Optional<CounterType> presentCounter = permanent.getCounters().entrySet().stream()
+                        .filter(entry -> entry.getKey() != CounterType.ANY
+                                && entry.getKey() != CounterType.SILVER && entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .findFirst();
+                if (presentCounter.isPresent()) {
+                    permanentCounterSupport.removeCounterFromPermanent(gameData, permanent,
+                            presentCounter.get(), 1);
+                    return;
+                }
+            } else if (permanent.getCounterCount(counterType) > 0) {
+                permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, counterType, 1);
+                return;
+            }
+        }
+        throw new IllegalStateException("Permanent has no counter matching this cost");
+    }
+
+    private Map<String, UUID> counterPaymentOptions(List<Permanent> candidates) {
+        Map<String, Integer> totalsByName = new HashMap<>();
+        for (Permanent candidate : candidates) {
+            totalsByName.merge(candidate.getCard().getName(), 1, Integer::sum);
+        }
+        Map<String, Integer> occurrencesByName = new HashMap<>();
+        Map<String, UUID> options = new LinkedHashMap<>();
+        for (Permanent candidate : candidates) {
+            String name = candidate.getCard().getName();
+            int occurrence = occurrencesByName.merge(name, 1, Integer::sum);
+            String label = totalsByName.get(name) == 1 ? name : name + " (" + occurrence + ")";
+            options.put(label, candidate.getId());
+        }
+        return options;
     }
 
     /**

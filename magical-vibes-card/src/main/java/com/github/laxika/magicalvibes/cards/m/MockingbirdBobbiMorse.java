@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "522")
+@CardRegistration(set = "MSC", collectorNumber = "842")
 public class MockingbirdBobbiMorse extends Card {
 
     public MockingbirdBobbiMorse() {

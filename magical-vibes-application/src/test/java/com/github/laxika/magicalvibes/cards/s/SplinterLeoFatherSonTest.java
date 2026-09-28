@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SplinterLeoFatherSon.class, GrizzlyBears.class})
 class SplinterLeoFatherSonTest extends BaseCardTest {
@@ -56,15 +55,19 @@ class SplinterLeoFatherSonTest extends BaseCardTest {
     }
 
     @Test
-    void bothModesCannotTargetTheSamePlayer() {
-        castSplinter();
+    void bothModesCanTargetTheSamePlayer() {
+        Permanent splinter = castSplinter();
 
         harness.handleListChoice(player1, TOKEN_MODE);
         harness.handleListChoice(player1, COUNTER_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Mutant").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+        assertThat(splinter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent castSplinter() {

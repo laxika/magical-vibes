@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "98")
+@CardRegistration(set = "HBG", collectorNumber = "152")
 public class Drider extends Card {
 
     public Drider() {

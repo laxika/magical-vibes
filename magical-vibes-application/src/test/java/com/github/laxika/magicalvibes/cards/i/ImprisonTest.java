@@ -118,7 +118,7 @@ class ImprisonTest extends BaseCardTest {
     }
 
     @Test
-    void payingToRemoveSoleBlockerMakesAttackerUnblocked() {
+    void payingToRemoveSoleBlockerLeavesAttackerBlocked() {
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
         Permanent attacker = addCreatureReady(player1, new BarbaryApes());
         attacker.setAttacking(true);
@@ -132,7 +132,7 @@ class ImprisonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveCombat(player1);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test

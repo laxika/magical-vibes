@@ -27,7 +27,8 @@ import java.util.UUID;
  * @param grantHasteToPermanentSpell whether the copy of a permanent spell gains haste
  * @param markSourceOncePerTurnOnAccept whether accepting the copy marks the source's once-per-turn trigger
  * @param startingLoyaltyFromX whether a copied planeswalker enters with loyalty equal to X
- * @param permanentSpellToken whether copies of permanent spells become tokens as they resolve
+ * @param permanentSpellToken whether a copy of a permanent spell becomes a token
+ * @param sacrificeAtEndStep whether a permanent-spell token copy is sacrificed at the next end step
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
@@ -40,28 +41,32 @@ public record CopyControllerCastSpellEffect(
         boolean grantHasteToPermanentSpell,
         boolean markSourceOncePerTurnOnAccept,
         boolean startingLoyaltyFromX,
-        boolean permanentSpellToken
+        boolean permanentSpellToken,
+        boolean sacrificeAtEndStep
 ) implements CardEffect {
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
-        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false, false, false);
+        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false, false,
+                false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords) {
-        this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), Set.of(), false, true, false, false, false, false);
+        this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), Set.of(), false, true, false, false, false,
+                false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy) {
-        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy, true, false, false, false, false);
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy, true, false,
+                false, false, false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy,
             boolean mayChooseNewTargets) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy,
-                mayChooseNewTargets, false, false, false, false);
+                mayChooseNewTargets, false, false, false, false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
@@ -69,23 +74,24 @@ public record CopyControllerCastSpellEffect(
             boolean mayChooseNewTargets, boolean grantHasteToPermanentSpell,
             boolean markSourceOncePerTurnOnAccept) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy,
-                mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept, false, false);
+                mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept, false, false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy,
             boolean mayChooseNewTargets, boolean grantHasteToPermanentSpell,
-            boolean markSourceOncePerTurnOnAccept, boolean permanentSpellToken) {
+            boolean markSourceOncePerTurnOnAccept, boolean permanentSpellToken,
+            boolean sacrificeAtEndStep) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy,
                 mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept, false,
-                permanentSpellToken);
+                permanentSpellToken, sacrificeAtEndStep);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
             Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
-                tokenCopy, mayChooseNewTargets, false, false, false, false);
+                tokenCopy, mayChooseNewTargets, false, false, false, false, false);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
@@ -94,8 +100,8 @@ public record CopyControllerCastSpellEffect(
             boolean grantHasteToPermanentSpell, boolean markSourceOncePerTurnOnAccept,
             boolean startingLoyaltyFromX) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
-                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell,
-                markSourceOncePerTurnOnAccept, startingLoyaltyFromX, false);
+                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept,
+                startingLoyaltyFromX, false, false);
     }
 
     public CopyControllerCastSpellEffect {

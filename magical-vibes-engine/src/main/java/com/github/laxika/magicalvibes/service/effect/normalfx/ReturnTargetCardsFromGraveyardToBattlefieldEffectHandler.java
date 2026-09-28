@@ -11,9 +11,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -42,6 +44,8 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final AmountEvaluationService amountEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,6 +66,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
+        int maxTotalManaValue = effect.maxTotalManaValue();
+        if (effect.dynamicMaxTotalManaValue() != null) {
+            maxTotalManaValue = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, effect.dynamicMaxTotalManaValue(), AmountContext.forStackEntry(entry, null)));
+        }
         for (UUID targetCardId : targets(entry, effect)) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
@@ -74,7 +83,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     card, effect.filter(), entry.getCard().getId(), gameData, graveyardOwnerId,
                     null, null, entry.getXValue())
                     && (!effect.hasTotalManaValueCap()
-                    || totalManaValue + card.getManaValue() <= effect.maxTotalManaValue())) {
+                    || totalManaValue + card.getManaValue() <= maxTotalManaValue)) {
                 cardsToReturn.add(new GraveyardCard(graveyardOwnerId, card));
                 totalManaValue += card.getManaValue();
             }
@@ -101,7 +110,6 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (effect.enterTapped()) {
                     permanent.tap();
                 }
-                attachToEnchantedCreature(gameData, entry, permanent, effect);
                 permanent.setEnteredFromGraveyardOwnerId(graveyardCard.ownerId());
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
@@ -181,11 +189,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         Set<CardType> enterTappedTypes =
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        Permanent sourceHost = e.attachToSourceHost() ? sourceHost(gameData, entry) : null;
+        List<Permanent> equipmentToAttach = new ArrayList<>();
         List<Card> returnedCards = new ArrayList<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Card card : cardsToReturn) {
                 if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    continue;
+                }
+                if (e.attachToSourceHost() && card.isAura()
+                        && (sourceHost == null
+                        || !auraAttachmentService.canEnchant(gameData, card, graveyardOwnerId, sourceHost))) {
                     continue;
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -194,11 +209,16 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.enterTapped()) {
                     permanent.tap();
                 }
-                attachToEnchantedCreature(gameData, entry, permanent, e);
+                if (e.attachToSourceHost() && card.isAura()) {
+                    permanent.setAttachedTo(sourceHost.getId());
+                }
                 permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
+                if (e.attachToSourceHost() && !card.isAura()) {
+                    equipmentToAttach.add(permanent);
+                }
                 applyReturnRiders(gameData, permanent, e);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
@@ -211,11 +231,31 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
+        if (sourceHost != null) {
+            for (Permanent equipment : equipmentToAttach) {
+                equipSupport.attachEquipment(gameData, equipment, sourceHost);
+            }
+        }
+
         if (!returnedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(graveyardOwnerId) + " returns " + returnedCards.size()
                             + " card(s) from the graveyard to the battlefield."));
         }
+    }
+
+    private Permanent sourceHost(GameData gameData, StackEntry entry) {
+        Permanent snapshot = entry.getAttachedPermanentSnapshot();
+        if (snapshot != null) {
+            return gameQueryService.findPermanentById(gameData, snapshot.getId());
+        }
+        if (entry.getSourcePermanentId() == null) {
+            return null;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null && source.isAttached()
+                ? gameQueryService.findPermanentById(gameData, source.getAttachedTo())
+                : null;
     }
 
     private record GraveyardCard(UUID ownerId, Card card) {
@@ -230,21 +270,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
         }
-    }
-
-    private void attachToEnchantedCreature(GameData gameData, StackEntry entry, Permanent returnedPermanent,
-                                            ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
-        if (!effect.attachToEnchantedCreature() || entry.getSourcePermanentId() == null) {
-            return;
-        }
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent enchantedCreature = aura == null || aura.getAttachedTo() == null
-                ? null : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        if (enchantedCreature == null && entry.getTriggeringPermanentId() != null) {
-            enchantedCreature = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        }
-        if (enchantedCreature != null) {
-            returnedPermanent.setAttachedTo(enchantedCreature.getId());
+        if (effect.sacrificeAtEndStepIfManaValueAtLeast() > 0) {
+            gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast(
+                    permanent.getId(), gameQueryService.findPermanentController(gameData, permanent.getId()),
+                    effect.sacrificeAtEndStepIfManaValueAtLeast()));
         }
     }
 }

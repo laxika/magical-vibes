@@ -1,49 +1,70 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
-import com.github.laxika.magicalvibes.cards.b.BrilliantHalo;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MantleOfTheAncients.class, GrizzlyBears.class, BrilliantHalo.class, Bonesplitter.class})
+@CardUsed({MantleOfTheAncients.class, Forest.class, GrizzlyBears.class, HolyStrength.class,
+        LeoninScimitar.class})
 class MantleOfTheAncientsTest extends BaseCardTest {
 
     @Test
-    void returnsTargetedAurasAndEquipmentAttachedToEnchantedCreature() {
+    @DisplayName("Returns selected Auras and Equipment attached to the enchanted creature")
+    void returnsSelectedAttachmentsToEnchantedCreature() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        BrilliantHalo aura = new BrilliantHalo();
-        Bonesplitter equipment = new Bonesplitter();
-        harness.setGraveyard(player1, List.of(aura, equipment, new GrizzlyBears()));
-        harness.setHand(player1, List.of(new MantleOfTheAncients()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        HolyStrength aura = new HolyStrength();
+        LeoninScimitar equipment = new LeoninScimitar();
+        Forest nonAttachment = new Forest();
+        castMantle(creature, List.of(aura, equipment, nonAttachment));
 
-        harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-
-        PendingInteraction.MultiGraveyardChoice choice = harness.getGameData().interaction
-                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(aura.getId(), equipment.getId());
-        assertThat(choice.minCount()).isZero();
+        assertThat(choice.cards()).containsExactly(aura, equipment);
 
         harness.handleMultipleCardsChosen(player1, List.of(aura.getId(), equipment.getId()));
         harness.passBothPriorities();
 
-        Permanent returnedAura = findPermanent(player1, "Brilliant Halo");
-        Permanent returnedEquipment = findPermanent(player1, "Bonesplitter");
-        assertThat(returnedAura.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(returnedEquipment.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(harness.getGameQueryService().getEffectivePower(harness.getGameData(), creature)).isEqualTo(8);
-        assertThat(harness.getGameQueryService().getEffectiveToughness(harness.getGameData(), creature)).isEqualTo(7);
+        assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(findPermanent(player1, "Leonin Scimitar").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Any number of targets can be declined")
+    void canReturnNoAttachments() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        HolyStrength aura = new HolyStrength();
+        castMantle(creature, List.of(aura));
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    private void castMantle(Permanent creature, List<com.github.laxika.magicalvibes.model.Card> graveyard) {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new MantleOfTheAncients()));
+        harness.setGraveyard(player1, graveyard);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
     }
 }

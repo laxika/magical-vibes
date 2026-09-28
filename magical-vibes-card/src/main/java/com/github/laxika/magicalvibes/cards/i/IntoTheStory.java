@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "50")
+@CardRegistration(set = "FIC", collectorNumber = "266")
 public class IntoTheStory extends Card {
 
     public IntoTheStory() {

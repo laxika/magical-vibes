@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "1")
 @CardRegistration(set = "SLZ", collectorNumber = "122")
 @CardRegistration(set = "SLZ", collectorNumber = "243")
+@CardRegistration(set = "PIP", collectorNumber = "155")
+@CardRegistration(set = "PIP", collectorNumber = "683")
 public class AllThatGlitters extends Card {
 
     public AllThatGlitters() {

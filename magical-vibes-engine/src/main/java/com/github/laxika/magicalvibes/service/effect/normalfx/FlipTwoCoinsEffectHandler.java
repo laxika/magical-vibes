@@ -46,10 +46,10 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
 
         String firstResult = (firstFlip ? "heads" : "tails") + coinFlipService.replacementDetails(firstResultValue);
         String secondResult = (secondFlip ? "heads" : "tails") + coinFlipService.replacementDetails(secondResultValue);
-        if (firstFlip) {
+        if (firstFlip && firstResultValue.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
         }
-        if (secondFlip) {
+        if (secondFlip && secondResultValue.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
         }
 

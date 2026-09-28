@@ -213,6 +213,11 @@ public class BattlefieldEntryService {
         placementService.completeSacrificePermanentToEnter(gameData, controllerId, permanent, sacrificed);
     }
 
+    public void completeLandCasualtyToEnter(
+            GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
+        placementService.completeLandCasualtyToEnter(gameData, controllerId, permanent, sacrificed);
+    }
+
     public void completeSacrificePermanentsToEnter(
             GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
         placementService.completeSacrificePermanentsToEnter(

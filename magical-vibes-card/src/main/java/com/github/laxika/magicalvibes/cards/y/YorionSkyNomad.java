@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "64")
 @CardRegistration(set = "MUL", collectorNumber = "129")
 @CardRegistration(set = "MUL", collectorNumber = "194")
+@CardRegistration(set = "MB2", collectorNumber = "94")
 public class YorionSkyNomad extends Card {
 
     public YorionSkyNomad() {

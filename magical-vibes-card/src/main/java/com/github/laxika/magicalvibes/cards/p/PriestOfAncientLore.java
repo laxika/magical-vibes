@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "35")
+@CardRegistration(set = "HBG", collectorNumber = "99")
 public class PriestOfAncientLore extends Card {
 
     public PriestOfAncientLore() {

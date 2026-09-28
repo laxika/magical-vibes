@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SNC", collectorNumber = "124")
+@CardRegistration(set = "PIP", collectorNumber = "191")
+@CardRegistration(set = "PIP", collectorNumber = "719")
 public class StickyFingers extends Card {
 
     public StickyFingers() {

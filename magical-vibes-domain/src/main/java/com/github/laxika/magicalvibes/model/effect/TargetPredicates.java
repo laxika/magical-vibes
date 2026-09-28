@@ -70,6 +70,7 @@ public final class TargetPredicates {
     private static final TargetPredicate CREATURE = permanents(IS_CREATURE);
     private static final TargetPredicate LAND = permanents(IS_LAND);
     private static final TargetPredicate CREATURE_OR_PLANESWALKER = permanents(IS_CREATURE_OR_PLANESWALKER);
+    private static final TargetPredicate CREATURE_OR_PLAYER = anyOf(PLAYER, CREATURE);
     private static final TargetPredicate PLAYER_OR_PERMANENT = anyOf(PLAYER, PERMANENT);
     private static final TargetPredicate PLAYER_OR_PLANESWALKER = anyOf(PLAYER, permanents(IS_PLANESWALKER));
     private static final TargetPredicate ANY_TARGET = anyOf(PLAYER, permanents(IS_ANY_TARGET_PERMANENT));
@@ -99,6 +100,11 @@ public final class TargetPredicates {
     /** A card in exile matching {@code predicate}. */
     public static TargetPredicate exiledCards(CardPredicate predicate) {
         return new TargetPredicate.ExiledCards(predicate);
+    }
+
+    /** A card in the controller's hand matching {@code predicate}. */
+    public static TargetPredicate handCards(CardPredicate predicate) {
+        return new TargetPredicate.HandCards(predicate);
     }
 
     /** A spell or ability on the stack matching {@code predicate}. */
@@ -141,6 +147,11 @@ public final class TargetPredicates {
     /** A creature or a planeswalker, layer-aware. */
     public static TargetPredicate creatureOrPlaneswalker() {
         return CREATURE_OR_PLANESWALKER;
+    }
+
+    /** A creature or a player, layer-aware for the permanent half. */
+    public static TargetPredicate creatureOrPlayer() {
+        return CREATURE_OR_PLAYER;
     }
 
     /** A player or <em>any</em> permanent — declares no restriction on the permanent half. */

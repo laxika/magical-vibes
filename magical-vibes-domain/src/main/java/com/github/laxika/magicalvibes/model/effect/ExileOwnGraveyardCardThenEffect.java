@@ -24,4 +24,17 @@ public record ExileOwnGraveyardCardThenEffect(CardPredicate exileFilter, CardEff
                                            boolean trackWithSource) {
         this(exileFilter, thenEffect, trackWithSource, false);
     }
+
+    /**
+     * A reflexive follow-up can itself declare a battlefield target. In that case the target is
+     * chosen when this effect's triggered ability is put onto the stack, before the graveyard
+     * exile choice resolves.
+     */
+    @Override
+    public TargetSpec targetSpec() {
+        // ReturnCardFromGraveyardEffect's target is deliberately selected only after the exile;
+        // its targetSpec describes that later graveyard choice, not a target of this wrapper.
+        return thenEffect instanceof ReturnCardFromGraveyardEffect
+                ? TargetSpec.NONE : thenEffect.targetSpec();
+    }
 }

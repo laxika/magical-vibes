@@ -80,6 +80,8 @@ public class CharacteristicState {
     private boolean losesAllNonManaAbilities;
     /** Timestamp of the non-mana ability removal. */
     private long losesAllNonManaAbilitiesTimestamp;
+    /** True when the permanent is prohibited from gaining any abilities. */
+    private boolean abilityGainProhibited;
     /**
      * True once a land-type-setting effect (Blood Moon, Sea's Claim, ...) removed the object's
      * printed abilities as part of setting its land types (CR 305.7). Unlike
@@ -197,6 +199,7 @@ public class CharacteristicState {
         this.losesAllAbilitiesTimestamp = source.losesAllAbilitiesTimestamp;
         this.losesAllNonManaAbilities = source.losesAllNonManaAbilities;
         this.losesAllNonManaAbilitiesTimestamp = source.losesAllNonManaAbilitiesTimestamp;
+        this.abilityGainProhibited = source.abilityGainProhibited;
         this.printedAbilitiesRemoved = source.printedAbilitiesRemoved;
     }
 
@@ -294,6 +297,7 @@ public class CharacteristicState {
     // --- Layer 6 (abilities) ---
 
     public void addKeyword(Keyword keyword) {
+        if (abilityGainProhibited) return;
         if (!blockedKeywords.contains(keyword)) {
             if (seeded && keyword == Keyword.FLANKING) flankingInstances++;
             keywords.add(keyword);
@@ -301,6 +305,7 @@ public class CharacteristicState {
     }
 
     public void addKeywords(Collection<Keyword> granted) {
+        if (abilityGainProhibited) return;
         for (Keyword keyword : granted) {
             if (!blockedKeywords.contains(keyword)) {
                 if (seeded && keyword == Keyword.FLANKING) {
@@ -324,6 +329,7 @@ public class CharacteristicState {
     }
 
     public void addProtectionColors(Collection<CardColor> colors) {
+        if (abilityGainProhibited) return;
         protectionRemoved = false;
         removedProtectionColors.removeAll(colors);
         protectionColors.addAll(colors);
@@ -350,10 +356,12 @@ public class CharacteristicState {
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {
+        if (abilityGainProhibited) return;
         grantedActivatedAbilities.add(ability);
     }
 
     public void addStaticEffect(CardEffect effect) {
+        if (abilityGainProhibited) return;
         if (effect instanceof ProtectionGrantingEffect) {
             protectionRemoved = false;
         }
@@ -375,6 +383,11 @@ public class CharacteristicState {
         grantedStaticEffects.clear();
         this.losesAllAbilities = true;
         this.losesAllAbilitiesTimestamp = timestamp;
+    }
+
+    /** Prevents all later layer-6 ability grants from taking effect. */
+    public void preventAbilityGain() {
+        this.abilityGainProhibited = true;
     }
 
     /**

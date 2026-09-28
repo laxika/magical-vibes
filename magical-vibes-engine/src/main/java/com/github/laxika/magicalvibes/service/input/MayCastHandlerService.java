@@ -1023,7 +1023,7 @@ public class MayCastHandlerService {
                                               PendingMayAbility ability,
                                               PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
         handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.filter(),
-                player.getId(), false, true);
+                player.getId(), effect.exileInsteadOfGraveyard(), true);
     }
 
     public void handleCastFromNoncreatureGraveyardChoice(
@@ -1459,6 +1459,15 @@ public class MayCastHandlerService {
             beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "madness");
             return;
         }
+        if (cardToCast.hasType(CardType.LAND)
+                && !spellCastingService.canPlayLandForMadness(gameData, player.getId(), cardToCast)) {
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be played for its madness cost."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (!cost.canPay(pool)) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
@@ -1467,6 +1476,12 @@ public class MayCastHandlerService {
             return;
         }
         cost.pay(pool);
+
+        if (cardToCast.hasType(CardType.LAND)) {
+            spellCastingService.playLandFromMadness(gameData, player, cardToCast.getId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         gameData.removeFromExile(cardToCast.getId());
         castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "madness", 0);
@@ -1616,9 +1631,8 @@ public class MayCastHandlerService {
         CardEffect afterSuccessfulCastEffect = ability.effects().stream()
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
-                .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
-                .filter(Objects::nonNull)
                 .findFirst()
+                .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
                 .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
                 revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+@CardRegistration(set = "FIC", collectorNumber = "236")
 @CardRegistration(set = "MSC", collectorNumber = "125")
 @CardRegistration(set = "MSC", collectorNumber = "298")
 public class CleverConcealment extends Card {

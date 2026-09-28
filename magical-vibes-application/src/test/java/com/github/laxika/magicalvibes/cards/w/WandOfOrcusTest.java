@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.z.ZombieAssassin;
+import com.github.laxika.magicalvibes.cards.z.ZombieCutthroat;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,60 +15,59 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WandOfOrcus.class, GrizzlyBears.class, ZombieAssassin.class})
+@CardUsed({WandOfOrcus.class, GrizzlyBears.class, ZombieCutthroat.class})
 class WandOfOrcusTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking with the equipped creature grants it and controlled Zombies deathtouch until end of turn")
-    void attackingGrantsDeathtouchToEquippedCreatureAndZombies() {
+    @DisplayName("Attacking with the equipped creature grants deathtouch to it and your Zombies")
+    void attackGrantsDeathtouchToEquippedCreatureAndZombies() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent zombie = addCreatureReady(player1, new ZombieCutthroat());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent zombie = addCreatureReady(player1, new ZombieAssassin());
-        Permanent nonZombie = addCreatureReady(player1, new GrizzlyBears());
-        wand.setAttachedTo(attacker.getId());
+        wand.setAttachedTo(creature.getId());
 
-        declareAttackers(player1, List.of(1));
+        declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(gqs.hasKeyword(gd, nonZombie, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
-    @DisplayName("Blocking with the equipped creature grants it and controlled Zombies deathtouch until end of turn")
-    void blockingGrantsDeathtouchToEquippedCreatureAndZombies() {
-        Permanent wand = addWandReady(player2);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent zombie = addCreatureReady(player2, new ZombieAssassin());
-        wand.setAttachedTo(blocker.getId());
-        addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("Blocking with the equipped creature grants deathtouch to it and your Zombies")
+    void blockGrantsDeathtouchToEquippedCreatureAndZombies() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent zombie = addCreatureReady(player1, new ZombieCutthroat());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(creature.getId());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
-        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        declareAttackers(player2, java.util.List.of(0));
+        prepareDeclareBlockers(player2);
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(creature);
+        gs.declareBlockers(gd, player1, java.util.List.of(new BlockerAssignment(blockerIndex, 0)));
         resolveAllTriggers();
 
-        assertThat(gqs.hasKeyword(gd, blocker, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
-    @DisplayName("Combat damage to a player creates that many 2/2 black Zombie tokens")
-    void combatDamageCreatesZombieTokensEqualToDamage() {
+    @DisplayName("Combat damage from the equipped creature creates that many Zombies")
+    void combatDamageCreatesThatManyZombies() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        wand.setAttachedTo(attacker.getId());
+        wand.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
 
-        declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
+        resolveCombat();
+        harness.passBothPriorities();
 
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Zombie"))
-                .toList();
-        assertThat(zombies).hasSize(2);
-        assertThat(zombies).allSatisfy(zombie -> {
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+        assertThat(findPermanents(player1, "Zombie")).allSatisfy(zombie -> {
             assertThat(zombie.getCard().getPower()).isEqualTo(2);
             assertThat(zombie.getCard().getToughness()).isEqualTo(2);
         });

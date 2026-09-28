@@ -26,6 +26,7 @@ public class StaticBonusAccumulator {
     private final Set<Keyword> keywords = new HashSet<>();
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     private boolean animatedCreature;
+    private boolean tokenized;
     private boolean selfBecomeCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedEffects = new ArrayList<>();
@@ -118,6 +119,14 @@ public class StaticBonusAccumulator {
 
     public boolean isAnimatedCreature() {
         return animatedCreature;
+    }
+
+    public void setTokenized(boolean tokenized) {
+        this.tokenized = tokenized;
+    }
+
+    public boolean isTokenized() {
+        return tokenized;
     }
 
     public void setSelfBecomeCreature(boolean selfBecomeCreature) {
@@ -300,7 +309,7 @@ public class StaticBonusAccumulator {
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
                 baseToughnessOverride != null ? baseToughnessOverride : 0, losesAllAbilities,
-                losesAllNonManaAbilities, false, name, turnFaceUpPrevented);
+                losesAllNonManaAbilities, false, name, turnFaceUpPrevented, tokenized);
     }
 }
 

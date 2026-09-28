@@ -17,7 +17,7 @@ class MarshlandBloodcasterTest extends BaseCardTest {
     @Test
     void letsTheNextSpellPayLifeEqualToItsManaValue() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player1, new MarshlandBloodcaster());
+        addCreatureReady(player1, new MarshlandBloodcaster());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -32,7 +32,7 @@ class MarshlandBloodcasterTest extends BaseCardTest {
     @Test
     void permissionIsConsumedByTheNextSpell() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player1, new MarshlandBloodcaster());
+        addCreatureReady(player1, new MarshlandBloodcaster());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);

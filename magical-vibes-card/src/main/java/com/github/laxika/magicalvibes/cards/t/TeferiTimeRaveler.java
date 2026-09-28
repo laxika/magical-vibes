@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "252")
 @CardRegistration(set = "SLD", collectorNumber = "526")
 @CardRegistration(set = "RVR", collectorNumber = "232")
+@CardRegistration(set = "MB2", collectorNumber = "91")
 public class TeferiTimeRaveler extends Card {
 
     public TeferiTimeRaveler() {

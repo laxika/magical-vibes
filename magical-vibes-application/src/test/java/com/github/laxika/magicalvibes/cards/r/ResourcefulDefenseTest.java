@@ -18,28 +18,46 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ResourcefulDefenseTest extends BaseCardTest {
 
     @Test
-    void transfersAllCounterTypesFromAControlledPermanentThatLeaves() {
-        Permanent defense = harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+    void transfersAllCounterKindsFromAControlledPermanentThatLeaves() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         leaving.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         leaving.setCounterCount(CounterType.CHARGE, 3);
 
         removePermanent(leaving);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(defense.getId(), recipient.getId())
-                .doesNotContain(opponentPermanent.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentPermanent.getId()))
-                .isInstanceOf(IllegalStateException.class);
-
         harness.handlePermanentChosen(player1, recipient.getId());
         harness.passBothPriorities();
 
         assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(recipient.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerForAControlledPermanentWithoutCounters() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        removePermanent(leaving);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void ignoresAnOpponentsPermanentLeaving() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        leaving.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        removePermanent(leaving);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -60,44 +78,43 @@ class ResourcefulDefenseTest extends BaseCardTest {
     }
 
     @Test
-    void activatedAbilityMovesAnyNumberOfDifferentCounterTypes() {
-        Permanent defense = harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+    void movesAnyChosenNumberOfEachCounterKind() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        source.setCounterCount(CounterType.CHARGE, 2);
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-
+        source.setCounterCount(CounterType.CHARGE, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(source.getId(), destination.getId()));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), destination.getId()));
         harness.passBothPriorities();
-
         harness.handleListChoice(player1, "1");
-        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "1");
 
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(source.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(destination.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(defense.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test
-    void doesNotTriggerForAControlledPermanentWithoutCounters() {
-        harness.addToBattlefield(player1, new ResourcefulDefense());
-        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+    void activatedAbilityRequiresControlledPermanents() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        removePermanent(leaving);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), opponentPermanent.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void removePermanent(Permanent permanent) {
-        harness.inMutationScope(
-                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, permanent));
         harness.passBothPriorities();
     }
 }

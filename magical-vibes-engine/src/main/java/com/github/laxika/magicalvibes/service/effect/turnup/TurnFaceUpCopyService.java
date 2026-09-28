@@ -64,10 +64,13 @@ public class TurnFaceUpCopyService {
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
         for (TurnFaceUpReplacementEffect replacement : replacements) {
+            if (!replacement.appliesWithoutPayingCost()) {
+                continue;
+            }
             int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
                     AmountContext.forEnteringPermanent(controllerId, permanent, 0));
-            permanentCounterSupport.applyPlusOnePlusOneCounters(
-                    gameData, null, permanent, counterCount);
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, replacement.counterType(), counterCount);
         }
         if (prepareChoice(gameData, permanent, controllerId)) {
             return;

@@ -81,6 +81,7 @@ class NegativeZonePortalTest extends BaseCardTest {
     @DisplayName("The upkeep trigger flips at four creature cards and loses by sacrificing and returning one")
     void upkeepFlipsAtFourCreatureCards() {
         Permanent portal = setupWithExiledCreatures(4);
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -94,7 +95,7 @@ class NegativeZonePortalTest extends BaseCardTest {
         } else {
             harness.assertInGraveyard(player1, "Negative Zone Portal");
             assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
-            assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
         }
     }
 

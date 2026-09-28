@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SNC", collectorNumber = "230")
 @CardRegistration(set = "OTP", collectorNumber = "59")
+@CardRegistration(set = "FIC", collectorNumber = "331")
 public class VoidRend extends Card {
 
     public VoidRend() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "ATQ", collectorNumber = "72")
 @CardRegistration(set = "3ED", collectorNumber = "278")
 @CardRegistration(set = "DPA", collectorNumber = "95")
+@CardRegistration(set = "MB2", collectorNumber = "141")
 public class TheRack extends Card {
 
     public TheRack() {

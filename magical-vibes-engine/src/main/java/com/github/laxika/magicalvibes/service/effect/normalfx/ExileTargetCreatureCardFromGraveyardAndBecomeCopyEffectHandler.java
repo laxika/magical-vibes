@@ -44,7 +44,7 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
         Card targetCard = targetCardId == null
                 ? null
                 : gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-        if (source == null || targetCard == null || !targetCard.hasType(CardType.CREATURE)) {
+        if (targetCard == null || !targetCard.hasType(CardType.CREATURE)) {
             return;
         }
 
@@ -53,14 +53,18 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
             return;
         }
 
-        Card originalCard = source.getOriginalCard();
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         exileService.exileCard(gameData, graveyardOwnerId, targetCard);
-        permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of(),
-                originalCard.getActivatedAbilities());
-
-        gameLogService.append(gameData,
-                GameLog.textCardText(originalCard.getName() + " exiles ", targetCard,
-                        " and becomes a copy of it."));
+        if (source != null) {
+            Card originalCard = source.getOriginalCard();
+            permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of(),
+                    originalCard.getActivatedAbilities());
+            gameLogService.append(gameData,
+                    GameLog.textCardText(originalCard.getName() + " exiles ", targetCard,
+                            " and becomes a copy of it."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.textCardText(entry.getCard().getName() + " exiles ", targetCard, "."));
+        }
     }
 }

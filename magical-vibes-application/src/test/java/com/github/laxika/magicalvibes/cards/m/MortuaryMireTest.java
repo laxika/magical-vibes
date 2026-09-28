@@ -19,21 +19,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MortuaryMireTest extends BaseCardTest {
 
     @Test
-    void entersTapped() {
-        playMire();
-
-        assertThat(findMire().isTapped()).isTrue();
-    }
-
-    @Test
-    void mayPutACreatureFromTheGraveyardOnTopOfTheLibrary() {
+    void entersTappedAndMayPutACreatureFromTheGraveyardOnTopOfTheLibrary() {
         Card creature = new GrizzlyBears();
         Card nonCreature = new HolyDay();
         harness.setGraveyard(player1, List.of(creature, nonCreature));
-        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MortuaryMire()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        playMire();
+        harness.playLand(player1, 0);
 
+        Permanent mire = findPermanent(player1, "Mortuary Mire");
+        assertThat(mire.isTapped()).isTrue();
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(creature.getId());
@@ -42,25 +39,24 @@ class MortuaryMireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(creature.getId());
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Holy Day");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
     }
 
     @Test
-    void mayDeclineTheGraveyardAbility() {
+    void canDeclineTheGraveyardReturn() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MortuaryMire()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        playMire();
-
+        harness.playLand(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
     }
 
     @Test
@@ -71,16 +67,5 @@ class MortuaryMireTest extends BaseCardTest {
 
         assertThat(mire.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-    }
-
-    private void playMire() {
-        harness.setHand(player1, List.of(new MortuaryMire()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.playLand(player1, 0);
-    }
-
-    private Permanent findMire() {
-        return findPermanent(player1, "Mortuary Mire");
     }
 }
