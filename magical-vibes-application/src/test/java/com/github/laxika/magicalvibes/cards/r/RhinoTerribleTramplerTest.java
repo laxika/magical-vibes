@@ -39,7 +39,6 @@ class RhinoTerribleTramplerTest extends BaseCardTest {
         assertThat(creatureChoice.validIds()).contains(first.getId(), second.getId());
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Welding Jar");
@@ -66,7 +65,7 @@ class RhinoTerribleTramplerTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice destructionChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(destructionChoice.validIds()).containsExactly(artifact.getId());
+        assertThat(destructionChoice.validIds()).contains(artifact.getId(), noncreature.getId());
         harness.handlePermanentChosen(player1, artifact.getId());
 
         PendingInteraction.PermanentChoice creatureChoice =

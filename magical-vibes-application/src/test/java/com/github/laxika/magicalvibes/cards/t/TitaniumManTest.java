@@ -26,7 +26,6 @@ class TitaniumManTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleListChoice(player1, FLYING_MODE);
-        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, titaniumMan, Keyword.FLYING)).isTrue();
 
@@ -49,7 +48,7 @@ class TitaniumManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
     private Permanent addReadyTitaniumMan() {

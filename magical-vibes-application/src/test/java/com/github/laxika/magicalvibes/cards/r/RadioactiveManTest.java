@@ -20,8 +20,9 @@ class RadioactiveManTest extends BaseCardTest {
         radioactiveMan.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
     }
 
     @Test
@@ -32,8 +33,9 @@ class RadioactiveManTest extends BaseCardTest {
         radioactiveMan.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
 
     @Test

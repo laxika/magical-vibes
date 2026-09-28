@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsE
 import com.github.laxika.magicalvibes.model.effect.PlayerDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
+import com.github.laxika.magicalvibes.model.effect.HalveAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.OjerAxonilDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
@@ -1706,6 +1707,9 @@ public class GameQueryService {
      */
     public boolean canSacrificePermanentForCosts(GameData gameData, Permanent permanent) {
         if (permanent == null) {
+            return false;
+        }
+        if (cantBeSacrificed(gameData, permanent)) {
             return false;
         }
         if (anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class)
@@ -7661,6 +7665,11 @@ public class GameQueryService {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof HalveAllDamageEffect
+                            && !hasLostAllAbilities(gameData, permanent)
+                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                        result[0] /= 2;
+                    }
                     if (recipientPlayerId != null && recipientPlayerId.equals(controllerId)
                             && effect instanceof PlayerDamageReplacementEffect replacement
                             && !hasLostAllAbilities(gameData, permanent)

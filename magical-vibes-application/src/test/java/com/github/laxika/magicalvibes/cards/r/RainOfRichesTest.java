@@ -37,7 +37,8 @@ class RainOfRichesTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(cascadeHit);
 
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -65,7 +66,8 @@ class RainOfRichesTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(cascadeHit);
 
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -77,13 +79,15 @@ class RainOfRichesTest extends BaseCardTest {
     void secondTreasureManaSpellDoesNotCascade() {
         castRainOfRiches();
         gd.playerDecks.get(player1.getId()).clear();
-        LlanowarElves untouched = new LlanowarElves();
-        gd.playerDecks.get(player1.getId()).add(untouched);
+        LlanowarElves firstHit = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).add(firstHit);
 
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         addTreasureManaAndCastFirstTreasureSpell();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         resolveAllTriggers();
+        LlanowarElves untouched = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).add(untouched);
 
         addTreasureManaAndCastSecondTreasureSpell();
         harness.passBothPriorities();

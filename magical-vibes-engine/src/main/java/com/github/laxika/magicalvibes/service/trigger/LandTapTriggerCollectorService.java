@@ -413,7 +413,7 @@ public class LandTapTriggerCollectorService {
             return true;
         }
 
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional mana of a type produced by the land."));
         return true;

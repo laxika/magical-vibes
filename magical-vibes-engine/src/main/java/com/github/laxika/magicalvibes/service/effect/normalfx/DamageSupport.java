@@ -1313,6 +1313,23 @@ public class DamageSupport {
     }
 
     public void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (gameQueryService.damageCantBePreventedFromSource(gameData, sourcePermanent)) {
+            boolean previous = gameData.damageCantBePreventedThisTurn;
+            gameData.damageCantBePreventedThisTurn = true;
+            try {
+                dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
+            } finally {
+                gameData.damageCantBePreventedThisTurn = previous;
+            }
+            return;
+        }
+        dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
+    }
+
+    private void dealDamageToPlayerFromSource(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,

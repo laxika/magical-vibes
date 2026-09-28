@@ -332,6 +332,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect restriction
                             && (!restriction.onlyIfAttackedControllerOrPlaneswalker()
@@ -830,6 +833,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect cantCast) {
                         // If opponentsOnly, skip if the casting player is the controller
@@ -1600,7 +1606,8 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
-                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                        || !predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), null, gameData, playerId)) {
                     continue;
                 }
                 if (!isGraveyardPermissionAvailable(gameData, playerId, perm, permission)) {

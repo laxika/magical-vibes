@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
-@CardRegistration(set = "MSC", collectorNumber = "550")
+@CardRegistration(set = "MSC", collectorNumber = "852")
 public class PowerBoost extends Card {
 
     public PowerBoost() {

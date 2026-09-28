@@ -52,10 +52,10 @@ class UltronTheAnnihilatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         addUltronReady();
         resolveAllTriggers();
-        harness.addToBattlefieldAndReturn(player1, new Fleshgrafter());
+        Permanent fleshgrafter = harness.addToBattlefieldAndReturn(player1, new Fleshgrafter());
         harness.setHand(player1, List.of(new LeoninScimitar()));
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(fleshgrafter), null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -64,7 +64,7 @@ class UltronTheAnnihilatorTest extends BaseCardTest {
     }
 
     private Permanent addUltronReady() {
-        Permanent ultron = harness.addToBattlefieldAndReturn(player1, new UltronTheAnnihilator());
+        Permanent ultron = harness.enterBattlefieldAndReturn(player1, new UltronTheAnnihilator());
         ultron.setSummoningSick(false);
         return ultron;
     }

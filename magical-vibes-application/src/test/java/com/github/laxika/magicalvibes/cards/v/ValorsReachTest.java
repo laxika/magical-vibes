@@ -66,7 +66,9 @@ class ValorsReachTest extends BaseCardTest {
 
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(first.isTapped()).isFalse();

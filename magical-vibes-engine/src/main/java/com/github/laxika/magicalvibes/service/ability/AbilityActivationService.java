@@ -1583,6 +1583,8 @@ public class AbilityActivationService {
             int additionalGenericCost = -Math.min(
                     castingCostService.getGraveyardActivatedAbilityCostReduction(gameData, playerId, card),
                     genericCost);
+            additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
+                    gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
             AmountContext activationCostContext = new AmountContext(
                     playerId, null, null, xValue, 0, false, null, List.of(), card);
             for (CardEffect effect : abilityEffects) {
@@ -2300,6 +2302,8 @@ public class AbilityActivationService {
         ManaCost manaCost = new ManaCost(ability.getManaCost());
         int genericCost = manaCost.getGenericCost();
         int additionalGenericCost = baseAdditionalGenericCost;
+        additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
+                gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
         AmountContext activationCostContext = new AmountContext(
                 playerId, null, null, xValue, 0, false, null, List.of(), card);
         for (CardEffect effect : ability.getEffects()) {
@@ -3675,7 +3679,8 @@ public class AbilityActivationService {
             abilityCost = null;
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
-        ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        ManaCost effectiveManaCost = abilityCost == null
+                ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
         }
@@ -6212,7 +6217,8 @@ public class AbilityActivationService {
         int creatureManaPaymentCount = validateCreatureManaPayment(
                 gameData, playerId, permanent, ability, abilityCost, xValue,
                 additionalGenericCost, selectedCreatureManaPaymentIds);
-        ManaCost effectiveManaCost = effectiveAbilityManaCostForPayment(gameData, permanent, ability);
+        ManaCost effectiveManaCost = abilityCost == null
+                ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
         effectiveManaCost = applyActivatedAbilityManaCostReductions(
                 gameData, playerId, permanent, ability, null, xValue, effectiveManaCost);
         CastingCostService.ImposedSacrificeRequirement imposedTax = ability.isPowerUpAbility()
@@ -7499,6 +7505,17 @@ public class AbilityActivationService {
     }
 
     private void validateHandTimingRestriction(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+            if (!playerId.equals(gameData.activePlayerId)) {
+                throw new IllegalStateException("This ability can only be activated at sorcery speed");
+            }
+            if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                throw new IllegalStateException("This ability can only be activated at sorcery speed during your main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("This ability can only be activated when the stack is empty");
+            }
+        }
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
                 && !playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("This ability can only be activated during your turn");

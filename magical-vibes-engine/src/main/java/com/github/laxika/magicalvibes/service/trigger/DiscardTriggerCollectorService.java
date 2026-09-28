@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
@@ -381,6 +382,18 @@ public class DiscardTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on controller discard event (damage to each opponent)",
                 gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleDamageToAnyTargetOnDiscardEvent(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                sourceCard, match.controllerId(), List.of(trigger), match.permanent().getId(),
+                discardEvent.discardedCount()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 

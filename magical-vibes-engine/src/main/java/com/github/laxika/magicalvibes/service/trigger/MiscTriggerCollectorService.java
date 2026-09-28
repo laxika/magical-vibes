@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardsAwareEffect;
@@ -613,10 +614,9 @@ public class MiscTriggerCollectorService {
                 || !predicateEvaluationService.matchesPermanentPredicate(
                         new Permanent(as.sacrificedCard()), conditional.predicate(),
                         new FilterContext(null, match.permanent().getCard().getId(),
-                                match.controllerId(), null, match.permanent(), match.permanent().getId())
+                                match.controllerId(), null, match.permanent(), null)
                                 .withSourceCardId(match.permanent().getCard().getId())
                                 .withSourceControllerId(match.controllerId())
-                                .withSourcePermanentId(match.permanent().getId())
                                 .withSourcePermanentSnapshot(match.permanent()))) {
             return false;
         }
@@ -945,6 +945,23 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
+
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    private boolean handleOpponentLifeLossOncePerTurn(TriggerMatchContext match,
+            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                match.gameData(), match.permanent(), effect);
+        if (!(resolved instanceof CastTargetInstantOrSorceryFromGraveyardEffect)) {
+            return false;
+        }
+
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                match.permanent().getCard(), match.controllerId(), List.of(resolved),
+                null, 1, 0, 1, null, false, null, match.permanent().getId()));
+        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
 
     @CollectsTrigger(value = FirstOpponentLifeLossEachTurnTriggerEffect.class,
             slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)

@@ -23,8 +23,8 @@ class VoltaicWhipTest extends BaseCardTest {
         Permanent whip = addCreatureReady(player1, new VoltaicWhip());
         whip.setAttachedTo(creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

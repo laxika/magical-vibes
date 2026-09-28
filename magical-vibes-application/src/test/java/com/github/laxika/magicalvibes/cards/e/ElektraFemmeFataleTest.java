@@ -24,6 +24,7 @@ class ElektraFemmeFataleTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
@@ -42,6 +43,7 @@ class ElektraFemmeFataleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

@@ -48,7 +48,7 @@ class ThorAsgardsAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("Thor does not increase his own combat damage")
     void doesNotIncreaseOwnCombatDamage() {
-        harness.addToBattlefield(player1, new ThorAsgardsAvenger());
+        addCreatureReady(player1, new ThorAsgardsAvenger());
         harness.setLife(player2, 20);
 
         declareAttackers(player1, List.of(0));

@@ -2123,6 +2123,8 @@ public class EnterTriggerCollectorService {
      */
     @CollectsTrigger(value = BoostEnteringCreatureEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = BoostEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyBoostEntering(TriggerMatchContext match,
             BoostEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;

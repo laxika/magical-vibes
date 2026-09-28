@@ -34,6 +34,7 @@ class HeroesForHireTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Treasure").getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);

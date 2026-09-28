@@ -3830,7 +3830,8 @@ public class SpellCastingService {
                 * additionalCosts.exileAnyNumberOfCardsFromHandCost().genericReductionPerCard();
         int exileFromGraveyardCostReduction = additionalCosts.exileAnyNumberOfCardsFromGraveyardCost() == null
                 ? 0
-                : costSelection.exileGraveyardCardIndices().size()
+                : (costSelection.exileGraveyardCardIndices() == null
+                        ? 0 : costSelection.exileGraveyardCardIndices().size())
                 * additionalCosts.exileAnyNumberOfCardsFromGraveyardCost().genericReductionPerCard();
         int tapCreaturesCostReduction = additionalCosts.tapCreaturesForManaCost() == null
                 ? 0
@@ -4287,7 +4288,7 @@ public class SpellCastingService {
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.IMPROVISE);
         if (!convokeCreatureIds.isEmpty() && (hasConvoke || hasImprovise)) {
             List<ManaColor> contributions = collectConvokeContributions(
-                    gameData, playerId, convokeCreatureIds, hasConvoke, hasImprovise);
+                    gameData, playerId, card, convokeCreatureIds, hasConvoke, hasImprovise);
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             List<Permanent> validatedSources = convokeCreatureIds.stream()
                     .map(creatureId -> battlefield.stream().filter(p -> p.getId().equals(creatureId)).findFirst().orElseThrow())
@@ -10927,10 +10928,14 @@ public class SpellCastingService {
      * sources contribute their color when possible; improvise-only artifacts contribute generic
      * mana. Throws if a source is missing, not a legal source, or already tapped.
      */
-    private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId,
+    private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId, Card card,
                                                          List<UUID> convokeCreatureIds,
                                                          boolean hasConvoke, boolean hasImprovise) {
         List<ManaColor> contributions = new ArrayList<>();
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(ManaColor.class);
+        if (card.getManaCost() != null) {
+            remainingColored.putAll(new ManaCost(card.getManaCost()).getColoredCosts());
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (UUID creatureId : convokeCreatureIds) {
             Permanent creature = battlefield.stream()
@@ -10961,11 +10966,21 @@ public class SpellCastingService {
                     : creatureColors.stream()
                             .map(color -> ManaColor.fromCode(color.getCode()))
                             .filter(java.util.Objects::nonNull)
+                            .filter(color -> remainingColored.getOrDefault(color, 0) > 0)
                             .findFirst()
                             .orElse(null);
+            if (contribution != null) {
+                remainingColored.merge(contribution, -1, Integer::sum);
+            }
             if (contribution == null) {
                 CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
                 contribution = creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null;
+                if (contribution == null && creatureColors != null) {
+                    contribution = creatureColors.stream()
+                            .map(color -> ManaColor.fromCode(color.getCode()))
+                            .filter(java.util.Objects::nonNull)
+                            .findFirst().orElse(null);
+                }
             }
             contributions.add(contribution);
         }
@@ -10985,7 +11000,7 @@ public class SpellCastingService {
         }
 
         List<ManaColor> contributions = collectConvokeContributions(
-                gameData, playerId, sourceIds, hasConvoke, hasImprovise);
+                gameData, playerId, card, sourceIds, hasConvoke, hasImprovise);
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> validatedSources = sourceIds.stream()
                 .map(sourceId -> battlefield.stream()
@@ -11018,7 +11033,7 @@ public class SpellCastingService {
         if (!hasConvoke && !hasImprovise) {
             return List.of();
         }
-        return collectConvokeContributions(gameData, playerId, convokeCreatureIds, hasConvoke, hasImprovise);
+        return collectConvokeContributions(gameData, playerId, card, convokeCreatureIds, hasConvoke, hasImprovise);
     }
 
     private record SpellManaPayment(int manaSpent, int phyrexianManaPaidWithLife) {

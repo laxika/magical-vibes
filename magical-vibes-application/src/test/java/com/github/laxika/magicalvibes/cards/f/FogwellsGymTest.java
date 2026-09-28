@@ -59,6 +59,7 @@ class FogwellsGymTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the draw ability without a discardable card")
     void cannotActivateWithoutCardToDiscard() {
+        harness.setHand(player1, List.of());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new FogwellsGym());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

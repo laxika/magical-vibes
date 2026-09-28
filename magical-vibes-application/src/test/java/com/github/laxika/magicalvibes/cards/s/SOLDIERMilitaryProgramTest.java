@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
+import com.github.laxika.magicalvibes.cards.f.FootSoldiers;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SOLDIERMilitaryProgram.class, HuntedWitness.class})
+@CardUsed({SOLDIERMilitaryProgram.class, FootSoldiers.class})
 class SOLDIERMilitaryProgramTest extends BaseCardTest {
 
     @Test
@@ -35,6 +35,7 @@ class SOLDIERMilitaryProgramTest extends BaseCardTest {
 
         beginCombat();
         harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two Soldiers you control");
+        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(soldier.getId()));
         harness.passBothPriorities();
 
@@ -46,11 +47,13 @@ class SOLDIERMilitaryProgramTest extends BaseCardTest {
         addProgram();
         Permanent commander = addSoldier(player1);
         commander.setCommander(true);
+        gd.playerCommanders.put(player1.getId(), List.of(commander.getOriginalCard()));
         Permanent secondSoldier = addSoldier(player1);
 
         beginCombat();
         harness.handleListChoice(player1, "Create a 1/1 white Soldier creature token");
         harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two Soldiers you control");
+        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(commander.getId(), secondSoldier.getId()));
         harness.passBothPriorities();
 
@@ -64,7 +67,7 @@ class SOLDIERMilitaryProgramTest extends BaseCardTest {
     }
 
     private Permanent addSoldier(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new HuntedWitness());
+        return harness.addToBattlefieldAndReturn(player, new FootSoldiers());
     }
 
     private List<Permanent> soldiers(Player player) {

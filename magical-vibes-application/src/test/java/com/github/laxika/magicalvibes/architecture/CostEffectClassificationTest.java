@@ -60,6 +60,7 @@ class CostEffectClassificationTest {
             "IncreaseActivationCostPerCounterEffect",
             "IncreaseActivationCostEffect",
             "ReduceActivationCostEffect",
+            "ReduceActivationCostByManaCostEffect",
             "MillControllerCost",
             "OpponentCreatesTokensCost",
             "OpponentGainsLifeCost",

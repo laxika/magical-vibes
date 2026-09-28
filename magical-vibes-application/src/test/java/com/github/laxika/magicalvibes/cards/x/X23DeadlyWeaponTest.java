@@ -18,7 +18,7 @@ class X23DeadlyWeaponTest extends BaseCardTest {
     @DisplayName("Puts a +1/+1 counter on an entering Mutant and X-23")
     void putsCountersOnEnteringMutantAndSource() {
         Permanent x23 = addCreatureReady(player1, new X23DeadlyWeapon());
-        Permanent mutant = harness.addToBattlefieldAndReturn(player1, new DonatelloMutantMechanic());
+        Permanent mutant = harness.enterBattlefieldAndReturn(player1, new DonatelloMutantMechanic());
         resolveAllTriggers();
 
         assertThat(mutant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -29,9 +29,9 @@ class X23DeadlyWeaponTest extends BaseCardTest {
     @DisplayName("Does not trigger for a non-Mutant or an opponent's Mutant")
     void ignoresNonMutantsAndOpponentsMutants() {
         Permanent x23 = addCreatureReady(player1, new X23DeadlyWeapon());
-        Permanent nonMutant = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonMutant = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         resolveAllTriggers();
-        Permanent opponentMutant = harness.addToBattlefieldAndReturn(player2, new DonatelloMutantMechanic());
+        Permanent opponentMutant = harness.enterBattlefieldAndReturn(player2, new DonatelloMutantMechanic());
         resolveAllTriggers();
 
         assertThat(nonMutant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

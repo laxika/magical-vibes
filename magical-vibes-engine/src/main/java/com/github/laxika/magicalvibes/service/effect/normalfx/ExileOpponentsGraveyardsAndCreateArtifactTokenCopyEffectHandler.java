@@ -87,6 +87,7 @@ public class ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffectHandler
                 entry.getSourcePermanentId(),
                 List.of());
         reflexiveAbility.setTargetCardIds(exiledCardIds);
+        reflexiveAbility.setNonTargeting(true);
         reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexiveAbility);
     }

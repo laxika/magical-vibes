@@ -36,6 +36,7 @@ public final class AiInteractionStrategies {
         register(new LibraryReorderAiStrategy());
         register(new TargetPlayerHandOrderChoiceAiStrategy());
         register(new SpatialMergingCardOrderAiStrategy());
+        register(new PlanarDeckPlaneswalkCardOrderAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
         register(new PlanarDieChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
@@ -49,6 +50,10 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderBattlefieldChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ActivatedExiledCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HitCounterExiledCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EspersToMagiciteCreatureChoice.class, 0));
+        register(new ActivatedExiledCardOpponentChoiceAiStrategy());
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCastCostHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualEnterExileHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));

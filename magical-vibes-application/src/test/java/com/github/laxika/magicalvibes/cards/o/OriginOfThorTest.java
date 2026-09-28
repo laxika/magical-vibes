@@ -83,7 +83,7 @@ class OriginOfThorTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga, source);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source).doesNotContain(saga);
     }
 
     private Permanent addSaga(int loreCounters) {
@@ -96,6 +96,7 @@ class OriginOfThorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

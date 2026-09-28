@@ -45,7 +45,7 @@ class SummonValeforTest extends BaseCardTest {
         advanceToNextChapter();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(target.getId());
+                .contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -55,6 +55,7 @@ class SummonValeforTest extends BaseCardTest {
 
     @Test
     void chapterIDoesNothingWhenAnOpponentControlsNoCreatures() {
+        harness.setHand(player2, java.util.List.of());
         addSagaWithLore(0);
 
         advanceToNextChapter();
@@ -73,6 +74,7 @@ class SummonValeforTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 

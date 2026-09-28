@@ -78,6 +78,7 @@ class MezzioMuggerTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent mugger = findPermanent(player1, "Mezzio Mugger");
         assertThat(gqs.hasKeyword(gd, mugger, Keyword.HASTE)).isTrue();

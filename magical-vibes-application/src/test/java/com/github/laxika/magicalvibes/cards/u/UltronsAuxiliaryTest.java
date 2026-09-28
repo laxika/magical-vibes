@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Fleshgrafter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({UltronsAuxiliary.class, Fleshgrafter.class, GrizzlyBears.class, LeoninScimitar.class,
-        Naturalize.class})
+        Naturalize.class, Shock.class})
 class UltronsAuxiliaryTest extends BaseCardTest {
 
     @Test
@@ -60,10 +61,14 @@ class UltronsAuxiliaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new LeoninScimitar());
 
-        harness.setHand(player1, List.of(new Naturalize()));
+        harness.setHand(player1, List.of(new Shock(), new Naturalize()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
+        assertThat(auxiliary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
 
         assertThat(auxiliary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

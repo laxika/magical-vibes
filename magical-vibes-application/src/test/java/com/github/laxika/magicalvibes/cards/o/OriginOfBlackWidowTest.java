@@ -78,5 +78,6 @@ class OriginOfBlackWidowTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

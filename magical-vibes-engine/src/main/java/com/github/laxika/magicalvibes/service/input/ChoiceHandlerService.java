@@ -5499,7 +5499,7 @@ public class ChoiceHandlerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().hasType(CardType.LAND)) {
+                if (gameQueryService.isLand(gameData, permanent)) {
                     GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
                             permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, true);
                 }

@@ -26,6 +26,7 @@ class WakkaDevotedGuardianTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(wakka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Credit Voucher");

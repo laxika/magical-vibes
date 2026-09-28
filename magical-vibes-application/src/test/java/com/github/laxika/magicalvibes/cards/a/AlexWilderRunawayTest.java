@@ -20,7 +20,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
         AlexWilderRunaway alex = new AlexWilderRunaway();
         harness.setGraveyard(player1, List.of(
                 alex, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castFromGraveyard(player1, 0, List.of(1, 2, 3));
         harness.passBothPriorities();

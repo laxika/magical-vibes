@@ -33,8 +33,8 @@ class ColossusSteelStalwartTest extends BaseCardTest {
         Permanent opponentMutant = addCreatureReady(player2, new ColossusSteelStalwart());
         Permanent nonMutant = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, otherMutant)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, otherMutant)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, opponentMutant)).isEqualTo(4);

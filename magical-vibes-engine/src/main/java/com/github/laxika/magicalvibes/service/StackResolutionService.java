@@ -429,6 +429,7 @@ public class StackResolutionService {
             permanent.tap();
         }
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
+        gameData.transferCardsExiledByPermanent(entry.getCard().getId(), permanent.getId());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, entry.getXValue(), entry.isKicked(), entry);

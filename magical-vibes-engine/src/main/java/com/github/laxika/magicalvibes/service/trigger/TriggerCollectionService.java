@@ -1104,6 +1104,7 @@ public class TriggerCollectionService {
             }
         }
 
+        boolean castUsingTreasureMana = gameData.spellCastUsedTreasureMana(spellCard.getId());
         gameData.clearSpellCastManaSpent(spellCard.getId());
         gameData.clearSpellCastManaSources(spellCard.getId());
         gameData.clearSpellCastTreasureMana(spellCard.getId());
@@ -1931,7 +1932,7 @@ public class TriggerCollectionService {
         // "The first spell you cast each turn that mana from a Treasure was spent to cast has
         // cascade" (Rain of Riches). Unlike the ordinary first-spell marker above, a spell cast
         // without Treasure mana does not consume this grant.
-        if (gameData.spellCastUsedTreasureMana(spellCard.getId())
+        if (castUsingTreasureMana
                 && gameData.getSpellsCastUsingTreasureManaThisTurnCount(castingPlayerId) == 1) {
             List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
             if (casterBattlefield != null) {
@@ -3128,8 +3129,14 @@ public class TriggerCollectionService {
             if (fromAllySource) {
                 for (CardEffect effect : perm.getCard().getEffects(
                         EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE)) {
+                    boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
+                    CardEffect resolved = unwrapOncePerTurnTrigger(gameData, perm, effect);
+                    if (resolved == null) continue;
                     var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
-                    dispatch(match, EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE, effect, ctx);
+                    if (dispatch(match, EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE,
+                            resolved, ctx) && oncePerTurn) {
+                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                    }
                 }
             }
             if (fromOpponent) {
@@ -4012,6 +4019,14 @@ public class TriggerCollectionService {
                     watchers.add(permanent);
                 }
             });
+            if (sacrificedCard != null
+                    && !sacrificedCard.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).isEmpty()
+                    && sacrificedCard.getEffects(EffectSlot.ON_DEATH).stream()
+                            .noneMatch(CardEffect::onlyTriggersOnSacrifice)
+                    && watchers.stream().noneMatch(watcher ->
+                            watcher.getCard().getId().equals(sacrificedCard.getId()))) {
+                watchers.add(new Permanent(sacrificedCard));
+            }
             Permanent sacrificedPermanent = gameData.simultaneousDyingPermanents.values().stream()
                     .filter(permanent -> permanent.getCard().getId().equals(sacrificedCard.getId()))
                     .findFirst().orElse(null);

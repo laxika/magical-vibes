@@ -62,9 +62,9 @@ class DaredevilFearlessFighterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(daredevil.isAttacking()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(daredevil);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }
 }

@@ -24,6 +24,7 @@ class SetzerWanderingGamblerTest extends BaseCardTest {
         Permanent crew = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(blackjack), null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, blackjack)).isTrue();
@@ -35,9 +36,10 @@ class SetzerWanderingGamblerTest extends BaseCardTest {
     void vehicleCombatDamageAndCoinFlipWinCreateTreasures() {
         castSetzer();
         Permanent blackjack = findPermanent(player1, "The Blackjack");
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(blackjack), null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
         harness.passBothPriorities();
 
         blackjack.setSummoningSick(false);
@@ -62,14 +64,14 @@ class SetzerWanderingGamblerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(saucer), 1, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         boolean won = gameLogContains("wins the coin flip");
         boolean lost = gameLogContains("loses the coin flip");
         assertThat(won != lost).isTrue();
-        assertThat(findPermanents(player1, "Treasure")).hasSize(won ? 2 : 0);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(won ? 3 : 0);
         if (won) {
-            assertThat(findPermanents(player1, "Treasure")).allSatisfy(treasure -> assertThat(treasure.isTapped()).isTrue());
+            assertThat(findPermanents(player1, "Treasure")).filteredOn(Permanent::isTapped).hasSize(2);
         }
     }
 

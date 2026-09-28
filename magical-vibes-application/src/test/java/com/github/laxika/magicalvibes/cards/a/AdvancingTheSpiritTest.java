@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.q.QuicksilverBrashBlur;
+import com.github.laxika.magicalvibes.cards.u.UltronDrone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,12 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AdvancingTheSpirit.class, QuicksilverBrashBlur.class})
+@CardUsed({AdvancingTheSpirit.class, QuicksilverBrashBlur.class, AerialDoombot.class,
+        UltronDrone.class})
 class AdvancingTheSpiritTest extends BaseCardTest {
 
     @Test
     void drawsACardWhenItEnters() {
         Card drawnCard = new QuicksilverBrashBlur();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
 
         harness.enterBattlefieldAndReturn(player1, new AdvancingTheSpirit());
@@ -32,8 +35,8 @@ class AdvancingTheSpiritTest extends BaseCardTest {
     void makesTheFirstPowerUpActivationFreeAndOnlyThatActivation() {
         harness.addToBattlefield(player1, new AdvancingTheSpirit());
         Permanent firstQuicksilver = addCreatureReady(player1, new QuicksilverBrashBlur());
-        Permanent secondQuicksilver = addCreatureReady(player1, new QuicksilverBrashBlur());
-        Permanent thirdQuicksilver = addCreatureReady(player1, new QuicksilverBrashBlur());
+        Permanent secondCreature = addCreatureReady(player1, new AerialDoombot());
+        Permanent thirdCreature = addCreatureReady(player1, new UltronDrone());
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
@@ -41,15 +44,19 @@ class AdvancingTheSpiritTest extends BaseCardTest {
         assertThat(firstQuicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(secondQuicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
-                .isEqualTo(1);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new QuicksilverBrashBlur()));
+        harness.setLibrary(player2, List.of(new QuicksilverBrashBlur()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -58,6 +65,6 @@ class AdvancingTheSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 3, null, null);
         harness.passBothPriorities();
 
-        assertThat(thirdQuicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(thirdCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

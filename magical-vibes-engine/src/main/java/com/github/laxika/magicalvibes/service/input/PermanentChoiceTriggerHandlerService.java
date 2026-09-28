@@ -1083,6 +1083,8 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.attackedTargetId() != null) {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
+            entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
             log.info("Game {} - {} attack trigger declined targeting", gameData.id, att.sourceCard().getName());

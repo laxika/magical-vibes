@@ -184,6 +184,7 @@ public sealed interface DynamicAmount permits
         SourceCardPower,
         SourceIntensity,
         SourceManaValueMinusOne,
+        SourceCardManaValue,
         SourcePower,
         SourceToughness,
         SpellsCastThisTurn,

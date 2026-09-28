@@ -49,7 +49,7 @@ class AntMansAirForceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test

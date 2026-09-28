@@ -78,6 +78,7 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
     private void castMotorcycle(Permanent target) {
         harness.setHand(player1, List.of(new CaptainAmericasMotorcycle()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

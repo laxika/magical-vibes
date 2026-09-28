@@ -36,6 +36,8 @@ class EnigmaRidgesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
     }
 
     @Test
@@ -79,7 +81,7 @@ class EnigmaRidgesTest extends BaseCardTest {
 
         triggerChaos();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature, drawn);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()

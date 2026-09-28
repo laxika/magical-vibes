@@ -68,7 +68,8 @@ class PickUpThePaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(topCard.getId()));
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
     }
 }

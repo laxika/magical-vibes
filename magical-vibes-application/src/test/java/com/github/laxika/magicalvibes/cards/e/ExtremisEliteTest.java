@@ -69,7 +69,8 @@ class ExtremisEliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private Permanent addReadyElite() {

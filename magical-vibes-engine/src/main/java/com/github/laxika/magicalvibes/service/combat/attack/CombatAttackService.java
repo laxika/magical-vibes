@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1224,16 +1225,18 @@ public class CombatAttackService {
                                         attacker.getId(), defendingPlayerId);
                             }
                         } else if (needsTarget) {
-                            // Multi-target / "up to N" attack triggers (Archon of the Triumvirate):
-                            // multi-group and dynamic groups use the slot-by-slot picker; a static
-                            // single group is handled by the ordinary attack-trigger target flow.
+                            // A static single "up to N" group uses the multi-permanent choice
+                            // flow. Equipment attachments need individual selections so each
+                            // chosen Equipment is attached when the trigger resolves.
                             Card attackCard = attacker.getCard();
                             boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
                                     && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
                                     && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
                                     && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
+                            boolean attachesEquipment = otherEffects.stream()
+                                    .anyMatch(AttachTargetEquipmentToTriggeringPermanentEffect.class::isInstance);
                             if (attackCard.getSpellTargets().size() > 1
-                                    || (!staticSingleMultiTargetGroup
+                                    || ((!staticSingleMultiTargetGroup || attachesEquipment)
                                     && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

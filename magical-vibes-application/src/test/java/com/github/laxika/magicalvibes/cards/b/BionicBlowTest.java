@@ -37,7 +37,7 @@ class BionicBlowTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new BionicBlow()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, 1, List.of(source.getId()));
         harness.passBothPriorities();
 

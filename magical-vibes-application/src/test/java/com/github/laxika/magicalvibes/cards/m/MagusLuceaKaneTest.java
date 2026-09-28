@@ -39,7 +39,7 @@ class MagusLuceaKaneTest extends BaseCardTest {
     @Test
     @DisplayName("Copies the next spell with X in its mana cost")
     void copiesNextXSpell() {
-        harness.addToBattlefield(player1, new MagusLuceaKane());
+        addCreatureReady(player1, new MagusLuceaKane());
         harness.setHand(player1, List.of(new DevilsPlay()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.setLife(player2, 20);
@@ -59,7 +59,7 @@ class MagusLuceaKaneTest extends BaseCardTest {
     @Test
     @DisplayName("Copies the next activated ability with X in its activation cost")
     void copiesNextXActivatedAbility() {
-        harness.addToBattlefield(player1, new MagusLuceaKane());
+        addCreatureReady(player1, new MagusLuceaKane());
         harness.addToBattlefield(player1, new KnollspineInvocation());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
@@ -68,6 +68,9 @@ class MagusLuceaKaneTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 2, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
         harness.passBothPriorities();
         harness.passBothPriorities();
 

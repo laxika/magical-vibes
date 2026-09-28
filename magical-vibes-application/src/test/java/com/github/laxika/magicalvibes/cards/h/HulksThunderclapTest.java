@@ -44,8 +44,8 @@ class HulksThunderclapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorceryWithBehold(player1, 0, source.getId(),
-                List.of(harness.getPermanentId(player2, "Grizzly Bears"), artifact.getId()),
+        harness.castSorceryWithBehold(player1, 0, null,
+                List.of(source.getId(), harness.getPermanentId(player2, "Grizzly Bears"), artifact.getId()),
                 List.of(gamma.getId()), List.of());
         harness.passBothPriorities();
 
@@ -63,8 +63,8 @@ class HulksThunderclapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castSorceryWithBehold(player1, 0, source.getId(),
-                List.of(victim.getId(), gamma.getId()), List.of(gamma.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castSorceryWithBehold(player1, 0, null,
+                List.of(source.getId(), victim.getId(), gamma.getId()), List.of(gamma.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("noncreature artifact or noncreature enchantment");
     }

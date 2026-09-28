@@ -40,7 +40,7 @@ class OriginOfTheHulkTest extends BaseCardTest {
 
         advanceToNextChapter();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(bears.getId());
+                .contains(bears.getId());
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 

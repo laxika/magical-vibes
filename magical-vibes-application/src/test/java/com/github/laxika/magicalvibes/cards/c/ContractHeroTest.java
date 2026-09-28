@@ -35,6 +35,7 @@ class ContractHeroTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing an artifact gives Contract Hero +2/+0 until end of turn")
     void sacrificingArtifactBoostsHero() {
+        harness.setHand(player1, List.of());
         Permanent hero = addCreatureReady(player1, new ContractHero());
         Permanent artifact = addCreatureReady(player1, new Ornithopter());
 
