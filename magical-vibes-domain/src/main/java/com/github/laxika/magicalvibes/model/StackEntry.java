@@ -110,6 +110,8 @@ public class StackEntry {
      * into-library dispositions still win.
      */
     @Setter private boolean exileInsteadOfGraveyard;
+    /** Whether a permanent cast through a graveyard permission is exiled if it would leave. */
+    @Setter private boolean exilePermanentIfLeavesBattlefield;
     /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
     @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
@@ -710,6 +712,7 @@ public class StackEntry {
         this.castWithEscape = source.castWithEscape;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
+        this.exilePermanentIfLeavesBattlefield = source.exilePermanentIfLeavesBattlefield;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
@@ -1031,6 +1034,7 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = null;
         this.exileAndReturnToHandAtNextEndStep = false;
         this.exileInsteadOfGraveyard = false;
+        this.exilePermanentIfLeavesBattlefield = false;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard = false;
     }
 

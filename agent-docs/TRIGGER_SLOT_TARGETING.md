@@ -169,7 +169,10 @@ combat damage step is processed.
 | `SUSPENDED_EACH_UPKEEP_TRIGGERED` | `StepTriggerService` scans suspended cards in exile on every player's upkeep; an active-player `MayEffect` preserves that player as the choice and effect context | Non-targeting; source card must remain suspended at resolution |
 | `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED` | `StepTriggerService` scans cards in exile during their owners' upkeeps while they have positive scream-counter entries | Non-targeting; the counter-removal handler rechecks the card's exile and counter state |
 | `ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE` | `TriggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers` dispatches the slot when the source card loses a time counter in exile; targeted effects use the shared self-trigger target queue | Non-targeting unless an effect declares a player/permanent target; source card is the suspended exiled card; Benalish Commander (`PLC`), Roiling Horror (`PLC`) |
+| `ON_SELF_TIME_COUNTERS_REMOVED` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
 | `ON_SELF_PHASES_IN` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `ON_ANY_OTHER_PERMANENT_PHASES_OUT` | `TriggerCollectionService.checkOtherPermanentPhasesOutTriggers` dispatches before the phased-out permanent leaves the battlefield; the watcher that phased out is excluded. | Non-targeting; the phased-out permanent is carried only in `TriggerContext.PermanentPhasedOut` |
+| `ON_ANY_CARD_EXILED` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
 | `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
@@ -185,11 +188,13 @@ combat damage step is processed.
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
 | `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
+| `ON_OPPONENT_SCRIES` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_SURVEILS` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
+| `ON_OPPONENT_SURVEILS` | `MiscTriggerCollectorService` | Opponent surveils; the surveiling player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_CONTROLLER_SEEKS` | `SeekTriggerCollectorService` | Controller seeks one or more cards; the sought cards are carried in `TriggerContext.Seek` and non-targeting effects enqueue directly |
 | `ON_CONTROLLER_DISCARD_EVENT` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` / `…_OF_OPPONENT_SPELL_ONLY` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
@@ -326,6 +331,9 @@ phase triggers cover the untap-step turn-based action and effect-driven phase-ou
 `PhasesInTriggerTarget` instead and are drained at upkeep start via
 `StepTriggerService.processNextPhasesInTriggerTarget` (Shimmering Efreet's "target creature phases out";
 reuses `TriggerTargetCollector.Options.END_STEP`)),
+`ON_ANY_OTHER_PERMANENT_PHASES_OUT` (The War Doctor; global non-targeting watcher dispatched before
+the phased-out permanent is removed), and `ON_ANY_CARD_EXILED` (The War Doctor; global non-targeting
+watcher dispatched after a non-token card enters exile),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
@@ -388,6 +396,8 @@ counters placed as the trigger event value),
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+`ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT` (Kate Stewart; fires once when one or more time
+counters are put on a permanent controlled by the placing player, including entry counters; non-targeting),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same

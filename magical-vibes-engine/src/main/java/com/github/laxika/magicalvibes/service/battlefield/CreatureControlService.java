@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedTo
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -63,6 +65,10 @@ public class CreatureControlService {
     @Autowired
     @Lazy
     private PredicateEvaluationService predicateEvaluationService;
+
+    @Autowired
+    @Lazy
+    private AuraCopyService auraCopyService;
 
     @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
@@ -150,7 +156,11 @@ public class CreatureControlService {
      * untapped permanent holds no such effect, so it is cheap to call on every untap.
      */
     public void onSourceUntapped(GameData gameData, Permanent permanent) {
-        gameData.expireTappedSourceFloatingEffects(permanent.getId());
+        List<FloatingContinuousEffect> expired =
+                gameData.expireTappedSourceFloatingEffects(permanent.getId());
+        if (auraCopyService != null) {
+            auraCopyService.revertExpiredCopies(gameData, expired);
+        }
 
         boolean holdsTappedControl;
         synchronized (gameData.floatingEffects) {
@@ -411,7 +421,8 @@ public class CreatureControlService {
     }
 
     /**
-     * Expires control effects whose "for as long as ..." condition stopped holding (such
+     * Expires source-controller-dependent floating effects whose "for as long as ..." condition
+     * stopped holding (such
      * effects end for good — they do not resume, CR 611.2b):
      * <ul>
      *   <li>{@code WHILE_ATTACHED} — the source Aura left or enchants something else (the
@@ -423,11 +434,15 @@ public class CreatureControlService {
      *       or it is no longer tapped (Seasinger).</li>
      *   <li>{@link GainControlOfEnchantedTargetEffect} — the affected permanent is no longer
      *       enchanted (Rootwater Matriarch).</li>
+     *   <li>{@link CombatAttackRequirementEffect} implementations that opt into source-controller
+     *       dependence, such as Vislor Turlough's source-bound goad.</li>
      * </ul>
      */
     private void expireStaleControlEffects(GameData gameData) {
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
             boolean sourceControllerDependent = fe.isControlEffect()
+                    || (fe.effect() instanceof CombatAttackRequirementEffect requirement
+                    && requirement.endsWhenSourceControllerChanges())
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges());
             if (!sourceControllerDependent) continue;
@@ -481,15 +496,18 @@ public class CreatureControlService {
     }
 
     /**
-     * When a permanent changes controllers, "for as long as you control [source]" control
-     * effects and keyword grants (Aegis Angel) keyed to it as their SOURCE end if their creator
-     * lost it; the permanents they were holding get recomputed.
+     * When a permanent changes controllers, "for as long as you control [source]" effects keyed
+     * to it as their SOURCE end if their creator lost it; the permanents they were holding get
+     * recomputed.
      */
     private void expireSourceControllerDependentEffects(GameData gameData, Permanent source) {
         UUID sourceController = gameData.findControllerOf(source);
         List<FloatingContinuousEffect> expired = new ArrayList<>();
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if ((fe.isControlEffect() || fe.effect() instanceof GrantKeywordEffect
+            if ((fe.isControlEffect()
+                    || (fe.effect() instanceof CombatAttackRequirementEffect requirement
+                    && requirement.endsWhenSourceControllerChanges())
+                    || fe.effect() instanceof GrantKeywordEffect
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges()))
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD

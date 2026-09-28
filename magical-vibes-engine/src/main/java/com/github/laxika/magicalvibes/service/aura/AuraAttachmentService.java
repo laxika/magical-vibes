@@ -110,7 +110,8 @@ public class AuraAttachmentService {
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
-                    } else if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT) || isFortification) {
+                    } else if (gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
+                            || isFortification) {
                         // Equipment and Fortification stay on the battlefield unattached when their host leaves
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
@@ -196,9 +197,9 @@ public class AuraAttachmentService {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 if (!p.isAttached()) continue;
-                boolean isAura = GameQueryService.permanentHasSubtype(p, CardSubtype.AURA);
-                boolean isEquipment = GameQueryService.permanentHasSubtype(p, CardSubtype.EQUIPMENT);
-                boolean isFortification = GameQueryService.permanentHasSubtype(p, CardSubtype.FORTIFICATION);
+                boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA);
+                boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
+                boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
                 if (!isAura && !isEquipment && !isFortification) {
                     // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());

@@ -78,7 +78,7 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
 
                 // The token deals X damage to the controller (damage source is the token, not the Saga)
                 if (x > 0) {
-                    if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                    if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
                         String playerName = gameData.playerIdToName.get(controllerId);
                         gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
                     } else {

@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -529,6 +530,13 @@ public class ActivatedAbilityExecutionService {
 
         if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)) {
             int amount = gameData.playerHands.getOrDefault(playerId, List.of()).size();
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayLifeEqualToCommanderColorIdentityCost.class::isInstance)) {
+            int amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
             if (amount > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
             }
@@ -1618,7 +1626,7 @@ public class ActivatedAbilityExecutionService {
                             }
                         }
                         lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
                         int lifeLoss = effectiveDamage
@@ -1841,7 +1849,7 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int lifeLoss = effectiveDamage

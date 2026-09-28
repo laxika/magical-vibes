@@ -32,6 +32,7 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +41,8 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
+                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                 entry.getControllerId(), new ArrayList<>(), 0, entry.getCard().getName());
     }
 

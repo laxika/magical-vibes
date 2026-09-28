@@ -81,7 +81,7 @@ public class TapUntapSupport {
         }
         boolean wasTapped = permanent.isTapped();
         permanent.untap();
-        if (wasTapped) {
+        if (wasTapped && !permanent.isTapped()) {
             // A "for as long as this stays tapped" control effect (Seasinger) ends here.
             creatureControlService.onSourceUntapped(gameData, permanent);
             // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.

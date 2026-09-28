@@ -823,7 +823,9 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                             entry.getCard(), payerId, List.of(e),
                             entry.getCard().getName() + " - " + sacrificePermanent.description() + "?",
-                            entry.getTargetId(), null, entry.getSourcePermanentId()));
+                            entry.getTargetId(), null, entry.getSourcePermanentId(),
+                            null, 0, 0, entry.getAttackedTargetId(), null, null,
+                            entry.getSourcePermanentSnapshot(), sourceControllerId, null));
                     return;
                 }
 

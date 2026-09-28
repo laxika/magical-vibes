@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "53")
+@CardRegistration(set = "WHO", collectorNumber = "215")
 public class Clockspinning extends Card {
 
     public Clockspinning() {

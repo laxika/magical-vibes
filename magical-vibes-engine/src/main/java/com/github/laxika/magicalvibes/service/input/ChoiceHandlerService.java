@@ -81,6 +81,8 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -134,6 +136,8 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAnyNumberOfCountersFromAllPermanentsEffectHandler
             removeAnyNumberOfCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
+    private final TimeTravelService timeTravelService;
+    private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
     private final TriggerTargetCollector triggerTargetCollector;
@@ -155,7 +159,12 @@ public class ChoiceHandlerService {
             graceOrCondemnationEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
             coercivePortalEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForInnocentOrGuiltyEffectHandler
+            voteForInnocentOrGuiltyEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.SagaChapterService sagaChapterService;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -362,6 +371,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid card name choice: " + colorName);
+            }
             handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
             return;
         }
@@ -428,6 +440,19 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.LiarsPendulumChoice ctx) {
             handleLiarsPendulumChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ToymakersTrapChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Toymaker's Trap number: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            int chosenNumber = Integer.parseInt(colorName);
+            if (ctx.guess()) {
+                toymakersTrapEffectHandler.completeGuess(gameData, ctx, chosenNumber);
+            } else {
+                toymakersTrapEffectHandler.completeNumberChoice(gameData, ctx, chosenNumber);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
@@ -725,8 +750,17 @@ public class ChoiceHandlerService {
             handleAdjustChosenCounterActionChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TimeTravelActionChoice ctx) {
+            timeTravelService.handleChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.AddAnotherCounterTypeChoice ctx) {
             handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context()
+                instanceof ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice ctx) {
+            handleAddAnotherCounterTypeOnEachNonSagaPermanentChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.CreateTokenCounterChoice ctx) {
@@ -818,6 +852,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             coercivePortalEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.VoteForInnocentOrGuiltyChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid innocent-or-guilty vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            voteForInnocentOrGuiltyEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1208,8 +1253,11 @@ public class ChoiceHandlerService {
                 ChoiceContext.ManaColorChoice nextCtx = ctx.creatureSourceSpellOrAbility()
                         ? ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
+                        : ctx.restrictedToSpellOrAbilitySubtypes() == null
+                        ? ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
                         : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
-                        ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
+                        ctx.playerId(), remaining, ctx.restrictedToSpellOrAbilitySubtypes());
                 nextCtx = nextCtx.withSnowSource(ctx.fromSnowSource())
                         .withCaveSource(ctx.fromCaveSource())
                         .withBasicLandSource(ctx.fromBasicLandSource());
@@ -2702,6 +2750,62 @@ public class ChoiceHandlerService {
                 permanentCounterSupport.placeCounterOnPermanent(
                         gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
             }
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleAddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+            GameData gameData, String choice,
+            ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter type: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        if (!ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice.SKIP.equals(choice)) {
+            CounterType counterType = ctx.counterTypes().stream()
+                    .filter(type -> ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice
+                            .counterLabel(type).equals(choice))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
+            Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+            if (target != null && !target.getCard().isSaga()) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
+            }
+        }
+
+        beginNextAddAnotherCounterTypeOnEachNonSagaPermanentChoice(gameData, ctx);
+    }
+
+    private void beginNextAddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+            GameData gameData,
+            ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice ctx) {
+        List<UUID> remainingTargetIds = new ArrayList<>(ctx.remainingTargetIds());
+        while (!remainingTargetIds.isEmpty()) {
+            UUID targetId = remainingTargetIds.removeFirst();
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || target.getCard().isSaga()) {
+                continue;
+            }
+
+            List<CounterType> counterTypes = new ArrayList<>();
+            for (CounterType counterType : CounterType.values()) {
+                if (counterType != CounterType.ANY && counterType != CounterType.SILVER
+                        && target.getCounterCount(counterType) > 0) {
+                    counterTypes.add(counterType);
+                }
+            }
+            if (counterTypes.isEmpty()) {
+                continue;
+            }
+
+            playerInputService.beginAddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+                    gameData, ctx.controllerId(), targetId, ctx.sourceCardName(),
+                    remainingTargetIds, counterTypes);
+            return;
         }
 
         stateBasedActionService.performStateBasedActions(gameData);
@@ -4343,6 +4447,8 @@ public class ChoiceHandlerService {
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
             perm.setChosenNumber(chosen);
+
+            sagaChapterService.completeReadAheadIfPresent(gameData, perm);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + chosen + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses number {} for {}", gameData.id, player.getUsername(), chosen, perm.getCard().getName());
@@ -6280,9 +6386,11 @@ public class ChoiceHandlerService {
             GameData gameData, Player player, String guess,
             ChoiceContext.MasterOfPredicamentsGuessChoice ctx) {
         boolean guessedGreater;
-        if ("Greater than 4".equals(guess)) {
+        String greaterOption = "Greater than " + ctx.guessThreshold();
+        String lesserOption = ctx.guessThreshold() + " or less";
+        if (greaterOption.equals(guess)) {
             guessedGreater = true;
-        } else if ("4 or less".equals(guess)) {
+        } else if (lesserOption.equals(guess)) {
             guessedGreater = false;
         } else {
             throw new IllegalStateException("Invalid guess: " + guess);
@@ -6290,20 +6398,31 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " guesses whether the chosen card's mana value is greater than 4."));
+                player.getUsername() + " guesses whether the chosen card's mana value is greater than "
+                        + ctx.guessThreshold() + "."));
 
-        boolean actualGreater = ctx.selectedCard().getManaValue() > 4;
+        boolean actualGreater = ctx.selectedCard().getManaValue() > ctx.guessThreshold();
         if (actualGreater != guessedGreater && !ctx.selectedCard().hasType(CardType.LAND)) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     ctx.selectedCard(),
                     ctx.controllerId(),
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(
+                            false, null, ctx.incorrectGuessDeclineEffect())),
                     "Cast the chosen card without paying its mana cost?"));
             playerInputService.processNextMayAbility(gameData);
             return;
         }
 
+        queueGuessFollowUp(gameData, ctx.incorrectGuessDeclineEffect());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void queueGuessFollowUp(GameData gameData, CardEffect followUp) {
+        if (followUp == null || gameData.pendingEffectResolutionEntry == null) {
+            return;
+        }
+        gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                gameData.pendingEffectResolutionIndex, List.of(followUp));
     }
 
     private void handleIndulgentTormentorChoice(GameData gameData, Player player, String chosen,

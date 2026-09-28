@@ -8,13 +8,30 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
         CardPredicate filter,
-        GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant)
+        CardPredicate landFilter,
+        GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant,
+        boolean exileIfLeavesBattlefield)
         implements CastSpellsFromGraveyardPermission, PlayLandsFromGraveyardPermission {
 
     public PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
             CardPredicate filter, GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant) {
+        this(filter, null, entryTriggeredAbilityGrant, false);
+    }
+
+    public PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+            CardPredicate filter, GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant,
+            boolean exileIfLeavesBattlefield) {
+        this(filter, null, entryTriggeredAbilityGrant, exileIfLeavesBattlefield);
+    }
+
+    public PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+            CardPredicate filter, CardPredicate landFilter,
+            GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant,
+            boolean exileIfLeavesBattlefield) {
         this.filter = filter;
+        this.landFilter = landFilter;
         this.entryTriggeredAbilityGrant = entryTriggeredAbilityGrant;
+        this.exileIfLeavesBattlefield = exileIfLeavesBattlefield;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -29,7 +30,7 @@ import java.util.Set;
  *                          the copy trigger resolves
  * @param requiredCastWithAdventure whether the spell must have been cast as an Adventure spell
  * @param additionalTypes  types added to the copied card, such as artifact for Tawnos, the Toymaker
- * @param tokenCopy        whether the copied creature spell becomes a token as it resolves
+ * @param tokenCopy        whether the copied permanent spell becomes a token as it resolves
  * @param triggerCondition optional source condition checked only when the spell is cast
  */
 public record CopyControllerCastSpellOnSpellCastEffect(
@@ -48,8 +49,10 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         boolean excludeHandCast,
         Condition triggerCondition,
         List<CardPredicate> firstSpellFilters,
-        CardEffect beforeCopyEffect
-, com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter, String sacrificeDescription) implements CardEffect {
+        CardEffect beforeCopyEffect,
+        com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+        String sacrificeDescription,
+        Set<CardSupertype> removedSupertypes) implements CardEffect {
     public CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,
@@ -68,7 +71,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         List<CardPredicate> firstSpellFilters,
         CardEffect beforeCopyEffect
 ) {
-        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters, beforeCopyEffect, null, null);
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters, beforeCopyEffect, null, null, Set.of());
     }
 
 
@@ -76,6 +79,7 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
         firstSpellFilters = firstSpellFilters == null ? List.of() : List.copyOf(firstSpellFilters);
+        removedSupertypes = removedSupertypes == null ? Set.of() : Set.copyOf(removedSupertypes);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -148,6 +152,16 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 firstSpellFilters, beforeCopyEffect);
     }
 
+    /** Free mandatory copy of the first matching spell, with copy exceptions. */
+    public static CopyControllerCastSpellOnSpellCastEffect firstMatchingCopy(
+            List<CardPredicate> firstSpellFilters, CardEffect beforeCopyEffect,
+            Set<CardSupertype> removedSupertypes, boolean mayChooseNewTargets) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                new CardAnyOfPredicate(firstSpellFilters), null, null, null, null, Set.of(), null,
+                false, Set.of(), true, mayChooseNewTargets, false, false, null,
+                firstSpellFilters, beforeCopyEffect, null, null, removedSupertypes);
+    }
+
     /** Free mandatory copy trigger gated by a source condition checked when the spell is cast. */
     public static CopyControllerCastSpellOnSpellCastEffect withTriggerCondition(
             CardPredicate spellFilter, Condition triggerCondition) {
@@ -218,6 +232,6 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             String sacrificeDescription) {
         return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
                 Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
-                sacrificeFilter, sacrificeDescription);
+                sacrificeFilter, sacrificeDescription, Set.of());
     }
 }

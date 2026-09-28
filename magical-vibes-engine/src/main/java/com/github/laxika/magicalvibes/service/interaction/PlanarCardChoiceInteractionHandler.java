@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,6 +25,10 @@ public class PlanarCardChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+
+    @Autowired
+    @Lazy
+    private PlanechaseService planechaseService;
 
     @Override
     public Class<PendingInteraction.PlanarCardChoice> handledType() {
@@ -42,7 +49,7 @@ public class PlanarCardChoiceInteractionHandler
 
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (cardIds == null || cardIds.size() != 1) {
-            throw new IllegalStateException("Choose exactly one plane");
+            throw new IllegalStateException("Choose exactly one card");
         }
         UUID selectedId = cardIds.getFirst();
         if (!interaction.validPlaneCardIds().contains(selectedId)) {
@@ -53,6 +60,27 @@ public class PlanarCardChoiceInteractionHandler
                 .filter(card -> card.getId().equals(selectedId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Selected plane is no longer available"));
+
+        if (interaction.planeswalkAfterChoice()) {
+            if (interaction.revealedCards().size() != 2 || gameData.planechase == null) {
+                throw new IllegalStateException("Invalid planeswalk replacement choice");
+            }
+            Card remaining = interaction.revealedCards().stream()
+                    .filter(card -> !card.getId().equals(selectedId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Missing second planar card"));
+            gameData.planechase.deck.add(selected);
+            gameData.planechase.deck.add(0, remaining);
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + " puts one planar card on the bottom and one on top, then planeswalks."));
+            planechaseService.continuePlaneswalk(gameData);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         List<Card> remaining = new ArrayList<>(interaction.revealedCards());
         remaining.remove(selected);
 

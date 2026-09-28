@@ -67,6 +67,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
+| `PermanentIsGoadedPredicate` | `()` | permanents currently affected by a goad requirement — needs game data. Used by The Rani's combat-damage trigger |
 | `PermanentHasAtLeastAttachedAurasPredicate` | `(int minimum)` | permanents with at least the requested number of attached Auras, regardless of Aura controller — needs game data. Used by Face of Divinity ("another Aura is attached to enchanted creature") |
 | `PermanentHasAttachedPermanentPredicate` | `(PermanentPredicate predicate)` | permanents with an attached permanent matching the nested predicate — needs game data. Use it for conditions such as a creature with a legendary Equipment attached |
 | `PermanentIsEnchantedBySourceControllerAuraPredicate` | `()` | permanents with an attached Aura controlled by the source controller; the host and Aura may have different controllers — needs game data and source-controller context. Used by Archon of the Wild Rose, Eriette of the Charmed Apple, and Dawn Evangel |
@@ -94,6 +95,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingAlonePredicate` | `()` | creatures currently attacking that were the only creatures declared as attackers in the current combat; needs game data |
+| `PermanentIsAttackingOrBlockingAlonePredicate` | `()` | creatures that were attacking alone or were the only creature blocking in the current combat; uses current combat state and last-known dying permanents |
 | `PermanentIsAttackingEnchantedPlayerPredicate` | `()` | creatures attacking the player enchanted by the source Aura directly; attacks against that player's planeswalker or battle do not match, and the source must be attached to a player (Curse of Hospitality) |
 | `PermanentAttacksPlayerWithMostLifePredicate` | `()` | attacking creatures whose direct player attack target is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
 | `PermanentAttacksWhileSourceControllerHasMostLifePredicate` | `()` | attacking creatures whose source controller is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
@@ -152,6 +154,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentControllerGraveyardCountAtLeastPredicate` | `(int minimumGraveyardCards)` | permanents whose current controller has at least N cards in their graveyard |
 | `PermanentManaValueAtMostOwnCountersPredicate` | `(CounterType)` | permanents whose mana value ≤ the number of that counter type on them (Corrosion rust destroy) |
 | `PermanentManaValueEqualsSourceCountersPredicate` | `(CounterType)` | permanents whose mana value **equals** the number of that counter type on the evaluating **source** permanent ("destroy each creature with mana value equal to the number of age counters on this enchantment" — Wave of Terror). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone (CR 608.2b) |
+| `PermanentManaValueAtMostSourceCountersPredicate` | `(CounterType)` | permanents whose mana value is at most the number of that counter type on the evaluating source permanent; falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentManaValueParityPredicate` | `(ManaValueParity parity)` | permanents whose mana value is odd or even; Obosh, the Preypiercer |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
@@ -233,6 +236,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
+| `PermanentIsSourceOrPairedPredicate` | `()` | the source permanent itself or its soulbond partner | `sourcePermanentId` / `sourcePermanentSnapshot` |
 | `PermanentIsCommanderPredicate` | `()` | a permanent whose original card is designated as a commander | `gameData` |
 | `PermanentIsTriggeringPermanentPredicate` | `()` | the permanent whose event caused the resolving ability to trigger, matched by the trigger's captured permanent id | `triggeringPermanentId` |
 | `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
@@ -448,6 +452,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenNamePredicate` | `()` | a card whose name equals the name chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
 | `CardKeywordPredicate` | `(Keyword)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability |
+| `CardHasCascadePredicate` | `()` | a card whose spell has a `CascadeEffect` in its `ON_SELF_CAST` slot; use for "cast a spell with cascade" triggers |
 | `CardHasAwakenPredicate` | `()` | a card with an Awaken ability word (`Awaken N—…`); Scryfall reports Awaken as a keyword, but the engine identifies it from the oracle text because it is not a rules keyword |
 | `CardIsAuraEnchantCreaturePredicate` | `()` | an Aura card whose enchant ability restricts it to creatures ("enchant creature", "enchant creature you control", …). An Aura's enchant restriction is its spell target filter, so this looks for a `PermanentIsCreaturePredicate` in that filter (directly or inside a `PermanentAllOfPredicate`); Auras that enchant players, lands, artifacts, or any permanent never match. Use as a `GrantFlashToCardTypeEffect` filter (Rootwater Shaman) |
 | `CardHasFlashbackPredicate` | `()` | a card that has a flashback casting option (Runic Repetition's "target exiled card with flashback") |

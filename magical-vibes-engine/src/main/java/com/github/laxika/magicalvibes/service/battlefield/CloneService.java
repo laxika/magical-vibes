@@ -25,10 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -36,6 +38,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ExiledCreatureCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -64,6 +67,7 @@ public class CloneService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ExiledCreatureCopyOnEnterService exiledCreatureCopyOnEnterService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
@@ -83,6 +87,10 @@ public class CloneService {
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue, int filterXValue,
                                                  Card physicalCard, boolean transformed) {
+        if (exiledCreatureCopyOnEnterService.prepare(
+                gameData, controllerId, card, targetId, xValue, physicalCard, transformed)) {
+            return true;
+        }
         MimeoplasmCopyOnEnterEffect mimeoplasmEffect = findMimeoplasmEffect(card);
         if (mimeoplasmEffect != null
                 && prepareMimeoplasmReplacementEffect(gameData, controllerId, card, physicalCard, transformed)) {
@@ -181,6 +189,8 @@ public class CloneService {
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
+        gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt =
+                copyEffect.addVanishingIfCopiedPermanentLacksIt();
         gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
         gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
@@ -501,6 +511,8 @@ public class CloneService {
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
         boolean copyUntilEndOfTurn = gameData.cloneOperation.copyUntilEndOfTurn;
+        boolean addVanishingIfCopiedPermanentLacksIt =
+                gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt;
         boolean entersTapped = gameData.cloneOperation.entersTapped;
         boolean ninjutsuEntry = gameData.cloneOperation.ninjutsuEntry;
         UUID ninjutsuAttackTargetId = gameData.cloneOperation.ninjutsuAttackTargetId;
@@ -534,6 +546,7 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
+        gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt = false;
         gameData.cloneOperation.entersTapped = false;
         gameData.cloneOperation.ninjutsuEntry = false;
         gameData.cloneOperation.ninjutsuAttackTargetId = null;
@@ -554,6 +567,8 @@ public class CloneService {
         Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
         Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
         if (copiedCard != null) {
+            boolean copiedPermanentHasVanishing = targetPerm != null
+                    && gameQueryService.hasKeyword(gameData, targetPerm, Keyword.VANISHING);
             Card preCopyCard = perm.getCard();
             Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
             Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
@@ -593,6 +608,14 @@ public class CloneService {
                 if (creatureOnlyCharacteristicsApply) {
                     applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                             additionalPlusOnePlusOneCounters, xValue);
+                }
+                if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing
+                        && perm.getCard().hasType(CardType.CREATURE)) {
+                    applyAdditionalCopyCharacteristics(perm.getCard(), Set.of(), Set.of(Keyword.VANISHING));
+                    perm.getCard().addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                            new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+                    perm.getCard().addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                            new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
                 }
                 if (addTypeAppropriateCounters) {
                     applyTypeAppropriateCounters(gameData, controllerId, perm);

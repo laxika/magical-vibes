@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "M20", collectorNumber = "255")
 @CardRegistration(set = "M21", collectorNumber = "254")
 @CardRegistration(set = "CP1", collectorNumber = "6")
+@CardRegistration(set = "WHO", collectorNumber = "318")
 public class TempleOfMystery extends Card {
 
     public TempleOfMystery() {

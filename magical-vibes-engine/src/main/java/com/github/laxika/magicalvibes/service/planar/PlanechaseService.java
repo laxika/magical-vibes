@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** Shared-deck Planechase actions. Callers own the game mutation and priority boundaries. */
 @Service
@@ -152,6 +153,16 @@ public class PlanechaseService {
         if (game.planechase == null) return;
         PlanechaseState state = game.planechase;
         state.controllerId = game.activePlayerId;
+        if (applyPlaneswalkReplacement(game)) {
+            return;
+        }
+        continuePlaneswalk(game);
+    }
+
+    /** Continues a planeswalk after a replacement effect has ordered the top planar cards. */
+    public void continuePlaneswalk(GameData game) {
+        if (game.planechase == null) return;
+        PlanechaseState state = game.planechase;
         if (state.faceUp.size() > 1) {
             interactions.begin(game, new PendingInteraction.LibraryReorder(state.controllerId,
                     state.faceUp.stream().map(PlanarObject::getCard).toList(), true, null,
@@ -159,6 +170,37 @@ public class PlanechaseService {
             return;
         }
         finishPlaneswalk(game, List.copyOf(state.faceUp));
+    }
+
+    private boolean applyPlaneswalkReplacement(GameData game) {
+        PlanechaseState state = game.planechase;
+        if (state.deck.size() < 2 || state.controllerId == null) {
+            return false;
+        }
+
+        boolean replacementActive = false;
+        for (Permanent source : game.playerBattlefields.getOrDefault(state.controllerId, List.of())) {
+            if (source.isFaceDown() || source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || query.computeStaticBonus(game, source).losesAllAbilities()) {
+                continue;
+            }
+            if (source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PlaneswalkTopTwoReplacementEffect.class::isInstance)) {
+                replacementActive = true;
+                break;
+            }
+        }
+        if (!replacementActive) {
+            return false;
+        }
+
+        List<Card> revealed = List.of(state.deck.removeFirst(), state.deck.removeFirst());
+        logs.append(game, GameLog.text("The top two cards of the planar deck are revealed: "
+                + revealed.stream().map(Card::getName).collect(Collectors.joining(", ")) + "."));
+        interactions.begin(game, new PendingInteraction.PlanarCardChoice(
+                state.controllerId, revealed, revealed.stream().map(Card::getId).toList(),
+                "Choose one card to put on the bottom of the planar deck, then planeswalk.", true));
+        return true;
     }
 
     public void finishPlaneswalk(GameData game, List<PlanarObject> departing) {

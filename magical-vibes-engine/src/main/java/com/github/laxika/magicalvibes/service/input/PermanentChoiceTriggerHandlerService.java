@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDama
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -78,6 +79,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
     private final MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler blackGateHandler;
+    private final TheMasterGallifreysEndEffectHandler theMasterHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -1011,12 +1013,24 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean isExiledCardTarget = target == null
+                && gameQueryService.findCardInExileById(gameData, permanentId) != null;
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
         boolean declined = hasOptionalSingleTarget(att.sourceCard(), att.effects())
                 && isPlayerTarget
                 && permanentId.equals(att.controllerId());
-        if ((target != null || isPlayerTarget) && !declined) {
-            StackEntry entry = new StackEntry(
+        if ((target != null || isPlayerTarget || isExiledCardTarget) && !declined) {
+            StackEntry entry = isExiledCardTarget
+                    ? new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    att.sourceCard(),
+                    att.controllerId(),
+                    att.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(att.effects()),
+                    permanentId,
+                    Zone.EXILE,
+                    att.sourcePermanentId())
+                    : new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     att.sourceCard(),
                     att.controllerId(),
@@ -1025,7 +1039,9 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     att.sourcePermanentId()
             );
-            entry.setTargetId(permanentId);
+            if (!isExiledCardTarget) {
+                entry.setTargetId(permanentId);
+            }
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());
             }
@@ -1577,6 +1593,12 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleBlackGateMostLifeChoice(GameData gameData, UUID playerId,
                                                PermanentChoiceContext.BlackGateMostLifeChoice context) {
         blackGateHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTheMasterMostLifeChoice(GameData gameData, UUID playerId,
+                                               PermanentChoiceContext.TheMasterMostLifeChoice context) {
+        theMasterHandler.completeMostLifeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

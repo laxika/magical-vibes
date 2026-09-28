@@ -120,6 +120,26 @@ public class LibraryRevealSupport {
         return collectCardNamesInGame(gameData, card -> !matchesCardTypes(card, excluded));
     }
 
+    /** Every distinct card name in the game with the required card type. */
+    public List<String> collectCardNamesInGameOfType(GameData gameData, CardType requiredType) {
+        if (requiredType == CardType.CREATURE) {
+            return collectCreatureCardNamesInGame(gameData);
+        }
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> card.hasType(requiredType)));
+        if (cardCatalog != null) {
+            for (CardSet set : CardSet.values()) {
+                for (var printing : cardCatalog.getPrintings(set)) {
+                    Card card = printing.createCard();
+                    if (card.getName() != null && card.hasType(requiredType)) {
+                        names.add(card.getName());
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(names);
+    }
+
     /** Every distinct card name in the game except basic land card names (Desperate Research). */
     public List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
         return collectCardNamesInGame(gameData,

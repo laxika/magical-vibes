@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToL
 
 @CardRegistration(set = "SHM", collectorNumber = "81")
 @CardRegistration(set = "2XM", collectorNumber = "113")
+@CardRegistration(set = "WHO", collectorNumber = "223")
 public class WoundReflection extends Card {
 
     public WoundReflection() {

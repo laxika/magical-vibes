@@ -19,7 +19,8 @@ import java.util.function.Supplier;
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
-                              Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget)
+                              Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
+                              boolean choicesEqualModalXValue)
         implements CombatDamageTriggerContextEffect {
 
     public static final String NO_MODE_LABEL = "Choose no modes";
@@ -27,7 +28,8 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired,
                            int choicesMax, boolean allModesWhenOptionalCostPaid) {
-        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, null);
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
+                false, null, List.of(), 0, false);
     }
 
     public ChooseOneEffect {
@@ -51,7 +53,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                            int choicesMax, boolean allModesWhenOptionalCostPaid,
                            boolean modesMayRepeat, Condition choicesMaxCondition) {
         this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
-                modesMayRepeat, choicesMaxCondition, List.of(), 0);
+                modesMayRepeat, choicesMaxCondition, List.of(), 0, false);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
@@ -121,10 +123,16 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return new ChooseOneEffect(options, false, choicesRequired, choicesRequired, false, true);
     }
 
+    /** Modal spell that must select exactly the paid X number of modes, with repetition allowed. */
+    public static ChooseOneEffect withRepeatedModesForX(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options, false, 0, Integer.MAX_VALUE, false, true,
+                null, List.of(), 0, true);
+    }
+
     public static ChooseOneEffect budgetedModes(List<ChooseOneOption> options, List<Integer> modeCosts,
                                                  int modeBudget) {
         return new ChooseOneEffect(options, false, 0, modeBudget, false, true, null,
-                modeCosts, modeBudget);
+                modeCosts, modeBudget, false);
     }
 
     public static ChooseOneEffect upToWithRepeatedModes(List<ChooseOneOption> options, int maxChoices) {

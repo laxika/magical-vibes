@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "C15", collectorNumber = "325")
 @CardRegistration(set = "C15", collectorNumber = "326")
+@CardRegistration(set = "WHO", collectorNumber = "196")
+@CardRegistration(set = "WHO", collectorNumber = "197")
 @CardRegistration(set = "ACR", collectorNumber = "101")
 @CardRegistration(set = "ACR", collectorNumber = "102")
 @CardRegistration(set = "10E", collectorNumber = "364")

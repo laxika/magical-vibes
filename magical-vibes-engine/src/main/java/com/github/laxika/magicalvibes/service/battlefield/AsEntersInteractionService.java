@@ -784,6 +784,7 @@ public class AsEntersInteractionService {
             return;
         }
         permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
+        permanentCounterSupport.notifyCountersPlaced(gameData, null, permanent, counterType, count);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(

@@ -192,6 +192,9 @@ public class PermanentRemovalService {
     }
 
     public boolean sacrificePermanentToGraveyard(GameData gameData, Permanent target) {
+        if (!gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, target)) {
+            return false;
+        }
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
@@ -627,6 +630,9 @@ public class PermanentRemovalService {
     private boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId,
                                             boolean faceDown,
                                             boolean exiledWhileActivatingCraftAbility) {
+        if (!gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, target)) {
+            return false;
+        }
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
@@ -1073,6 +1079,11 @@ public class PermanentRemovalService {
         for (DelayedPermanentAction action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
             if (perm == null) {
+                continue;
+            }
+            if ((kind.op() == DelayedPermanentActionKind.Op.EXILE
+                    || kind.op() == DelayedPermanentActionKind.Op.SACRIFICE)
+                    && !gameQueryService.delayedTriggeredAbilityCanMoveCreatureToken(gameData, perm)) {
                 continue;
             }
             boolean completed = true;
@@ -1823,6 +1834,11 @@ public class PermanentRemovalService {
                         .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.ConcurrentHashMap<>());
                 for (CardSubtype subtype : creatureSubtypesAtDeath) {
                     subtypeCounts.merge(subtype, 1, Integer::sum);
+                }
+                Map<CardSubtype, Integer> subtypePowers = gameData.creatureSubtypeDeathPowerThisTurn
+                        .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.ConcurrentHashMap<>());
+                for (CardSubtype subtype : creatureSubtypesAtDeath) {
+                    subtypePowers.merge(subtype, dyingPowerAtDeath, Integer::sum);
                 }
                 if (!creatureDeathTriggersSuppressed) {
                     triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(

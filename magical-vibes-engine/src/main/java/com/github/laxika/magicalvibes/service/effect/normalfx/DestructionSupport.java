@@ -472,7 +472,7 @@ public class DestructionSupport {
             return;
         }
 
-        if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + "'s life total can't change."));
             return;
         }

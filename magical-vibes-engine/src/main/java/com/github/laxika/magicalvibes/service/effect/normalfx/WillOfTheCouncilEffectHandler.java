@@ -35,6 +35,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,10 +46,12 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         WillOfTheCouncilEffect willOfTheCouncil = (WillOfTheCouncilEffect) effect;
         if (willOfTheCouncil.graveyardCards()) {
-            beginNextGraveyardVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+            beginNextGraveyardVote(gameData, votingSupport.addAdditionalControllerVotes(
+                            gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                     entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
         } else {
-            beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+            beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
+                            gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                     entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
         }
     }

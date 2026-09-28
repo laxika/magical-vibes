@@ -622,6 +622,14 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, false, amount, subtype, false, false, true);
         }
 
+        /** "Add N mana in any combination of colors", spendable for any of several subtypes. */
+        public static ManaColorChoice subtypeSpellOrAbility(UUID playerId, int amount,
+                                                              Set<CardSubtype> subtypes) {
+            return new ManaColorChoice(playerId, false, amount, null, false, false, true,
+                    false, null, false, false, false, false, false, null,
+                    subtypes, false);
+        }
+
         public static ManaColorChoice subtypeSpellOnly(UUID playerId, int amount,
                                                         ManaRestriction.SubtypeOrPlaneswalkerSpells restriction) {
             return new ManaColorChoice(playerId, false, amount, null, false, false, false,
@@ -848,8 +856,12 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId)
-            implements ChoiceContext {}
+    record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                             CardType requiredType) implements ChoiceContext {
+        public ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, sourcePermanentId, null);
+        }
+    }
 
     /**
      * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
@@ -1003,6 +1015,11 @@ public sealed interface ChoiceContext {
      * permanent via {@code Permanent.setChosenNumber(int)}.
      */
     record NumberChoice(UUID permanentId) implements ChoiceContext {}
+
+    /** The Toymaker's Trap's private controller choice or opponent guess. */
+    record ToymakersTrapChoice(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
+                               UUID opponentId, int chosenNumber, boolean guess)
+            implements ChoiceContext {}
 
     /**
      * "As this creature enters, pay any amount of life" (Minion of the Wastes). The controller
@@ -1227,8 +1244,13 @@ public sealed interface ChoiceContext {
     record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ChoiceContext {}
 
     /** The damaged player guesses the mana-value range of a card chosen from the controller's hand. */
-    record MasterOfPredicamentsGuessChoice(UUID controllerId, Card sourceCard, Card selectedCard)
-            implements ChoiceContext {}
+    record MasterOfPredicamentsGuessChoice(UUID controllerId, Card sourceCard, Card selectedCard,
+                                           int guessThreshold, CardEffect incorrectGuessDeclineEffect)
+            implements ChoiceContext {
+        public MasterOfPredicamentsGuessChoice(UUID controllerId, Card sourceCard, Card selectedCard) {
+            this(controllerId, sourceCard, selectedCard, 4, null);
+        }
+    }
 
     /**
      * Lammastide Weave: the controller names a card, then the target player mills one card. If the
@@ -1597,6 +1619,28 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
 
+    /** A single add/remove/skip choice while a time-travel event is being processed. */
+    record TimeTravelActionChoice(UUID controllerId, String sourceCardName,
+                                  List<TimeTravelTarget> targets, int targetIndex,
+                                  int remainingTravels) implements ChoiceContext {
+
+        public static final String ADD = "ADD";
+        public static final String REMOVE = "REMOVE";
+        public static final String SKIP = "SKIP";
+        public static final List<String> OPTIONS = List.of(ADD, REMOVE, SKIP);
+
+        public TimeTravelActionChoice {
+            targets = List.copyOf(targets);
+        }
+
+        public TimeTravelTarget target() {
+            return targets.get(targetIndex);
+        }
+    }
+
+    record TimeTravelTarget(UUID id, Zone zone) {
+    }
+
     /** Animation Module's choice of a counter kind to add to the target. */
     record AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                        List<CounterType> counterTypes, boolean poisonCounters)
@@ -1609,6 +1653,35 @@ public sealed interface ChoiceContext {
                 return List.of(POISON);
             }
             return counterTypes.stream().map(AddAnotherCounterTypeChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
+    }
+
+    /** The Caves of Androzani's per-non-Saga-permanent counter choice. */
+    record AddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+            UUID targetId, UUID controllerId, String sourceCardName,
+            List<UUID> remainingTargetIds, List<CounterType> counterTypes) implements ChoiceContext {
+
+        public static final String SKIP = "SKIP";
+
+        public AddAnotherCounterTypeOnEachNonSagaPermanentChoice {
+            remainingTargetIds = List.copyOf(remainingTargetIds);
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            List<String> options = new java.util.ArrayList<>(counterTypes.stream()
+                    .map(AddAnotherCounterTypeOnEachNonSagaPermanentChoice::counterLabel)
+                    .toList());
+            options.add(SKIP);
+            return options;
         }
 
         public static String counterLabel(CounterType counterType) {
@@ -1848,6 +1921,19 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Trial of a Time Lord: the current player voted for innocent or guilty. */
+    record VoteForInnocentOrGuiltyChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                         Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String INNOCENT = "Innocent";
+        public static final String GUILTY = "Guilty";
+        public static final List<String> OPTIONS = List.of(INNOCENT, GUILTY);
+
+        public VoteForInnocentOrGuiltyChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
     /** Choice of a specific locked door for an effect that unlocks a Room for free. */
     record UnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
             implements ChoiceContext {
@@ -1999,11 +2085,12 @@ public sealed interface ChoiceContext {
         public static final String DISCARD = "Discard a card";
     }
 
-    /** Dr. Eggman's villainous choice between discarding and letting its controller put a card in. */
+    /** Villainous choice answered by the affected opponent. */
     record VillainousChoice(UUID affectedPlayerId, String sourceCardName, String putOption)
             implements ChoiceContext {
 
         public static final String DISCARD = "Discard a card";
+        public static final String DRAW = "You draw a card";
     }
 
     /**

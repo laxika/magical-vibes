@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "326")
+@CardRegistration(set = "WHO", collectorNumber = "303")
 public class ShadowbloodRidge extends Card {
 
     public ShadowbloodRidge() {

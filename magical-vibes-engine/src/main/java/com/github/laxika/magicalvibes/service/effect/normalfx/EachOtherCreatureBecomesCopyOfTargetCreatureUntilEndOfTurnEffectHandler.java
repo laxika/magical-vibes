@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +42,11 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
 
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPerm == null) {
-            log.info("Game {} - Mirrorweave target no longer exists", gameData.id);
+            log.info("Game {} - temporary creature copy target no longer exists", gameData.id);
             return;
         }
+
+        var copyEffect = (EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
 
         // Snapshot the battlefield first: applying copies must not interleave with iteration.
         List<Permanent> creatures = new ArrayList<>();
@@ -59,6 +63,12 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
                 creature.setPreCopyCard(creature.getCard());
             }
             permanentCopierService.applyCloneCopy(creature, targetPerm, null, null);
+            if (copyEffect.removeLegendary()) {
+                EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+                supertypes.addAll(creature.getCard().getSupertypes());
+                supertypes.remove(CardSupertype.LEGENDARY);
+                creature.getCard().setSupertypes(supertypes);
+            }
             creature.setCopyUntilEndOfTurn(true);
             // CR 613.2a: each temporary copy is a layer-1 continuous effect with a duration. The
             // card swap stores the copiable values; the floating effect carries the timestamp and
@@ -73,6 +83,6 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
 
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " other creature(s) a copy of " + targetName + " until end of turn.").build());
-        log.info("Game {} - Mirrorweave copies {} onto {} creatures", gameData.id, targetName, count);
+        log.info("Game {} - {} copies {} onto {} creatures", gameData.id, entry.getCard().getName(), targetName, count);
     }
 }

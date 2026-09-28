@@ -46,8 +46,41 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean exileAtEndOfCombat,
         Set<CardSupertype> additionalSupertypes,
         boolean chooseAttackTarget,
-        List<CardColor> additionalColors
+        List<CardColor> additionalColors,
+        String nameOverride
 ) implements CardEffect {
+    /** Backward-compatible full constructor without a name override. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, null);
+    }
+
     public CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
         Set<CardType> additionalTypes,
@@ -71,7 +104,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean exileAtEndOfCombat,
         Set<CardSupertype> additionalSupertypes,
         boolean chooseAttackTarget) {
-        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, List.of());
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, List.of(), null);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -97,6 +130,15 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean exileAtEndOfCombat,
         Set<CardSupertype> additionalSupertypes) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount, exileAtEndOfCombat, additionalSupertypes, false);
+    }
+
+    /** Creates a copy with additional subtypes and supertypes and an explicit name. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            String nameOverride, List<CardSubtype> additionalSubtypes,
+            Set<CardSupertype> additionalSupertypes) {
+        this(additionalSubtypes, Set.of(), null, null, Map.of(), false, false, false, false,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                new Fixed(1), false, additionalSupertypes, false, List.of(), nameOverride);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -261,7 +303,8 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
-                false, Map.of(), List.of(), false, false, new Fixed(1), false, Set.of(), false, additionalColors);
+                false, Map.of(), List.of(), false, false, new Fixed(1), false, Set.of(), false, additionalColors,
+                null);
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect withAdditionalEffects(

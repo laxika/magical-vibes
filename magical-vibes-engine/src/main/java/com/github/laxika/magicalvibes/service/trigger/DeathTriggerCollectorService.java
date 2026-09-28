@@ -3157,7 +3157,23 @@ public class DeathTriggerCollectorService {
                 match.gameData(), death.dyingCreatureControllerId())) {
             return true;
         }
-        return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
+        CardEffect wrapped = bindAllyNontokenDyingCard(conditional.wrapped(), death.dyingCard());
+        return handleAllyNontokenDefault(match, wrapped, ctx);
+    }
+
+    private CardEffect bindAllyNontokenDyingCard(CardEffect effect, Card dyingCard) {
+        if (effect instanceof MayEffect may) {
+            CardEffect wrapped = bindAllyNontokenDyingCard(may.wrapped(), dyingCard);
+            CardEffect elseEffect = bindAllyNontokenDyingCard(may.elseEffect(), dyingCard);
+            if (wrapped != may.wrapped() || elseEffect != may.elseEffect()) {
+                return new MayEffect(wrapped, may.prompt(), elseEffect, may.choicePlayer());
+            }
+            return may;
+        }
+        if (effect instanceof DyingCreatureCardAwareEffect aware) {
+            return aware.boundToDyingCard(dyingCard.getId());
+        }
+        return effect;
     }
 
     private void logAllyNontokenCreatureDeath(TriggerMatchContext match) {

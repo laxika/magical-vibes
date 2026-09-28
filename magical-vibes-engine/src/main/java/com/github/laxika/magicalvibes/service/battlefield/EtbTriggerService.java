@@ -806,6 +806,7 @@ public class EtbTriggerService {
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (sourcePermanent != null) {
                     etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                    etbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
                     snapshotAttachedPermanent(gameData, etbEntry, sourcePermanent);
                 }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
@@ -843,6 +844,7 @@ public class EtbTriggerService {
                     }
                     if (sourcePermanent != null) {
                         extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                        extraEtbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
                         snapshotAttachedPermanent(gameData, extraEtbEntry, sourcePermanent);
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);

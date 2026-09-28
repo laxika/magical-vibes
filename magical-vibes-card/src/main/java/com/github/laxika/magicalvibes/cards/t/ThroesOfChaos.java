@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "150")
+@CardRegistration(set = "WHO", collectorNumber = "227")
 public class ThroesOfChaos extends Card {
 
     public ThroesOfChaos() {

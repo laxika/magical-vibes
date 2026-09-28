@@ -561,6 +561,12 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses up to three matching Doctors before an optional creature exile. */
+    record ChooseUpToNMatchingCreaturesThenMayExileRest(
+            Card sourceCard, UUID controllerId, UUID sourcePermanentId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Forced destroy pick ("you/target player destroys N permanents you control"). The
      * {@code destroyingPlayerId} is the chooser; the chosen permanents are destroyed (regeneration

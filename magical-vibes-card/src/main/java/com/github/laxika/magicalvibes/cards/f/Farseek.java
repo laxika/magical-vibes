@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "TSR", collectorNumber = "363")
 @CardRegistration(set = "FCA", collectorNumber = "45")
 @CardRegistration(set = "RVR", collectorNumber = "138")
+@CardRegistration(set = "WHO", collectorNumber = "232")
 public class Farseek extends Card {
 
     public Farseek() {

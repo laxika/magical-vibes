@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTur
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
+import com.github.laxika.magicalvibes.model.amount.SuspendedCards;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
@@ -180,6 +181,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.TargetGroupCount;
@@ -433,6 +435,8 @@ public class AmountEvaluationService {
                             .count();
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
+            case SuspendedCards c ->
+                    countSuspendedCards(gameData, c, ctx);
             case CardsExiledWithSource c ->
                     countCardsExiledWithSource(gameData, c, ctx);
             case CardsDelved delved ->
@@ -624,6 +628,8 @@ public class AmountEvaluationService {
                     countLifeLostThisTurn(gameData, c, ctx);
             case SpellsCastThisTurn c ->
                     countSpellsCastThisTurn(gameData, c, ctx);
+            case SpellsCastFromOutsideHandThisTurn c ->
+                    countSpellsCastFromOutsideHandThisTurn(gameData, c, ctx);
             case TargetPlayerPoisonCounters ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerPoisonCounters.getOrDefault(ctx.targetPermanentId(), 0);
@@ -1583,6 +1589,25 @@ public class AmountEvaluationService {
         return matches;
     }
 
+    private int countSuspendedCards(GameData gameData, SuspendedCards count, AmountContext ctx) {
+        int matches = 0;
+        synchronized (gameData.exiledCards) {
+            for (var exiled : gameData.exiledCards) {
+                if (exiled.faceDown() || !isPlayerInScope(gameData, exiled.ownerId(), count.scope(), ctx)) {
+                    continue;
+                }
+                UUID cardId = exiled.card().getId();
+                boolean hasSuspendCounters = gameData.exiledCardTimeCounters.getOrDefault(cardId, 0) > 0;
+                boolean isSuspendedSpell = gameData.suspendedSpellExiles.stream()
+                        .anyMatch(pending -> cardId.equals(pending.cardId()) && pending.counters() > 0);
+                if (hasSuspendCounters || isSuspendedSpell) {
+                    matches++;
+                }
+            }
+        }
+        return matches;
+    }
+
     private int countDelvedCards(GameData gameData, CardsDelved count, AmountContext ctx) {
         if (ctx.stackEntry() == null) {
             return 0;
@@ -2324,6 +2349,18 @@ public class AmountEvaluationService {
                             || predicateEvaluationService.matchesCardPredicate(
                             spell, count.filter(), null, gameData, playerId))
                     .count();
+        }
+        return total;
+    }
+
+    private int countSpellsCastFromOutsideHandThisTurn(GameData gameData,
+                                                       SpellsCastFromOutsideHandThisTurn count,
+                                                       AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (isPlayerInScope(gameData, playerId, count.scope(), ctx)) {
+                total += gameData.getSpellsCastFromOutsideHandThisTurnCount(playerId);
+            }
         }
         return total;
     }

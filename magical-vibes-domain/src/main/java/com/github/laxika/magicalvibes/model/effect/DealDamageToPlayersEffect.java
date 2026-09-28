@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
  * Deals damage to one or more players (never creatures). The {@link DamageRecipient} selects
@@ -19,8 +20,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
-                                        boolean recordDamageDealt)
+                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter)
         implements DamageDealingEffect, CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt, null);
+    }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable) {
@@ -29,7 +36,14 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
 
     /** Records actual damage in the entry's event value for a subsequent effect. */
     public DealDamageToPlayersEffect recordingDamageDealt() {
-        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true);
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true,
+                triggeredTargetFilter);
+    }
+
+    /** Supplies a target filter for trigger-time target selection when the effect is granted. */
+    public DealDamageToPlayersEffect withTriggeredTargetFilter(TargetFilter targetFilter) {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
+                recordDamageDealt, targetFilter);
     }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {

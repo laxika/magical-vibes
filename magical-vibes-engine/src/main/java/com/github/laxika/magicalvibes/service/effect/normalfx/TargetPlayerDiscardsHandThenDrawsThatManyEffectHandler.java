@@ -19,8 +19,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link TargetPlayerDiscardsHandThenDrawsThatManyEffect}: the targeted player discards
- * their entire hand, then draws that many cards. Discards are automatic; draw count equals the
- * number discarded. Mirrors {@link DiscardOwnHandThenDrawThatManyEffectHandler} for a target.
+ * their entire hand, then draws that many cards minus the effect's optional fixed reduction.
+ * Discards are automatic; the draw count is floored at zero. Mirrors
+ * {@link DiscardOwnHandThenDrawThatManyEffectHandler} for a target.
  */
 @Slf4j
 @Component
@@ -72,11 +73,13 @@ public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements N
         gameLogService.append(gameData, GameLog.text(discardLog));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
 
-        for (int i = 0; i < discardCount; i++) {
+        int drawReduction = ((TargetPlayerDiscardsHandThenDrawsThatManyEffect) effect).drawReduction();
+        int drawCount = Math.max(0, discardCount - drawReduction);
+        for (int i = 0; i < drawCount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
-        String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
+        String drawLog = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".";
         gameLogService.append(gameData, GameLog.text(drawLog));
-        log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, discardCount, cardName);
+        log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, drawCount, cardName);
     }
 }

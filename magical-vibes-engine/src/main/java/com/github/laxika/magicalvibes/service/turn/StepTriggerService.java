@@ -3541,6 +3541,7 @@ public class StepTriggerService {
                 case 3 -> EffectSlot.SAGA_CHAPTER_III;
                 case 4 -> EffectSlot.SAGA_CHAPTER_IV;
                 case 5 -> EffectSlot.SAGA_CHAPTER_V;
+                case 6 -> EffectSlot.SAGA_CHAPTER_VI;
                 default -> null;
             };
             if (chapterSlot == null) continue;
@@ -3554,6 +3555,7 @@ public class StepTriggerService {
                 case 3 -> "III";
                 case 4 -> "IV";
                 case 5 -> "V";
+                case 6 -> "VI";
                 default -> String.valueOf(newLoreCount);
             };
 

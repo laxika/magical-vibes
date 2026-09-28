@@ -115,7 +115,7 @@ public class GameSetupService {
         }
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
-        gameData.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
+        gameData.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.format = format;
@@ -287,7 +287,7 @@ public class GameSetupService {
 
     /** Initializes pregame play from transferred libraries rather than submitted decks. */
     public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
-        game.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
+        game.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
         for (UUID player : game.orderedPlayerIds) {
             List<Card> deck = new ArrayList<>(decks.get(player));
             deck.forEach(card -> game.subgameCards.put(card.getId(), card));

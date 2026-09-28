@@ -32,11 +32,13 @@ class SearchLibraryAndOrGraveyardChoiceAiStrategy
             return;
         }
 
-        Card chosen = pool.stream()
-                .max(Comparator.comparingInt(this::score))
-                .orElseThrow();
-        log.info("AI: Choosing {} from library or graveyard in game {}", chosen.getName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(List.of(chosen.getId())));
+        List<Card> chosen = pool.stream()
+                .sorted(Comparator.comparingInt(this::score).reversed())
+                .limit(interaction.maxCount())
+                .toList();
+        log.info("AI: Choosing {} card(s) from library or graveyard in game {}", chosen.size(), ctx.gameId());
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(
+                chosen.stream().map(Card::getId).toList()));
     }
 
     private int score(Card card) {

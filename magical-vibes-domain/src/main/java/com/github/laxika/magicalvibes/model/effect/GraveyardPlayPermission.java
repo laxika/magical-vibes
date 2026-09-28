@@ -8,6 +8,11 @@ public interface GraveyardPlayPermission extends CardEffect {
         return false;
     }
 
+    /** Whether a permanent entering through this permission is exiled if it would leave. */
+    default boolean exileIfLeavesBattlefield() {
+        return false;
+    }
+
     /** Triggered ability granted to a permanent that enters through this permission. */
     default GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant() {
         return null;

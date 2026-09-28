@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "89")
 @CardRegistration(set = "EOS", collectorNumber = "134")
 @CardRegistration(set = "EOS", collectorNumber = "179")
+@CardRegistration(set = "WHO", collectorNumber = "323")
 public class ThespiansStage extends Card {
 
     public ThespiansStage() {

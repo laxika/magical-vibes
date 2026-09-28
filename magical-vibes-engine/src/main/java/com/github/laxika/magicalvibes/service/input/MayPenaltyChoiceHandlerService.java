@@ -892,7 +892,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — lose life
-        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
         } else {
             int lifeLoss = effect.lifeLoss()
@@ -928,7 +928,7 @@ public class MayPenaltyChoiceHandlerService {
             } else {
                 // Can't pay — apply life loss
                 penaltyApplied = true;
-                if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
                     int lifeLoss = effect.lifeLoss()
@@ -943,7 +943,7 @@ public class MayPenaltyChoiceHandlerService {
             }
         } else {
             // Declined — lose life
-            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
                 int lifeLoss = effect.lifeLoss()
@@ -2298,6 +2298,7 @@ public class MayPenaltyChoiceHandlerService {
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
                 ability.targetCardId(), ability.sourcePermanentId());
         syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+        syntheticEntry.setAttackedTargetId(ability.attackedTargetId());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "INR", collectorNumber = "285")
 @CardRegistration(set = "VOW", collectorNumber = "265")
 @CardRegistration(set = "DBL", collectorNumber = "532")
+@CardRegistration(set = "WHO", collectorNumber = "308")
 public class StormcarvedCoast extends Card {
 
     public StormcarvedCoast() {

@@ -237,6 +237,7 @@ public enum CardSet {
     SET_NCC("NCC"),
     SET_TDM("TDM"),
     SET_TMC("TMC"),
+    SET_WHO("WHO"),
     SET_TMT("TMT"),
     SET_BOT("BOT"),
     SET_APC("APC"),

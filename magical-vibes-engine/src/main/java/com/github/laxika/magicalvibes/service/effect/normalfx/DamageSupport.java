@@ -661,7 +661,8 @@ public class DamageSupport {
                 int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
                 if (counters > 0) {
                     target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters);
+                    permanentCounterSupport.notifyCountersPlaced(
+                            gameData, entry, target, CounterType.MINUS_ONE_MINUS_ONE, counters);
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                             " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
                     log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
@@ -1637,7 +1638,7 @@ public class DamageSupport {
                             source != null ? source.getName() : entry.getCard().getName(),
                             entry.getControllerId());
                 }
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
@@ -1838,7 +1839,7 @@ public class DamageSupport {
                     gameData, targetId, redirectEffective);
 
             if (redirectEffective > 0) {
-                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                     int lifeLoss = redirectEffective
                             * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                     gameData.playerLifeTotals.put(targetId,
@@ -1923,7 +1924,7 @@ public class DamageSupport {
                         gameData, targetId, redirectEffective);
 
                 if (redirectEffective > 0) {
-                    if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                         int lifeLoss = redirectEffective
                                 * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                         gameData.playerLifeTotals.put(targetId,

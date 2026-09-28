@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -148,6 +149,7 @@ public class TurnProgressionService {
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
             gameData.onlyPermanentCanAttackThisCombatId = null;
+            gameData.onlyPermanentsCanAttackThisCombatIds = null;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
 
@@ -841,6 +843,7 @@ public class TurnProgressionService {
         gameData.clearGreatestStackSourceCountThisTurn();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.clearSpellsCastFromHandThisTurn();
+        gameData.clearSpellsCastFromOutsideHandThisTurn();
         gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
@@ -909,6 +912,7 @@ public class TurnProgressionService {
         gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
+        gameData.creatureSubtypeDeathPowerThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
@@ -939,6 +943,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageToken.class);
         gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
+        gameData.clearDelayedActions(DelayedCombatDamageEffect.class);
         gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
@@ -996,6 +1001,7 @@ public class TurnProgressionService {
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
+        gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
@@ -1023,6 +1029,7 @@ public class TurnProgressionService {
         gameData.additionalCombatReturnActivePlayerId = null;
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
+        gameData.onlyPermanentsCanAttackThisCombatIds = null;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;

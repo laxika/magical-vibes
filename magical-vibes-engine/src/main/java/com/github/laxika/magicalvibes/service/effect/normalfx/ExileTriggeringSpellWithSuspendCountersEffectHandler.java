@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspendCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,7 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
                 .findFirst()
                 .orElse(null);
         if (spell == null) return;
+        if (suspendEffect.skipIfCastFromExile() && spell.getSourceZone() == Zone.EXILE) return;
 
         Card card = spell.getCard();
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : spell.getControllerId();
@@ -57,5 +60,12 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
                 " is exiled with " + suspendEffect.counters() + " time counters and gains suspend."));
         log.info("Game {} - {} exiled with {} suspend counters", gameData.id,
                 card.getName(), suspendEffect.counters());
+
+        if (suspendEffect.followUp() != null) {
+            int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+            if (effectIndex >= 0) {
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(suspendEffect.followUp()));
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "276")
 @CardRegistration(set = "SIR", collectorNumber = "269")
+@CardRegistration(set = "WHO", collectorNumber = "284")
 public class GameTrail extends Card {
 
     public GameTrail() {

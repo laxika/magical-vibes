@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -21,7 +22,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,10 @@ public class SagaChapterService {
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
+    @Autowired
+    @Lazy
+    private PlayerInputService playerInputService;
+
     public SagaChapterService(GameQueryService gameQueryService,
                               GameLogService gameLogService,
                               @Lazy TriggerCollectionService triggerCollectionService) {
@@ -47,13 +54,53 @@ public class SagaChapterService {
     }
 
     public void initializeSaga(GameData gameData, Permanent sagaPermanent, Card card, UUID controllerId) {
+        int maximumChapter = maximumChapter(card);
+        if (maximumChapter > 0 && hasReadAhead(gameData, controllerId)) {
+            playerInputService.beginNumberChoice(gameData, controllerId, sagaPermanent.getId(), 1, maximumChapter);
+            return;
+        }
+
+        initializeSagaAtChapter(gameData, sagaPermanent, card, controllerId, 1);
+    }
+
+    public void completeReadAheadIfPresent(GameData gameData, Permanent sagaPermanent) {
+        if (sagaPermanent == null || !sagaPermanent.getCard().isSaga()
+                || sagaPermanent.getChosenNumber() < 1) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, sagaPermanent.getId());
+        if (controllerId == null || !hasReadAhead(gameData, controllerId)) {
+            return;
+        }
+
+        initializeSagaAtChapter(gameData, sagaPermanent, sagaPermanent.getCard(), controllerId,
+                sagaPermanent.getChosenNumber());
+    }
+
+    private void initializeSagaAtChapter(GameData gameData, Permanent sagaPermanent, Card card,
+                                         UUID controllerId, int chapter) {
         int loreCounters = gameQueryService.replaceCounters(
-                gameData, sagaPermanent, CounterType.LORE, 1, controllerId);
+                gameData, sagaPermanent, CounterType.LORE, chapter, controllerId);
         sagaPermanent.setCounterCount(CounterType.LORE, loreCounters);
-        gameLogService.append(gameData, GameLog.cardThen(card, " gets a lore counter (1)."));
-        log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
+        gameLogService.append(gameData, GameLog.cardThen(card, " enters with " + chapter + " lore counter(s)."));
+        log.info("Game {} - {} enters with lore counter(s) {}", gameData.id, card.getName(), chapter);
         triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
-        triggerSagaChapter(gameData, sagaPermanent, card, controllerId, 1);
+        triggerSagaChapter(gameData, sagaPermanent, card, controllerId, chapter);
+    }
+
+    private boolean hasReadAhead(GameData gameData, UUID controllerId) {
+        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .anyMatch(source -> gameQueryService.hasActiveStaticEffect(
+                        gameData, source, ReadAheadEffect.class));
+    }
+
+    private int maximumChapter(Card card) {
+        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_VI).isEmpty()) return 6;
+        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
+        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
+        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
+        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
+        return card.getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty() ? 0 : 1;
     }
 
     /**
@@ -67,6 +114,7 @@ public class SagaChapterService {
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
             case 4 -> EffectSlot.SAGA_CHAPTER_IV;
             case 5 -> EffectSlot.SAGA_CHAPTER_V;
+            case 6 -> EffectSlot.SAGA_CHAPTER_VI;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -80,6 +128,7 @@ public class SagaChapterService {
             case 3 -> "III";
             case 4 -> "IV";
             case 5 -> "V";
+            case 6 -> "VI";
             default -> String.valueOf(loreCount);
         };
 

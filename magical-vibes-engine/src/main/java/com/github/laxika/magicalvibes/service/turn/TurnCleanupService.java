@@ -363,6 +363,7 @@ public class TurnCleanupService {
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
+        gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
@@ -379,6 +380,7 @@ public class TurnCleanupService {
         gameData.damageLifeFloorsUntilEndOfTurn.clear();
         gameData.damageReplacementsThisTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
+        gameData.playersCantLoseLifeThisTurn = false;
         gameData.playersCantSearchLibrariesThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
@@ -447,6 +449,7 @@ public class TurnCleanupService {
         gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
         gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();

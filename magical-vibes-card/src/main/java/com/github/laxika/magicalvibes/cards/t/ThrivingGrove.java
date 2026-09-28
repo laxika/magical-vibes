@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "171")
 @CardRegistration(set = "TLE", collectorNumber = "261")
 @CardRegistration(set = "TMC", collectorNumber = "77")
+@CardRegistration(set = "WHO", collectorNumber = "325")
 public class ThrivingGrove extends Card {
 
     public ThrivingGrove() {

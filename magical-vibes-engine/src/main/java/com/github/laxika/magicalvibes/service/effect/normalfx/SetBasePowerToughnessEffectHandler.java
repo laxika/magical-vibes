@@ -55,6 +55,27 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        if (e.scope() == GrantScope.OPPONENT_CREATURES) {
+            int count = 0;
+            for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
+                if (battlefieldEntry.getKey().equals(entry.getControllerId())) {
+                    continue;
+                }
+                for (Permanent permanent : battlefieldEntry.getValue()) {
+                    if (!gameQueryService.isCreature(gameData, permanent)) {
+                        continue;
+                    }
+                    applyEffect(gameData, entry, e, permanent);
+                    count++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" sets the base power and toughness of " + count
+                            + " opponent creature(s) to " + e.power() + "/" + e.toughness()
+                            + " until end of turn.").build());
+            return;
+        }
+
         if (e.scope() == GrantScope.TARGET) {
             List<UUID> targetIds = entry.targetsForEffect(e);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

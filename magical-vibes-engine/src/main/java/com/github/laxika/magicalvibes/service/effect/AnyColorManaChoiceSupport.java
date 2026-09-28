@@ -338,8 +338,11 @@ public final class AnyColorManaChoiceSupport {
                         playerId, amount, effect.spellOnlySubtypes());
             }
             if (effect.restriction() == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY) {
-                return ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
-                        playerId, amount, effect.subtype());
+                return effect.spellOnlySubtypes().isEmpty()
+                        ? ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.subtype())
+                        : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.spellOnlySubtypes());
             }
             if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
                 return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
@@ -455,8 +458,11 @@ public final class AnyColorManaChoiceSupport {
                     ? null
                     : ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
-                    new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
-                            playerId, amount, effect.subtype(), fromCreature);
+                    effect.spellOnlySubtypes().isEmpty()
+                            ? new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
+                            playerId, amount, effect.subtype(), fromCreature)
+                            : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                            playerId, amount, effect.spellOnlySubtypes());
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->

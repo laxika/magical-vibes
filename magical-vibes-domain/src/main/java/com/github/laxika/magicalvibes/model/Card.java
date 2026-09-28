@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -840,6 +841,7 @@ public class Card {
         effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
             case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case ConditionalReplacementEffect e -> {
                 if (e.baseEffect() != null) registerEffectTargetIndex(e.baseEffect(), targetIndex);
                 registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
@@ -1729,6 +1731,7 @@ public class Card {
      * Returns 0 if the card has no chapter abilities.
      */
     public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_VI).isEmpty()) return 6;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
