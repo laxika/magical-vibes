@@ -19,6 +19,12 @@ import java.util.Set;
 @CardRegistration(set = "DMR", collectorNumber = "261")
 @CardRegistration(set = "YEOE", collectorNumber = "40")
 @CardRegistration(set = "ECC", collectorNumber = "176")
+@CardRegistration(set = "PIP", collectorNumber = "316")
+@CardRegistration(set = "PIP", collectorNumber = "528")
+@CardRegistration(set = "PIP", collectorNumber = "844")
+@CardRegistration(set = "PIP", collectorNumber = "1056")
+@CardRegistration(set = "DSC", collectorNumber = "326")
+@CardRegistration(set = "LTC", collectorNumber = "346")
 public class WoodlandCemetery extends Card {
 
     public WoodlandCemetery() {

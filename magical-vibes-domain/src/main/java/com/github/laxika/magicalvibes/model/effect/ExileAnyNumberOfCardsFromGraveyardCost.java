@@ -9,13 +9,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param predicate the cards that may be exiled
  * @param genericReductionPerCard the generic mana reduction for each card exiled
+ * @param maxCards the maximum number of cards that may be exiled
  */
-public record ExileAnyNumberOfCardsFromGraveyardCost(CardPredicate predicate, int genericReductionPerCard)
+public record ExileAnyNumberOfCardsFromGraveyardCost(
+        CardPredicate predicate, int genericReductionPerCard, int maxCards)
         implements CostEffect {
+
+    public ExileAnyNumberOfCardsFromGraveyardCost(CardPredicate predicate, int genericReductionPerCard) {
+        this(predicate, genericReductionPerCard, Integer.MAX_VALUE);
+    }
 
     public ExileAnyNumberOfCardsFromGraveyardCost {
         if (genericReductionPerCard < 0) {
             throw new IllegalArgumentException("generic reduction must not be negative");
+        }
+        if (maxCards < 0) {
+            throw new IllegalArgumentException("maximum number of cards must not be negative");
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AngelicPage.class, CoralMerfolk.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AngelicPage.class, Forest.class, GrizzlyBears.class})
 class AngelicPageTest extends BaseCardTest {
 
     @Test
@@ -41,6 +40,19 @@ class AngelicPageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not boost a creature that stops blocking before resolution")
+    void doesNotBoostTargetThatStopsBlockingBeforeResolution() {
+        Permanent blocker = addAngelicPageAndCombatCreature(false, true, player2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(0);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Does not boost a creature that stops attacking before resolution")
     void doesNotBoostTargetThatStopsAttackingBeforeResolution() {
         Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
@@ -62,18 +74,6 @@ class AngelicPageTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bystander.getId()))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisplayName("Cannot target a creature that is neither attacking nor blocking")
-    void cannotTargetNonCombatCreatureUpstreamReview() {
-        addAngelicPage();
-        Permanent target = addCreatureReady(player1, new CoralMerfolk());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -167,16 +167,4 @@ class AngelicPageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    @Test
-    @DisplayName("Does not boost a target that stops attacking before resolution")
-    void targetMustStillBeAttackingWhenAbilityResolves() {
-        Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
-
-        harness.activateAbility(player1, 0, null, attacker.getId());
-        attacker.setAttacking(false);
-        harness.passBothPriorities();
-
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-    }
 }

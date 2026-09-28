@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,27 +14,38 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mourning.class, GrizzlyBears.class, FountainOfYouth.class})
 class MourningTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets -2/-0")
     void enchantedCreatureGetsMinusTwoPower() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new Mourning());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Mourning());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("Mourning only affects its enchanted creature")
+    void onlyEnchantedCreatureGetsMinusTwoPower() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Mourning());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Activating {B} returns Mourning to its owner's hand")
     void activatedAbilityReturnsAuraToHand() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new Mourning());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Mourning());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 1, null, null);
@@ -47,8 +59,7 @@ class MourningTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Mourning attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Mourning()));
         harness.addMana(player1, ManaColor.BLACK, 1);

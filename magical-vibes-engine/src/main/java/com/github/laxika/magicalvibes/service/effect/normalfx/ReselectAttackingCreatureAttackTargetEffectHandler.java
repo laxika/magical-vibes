@@ -31,6 +31,8 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ReselectAttackingCreatureAttackTargetEffect reselectEffect =
+                (ReselectAttackingCreatureAttackTargetEffect) effect;
         UUID attackerId = entry.getTargetIds().isEmpty()
                 ? entry.getTargetId()
                 : entry.getTargetIds().getFirst();
@@ -51,13 +53,15 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
                 .filter(playerId -> !playerId.equals(attackerControllerId))
                 .filter(playerId -> attackLegalityService.canAttackDefender(gameData, attacker, playerId))
                 .toList();
-        List<UUID> validPermanentIds = gameData.orderedPlayerIds.stream()
-                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                .filter(permanent -> validAttackTargetIds.contains(permanent.getId()))
-                .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent)))
-                .map(Permanent::getId)
-                .filter(targetId -> attackLegalityService.canAttackDefender(gameData, attacker, targetId))
-                .toList();
+        List<UUID> validPermanentIds = reselectEffect.playersOnly()
+                ? List.of()
+                : gameData.orderedPlayerIds.stream()
+                        .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
+                        .filter(permanent -> validAttackTargetIds.contains(permanent.getId()))
+                        .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent)))
+                        .map(Permanent::getId)
+                        .filter(targetId -> attackLegalityService.canAttackDefender(gameData, attacker, targetId))
+                        .toList();
 
         if (validPlayerIds.isEmpty() && validPermanentIds.isEmpty()) {
             return;

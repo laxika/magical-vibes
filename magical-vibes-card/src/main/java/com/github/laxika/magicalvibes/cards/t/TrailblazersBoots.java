@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "208")
+@CardRegistration(set = "OTC", collectorNumber = "269")
 public class TrailblazersBoots extends Card {
 
     public TrailblazersBoots() {

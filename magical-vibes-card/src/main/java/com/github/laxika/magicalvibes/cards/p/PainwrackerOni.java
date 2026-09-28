@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class PainwrackerOni extends Card {
 
     public PainwrackerOni() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
                 new NotCondition(new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.OGRE))),
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER)
         ));

@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "482")
 @CardRegistration(set = "PIO", collectorNumber = "213")
 @CardRegistration(set = "C15", collectorNumber = "214")
+@CardRegistration(set = "SLD", collectorNumber = "2471")
 public class Counterflux extends Card {
 
     public Counterflux() {

@@ -25,6 +25,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "214")
+@CardRegistration(set = "SOC", collectorNumber = "323")
+@CardRegistration(set = "TDC", collectorNumber = "299")
+@CardRegistration(set = "LCC", collectorNumber = "279")
 public class PrismariCommand extends Card {
 
     public PrismariCommand() {

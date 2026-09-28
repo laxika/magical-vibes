@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "88")
+@CardRegistration(set = "MSC", collectorNumber = "165")
+@CardRegistration(set = "MSC", collectorNumber = "363")
 public class IntoTheTimeVortex extends Card {
 
     public IntoTheTimeVortex() {

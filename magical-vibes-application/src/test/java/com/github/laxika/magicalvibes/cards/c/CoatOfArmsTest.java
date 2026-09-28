@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.StandingTroops;
 import com.github.laxika.magicalvibes.cards.w.WelkinHawk;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,8 +13,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,10 +23,7 @@ class CoatOfArmsTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new CoatOfArms()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new CoatOfArms(), "{5}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -39,10 +33,7 @@ class CoatOfArmsTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Coat of Arms onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new CoatOfArms()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new CoatOfArms(), "{5}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -219,12 +210,10 @@ class CoatOfArmsTest extends BaseCardTest {
     void bonusAppliesOnResolve() {
         Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
-        harness.setHand(player1, List.of(new CoatOfArms()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
 
         assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(1);
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new CoatOfArms(), "{5}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(2);

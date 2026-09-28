@@ -16,6 +16,9 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "193")
 @CardRegistration(set = "PIO", collectorNumber = "224")
+@CardRegistration(set = "MSC", collectorNumber = "282")
+@CardRegistration(set = "MSC", collectorNumber = "423")
+@CardRegistration(set = "AFC", collectorNumber = "185")
 public class FleecemaneLion extends Card {
 
     public FleecemaneLion() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1558")
+@CardRegistration(set = "C20", collectorNumber = "11")
 public class KelsienThePlague extends Card {
 
     public KelsienThePlague() {

@@ -93,7 +93,7 @@ class VenatHeartOfHydaelynTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(hydaelyn.getCard().getName()).isEqualTo("Hydaelyn, the Mothercrystal");
     }
@@ -111,7 +111,7 @@ class VenatHeartOfHydaelynTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

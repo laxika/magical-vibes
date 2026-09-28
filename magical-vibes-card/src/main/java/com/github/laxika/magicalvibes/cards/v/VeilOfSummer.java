@@ -17,7 +17,9 @@ import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "198")
 @CardRegistration(set = "SLD", collectorNumber = "1024")
+@CardRegistration(set = "SLD", collectorNumber = "2348")
 @CardRegistration(set = "SOA", collectorNumber = "60")
+@CardRegistration(set = "MB2", collectorNumber = "75")
 public class VeilOfSummer extends Card {
 
     public VeilOfSummer() {

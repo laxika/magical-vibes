@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1791")
+@CardRegistration(set = "AFC", collectorNumber = "49")
 public class KarazikarTheEyeTyrant extends Card {
 
     public KarazikarTheEyeTyrant() {

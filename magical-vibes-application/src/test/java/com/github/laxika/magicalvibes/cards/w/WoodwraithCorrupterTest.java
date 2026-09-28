@@ -21,28 +21,30 @@ class WoodwraithCorrupterTest extends BaseCardTest {
     @Test
     @DisplayName("Target Forest becomes a permanent 4/4 black and green Elemental Horror")
     void targetForestBecomesPermanentAnimation() {
-        addCorrupter(player1);
-        Permanent forest = addForest(player1);
+        Permanent corrupter = addCreatureReady(player1, new WoodwraithCorrupter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         addActivationMana(player1);
 
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
+        assertThat(corrupter.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, forest))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-        assertThat(forest.getGrantedSubtypes())
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest))
                 .containsExactlyInAnyOrder(CardSubtype.ELEMENTAL, CardSubtype.HORROR);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
     }
 
     @Test
     @DisplayName("Permanent Forest animation survives cleanup")
     void animationSurvivesCleanup() {
-        addCorrupter(player1);
-        Permanent forest = addForest(player1);
+        addCreatureReady(player1, new WoodwraithCorrupter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         addActivationMana(player1);
 
         harness.activateAbility(player1, 0, null, forest.getId());
@@ -54,15 +56,16 @@ class WoodwraithCorrupterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, forest))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.ELEMENTAL, CardSubtype.HORROR);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a non-Forest land")
     void cannotTargetNonForest() {
-        addCorrupter(player1);
-        Permanent mountain = new Permanent(new Mountain());
-        mountain.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mountain);
+        addCreatureReady(player1, new WoodwraithCorrupter());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         addActivationMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mountain.getId()))
@@ -70,18 +73,22 @@ class WoodwraithCorrupterTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a Forest");
     }
 
-    private Permanent addCorrupter(Player player) {
-        Permanent permanent = new Permanent(new WoodwraithCorrupter());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Can target a Forest controlled by an opponent")
+    void canTargetOpponentsForest() {
+        addCreatureReady(player1, new WoodwraithCorrupter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        addActivationMana(player1);
 
-    private Permanent addForest(Player player) {
-        Permanent permanent = new Permanent(new Forest());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, forest))
+                .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
     }
 
     private void addActivationMana(Player player) {

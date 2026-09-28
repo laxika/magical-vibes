@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPermanentEffect;
 
 @CardRegistration(set = "STX", collectorNumber = "176")
+@CardRegistration(set = "SOC", collectorNumber = "303")
 public class DeadlyBrew extends Card {
 
     public DeadlyBrew() {

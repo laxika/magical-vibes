@@ -44,6 +44,13 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
                 || cardIds.stream().anyMatch(id -> gameData.findExiledCard(id) == null)) {
             throw new IllegalStateException("Choose distinct cards from the offered exiled cards");
         }
+        if (interaction.maxTotalManaValue() != null
+                && cardIds.stream()
+                .map(gameData::findExiledCard)
+                .mapToInt(exiled -> exiled.card().getManaValue())
+                .sum() > interaction.maxTotalManaValue()) {
+            throw new IllegalStateException("The chosen cards exceed the total mana value limit");
+        }
         if (interaction.castAsCopies()) {
             gameData.interaction.clearAwaitingInput();
             Set<UUID> chosenIds = new HashSet<>(cardIds);

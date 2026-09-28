@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 
 @CardRegistration(set = "AFR", collectorNumber = "206")
+@CardRegistration(set = "HBG", collectorNumber = "224")
 public class SylvanShepherd extends Card {
 
     public SylvanShepherd() {

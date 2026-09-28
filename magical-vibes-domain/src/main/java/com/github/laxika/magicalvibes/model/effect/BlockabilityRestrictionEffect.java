@@ -50,6 +50,11 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
         return false;
     }
 
+    /** Whether this creature can't be blocked while the defending player has a rad counter. */
+    default boolean unblockableIfDefenderHasRadCounters() {
+        return false;
+    }
+
     /**
      * Whether {@link #unblockableIfDefenderControls()} models a landwalk ability (CR 702.14a) — snow
      * landwalk in particular, which checks a supertype as well as a land type and so cannot be a

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "38")
+@CardRegistration(set = "C21", collectorNumber = "18")
 public class LosheelClockworkScholar extends Card {
 
     public LosheelClockworkScholar() {

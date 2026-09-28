@@ -24,6 +24,7 @@ public enum Keyword {
     INDESTRUCTIBLE,
     CONVOKE,
     DEVOID,
+    DEWORDED,
     IMPROVISE,
     HARMONIZE,
     HASTE,
@@ -32,6 +33,7 @@ public enum Keyword {
     RIOT,
     TRAMPLE,
     LIFELINK,
+    PROLIFERATELINK,
     FORESTWALK,
     MOUNTAINWALK,
     ISLANDWALK,
@@ -47,6 +49,7 @@ public enum Keyword {
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
+    MELEE,
     ENLIST,
     AGGRESSIVE,
     DETHRONE,
@@ -72,6 +75,7 @@ public enum Keyword {
     HORSEMANSHIP,
     SHADOW,
     FLANKING,
+    DEMONSTRATE,
     CONSPIRE,
     CASUALTY,
     REPLICATE,
@@ -79,6 +83,8 @@ public enum Keyword {
     JUMP,
     JUMP_START,
     BANDING,
+    INGEST,
+    TANTRUM,
     EMERGE,
     COVEN,
     MELD,
@@ -87,6 +93,7 @@ public enum Keyword {
     MORPH,
     MUTATE,
     SKULK,
+    NIMBLE,
     SOULBOND,
     PARTNER,
     MIRACLE,
@@ -142,7 +149,11 @@ public enum Keyword {
     DISGUISE,
     STATION,
     FREERUNNING,
-    DOUBLE_TEAM;
+    DOUBLE_TEAM,
+    HOPE,
+    GRAZING,
+    PRAY,
+    FLURRY;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

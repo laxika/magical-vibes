@@ -44,9 +44,11 @@ public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerB
         String cardName = entry.getCard().getName();
         List<Card> hand = gameData.playerHands.get(controllerId);
 
+        entry.setEventValue(0);
         if (hand != null && !hand.isEmpty()) {
             List<Card> discarded = new ArrayList<>(hand);
             int discardCount = discarded.size();
+            entry.setEventValue(discardCount);
             hand.clear();
             gameData.discardCausedByOpponent = false;
 

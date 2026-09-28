@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.WinGameIfPlayerAttackedByCont
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1560")
+@CardRegistration(set = "DMC", collectorNumber = "39")
+@CardRegistration(set = "DMC", collectorNumber = "61")
 public class RamsesAssassinLord extends Card {
 
     public RamsesAssassinLord() {

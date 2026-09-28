@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "57")
 @CardRegistration(set = "AKR", collectorNumber = "64")
+@CardRegistration(set = "C20", collectorNumber = "112")
 public class HieroglyphicIllumination extends Card {
 
     public HieroglyphicIllumination() {

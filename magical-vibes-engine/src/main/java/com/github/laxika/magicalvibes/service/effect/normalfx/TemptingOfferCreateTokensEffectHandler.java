@@ -35,7 +35,9 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
             return;
         }
 
-        createTokens(gameData, entry, offer, controllerId);
+        if (offer.controllerCreatesFirst()) {
+            createTokens(gameData, entry, offer, controllerId);
+        }
 
         List<UUID> opponents = offer.remainingOpponentIds() == null
                 ? new ArrayList<>(AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
@@ -44,7 +46,8 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (!opponents.isEmpty()) {
             promptNext(gameData, entry.getCard(), new TemptingOfferCreateTokensEffect(
-                    offer.tokenEffect(), List.copyOf(opponents), controllerId));
+                    offer.tokenEffect(), List.copyOf(opponents), controllerId,
+                    offer.controllerCreatesFirst()));
         }
     }
 
@@ -54,8 +57,8 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
                 sourceCard,
                 opponentId,
                 List.of(effect),
-                "Create X 1/1 red Elemental creature tokens? If you do, "
-                        + sourceCard.getName() + "'s controller creates X more."));
+                sourceCard.getName() + " — Create the offered tokens? If you do, "
+                        + sourceCard.getName() + "'s controller creates that many more."));
         log.info("Game {} - offering {} the {} token choice", gameData.id,
                 gameData.playerIdToName.get(opponentId), sourceCard.getName());
     }
@@ -73,7 +76,8 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
         if (!remaining.isEmpty()) {
             promptNext(gameData, ability.sourceCard(), new TemptingOfferCreateTokensEffect(
-                    effect.tokenEffect(), List.copyOf(remaining), effect.abilityControllerId()));
+                    effect.tokenEffect(), List.copyOf(remaining), effect.abilityControllerId(),
+                    effect.controllerCreatesFirst()));
         }
     }
 

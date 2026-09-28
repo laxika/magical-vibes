@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "167")
+@CardRegistration(set = "AFC", collectorNumber = "231")
 public class CrucibleOfTheSpiritDragon extends Card {
 
     public CrucibleOfTheSpiritDragon() {

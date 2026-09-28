@@ -19,6 +19,7 @@ public class TypeLineParser {
             "Basic", CardSupertype.BASIC,
             "Legendary", CardSupertype.LEGENDARY,
             "Snow", CardSupertype.SNOW,
+            "Ongoing", CardSupertype.ONGOING,
             "World", CardSupertype.WORLD
     );
 

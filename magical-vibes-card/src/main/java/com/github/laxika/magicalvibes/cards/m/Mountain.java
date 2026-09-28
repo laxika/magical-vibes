@@ -8,11 +8,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "2ED", collectorNumber = "298")
 @CardRegistration(set = "2ED", collectorNumber = "299")
+@CardRegistration(set = "HBG", collectorNumber = "302")
+@CardRegistration(set = "HBG", collectorNumber = "304")
 @CardRegistration(set = "ARN", collectorNumber = "77")
 @CardRegistration(set = "DPA", collectorNumber = "106")
 @CardRegistration(set = "SLD", collectorNumber = "1953")
 @CardRegistration(set = "SLD", collectorNumber = "2079")
 @CardRegistration(set = "SLD", collectorNumber = "2119")
+@CardRegistration(set = "SLD", collectorNumber = "2418")
+@CardRegistration(set = "SLD", collectorNumber = "2419")
+@CardRegistration(set = "SLD", collectorNumber = "2420")
+@CardRegistration(set = "SLD", collectorNumber = "2512")
 @CardRegistration(set = "ACR", collectorNumber = "108")
 @CardRegistration(set = "DMU", collectorNumber = "273")
 @CardRegistration(set = "C13", collectorNumber = "349")
@@ -556,6 +562,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CMM", collectorNumber = "448")
 @CardRegistration(set = "WHO", collectorNumber = "202")
 @CardRegistration(set = "WHO", collectorNumber = "203")
+@CardRegistration(set = "PIP", collectorNumber = "323")
+@CardRegistration(set = "PIP", collectorNumber = "324")
+@CardRegistration(set = "PIP", collectorNumber = "851")
+@CardRegistration(set = "PIP", collectorNumber = "852")
+@CardRegistration(set = "HBG", collectorNumber = "301")
+@CardRegistration(set = "HBG", collectorNumber = "303")
+@CardRegistration(set = "40K", collectorNumber = "315")
+@CardRegistration(set = "40K", collectorNumber = "316")
 public class Mountain extends Card {
 
     public Mountain() {

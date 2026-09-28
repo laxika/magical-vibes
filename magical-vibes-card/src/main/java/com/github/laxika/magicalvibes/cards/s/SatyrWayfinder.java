@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "BNG", collectorNumber = "136")
 @CardRegistration(set = "UMA", collectorNumber = "180")
 @CardRegistration(set = "EA2", collectorNumber = "17")
+@CardRegistration(set = "TDC", collectorNumber = "267")
+@CardRegistration(set = "OTC", collectorNumber = "204")
+@CardRegistration(set = "C20", collectorNumber = "188")
 public class SatyrWayfinder extends Card {
 
     public SatyrWayfinder() {

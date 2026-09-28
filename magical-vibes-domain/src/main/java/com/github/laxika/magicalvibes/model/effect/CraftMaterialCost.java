@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,29 +14,48 @@ import java.util.List;
  */
 public record CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
                                 List<CardSubtype> requiredSubtypes, boolean nonlandOnly,
-                                boolean requireActivatedAbility, boolean allowsAdditionalMaterials) implements CostEffect {
+                                boolean requireActivatedAbility, boolean allowsAdditionalMaterials,
+                                CardPredicate requiredCardPredicate, boolean graveyardOnly,
+                                boolean requiresSharedCardType) implements CostEffect {
+
+    public CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
+                             List<CardSubtype> requiredSubtypes, boolean nonlandOnly,
+                             boolean requireActivatedAbility, boolean allowsAdditionalMaterials) {
+        this(minimumCount, requiredType, requiredSubtype, requiredSubtypes, nonlandOnly,
+                requireActivatedAbility, allowsAdditionalMaterials, null, false, false);
+    }
+
+    public CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
+                             List<CardSubtype> requiredSubtypes, boolean nonlandOnly,
+                             boolean requireActivatedAbility, boolean allowsAdditionalMaterials,
+                             CardPredicate requiredCardPredicate, boolean graveyardOnly) {
+        this(minimumCount, requiredType, requiredSubtype, requiredSubtypes, nonlandOnly,
+                requireActivatedAbility, allowsAdditionalMaterials, requiredCardPredicate,
+                graveyardOnly, false);
+    }
 
     public CraftMaterialCost() {
-        this(1, CardType.ARTIFACT, null, List.of(), false, false, false);
+        this(1, CardType.ARTIFACT, null, List.of(), false, false, false, null, false, false);
     }
 
     public CraftMaterialCost(int minimumCount, CardType requiredType, boolean nonlandOnly,
                              boolean requireActivatedAbility) {
-        this(minimumCount, requiredType, null, List.of(), nonlandOnly, requireActivatedAbility, false);
+        this(minimumCount, requiredType, null, List.of(), nonlandOnly, requireActivatedAbility, false,
+                null, false, false);
     }
 
     public CraftMaterialCost(int minimumCount, CardType requiredType, CardSubtype requiredSubtype,
                              boolean nonlandOnly, boolean requireActivatedAbility) {
         this(minimumCount, requiredType, requiredSubtype, List.of(), nonlandOnly,
-                requireActivatedAbility, false);
+                requireActivatedAbility, false, null, false, false);
     }
 
     public CraftMaterialCost(CardSubtype requiredSubtype) {
-        this(1, null, requiredSubtype, List.of(), false, false, false);
+        this(1, null, requiredSubtype, List.of(), false, false, false, null, false, false);
     }
 
     public CraftMaterialCost(List<CardSubtype> requiredSubtypes) {
-        this(requiredSubtypes.size(), null, null, requiredSubtypes, false, false, false);
+        this(requiredSubtypes.size(), null, null, requiredSubtypes, false, false, false, null, false, false);
     }
 
     public static CraftMaterialCost withRequiredSubtypes(CardSubtype... requiredSubtypes) {
@@ -60,14 +80,26 @@ public record CraftMaterialCost(int minimumCount, CardType requiredType, CardSub
 
     /** The material form used by The Enigma Jewel. */
     public static CraftMaterialCost nonlandsWithActivatedAbilities(int minimumCount) {
-        return new CraftMaterialCost(minimumCount, null, null, List.of(), true, true, true);
+        return new CraftMaterialCost(minimumCount, null, null, List.of(), true, true, true, null, false, false);
     }
 
     public static CraftMaterialCost oneOrMore() {
-        return new CraftMaterialCost(1, null, null, List.of(), false, false, true);
+        return new CraftMaterialCost(1, null, null, List.of(), false, false, true, null, false, false);
     }
 
     public static CraftMaterialCost oneOrMore(CardSubtype requiredSubtype) {
-        return new CraftMaterialCost(1, null, requiredSubtype, List.of(), false, false, true);
+        return new CraftMaterialCost(1, null, requiredSubtype, List.of(), false, false, true, null, false, false);
+    }
+
+    /** Craft from the controller's graveyard using an arbitrary card filter. */
+    public static CraftMaterialCost fromGraveyard(int minimumCount, CardPredicate predicate) {
+        return new CraftMaterialCost(minimumCount, null, null, List.of(), false, false, true,
+                predicate, true, false);
+    }
+
+    /** Craft with exactly two materials that share at least one card type. */
+    public static CraftMaterialCost twoSharingCardType() {
+        return new CraftMaterialCost(2, null, null, List.of(), false, false, false,
+                null, false, true);
     }
 }

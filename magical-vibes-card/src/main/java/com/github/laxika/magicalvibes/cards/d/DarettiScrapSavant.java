@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingArtifactUnderControlEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "213")
 @CardRegistration(set = "CMM", collectorNumber = "531")
 @CardRegistration(set = "C14", collectorNumber = "33")
+@CardRegistration(set = "C21", collectorNumber = "164")
 public class DarettiScrapSavant extends Card {
 
     private static final String EMBLEM_TEXT =
@@ -55,7 +56,7 @@ public class DarettiScrapSavant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new CreateEmblemEffect(
-                        List.of(new RegisterDelayedReturnDyingArtifactUnderControlEffect()), EMBLEM_TEXT)),
+                        List.of(new EmblemArtifactGraveyardReturnTriggerEffect()), EMBLEM_TEXT)),
                 "−10: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));
     }

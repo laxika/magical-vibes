@@ -257,6 +257,23 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Inventory Management: select the controlled Auras and Equipment to reattach individually. */
+    record InventoryManagementAttachmentSelection(UUID controllerId)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Selects any number of captured Auras and Equipment to move onto a death-trigger target. */
+    record ReturnAurasAndAttachEquipmentToTargetCreature(UUID targetCreatureId,
+                                                         List<UUID> auraCardIds,
+                                                         List<UUID> equipmentPermanentIds)
+            implements MultiPermanentChoiceContext {
+
+        public ReturnAurasAndAttachEquipmentToTargetCreature {
+            auraCardIds = List.copyOf(auraCardIds);
+            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
+        }
+    }
+
     /** The controller may choose an Equipment attached to a creature they control to unattach. */
     record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
@@ -378,6 +395,10 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Phase out any number of controlled permanents that received counters during this resolution. */
+    record PhaseOutPermanentsThatReceivedCountersThisWay() implements MultiPermanentChoiceContext {
+    }
+
     /** Resolve one choice in a repeated immediate controller-creature flicker. */
     record FlickerAnyNumber(StackEntry resolvingEntry,
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,
@@ -497,6 +518,30 @@ public sealed interface MultiPermanentChoiceContext {
             StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** Each player chooses a nontoken creature for Danse Macabre before all are sacrificed. */
+    record DanseMacabreSacrifice(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public DanseMacabreSacrifice {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
+    /** Each player chooses a creature before the chosen creatures are sacrificed together. */
+    record EachPlayerSacrificesCreature(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerSacrificesCreature {
             remainingChoosers = java.util.List.copyOf(remainingChoosers);
             accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
         }
@@ -645,6 +690,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put one or more counters on each chosen matching permanent the controller controls. */
+    record OwnPermanentCounterPlacementOnChosenPermanents(
+            CounterType counterType, int count, PermanentPredicate permanentFilter)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Put counters on the single chosen permanent on any battlefield. */
+    record AnyPermanentCounterPlacement(CounterType counterType, int count)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
     record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
             implements MultiPermanentChoiceContext {
@@ -710,6 +766,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses any number of creatures that must block this combat if able. */
+    record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
     record CulturalExchange(Card sourceCard, UUID chooserId, UUID firstPlayerId, UUID secondPlayerId,
                             List<UUID> firstChosenIds, boolean firstSelection) implements MultiPermanentChoiceContext {
@@ -734,7 +794,8 @@ public sealed interface MultiPermanentChoiceContext {
     /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
     record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
                       List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
-                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers)
+                      Set<UUID> usedSupporterIds, Map<UUID, Integer> boostPowers,
+                      Map<UUID, UUID> enlistedSupporters)
             implements MultiPermanentChoiceContext {
 
         public Enlistment {
@@ -744,6 +805,7 @@ public sealed interface MultiPermanentChoiceContext {
             remainingAttackerIds = List.copyOf(remainingAttackerIds);
             usedSupporterIds = Set.copyOf(usedSupporterIds);
             boostPowers = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(boostPowers));
+            enlistedSupporters = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(enlistedSupporters));
         }
     }
 
@@ -778,6 +840,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses another attacking creature with lesser power. */
+    record ChooseAnotherAttackingCreatureWithLesserPower() implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tap each chosen untapped creature the controller controls, then the controller creates one
      * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's
@@ -795,11 +861,16 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Tap any number of matching permanents, then queue the target-dependent reflexive ability. */
-    record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
-                                                  PermanentPredicate filter,
-                                                  CardEffect reflexiveEffect)
-            implements MultiPermanentChoiceContext {
-    }
+      record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
+                                                    PermanentPredicate filter,
+                                                    CardEffect reflexiveEffect)
+              implements MultiPermanentChoiceContext {
+      }
+
+      /** Nihiloor's optional choice of one untapped creature to tap for one opponent. */
+      record NihiloorTapChoice(StackEntry resolvingEntry, CardEffect reflexiveEffect)
+              implements MultiPermanentChoiceContext {
+      }
 
     /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */
     record TapPermanentsDrawPerTapped() implements MultiPermanentChoiceContext {
@@ -927,6 +998,14 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chose any number of matching permanents whose counters are removed as this permanent enters. */
+    record RemoveAllCountersAsEntersForCounters(UUID enteringPermanentId,
+                                                com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect effect,
+                                                UUID controllerId, Card card, UUID targetId,
+                                                boolean wasCastFromHand, int etbMode, boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** A permanent entering by sacrificing an exact number of matching permanents, or declining. */
     record SacrificePermanentsToEnter(UUID controllerId, Permanent enteringPermanent, int requiredCount)
             implements MultiPermanentChoiceContext {
@@ -992,6 +1071,18 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Promise of Loyalty: each player chose the creature that receives a vow counter and survives. */
+    record EachPlayerChoosesCreaturePutsVowCounterChoice(
+            StackEntry resolvingEntry, java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesCreaturePutsVowCounterChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
+    }
+
     /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
     record FadeAwayKeep(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
                         java.util.List<UUID> remainingPlayerIds,
@@ -1020,6 +1111,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Carries one player's optional party-role choice until the next role or final sacrifice. */
+    record EachPlayerChoosesPartyThenSacrificesRestChoice(
+            List<UUID> playerIds, int playerIndex, int roleIndex, List<UUID> keptIds,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesPartyThenSacrificesRestChoice {
+            playerIds = List.copyOf(playerIds);
+            keptIds = List.copyOf(keptIds);
+        }
+    }
+
     /**
      * Winnowing: the spell's controller chose a creature for the player at {@code playerIndex}.
      * The choices are retained by player so every player's other non-sharing creatures can be
@@ -1030,6 +1132,17 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
 
         public WinnowingChoice {
+            playerIds = List.copyOf(playerIds);
+            chosenByPlayer = Map.copyOf(chosenByPlayer);
+        }
+    }
+
+    /** Promise of Loyalty: each player chooses the creature that receives a vow counter. */
+    record PromiseOfLoyaltyChoice(List<UUID> playerIds, int playerIndex,
+                                  Map<UUID, UUID> chosenByPlayer, StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+
+        public PromiseOfLoyaltyChoice {
             playerIds = List.copyOf(playerIds);
             chosenByPlayer = Map.copyOf(chosenByPlayer);
         }
@@ -1123,6 +1236,33 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chose one creature to keep after placing a counter on it. */
+    record EachPlayerChoosesCreatureThenSacrificesRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            CounterType counterType, UUID controllerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesCreatureThenSacrificesRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
+    /** The effect controller chooses a land controlled by each player to receive a counter. */
+    record EachPlayerChoosesLandAndPutCounterChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            CounterType counterType, String sourceName, UUID chooserId)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandAndPutCounterChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
+    /** The controller of a creature chooses a contested land to gain control of. */
+    record TurfWarLandChoice(UUID creatureControllerId, UUID damagedPlayerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Will of the Council: the current player voted for a nonland permanent. */
     record WillOfTheCouncilChoice(UUID effectControllerId,
                                   java.util.List<UUID> remainingPlayerIds,
@@ -1140,6 +1280,67 @@ public sealed interface MultiPermanentChoiceContext {
         public WillOfTheCouncilChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Vault 11: Voter's Dilemma: the current player voted for up to one creature. */
+    record VoteForCreatureThenDestroyMostVotedChoice(
+            java.util.List<UUID> remainingPlayerIds,
+            java.util.Map<UUID, Integer> votes,
+            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public VoteForCreatureThenDestroyMostVotedChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Secret council: the current player secretly voted for a creature. */
+    record SecretCouncilChoice(UUID effectControllerId,
+                               java.util.List<UUID> remainingPlayerIds,
+                               java.util.Map<UUID, Integer> votes,
+                               String sourceName)
+            implements MultiPermanentChoiceContext {
+        public SecretCouncilChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Círdan the Shipwright: the current player secretly voted for a player. */
+    record ElrondFellowshipChoice(UUID effectControllerId,
+                                  java.util.List<UUID> remainingVoterIds,
+                                  java.util.List<UUID> chosenCreatureIds,
+                                  int aidVotes,
+                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ElrondFellowshipChoice {
+            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
+            chosenCreatureIds = java.util.List.copyOf(chosenCreatureIds);
+        }
+    }
+
+    /** Cirdan the Shipwright: the current player secretly voted for a player. */
+    record CirdanVoteChoice(UUID effectControllerId,
+                            java.util.List<UUID> remainingVoterIds,
+                            java.util.Map<UUID, Integer> votes,
+                            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public CirdanVoteChoice {
+            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
+    /** Círdan the Shipwright: a player chose a permanent card to put onto the battlefield. */
+    record CirdanHandChoice(UUID playerId,
+                            java.util.List<UUID> remainingPlayerIds,
+                            java.util.List<UUID> chosenCardIds,
+                            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public CirdanHandChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
         }
     }
 

@@ -47,6 +47,10 @@ public class ExileTargetCardFromGraveyardWithConditionalEffectsEffectHandler imp
 
         boolean matches = predicateEvaluationService.matchesCardPredicate(
                 targetCard, effect.matchPredicate(), entry.getCard().getId());
+        boolean secondaryMatches = !matches
+                && effect.secondaryMatchPredicate() != null
+                && predicateEvaluationService.matchesCardPredicate(
+                targetCard, effect.secondaryMatchPredicate(), entry.getCard().getId());
         if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard)) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target is no longer in a graveyard)."));
@@ -56,7 +60,9 @@ public class ExileTargetCardFromGraveyardWithConditionalEffectsEffectHandler imp
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(entry.getControllerId()) + " exiles ", targetCard,
                 " from a graveyard."));
-        CardEffect branch = matches ? effect.matchingEffect() : effect.nonMatchingEffect();
+        CardEffect branch = matches
+                ? effect.matchingEffect()
+                : secondaryMatches ? effect.secondaryMatchingEffect() : effect.nonMatchingEffect();
         int effectIndex = entry.getEffectsToResolve().indexOf(effectToResolve);
         if (effectIndex < 0) {
             throw new IllegalStateException("Could not locate conditional graveyard exile effect on stack entry");

@@ -19,6 +19,8 @@ import java.util.List;
 @CardRegistration(set = "ELD", collectorNumber = "173")
 @CardRegistration(set = "THB", collectorNumber = "197")
 @CardRegistration(set = "DBL", collectorNumber = "195")
+@CardRegistration(set = "MOC", collectorNumber = "309")
+@CardRegistration(set = "AFC", collectorNumber = "169")
 public class ReturnToNature extends Card {
 
     public ReturnToNature() {

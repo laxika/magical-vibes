@@ -28,7 +28,7 @@ public class CultOfSkaro extends Card {
 
     public CultOfSkaro() {
         addEffect(EffectSlot.ON_ATTACK, new RandomChoiceEffect(List.of(
-                new PutCounterOnEachMatchingPermanentEffect(
+                List.of(new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
                         new PermanentAllOfPredicate(List.of(
@@ -36,11 +36,11 @@ public class CultOfSkaro extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate()
                         )),
-                        EachPermanentScope.ALL_PLAYERS),
-                new DrawCardEffect(2),
-                new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
-                        List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT)),
-                new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT)
+                        EachPermanentScope.ALL_PLAYERS)),
+                List.of(new DrawCardEffect(2)),
+                List.of(new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
+                        List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT))),
+                List.of(new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT))
         )));
     }
 }

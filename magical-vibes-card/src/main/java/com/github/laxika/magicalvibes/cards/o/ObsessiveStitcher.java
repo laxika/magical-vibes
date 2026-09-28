@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "223")
+@CardRegistration(set = "AFC", collectorNumber = "189")
 public class ObsessiveStitcher extends Card {
 
     public ObsessiveStitcher() {

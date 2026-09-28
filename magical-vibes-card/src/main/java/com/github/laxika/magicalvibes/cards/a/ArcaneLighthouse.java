@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "59")
+@CardRegistration(set = "MB2", collectorNumber = "102")
+@CardRegistration(set = "SOC", collectorNumber = "361")
 public class ArcaneLighthouse extends Card {
 
     public ArcaneLighthouse() {

@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,8 +47,8 @@ class AssaultSuitTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.CLEANUP);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
+                .applyCleanupResets(gd));
         assertThat(gqs.findPermanentController(gd, creature.getId())).isEqualTo(player1.getId());
         assertThat(gqs.cantBeSacrificed(gd, creature)).isTrue();
     }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "186")
+@CardRegistration(set = "DMC", collectorNumber = "136")
 public class PathToTheWorldTree extends Card {
 
     public PathToTheWorldTree() {

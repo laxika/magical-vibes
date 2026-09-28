@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "PCA", collectorNumber = "67")
 @CardRegistration(set = "PC2", collectorNumber = "67")
 @CardRegistration(set = "TD2", collectorNumber = "61")
+@CardRegistration(set = "NCC", collectorNumber = "302")
 public class MitoticSlime extends Card {
 
     public MitoticSlime() {

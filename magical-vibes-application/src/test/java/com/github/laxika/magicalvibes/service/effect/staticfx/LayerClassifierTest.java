@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -210,6 +211,9 @@ class LayerClassifierTest {
             assertThat(LayerClassifier.classify(new BecomeCopyOfTargetCreatureEffect(), false).layers())
                     .containsExactly(Layer.L1_COPY);
             assertThat(LayerClassifier.classify(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN), false)
+                    .layers()).containsExactly(Layer.L2_CONTROL);
+            assertThat(LayerClassifier.classify(
+                    new GainControlOfTargetWhileHasCounterEffect(com.github.laxika.magicalvibes.model.CounterType.SHIELD), false)
                     .layers()).containsExactly(Layer.L2_CONTROL);
             assertThat(LayerClassifier.classify(new ControlEnchantedCreatureEffect(), false).layers())
                     .containsExactly(Layer.L2_CONTROL);

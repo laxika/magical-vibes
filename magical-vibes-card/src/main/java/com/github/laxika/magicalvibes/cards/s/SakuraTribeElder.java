@@ -11,10 +11,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "239")
+@CardRegistration(set = "SOC", collectorNumber = "285")
 @CardRegistration(set = "SLD", collectorNumber = "192")
 @CardRegistration(set = "C13", collectorNumber = "168")
 @CardRegistration(set = "CMD", collectorNumber = "169")
 @CardRegistration(set = "C15", collectorNumber = "200")
+@CardRegistration(set = "MB2", collectorNumber = "72")
+@CardRegistration(set = "NCC", collectorNumber = "307")
+@CardRegistration(set = "DSC", collectorNumber = "194")
+@CardRegistration(set = "SLD", collectorNumber = "2518")
+@CardRegistration(set = "TDC", collectorNumber = "266")
+@CardRegistration(set = "C20", collectorNumber = "187")
 public class SakuraTribeElder extends Card {
 
     public SakuraTribeElder() {

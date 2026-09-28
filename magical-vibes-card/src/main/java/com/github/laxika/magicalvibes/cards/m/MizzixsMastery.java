@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "FCA", collectorNumber = "41")
 @CardRegistration(set = "RVR", collectorNumber = "118")
 @CardRegistration(set = "C15", collectorNumber = "29")
+@CardRegistration(set = "OTC", collectorNumber = "175")
 public class MizzixsMastery extends Card {
 
     public MizzixsMastery() {

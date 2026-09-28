@@ -17,9 +17,19 @@ import java.util.List;
 
 @CardRegistration(set = "EXP", collectorNumber = "3")
 @CardRegistration(set = "EA3", collectorNumber = "22")
+@CardRegistration(set = "MSC", collectorNumber = "266")
+@CardRegistration(set = "MSC", collectorNumber = "493")
 @CardRegistration(set = "ECC", collectorNumber = "168")
 @CardRegistration(set = "TMC", collectorNumber = "73")
 @CardRegistration(set = "WHO", collectorNumber = "307")
+@CardRegistration(set = "PIP", collectorNumber = "292")
+@CardRegistration(set = "PIP", collectorNumber = "510")
+@CardRegistration(set = "PIP", collectorNumber = "820")
+@CardRegistration(set = "PIP", collectorNumber = "1038")
+@CardRegistration(set = "DSC", collectorNumber = "299")
+@CardRegistration(set = "LTC", collectorNumber = "332")
+@CardRegistration(set = "AFC", collectorNumber = "262")
+@CardRegistration(set = "C20", collectorNumber = "314")
 public class SmolderingMarsh extends Card {
 
     public SmolderingMarsh() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DGM", collectorNumber = "23")
 @CardRegistration(set = "PIO", collectorNumber = "88")
+@CardRegistration(set = "LTC", collectorNumber = "198")
 public class CryptIncursion extends Card {
 
     public CryptIncursion() {

@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureSharingTyp
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "372")
+@CardRegistration(set = "LTC", collectorNumber = "279")
+@CardRegistration(set = "AFC", collectorNumber = "208")
+@CardRegistration(set = "LCC", collectorNumber = "303")
+@CardRegistration(set = "C20", collectorNumber = "242")
 public class HeirloomBlade extends Card {
 
     public HeirloomBlade() {

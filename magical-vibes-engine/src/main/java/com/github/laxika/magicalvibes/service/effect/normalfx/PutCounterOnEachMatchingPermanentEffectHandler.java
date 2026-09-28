@@ -65,7 +65,9 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+        int amount = e.evaluateAmountPerPermanent()
+                ? 0
+                : amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
         UUID sourceCardId = source == null || source.getOriginalCard() == null
@@ -76,26 +78,38 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(source);
         int count = 0;
+        int totalPlaced = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
         // Vizier of Remedies reduces per creature by its own controller's copies, so the placed -1/-1
         // amount can differ per permanent; remember each so the trigger fires the right number of times.
         Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
+        Map<Permanent, Integer> amountsByPermanent = new LinkedHashMap<>();
         for (Permanent p : candidates) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
-            int placed = amount;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
             } else if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                 if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, p)) continue;
             }
-            placed = gameQueryService.replaceCounters(gameData, p, e.counterType(), amount,
+            int amountForPermanent = e.evaluateAmountPerPermanent()
+                    ? amountEvaluationService.evaluate(gameData, e.amount(),
+                    AmountContext.forStackEntry(entry, p))
+                    : amount;
+            amountsByPermanent.put(p, amountForPermanent);
+        }
+        for (Map.Entry<Permanent, Integer> target : amountsByPermanent.entrySet()) {
+            Permanent p = target.getKey();
+            int amountForPermanent = target.getValue();
+            int placed = gameQueryService.replaceCounters(gameData, p, e.counterType(), amountForPermanent,
                     entry.getControllerId());
             if (placed <= 0) continue;
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
-            permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, e.counterType(), placed);
+            permanentCounterSupport.notifyCountersPlaced(
+                    gameData, entry, p, placed, e.counterType());
             count++;
+            totalPlaced += placed;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                         gameData, p, entry.getControllerId());
@@ -108,10 +122,12 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         }
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-        String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
+        String counterText = totalPlaced == 1
+                ? "a " + counterName + " counter"
+                : totalPlaced + " " + counterName + " counters";
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " creature(s).").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} matching permanent(s)", gameData.id,
-                entry.getCard().getName(), amount, counterName, count);
+                entry.getCard().getName(), totalPlaced, counterName, count);
 
         for (Permanent p : plusOneTargets) {
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());

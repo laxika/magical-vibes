@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -80,7 +81,9 @@ public class WarpWorldService {
     }
 
     public void placePendingWarpWorldEnchantments(GameData gameData) {
-        Set<CardType> enterTappedTypes = gameData.warpWorldOperation.enterTappedTypesSnapshot;
+        Set<CardType> enterTappedTypes = java.util.EnumSet.noneOf(CardType.class);
+        enterTappedTypes.addAll(gameData.warpWorldOperation.enterTappedTypesSnapshot);
+        enterTappedTypes.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // Warp World's enchantment group is its own simultaneous event, separate from the earlier
         // artifact/creature/land group: these enchantments do see that group, but not each other
         // (CR 614.12).
@@ -97,13 +100,15 @@ public class WarpWorldService {
             batch.add(permanent);
 
             if (placement.attachmentTargetId() != null) {
-                boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-                if (hasControlEffect) {
+                CardEffect controlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                        .findFirst()
+                        .orElse(null);
+                if (controlEffect != null) {
                     Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
                     if (target != null) {
                         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                                new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                                controlEffect, EffectDuration.WHILE_ATTACHED,
                                 permanent.getId(), card.getName());
                     }
                 }

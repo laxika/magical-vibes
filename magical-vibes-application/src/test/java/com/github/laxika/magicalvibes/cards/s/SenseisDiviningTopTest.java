@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SenseisDiviningTop.class})
 class SenseisDiviningTopTest extends BaseCardTest {
 
     @Test
@@ -64,11 +66,34 @@ class SenseisDiviningTopTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(top.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(top);
-        assertThat(deck.getFirst().getName()).isEqualTo("Sensei's Divining Top");
+        assertThat(deck.getFirst()).isSameAs(top.getCard());
+    }
+
+    @Test
+    @DisplayName("Second ability puts the artifact on its owner's library when another player controls it")
+    void tucksItselfOnItsOwnersLibrary() {
+        SenseisDiviningTop source = new SenseisDiviningTop();
+        source.setOwnerId(player1.getId());
+        Permanent top = harness.addToBattlefieldAndReturn(player2, source);
+
+        Card drawn = new SenseisDiviningTop();
+        Card ownerLibraryCard = new SenseisDiviningTop();
+        harness.setLibrary(player2, List.of(drawn));
+        harness.setLibrary(player1, List.of(ownerLibraryCard));
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(drawn);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(source, ownerLibraryCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(top);
     }
 }

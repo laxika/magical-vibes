@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "12")
 @CardRegistration(set = "OPCA", collectorNumber = "29")
+@CardRegistration(set = "MOC", collectorNumber = "143")
 public class GlimmervoidBasin extends Card {
 
     public GlimmervoidBasin() {

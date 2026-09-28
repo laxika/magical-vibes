@@ -12,5 +12,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "SLZ", collectorNumber = "73")
 @CardRegistration(set = "SLZ", collectorNumber = "194")
 @CardRegistration(set = "SLZ", collectorNumber = "315")
+@CardRegistration(set = "MB2", collectorNumber = "67")
 public class ColossalDreadmaw extends Card {
 }

@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "M20", collectorNumber = "29")
 @CardRegistration(set = "MM3", collectorNumber = "15")
 @CardRegistration(set = "2XM", collectorNumber = "22")
+@CardRegistration(set = "MOC", collectorNumber = "194")
 public class MasterSplicer extends Card {
 
     public MasterSplicer() {

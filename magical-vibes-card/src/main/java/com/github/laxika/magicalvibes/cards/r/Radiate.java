@@ -31,6 +31,6 @@ public class Radiate extends Card {
                                 new StackEntryTargetsAnyPlayerPredicate()))
                 )),
                 "Target must be an instant or sorcery spell that targets only one permanent or player."
-        )).addEffect(EffectSlot.SPELL, new CopySpellForEachOtherPermanentOrPlayerEffect());
+        )).addEffect(EffectSlot.SPELL, CopySpellForEachOtherPermanentOrPlayerEffect.permanentsAndPlayersOnly());
     }
 }

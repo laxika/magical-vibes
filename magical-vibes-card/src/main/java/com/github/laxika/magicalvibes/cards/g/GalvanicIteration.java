@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 @CardRegistration(set = "INR", collectorNumber = "236")
 @CardRegistration(set = "INR", collectorNumber = "430")
 @CardRegistration(set = "MID", collectorNumber = "224")
+@CardRegistration(set = "MSC", collectorNumber = "184")
+@CardRegistration(set = "MSC", collectorNumber = "404")
 @CardRegistration(set = "DBL", collectorNumber = "224")
+@CardRegistration(set = "OTC", collectorNumber = "227")
 public class GalvanicIteration extends Card {
 
     public GalvanicIteration() {

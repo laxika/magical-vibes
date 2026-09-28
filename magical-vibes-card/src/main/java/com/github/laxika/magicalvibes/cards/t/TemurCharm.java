@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "208")
+@CardRegistration(set = "C20", collectorNumber = "230")
 public class TemurCharm extends Card {
 
     public TemurCharm() {

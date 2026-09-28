@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
-import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, BalduvianBears.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class, MerfolkOfThePearlTrident.class, ZuranSpellcaster.class})
+@CardUsed({AirElemental.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -220,7 +217,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     private Permanent addReadyNonGreenCreature(Player player) {
-        return addCreatureReady(player, new MerfolkOfThePearlTrident());
+        return addCreatureReady(player, new AirElemental());
     }
 
     @Test

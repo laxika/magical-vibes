@@ -33,8 +33,7 @@ class WallOfAirTest extends BaseCardTest {
         addCreatureReady(player1, new AirElemental());
         Permanent wall = addCreatureReady(player2, new WallOfAir());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
@@ -46,8 +45,7 @@ class WallOfAirTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent wall = addCreatureReady(player2, new WallOfAir());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();

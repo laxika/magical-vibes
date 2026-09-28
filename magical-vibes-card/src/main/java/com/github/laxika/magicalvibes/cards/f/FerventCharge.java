@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "98")
+@CardRegistration(set = "PIP", collectorNumber = "215")
+@CardRegistration(set = "PIP", collectorNumber = "477")
+@CardRegistration(set = "PIP", collectorNumber = "743")
+@CardRegistration(set = "PIP", collectorNumber = "1005")
 public class FerventCharge extends Card {
 
     public FerventCharge() {

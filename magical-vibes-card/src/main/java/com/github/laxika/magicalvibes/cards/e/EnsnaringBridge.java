@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MPS", collectorNumber = "37")
 @CardRegistration(set = "A25", collectorNumber = "224")
 @CardRegistration(set = "2XM", collectorNumber = "253")
+@CardRegistration(set = "MB2", collectorNumber = "219")
+@CardRegistration(set = "LTC", collectorNumber = "350")
+@CardRegistration(set = "LTC", collectorNumber = "380")
 public class EnsnaringBridge extends Card {
 
     public EnsnaringBridge() {

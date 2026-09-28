@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>{@code exileInsteadOfGraveyard} adds the companion replacement "if that spell would be put into
  * a graveyard, exile it instead" (Toshiro Umezawa). {@code additionalGenericCost} adds a
  * conditional generic cost when the spell does not target a creature controlled by its caster
- * (Mavinda, Students' Advocate). {@code escape} makes the permission use the card's normal mana
- * cost plus the configured number of additional graveyard cards to exile (Confession Dial).</p>
+ * (Mavinda, Students' Advocate). {@code additionalGraveyardExileCount} and {@code escape} support
+ * targeted escape permissions such as Desdemona, Freedom's Edge.</p>
  */
 public record GrantTargetGraveyardCardCastEffect(
         CardPredicate filter,
@@ -20,24 +20,43 @@ public record GrantTargetGraveyardCardCastEffect(
         boolean exileInsteadOfGraveyard,
         int additionalGenericCost,
         boolean anyManaType,
+        int additionalGraveyardExileCount,
         boolean escape
 ) implements CardEffect {
 
+    public GrantTargetGraveyardCardCastEffect {
+        if (additionalGraveyardExileCount < 0) {
+            throw new IllegalArgumentException("Additional graveyard exile count cannot be negative");
+        }
+    }
+
     public GrantTargetGraveyardCardCastEffect(
             CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard) {
-        this(filter, scope, exileInsteadOfGraveyard, 0, false, false);
+        this(filter, scope, exileInsteadOfGraveyard, 0, false, 0, false);
     }
 
     public GrantTargetGraveyardCardCastEffect(
             CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
             int additionalGenericCost) {
-        this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, false, false);
+        this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, false, 0, false);
     }
 
     public GrantTargetGraveyardCardCastEffect(
             CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
             boolean anyManaType) {
-        this(filter, scope, exileInsteadOfGraveyard, 0, anyManaType, false);
+        this(filter, scope, exileInsteadOfGraveyard, 0, anyManaType, 0, false);
+    }
+
+    public GrantTargetGraveyardCardCastEffect(
+            CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
+            int additionalGenericCost, boolean anyManaType) {
+        this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, anyManaType, 0, false);
+    }
+
+    public static GrantTargetGraveyardCardCastEffect withEscape(
+            CardPredicate filter, GraveyardSearchScope scope, int additionalGraveyardExileCount) {
+        return new GrantTargetGraveyardCardCastEffect(
+                filter, scope, false, 0, false, additionalGraveyardExileCount, true);
     }
 
     @Override public TargetSpec targetSpec() {

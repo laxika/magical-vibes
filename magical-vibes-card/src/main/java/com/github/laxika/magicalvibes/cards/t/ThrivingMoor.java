@@ -15,9 +15,12 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "433")
 @CardRegistration(set = "ECC", collectorNumber = "174")
+@CardRegistration(set = "DSC", collectorNumber = "317")
 @CardRegistration(set = "TLE", collectorNumber = "264")
 @CardRegistration(set = "TMC", collectorNumber = "79")
 @CardRegistration(set = "WHO", collectorNumber = "328")
+@CardRegistration(set = "AFC", collectorNumber = "271")
+@CardRegistration(set = "MSC", collectorNumber = "582")
 public class ThrivingMoor extends Card {
 
     public ThrivingMoor() {

@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "319")
 @CardRegistration(set = "DRK", collectorNumber = "102")
 @CardRegistration(set = "ME3", collectorNumber = "195")
+@CardRegistration(set = "SOC", collectorNumber = "347")
+@CardRegistration(set = "MSC", collectorNumber = "285")
 @CardRegistration(set = "SLD", collectorNumber = "708")
 @CardRegistration(set = "SLD", collectorNumber = "743")
 @CardRegistration(set = "SLD", collectorNumber = "1040")
@@ -22,6 +24,12 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "141")
 @CardRegistration(set = "CMM", collectorNumber = "382")
 @CardRegistration(set = "CMM", collectorNumber = "657")
+@CardRegistration(set = "MOC", collectorNumber = "356")
+@CardRegistration(set = "DSC", collectorNumber = "245")
+@CardRegistration(set = "TDC", collectorNumber = "318")
+@CardRegistration(set = "AFC", collectorNumber = "206")
+@CardRegistration(set = "OTC", collectorNumber = "257")
+@CardRegistration(set = "DMC", collectorNumber = "182")
 public class FellwarStone extends Card {
 
     public FellwarStone() {

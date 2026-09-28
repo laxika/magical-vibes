@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "242")
+@CardRegistration(set = "TDC", collectorNumber = "326")
 public class StaffOfCompleation extends Card {
 
     public StaffOfCompleation() {

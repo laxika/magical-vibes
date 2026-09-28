@@ -51,9 +51,10 @@ public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffec
             return;
         }
 
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-            gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
+        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+            return;
         }
+        gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);

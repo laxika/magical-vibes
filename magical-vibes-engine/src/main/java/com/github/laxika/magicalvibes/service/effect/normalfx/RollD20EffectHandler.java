@@ -34,14 +34,24 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RollD20Effect rollEffect = (RollD20Effect) effect;
-        int rawResult = d20RollService.roll(gameData, entry.getControllerId());
+        D20RollService.D20RollResult rollResult = d20RollService.rollResult(gameData, entry.getControllerId());
+        int rawResult = rollResult.result();
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
-                + " rolls a d20 for " + entry.getCard().getName() + ": " + rawResult + "."));
+                + (rollResult.wasD20Roll() ? " rolls a d20 for " : " flips a coin for ")
+                + entry.getCard().getName() + ": " + rawResult + "."));
         entry.setEventValue(rawResult);
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
-                gameData, entry.getControllerId(), 1, rawResult);
-        if (rawResult == 20) {
-            triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, entry.getControllerId());
+        if (rollResult.wasD20Roll()) {
+            triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                    gameData, entry.getControllerId(), 1, rawResult);
+            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                    gameData, entry.getControllerId(), 20, rawResult);
+            if (rawResult == 20) {
+                triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, entry.getControllerId());
+            }
+        } else if (rawResult == 20) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
         }
 
         int result = rawResult;
@@ -51,6 +61,13 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean {
             int amount = amountEvaluationService.evaluate(gameData, rollEffect.amountToSubtract(),
                     AmountContext.forStackEntry(entry, source));
             result -= amount;
+        }
+        if (rollEffect.amountToAdd() != null) {
+            var source = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            int amount = amountEvaluationService.evaluate(gameData, rollEffect.amountToAdd(),
+                    AmountContext.forStackEntry(entry, source));
+            result += amount;
         }
 
         boolean isTwenty = (rollEffect.twentyUsesRawResult() ? rawResult : result) == 20;

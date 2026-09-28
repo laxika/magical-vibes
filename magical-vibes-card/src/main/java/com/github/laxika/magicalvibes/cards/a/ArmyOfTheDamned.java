@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "87")
 @CardRegistration(set = "C13", collectorNumber = "69")
+@CardRegistration(set = "NCC", collectorNumber = "242")
 public class ArmyOfTheDamned extends Card {
 
     public ArmyOfTheDamned() {

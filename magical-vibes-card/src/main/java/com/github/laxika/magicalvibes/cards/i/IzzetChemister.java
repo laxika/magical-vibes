@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "138")
+@CardRegistration(set = "AFC", collectorNumber = "130")
 public class IzzetChemister extends Card {
 
     public IzzetChemister() {

@@ -28,13 +28,10 @@ public class ConfessionDial extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantTargetGraveyardCardCastEffect(
+                List.of(GrantTargetGraveyardCardCastEffect.withEscape(
                         legendaryCreature,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        false,
-                        0,
-                        false,
-                        true)),
+                        3)),
                 "{T}: Target legendary creature card in your graveyard gains escape until end of turn. "
                         + "The escape cost is equal to its mana cost plus exile three other cards from your graveyard.",
                 new GraveyardCardPredicateTargetFilter(

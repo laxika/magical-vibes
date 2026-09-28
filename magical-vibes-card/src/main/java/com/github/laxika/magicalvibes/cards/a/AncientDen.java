@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "SLD", collectorNumber = "300")
 @CardRegistration(set = "TSR", collectorNumber = "403")
 @CardRegistration(set = "AA2", collectorNumber = "23")
+@CardRegistration(set = "C21", collectorNumber = "276")
 public class AncientDen extends Card {
 
     public AncientDen() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "234")
+@CardRegistration(set = "OTC", collectorNumber = "171")
 public class ImpulsivePilferer extends Card {
 
     public ImpulsivePilferer() {

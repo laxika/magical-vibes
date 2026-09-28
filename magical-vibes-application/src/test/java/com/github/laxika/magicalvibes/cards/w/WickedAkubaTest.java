@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AkkiAvalanchers;
+import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WickedAkuba.class, HumbleBudoka.class, AkkiAvalanchers.class})
 class WickedAkubaTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
@@ -81,10 +85,26 @@ class WickedAkubaTest extends BaseCardTest {
     @DisplayName("Damage dealt by another creature does not make its victim a legal target")
     void otherCreaturesDamageDoesNotCount() {
         addReadyAkuba();
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HumbleBudoka());
 
         declareAttackers(List.of(1));
         resolveCombat();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A blocked attack does not make the player a legal target")
+    void blockedDamageDoesNotCount() {
+        addReadyAkuba();
+        addCreatureReady(player2, new AkkiAvalanchers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

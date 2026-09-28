@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "185")
 @CardRegistration(set = "TSR", collectorNumber = "404")
+@CardRegistration(set = "LCC", collectorNumber = "319")
 public class ArchOfOrazca extends Card {
 
     public ArchOfOrazca() {

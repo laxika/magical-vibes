@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicPage;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SerraZealot;
+import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AngelicPage.class, GloriousAnthem.class, GorillaWarrior.class, HillGiant.class, SerraZealot.class, WesternPaladin.class})
+@CardUsed({AngelicPage.class, GloriousAnthem.class, GlorySeeker.class, GrizzlyBears.class,
+        HillGiant.class, RoyalAssassin.class, WesternPaladin.class})
 class WesternPaladinTest extends BaseCardTest {
 
     @Test
@@ -35,13 +37,13 @@ class WesternPaladinTest extends BaseCardTest {
     @DisplayName("Resolving destroys target white creature")
     void resolvingDestroysTargetWhiteCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player2, new SerraZealot());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Serra Zealot");
-        harness.assertInGraveyard(player2, "Serra Zealot");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
     }
 
     @Test
@@ -74,13 +76,13 @@ class WesternPaladinTest extends BaseCardTest {
     @DisplayName("Can target a white creature controlled by its controller")
     void canTargetOwnWhiteCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player1, new SerraZealot());
+        Permanent target = addCreatureReady(player1, new GlorySeeker());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Serra Zealot");
-        harness.assertInGraveyard(player1, "Serra Zealot");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Glory Seeker");
     }
 
     @Test
@@ -102,11 +104,15 @@ class WesternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot target a non-white creature")
     void cannotTargetNonWhiteCreatureUpstreamReview() {
         setupPaladin();
-        Permanent target = addCreatureReady(player2, new GorillaWarrior());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("white creature");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Western Paladin").isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -174,7 +180,7 @@ class WesternPaladinTest extends BaseCardTest {
     @DisplayName("Activation pays two black mana and taps Western Paladin")
     void activationPaysManaAndTapsSource() {
         Permanent paladin = setupPaladin();
-        Permanent target = addCreatureReady(player2, new SerraZealot());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -186,7 +192,7 @@ class WesternPaladinTest extends BaseCardTest {
     @DisplayName("Cannot activate with only one black mana")
     void cannotActivateWithOnlyOneBlackMana() {
         setupPaladin(1);
-        Permanent target = addCreatureReady(player2, new SerraZealot());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -198,11 +204,30 @@ class WesternPaladinTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WesternPaladin());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        Permanent target = addCreatureReady(player2, new SerraZealot());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that leaves the battlefield before resolution")
+    void targetLeavingBattlefieldBeforeResolution() {
+        setupPaladin();
+        Permanent target = addCreatureReady(player2, new AngelicPage());
+        addCreatureReady(player2, new RoyalAssassin());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Angelic Page");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Page");
+        harness.assertInGraveyard(player2, "Angelic Page");
+        assertThat(findPermanent(player1, "Western Paladin").isTapped()).isTrue();
     }
 
     private Permanent setupPaladin(int blackMana) {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "126")
+@CardRegistration(set = "MSC", collectorNumber = "848")
 public class CrimsonOperative extends Card {
 
     public CrimsonOperative() {

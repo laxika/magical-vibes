@@ -46,7 +46,7 @@ public class BattlefieldEntryBatchSupport {
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, candidate.card(), candidate.origin())) {
                 continue;
             }
-            if (!candidate.card().isAura()) {
+            if (!candidate.card().isAura() || candidate.card().isEnchantZone()) {
                 ready.add(candidate);
                 continue;
             }

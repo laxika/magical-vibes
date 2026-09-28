@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "13")
+@CardRegistration(set = "LCC", collectorNumber = "131")
 public class MajesticHeliopterus extends Card {
 
     public MajesticHeliopterus() {

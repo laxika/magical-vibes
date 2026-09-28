@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTar
 
 @CardRegistration(set = "DGM", collectorNumber = "91")
 @CardRegistration(set = "DDO", collectorNumber = "55")
+@CardRegistration(set = "OTC", collectorNumber = "237")
 public class PlasmCapture extends Card {
 
     public PlasmCapture() {

@@ -17,5 +17,9 @@ public interface TemporaryGlobalTriggerEffect extends CardEffect {
 
     boolean matches(Zone sourceZone, UUID exiledSourcePermanentId);
 
+    default boolean matchesCastingPlayer(UUID castingPlayerId) {
+        return true;
+    }
+
     TemporaryGlobalTriggerEffect bindTo(UUID sourcePermanentId, UUID targetPlayerId);
 }

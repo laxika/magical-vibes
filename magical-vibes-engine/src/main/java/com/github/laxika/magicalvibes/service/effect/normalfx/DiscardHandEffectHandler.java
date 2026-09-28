@@ -44,7 +44,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
 
         switch (e.recipient()) {
-            case CONTROLLER -> discardHand(gameData, controllerId, controllerId, cardName);
+            case CONTROLLER -> entry.setEventValue(discardHand(gameData, controllerId, controllerId, cardName));
             case TARGET_PLAYER -> {
                 List<UUID> targetPlayerIds = entry.targetsForEffect(e);
                 if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {

@@ -13,8 +13,18 @@ public interface GraveyardPlayPermission extends CardEffect {
         return false;
     }
 
+    /** True if the permission applies only to cards put into a graveyard from a library this turn. */
+    default boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn() {
+        return false;
+    }
+
     /** Triggered ability granted to a permanent that enters through this permission. */
     default GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant() {
         return null;
+    }
+
+    /** True when a permanent cast through this permission enters the battlefield tapped. */
+    default boolean entersTapped() {
+        return false;
     }
 }

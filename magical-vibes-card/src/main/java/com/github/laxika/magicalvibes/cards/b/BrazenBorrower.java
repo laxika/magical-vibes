@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "SLD", collectorNumber = "234")
 @CardRegistration(set = "SLD", collectorNumber = "265")
 @CardRegistration(set = "SPG", collectorNumber = "30")
+@CardRegistration(set = "SOC", collectorNumber = "190")
 public class BrazenBorrower extends Card {
 
     public BrazenBorrower() {

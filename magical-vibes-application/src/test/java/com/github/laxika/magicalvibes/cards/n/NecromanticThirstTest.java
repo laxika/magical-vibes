@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terrarion;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NecromanticThirst.class, GrizzlyBears.class})
+@CardUsed({NecromanticThirst.class, Terrarion.class, Watchwolf.class})
 class NecromanticThirstTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage presents the optional graveyard target")
     void combatDamagePresentsOptionalGraveyardTarget() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        Permanent creature = addCreatureReady(player1);
+        harness.setGraveyard(player1, List.of(new Watchwolf()));
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         attachNecromanticThirst(player1, creature);
         creature.setAttacking(true);
 
@@ -33,9 +34,9 @@ class NecromanticThirstTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature card returns it from the graveyard")
     void choosingCreatureReturnsIt() {
-        GrizzlyBears deadCreature = new GrizzlyBears();
+        Watchwolf deadCreature = new Watchwolf();
         harness.setGraveyard(player1, List.of(deadCreature));
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         attachNecromanticThirst(player1, creature);
         creature.setAttacking(true);
 
@@ -47,15 +48,15 @@ class NecromanticThirstTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Watchwolf");
+        harness.assertNotInGraveyard(player1, "Watchwolf");
     }
 
     @Test
     @DisplayName("Choosing no card leaves the graveyard unchanged")
     void choosingNoCardDoesNotReturnCreature() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        Permanent creature = addCreatureReady(player1);
+        harness.setGraveyard(player1, List.of(new Watchwolf()));
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
         attachNecromanticThirst(player1, creature);
         creature.setAttacking(true);
 
@@ -66,20 +67,94 @@ class NecromanticThirstTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        harness.assertNotInHand(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Watchwolf");
+        harness.assertInGraveyard(player1, "Watchwolf");
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Only creature cards are legal graveyard targets")
+    void onlyCreatureCardsAreLegalTargets() {
+        Terrarion artifact = new Terrarion();
+        Watchwolf creatureCard = new Watchwolf();
+        harness.setGraveyard(player1, List.of(artifact, creatureCard));
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        attachNecromanticThirst(player1, creature);
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(creatureCard.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Watchwolf");
+        harness.assertInGraveyard(player1, "Terrarion");
+    }
+
+    @Test
+    @DisplayName("A blocked enchanted creature does not trigger")
+    void blockedCreatureDoesNotTrigger() {
+        harness.setGraveyard(player1, List.of(new Watchwolf()));
+        Permanent attacker = addCreatureReady(player1, new Watchwolf());
+        attachNecromanticThirst(player1, attacker);
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new Watchwolf());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Watchwolf");
+    }
+
+    @Test
+    @DisplayName("The trigger searches only the Aura controller's graveyard")
+    void triggerUsesAurasControllersGraveyard() {
+        Watchwolf opponentCard = new Watchwolf();
+        harness.setGraveyard(player2, List.of(opponentCard));
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        attachNecromanticThirst(player1, creature);
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Watchwolf");
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by one player triggers from an opponent's enchanted creature")
+    void auraControllerMayReturnCardWhenOpponentsCreatureDealsDamage() {
+        Watchwolf deadCreature = new Watchwolf();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
+        creature.setAttacking(true);
+        creature.setAttackTarget(player1.getId());
+        attachNecromanticThirst(player1, creature);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(deadCreature.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Watchwolf");
+        harness.assertNotInGraveyard(player1, "Watchwolf");
     }
 
     private void attachNecromanticThirst(Player player, Permanent creature) {
-        Permanent aura = new Permanent(new NecromanticThirst());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new NecromanticThirst());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
     }
 }

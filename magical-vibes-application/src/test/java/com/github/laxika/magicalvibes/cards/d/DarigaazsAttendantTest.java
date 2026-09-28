@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(DarigaazsAttendant.class)
 class DarigaazsAttendantTest extends BaseCardTest {
 
     @Test
@@ -36,5 +39,17 @@ class DarigaazsAttendantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Darigaaz's Attendant cannot activate without paying its generic cost")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new DarigaazsAttendant());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Darigaaz's Attendant");
+        harness.assertNotInGraveyard(player1, "Darigaaz's Attendant");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

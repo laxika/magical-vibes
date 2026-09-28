@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Deals damage to one or more players (never creatures). The {@link DamageRecipient} selects
@@ -20,30 +22,47 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
-                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter)
-        implements DamageDealingEffect, CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
+                                        List<UUID> selectedPlayerIds)
+        implements DamageDealingEffect, AcceptedPlayersAwareEffect,
+        CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, TargetFilter triggeredTargetFilter) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                triggeredTargetFilter, List.of());
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, List<UUID> selectedPlayerIds) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                null, selectedPlayerIds);
+    }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable,
                                      boolean recordDamageDealt) {
-        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt, null);
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                null, List.of());
     }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable) {
-        this(amount, recipient, attachedCountFilter, unpreventable, false);
+        this(amount, recipient, attachedCountFilter, unpreventable, false, List.of());
     }
 
     /** Records actual damage in the entry's event value for a subsequent effect. */
     public DealDamageToPlayersEffect recordingDamageDealt() {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true,
-                triggeredTargetFilter);
+                triggeredTargetFilter, selectedPlayerIds);
     }
 
     /** Supplies a target filter for trigger-time target selection when the effect is granted. */
     public DealDamageToPlayersEffect withTriggeredTargetFilter(TargetFilter targetFilter) {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, targetFilter);
+                recordDamageDealt, targetFilter, selectedPlayerIds);
     }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
@@ -62,6 +81,32 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      boolean unpreventable) {
         this(amount, recipient, null, unpreventable);
+    }
+
+    public DealDamageToPlayersEffect {
+        selectedPlayerIds = selectedPlayerIds == null ? List.of() : List.copyOf(selectedPlayerIds);
+    }
+
+    public static DealDamageToPlayersEffect selectedOpponents(DynamicAmount amount) {
+        return new DealDamageToPlayersEffect(amount, DamageRecipient.SELECTED_OPPONENTS,
+                null, false, false, List.of());
+    }
+
+    public static DealDamageToPlayersEffect selectedOpponents(int damage) {
+        return selectedOpponents(new Fixed(damage));
+    }
+
+    public DealDamageToPlayersEffect withSelectedPlayerIds(List<UUID> playerIds) {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
+                recordDamageDealt, triggeredTargetFilter, playerIds);
+    }
+
+    @Override
+    public DealDamageToPlayersEffect withAcceptedPlayerIds(List<UUID> playerIds) {
+        if (recipient != DamageRecipient.SELECTED_OPPONENTS) {
+            throw new IllegalStateException("Accepted player ids require SELECTED_OPPONENTS");
+        }
+        return withSelectedPlayerIds(playerIds);
     }
 
     /**
@@ -112,7 +157,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public TriggerContext combatDamageTriggerContext() {
         return switch (recipient) {
-            case TARGET_PLAYER -> TriggerContext.DAMAGED_PLAYER;
+            case TARGET_PLAYER, EACH_OTHER_OPPONENT -> TriggerContext.DAMAGED_PLAYER;
             case CHOSEN_PLAYER -> TriggerContext.CHOSEN_PLAYER;
             default -> null;
         };

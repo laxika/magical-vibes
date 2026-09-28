@@ -14,6 +14,13 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "157")
 @CardRegistration(set = "OTP", collectorNumber = "37")
+@CardRegistration(set = "FIC", collectorNumber = "319")
+@CardRegistration(set = "NCC", collectorNumber = "331")
+@CardRegistration(set = "MSC", collectorNumber = "182")
+@CardRegistration(set = "MSC", collectorNumber = "393")
+@CardRegistration(set = "DSC", collectorNumber = "84")
+@CardRegistration(set = "AFC", collectorNumber = "179")
+@CardRegistration(set = "DMC", collectorNumber = "144")
 public class Bedevil extends Card {
 
     public Bedevil() {

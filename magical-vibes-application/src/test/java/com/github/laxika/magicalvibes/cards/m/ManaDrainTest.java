@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeadlessHorseman;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,42 +14,50 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaDrain.class, GrizzlyBears.class})
+@CardUsed({ManaDrain.class, HeadlessHorseman.class, HolyDay.class})
 class ManaDrainTest extends BaseCardTest {
 
-    private GrizzlyBears counterBears() {
+    private Card counterSpell(Card spell, String manaCost) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, spell, manaCost);
 
         harness.setHand(player2, List.of(new ManaDrain()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, spell.getId());
         harness.passBothPriorities();
-        return bears;
+        return spell;
     }
 
     @Test
-    @DisplayName("Counters the spell and adds colorless mana equal to its mana value at the next main phase")
+    @DisplayName("Counters a creature spell and adds colorless mana equal to its mana value at the next main phase")
     void countersAndAddsManaAtNextMainPhase() {
-        GrizzlyBears bears = counterBears();
+        Card horseman = counterSpell(new HeadlessHorseman(), "{2}{B}");
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, horseman.getName());
+        harness.assertInGraveyard(player1, horseman.getName());
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counters a noncreature spell and still uses its mana value for the delayed mana")
+    void countersNoncreatureSpell() {
+        Card holyDay = counterSpell(new HolyDay(), "{W}");
+
+        harness.assertNotOnBattlefield(player1, holyDay.getName());
+        harness.assertInGraveyard(player1, holyDay.getName());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }

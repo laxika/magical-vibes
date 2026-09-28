@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.t.TomeScour;
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkable;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.cards.l.LightningHelix;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VulturousZombie.class, Shock.class, TomeScour.class})
+@CardUsed({VulturousZombie.class, ElvesOfDeepShadow.class, GlimpseTheUnthinkable.class,
+        LastGasp.class, LightningHelix.class})
 class VulturousZombieTest extends BaseCardTest {
 
     @Test
@@ -25,12 +28,13 @@ class VulturousZombieTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new LightningHelix()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -39,28 +43,46 @@ class VulturousZombieTest extends BaseCardTest {
     @DisplayName("Gets one counter for each opponent card milled")
     void getsCounterForEachOpponentCardMilled() {
         Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VulturousZombie());
-        harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
-        harness.setHand(player1, List.of(new TomeScour()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLibrary(player2, List.of(
+                new ElvesOfDeepShadow(), new ElvesOfDeepShadow(), new ElvesOfDeepShadow(),
+                new ElvesOfDeepShadow(), new ElvesOfDeepShadow(), new ElvesOfDeepShadow(),
+                new ElvesOfDeepShadow(), new ElvesOfDeepShadow(), new ElvesOfDeepShadow(),
+                new ElvesOfDeepShadow()));
+        harness.setHand(player1, List.of(new GlimpseTheUnthinkable()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        for (int i = 0; i < 5; i++) {
-            harness.passBothPriorities();
-        }
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
 
-        assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Gets a counter when an opponent's permanent is put into their graveyard")
+    void getsCounterWhenOpponentPermanentIsPutIntoGraveyard() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VulturousZombie());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new ElvesOfDeepShadow());
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player2, 0, elf.getId());
+        resolveAllTriggers();
+
+        assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Elves of Deep Shadow");
     }
 
     @Test
     @DisplayName("Does not trigger for a card put into the controller's graveyard")
     void doesNotTriggerForOwnCard() {
         Permanent zombie = harness.addToBattlefieldAndReturn(player1, new VulturousZombie());
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new LightningHelix()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

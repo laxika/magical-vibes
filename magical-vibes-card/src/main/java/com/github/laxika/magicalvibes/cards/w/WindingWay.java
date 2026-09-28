@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToH
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "193")
+@CardRegistration(set = "OTC", collectorNumber = "213")
 public class WindingWay extends Card {
 
     public WindingWay() {

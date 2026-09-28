@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class TheTwelfthDoctor extends Card {
         addEffect(EffectSlot.GRANT_DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND,
                 new MayEffect(new DemonstrateEffect(), "Copy this spell for an opponent?"));
         addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
-                new SpellCopyTriggerEffect(null, List.of(new PutCountersOnSourceEffect(1, 1, 1)), null, true));
+                new SpellCopyTriggerEffect(null, List.of(new PutCountersOnSourceEffect(1, 1, 1)),
+                        (StackEntryPredicate) null, true));
     }
 }

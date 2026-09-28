@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves non-targeting damage to a uniformly random opponent. */
+/** Resolves {@link DealDamageToRandomOpponentEffect}. */
 @Component
 @RequiredArgsConstructor
 public class DealDamageToRandomOpponentEffectHandler implements NormalEffectHandlerBean {
@@ -33,25 +33,32 @@ public class DealDamageToRandomOpponentEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> opponents = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId())
-                        && gameData.playerIds.contains(playerId))
-                .toList();
-        if (opponents.isEmpty() || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            return;
+        var e = (DealDamageToRandomOpponentEffect) effect;
+        UUID chosenOpponent;
+        if (e.targeted()) {
+            chosenOpponent = entry.getTargetId();
+            if (chosenOpponent == null || !gameData.playerIds.contains(chosenOpponent)) {
+                return;
+            }
+        } else {
+            List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .toList();
+            if (opponents.isEmpty()) {
+                return;
+            }
+            chosenOpponent = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
         }
 
-        UUID opponentId = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData,
-                ((DealDamageToRandomOpponentEffect) effect).damage(),
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
-        damageSupport.dealDamageToPlayer(gameData, entry, opponentId, rawDamage);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        damageSupport.resolveAnyTargetDamage(gameData, entry, chosenOpponent, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

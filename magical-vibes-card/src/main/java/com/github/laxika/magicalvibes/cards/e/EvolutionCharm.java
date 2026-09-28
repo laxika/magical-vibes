@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "127")
 @CardRegistration(set = "TSR", collectorNumber = "202")
+@CardRegistration(set = "C20", collectorNumber = "171")
 public class EvolutionCharm extends Card {
 
     public EvolutionCharm() {

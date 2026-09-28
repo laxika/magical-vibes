@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.g.GolgariSignet;
+import com.github.laxika.magicalvibes.cards.g.GolgariThug;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,15 +19,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GolgariGuildmage.class, GrizzlyBears.class, HillGiant.class, LeoninScimitar.class})
+@CardUsed({GolgariGuildmage.class, BorosRecruit.class, GolgariThug.class, GolgariSignet.class})
 class GolgariGuildmageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a creature returns a target creature card from the graveyard to hand")
     void sacrificesCreatureAndReturnsTargetCreature() {
         addCreatureReady(player1, new GolgariGuildmage());
-        Permanent sacrificed = addCreatureReady(player1, new GrizzlyBears());
-        Card returned = new HillGiant();
+        Permanent sacrificed = addCreatureReady(player1, new BorosRecruit());
+        Card returned = new GolgariThug();
         harness.setGraveyard(player1, List.of(returned));
         addBlackActivationMana();
 
@@ -35,8 +36,8 @@ class GolgariGuildmageTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Hill Giant");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Golgari Thug");
+        harness.assertInGraveyard(player1, "Boros Recruit");
         harness.assertOnBattlefield(player1, "Golgari Guildmage");
     }
 
@@ -44,22 +45,54 @@ class GolgariGuildmageTest extends BaseCardTest {
     @DisplayName("The first ability can sacrifice Golgari Guildmage itself")
     void canSacrificeItself() {
         addCreatureReady(player1, new GolgariGuildmage());
-        Card returned = new HillGiant();
+        Card returned = new GolgariThug();
         harness.setGraveyard(player1, List.of(returned));
         addBlackActivationMana();
 
         harness.activateAbility(player1, 0, 0, null, returned.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Hill Giant");
+        harness.assertInHand(player1, "Golgari Thug");
         harness.assertInGraveyard(player1, "Golgari Guildmage");
+    }
+
+    @Test
+    @DisplayName("The first ability only targets creature cards in its controller's graveyard")
+    void cannotTargetNonCreatureOrOpponentGraveyardCard() {
+        addCreatureReady(player1, new GolgariGuildmage());
+        Card ownCreature = new GolgariThug();
+        Card ownNonCreature = new GolgariSignet();
+        Card opponentCreature = new GolgariThug();
+        harness.setGraveyard(player1, List.of(ownCreature, ownNonCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        addBlackActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, ownNonCreature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, opponentCreature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("The second ability puts a +1/+1 counter on target creature")
     void putsCounterOnTargetCreature() {
         addCreatureReady(player1, new GolgariGuildmage());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new BorosRecruit());
+        addGreenActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The second ability can target an opponent's creature")
+    void putsCounterOnOpponentsCreature() {
+        addCreatureReady(player1, new GolgariGuildmage());
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
         addGreenActivationMana();
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -72,7 +105,7 @@ class GolgariGuildmageTest extends BaseCardTest {
     @DisplayName("The second ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         addCreatureReady(player1, new GolgariGuildmage());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GolgariSignet());
         addGreenActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))

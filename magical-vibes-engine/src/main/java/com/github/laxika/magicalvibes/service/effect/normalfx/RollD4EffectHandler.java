@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -32,11 +33,11 @@ public class RollD4EffectHandler implements NormalEffectHandlerBean {
         int result = d4RollService.roll(gameData, entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d4 for " + entry.getCard().getName() + ": " + result + "."));
+        entry.setEventValue(result);
         triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                 gameData, entry.getControllerId(), 1, result);
-        if (result != 1) {
-            return;
-        }
+        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                gameData, entry.getControllerId(), 4, result);
 
         int effectIndex = -1;
         for (int i = 0; i < entry.getEffectsToResolve().size(); i++) {
@@ -55,7 +56,16 @@ public class RollD4EffectHandler implements NormalEffectHandlerBean {
             }
         }
         if (effectIndex >= 0) {
-            entry.insertEffectsToResolve(effectIndex + 1, List.of(rollEffect.onOne()));
+            List<CardEffect> followUps = new ArrayList<>();
+            if (rollEffect.onResult() != null) {
+                followUps.add(rollEffect.onResult());
+            }
+            if (result == 1 && rollEffect.onOne() != null) {
+                followUps.add(rollEffect.onOne());
+            }
+            if (!followUps.isEmpty()) {
+                entry.insertEffectsToResolve(effectIndex + 1, followUps);
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,7 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final VotingSupport votingSupport;
 
     @Override
@@ -79,6 +81,7 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
                                int timeVotes, String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             beginNextMoneyChoice(gameData, moneyVoterIds, effectControllerId, timeVotes, sourceName);
             return;
         }

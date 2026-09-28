@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,24 +12,24 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LlanowarBehemoth.class, RedwoodTreefolk.class})
+@CardUsed({LlanowarBehemoth.class, GrizzlyBears.class})
 class LlanowarBehemothTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps another creature to give itself +1/+1")
     void tapsAnotherCreatureToBoostSelf() {
         Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
-        Permanent treefolk = addCreatureReady(player1, new RedwoodTreefolk());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
         harness.activateAbility(player1, idx, null, null);
 
         // Two untapped creatures -> choose which to tap
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, treefolk.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(treefolk.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
         assertThat(behemoth.isTapped()).isFalse();
         assertThat(behemoth.getEffectivePower()).isEqualTo(5);
         assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
@@ -53,17 +53,17 @@ class LlanowarBehemothTest extends BaseCardTest {
     @DisplayName("Activations stack and a later activation can tap itself")
     void activationsStackUntilEndOfTurn() {
         Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
-        Permanent treefolk = addCreatureReady(player1, new RedwoodTreefolk());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
 
         harness.activateAbility(player1, idx, null, null);
-        harness.handlePermanentChosen(player1, treefolk.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         harness.activateAbility(player1, idx, null, null);
         harness.passBothPriorities();
 
-        assertThat(treefolk.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
         assertThat(behemoth.isTapped()).isTrue();
         assertThat(behemoth.getEffectivePower()).isEqualTo(6);
         assertThat(behemoth.getEffectiveToughness()).isEqualTo(6);
@@ -102,7 +102,7 @@ class LlanowarBehemothTest extends BaseCardTest {
     void cannotTapOpponentsCreature() {
         Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
         behemoth.tap();
-        Permanent opponentCreature = addCreatureReady(player2, new RedwoodTreefolk());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))

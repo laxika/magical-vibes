@@ -54,11 +54,15 @@ public class PlayCardRequestDispatchService {
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
             List<UUID> counterCostPermanentIds = listOrEmpty(request.exileCounterCostPermanentIds());
-            if (counterCostPermanentIds.isEmpty()) {
+            List<UUID> additionalCostSacrificePermanentIds = listOrEmpty(request.additionalCostSacrificePermanentIds());
+            if (counterCostPermanentIds.isEmpty() && additionalCostSacrificePermanentIds.isEmpty()) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
-            } else {
+            } else if (additionalCostSacrificePermanentIds.isEmpty()) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
                         counterCostPermanentIds);
+            } else {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds);
             }
             return;
         }
@@ -81,6 +85,18 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (request.fromExileCardId() != null) {
+            boolean flashforwardCast = Boolean.TRUE.equals(request.alternateCost());
+            if (flashforwardCast
+                    && request.waterbendPaid() == null
+                    && (request.additionalCostSacrificePermanentIds() == null
+                    || request.additionalCostSacrificePermanentIds().isEmpty())
+                    && (request.exileCounterCostPermanentIds() == null
+                    || request.exileCounterCostPermanentIds().isEmpty())
+                    && (request.convokeCreatureIds() == null || request.convokeCreatureIds().isEmpty())) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), true);
+                return;
+            }
             if (request.waterbendPaid() != null
                     || request.additionalCostSacrificePermanentIds() != null
                     && !request.additionalCostSacrificePermanentIds().isEmpty()) {

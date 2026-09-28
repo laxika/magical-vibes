@@ -92,6 +92,8 @@ public record CardView(
         boolean modalModesMayRepeat,
         List<ModalOptionView> modalOptions,
         int exileCastCounterCost,
+        boolean hasFlashforward,
+        String flashforwardCost,
         boolean additionalChooseCreatureType,
         List<String> additionalCreatureTypeChoices,
         int additionalCostLifePayment,

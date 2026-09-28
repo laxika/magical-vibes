@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "246")
+@CardRegistration(set = "SOC", collectorNumber = "336")
 public class VenerableWarsinger extends Card {
 
     public VenerableWarsinger() {

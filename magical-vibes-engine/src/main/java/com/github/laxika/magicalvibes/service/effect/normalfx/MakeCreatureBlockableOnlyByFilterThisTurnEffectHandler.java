@@ -45,6 +45,16 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
 
         // A self-targeting effect uses the source permanent even when targetId carries
         // separate context about the spell or player that caused the trigger.
+        if (!grant.selfTargeting()) {
+            List<UUID> targetIds = entry.targetsForEffect(effect);
+            if (!targetIds.isEmpty()) {
+                for (UUID targetId : targetIds) {
+                    applyRestriction(gameData, entry, grant, targetId);
+                }
+                return;
+            }
+        }
+
         UUID permanentId = grant.selfTargeting()
                 ? (entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId())
                 : entry.getTargetId();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "43")
+@CardRegistration(set = "LTC", collectorNumber = "185")
 public class BoonOfTheWishGiver extends Card {
 
     public BoonOfTheWishGiver() {

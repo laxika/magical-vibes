@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -116,6 +117,7 @@ public class GameSetupService {
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
+        gameData.setOpponentOwnedCardExiledListener(triggerCollectionService::checkOpponentOwnedCardExiledTriggers);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.format = format;
@@ -200,11 +202,23 @@ public class GameSetupService {
                 throw new IllegalArgumentException("Planar cards belong in the planar deck");
             }
 
+            // Conspiracies start the game face up in the command zone rather than in the library.
+            // Their command-zone effect slot is the engine's zone-independent marker, so this also
+            // keeps future conspiracy implementations out of the opening hand automatically.
+            List<Card> commandZoneCards = deck.stream()
+                    .filter(card -> !card.getEffects(EffectSlot.COMMAND_ZONE_END_STEP_TRIGGERED).isEmpty())
+                    .toList();
+            deck.removeAll(commandZoneCards);
+
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".
             // Then freeze: from here on the Card objects are shared with AI simulation copies
             // and must never be mutated (runtime state lives on Permanent/StackEntry/GameData).
             for (Card card : deck) {
+                card.setOwnerId(playerId);
+                card.freeze();
+            }
+            for (Card card : commandZoneCards) {
                 card.setOwnerId(playerId);
                 card.freeze();
             }
@@ -219,7 +233,7 @@ public class GameSetupService {
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
-            gameData.playerCommandZones.put(playerId, new ArrayList<>());
+            gameData.playerCommandZones.put(playerId, new ArrayList<>(commandZoneCards));
             gameData.playerCommanders.put(playerId, new ArrayList<>());
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.playerLifeTotals.put(playerId, gameData.startingLife());
@@ -288,6 +302,7 @@ public class GameSetupService {
     /** Initializes pregame play from transferred libraries rather than submitted decks. */
     public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
         game.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
+        game.setOpponentOwnedCardExiledListener(triggerCollectionService::checkOpponentOwnedCardExiledTriggers);
         for (UUID player : game.orderedPlayerIds) {
             List<Card> deck = new ArrayList<>(decks.get(player));
             deck.forEach(card -> game.subgameCards.put(card.getId(), card));

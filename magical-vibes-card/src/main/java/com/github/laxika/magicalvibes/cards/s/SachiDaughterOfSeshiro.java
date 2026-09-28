@@ -28,12 +28,12 @@ public class SachiDaughterOfSeshiro extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
-        // Sachi is a Shaman herself, so the grant includes her: ALL_OWN_CREATURES.
+        // Shamans you control includes Sachi and noncreature permanents with the subtype.
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
-                GrantScope.ALL_OWN_CREATURES,
+                GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.SHAMAN)));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -19,14 +19,15 @@ import java.util.Set;
 public class SlumberingTora extends Card {
 
     public SlumberingTora() {
-        LastDiscardedCardManaValue discardedManaValue = new LastDiscardedCardManaValue();
+        XValue discardedManaValue = new XValue();
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
                 List.of(
                         new DiscardCardTypeCost(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))), "Spirit or Arcane"),
+                                new CardSubtypePredicate(CardSubtype.ARCANE))),
+                                "Spirit or Arcane", false, 1, false, true),
                         new AnimatePermanentsEffect(
                                 discardedManaValue,
                                 discardedManaValue,

@@ -43,7 +43,9 @@ public class RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 Integer counters = gameData.exiledCardTimeCounters.get(entry.card().getId());
-                if (playerId.equals(entry.ownerId()) && counters != null && counters > 0) {
+                if (playerId.equals(entry.ownerId())
+                        && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(entry.card().getId())
+                        && counters != null && counters > 0) {
                     cardIds.add(entry.card().getId());
                 }
             }
@@ -67,6 +69,7 @@ public class RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(chosenCardId);
         Integer counters = gameData.exiledCardTimeCounters.get(chosenCardId);
         if (exiledEntry != null && player.getId().equals(exiledEntry.ownerId())
+                && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(chosenCardId)
                 && counters != null && counters > 0) {
             int stackSizeBefore = gameData.stack.size();
             exiledCardEffectHandler.removeTimeCounter(gameData, chosenCardId);

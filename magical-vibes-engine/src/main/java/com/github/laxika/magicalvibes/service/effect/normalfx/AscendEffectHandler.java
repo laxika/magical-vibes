@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,17 +35,35 @@ public class AscendEffectHandler implements NormalEffectHandlerBean {
     }
 
     public void checkPermanentAscend(GameData gameData, UUID controllerId) {
+        if (!gameData.playersWithCityBlessing.contains(controllerId)) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null && battlefield.size() >= 10) {
+                Card ascendSource = battlefield.stream()
+                        .map(Permanent::getCard)
+                        .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(AscendEffect.class::isInstance))
+                        .findFirst()
+                        .orElse(null);
+                if (ascendSource != null) {
+                    grantBlessingIfEligible(gameData, controllerId, ascendSource);
+                }
+            }
+        }
+        checkPlanarAscend(gameData);
+    }
+
+    public void checkPlanarAscend(GameData gameData) {
+        if (gameData.planechase == null || gameData.planechase.controllerId == null) {
+            return;
+        }
+
+        UUID controllerId = gameData.planechase.controllerId;
         if (gameData.playersWithCityBlessing.contains(controllerId)) {
             return;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || battlefield.size() < 10) {
-            return;
-        }
-
-        Card ascendSource = battlefield.stream()
-                .map(Permanent::getCard)
+        Card ascendSource = gameData.planechase.faceUp.stream()
+                .map(PlanarObject::getCard)
                 .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(AscendEffect.class::isInstance))
                 .findFirst()

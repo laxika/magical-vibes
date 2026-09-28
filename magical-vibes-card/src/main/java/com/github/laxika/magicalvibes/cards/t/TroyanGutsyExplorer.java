@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "217")
+@CardRegistration(set = "SOC", collectorNumber = "334")
 public class TroyanGutsyExplorer extends Card {
 
     public TroyanGutsyExplorer() {

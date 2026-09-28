@@ -30,6 +30,12 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EnchantedCreatureControllerLosesLifeEffect) effect;
         UUID playerId = e.affectedPlayerId();
+        if (entry.isNonTargeting() && entry.getTargetId() != null) {
+            UUID currentController = gameQueryService.findPermanentController(gameData, entry.getTargetId());
+            if (currentController != null) {
+                playerId = currentController;
+            }
+        }
         if (playerId == null) return;
 
         if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {

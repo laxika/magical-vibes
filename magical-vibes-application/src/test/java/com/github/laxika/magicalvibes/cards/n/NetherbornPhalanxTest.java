@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GraveTitan;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.f.FlowOfIdeas;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,21 +14,19 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NetherbornPhalanx.class, GraveTitan.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({NetherbornPhalanx.class, FlowOfIdeas.class, BorosRecruit.class, Watchwolf.class})
 class NetherbornPhalanxTest extends BaseCardTest {
 
     @Test
     void eachOpponentLosesLifeForEachCreatureTheyControl() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player2, new BorosRecruit());
+        harness.addToBattlefield(player2, new Watchwolf());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new NetherbornPhalanx()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NetherbornPhalanx(), "{5}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -38,9 +37,9 @@ class NetherbornPhalanxTest extends BaseCardTest {
     @Test
     void transmuteSearchesForTheSameManaValue() {
         NetherbornPhalanx phalanx = new NetherbornPhalanx();
-        GraveTitan matchingCard = new GraveTitan();
-        GrizzlyBears lowerManaValue = new GrizzlyBears();
-        HillGiant differentManaValue = new HillGiant();
+        FlowOfIdeas matchingCard = new FlowOfIdeas();
+        BorosRecruit lowerManaValue = new BorosRecruit();
+        Watchwolf differentManaValue = new Watchwolf();
         harness.setHand(player1, List.of(phalanx));
         harness.setLibrary(player1, List.of(matchingCard, lowerManaValue, differentManaValue));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -57,5 +56,41 @@ class NetherbornPhalanxTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Netherborn Phalanx");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteShufflesWithoutFindingAMatchingCard() {
+        NetherbornPhalanx phalanx = new NetherbornPhalanx();
+        BorosRecruit nonMatchingCard = new BorosRecruit();
+        harness.setHand(player1, List.of(phalanx));
+        harness.setLibrary(player1, List.of(nonMatchingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Netherborn Phalanx");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+    }
+
+    @Test
+    void transmuteCanOnlyBeActivatedAtSorcerySpeed() {
+        NetherbornPhalanx phalanx = new NetherbornPhalanx();
+        harness.setHand(player1, List.of(phalanx));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(phalanx);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

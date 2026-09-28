@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "62")
 @CardRegistration(set = "AKR", collectorNumber = "102")
+@CardRegistration(set = "MSC", collectorNumber = "795")
 public class Doomfall extends Card {
 
     public Doomfall() {

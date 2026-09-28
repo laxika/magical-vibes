@@ -1,0 +1,75 @@
+package com.github.laxika.magicalvibes.cards.l;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({LuciusTheEternal.class, GrizzlyBears.class, Murder.class})
+class LuciusTheEternalTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("When Lucius dies, it exiles itself haunting an opponent's creature and returns when it leaves")
+    void hauntsOpponentCreatureAndReturnsWhenItLeaves() {
+        Permanent lucius = addReadyCard(player1, new LuciusTheEternal());
+        Permanent bears = addReadyCard(player2, new GrizzlyBears());
+
+        destroyWithMurder(player2, lucius.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(lucius);
+        assertThat(gd.hauntingCardToPermanentId).containsEntry(lucius.getCard().getId(), bears.getId());
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(lucius.getCard().getId()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bears));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
+                permanent -> permanent.getCard().getId().equals(lucius.getCard().getId()));
+        assertThat(gd.hauntingCardToPermanentId).doesNotContainKey(lucius.getCard().getId());
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(lucius.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Lucius's death trigger is skipped when the opponent controls no creature")
+    void deathTriggerNeedsAnOpponentCreature() {
+        Permanent lucius = addReadyCard(player1, new LuciusTheEternal());
+
+        destroyWithMurder(player2, lucius.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(lucius.getCard());
+    }
+
+    private void destroyWithMurder(Player caster, java.util.UUID targetId) {
+        harness.forceActivePlayer(caster);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(caster, List.of(new Murder()));
+        harness.addMana(caster, ManaColor.BLACK, 3);
+        harness.castInstant(caster, 0, targetId);
+        harness.passBothPriorities();
+    }
+
+    private Permanent addReadyCard(Player player, com.github.laxika.magicalvibes.model.Card card) {
+        Permanent creature = new Permanent(card);
+        creature.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(creature);
+        return creature;
+    }
+}

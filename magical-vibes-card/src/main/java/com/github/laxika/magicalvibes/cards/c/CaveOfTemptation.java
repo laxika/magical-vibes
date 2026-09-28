@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "237")
+@CardRegistration(set = "40K", collectorNumber = "267")
 public class CaveOfTemptation extends Card {
 
     public CaveOfTemptation() {

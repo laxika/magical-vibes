@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LightOfDay;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.q.QueenMotherRamonda;
 import com.github.laxika.magicalvibes.cards.r.RollingStones;
 import com.github.laxika.magicalvibes.cards.s.SandwurmConvergence;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -89,6 +91,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         LightOfDay.class,
         Okk.class,
         Pacifism.class,
+        QueenMotherRamonda.class,
         RollingStones.class,
         SandwurmConvergence.class,
         ScatheZombies.class,
@@ -420,6 +423,19 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A conditional defender restriction applies only while its controller is monarch")
+    void conditionalDefenderRestrictionTracksMonarch() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new QueenMotherRamonda());
+
+        gd.monarchPlayerId = player2.getId();
+        assertThat(als.canAttackDefender(gd, bears, player2.getId())).isFalse();
+
+        gd.monarchPlayerId = player1.getId();
+        assertThat(als.canAttackDefender(gd, bears, player2.getId())).isTrue();
+    }
+
+    @Test
     @DisplayName("A restriction that also covers planeswalkers is the only one a planeswalker feels")
     void onlyPlaneswalkerProtectingRestrictionsCoverPlaneswalkers() {
         // Form of the Dragon protects its controller alone; Sandwurm Convergence names
@@ -514,6 +530,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
                 null, null, goad.affectedPredicate(), EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
 
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A floating requirement can force a creature to attack a specific player")
+    void floatingSpecificAttackRequirementUsesItsPlayerTarget() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        var requirement = new TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect(player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Silver Surfer, Galactus's Herald", null, player1.getId(), requirement,
+                bears.getId(), null, null, EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
+
+        assertThat(als.getRequiredAttackTargetIds(gd, bears)).containsExactly(player2.getId());
+        assertThat(als.getMustAttackRequirementCount(gd, bears, player2.getId())).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, bears, planeswalker.getId())).isZero();
     }
 
     @Test

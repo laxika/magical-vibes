@@ -17,6 +17,7 @@ public final class AiInteractionStrategies {
 
     static {
         register(new XValueChoiceAiStrategy());
+        register(new DrawFromLibraryPositionChoiceAiStrategy());
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
@@ -36,7 +37,29 @@ public final class AiInteractionStrategies {
         register(new LibraryReorderAiStrategy());
         register(new TargetPlayerHandOrderChoiceAiStrategy());
         register(new SpatialMergingCardOrderAiStrategy());
+        register(new PlanarDeckPlaneswalkCardOrderAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
+        register(new PlanarDieChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ApplejackToyChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.StingingStudyCommanderChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.RevealedMatchingHandCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HeistCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderBattlefieldChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ActivatedExiledCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HitCounterExiledCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EspersToMagiciteCreatureChoice.class, 0));
+        register(new ActivatedExiledCardOpponentChoiceAiStrategy());
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCastCostHandCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualEnterExileHandCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));
         register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());

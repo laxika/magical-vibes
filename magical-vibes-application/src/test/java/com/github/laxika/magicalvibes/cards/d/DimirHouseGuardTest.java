@@ -1,27 +1,32 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.g.GolgariThug;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DimirHouseGuard.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({DimirHouseGuard.class, BorosRecruit.class, DimirSignet.class, GolgariThug.class, GlassGolem.class})
 class DimirHouseGuardTest extends BaseCardTest {
 
     @Test
     void transmuteSearchesForTheSameManaValue() {
         DimirHouseGuard houseGuard = new DimirHouseGuard();
-        HillGiant matchingCard = new HillGiant();
-        GrizzlyBears differentManaValue = new GrizzlyBears();
+        DimirHouseGuard matchingCard = new DimirHouseGuard();
+        DimirSignet differentManaValue = new DimirSignet();
         harness.setHand(player1, List.of(houseGuard));
         harness.setLibrary(player1, List.of(matchingCard, differentManaValue));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -42,16 +47,71 @@ class DimirHouseGuardTest extends BaseCardTest {
 
     @Test
     void sacrificingACreatureRegeneratesDimirHouseGuard() {
-        Permanent houseGuard = new Permanent(new DimirHouseGuard());
-        gd.playerBattlefields.get(player1.getId()).add(houseGuard);
-        Permanent fodder = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(fodder);
+        Permanent houseGuard = addCreatureReady(player1, new DimirHouseGuard());
+        Permanent fodder = addCreatureReady(player1, new BorosRecruit());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
         assertThat(houseGuard.getRegenerationShield()).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("Transmute can only be activated at sorcery speed")
+    void transmuteRequiresSorcerySpeed() {
+        DimirHouseGuard houseGuard = new DimirHouseGuard();
+        harness.setHand(player1, List.of(houseGuard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(houseGuard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fear prevents a nonblack, nonartifact creature from blocking")
+    void fearPreventsNonblackNonartifactCreatureFromBlocking() {
+        addCreatureReady(player1, new DimirHouseGuard());
+        addCreatureReady(player2, new BorosRecruit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("fear");
+    }
+
+    @Test
+    @DisplayName("Fear allows a black creature to block")
+    void fearAllowsBlackCreatureToBlock() {
+        addCreatureReady(player1, new DimirHouseGuard());
+        addCreatureReady(player2, new GolgariThug());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fear allows an artifact creature to block")
+    void fearAllowsArtifactCreatureToBlock() {
+        addCreatureReady(player1, new DimirHouseGuard());
+        addCreatureReady(player2, new GlassGolem());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 }

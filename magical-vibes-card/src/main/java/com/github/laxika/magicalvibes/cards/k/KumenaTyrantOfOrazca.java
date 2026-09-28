@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "162")
 @CardRegistration(set = "SLD", collectorNumber = "1412")
+@CardRegistration(set = "LCC", collectorNumber = "274")
 public class KumenaTyrantOfOrazca extends Card {
 
     public KumenaTyrantOfOrazca() {

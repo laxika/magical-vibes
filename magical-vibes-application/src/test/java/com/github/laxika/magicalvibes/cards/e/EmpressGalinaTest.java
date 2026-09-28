@@ -1,28 +1,26 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmpressGalina.class, CaptainSisay.class, DreamThrush.class})
 class EmpressGalinaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains permanent control of target legendary permanent")
     void gainsControlOfLegendaryPermanent() {
         Permanent empress = addEmpressGalina();
-        Spellbook legendarySpellbook = new Spellbook();
-        legendarySpellbook.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        Permanent target = harness.addToBattlefieldAndReturn(player2, legendarySpellbook);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CaptainSisay());
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, battlefieldIndex(player1, empress), null, target.getId());
@@ -38,7 +36,7 @@ class EmpressGalinaTest extends BaseCardTest {
     @DisplayName("Cannot target a nonlegendary permanent")
     void cannotTargetNonlegendaryPermanent() {
         Permanent empress = addEmpressGalina();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DreamThrush());
 
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -49,12 +47,10 @@ class EmpressGalinaTest extends BaseCardTest {
     }
 
     private Permanent addEmpressGalina() {
-        Permanent empress = harness.addToBattlefieldAndReturn(player1, new EmpressGalina());
-        empress.setSummoningSick(false);
-        return empress;
+        return addCreatureReady(player1, new EmpressGalina());
     }
 
-    private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
+    private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 }

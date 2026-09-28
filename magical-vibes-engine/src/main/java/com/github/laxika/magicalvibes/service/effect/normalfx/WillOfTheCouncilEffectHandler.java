@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final VotingSupport votingSupport;
 
     @Override
@@ -82,6 +84,8 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             if (candidates.size() == 1) {
+                votingFinishedSupport.recordVote(gameData, effectControllerId, choosingPlayerId,
+                        "permanent:" + candidates.getFirst());
                 votes.merge(candidates.getFirst(), 1, Integer::sum);
                 continue;
             }
@@ -94,6 +98,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        votingFinishedSupport.finishVoting(gameData, effectControllerId);
         exileMostVoted(gameData, votes, sourceName);
     }
 
@@ -158,6 +163,8 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             if (candidates.size() == 1) {
+                votingFinishedSupport.recordVote(gameData, effectControllerId, choosingPlayerId,
+                        "permanent:" + candidates.getFirst());
                 votes.merge(candidates.getFirst(), 1, Integer::sum);
                 continue;
             }
@@ -170,6 +177,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        votingFinishedSupport.finishVoting(gameData, effectControllerId);
         returnMostVotedGraveyardCards(gameData, effectControllerId, votes, sourceName);
     }
 

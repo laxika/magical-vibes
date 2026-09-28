@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 @CardRegistration(set = "WWK", collectorNumber = "137")
 @CardRegistration(set = "DDM", collectorNumber = "36")
 @CardRegistration(set = "SLD", collectorNumber = "2159")
+@CardRegistration(set = "DSC", collectorNumber = "282")
+@CardRegistration(set = "AFC", collectorNumber = "244")
+@CardRegistration(set = "C20", collectorNumber = "280")
 public class HalimarDepths extends Card {
 
     public HalimarDepths() {

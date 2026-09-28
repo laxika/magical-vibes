@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "SOM", collectorNumber = "224")
 @CardRegistration(set = "ONE", collectorNumber = "248")
 @CardRegistration(set = "ZNE", collectorNumber = "13")
+@CardRegistration(set = "DSC", collectorNumber = "263")
+@CardRegistration(set = "OTC", collectorNumber = "272")
 public class BlackcleaveCliffs extends Card {
 
     public BlackcleaveCliffs() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "92")
+@CardRegistration(set = "LCC", collectorNumber = "174")
 public class Surgespanner extends Card {
 
     public Surgespanner() {

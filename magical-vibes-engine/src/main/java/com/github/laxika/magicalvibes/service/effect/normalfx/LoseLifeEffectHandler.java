@@ -80,8 +80,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
             case SOURCE_CONTROLLER -> lifeSupport.applyLifeLoss(gameData, sourceControllerId, amount, sourceName);
-            case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER ->
+            case TARGET_PLAYER, TRIGGERING_PLAYER ->
                     loseTargetPlayerLife(gameData, entry, e, amount, sourceName, amountContext);
+            case ACTIVE_PLAYER -> loseActivePlayerLife(gameData, entry, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
@@ -159,12 +160,23 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    private void loseActivePlayerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+        UUID activePlayerId = entry.getActivePlayerId() != null
+                ? entry.getActivePlayerId() : gameData.activePlayerId;
+        if (activePlayerId != null) {
+            lifeSupport.applyLifeLoss(gameData, activePlayerId, amount, sourceName);
+        }
+    }
+
     private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(targetId);
+        }
         if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
             controllerId = entry.getTriggeringPermanentControllerId();
         }

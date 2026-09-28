@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.DrippingTongueZubera;
+import com.github.laxika.magicalvibes.cards.t.Thoughtbind;
+import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoseijuWhoSheltersAll.class, CounselOfTheSoratami.class, DrippingTongueZubera.class,
+        Thoughtbind.class, YamabushisFlame.class})
 class BoseijuWhoSheltersAllTest extends BaseCardTest {
 
     private void addBoseiju(int count) {
@@ -58,25 +62,24 @@ class BoseijuWhoSheltersAllTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        Divination divination = new Divination();
-        harness.setHand(player1, List.of(divination));
+        harness.setLibrary(player1, List.of(new DrippingTongueZubera(), new DrippingTongueZubera()));
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel));
 
-        harness.setHand(player2, List.of(new Cancel()));
+        harness.setHand(player2, List.of(new Thoughtbind()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.forceActivePlayer(player1);
         harness.castSorcery(player1, 0, 0);
-        assertThat(gd.spellsMadeUncounterable).contains(divination.getId());
 
         harness.ensurePriority(player2);
-        harness.castInstant(player2, 0, divination.getId());
+        harness.castInstant(player2, 0, counsel.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Cancel");
-        harness.assertInGraveyard(player1, "Divination");
+        harness.assertInGraveyard(player2, "Thoughtbind");
+        harness.assertInGraveyard(player1, "Counsel of the Soratami");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.stack).isEmpty();
     }
@@ -87,25 +90,54 @@ class BoseijuWhoSheltersAllTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        Divination divination = new Divination();
-        harness.setHand(player1, List.of(divination));
+        harness.setLibrary(player1, List.of(new DrippingTongueZubera(), new DrippingTongueZubera()));
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel));
 
-        harness.setHand(player2, List.of(new Cancel()));
+        harness.setHand(player2, List.of(new Thoughtbind()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.forceActivePlayer(player1);
         harness.castSorcery(player1, 0, 0);
-        assertThat(gd.spellsMadeUncounterable).doesNotContain(divination.getId());
 
         harness.ensurePriority(player2);
-        harness.castInstant(player2, 0, divination.getId());
+        harness.castInstant(player2, 0, counsel.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Divination");
+        harness.assertInGraveyard(player1, "Counsel of the Soratami");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An instant paid for with Boseiju's mana can't be countered")
+    void instantPaidWithBoseijuManaCannotBeCountered() {
+        addBoseiju(1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        YamabushisFlame flame = new YamabushisFlame();
+        harness.setHand(player1, List.of(flame));
+
+        harness.setHand(player2, List.of(new Thoughtbind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.forceActivePlayer(player1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, flame.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertInGraveyard(player2, "Thoughtbind");
+        harness.assertInGraveyard(player1, "Yamabushi's Flame");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -116,12 +148,23 @@ class BoseijuWhoSheltersAllTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
+        DrippingTongueZubera zubera = new DrippingTongueZubera();
+        harness.setHand(player1, List.of(zubera));
+
+        harness.setHand(player2, List.of(new Thoughtbind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.forceActivePlayer(player1);
         harness.castCreature(player1, 0);
 
-        assertThat(gd.spellsMadeUncounterable).doesNotContain(bears.getId());
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, zubera.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Thoughtbind");
+        harness.assertInGraveyard(player1, "Dripping-Tongue Zubera");
+        assertThat(gd.stack).isEmpty();
     }
 }

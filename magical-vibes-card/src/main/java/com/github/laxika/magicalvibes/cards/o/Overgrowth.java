@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "10E", collectorNumber = "283")
 @CardRegistration(set = "9ED", collectorNumber = "262")
 @CardRegistration(set = "STH", collectorNumber = "111")
+@CardRegistration(set = "40K", collectorNumber = "219")
 public class Overgrowth extends Card {
 
     public Overgrowth() {

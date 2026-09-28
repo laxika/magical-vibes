@@ -1,26 +1,25 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Tangle.class, RazorfootGriffin.class})
 class TangleTest extends BaseCardTest {
 
     @Test
     void preventsCombatDamageAndKeepsAttackingCreaturesTapped() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.tap();
 
-        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         nonAttacker.setSummoningSick(false);
         nonAttacker.tap();
 
@@ -30,7 +29,7 @@ class TangleTest extends BaseCardTest {
         assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
         assertThat(nonAttacker.getSkipUntapCount()).isZero();
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(attacker.isTapped()).isTrue();
         assertThat(nonAttacker.isTapped()).isFalse();
@@ -38,34 +37,38 @@ class TangleTest extends BaseCardTest {
 
     @Test
     void attackingCreaturesUntapOnTheFollowingTurn() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.tap();
 
         castAndResolve();
-        advanceToNextTurn(player1);
-        advanceToNextTurn(player2);
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
 
         assertThat(attacker.isTapped()).isFalse();
     }
 
-    private void castAndResolve() {
-        harness.setHand(player1, List.of(new Tangle()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+    @Test
+    void preventsCombatDamageFromAttackingCreatures() {
+        harness.setLife(player1, 20);
+        Permanent attacker = addCreatureReady(player2, new RazorfootGriffin());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        castAndResolve();
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
+    private void castAndResolve() {
+        harness.castFromHand(player1, new Tangle(), "{1}{G}");
         harness.passBothPriorities();
     }
 }

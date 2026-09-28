@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -94,15 +97,29 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        if (e.scope() == GrantScope.ALL_CREATURES
+        if (e.scope() == GrantScope.OPPONENT_CREATURES
+                || e.scope() == GrantScope.ALL_CREATURES
                 || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             SetBasePowerToughnessEffect individualEffect = new SetBasePowerToughnessEffect(
                     e.power(), e.toughness(), GrantScope.TARGET, e.duration());
             int count = 0;
-            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
+                UUID playerId = battlefieldEntry.getKey();
+                if (e.scope() == GrantScope.OPPONENT_CREATURES
+                        && playerId.equals(entry.getControllerId())) {
+                    continue;
+                }
+                List<Permanent> battlefield = battlefieldEntry.getValue();
                 for (Permanent permanent : battlefield) {
                     if (!gameQueryService.isCreature(gameData, permanent)
+                            || (e.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, e.filter(), FilterContext.of(gameData)
+                                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                                    .withSourceControllerId(entry.getControllerId())
+                                    .withSourcePermanentId(entry.getSourcePermanentId())
+                                    .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                    .withXValue(entry.getXValue())))
                             || (e.scope() == GrantScope.ALL_CREATURES
                             && permanent.getId().equals(sourcePermanentId))) {
                         continue;

@@ -42,4 +42,40 @@ class RoofstalkerWightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Ability requires the generic portion in addition to its blue mana")
+    void requiresGenericMana() {
+        harness.addToBattlefieldAndReturn(player1, new RoofstalkerWight());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Ability cannot be paid without blue mana")
+    void requiresBlueMana() {
+        harness.addToBattlefieldAndReturn(player1, new RoofstalkerWight());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while Roofstalker Wight is tapped")
+    void doesNotRequireTapping() {
+        Permanent wight = harness.addToBattlefieldAndReturn(player1, new RoofstalkerWight());
+        wight.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wight.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, wight, Keyword.FLYING)).isTrue();
+    }
 }

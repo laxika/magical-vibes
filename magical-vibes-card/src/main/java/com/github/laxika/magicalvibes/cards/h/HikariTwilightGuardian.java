@@ -22,7 +22,7 @@ public class HikariTwilightGuardian extends Card {
                         new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(FlickerEffect.exileSelfReturnAtEndStep())),
+                        List.of(FlickerEffect.exileSelfReturnAtEndStepUnderOwnerControl(false))),
                 "Exile Hikari?"));
     }
 }

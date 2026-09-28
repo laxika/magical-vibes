@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "240")
 @CardRegistration(set = "ZNE", collectorNumber = "26")
 @CardRegistration(set = "WHO", collectorNumber = "287")
+@CardRegistration(set = "LTC", collectorNumber = "366")
+@CardRegistration(set = "LTC", collectorNumber = "396")
 public class HorizonCanopy extends Card {
 
     public HorizonCanopy() {

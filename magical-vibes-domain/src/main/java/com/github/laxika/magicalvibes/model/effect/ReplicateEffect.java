@@ -10,11 +10,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                 or {@code null} for a non-mana tap replicate cost
  * @param tapFilter the permanents tapped for a non-mana replicate cost, or {@code null} for a
  *                  mana replicate cost
+ * @param tokenCopy whether copies of a permanent spell enter the battlefield as tokens
  */
-public record ReplicateEffect(String manaCost, PermanentPredicate tapFilter) implements CardEffect {
+public record ReplicateEffect(String manaCost, PermanentPredicate tapFilter, boolean tokenCopy) implements CardEffect {
 
     public ReplicateEffect(String manaCost) {
-        this(manaCost, null);
+        this(manaCost, null, false);
+    }
+
+    public ReplicateEffect(String manaCost, PermanentPredicate tapFilter) {
+        this(manaCost, tapFilter, false);
+    }
+
+    public ReplicateEffect(String manaCost, boolean tokenCopy) {
+        this(manaCost, null, tokenCopy);
     }
 
     public ReplicateEffect {
@@ -24,6 +33,6 @@ public record ReplicateEffect(String manaCost, PermanentPredicate tapFilter) imp
     }
 
     public static ReplicateEffect forTapCost(PermanentPredicate tapFilter) {
-        return new ReplicateEffect(null, tapFilter);
+        return new ReplicateEffect(null, tapFilter, false);
     }
 }

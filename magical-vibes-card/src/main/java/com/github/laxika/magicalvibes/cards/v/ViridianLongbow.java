@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "270")
+@CardRegistration(set = "AFC", collectorNumber = "221")
 public class ViridianLongbow extends Card {
 
     public ViridianLongbow() {

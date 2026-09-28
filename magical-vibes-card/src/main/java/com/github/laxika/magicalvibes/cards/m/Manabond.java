@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAllLandsFromHandAndDiscard
 
 @CardRegistration(set = "EXO", collectorNumber = "113")
 @CardRegistration(set = "TPR", collectorNumber = "179")
+@CardRegistration(set = "MB2", collectorNumber = "208")
 public class Manabond extends Card {
 
     public Manabond() {

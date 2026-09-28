@@ -192,8 +192,8 @@ class SoulBurnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Life gain counts damage replaced by -1/-1 counters")
-    void lifeGainCountsDamageDealtAsMinusOneMinusOneCounters() {
+    @DisplayName("Life gain does not count damage replaced by -1/-1 counters")
+    void lifeGainDoesNotCountDamageReplacedByMinusOneMinusOneCounters() {
         harness.addToBattlefield(player1, new SoulScarMage());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new SoulBurn()));
@@ -204,6 +204,6 @@ class SoulBurnTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        harness.assertLife(player1, 21);
+        harness.assertLife(player1, 20);
     }
 }

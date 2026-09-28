@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect;
 
 @CardRegistration(set = "SNC", collectorNumber = "128")
+@CardRegistration(set = "MSC", collectorNumber = "812")
 public class UnluckyWitness extends Card {
 
     public UnluckyWitness() {

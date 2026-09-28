@@ -26,8 +26,23 @@ public record PendingMayAbility(
         int eventValue,
         UUID triggeringPermanentId,
         Integer sourcePowerAtTrigger,
-        Integer xValue
+        Integer xValue,
+        Integer triggeringPermanentToughnessAtTrigger
 ) {
+
+    /** Backward-compatible constructor without a triggering permanent toughness snapshot. */
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,
+                             UUID attackedTargetId, UUID activePlayerId, UUID choicePlayerId,
+                             Permanent sourcePermanentSnapshot, UUID sourceControllerId, UUID triggeringCardId,
+                             int eventValue, UUID triggeringPermanentId, Integer sourcePowerAtTrigger,
+                             Integer xValue) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
+                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId, eventValue,
+                triggeringPermanentId, sourcePowerAtTrigger, xValue, null);
+    }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
                              UUID targetCardId, String manaCost, UUID sourcePermanentId,
@@ -163,13 +178,15 @@ public record PendingMayAbility(
         return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
-                updatedEventValue);
+                updatedEventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
+                triggeringPermanentToughnessAtTrigger);
     }
 
     public PendingMayAbility withXValue(Integer updatedXValue) {
         return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
-                eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue);
+                eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue,
+                triggeringPermanentToughnessAtTrigger);
     }
 }

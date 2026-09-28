@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +43,11 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
+    /** Effects to evaluate once this stack entry has finished resolving. */
+    private List<CardEffect> postResolutionEffects = List.of();
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
+    /** Index of the effect currently being dispatched by EffectResolutionService. */
+    @Setter private int resolvingEffectIndex = -1;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -63,6 +68,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
+    private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
     /** Effective colors of declared targets just before they left the battlefield. */
     private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
@@ -101,6 +108,8 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
+    /** Cards exiled from the graveyard to pay an escape cost, linked when the permanent enters. */
+    @Setter private List<UUID> escapeExiledCardIds = List.of();
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -112,6 +121,8 @@ public class StackEntry {
     @Setter private boolean exileInsteadOfGraveyard;
     /** Whether a permanent cast through a graveyard permission is exiled if it would leave. */
     @Setter private boolean exilePermanentIfLeavesBattlefield;
+    /** Source permanent to record when an ExileSpellEffect tracks the spell in exile. */
+    @Setter private UUID exileWithSourcePermanentId;
     /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
     @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
@@ -254,6 +265,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
     */
     @Setter private int eventValue;
+    @Setter private Integer combatOpponentPowerAtTrigger;
+    @Setter private Integer combatOpponentToughnessAtTrigger;
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
@@ -318,6 +331,8 @@ public class StackEntry {
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion;
+    /** Graveyard entry chosen as this spell's primary target when it was cast. */
+    @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
@@ -338,6 +353,8 @@ public class StackEntry {
     private List<UUID> convokeCreatureIds = List.of();
     /** Remaining convoke creatures for a resolving effect that makes them connive one at a time. */
     private List<UUID> convokeConniveCreatureIdsToProcess;
+    /** Remaining target creatures for a resolving effect that makes them connive one at a time. */
+    private List<UUID> targetConniveCreatureIdsToProcess;
     /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
     private List<UUID> chosenCostPermanentIds = List.of();
     /** Last-known snapshots of permanents chosen to pay a tracked cost. */
@@ -359,6 +376,8 @@ public class StackEntry {
     @Setter private UUID triggeringPermanentId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
+    /** Owner of the triggering permanent when its non-targeting reference was captured. */
+    @Setter private UUID triggeringPermanentOwnerId;
     /** Power and toughness captured for a permanent when its trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;
     @Setter private Integer triggeringPermanentToughnessAtTrigger;
@@ -676,8 +695,11 @@ public class StackEntry {
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
+        this.postResolutionEffects = source.postResolutionEffects.isEmpty()
+                ? List.of() : new ArrayList<>(source.postResolutionEffects);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
+        this.resolvingEffectIndex = source.resolvingEffectIndex;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -687,6 +709,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.returnedPermanentIds.addAll(source.returnedPermanentIds);
         this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
@@ -710,9 +733,12 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.castWithEscape = source.castWithEscape;
+        this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.exilePermanentIfLeavesBattlefield = source.exilePermanentIfLeavesBattlefield;
+        this.exileWithSourcePermanentId = source.exileWithSourcePermanentId;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
@@ -770,6 +796,8 @@ public class StackEntry {
         this.attackedTargetId = source.attackedTargetId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
+        this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
+        this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
@@ -794,6 +822,7 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
@@ -812,12 +841,15 @@ public class StackEntry {
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
+        this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
                 ? null : new ArrayList<>(source.convokeConniveCreatureIdsToProcess);
+        this.targetConniveCreatureIdsToProcess = source.targetConniveCreatureIdsToProcess == null
+                ? null : new ArrayList<>(source.targetConniveCreatureIdsToProcess);
         this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
         this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
@@ -935,6 +967,19 @@ public class StackEntry {
 
     public void replaceEffectsToResolve(List<CardEffect> effects) {
         effectsToResolve = List.copyOf(effects);
+    }
+
+    public void addPostResolutionEffect(CardEffect effect) {
+        List<CardEffect> updated = new ArrayList<>(postResolutionEffects);
+        updated.add(effect);
+        postResolutionEffects = updated;
+    }
+
+    /** Returns and clears the one-shot effects waiting for this entry to finish resolving. */
+    public List<CardEffect> takePostResolutionEffects() {
+        List<CardEffect> effects = postResolutionEffects;
+        postResolutionEffects = List.of();
+        return effects;
     }
 
     /**
@@ -1125,6 +1170,10 @@ public class StackEntry {
 
     public void setConvokeConniveCreatureIdsToProcess(List<UUID> creatureIds) {
         this.convokeConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
+    }
+
+    public void setTargetConniveCreatureIdsToProcess(List<UUID> creatureIds) {
+        this.targetConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
     }
 
     public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {
@@ -1445,6 +1494,16 @@ public class StackEntry {
 
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
+    }
+
+    public void clearReturnedPermanentIds() {
+        returnedPermanentIds.clear();
+    }
+
+    public void rememberReturnedPermanent(UUID permanentId) {
+        if (permanentId != null) {
+            returnedPermanentIds.add(permanentId);
+        }
     }
 
     /**

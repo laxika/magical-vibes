@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -153,6 +155,30 @@ public class TargetValidationService {
             return;
         }
 
+        boolean handCardTarget = predicate.admits(TargetPredicate.Kind.HAND_CARD);
+        if (handCardTarget) {
+            requireTarget(ctx);
+            UUID controllerId = ctx.sourceControllerId();
+            Card target = controllerId == null ? null : gameDataHandCard(ctx, controllerId, ctx.targetId());
+            if (target != null) {
+                TargetPredicate.HandCards restriction = (TargetPredicate.HandCards)
+                        predicate.leaf(TargetPredicate.Kind.HAND_CARD).orElseThrow();
+                UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+                if (!predicateEvaluationService.matchesCardPredicate(
+                        target, restriction.inner(), sourceCardId, ctx.gameData(), controllerId,
+                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                    throw new IllegalStateException("Target card does not match the required predicate");
+                }
+                if (!predicate.admits(TargetPredicate.Kind.PERMANENT)
+                        && !predicate.admits(TargetPredicate.Kind.PLAYER)) {
+                    return;
+                }
+            } else if (!predicate.admits(TargetPredicate.Kind.PERMANENT)
+                    && !predicate.admits(TargetPredicate.Kind.PLAYER)) {
+                throw new IllegalStateException("Target card is not in its controller's hand");
+            }
+        }
+
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
         if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
@@ -181,6 +207,13 @@ public class TargetValidationService {
         if (spec.harmful()) {
             checkProtection(ctx, target);
         }
+    }
+
+    private Card gameDataHandCard(TargetValidationContext ctx, UUID controllerId, UUID targetId) {
+        return ctx.gameData().playerHands.getOrDefault(controllerId, List.of()).stream()
+                .filter(card -> card.getId().equals(targetId))
+                .findFirst()
+                .orElse(null);
     }
 
     private void validateGraveyardTarget(TargetValidationContext ctx, TargetPredicate predicate) {
@@ -212,7 +245,10 @@ public class TargetValidationService {
         if (!predicateEvaluationService.matchesCardPredicate(
                 target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
                 ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
-            throw new IllegalStateException("Target card does not match the required predicate");
+            String description = CardPredicateUtils.describeFilter(restriction.inner());
+            throw new IllegalStateException(description.equals("card")
+                    ? "Target card does not match the required predicate"
+                    : "Target card must be a " + description);
         }
     }
 
@@ -323,6 +359,9 @@ public class TargetValidationService {
         if (ctx.defendingPlayerId() != null) {
             filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
+        if (ctx.triggeringPermanentId() != null) {
+            filterContext = filterContext.withTriggeringPermanentId(ctx.triggeringPermanentId());
+        }
         filterContext = filterContext.withXValue(ctx.xValue());
         return filterContext;
     }
@@ -356,18 +395,21 @@ public class TargetValidationService {
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
         Permanent sourcePermanent = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        Set<CardColor> sourceColors = sourcePermanent == null
+                ? gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())
+                : gameQueryService.getEffectiveColors(ctx.gameData(), sourcePermanent);
+        for (CardColor effectiveColor : sourceColors) {
+            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
+                throw new IllegalStateException(target.getCard().getName() + " has protection from "
+                        + effectiveColor.name().toLowerCase());
+            }
+        }
         if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
                 ctx.gameData(), target, sourcePermanent)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
         }
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
-        }
-        for (CardColor effectiveColor : gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())) {
-            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
-                throw new IllegalStateException(target.getCard().getName() + " has protection from "
-                        + effectiveColor.name().toLowerCase());
-            }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");

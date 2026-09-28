@@ -1573,7 +1573,7 @@ public class GameService {
             if (!manifestedOrCloaked && morphLifeCost != null) {
                 spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
-            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
+            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true, true);
         }
     }
 
@@ -1604,12 +1604,12 @@ public class GameService {
             if (controllerId == null) {
                 return;
             }
-            finishTurningFaceUp(gameData, permanent, controllerId, null, false);
+            finishTurningFaceUp(gameData, permanent, controllerId, null, false, false);
         }
     }
 
     private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,
-                                     Integer xValue, boolean autoPass) {
+                                     Integer xValue, boolean autoPass, boolean paidTurnFaceUpCost) {
         permanent.turnFaceUp();
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
@@ -1618,10 +1618,13 @@ public class GameService {
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
         for (TurnFaceUpReplacementEffect replacement : replacements) {
+            if (!paidTurnFaceUpCost && !replacement.appliesWithoutPayingCost()) {
+                continue;
+            }
             int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
                     AmountContext.forEnteringPermanent(controllerId, permanent, xValue != null ? xValue : 0));
-            permanentCounterSupport.applyPlusOnePlusOneCounters(
-                    gameData, null, permanent, counterCount);
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, replacement.counterType(), counterCount);
         }
         if (turnFaceUpCopyService != null
                 && turnFaceUpCopyService.prepareChoice(gameData, permanent, controllerId)) {
@@ -1819,6 +1822,20 @@ public class GameService {
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, boolean flashforwardCast) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
+                        flashforwardCast))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                    flashforwardCast);
+        }
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId,
                 exileCounterCostPermanentIds, List.of());
@@ -1856,15 +1873,22 @@ public class GameService {
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds, List.of());
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
-                        counterCostPermanentIds))) return;
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
-                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of());
+                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of(),
+                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of());
         }
     }
 

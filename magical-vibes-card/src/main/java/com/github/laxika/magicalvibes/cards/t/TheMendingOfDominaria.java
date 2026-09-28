@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  *        graveyard into your library.
  */
 @CardRegistration(set = "DOM", collectorNumber = "173")
+@CardRegistration(set = "OTC", collectorNumber = "197")
 public class TheMendingOfDominaria extends Card {
 
     public TheMendingOfDominaria() {

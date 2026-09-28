@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AFR", collectorNumber = "11")
+@CardRegistration(set = "HBG", collectorNumber = "88")
 public class DevotedPaladin extends Card {
 
     public DevotedPaladin() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "YMID", collectorNumber = "56")
+@CardRegistration(set = "MB2", collectorNumber = "262")
 public class TenaciousPup extends Card {
 
     public TenaciousPup() {

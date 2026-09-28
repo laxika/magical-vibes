@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "110")
+@CardRegistration(set = "LTC", collectorNumber = "219")
+@CardRegistration(set = "C20", collectorNumber = "153")
 public class GoblinDarkDwellers extends Card {
 
     public GoblinDarkDwellers() {

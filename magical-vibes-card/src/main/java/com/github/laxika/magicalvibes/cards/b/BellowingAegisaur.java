@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "4")
+@CardRegistration(set = "LCC", collectorNumber = "127")
 public class BellowingAegisaur extends Card {
 
     public BellowingAegisaur() {

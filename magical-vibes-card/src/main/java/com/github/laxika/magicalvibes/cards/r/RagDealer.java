@@ -18,7 +18,8 @@ public class RagDealer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{B}",
-                List.of(new ExileGraveyardCardsEffect(3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)),
+                List.of(new ExileGraveyardCardsEffect(3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                        null, null, false, false, false, null, false, true)),
                 "{2}{B}, {T}: Exile up to three target cards from a single graveyard."
         ));
     }

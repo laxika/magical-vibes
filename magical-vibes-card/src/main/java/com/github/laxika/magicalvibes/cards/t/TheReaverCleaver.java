@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2095")
 @CardRegistration(set = "HOC", collectorNumber = "94")
+@CardRegistration(set = "DMC", collectorNumber = "8")
+@CardRegistration(set = "DMC", collectorNumber = "84")
 public class TheReaverCleaver extends Card {
 
     public TheReaverCleaver() {

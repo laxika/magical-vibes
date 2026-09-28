@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "894")
 @CardRegistration(set = "MH1", collectorNumber = "82")
+@CardRegistration(set = "OTC", collectorNumber = "128")
 public class ChangelingOutcast extends Card {
 
     public ChangelingOutcast() {

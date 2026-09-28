@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "OPC2", collectorNumber = "38")
 @CardRegistration(set = "OPCA", collectorNumber = "81")
+@CardRegistration(set = "MOC", collectorNumber = "161")
 public class TrugaJungle extends Card {
 
     public TrugaJungle() {

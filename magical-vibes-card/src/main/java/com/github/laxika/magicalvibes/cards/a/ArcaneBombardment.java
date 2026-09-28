@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "101")
+@CardRegistration(set = "OTC", collectorNumber = "154")
 public class ArcaneBombardment extends Card {
 
     public ArcaneBombardment() {

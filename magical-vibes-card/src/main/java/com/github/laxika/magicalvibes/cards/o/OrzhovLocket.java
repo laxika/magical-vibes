@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "236")
+@CardRegistration(set = "MOC", collectorNumber = "368")
 public class OrzhovLocket extends Card {
 
     public OrzhovLocket() {

@@ -30,6 +30,7 @@ public class KamiOfTheHonoredDead extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(6))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

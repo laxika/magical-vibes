@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @InjectMocks private TargetRedirectionSupport targetRedirectionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -84,7 +86,8 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 .thenReturn(Optional.empty());
         changeTargetWithSingleTargetHandler = new ChangeTargetOfTargetSpellWithSingleTargetEffectHandler(
                 gameQueryService, gameLogService, playerInputService, targetRedirectionSupport,
-                new PsychicBattleSupport(targetLegalityService, playerInputService));
+                new PsychicBattleSupport(targetLegalityService, playerInputService,
+                        predicateEvaluationService, gameQueryService));
 
     }
 

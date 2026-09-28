@@ -12,7 +12,11 @@ public record TurnTargetCreatureFaceDownEffect(PermanentPredicate targetFilter,
                                                Set<CardSubtype> faceDownSubtypes) implements CardEffect {
 
     public TurnTargetCreatureFaceDownEffect() {
-        this(null);
+        this(null, Set.of(CardType.CREATURE), Set.of());
+    }
+
+    public TurnTargetCreatureFaceDownEffect(PermanentPredicate targetFilter, Set<CardSubtype> faceDownSubtypes) {
+        this(targetFilter, Set.of(CardType.CREATURE), faceDownSubtypes);
     }
 
     public TurnTargetCreatureFaceDownEffect(PermanentPredicate targetFilter) {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "225")
+@CardRegistration(set = "HBG", collectorNumber = "237")
 public class KalainReclusivePainter extends Card {
 
     public KalainReclusivePainter() {

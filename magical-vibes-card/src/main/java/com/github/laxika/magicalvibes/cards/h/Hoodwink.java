@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "84")
+@CardRegistration(set = "MB2", collectorNumber = "123")
 public class Hoodwink extends Card {
 
     public Hoodwink() {

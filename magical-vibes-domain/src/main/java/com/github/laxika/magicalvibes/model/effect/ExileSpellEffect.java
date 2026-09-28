@@ -26,7 +26,11 @@ public record ExileSpellEffect(int suspendTimeCounters, int screamCounterCount,
     }
 
     public static ExileSpellEffect withScreamCounters(int screamCounterCount) {
-        return new ExileSpellEffect(0, screamCounterCount);
+        return new ExileSpellEffect(0, screamCounterCount, null);
+    }
+
+    public static ExileSpellEffect withSource(UUID sourcePermanentId) {
+        return new ExileSpellEffect(0, 0, sourcePermanentId);
     }
 
     public ExileSpellEffect {

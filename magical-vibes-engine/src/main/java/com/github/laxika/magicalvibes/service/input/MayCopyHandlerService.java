@@ -162,9 +162,10 @@ public class MayCopyHandlerService {
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
-                    .flatMap(List::stream)
-                    .filter(card -> card.hasType(CardType.CREATURE))
+            List<Card> creatureCards = gameData.playerGraveyards.entrySet().stream()
+                    .flatMap(entry -> entry.getValue().stream()
+                            .filter(card -> cloneService.isValidGraveyardCopyCard(
+                                    gameData, ability.controllerId(), entry.getKey(), card, copyEffect)))
                     .toList();
             int requiredCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
             if (creatureCards.size() >= requiredCards) {
@@ -652,6 +653,10 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
+            validTargets.removeAll(targetSpellEntry.getDeclaredTargetIds());
+            if (targetSpellEntry.getTargetId() != null) {
+                validTargets.remove(targetSpellEntry.getTargetId());
+            }
         }
 
         if (validTargets.isEmpty()) {
@@ -663,7 +668,10 @@ public class MayCopyHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(spellCardId));
+        Integer targetIndex = targetSpellEntry.getTargetId() == null
+                && !targetSpellEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for " + spellCard.getName() + ".");
     }

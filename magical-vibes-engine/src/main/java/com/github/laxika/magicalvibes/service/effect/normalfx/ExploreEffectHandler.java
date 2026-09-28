@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleExploreReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryBeforeExploreReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -45,6 +46,10 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         ExploreEffect exploreEffect = (ExploreEffect) effect;
         UUID controllerId = entry.getControllerId();
         UUID exploringPermanentId = findExploringPermanentId(gameData, entry, exploreEffect);
+        if (exploreEffect.permanentId() != null
+                && gameQueryService.findPermanentById(gameData, exploreEffect.permanentId()) == null) {
+            return;
+        }
         if (exploreEffect.reference() != null && exploringPermanentId == null) {
             return;
         }
@@ -58,15 +63,17 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (!exploreEffect.replacementApplied()) {
-            int replacementCount = countExploreReplacements(gameData, exploringPermanent);
-            if (replacementCount > 0) {
-                List<CardEffect> replacementEffects = new ArrayList<>(exploreCount * (replacementCount + 1));
-                for (int i = 0; i < exploreCount; i++) {
-                    for (int j = 0; j < replacementCount; j++) {
+            ExploreReplacementCounts replacements = countExploreReplacements(gameData, exploringPermanent);
+            int effectiveExploreCount = exploreCount * (1 << replacements.doubleExploreCount());
+            if (replacements.scryCount() > 0 || replacements.doubleExploreCount() > 0) {
+                List<CardEffect> replacementEffects = new ArrayList<>(
+                        effectiveExploreCount * (replacements.scryCount() + 1));
+                for (int i = 0; i < effectiveExploreCount; i++) {
+                    for (int j = 0; j < replacements.scryCount(); j++) {
                         replacementEffects.add(new ScryEffect(1));
                     }
                     replacementEffects.add(ExploreEffect.afterReplacement(
-                            exploreEffect.targeted(), exploreEffect.reference()));
+                            exploreEffect.targeted(), exploreEffect.reference(), exploreEffect.permanentId()));
                 }
                 insertEffectsAfter(entry, effect, replacementEffects);
                 return;
@@ -104,7 +111,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                     permanentCounterSupport.notifyCountersPlaced(
-                            gameData, entry, source, CounterType.PLUS_ONE_PLUS_ONE, placed);
+                            gameData, entry, source, placed, CounterType.PLUS_ONE_PLUS_ONE);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                             gameData, source, controllerId);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
@@ -129,28 +136,34 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     
     }
 
-    private int countExploreReplacements(GameData gameData, Permanent exploringPermanent) {
+    private ExploreReplacementCounts countExploreReplacements(GameData gameData, Permanent exploringPermanent) {
         if (exploringPermanent == null
                 || !gameQueryService.isCreature(gameData, exploringPermanent)) {
-            return 0;
+            return new ExploreReplacementCounts(0, 0);
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, exploringPermanent.getId());
         if (controllerId == null) {
-            return 0;
+            return new ExploreReplacementCounts(0, 0);
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
-            return 0;
+            return new ExploreReplacementCounts(0, 0);
         }
-        int replacementCount = 0;
+        int scryCount = 0;
+        int doubleExploreCount = 0;
         for (Permanent permanent : battlefield) {
             for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (staticEffect instanceof ScryBeforeExploreReplacementEffect) {
-                    replacementCount++;
+                    scryCount++;
+                } else if (staticEffect instanceof DoubleExploreReplacementEffect) {
+                    doubleExploreCount++;
                 }
             }
         }
-        return replacementCount;
+        return new ExploreReplacementCounts(scryCount, doubleExploreCount);
+    }
+
+    private record ExploreReplacementCounts(int scryCount, int doubleExploreCount) {
     }
 
     private void insertEffectsAfter(StackEntry entry, CardEffect effect, List<CardEffect> effects) {
@@ -171,7 +184,9 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             if (entry.getEffectsToResolve().get(i) == effect) {
                 List<CardEffect> remaining = new ArrayList<>(exploreCount - 1);
                 for (int j = 1; j < exploreCount; j++) {
-                    remaining.add(new ExploreEffect(exploreEffect.targeted(), exploreEffect.reference()));
+                    remaining.add(exploreEffect.permanentId() == null
+                            ? new ExploreEffect(exploreEffect.targeted(), exploreEffect.reference())
+                            : ExploreEffect.forPermanent(exploreEffect.permanentId()));
                 }
                 entry.insertEffectsToResolve(i + 1, remaining);
                 return;
@@ -180,6 +195,9 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     }
 
     private UUID findExploringPermanentId(GameData gameData, StackEntry entry, ExploreEffect effect) {
+        if (effect.permanentId() != null) {
+            return effect.permanentId();
+        }
         if (effect.reference() != null) {
             return switch (effect.reference()) {
                 case SOURCE -> entry.getSourcePermanentId();

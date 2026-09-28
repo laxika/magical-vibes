@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "207")
 @CardRegistration(set = "A25", collectorNumber = "191")
+@CardRegistration(set = "TDC", collectorNumber = "97")
 public class TreeOfRedemption extends Card {
 
     public TreeOfRedemption() {

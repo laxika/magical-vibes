@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "148")
+@CardRegistration(set = "MOC", collectorNumber = "281")
 public class GhirapurAetherGrid extends Card {
 
     public GhirapurAetherGrid() {

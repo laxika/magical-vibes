@@ -31,14 +31,17 @@ class VronosMaskedInquisitorTest extends BaseCardTest {
         Permanent jace = addReady(player1, new JaceBeleren());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(karn.getId(), jace.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(karn, jace);
         assertThat(vronos.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+        while (!gd.stack.isEmpty()) {
+            harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+        }
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(karn, jace);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(karn, jace);
@@ -105,6 +108,9 @@ class VronosMaskedInquisitorTest extends BaseCardTest {
     private Permanent addReady(Player player, Card card) {
         Permanent permanent = new Permanent(card);
         permanent.setSummoningSick(false);
+        if (card.getLoyalty() != null) {
+            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+        }
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }

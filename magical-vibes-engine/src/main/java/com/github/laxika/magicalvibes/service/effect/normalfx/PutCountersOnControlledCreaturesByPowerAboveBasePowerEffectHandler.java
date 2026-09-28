@@ -85,7 +85,7 @@ public class PutCountersOnControlledCreaturesByPowerAboveBasePowerEffectHandler
             permanent.setCounterCount(e.counterType(),
                     permanent.getCounterCount(e.counterType()) + placed);
             permanentCounterSupport.notifyCountersPlaced(
-                    gameData, entry, permanent, e.counterType(), placed);
+                    gameData, entry, permanent, placed, e.counterType());
             totalPlaced += placed;
             creatureCount++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KitsuneLoreweaver.class, KitsuneBonesetter.class})
 class KitsuneLoreweaverTest extends BaseCardTest {
 
     @Test
@@ -52,13 +53,28 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("The ability gives no toughness when its controller's hand is empty")
+    void abilityGivesNoToughnessWithEmptyHand() {
+        Permanent loreweaver = addLoreweaverReady(player1);
+        harness.setHand(player1, hand(0));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
+    }
+
     private Permanent addLoreweaverReady(Player player) {
         return addCreatureReady(player, new KitsuneLoreweaver());
     }
 
     private List<Card> hand(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(ignored -> new GrizzlyBears())
+                .mapToObj(ignored -> new KitsuneBonesetter())
                 .map(card -> (Card) card)
                 .toList();
     }

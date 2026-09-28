@@ -18,8 +18,15 @@ import java.util.Set;
 @CardRegistration(set = "M12", collectorNumber = "229")
 @CardRegistration(set = "M13", collectorNumber = "229")
 @CardRegistration(set = "XLN", collectorNumber = "257")
+@CardRegistration(set = "MSC", collectorNumber = "272")
+@CardRegistration(set = "MSC", collectorNumber = "499")
 @CardRegistration(set = "SLD", collectorNumber = "460")
 @CardRegistration(set = "YEOE", collectorNumber = "39")
+@CardRegistration(set = "PIP", collectorNumber = "297")
+@CardRegistration(set = "PIP", collectorNumber = "515")
+@CardRegistration(set = "PIP", collectorNumber = "825")
+@CardRegistration(set = "PIP", collectorNumber = "1043")
+@CardRegistration(set = "LTC", collectorNumber = "336")
 public class SunpetalGrove extends Card {
 
     public SunpetalGrove() {

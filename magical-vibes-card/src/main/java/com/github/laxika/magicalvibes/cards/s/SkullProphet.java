@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "206")
+@CardRegistration(set = "TDC", collectorNumber = "304")
 public class SkullProphet extends Card {
 
     public SkullProphet() {

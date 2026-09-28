@@ -32,6 +32,21 @@ class FiremaneAngelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline life gain from the battlefield during your upkeep")
+    void mayDeclineLifeGainFromBattlefield() {
+        harness.addToBattlefield(player1, new FiremaneAngel());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("May gain 1 life from the graveyard during your upkeep")
     void mayGainLifeFromGraveyard() {
         harness.setGraveyard(player1, List.of(new FiremaneAngel()));
@@ -44,6 +59,25 @@ class FiremaneAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("Does not gain life if it returns from the graveyard before its trigger resolves")
+    void doesNotGainLifeIfReturnedBeforeGraveyardTriggerResolves() {
+        FiremaneAngel angel = new FiremaneAngel();
+        harness.setGraveyard(player1, List.of(angel));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test
@@ -67,6 +101,27 @@ class FiremaneAngelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns only the activated copy from the graveyard")
+    void returnsOnlyTheActivatedCopyFromGraveyard() {
+        FiremaneAngel otherAngel = new FiremaneAngel();
+        FiremaneAngel activatedAngel = new FiremaneAngel();
+        harness.setGraveyard(player1, List.of(otherAngel, activatedAngel));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(activatedAngel.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(otherAngel);
+    }
+
+    @Test
     @DisplayName("Cannot return itself from the graveyard outside its controller's upkeep")
     void cannotActivateOutsideUpkeep() {
         harness.setGraveyard(player1, List.of(new FiremaneAngel()));
@@ -78,5 +133,20 @@ class FiremaneAngelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot return itself during an opponent's upkeep")
+    void cannotActivateDuringOpponentUpkeep() {
+        harness.setGraveyard(player1, List.of(new FiremaneAngel()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
     }
 }

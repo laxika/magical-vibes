@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "145")
+@CardRegistration(set = "MB2", collectorNumber = "99")
 public class ThornbiteStaff extends Card {
 
     public ThornbiteStaff() {

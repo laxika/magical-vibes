@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "25")
+@CardRegistration(set = "AFC", collectorNumber = "125")
 public class DreamPillager extends Card {
 
     public DreamPillager() {

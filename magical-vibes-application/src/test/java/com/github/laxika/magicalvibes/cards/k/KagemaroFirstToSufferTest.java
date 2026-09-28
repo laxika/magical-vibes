@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +13,32 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KagemaroFirstToSuffer.class, KamiOfTheTendedGarden.class, HandOfHonor.class})
 class KagemaroFirstToSufferTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Kagemaro's power and toughness equal the cards in its controller's hand")
+    void powerAndToughnessEqualControllerHandSize() {
+        Permanent kagemaro = addCreatureReady(player1, new KagemaroFirstToSuffer());
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
+        harness.setHand(player2, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
+
+        assertThat(gqs.getEffectivePower(gd, kagemaro)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kagemaro)).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new HandOfHonor()));
+
+        assertThat(gqs.getEffectivePower(gd, kagemaro)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kagemaro)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Sacrificing Kagemaro gives all creatures -X/-X based on hand size")
     void sacrificesKagemaroAndWeakensAllCreatures() {
         harness.addToBattlefield(player1, new KagemaroFirstToSuffer());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new KamiOfTheTendedGarden());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new KamiOfTheTendedGarden());
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -39,8 +56,8 @@ class KagemaroFirstToSufferTest extends BaseCardTest {
     @DisplayName("The -X/-X effect wears off at end of turn")
     void effectWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new KagemaroFirstToSuffer());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KamiOfTheTendedGarden());
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -55,5 +72,21 @@ class KagemaroFirstToSufferTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The ability uses the hand size when it resolves")
+    void usesHandSizeAtResolution() {
+        harness.addToBattlefield(player1, new KagemaroFirstToSuffer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KamiOfTheTendedGarden());
+        harness.setHand(player1, List.of(new HandOfHonor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 }

@@ -39,12 +39,14 @@ class LitaMechanicalEngineerTest extends BaseCardTest {
         addLitaMana();
         Permanent zeppelin = createZeppelin(lita);
         Permanent bear = addCreatureReady(player1);
+        Permanent secondBear = addCreatureReady(player1);
 
         harness.activateAbility(player1, battlefieldIndex(zeppelin), null, null);
         harness.passBothPriorities();
 
         zeppelin.tap();
         assertThat(bear.isTapped()).isTrue();
+        assertThat(secondBear.isTapped()).isTrue();
 
         advanceToEndStep();
 

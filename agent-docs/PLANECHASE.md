@@ -18,6 +18,7 @@ Rolling the die by special action requires the active player's main phase, prior
 - `BlankPlanarDieRollsCauseChaosEffect()` makes blank planar-die rolls trigger chaos while its source phenomenon remains face up; the source state is cleared when planeswalking away.
 - `ReverseTurnOrderEffect()` reverses the authoritative player-order list when it resolves; the phenomenon lifecycle then planeswalks away from Time Distortion.
 - `EffectDuration.UNTIL_PLANESWALK` expires on a planeswalk.
+- `PhaseOutCreaturesUntilPlaneswalkEffect()` holds phased-out creatures and their attachments until the next planeswalk, when `PhasingService` phases them back in.
 - `AllowPlayFromAnyLibraryTopEffect` is a controller-scoped static permission for playing lands and casting spells from any player's library top; it uses the normal costs, timing, and land-play allowance.
 - `PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED`, and `ENCOUNTER_TRIGGERED` provide planar event slots. Reuse ordinary effects inside them.
 - `PlaneswalkIfPlanarSourceHasCountersEffect` is the resolution-time threshold rider for planes whose own counters cause a planeswalk (Aretopolis); it checks the live face-up `PlanarObject` rather than a battlefield permanent.
@@ -27,8 +28,9 @@ Rolling the die by special action requires the active player's main phase, prior
 - `RevealPlanarCardsUntilFivePlanesEffect` reveals through five planes, uses `PlanarCardChoice` to select the plane that becomes the next top card, and randomizes all other revealed cards onto the bottom.
 - `RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect` reveals through two planes, orders any intervening cards onto the bottom, and replaces the face-up planar cards with both revealed planes simultaneously.
 - `PlaneswalkTopTwoReplacementEffect` is checked for the current planar controller before a planeswalk; it reveals the top two planar cards, lets that player put one on the bottom and the other on top, then continues the planeswalk.
+- `RevealPlanarCardsUntilPlaneAndPlaneswalkEffect` reveals through the first plane, adds it without removing existing face-up planes, and orders intervening cards onto the bottom.
 - Land-entry slots are collected from face-up planar objects for both the planar controller's lands and opponents' lands; `CreateTokenForTriggeringPlayerEffect` can use the entering land's controller.
-- Per-creature attack slots on face-up planar objects are collected during attacker declaration; planar attack effects receive the triggering attacker and attacked player without making the plane a battlefield permanent.
+- Per-creature attack slots on face-up planar objects are collected during attacker declaration; planar attack effects receive the triggering attacker and attacked player without making the plane a battlefield permanent. Combat-wide `ON_ALLY_CREATURES_ATTACK` slots are also collected once per combat for the planar controller.
 - Targeted planar triggers enter the existing trigger-target interaction with a source snapshot. Phenomena wait while their triggered abilities are on the stack or awaiting target selection. Once those abilities leave the stack, state-based actions planeswalk onward, including after a countered encounter.
 - Global creature-leave triggers on face-up planes use the shared leave collector and retain the departing creature's controller for resolution.
 - Planar abilities with an optional multi-target group, such as `target(0, 99)`, use the slot-by-slot target walker so the controller can select any number of player targets and the resulting stack entry retains every selected player ID.

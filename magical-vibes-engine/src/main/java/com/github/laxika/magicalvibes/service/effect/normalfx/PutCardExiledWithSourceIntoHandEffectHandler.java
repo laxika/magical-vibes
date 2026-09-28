@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component;
 public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
@@ -39,7 +41,9 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        String requiredName = ((PutCardExiledWithSourceIntoHandEffect) effect).requiredName();
+        PutCardExiledWithSourceIntoHandEffect returnEffect = (PutCardExiledWithSourceIntoHandEffect) effect;
+        String requiredName = returnEffect.requiredName();
+        var filter = returnEffect.filter();
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -50,7 +54,9 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId())
                         && controllerId.equals(e.ownerId()))
                 .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
-                .filter(c -> requiredName == null || requiredName.equals(c.getName()))
+                .filter(c -> (requiredName == null || requiredName.equals(c.getName()))
+                        && (filter == null || predicateEvaluationService.matchesCardPredicate(
+                        c, filter, entry.getCard().getId(), gameData, controllerId)))
                 .toList();
 
         if (matching.isEmpty()) {

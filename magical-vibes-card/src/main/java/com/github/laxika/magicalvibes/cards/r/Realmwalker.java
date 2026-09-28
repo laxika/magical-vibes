@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 @CardRegistration(set = "KHM", collectorNumber = "188")
 @CardRegistration(set = "SLD", collectorNumber = "1724")
 @CardRegistration(set = "ECC", collectorNumber = "114")
+@CardRegistration(set = "LCC", collectorNumber = "250")
 public class Realmwalker extends Card {
 
     public Realmwalker() {

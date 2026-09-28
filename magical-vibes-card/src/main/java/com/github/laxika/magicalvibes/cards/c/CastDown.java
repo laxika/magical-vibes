@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "81")
 @CardRegistration(set = "2XM", collectorNumber = "79")
+@CardRegistration(set = "HBG", collectorNumber = "148")
 public class CastDown extends Card {
 
     public CastDown() {

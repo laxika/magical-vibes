@@ -144,6 +144,15 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                 Set.of(), false, false, null, false, false);
     }
 
+    /** Clone that adds both card types and subtypes to the resulting permanent. */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardType> additionalTypesOverride,
+                                      Set<CardSubtype> additionalSubtypesOverride) {
+        this(filter, typeLabel, null, null, additionalTypesOverride, List.of(), null, null, false, null,
+                additionalSubtypesOverride, Map.of(), false, false, null, Set.of(), Set.of(), false, true,
+                Set.of(), false, false, null, false, false);
+    }
+
     /** Clone that also adds copy exceptions to the resulting permanent and may omit its color. */
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       Set<CardSubtype> additionalSubtypesOverride,
@@ -163,6 +172,20 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                 additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false, false, null,
                 additionalSupertypesOverride, additionalKeywordsOverride,
                 additionalCreatureOnlyCharacteristics, true, Set.of(), false, false, null, false, false);
+    }
+
+    /** Clone with additional copy characteristics that last only until end of turn. */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardSupertype> additionalSupertypesOverride,
+                                      Set<Keyword> additionalKeywordsOverride,
+                                      DynamicAmount additionalPlusOnePlusOneCounters,
+                                      boolean additionalCreatureOnlyCharacteristics,
+                                      boolean copyUntilEndOfTurn) {
+        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
+                additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false, false, null,
+                additionalSupertypesOverride, additionalKeywordsOverride,
+                additionalCreatureOnlyCharacteristics, true, Set.of(), false, false, null,
+                copyUntilEndOfTurn, false);
     }
 
     /** Clone that removes a supertype and adds the appropriate creature or planeswalker counter. */

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureAtta
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CMM", collectorNumber = "112")
+@CardRegistration(set = "C20", collectorNumber = "122")
 public class PortalMage extends Card {
 
     public PortalMage() {

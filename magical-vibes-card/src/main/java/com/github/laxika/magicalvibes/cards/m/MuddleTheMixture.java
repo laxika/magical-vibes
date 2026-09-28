@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -32,7 +32,7 @@ public class MuddleTheMixture extends Card {
                 false,
                 "{1}{U}{U}",
                 List.of(new SearchLibraryEffect(null, LibrarySearchDestination.HAND,
-                        new ManaValueBound(new LastDiscardedCardManaValue(), true, 0))),
+                        new ManaValueBound(new SourceCardManaValue(), true, 0))),
                 "Transmute {1}{U}{U} ({1}{U}{U}, Discard this card: Search your library for a card with the same mana value as this card, reveal it, put it into your hand, then shuffle. Transmute only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

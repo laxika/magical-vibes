@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "62")
+@CardRegistration(set = "AFC", collectorNumber = "99")
 public class FiendOfTheShadows extends Card {
 
     public FiendOfTheShadows() {

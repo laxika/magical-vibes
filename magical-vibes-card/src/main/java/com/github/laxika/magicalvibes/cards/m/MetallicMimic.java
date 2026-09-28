@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 @CardRegistration(set = "SLD", collectorNumber = "194")
 @CardRegistration(set = "KLR", collectorNumber = "251")
 @CardRegistration(set = "PZA", collectorNumber = "16")
+@CardRegistration(set = "MSC", collectorNumber = "203")
+@CardRegistration(set = "MSC", collectorNumber = "441")
+@CardRegistration(set = "LCC", collectorNumber = "308")
 public class MetallicMimic extends Card {
 
     public MetallicMimic() {

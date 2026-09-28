@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KuroPitlord;
+import com.github.laxika.magicalvibes.cards.n.NoDachi;
+import com.github.laxika.magicalvibes.cards.o.OrderOfTheSacredBell;
+import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodthirstyOgre.class, KuroPitlord.class, NoDachi.class, OrderOfTheSacredBell.class,
+        WanderingOnes.class})
 class BloodthirstyOgreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tap ability puts a devotion counter on itself")
     void tapPutsDevotionCounter() {
-        Permanent ogre = addReadyOgre();
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
         forceMainPhase(player1);
 
         harness.activateAbility(player1, indexOf(player1, ogre), 0, null, null);
@@ -31,11 +35,27 @@ class BloodthirstyOgreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap cost prevents activating the other ability while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, ogre), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ogre.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("With a Demon, target gets -X/-X equal to devotion counters")
     void debuffScalesWithDevotionCounters() {
-        Permanent ogre = addReadyOgre();
-        harness.addToBattlefield(player1, new DemonOfDeathsGate());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
         forceMainPhase(player1);
 
         putDevotionCounters(ogre, 2);
@@ -50,9 +70,9 @@ class BloodthirstyOgreTest extends BaseCardTest {
     @Test
     @DisplayName("Enough devotion counters kill the target")
     void enoughCountersKillTarget() {
-        Permanent ogre = addReadyOgre();
-        harness.addToBattlefield(player1, new DemonOfDeathsGate());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
         forceMainPhase(player1);
 
         putDevotionCounters(ogre, 2);
@@ -60,15 +80,43 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("With no devotion counters, the debuff is -0/-0")
+    void zeroDevotionCountersHaveNoEffect() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player2, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NoDachi());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Debuff wears off at end of turn")
     void debuffWearsOff() {
-        Permanent ogre = addReadyOgre();
-        harness.addToBattlefield(player1, new DemonOfDeathsGate());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
         forceMainPhase(player1);
 
         putDevotionCounters(ogre, 1);
@@ -89,8 +137,9 @@ class BloodthirstyOgreTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the debuff ability without controlling a Demon")
     void cannotActivateWithoutDemon() {
-        Permanent ogre = addReadyOgre();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player2, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
         forceMainPhase(player1);
 
         putDevotionCounters(ogre, 2);
@@ -103,13 +152,6 @@ class BloodthirstyOgreTest extends BaseCardTest {
 
     private void putDevotionCounters(Permanent ogre, int count) {
         ogre.setCounterCount(CounterType.DEVOTION, count);
-    }
-
-    private Permanent addReadyOgre() {
-        Permanent perm = new Permanent(new BloodthirstyOgre());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
     }
 
     private void forceMainPhase(Player activePlayer) {

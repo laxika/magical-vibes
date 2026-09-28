@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.c.CivicWayfinder;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
+import com.github.laxika.magicalvibes.cards.g.GlassGolem;
+import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,61 +18,120 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SurgeOfZeal.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class})
+@CardUsed({SurgeOfZeal.class, BorosRecruit.class, BorosSignet.class, CivicWayfinder.class,
+        CourierHawk.class, GlassGolem.class, ViashinoFangtail.class})
 class SurgeOfZealTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives haste to the target and every creature sharing a color with it")
     void grantsHasteToTargetAndColorSharingCreatures() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent ownMatchingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentMatchingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
+        Permanent ownMatchingCreature = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
+        Permanent opponentMatchingCreature = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+        Permanent differentColorCreature = harness.addToBattlefieldAndReturn(player2, new ViashinoFangtail());
         harness.setHand(player1, List.of(new SurgeOfZeal()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(ownMatchingCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(opponentMatchingCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(differentColorCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownMatchingCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentMatchingCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, differentColorCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
     @DisplayName("A colorless target affects only itself")
     void colorlessTargetOnlyAffectsItself() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        Permanent otherColorlessCreature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        Permanent coloredCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlassGolem());
+        Permanent otherColorlessCreature = harness.addToBattlefieldAndReturn(player2, new GlassGolem());
+        Permanent coloredCreature = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherColorlessCreature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, coloredCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A multicolored target affects creatures sharing either color")
+    void multicoloredTargetAffectsCreaturesSharingEitherColor() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent redCreature = harness.addToBattlefieldAndReturn(player1, new ViashinoFangtail());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new CourierHawk());
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, redCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, whiteCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, greenCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Determines color-sharing creatures when the spell resolves")
+    void determinesColorSharingCreaturesOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
         harness.setHand(player1, List.of(new SurgeOfZeal()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        Permanent creatureEnteringBeforeResolution =
+                harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(otherColorlessCreature.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(coloredCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creatureEnteringBeforeResolution, Keyword.HASTE)).isTrue();
     }
 
     @Test
     @DisplayName("Granted haste wears off at end of turn")
     void hasteWearsOffAtEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
         harness.setHand(player1, List.of(new SurgeOfZeal()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does nothing if the target leaves before resolution")
+    void doesNothingIfTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CivicWayfinder());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new CivicWayfinder());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, matchingCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target only a creature")
+    void cannotTargetNonCreature() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+        harness.setHand(player1, List.of(new SurgeOfZeal()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, signet.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

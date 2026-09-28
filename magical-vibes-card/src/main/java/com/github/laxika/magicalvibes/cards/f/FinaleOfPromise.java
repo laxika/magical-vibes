@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "127")
+@CardRegistration(set = "OTC", collectorNumber = "166")
 public class FinaleOfPromise extends Card {
 
     public FinaleOfPromise() {

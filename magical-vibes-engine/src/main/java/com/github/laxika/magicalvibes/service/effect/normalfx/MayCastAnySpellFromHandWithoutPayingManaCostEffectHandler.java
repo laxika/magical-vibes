@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +33,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +50,9 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
         int maxManaValue = e.maxManaValue() == null
                 ? Integer.MAX_VALUE
                 : amountEvaluationService.evaluate(gameData, e.maxManaValue(),
-                        AmountContext.forStackEntry(entry, null));
+                        AmountContext.forStackEntry(entry, entry.getSourcePermanentId() == null
+                                ? null
+                                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
 
         List<Card> eligible = hand.stream()
                 .filter(c -> !c.hasType(CardType.LAND))
@@ -60,8 +64,10 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
             Card c = eligible.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
-                    "Cast " + c.getName() + " without paying its mana cost?"
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(
+                            true, e.afterSuccessfulCastEffect())),
+                    "Cast " + c.getName() + " without paying its mana cost?",
+                    entry.getSourcePermanentId(), (Integer) null
             ));
         }
     }

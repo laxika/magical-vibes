@@ -38,7 +38,8 @@ public record PendingExileReturn(
         Set<UUID> cardsToAttachToPrimary,
         CounterType counterTypeOnReturn,
         int counterAmountOnReturn,
-        Map<CounterType, Integer> countersOnReturn) implements DelayedAction {
+        Map<CounterType, Integer> countersOnReturn,
+        boolean returnLandsTapped) implements DelayedAction {
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped,
                               boolean returnToHand, TurnStep returnStep,
@@ -51,7 +52,7 @@ public record PendingExileReturn(
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
                 returnToGraveyard, timingControllerId, followUpSourceCard,
                 discardControllerCardsEqualToReturnedToughness, false, 0, Set.of(), null, 0,
-                Map.of());
+                Map.of(), false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
@@ -68,7 +69,7 @@ public record PendingExileReturn(
                 returnToGraveyard, timingControllerId, followUpSourceCard,
                 discardControllerCardsEqualToReturnedToughness,
                 plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
-                cardsToAttachToPrimary, counterTypeOnReturn, counterAmountOnReturn, Map.of());
+                cardsToAttachToPrimary, counterTypeOnReturn, counterAmountOnReturn, Map.of(), false);
     }
 
     public PendingExileReturn {
@@ -88,7 +89,7 @@ public record PendingExileReturn(
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, returnToGraveyard,
                 timingControllerId, followUpSourceCard, discardControllerCardsEqualToReturnedToughness,
                 plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
-                Set.of(), null, 0, Map.of());
+                Set.of(), null, 0, Map.of(), false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
@@ -103,7 +104,23 @@ public record PendingExileReturn(
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, returnToGraveyard,
                 timingControllerId, followUpSourceCard, discardControllerCardsEqualToReturnedToughness,
                 plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
-                Set.of(), counterTypeOnReturn, counterAmountOnReturn, Map.of());
+                Set.of(), counterTypeOnReturn, counterAmountOnReturn, Map.of(), false);
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking,
+                              boolean returnToGraveyard, UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness,
+                              boolean plusOnePlusOneCountersOnlyOnCreatures,
+                              int loyaltyCountersOnPlaneswalkers,
+                              CounterType counterTypeOnReturn, int counterAmountOnReturn,
+                              boolean returnLandsTapped) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, returnToGraveyard,
+                timingControllerId, followUpSourceCard, discardControllerCardsEqualToReturnedToughness,
+                plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
+                Set.of(), counterTypeOnReturn, counterAmountOnReturn, Map.of(), returnLandsTapped);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
@@ -168,14 +185,14 @@ public record PendingExileReturn(
         return new PendingExileReturn(card, controllerId, returnTapped, false, returnStep,
                 plusOnePlusOneCounters, additionalCards, false, false, false, false,
                 null, null, false, plusOnePlusOneCountersOnlyOnCreatures,
-                loyaltyCountersOnPlaneswalkers, Set.of(), null, 0, Map.of());
+                loyaltyCountersOnPlaneswalkers, Set.of(), null, 0, Map.of(), false);
     }
 
     public static PendingExileReturn withCardsAttachedToPrimary(
             Card card, UUID controllerId, List<Card> additionalCards, Set<UUID> cardsToAttachToPrimary) {
         return new PendingExileReturn(card, controllerId, false, false, TurnStep.END_STEP, 0,
                 additionalCards, false, false, false, false, null, null, false,
-                false, 0, cardsToAttachToPrimary, null, 0, Map.of());
+                false, 0, cardsToAttachToPrimary, null, 0, Map.of(), false);
     }
 
     public static PendingExileReturn withCountersAndCardsAttachedToPrimary(
@@ -183,6 +200,6 @@ public record PendingExileReturn(
             Set<UUID> cardsToAttachToPrimary, Map<CounterType, Integer> countersOnReturn) {
         return new PendingExileReturn(card, controllerId, returnTapped, false, TurnStep.END_STEP, 0,
                 additionalCards, false, false, false, false, null, null, false,
-                false, 0, cardsToAttachToPrimary, null, 0, countersOnReturn);
+                false, 0, cardsToAttachToPrimary, null, 0, countersOnReturn, false);
     }
 }

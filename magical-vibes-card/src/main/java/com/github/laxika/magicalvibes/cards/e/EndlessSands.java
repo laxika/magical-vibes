@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "60")
 @CardRegistration(set = "EOS", collectorNumber = "105")
 @CardRegistration(set = "EOS", collectorNumber = "150")
+@CardRegistration(set = "C20", collectorNumber = "272")
 public class EndlessSands extends Card {
 
     public EndlessSands() {

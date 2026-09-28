@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "227")
+@CardRegistration(set = "SOC", collectorNumber = "354")
+@CardRegistration(set = "OTC", collectorNumber = "263")
 public class PerpetualTimepiece extends Card {
 
     public PerpetualTimepiece() {

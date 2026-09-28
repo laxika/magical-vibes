@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "238")
+@CardRegistration(set = "LTC", collectorNumber = "354")
+@CardRegistration(set = "LTC", collectorNumber = "384")
 public class SwordOfHearthAndHome extends Card {
 
     public SwordOfHearthAndHome() {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "201")
+@CardRegistration(set = "LCC", collectorNumber = "281")
 public class QuartzwoodCrasher extends Card {
 
     public QuartzwoodCrasher() {

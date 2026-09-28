@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "241")
+@CardRegistration(set = "TDC", collectorNumber = "334")
 public class WalkingBulwark extends Card {
 
     public WalkingBulwark() {

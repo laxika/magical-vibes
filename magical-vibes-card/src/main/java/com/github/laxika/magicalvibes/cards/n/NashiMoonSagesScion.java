@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibr
 
 @CardRegistration(set = "NEO", collectorNumber = "114")
 @CardRegistration(set = "SLC", collectorNumber = "82")
+@CardRegistration(set = "OTC", collectorNumber = "143")
 public class NashiMoonSagesScion extends Card {
 
     public NashiMoonSagesScion() {

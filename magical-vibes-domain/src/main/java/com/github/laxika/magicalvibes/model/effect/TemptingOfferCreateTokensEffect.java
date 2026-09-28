@@ -8,13 +8,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Tempting offer that creates tokens for the spell's controller, then offers each opponent the
- * same token creation; an opponent who accepts also gives the spell's controller another batch.
+ * Tempting offer that offers each opponent the same token creation; an opponent who accepts also
+ * gives the ability controller another batch.
  */
 public record TemptingOfferCreateTokensEffect(
         CreateTokenEffect tokenEffect,
         List<UUID> remainingOpponentIds,
-        UUID abilityControllerId
+        UUID abilityControllerId,
+        boolean controllerCreatesFirst
 ) implements TokenCreatingEffect {
 
     public TemptingOfferCreateTokensEffect {
@@ -25,7 +26,12 @@ public record TemptingOfferCreateTokensEffect(
     }
 
     public TemptingOfferCreateTokensEffect(CreateTokenEffect tokenEffect) {
-        this(tokenEffect, null, null);
+        this(tokenEffect, null, null, true);
+    }
+
+    public TemptingOfferCreateTokensEffect(CreateTokenEffect tokenEffect,
+                                           boolean controllerCreatesFirst) {
+        this(tokenEffect, null, null, controllerCreatesFirst);
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "188")
+@CardRegistration(set = "LCC", collectorNumber = "267")
 public class CruelCelebrant extends Card {
 
     private static final SequenceEffect DEATH_TRIGGER = SequenceEffect.of(

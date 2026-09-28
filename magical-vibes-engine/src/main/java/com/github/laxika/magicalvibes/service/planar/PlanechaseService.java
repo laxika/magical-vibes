@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import org.springframework.context.annotation.Lazy;
@@ -26,6 +28,12 @@ public class PlanechaseService {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialMana;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private AscendEffectHandler ascendEffectHandler;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private PhasingService phasingService;
     private final CardCatalog catalog;
     private final PlanarDieRoller die;
     private final GameQueryService query;
@@ -76,6 +84,8 @@ public class PlanechaseService {
         state.faceUp.clear();
         state.specialActionRolls.clear();
         state.blankRollChaosSources.clear();
+        state.planeswalkedToTurn = -1;
+        state.planeswalkedToNamesThisTurn.clear();
         state.rollTurn = -1;
         state.lastRoll = null;
         state.lastRollPlayerId = null;
@@ -122,9 +132,25 @@ public class PlanechaseService {
 
     public void roll(GameData game, UUID playerId) {
         if (game.planechase == null) return;
+        int rollCount = Math.max(1, die.numberOfRolls(game, playerId));
+        List<PlanarDieResult> rolls = new ArrayList<>(rollCount);
+        for (int i = 0; i < rollCount; i++) {
+            rolls.add(die.roll());
+        }
+        if (rolls.size() > 1) {
+            interactions.begin(game, new PendingInteraction.PlanarDieChoice(
+                    playerId, rolls, rolls.size() - 1));
+            return;
+        }
+        completeRoll(game, playerId, rolls.getFirst());
+    }
+
+    /** Completes a planar roll after any replacement-effect choice has been made. */
+    public void completeRoll(GameData game, UUID playerId, PlanarDieResult result) {
+        if (game.planechase == null) return;
         PlanechaseState state = game.planechase;
         state.controllerId = game.activePlayerId;
-        state.lastRoll = die.roll();
+        state.lastRoll = result;
         state.lastRollPlayerId = playerId;
         state.rollSequence++;
         logs.append(game, GameLogEntry.text(game.playerIdToName.get(playerId)
@@ -205,8 +231,10 @@ public class PlanechaseService {
 
     public void finishPlaneswalk(GameData game, List<PlanarObject> departing) {
         PlanechaseState state = game.planechase;
+        if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
         state.faceUp.clear();
         state.blankRollChaosSources.clear();
+        state.planeswalkedToNamesThisTurn.clear();
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
             trigger(game, object, EffectSlot.PLANESWALK_FROM_TRIGGERED, state.controllerId);
@@ -222,9 +250,11 @@ public class PlanechaseService {
 
         PlanechaseState state = game.planechase;
         state.controllerId = controllerId;
+        if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
         List<PlanarObject> departing = List.copyOf(state.faceUp);
         state.faceUp.clear();
         state.blankRollChaosSources.clear();
+        state.planeswalkedToNamesThisTurn.clear();
 
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
@@ -235,11 +265,34 @@ public class PlanechaseService {
 
         for (Card card : arrivingPlanes) {
             state.faceUp.add(new PlanarObject(card, game.nextTimestamp()));
+            if (card.hasType(CardType.PLANE)) state.planeswalkedToNamesThisTurn.add(card.getName());
         }
+        state.planeswalkedToTurn = game.turnNumber;
         for (PlanarObject object : List.copyOf(state.faceUp)) {
             logs.append(game, GameLogEntry.text("The planar card is " + object.getCard().getName() + "."));
             trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);
         }
+    }
+
+    /** Adds one plane without planeswalking away from any currently face-up planar card. */
+    public void completePlaneswalkToPlaneWithoutDeparting(GameData game, Card arrivingPlane,
+                                                          List<Card> cardsToBottom, UUID controllerId) {
+        if (game.planechase == null) return;
+
+        PlanechaseState state = game.planechase;
+        state.controllerId = controllerId;
+        state.deck.addAll(cardsToBottom);
+        PlanarObject object = new PlanarObject(arrivingPlane, game.nextTimestamp());
+        state.faceUp.add(object);
+        state.planeswalkedToTurn = game.turnNumber;
+        if (arrivingPlane.hasType(CardType.PLANE)) state.planeswalkedToNamesThisTurn.add(arrivingPlane.getName());
+        if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
+        game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
+        logs.append(game, GameLogEntry.text("The planar card is " + arrivingPlane.getName() + "."));
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPlanarAscend(game);
+        }
+        trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);
     }
 
     public void reveal(GameData game, boolean triggerAbilities) {
@@ -247,7 +300,14 @@ public class PlanechaseService {
         if (state.deck.isEmpty()) return;
         PlanarObject object = new PlanarObject(state.deck.removeFirst(), game.nextTimestamp());
         state.faceUp.add(object);
+        if (triggerAbilities && object.getCard().hasType(CardType.PLANE)) {
+            state.planeswalkedToTurn = game.turnNumber;
+            state.planeswalkedToNamesThisTurn.add(object.getCard().getName());
+        }
         logs.append(game, GameLogEntry.text("The planar card is " + object.getCard().getName() + "."));
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPlanarAscend(game);
+        }
         if (triggerAbilities) {
             trigger(game, object, object.getCard().hasType(CardType.PHENOMENON)
                     ? EffectSlot.ENCOUNTER_TRIGGERED : EffectSlot.PLANESWALK_TO_TRIGGERED, state.controllerId);

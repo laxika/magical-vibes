@@ -1,23 +1,27 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithManaValueTimeCountersEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-/** Resolves a hand-card exile effect that permits lands as well as nonlands. */
+/** Resolves Alaundo the Seer's hand exile and time-counter progression. */
 @Component
 @RequiredArgsConstructor
 public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements NormalEffectHandlerBean {
 
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -26,17 +30,41 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-        if (hand == null || hand.isEmpty()) {
+        ExileCardFromHandWithManaValueTimeCountersEffect alaundoEffect =
+                (ExileCardFromHandWithManaValueTimeCountersEffect) effect;
+        UUID controllerId = entry.getControllerId();
+
+        if (alaundoEffect.chosenCard() == null) {
+            List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(controllerId);
+            if (hand != null && !hand.isEmpty()) {
+                playerInputService.beginExileFromHandChoice(gameData, controllerId, alaundoEffect);
+            }
             return;
         }
 
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
+        UUID chosenCardId = alaundoEffect.chosenCard().getId();
+        ExiledCardEntry chosenEntry = gameData.findExiledCard(chosenCardId);
+        if (chosenEntry == null || !controllerId.equals(chosenEntry.ownerId())) {
+            return;
         }
-        playerInputService.beginExileCardFromHandWithTimeCountersChoice(
-                gameData, entry.getControllerId(), validIndices,
-                "Choose a card from your hand to exile.");
+
+        int manaValue = chosenEntry.card().getManaValue();
+        if (manaValue > 0) {
+            gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
+            gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(chosenEntry.card(), " gets " + manaValue + " time counters."));
+        }
+
+        for (ExiledCardEntry otherEntry : List.copyOf(gameData.exiledCards)) {
+            if (!controllerId.equals(otherEntry.ownerId())
+                    || chosenCardId.equals(otherEntry.card().getId())) {
+                continue;
+            }
+            Integer counters = gameData.exiledCardTimeCounters.get(otherEntry.card().getId());
+            if (counters != null && counters > 0) {
+                removeTimeCounterHandler.removeTimeCounter(gameData, otherEntry.card().getId());
+            }
+        }
     }
 }

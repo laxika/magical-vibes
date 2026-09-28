@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
@@ -173,6 +174,30 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    @DisplayName("filtered graveyard-land permission only allows matching lands")
+    void filteredGraveyardLandPermission() {
+        Card source = new Card();
+        CardSubtypePredicate filter = new CardSubtypePredicate(CardSubtype.FOREST);
+        source.addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect(filter));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card forest = new Card();
+        forest.setType(CardType.LAND);
+        forest.setSubtypes(List.of(CardSubtype.FOREST));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(forest), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(true);
+
+        Card island = new Card();
+        island.setType(CardType.LAND);
+        island.setSubtypes(List.of(CardSubtype.ISLAND));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(island), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(false);
+
+        assertThat(svc.canPlayLandFromGraveyard(gd, player1Id, forest)).isTrue();
+        assertThat(svc.canPlayLandFromGraveyard(gd, player1Id, island)).isFalse();
+    }
+
+    @Test
     @DisplayName("conditional graveyard-spell permission applies only when its condition is met")
     void conditionalGraveyardSpellPermission() {
         Card source = new Card();
@@ -184,13 +209,28 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null))
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
                 .thenReturn(true);
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(false);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
 
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(true);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isTrue();
+    }
+
+    @Test
+    void temporaryPlayerScopedGraveyardSpellPermissionApplies() {
+        Card spell = new Card();
+        spell.setType(CardType.CREATURE);
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        gd.playerStaticEffectsUntilEndOfTurn.put(player1Id, new ArrayList<>(List.of(
+                new GrantEscapeToGraveyardCardsEffect(filter, "{3}{B}", 4))));
+        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null)).thenReturn(true);
+
+        var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
+        assertThat(permission.sourcePermanentId()).isNull();
+        assertThat(permission.permission().alternateManaCost()).isEqualTo("{3}{B}");
+        assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(4);
     }
 
     @Test
@@ -203,7 +243,7 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null))
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
                 .thenReturn(true);
 
         gd.activePlayerId = player2Id;

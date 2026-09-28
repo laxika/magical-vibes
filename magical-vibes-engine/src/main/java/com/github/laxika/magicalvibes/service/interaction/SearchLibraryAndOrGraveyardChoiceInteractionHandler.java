@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -10,9 +11,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.HashSet;
@@ -30,9 +37,11 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final GraveyardService graveyardService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<PendingInteraction.SearchLibraryAndOrGraveyardChoice> handledType() {
@@ -84,15 +93,19 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             }
             finishSearch(gameData, interaction);
         } else {
-            completeSingleSelection(gameData, playerId, selectedCards.getFirst(), interaction, toBattlefield);
+            boolean awaitingAuraChoice = completeSingleSelection(
+                    gameData, playerId, selectedCards.getFirst(), interaction, toBattlefield);
             finishSearch(gameData, interaction);
+            if (awaitingAuraChoice) {
+                return;
+            }
         }
 
         gameData.interaction.clearAwaitingInput();
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void completeSingleSelection(GameData gameData, UUID playerId, Card chosen,
+    private boolean completeSingleSelection(GameData gameData, UUID playerId, Card chosen,
                                          PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
                                          boolean toBattlefield) {
         boolean fromLibrary = interaction.libraryCardIds().contains(chosen.getId());
@@ -112,6 +125,36 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (!fromLibrary && !fromHand && !fromOutsideGame) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
         }
+        if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
+            List<UUID> attachTargetIds = gameData.orderedPlayerIds.stream()
+                    .flatMap(battlefieldPlayerId -> gameData.playerBattlefields
+                            .getOrDefault(battlefieldPlayerId, List.of()).stream())
+                    .filter(permanent -> auraAttachmentService.canEnchant(
+                            gameData, chosen, playerId, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            List<UUID> attachPlayerIds = chosen.isEnchantPlayer()
+                    ? gameData.orderedPlayerIds.stream()
+                    .filter(targetPlayerId -> auraAttachmentService.canEnchantPlayer(
+                            gameData, chosen, playerId, targetPlayerId))
+                    .toList()
+                    : List.of();
+            if (attachTargetIds.isEmpty() && attachPlayerIds.isEmpty()) {
+                graveyardService.addCardToGraveyard(gameData, playerId, chosen,
+                        fromHand ? Zone.HAND : Zone.GRAVEYARD);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(playerId) + " puts ", chosen,
+                        " into their graveyard because it cannot legally enchant anything."));
+                return false;
+            }
+            gameData.interaction.setPendingAuraCard(chosen);
+            gameData.interaction.setPendingAuraOwnerId(playerId);
+            gameData.interaction.clearAwaitingInput();
+            playerInputService.beginAnyTargetChoice(gameData, playerId,
+                    attachTargetIds, attachPlayerIds,
+                    "Choose a permanent or player for " + chosen.getName() + " to enchant.");
+            return true;
+        }
         if (toBattlefield) {
             Permanent entered = graveyardReturnSupport.putCardOntoBattlefield(
                     gameData, playerId, chosen, null, null, false, false,
@@ -121,6 +164,10 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             }
             if (entered != null && interaction.attachToPermanentId() != null) {
                 entered.setAttachedTo(interaction.attachToPermanentId());
+            }
+            if (entered != null && interaction.attachAuraOrEquipment()
+                    && chosen.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                queueEquipmentAttachmentFollowUp(gameData, entered.getId());
             }
         } else {
             gameData.addCardToHand(playerId, chosen);
@@ -133,6 +180,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
                 chosen, ", and puts it " + destination + "."));
+        return false;
     }
 
     private void putCardsIntoHand(GameData gameData, UUID playerId, List<Card> cards,
@@ -210,5 +258,22 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
             }
         }
+    }
+
+    private void queueEquipmentAttachmentFollowUp(GameData gameData, UUID equipmentId) {
+        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+        if (sourceEntry == null) {
+            return;
+        }
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceEntry.getCard(),
+                sourceEntry.getControllerId(),
+                sourceEntry.getCard().getName() + "'s reflexive ability",
+                List.of(new MayEffect(
+                        new AttachSelectedEquipmentToCreatureEffect(List.of(equipmentId)),
+                        "Attach that Equipment to a creature you control?")),
+                null,
+                sourceEntry.getSourcePermanentId()));
     }
 }

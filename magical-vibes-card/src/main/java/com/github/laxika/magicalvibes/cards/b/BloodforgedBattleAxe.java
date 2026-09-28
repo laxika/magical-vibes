@@ -9,6 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "2X2", collectorNumber = "299")
+@CardRegistration(set = "PIP", collectorNumber = "226")
+@CardRegistration(set = "PIP", collectorNumber = "481")
+@CardRegistration(set = "PIP", collectorNumber = "754")
+@CardRegistration(set = "PIP", collectorNumber = "1009")
+@CardRegistration(set = "MOC", collectorNumber = "349")
 public class BloodforgedBattleAxe extends Card {
 
     public BloodforgedBattleAxe() {

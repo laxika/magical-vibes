@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MH2", collectorNumber = "69")
 @CardRegistration(set = "MH2", collectorNumber = "310")
+@CardRegistration(set = "LCC", collectorNumber = "175")
 public class SvyelunOfSeaAndSky extends Card {
 
     public SvyelunOfSeaAndSky() {

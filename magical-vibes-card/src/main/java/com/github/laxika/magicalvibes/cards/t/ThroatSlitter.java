@@ -16,6 +16,8 @@ import java.util.Set;
 @CardRegistration(set = "BOK", collectorNumber = "88")
 @CardRegistration(set = "PC2", collectorNumber = "37")
 @CardRegistration(set = "PCA", collectorNumber = "37")
+@CardRegistration(set = "SLD", collectorNumber = "2356")
+@CardRegistration(set = "SLD", collectorNumber = "2360")
 public class ThroatSlitter extends Card {
 
     public ThroatSlitter() {

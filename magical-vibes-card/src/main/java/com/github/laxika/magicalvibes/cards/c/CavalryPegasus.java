@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "2")
 @CardRegistration(set = "DDL", collectorNumber = "4")
+@CardRegistration(set = "C20", collectorNumber = "81")
 public class CavalryPegasus extends Card {
 
     public CavalryPegasus() {

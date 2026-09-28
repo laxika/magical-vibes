@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "81")
 @CardRegistration(set = "ZEN", collectorNumber = "80")
+@CardRegistration(set = "DSC", collectorNumber = "77")
 public class BloodSeeker extends Card {
 
     public BloodSeeker() {
