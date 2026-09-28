@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "187")
+@CardRegistration(set = "DMC", collectorNumber = "155")
 public class KayasWrath extends Card {
 
     public KayasWrath() {

@@ -899,7 +899,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                           String prompt, boolean castAsCopies)
+                                           String prompt, boolean castAsCopies,
+                                           Integer maxTotalManaValue)
             implements PendingInteraction {
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -910,6 +911,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount, String prompt) {
             this(playerId, validCardIds, maxCount, prompt, false);
+        }
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount, String prompt, Integer maxTotalManaValue) {
+            this(playerId, validCardIds, maxCount, prompt, false, maxTotalManaValue);
+        }
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount, String prompt, boolean castAsCopies) {
+            this(playerId, validCardIds, maxCount, prompt, castAsCopies, null);
         }
 
         public ImprovisationCapstoneCastChoice {

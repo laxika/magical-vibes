@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "194")
 @CardRegistration(set = "UMA", collectorNumber = "200")
+@CardRegistration(set = "DMC", collectorNumber = "151")
 @CardRegistration(set = "C20", collectorNumber = "213")
 public class GarnaTheBloodflame extends Card {
 

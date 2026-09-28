@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "DIS", collectorNumber = "168")
+@CardRegistration(set = "DMC", collectorNumber = "194")
 public class TransguildCourier extends Card {
 
     public TransguildCourier() {

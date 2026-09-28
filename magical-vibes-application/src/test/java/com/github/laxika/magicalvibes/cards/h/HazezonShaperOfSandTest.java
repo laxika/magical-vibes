@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.d.DesertOfTheFervent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,8 +18,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HazezonShaperOfSand.class, DesertOfTheFervent.class, Forest.class})
+@CardUsed({HazezonShaperOfSand.class, Desert.class, DesertOfTheFervent.class, Forest.class})
 class HazezonShaperOfSandTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The DMC Desert card can also be played from the graveyard")
+    void canPlayDesertCardFromGraveyard() {
+        harness.addToBattlefield(player1, new HazezonShaperOfSand());
+        harness.setGraveyard(player1, List.of(new Desert()));
+        harness.setHand(player1, List.of());
+        prepareMainPhase(player1);
+
+        harness.playGraveyardLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Desert");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Can play a Desert from the controller's graveyard")

@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OTC", collectorNumber = "229")
+@CardRegistration(set = "DMC", collectorNumber = "32")
+@CardRegistration(set = "DMC", collectorNumber = "54")
 public class HazezonShaperOfSand extends Card {
 
     public HazezonShaperOfSand() {

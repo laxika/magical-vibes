@@ -22,6 +22,7 @@ public sealed interface Condition permits
         AllOf,
         ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn,
         EnchantmentPutIntoGraveyardFromBattlefieldThisTurn,
+        LandPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentPutIntoGraveyardFromBattlefieldThisTurn,
         AnotherPermanentEnteredLastTurn,
         AnotherPermanentEnteredThisTurn,

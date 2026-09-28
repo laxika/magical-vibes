@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandPermanentToBattlefieldOrHandEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "190")
+@CardRegistration(set = "DMC", collectorNumber = "154")
 public class IllunaApexOfWishes extends Card {
 
     public IllunaApexOfWishes() {

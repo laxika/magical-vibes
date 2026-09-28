@@ -9867,6 +9867,10 @@ public class GameQueryService {
             if (!playerId.equals(controllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AdditionalControllerDamageEffect acde) {
+                    if (acde.anotherSourceOnly()
+                            && p.getId().equals(entry.getSourcePermanentId())) {
+                        continue;
+                    }
                     if (acde.stackFilter() == null
                             || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null)) {
                         bonus[0] += acde.amount();

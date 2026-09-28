@@ -405,7 +405,8 @@ public class CombatAttackService {
 
     private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices) {
-        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (castingCostService.hasAttackLifePaymentForAnyCreature(gameData, playerId)
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -793,12 +794,16 @@ public class CombatAttackService {
         int selfTaxTotal = 0;
         int defenderTaxTotal = 0;
         int totalTax = 0;
+        int attackLifeTaxTotal = 0;
         for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
             int defenderTax = castingCostService.getAttackPaymentPerCreature(
-                    gameData, playerId, resolvedTargets.get(idx), battlefield.get(idx));
+                    gameData, playerId, resolvedTargets.get(idx), attacker);
             defenderTaxTotal += defenderTax;
             totalTax += defenderTax;
-            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
+            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, attacker);
+            attackLifeTaxTotal += castingCostService.getAttackLifePaymentPerCreature(
+                    gameData, playerId, resolvedTargets.get(idx), attacker);
         }
         totalTax += selfTaxTotal;
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
@@ -827,6 +832,16 @@ public class CombatAttackService {
             if (currentLife < phyrexianLifeCost) {
                 throw new IllegalStateException("Not enough life to pay Phyrexian attack tax ("
                         + phyrexianLifeCost + " required)");
+            }
+        }
+        if (attackLifeTaxTotal > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Life total can't change to pay attack life cost");
+            }
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (currentLife < attackLifeTaxTotal) {
+                throw new IllegalStateException("Not enough life to pay attack life cost ("
+                        + attackLifeTaxTotal + " required)");
             }
         }
 
@@ -858,6 +873,12 @@ public class CombatAttackService {
             if (lifeCost > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, lifeCost, "Phyrexian attack tax");
             }
+        }
+        if (attackLifeTaxTotal > 0) {
+            lifeSupport.applyLifePayment(gameData, playerId, attackLifeTaxTotal, "attack life tax");
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " pays " + attackLifeTaxTotal
+                            + " life to declare attackers."));
         }
 
         combatTapCostService.payAttackCosts(gameData, playerId, declaredAttackers);
@@ -3156,6 +3177,8 @@ public class CombatAttackService {
         return attackLegalityService.getValidAttackTargetIds(gameData, controllerId).stream()
                 .filter(targetId -> attackLegalityService.canAttackDefender(gameData, creature, targetId))
                 .filter(targetId -> castingCostService.getAttackPaymentPerCreature(
+                        gameData, controllerId, targetId, creature) == 0)
+                .filter(targetId -> castingCostService.getAttackLifePaymentPerCreature(
                         gameData, controllerId, targetId, creature) == 0)
                 .mapToInt(targetId -> attackLegalityService.getMustAttackRequirementCount(gameData, creature, targetId))
                 .max().orElse(0);

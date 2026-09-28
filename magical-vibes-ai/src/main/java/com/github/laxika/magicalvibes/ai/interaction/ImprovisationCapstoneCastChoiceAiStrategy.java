@@ -32,6 +32,18 @@ class ImprovisationCapstoneCastChoiceAiStrategy
         if (interaction.maxCount() > 0 && chosen.size() > interaction.maxCount()) {
             chosen = chosen.subList(0, interaction.maxCount());
         }
+        if (interaction.maxTotalManaValue() != null) {
+            int totalManaValue = 0;
+            List<UUID> withinManaValue = new ArrayList<>();
+            for (UUID cardId : chosen) {
+                int manaValue = ctx.gameData().findExiledCard(cardId).card().getManaValue();
+                if (totalManaValue + manaValue <= interaction.maxTotalManaValue()) {
+                    withinManaValue.add(cardId);
+                    totalManaValue += manaValue;
+                }
+            }
+            chosen = withinManaValue;
+        }
         log.info("AI: Casting {} exiled spells for Improvisation Capstone in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }

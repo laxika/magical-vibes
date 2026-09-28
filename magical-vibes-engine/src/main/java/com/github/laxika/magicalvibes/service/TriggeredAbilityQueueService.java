@@ -1095,7 +1095,8 @@ public class TriggeredAbilityQueueService {
             }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
-                    List.of(), pending.triggeringCardId(), pending.attackedTargetId());
+                    List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
+                    pending.triggeringPermanentId());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1154,6 +1155,13 @@ public class TriggeredAbilityQueueService {
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
             UUID attackedTargetId) {
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId, chosenModes,
+                triggeringCardId, attackedTargetId, null);
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
+            UUID attackedTargetId, UUID triggeringPermanentId) {
         if (chosenModes.isEmpty()) {
             return;
         }
@@ -1207,6 +1215,7 @@ public class TriggeredAbilityQueueService {
                 triggerTargetId,
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
+        entry.setTriggeringPermanentId(triggeringPermanentId);
         if (attackedTargetId != null) {
             entry.setAttackedTargetId(attackedTargetId);
         }
@@ -2327,6 +2336,11 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromBattlefieldThisTurn()
+                            && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
                             && gameData.cardsPutIntoGraveyardThisCombat
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {

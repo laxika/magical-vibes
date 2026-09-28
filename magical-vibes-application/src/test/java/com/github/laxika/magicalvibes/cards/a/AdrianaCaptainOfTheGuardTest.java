@@ -40,4 +40,23 @@ class AdrianaCaptainOfTheGuardTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(powerBefore + 1);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(toughnessBefore + 1);
     }
+
+    @Test
+    @DisplayName("Adriana does not gain a second melee boost from her own ability")
+    void doesNotAddAnotherMeleeInstanceToAdriana() {
+        Permanent adriana = addCreatureReady(player1, new AdrianaCaptainOfTheGuard());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        int adrianaPowerBefore = gqs.getEffectivePower(gd, adriana);
+        int adrianaToughnessBefore = gqs.getEffectiveToughness(gd, adriana);
+        int otherPowerBefore = gqs.getEffectivePower(gd, otherCreature);
+        int otherToughnessBefore = gqs.getEffectiveToughness(gd, otherCreature);
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, adriana)).isEqualTo(adrianaPowerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, adriana)).isEqualTo(adrianaToughnessBefore + 1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(otherPowerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(otherToughnessBefore + 1);
+    }
 }

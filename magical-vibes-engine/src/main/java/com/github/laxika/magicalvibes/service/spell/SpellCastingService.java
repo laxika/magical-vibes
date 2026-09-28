@@ -202,6 +202,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -2484,7 +2485,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card does not have spellmorph");
         }
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : player.getId();
-        gameData.exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, gameData.turnNumber));
+        gameData.addToExile(ownerId, card);
         try {
             playCardFromExileInternal(gameData, player, card.getId(), xValue, targetId,
                     List.of(), List.of(), List.of(), false, targetIds != null ? targetIds : List.of(),
@@ -11448,6 +11449,12 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState multicoloredMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.CreatureSpellWithoutAbilitiesManaState creatureSpellWithoutAbilitiesMana =
+                card.hasType(CardType.CREATURE)
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, new CardHasNoAbilitiesPredicate(), null)
+                        && pool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0
+                        ? pool.promoteCreatureSpellWithoutAbilitiesOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
@@ -11528,6 +11535,9 @@ public class SpellCastingService {
             }
             if (seanceBoardMana != null) {
                 pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
+            }
+            if (creatureSpellWithoutAbilitiesMana != null) {
+                pool.restorePromotedCreatureSpellWithoutAbilitiesOnlyMana(creatureSpellWithoutAbilitiesMana);
             }
         }
     }

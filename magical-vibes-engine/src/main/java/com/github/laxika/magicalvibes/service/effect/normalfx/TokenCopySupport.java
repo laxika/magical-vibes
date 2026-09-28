@@ -249,6 +249,7 @@ public class TokenCopySupport {
         tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
+        tokenCard.setAttachRestriction(sourceCard.getAttachRestriction());
         tokenCard.setCardText(sourceCard.getCardText());
         tokenCard.setSetCode(sourceCard.getSetCode());
         tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());

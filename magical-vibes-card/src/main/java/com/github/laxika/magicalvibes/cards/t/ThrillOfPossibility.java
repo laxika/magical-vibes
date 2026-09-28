@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "MAR", collectorNumber = "28")
 @CardRegistration(set = "OMB", collectorNumber = "28")
 @CardRegistration(set = "LTC", collectorNumber = "229")
+@CardRegistration(set = "DMC", collectorNumber = "127")
 public class ThrillOfPossibility extends Card {
 
     public ThrillOfPossibility() {

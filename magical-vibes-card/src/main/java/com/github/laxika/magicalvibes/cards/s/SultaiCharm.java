@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "204")
+@CardRegistration(set = "DMC", collectorNumber = "168")
 public class SultaiCharm extends Card {
 
     public SultaiCharm() {

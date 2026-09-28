@@ -20,6 +20,7 @@ import java.util.Set;
  * legendary red creature gets +3/+3 and trample.
  */
 @CardRegistration(set = "CHK", collectorNumber = "271")
+@CardRegistration(set = "DMC", collectorNumber = "193")
 public class TenzaGodosMaul extends Card {
 
     public TenzaGodosMaul() {

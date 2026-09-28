@@ -106,6 +106,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast creature spells with no abilities (Jasmine Boreal of the Seven). */
+    record CreatureSpellsWithoutAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellWithoutAbilitiesOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells with no abilities only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override

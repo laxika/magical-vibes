@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffe
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledSubtypeLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledTokensLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNameCountLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -64,7 +65,8 @@ public class LegendRuleService {
                 List<UUID> nonExemptPermanents = entry.getValue().stream()
                         .filter(id -> findPermanent(battlefield, id)
                                 .map(perm -> !hasControlledSubtypeExemption(gameData, battlefield, perm)
-                                        && !hasControlledCreaturesExemption(gameData, controllerId, perm))
+                                        && !hasControlledCreaturesExemption(gameData, controllerId, perm)
+                                        && !hasControlledTokensExemption(gameData, controllerId, perm))
                                 .orElse(false))
                         .toList();
                 if (nonExemptPermanents.size() < 2) {
@@ -160,6 +162,17 @@ public class LegendRuleService {
         return battlefield != null && battlefield.stream()
                 .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(ControlledCreaturesLegendRuleExemptionEffect.class::isInstance);
+    }
+
+    private boolean hasControlledTokensExemption(GameData gameData, UUID controllerId,
+                                                 Permanent permanent) {
+        if (!permanent.getCard().isToken()) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(ControlledTokensLegendRuleExemptionEffect.class::isInstance);
     }
 
     /**
