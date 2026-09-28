@@ -33,7 +33,7 @@ class FrayingLineTest extends BaseCardTest {
         Permanent activeCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        advanceToUpkeep(player2);
+        advanceToUpkeepWithRopeTrigger(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
@@ -49,7 +49,7 @@ class FrayingLineTest extends BaseCardTest {
         Permanent roped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         roped.setCounterCount(CounterType.ROPE, 2);
 
-        advanceToUpkeep(player2);
+        advanceToUpkeepWithRopeTrigger(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
@@ -58,7 +58,7 @@ class FrayingLineTest extends BaseCardTest {
         assertThat(roped.getCounterCount(CounterType.ROPE)).isZero();
     }
 
-    private void advanceToUpkeep(com.github.laxika.magicalvibes.model.Player activePlayer) {
+    private void advanceToUpkeepWithRopeTrigger(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UNTAP);

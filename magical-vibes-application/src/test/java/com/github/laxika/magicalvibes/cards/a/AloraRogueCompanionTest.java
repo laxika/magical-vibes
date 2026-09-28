@@ -86,7 +86,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
 
         assertThat(gd.perpetualCardPowerToughnessModifiers)
                 .containsEntry(attacker.getCard().getId(),
-                        new com.github.laxika.magicalvibes.model.GameData.PerpetualPowerToughnessModifier(1, 1));
+                        new com.github.laxika.magicalvibes.model.CardPowerToughnessModifier(1, 1));
     }
 
     @Test
