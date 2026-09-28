@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WOT", collectorNumber = "3")
 @CardRegistration(set = "C15", collectorNumber = "3")
+@CardRegistration(set = "WHO", collectorNumber = "208")
 public class GraspOfFate extends Card {
 
     public GraspOfFate() {

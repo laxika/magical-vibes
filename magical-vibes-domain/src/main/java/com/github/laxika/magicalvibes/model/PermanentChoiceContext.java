@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
@@ -180,6 +181,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Intellectual Offering: choose an opponent for one of its two independent modes. */
     record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
             implements PermanentChoiceContext {}
+    /** The Toymaker's Trap: choose which opponent makes the guess in a multiplayer game. */
+    record ToymakersTrapOpponentChoice(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
+                                       int chosenNumber) implements PermanentChoiceContext {}
     /** Triarch Stalker: choose the opponent remembered by its targeting relay. */
     record ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -285,25 +289,27 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
     record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
-                                 boolean cannotBeRegenerated, UUID sourcePermanentId, Card sourceCard)
+                                 boolean cannotBeRegenerated, UUID sourcePermanentId, Card sourceCard,
+                                 boolean shuffleIntoOwnersLibrary)
             implements PermanentChoiceContext {
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
-            this(choosingPlayerId, sourceCardName, false, false, null, null);
+            this(choosingPlayerId, sourceCardName, false, false, null, null, false);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) {
-            this(choosingPlayerId, sourceCardName, exile, false, null, null);
+            this(choosingPlayerId, sourceCardName, exile, false, null, null, false);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
                                      boolean cannotBeRegenerated) {
-            this(choosingPlayerId, sourceCardName, exile, cannotBeRegenerated, null, null);
+            this(choosingPlayerId, sourceCardName, exile, cannotBeRegenerated, null, null, false);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
                                      UUID sourcePermanentId, Card sourceCard) {
-            this(choosingPlayerId, sourceCardName, exile, false, sourcePermanentId, sourceCard);
+            this(choosingPlayerId, sourceCardName, exile, false, sourcePermanentId, sourceCard, false);
         }
+
     }
 
     /** Highcliff Felidar: the controller chooses a greatest-power creature for one opponent. */
@@ -392,6 +398,38 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
                                           PermanentPredicate filter) {
             this(sourceCard, sourcePermanentId, controllerId, filter, null);
+        }
+    }
+
+    /** The Master, Formed Anew: choose a creature to exile with a takeover counter. */
+    record TakeoverCreatureToExile(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
+
+    /** The controller chooses one permanent to exile, then all permanents matching another filter are exiled. */
+    record ExilePermanentThenExileMatchingPermanents(
+            Card sourceCard,
+            UUID sourcePermanentId,
+            UUID controllerId,
+            PermanentPredicate choiceFilter,
+            PermanentPredicate matchingFilter,
+            String choiceLabel
+    ) implements PermanentChoiceContext {}
+
+    /** The controller chooses and exiles a Human and an artifact, then searches their library. */
+    record ExileTwoPermanentsThenSearchLibrary(
+            Card sourceCard,
+            UUID sourcePermanentId,
+            UUID controllerId,
+            PermanentPredicate firstFilter,
+            String firstLabel,
+            PermanentPredicate secondFilter,
+            String secondLabel,
+            CardPredicate searchFilter,
+            UUID firstPermanentId
+    ) implements PermanentChoiceContext {
+        public ExileTwoPermanentsThenSearchLibrary withFirstPermanentId(UUID id) {
+            return new ExileTwoPermanentsThenSearchLibrary(
+                    sourceCard, sourcePermanentId, controllerId, firstFilter, firstLabel,
+                    secondFilter, secondLabel, searchFilter, id);
         }
     }
 
@@ -634,6 +672,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sourcePermanentId,
             String sourceCardName,
             com.github.laxika.magicalvibes.model.effect.ControlDuration duration
+    ) implements PermanentChoiceContext {}
+
+    /** The attacking player chooses a defending player's creature to gain control of until end of turn. */
+    record GainControlOfDefendingPlayerCreatureAndAttack(
+            UUID controllerId,
+            UUID defendingPlayerId,
+            UUID sourcePermanentId,
+            String sourceCardName
     ) implements PermanentChoiceContext {}
 
     record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
@@ -1568,6 +1614,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                    UUID targetCreatureId, List<UUID> eligiblePlayerIds)
             implements PermanentChoiceContext {
         public BlackGateMostLifeChoice {
+            eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
+        }
+    }
+
+    /** The Master's choice of an opponent tied for most life. */
+    record TheMasterMostLifeChoice(Card sourceCard, UUID controllerId,
+                                   List<UUID> eligiblePlayerIds)
+            implements PermanentChoiceContext {
+        public TheMasterMostLifeChoice {
             eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
         }
     }

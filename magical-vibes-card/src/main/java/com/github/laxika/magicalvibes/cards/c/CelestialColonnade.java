@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "52")
 @CardRegistration(set = "EOS", collectorNumber = "97")
 @CardRegistration(set = "EOS", collectorNumber = "142")
+@CardRegistration(set = "WHO", collectorNumber = "260")
 public class CelestialColonnade extends Card {
 
     public CelestialColonnade() {

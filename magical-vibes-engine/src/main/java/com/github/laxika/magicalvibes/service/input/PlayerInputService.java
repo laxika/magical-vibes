@@ -1731,6 +1731,14 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerId, counterType);
     }
 
+    /** Begins one of the per-object add/remove/skip choices for time travel. */
+    public void beginTimeTravelChoice(GameData gameData, ChoiceContext.TimeTravelActionChoice context) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context,
+                ChoiceContext.TimeTravelActionChoice.OPTIONS,
+                context.sourceCardName() + " — Add, remove, or skip a time counter?"));
+    }
+
     /** Animation Module: choose a counter kind already present on the target, then add one more. */
     public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
                                                   String sourceCardName, List<CounterType> counterTypes,
@@ -1760,6 +1768,20 @@ public class PlayerInputService {
                 playerId, null, null, context, options,
                 sourceCardName + " — Choose a counter to add another of."));
         log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
+    }
+
+    /** The Caves of Androzani: choose a counter kind, or decline, for one non-Saga permanent. */
+    public void beginAddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+            GameData gameData, UUID playerId, UUID targetId, String sourceCardName,
+            List<UUID> remainingTargetIds, List<CounterType> counterTypes) {
+        ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice context =
+                new ChoiceContext.AddAnotherCounterTypeOnEachNonSagaPermanentChoice(
+                        targetId, playerId, sourceCardName, remainingTargetIds, counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose a counter to add another of, or skip."));
+        log.info("Game {} - Awaiting {} to choose a counter kind for non-Saga permanent {}",
+                gameData.id, playerId, targetId);
     }
 
     /** Bribe Taker: choose whether to put a +1/+1 counter or the current kind on the source. */
@@ -2208,6 +2230,25 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 ctx.targetPlayerId(), null, null, ctx, List.of("Yes", "No"),
                 "Is a card named \"" + ctx.chosenName() + "\" in the controller's hand?"));
+    }
+
+    /** Begins The Toymaker's Trap's private controller number choice. */
+    public void beginToymakersTrapNumberChoice(GameData gameData, UUID controllerId, UUID sourcePermanentId,
+                                               Card sourceCard, List<Integer> availableNumbers) {
+        ChoiceContext.ToymakersTrapChoice context = new ChoiceContext.ToymakersTrapChoice(
+                controllerId, sourcePermanentId, sourceCard, null, 0, false);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, context,
+                availableNumbers.stream().map(String::valueOf).toList(),
+                sourceCard.getName() + " — Secretly choose an unused number."));
+    }
+
+    /** Begins The Toymaker's Trap's opponent guess. */
+    public void beginToymakersTrapGuessChoice(GameData gameData, ChoiceContext.ToymakersTrapChoice context) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                context.opponentId(), null, null, context,
+                java.util.stream.IntStream.rangeClosed(1, 5).mapToObj(String::valueOf).toList(),
+                context.sourceCard().getName() + " — Guess the number."));
     }
 
     /** Distinct names of the cards held by {@code playerId}'s opponents, minus {@code excludedTypes}. */
@@ -2747,6 +2788,18 @@ public class PlayerInputService {
                                                             int counterCount) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandWithRefineCountersChoice(
                 playerId, new ArrayList<>(validIndices), prompt, counterCount));
+    }
+
+    public void beginExileNonlandCardFromHandWithTimeCountersChoice(GameData gameData, UUID playerId,
+                                                                     List<Integer> validIndices, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice(
+                playerId, new ArrayList<>(validIndices), prompt));
+    }
+
+    public void beginExileCardFromHandWithTimeCountersChoice(GameData gameData, UUID playerId,
+                                                              List<Integer> validIndices, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileCardFromHandWithTimeCountersChoice(
+                playerId, new ArrayList<>(validIndices), prompt));
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,

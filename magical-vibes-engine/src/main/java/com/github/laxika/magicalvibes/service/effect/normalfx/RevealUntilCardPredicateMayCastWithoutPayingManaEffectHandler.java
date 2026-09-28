@@ -75,6 +75,21 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
             return;
         }
 
+        if (typedEffect.castPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                foundCard, typedEffect.castPredicate(), entry.getCard().getId(), gameData,
+                controllerId, entry.getSourcePermanentId(),
+                entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getEffectivePower())) {
+            Collections.shuffle(revealedCards);
+            deck.addAll(revealedCards);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " cannot cast the revealed " + foundCard.getName()
+                            + " without paying its mana cost; the revealed cards go to the bottom"
+                            + " of the library in a random order."));
+            return;
+        }
+
         String prompt = "You may cast " + foundCard.getName() + " without paying its mana cost.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, List.of(foundCard))

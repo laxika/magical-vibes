@@ -161,6 +161,8 @@ public class GameData {
     private final Map<UUID, Map<Zone, Integer>> spellCastCountsByZoneThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells that were kicked when cast, grouped by caster for the current turn. */
     private final Map<UUID, Set<UUID>> kickedSpellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Number of spells each player cast from somewhere other than their hand this turn. */
+    private final Map<UUID, Integer> spellsCastFromOutsideHandThisTurn = new ConcurrentHashMap<>();
     /** Whether any spell was cast for its Warp cost this turn. */
     public boolean spellWarpedThisTurn;
     public final Map<UUID, List<StackEntry>> crimeCandidatesThisTurn = new ConcurrentHashMap<>();
@@ -427,6 +429,8 @@ public class GameData {
     public final Set<UUID> phasedOutUntilPlaneswalk = ConcurrentHashMap.newKeySet();
     /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
     public final Map<UUID, Map<UUID, Integer>> phasedOutWhileSourceControlled = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out while their source stays tapped. */
+    public final Map<UUID, Set<UUID>> phasedOutWhileSourceTapped = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -569,6 +573,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureExileCountThisTurn = new ConcurrentHashMap<>();
     /** Counts creature deaths by effective creature subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathCountThisTurn = new ConcurrentHashMap<>();
+    /** Sums the last-known effective power of creature deaths by effective subtype and controller this turn. */
+    public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathPowerThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     /** Source object id (permanent or spell card) → creature card ids it damaged this turn. */
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySource = new ConcurrentHashMap<>();
@@ -676,6 +682,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithKickCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled creature card UUIDs that have memory counters (Altaïr Ibn-La'Ahad). */
     public final Set<UUID> exiledCardsWithMemoryCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled creature card UUIDs that have takeover counters (The Master, Formed Anew). */
+    public final Set<UUID> exiledCardsWithTakeoverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have brain counters (Rex, Cyber-Hound). */
     public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
@@ -931,6 +939,8 @@ public class GameData {
     public final GoblinGameState goblinGame = new GoblinGameState();
     /** Progress state for Wheel of Misfortune's hidden number choices. */
     public final WheelOfMisfortuneState wheelOfMisfortune = new WheelOfMisfortuneState();
+    /** Progress state for Truth or Consequences' hidden votes. */
+    public final TruthOrConsequencesState truthOrConsequences = new TruthOrConsequencesState();
     /** Progress state for Expert-Level Safe's two-player hidden-number choice. */
     public final ExpertLevelSafeState expertLevelSafe = new ExpertLevelSafeState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
@@ -1130,6 +1140,8 @@ public class GameData {
     public boolean creaturesCantAttackThisCombat;
     /** If non-null, only this permanent may attack during the current additional combat phase. */
     public UUID onlyPermanentCanAttackThisCombatId;
+    /** If non-null, only these chosen permanents may attack during the current additional combat phase. */
+    public Set<UUID> onlyPermanentsCanAttackThisCombatIds;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
     public int additionalCombatPhasesAfterMain;
     /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
@@ -1243,6 +1255,8 @@ public class GameData {
     public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, exile nontoken creatures that would enter without having been cast (Mistcaller). */
     public final Set<UUID> playersExilingUncastEnteringNontokenCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players whose effects, this turn, shuffle creatures entering from exile into their owners' libraries instead. */
+    public final Set<UUID> playersShufflingCreaturesEnteringFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose effects, this turn, exile creatures that would die instead of putting them into graveyards. */
     public final Set<UUID> playersExilingCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose effects, this turn, exile creatures their opponents control instead of putting them into graveyards. */
@@ -1300,6 +1314,8 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
     public boolean playersCantGainLifeThisTurn = false;
+    /** When true, no player can lose life this turn (Everybody Lives!). Cleared at turn cleanup. */
+    public boolean playersCantLoseLifeThisTurn = false;
     /** When true, no player can search a library this turn (Shadow of Doubt). Cleared at turn cleanup. */
     public boolean playersCantSearchLibrariesThisTurn = false;
     /** When true, no creature can attack this turn. Cleared at turn cleanup. */
@@ -1405,6 +1421,8 @@ public class GameData {
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerDrawUpToInitialCount;
+    /** Chosen count for the current optional draw instruction, retained across replacement choices. */
+    public Integer pendingEachPlayerMayDrawChosenCount;
     /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
     public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** The Ring emblem state for players who have been tempted by the Ring. */
@@ -1615,8 +1633,12 @@ public class GameData {
     public UUID senControlledPlayerId;
 
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
-     *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
+     *  The flashback cost for these cards equals their mana cost unless overridden in
+     *  {@link #cardsGrantedFlashbackCostsUntilEndOfTurn}. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Optional fixed flashback costs for cards granted flashback until end of turn. */
+    public final Map<UUID, String> cardsGrantedFlashbackCostsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Card IDs that have been granted Warp {0} until end of turn. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedWarpUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -2629,6 +2651,9 @@ public class GameData {
     /** Tracks which permanents' once-each-turn library-cast permissions have been used this turn. */
     public final Set<UUID> oncePerTurnLibraryCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks which permanents' shared once-each-turn library-top play permissions have been used. */
+    public final Set<UUID> oncePerTurnLibraryPlayPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks which source permanents or graveyard cards (by UUID) have already fired a
      *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
@@ -2851,6 +2876,9 @@ public class GameData {
      * battlefield because of "a spell or ability an opponent controls".
      */
     public UUID currentlyResolvingControllerId;
+
+    /** Controller of the triggered ability currently resolving, or {@code null} otherwise. */
+    public UUID currentlyResolvingTriggeredAbilityControllerId;
 
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
@@ -4038,6 +4066,12 @@ public class GameData {
         if (card != null) spellsCastFromHandThisTurn.add(card.getId());
     }
 
+    public void recordSpellCastFromOutsideHand(UUID playerId) {
+        if (playerId != null) {
+            spellsCastFromOutsideHandThisTurn.merge(playerId, 1, Integer::sum);
+        }
+    }
+
     /** Records the source zone of a spell cast for zone-restricted spell-cast triggers. */
     public void recordSpellCastFromZone(UUID playerId, Zone sourceZone) {
         if (playerId == null || sourceZone == null) return;
@@ -4065,6 +4099,10 @@ public class GameData {
 
     public void clearSpellsCastFromHandThisTurn() {
         spellsCastFromHandThisTurn.clear();
+    }
+
+    public void clearSpellsCastFromOutsideHandThisTurn() {
+        spellsCastFromOutsideHandThisTurn.clear();
     }
 
     public void recordStackEntryForCrime(StackEntry entry) {
@@ -4734,6 +4772,10 @@ public class GameData {
      */
     public int getSpellsCastThisTurnCount(UUID playerId) {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
+    }
+
+    public int getSpellsCastFromOutsideHandThisTurnCount(UUID playerId) {
+        return spellsCastFromOutsideHandThisTurn.getOrDefault(playerId, 0);
     }
 
     /** Returns the number of spells cast with Treasure-produced mana by the player this turn. */
@@ -5534,6 +5576,28 @@ public class GameData {
         notifyCardsExiled(card, true);
     }
 
+    /** Marks an already-exiled card as foretold without creating a second exile event. */
+    public boolean markExiledCardAsForetold(UUID cardId, UUID foretellingPlayerId,
+                                            ManaCost foretellCost) {
+        synchronized (exiledCards) {
+            for (int i = 0; i < exiledCards.size(); i++) {
+                ExiledCardEntry entry = exiledCards.get(i);
+                if (!entry.card().getId().equals(cardId)) continue;
+                exiledCards.set(i, new ExiledCardEntry(entry.card(), entry.ownerId(),
+                        entry.sourcePermanentId(), true, foretellingPlayerId, turnNumber,
+                        foretellingPlayerId == null
+                                ? -1
+                                : turnsTakenByPlayer.getOrDefault(foretellingPlayerId, 0)));
+                foretoldCardIds.add(cardId);
+                if (foretellCost != null) {
+                    foretoldCardCosts.put(cardId, foretellCost);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean putOnBottomOfLibraryInsteadOfExile(UUID ownerId, Card card) {
         if (card.isToken()
                 || !playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.contains(ownerId)) {
@@ -5605,6 +5669,7 @@ public class GameData {
             exiledCardsWithIntelCounters.remove(cardId);
             exiledCardsWithKickCounters.remove(cardId);
             exiledCardsWithMemoryCounters.remove(cardId);
+            exiledCardsWithTakeoverCounters.remove(cardId);
             exiledCardsWithBrainCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
@@ -5760,6 +5825,7 @@ public class GameData {
         removedIds.forEach(exiledCardsWithIntelCounters::remove);
         removedIds.forEach(exiledCardsWithKickCounters::remove);
         removedIds.forEach(exiledCardsWithMemoryCounters::remove);
+        removedIds.forEach(exiledCardsWithTakeoverCounters::remove);
         removedIds.forEach(exiledCardsWithFetchCounters::remove);
         removedIds.forEach(exiledCardsWithBrainCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
@@ -6320,6 +6386,12 @@ public class GameData {
         copy.goblinGame.index = this.goblinGame.index;
         copy.goblinGame.itemCounts.putAll(this.goblinGame.itemCounts);
         copy.goblinGame.currentPlayerId = this.goblinGame.currentPlayerId;
+        copy.truthOrConsequences.active = this.truthOrConsequences.active;
+        copy.truthOrConsequences.order.addAll(this.truthOrConsequences.order);
+        copy.truthOrConsequences.index = this.truthOrConsequences.index;
+        copy.truthOrConsequences.choices.putAll(this.truthOrConsequences.choices);
+        copy.truthOrConsequences.voteChoices.addAll(this.truthOrConsequences.voteChoices);
+        copy.truthOrConsequences.currentPlayerId = this.truthOrConsequences.currentPlayerId;
         copy.expertLevelSafe.active = this.expertLevelSafe.active;
         copy.expertLevelSafe.sourcePermanentId = this.expertLevelSafe.sourcePermanentId;
         copy.expertLevelSafe.controllerId = this.expertLevelSafe.controllerId;
@@ -6361,8 +6433,16 @@ public class GameData {
         copy.villainousChoice.active = this.villainousChoice.active;
         copy.villainousChoice.remaining.addAll(this.villainousChoice.remaining);
         copy.villainousChoice.currentPlayerId = this.villainousChoice.currentPlayerId;
+        copy.villainousChoice.currentTargetId = this.villainousChoice.currentTargetId;
+        copy.villainousChoice.additionalChoicesRemaining = this.villainousChoice.additionalChoicesRemaining;
+        copy.villainousChoice.choicePlayerId = this.villainousChoice.choicePlayerId;
+        copy.villainousChoice.choiceSourceCardName = this.villainousChoice.choiceSourceCardName;
+        copy.villainousChoice.choicePutOption = this.villainousChoice.choicePutOption;
+        copy.villainousChoice.choiceOptions = List.copyOf(this.villainousChoice.choiceOptions);
+        copy.villainousChoice.choiceDescription = this.villainousChoice.choiceDescription;
         copy.villainousChoice.chosenMode = this.villainousChoice.chosenMode;
         copy.villainousChoice.waitingForDiscard = this.villainousChoice.waitingForDiscard;
+        copy.villainousChoice.waitingForDraw = this.villainousChoice.waitingForDraw;
         copy.villainousChoice.waitingForControllerMay = this.villainousChoice.waitingForControllerMay;
         copy.villainousChoice.waitingForCardChoice = this.villainousChoice.waitingForCardChoice;
         copy.plaguecrafter.active = this.plaguecrafter.active;
@@ -6405,6 +6485,8 @@ public class GameData {
         copy.onlyAggressiveCreaturesCanAttackThisCombat = this.onlyAggressiveCreaturesCanAttackThisCombat;
         copy.creaturesCantAttackThisCombat = this.creaturesCantAttackThisCombat;
         copy.onlyPermanentCanAttackThisCombatId = this.onlyPermanentCanAttackThisCombatId;
+        copy.onlyPermanentsCanAttackThisCombatIds = this.onlyPermanentsCanAttackThisCombatIds == null
+                ? null : new HashSet<>(this.onlyPermanentsCanAttackThisCombatIds);
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
@@ -6429,6 +6511,7 @@ public class GameData {
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
+        copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
@@ -6476,6 +6559,8 @@ public class GameData {
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
         copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
+        copy.playersShufflingCreaturesEnteringFromExileThisTurn
+                .addAll(this.playersShufflingCreaturesEnteringFromExileThisTurn);
         copy.playersExilingCreaturesInsteadOfDyingThisTurn
                 .addAll(this.playersExilingCreaturesInsteadOfDyingThisTurn);
         copy.playersExilingOpponentCreaturesInsteadOfDyingThisTurn
@@ -6540,6 +6625,7 @@ public class GameData {
         copy.damageLifeFloorsUntilEndOfTurn.putAll(this.damageLifeFloorsUntilEndOfTurn);
         copy.damageReplacementsThisTurn.addAll(this.damageReplacementsThisTurn);
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
+        copy.playersCantLoseLifeThisTurn = this.playersCantLoseLifeThisTurn;
         copy.playersCantSearchLibrariesThisTurn = this.playersCantSearchLibrariesThisTurn;
         copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
@@ -6590,6 +6676,7 @@ public class GameData {
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
         copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
+        copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
 
         // --- List<UUID> (synchronized) ---
@@ -6880,6 +6967,7 @@ public class GameData {
         copy.oncePerTurnExileCastPermissionsUsedThisTurn.addAll(this.oncePerTurnExileCastPermissionsUsedThisTurn);
         copy.oneShotExileCastPermissionsUsed.addAll(this.oneShotExileCastPermissionsUsed);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
+        copy.oncePerTurnLibraryPlayPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryPlayPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
                 copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
@@ -6977,6 +7065,7 @@ public class GameData {
         copy.exiledCardsWithFetchCounters.addAll(this.exiledCardsWithFetchCounters);
         copy.exiledCardsWithKickCounters.addAll(this.exiledCardsWithKickCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
+        copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
         copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
@@ -7001,6 +7090,11 @@ public class GameData {
             Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
             targetSequenceCopy.putAll(targetSequences);
             copy.phasedOutWhileSourceControlled.put(sourceId, targetSequenceCopy);
+        });
+        this.phasedOutWhileSourceTapped.forEach((sourceId, targetIds) -> {
+            Set<UUID> targetIdCopy = ConcurrentHashMap.newKeySet();
+            targetIdCopy.addAll(targetIds);
+            copy.phasedOutWhileSourceTapped.put(sourceId, targetIdCopy);
         });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
@@ -7063,6 +7157,8 @@ public class GameData {
         copy.creatureExileCountThisTurn.putAll(this.creatureExileCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
                 copy.creatureSubtypeDeathCountThisTurn.put(k, new HashMap<>(v)));
+        this.creatureSubtypeDeathPowerThisTurn.forEach((k, v) ->
+                copy.creatureSubtypeDeathPowerThisTurn.put(k, new HashMap<>(v)));
         this.sacrificedPermanentSubtypeCountThisTurn.forEach((k, v) ->
                 copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
@@ -7303,6 +7399,8 @@ public class GameData {
         copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
         copy.cloneOperation.copyColor = this.cloneOperation.copyColor;
         copy.cloneOperation.copyUntilEndOfTurn = this.cloneOperation.copyUntilEndOfTurn;
+        copy.cloneOperation.addVanishingIfCopiedPermanentLacksIt =
+                this.cloneOperation.addVanishingIfCopiedPermanentLacksIt;
         copy.cloneOperation.removedSupertypesOverride = this.cloneOperation.removedSupertypesOverride;
         copy.cloneOperation.addTypeAppropriateCounters = this.cloneOperation.addTypeAppropriateCounters;
         copy.cloneOperation.entersTapped = this.cloneOperation.entersTapped;
@@ -7618,6 +7716,7 @@ public class GameData {
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
+        copy.currentlyResolvingTriggeredAbilityControllerId = this.currentlyResolvingTriggeredAbilityControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
@@ -7696,6 +7795,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedFlashbackCostsUntilEndOfTurn.putAll(this.cardsGrantedFlashbackCostsUntilEndOfTurn);
         copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
@@ -7780,6 +7880,7 @@ public class GameData {
                 copy.crimeCandidatesThisTurn.put(key,
                         Collections.synchronizedList(new ArrayList<>(entries))));
         copy.spellsCastFromHandThisTurn.addAll(this.spellsCastFromHandThisTurn);
+        copy.spellsCastFromOutsideHandThisTurn.putAll(this.spellsCastFromOutsideHandThisTurn);
         copy.spellsWithPlotOnResolution.addAll(this.spellsWithPlotOnResolution);
         copy.plottedCardIds.addAll(this.plottedCardIds);
         this.creaturesThatSaddledPermanentThisTurn.forEach((key, ids) ->

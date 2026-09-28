@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "159")
+@CardRegistration(set = "WHO", collectorNumber = "242")
 @CardRegistration(set = "DMC", collectorNumber = "185")
 public class HeroesPodium extends Card {
 

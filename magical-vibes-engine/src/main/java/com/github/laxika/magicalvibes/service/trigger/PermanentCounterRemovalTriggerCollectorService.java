@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,29 @@ public class PermanentCounterRemovalTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED)
+    private boolean handleSelfTimeCountersRemoved(TriggerMatchContext match, CardEffect effect,
+                                                  TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.TimeCountersRemoved removed)
+                || removed.amount() <= 0
+                || match.permanent() == null
+                || !match.permanent().getId().equals(removed.permanent().getId())) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()));

@@ -41,7 +41,7 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
 
         if (!canPay) {
             // Can't pay — auto-apply life loss
-            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int lifeLoss = e.lifeLoss()

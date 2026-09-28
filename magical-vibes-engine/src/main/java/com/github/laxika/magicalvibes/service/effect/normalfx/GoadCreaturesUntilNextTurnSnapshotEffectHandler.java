@@ -33,8 +33,13 @@ public class GoadCreaturesUntilNextTurnSnapshotEffectHandler implements NormalEf
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GoadCreaturesUntilNextTurnSnapshotEffect goad =
                 (GoadCreaturesUntilNextTurnSnapshotEffect) effect;
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         FilterContext context = FilterContext.of(gameData)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(source);
 
         gameData.forEachPermanent((ignoredControllerId, permanent) -> {
             if (!gameQueryService.isCreature(gameData, permanent)

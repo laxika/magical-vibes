@@ -41,6 +41,27 @@ class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandlerTest extends Abstrac
     }
 
     @Test
+    @DisplayName("Target can draw one fewer card than discarded")
+    void discardsAllThenDrawsOneFewer() {
+        Card card = createCard("Sycorax Commander");
+        Card handCard1 = createCard("Mountain");
+        Card handCard2 = createCard("Forest");
+        Card handCard3 = createCard("Island");
+        gd.playerHands.get(player2Id).addAll(List.of(handCard1, handCard2, handCard3));
+        StackEntry entry = createEntryWithTarget(card, player1Id,
+                List.of(new TargetPlayerDiscardsHandThenDrawsThatManyEffect(1)), player2Id);
+
+        resolveEffect(gd, entry, new TargetPlayerDiscardsHandThenDrawsThatManyEffect(1));
+
+        verify(graveyardService).discardCard(gd, player2Id, handCard1);
+        verify(graveyardService).discardCard(gd, player2Id, handCard2);
+        verify(graveyardService).discardCard(gd, player2Id, handCard3);
+        verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                logEntry.plainText().contains("draws 2 cards")));
+    }
+
+    @Test
     @DisplayName("Does nothing with empty hand")
     void doesNothingWithEmptyHand() {
         Card card = createCard("Collective Defiance");

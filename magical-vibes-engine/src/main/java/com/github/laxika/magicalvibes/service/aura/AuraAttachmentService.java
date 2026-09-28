@@ -113,7 +113,8 @@ public class AuraAttachmentService {
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
-                    } else if (isEquipment || isFortification) {
+                    } else if (gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
+                            || isFortification) {
                         // Equipment and Fortification stay on the battlefield unattached when their host leaves
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);

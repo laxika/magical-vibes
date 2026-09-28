@@ -2257,6 +2257,17 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
         }
+        if (abilityEffects.stream().anyMatch(PayLifeEqualToCommanderColorIdentityCost.class::isInstance)) {
+            if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
+                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Players can't pay life to activate abilities");
+            }
+            int life = gameData.getLife(playerId);
+            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
+            if (life < needed) {
+                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
 
         int stackSizeBeforeCosts = gameData.stack.size();
 
@@ -6446,6 +6457,14 @@ public class AbilityActivationService {
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
+            if (life < needed) {
+                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayLifeEqualToCommanderColorIdentityCost.class::isInstance)) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }

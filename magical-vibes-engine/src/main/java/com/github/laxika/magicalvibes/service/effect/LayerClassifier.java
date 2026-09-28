@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEff
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -59,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCards
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
@@ -91,6 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwn
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseDevotionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
@@ -258,6 +261,7 @@ public final class LayerClassifier {
 
         // Layer 1 — copy effects (CR 613.2a).
         map.put(BecomeCopyOfTargetCreatureEffect.class, fixed(Layer.L1_COPY));
+        map.put(BecomeCopyOfTargetCreatureWhileTargetTappedEffect.class, fixed(Layer.L1_COPY));
         map.put(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class, fixed(Layer.L1_COPY));
         map.put(BecomeCopyOfTargetLandEffect.class, fixed(Layer.L1_COPY));
         map.put(MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class, fixed(Layer.L1_COPY));
@@ -278,6 +282,7 @@ public final class LayerClassifier {
         // Layer 3 — text-changing effects (CR 613.2c / CR 612).
         map.put(ChangeColorTextEffect.class, fixed(Layer.L3_TEXT));
         map.put(SetNameEffect.class, fixed(Layer.L3_TEXT));
+        map.put(SetChosenNameAndCreatureTypeEffect.class, fixed(Layer.L3_TEXT, Layer.L4_TYPE));
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
@@ -483,6 +488,8 @@ public final class LayerClassifier {
         map.put(GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect.class,
                 fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));

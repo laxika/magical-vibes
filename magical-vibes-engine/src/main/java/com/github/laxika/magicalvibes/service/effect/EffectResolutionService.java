@@ -95,6 +95,10 @@ public class EffectResolutionService {
      * @param startIndex the zero-based index of the first effect to resolve
      */
     public void resolveEffectsFrom(GameData gameData, StackEntry entry, int startIndex) {
+        UUID previousTriggeredAbilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            gameData.currentlyResolvingTriggeredAbilityControllerId = entry.getControllerId();
+        }
         // CR 704.3 / 104.3b — defer the player-loss state-based action until this whole resolution
         // ends (see GameData.deferPlayerLossCheck). The depth counter keeps the suppression in place
         // across nested sub-resolutions (e.g. Kinship, counter riders) so that a nested completion
@@ -124,6 +128,7 @@ public class EffectResolutionService {
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             }
+            gameData.currentlyResolvingTriggeredAbilityControllerId = previousTriggeredAbilityControllerId;
         }
     }
 

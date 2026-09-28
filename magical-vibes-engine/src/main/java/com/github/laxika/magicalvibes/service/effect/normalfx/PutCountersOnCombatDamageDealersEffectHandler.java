@@ -64,7 +64,7 @@ public class PutCountersOnCombatDamageDealersEffectHandler implements NormalEffe
             }
 
             dealer.setCounterCount(e.counterType(), dealer.getCounterCount(e.counterType()) + placed);
-            permanentCounterSupport.notifyCountersPlaced(gameData, entry, dealer, placed);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, dealer, e.counterType(), placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorS
 import com.github.laxika.magicalvibes.model.effect.CardAdvantageSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromLibraryTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -1158,7 +1159,9 @@ public class SpellCastTriggerCollectorService {
             @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
                     slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
             @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+                    slot = EffectSlot.ON_OPPONENT_CASTS_SPELL),
+            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     })
     private boolean handleControllerSpellCastFromHandTrigger(TriggerMatchContext match,
             SpellCastFromHandTriggerEffect trigger, TriggerContext ctx) {
@@ -1875,6 +1878,35 @@ public class SpellCastTriggerCollectorService {
         match.gameData().stack.add(entry);
         log.info("Game {} - {} cast-from-library trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleFoodWhenCastingFromLibraryTop(TriggerMatchContext match,
+            CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.castZone() != Zone.LIBRARY
+                || !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.filter(),
+                match.permanent().getOriginalCard().getId(), match.gameData(), match.controllerId())
+                || !match.gameData().oncePerTurnLibraryPlayPermissionsUsedThisTurn
+                .contains(match.permanent().getId())) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(CreateTokenEffect.ofFoodToken(1))),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 

@@ -73,6 +73,8 @@ public record CardView(
         int graveyardCastDiscardCount,
         int graveyardCastExileCount,
         String graveyardCastExileLabel,
+        boolean graveyardCastRequiresPermanentExile,
+        String graveyardCastExilePermanentLabel,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
         List<ActivatedAbilityView> exileActivatedAbilities,

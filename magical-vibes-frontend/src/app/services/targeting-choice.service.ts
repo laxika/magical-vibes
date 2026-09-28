@@ -392,6 +392,10 @@ export class TargetingChoiceService {
   graveyardCastExileLabel = '';
   graveyardCastExileSelectedIndices = signal<number[]>([]);
   private pendingGraveyardCastExileIndices: number[] = [];
+  selectingGraveyardCastExilePermanent = false;
+  graveyardCastExilePermanentCardIndex = -1;
+  graveyardCastExilePermanentCardName = '';
+  private pendingGraveyardCastExilePermanentId: string | null = null;
 
   get graveyardCastExileChoices(): { card: Card; index: number }[] {
     const game = this.gameSignal?.();
@@ -1247,6 +1251,12 @@ export class TargetingChoiceService {
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
     this.pendingFlashback = true;
+    if (card.graveyardCastRequiresPermanentExile) {
+      this.selectingGraveyardCastExilePermanent = true;
+      this.graveyardCastExilePermanentCardIndex = graveyardIndex;
+      this.graveyardCastExilePermanentCardName = card.name;
+      return;
+    }
     if ((card.graveyardCastExileCount ?? 0) > 0) {
       this.selectingGraveyardCastExile = true;
       this.graveyardCastExileCardIndex = graveyardIndex;
@@ -1268,6 +1278,47 @@ export class TargetingChoiceService {
       return;
     }
     this.continueFlashbackPlay(graveyardIndex, card);
+  }
+
+  selectGraveyardCastExilePermanent(permanentId: string): void {
+    if (!this.selectingGraveyardCastExilePermanent) return;
+    const graveyardIndex = this.graveyardCastExilePermanentCardIndex;
+    const game = this.gameSignal();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    const card = playerIndex >= 0 ? game?.graveyards[playerIndex]?.[graveyardIndex] : undefined;
+    if (!card) return;
+    this.pendingGraveyardCastExilePermanentId = permanentId;
+    this.selectingGraveyardCastExilePermanent = false;
+    this.graveyardCastExilePermanentCardIndex = -1;
+    this.graveyardCastExilePermanentCardName = '';
+    if ((card.graveyardCastExileCount ?? 0) > 0) {
+      this.selectingGraveyardCastExile = true;
+      this.graveyardCastExileCardIndex = graveyardIndex;
+      this.graveyardCastExileCardName = card.name;
+      this.graveyardCastExileCount = card.graveyardCastExileCount ?? 0;
+      this.graveyardCastExileLabel = card.graveyardCastExileLabel ?? 'other cards';
+      this.graveyardCastExileSelectedIndices.set([]);
+    } else if (card.graveyardCastRequiresDiscard) {
+      this.selectingGraveyardCastDiscard = true;
+      this.graveyardCastDiscardCardIndex = graveyardIndex;
+      this.graveyardCastDiscardCardName = card.name;
+      this.graveyardCastDiscardCount = card.graveyardCastDiscardCount ?? 1;
+    } else if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+    } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
+      this.continueFlashbackPlay(graveyardIndex, card);
+    } else {
+      this.sendPlayCardMessage(graveyardIndex, null);
+    }
+  }
+
+  cancelGraveyardCastExilePermanent(): void {
+    this.pendingCommandCardId = null;
+    this.selectingGraveyardCastExilePermanent = false;
+    this.graveyardCastExilePermanentCardIndex = -1;
+    this.graveyardCastExilePermanentCardName = '';
+    this.pendingGraveyardCastExilePermanentId = null;
+    this.pendingFlashback = false;
   }
 
   toggleGraveyardCastExile(index: number): void {
@@ -1325,6 +1376,7 @@ export class TargetingChoiceService {
     this.graveyardCastExileLabel = '';
     this.graveyardCastExileSelectedIndices.set([]);
     this.pendingGraveyardCastExileIndices = [];
+    this.pendingGraveyardCastExilePermanentId = null;
     this.pendingFlashback = false;
   }
 
@@ -1371,6 +1423,7 @@ export class TargetingChoiceService {
     this.pendingGraveyardCastDiscardHandIndex = null;
     this.pendingGraveyardCastDiscardHandIndices = [];
     this.graveyardCastDiscardCount = 0;
+    this.pendingGraveyardCastExilePermanentId = null;
     this.pendingFlashback = false;
   }
 
@@ -1658,6 +1711,10 @@ export class TargetingChoiceService {
     if (this.pendingGraveyardCastExileIndices.length > 0) {
       msg.exileGraveyardCardIndices = this.pendingGraveyardCastExileIndices;
       this.pendingGraveyardCastExileIndices = [];
+    }
+    if (this.pendingGraveyardCastExilePermanentId != null) {
+      msg.sacrificePermanentId = this.pendingGraveyardCastExilePermanentId;
+      this.pendingGraveyardCastExilePermanentId = null;
     }
     if (this.pendingBeholdPermanentId != null) {
       msg.beholdPermanentId = this.pendingBeholdPermanentId;
@@ -2393,6 +2450,10 @@ export class TargetingChoiceService {
     this.graveyardCastExileLabel = '';
     this.graveyardCastExileSelectedIndices.set([]);
     this.pendingGraveyardCastExileIndices = [];
+    this.selectingGraveyardCastExilePermanent = false;
+    this.graveyardCastExilePermanentCardIndex = -1;
+    this.graveyardCastExilePermanentCardName = '';
+    this.pendingGraveyardCastExilePermanentId = null;
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;

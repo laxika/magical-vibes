@@ -5,7 +5,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * is unaffected; every other creature on the battlefield (regardless of controller) takes on the
  * target's copiable values until the cleanup step. Used by Mirrorweave.
  */
-public record EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect() implements CardEffect {
+public record EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect(boolean removeLegendary)
+        implements CardEffect {
+
+    public EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect() {
+        this(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

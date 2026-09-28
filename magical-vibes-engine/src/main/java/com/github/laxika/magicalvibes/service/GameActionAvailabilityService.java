@@ -1439,6 +1439,8 @@ public class GameActionAvailabilityService {
                     && card.getCastingOption(GraveyardCast.class)
                     .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                     .orElse(false);
+            boolean canPlayThisLandFromGraveyard = castingPermissionService
+                    .canPlayLandsFromGraveyard(gameData, playerId, card);
             if (card.hasType(CardType.LAND)
                     && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
                     && (castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
@@ -1704,6 +1706,11 @@ public class GameActionAvailabilityService {
             } else if (emblemFlashback) {
                 manaCostStr = grantedFlashbackOption.get()
                         .getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
+            } else if (grantedFlashback) {
+                manaCostStr = gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.get(card.getId());
+                if (manaCostStr == null) {
+                    manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
+                }
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
                     || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery

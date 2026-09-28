@@ -591,6 +591,7 @@ public class BlockLegalityService {
                             || restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
                             || restriction.blockableOnlyBy() != null
                             || restriction.cantBeBlockedByCreaturesMatching() != null
+                            || restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
                             || restriction.requiresAllDefendingCreaturesToBlock())) {
                         restrictions.add(new AttackerRestriction(source, restriction));
                     }
@@ -635,6 +636,11 @@ public class BlockLegalityService {
                 }
             }
             if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
+                unblockable = true;
+                unblockableForOtherReason = true;
+            }
+            if (restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
+                    && !attacksOwnerOrOwnerControlledPermanent(gameData, attacker)) {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
@@ -817,6 +823,22 @@ public class BlockLegalityService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
+    }
+
+    private boolean attacksOwnerOrOwnerControlledPermanent(GameData gameData, Permanent attacker) {
+        UUID ownerId = attacker.getOriginalCard().getOwnerId();
+        if (ownerId == null) {
+            ownerId = attacker.getCard().getOwnerId();
+        }
+        UUID attackTargetId = attacker.getAttackTarget();
+        if (ownerId == null || attackTargetId == null) {
+            return false;
+        }
+        if (ownerId.equals(attackTargetId)) {
+            return true;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, attackTargetId);
+        return target != null && ownerId.equals(gameQueryService.findPermanentController(gameData, target.getId()));
     }
 
     private int countIslandsControlledBy(GameData gameData, Permanent attacker) {

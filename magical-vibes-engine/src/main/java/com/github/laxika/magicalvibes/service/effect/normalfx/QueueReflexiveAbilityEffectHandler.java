@@ -45,6 +45,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
         int targetGroupIndex = entry.getCard().getEffectTargetIndex(queueEffect.effect());
         if (isMultiTargetGroup(entry, targetGroupIndex)) {
+            int reflexiveXValue = queueEffect.useEventValueAsX()
+                    ? entry.getEventValue() : entry.getXValue();
             List<Integer> precedingGroupSizes = new ArrayList<>();
             for (int i = 0; i < targetGroupIndex; i++) {
                 precedingGroupSizes.add(0);
@@ -52,8 +54,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
                     entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
-                    precedingGroupSizes, queueEffect.useEventValueAsX()
-                            ? entry.getEventValue() : entry.getXValue(), List.of(), false,
+                    precedingGroupSizes, reflexiveXValue, List.of(), false,
                     null, null, entry.getEventValue()));
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;

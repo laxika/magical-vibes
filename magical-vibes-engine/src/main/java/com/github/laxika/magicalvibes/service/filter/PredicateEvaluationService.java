@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -44,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithC
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAwakenPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCascadePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasColorManaSymbolPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
@@ -217,6 +220,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingAlonePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOrBlockingAlonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
@@ -248,6 +252,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
@@ -260,6 +265,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
@@ -271,6 +277,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttacking
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
@@ -395,6 +402,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -588,6 +596,8 @@ public class PredicateEvaluationService {
             }
             case CardHasAwakenPredicate ignored ->
                     card.getCardText() != null && AWAKEN_ABILITY_PATTERN.matcher(card.getCardText()).find();
+            case CardHasCascadePredicate ignored ->
+                    card.getEffects(EffectSlot.ON_SELF_CAST).stream().anyMatch(CascadeEffect.class::isInstance);
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
@@ -1200,6 +1210,7 @@ public class PredicateEvaluationService {
                     hasAuraControlledBySourceControllerAttachedTo(gameData, permanent, sourceControllerId);
             case PermanentIsEquippedPredicate ignored ->
                     gameData != null && gameQueryService.isEquipped(gameData, permanent);
+            case PermanentIsGoadedPredicate ignored -> isGoaded(gameData, permanent);
             case PermanentIsModifiedPredicate ignored -> isModified(gameData, permanent, filterContext);
             case PermanentAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.isAttached()) {
@@ -1398,10 +1409,10 @@ public class PredicateEvaluationService {
                     permanent.isTransformed();
             case PermanentIsAttackingPredicate ignored ->
                     permanent.isAttacking();
-            case PermanentIsGoadedPredicate ignored ->
-                    gameData != null && gameQueryService.isGoaded(gameData, permanent);
             case PermanentIsAttackingAlonePredicate ignored ->
                     isAttackingAlone(gameData, permanent);
+            case PermanentIsAttackingOrBlockingAlonePredicate ignored ->
+                    isAttackingOrBlockingAlone(gameData, permanent);
             case PermanentIsAttackingEnchantedPlayerPredicate ignored -> {
                 UUID enchantedPlayerId = sourceAttachedPlayerId(filterContext);
                 yield permanent.isAttacking() && enchantedPlayerId != null
@@ -1834,6 +1845,18 @@ public class PredicateEvaluationService {
             case PermanentManaValueAtMostOwnCountersPredicate atMostOwnCounters ->
                     permanent.getCard().getManaValue()
                             <= permanent.getCounterCount(atMostOwnCounters.counterType());
+            case PermanentManaValueAtMostSourceCountersPredicate atMostSourceCounters -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                yield sourcePermanent != null
+                        && permanent.getCard().getManaValue()
+                        <= sourcePermanent.getCounterCount(atMostSourceCounters.counterType());
+            }
             case PermanentPowerAtLeastPredicate powerAtLeastPredicate -> {
                 if (gameData == null) {
                     yield gameQueryService.powerForStaticFilter(permanent) >= powerAtLeastPredicate.minPower();
@@ -2032,6 +2055,17 @@ public class PredicateEvaluationService {
                 }
                 yield sourcePermanent != null && sourcePermanent.getId().equals(permanent.getId());
             }
+            case PermanentIsSourceOrPairedPredicate ignored -> {
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (filterContext != null && filterContext.sourcePermanentId() != null && gameData != null) {
+                    sourcePermanent = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                }
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                }
+                yield sourcePermanent != null && (sourcePermanent.getId().equals(permanent.getId())
+                        || sourcePermanent.getId().equals(permanent.getPairedWithId()));
+            }
             case PermanentIsTriggeringPermanentPredicate ignored -> {
                 UUID triggeringPermanentId = filterContext == null
                         ? null : filterContext.triggeringPermanentId();
@@ -2059,6 +2093,10 @@ public class PredicateEvaluationService {
                 }
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 if (controllerBattlefield != null && controllerBattlefield.contains(permanent)) {
+                    yield true;
+                }
+                if (filterContext.enteringControllerId() != null
+                        && sourceControllerId.equals(filterContext.enteringControllerId())) {
                     yield true;
                 }
                 UUID triggeringPermanentControllerId = filterContext != null
@@ -2720,6 +2758,9 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentIsModifiedPredicate) {
             return true;
         }
+        if (predicate instanceof PermanentIsGoadedPredicate) {
+            return true;
+        }
         if (predicate instanceof PermanentIsCommanderPredicate) {
             return true;
         }
@@ -2740,6 +2781,62 @@ public class PredicateEvaluationService {
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOf) {
             return anyOf.predicates().stream().anyMatch(this::requiresGameDataForStaticFilter);
+        }
+        return false;
+    }
+
+    /**
+     * Goad is represented by the attack requirement's "attack another player if able" marker.
+     * Keep this query aligned with {@link com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService}
+     * so combat-damage triggers recognize both static Auras and resolved temporary goad effects.
+     */
+    private boolean isGoaded(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return false;
+        }
+
+        final boolean[] goaded = {false};
+        gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
+            if (goaded[0]
+                    || sourcePermanent.isFaceDown()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
+                return;
+            }
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(sourcePermanent.getOriginalCard().getId())
+                    .withSourceControllerId(sourceControllerId)
+                    .withSourcePermanentId(sourcePermanent.getId());
+            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatAttackRequirementEffect requirement
+                        && requirement.requiresAttackAtOtherPlayerIfAble()
+                        && requirement.isActive(gameData, sourcePermanent)
+                        && matchesPermanentPredicate(permanent, requirement.affectedPredicate(), context)) {
+                    goaded[0] = true;
+                    return;
+                }
+            }
+        });
+        if (goaded[0]) {
+            return true;
+        }
+
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
+                if (!(floating.effect() instanceof CombatAttackRequirementEffect requirement)
+                        || !requirement.requiresAttackAtOtherPlayerIfAble()) {
+                    continue;
+                }
+                if (floating.affectedPermanentId() != null) {
+                    if (permanent.getId().equals(floating.affectedPermanentId())) {
+                        return true;
+                    }
+                    continue;
+                }
+                if (matchesPermanentPredicate(permanent, requirement.affectedPredicate(),
+                        FilterContext.of(gameData).withSourceControllerId(floating.controllerId()))) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -3042,6 +3139,10 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield isAttackingAlone(gameData, permanent);
             }
+            case PermanentIsAttackingOrBlockingAlonePredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield isAttackingOrBlockingAlone(gameData, permanent);
+            }
             case PermanentIsAttackingEnchantedPlayerPredicate ignored -> {
                 UUID enchantedPlayerId = sourceAttachedPlayerId(context);
                 yield permanent.isAttacking() && enchantedPlayerId != null
@@ -3101,6 +3202,8 @@ public class PredicateEvaluationService {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameQueryService.isEquipped(gameData, permanent);
             }
+            case PermanentIsGoadedPredicate ignored ->
+                    isGoaded(context == null ? null : context.gameData(), permanent);
             case PermanentIsModifiedPredicate ignored ->
                     isModified(context == null ? null : context.gameData(), permanent, context);
             case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -3162,6 +3265,14 @@ public class PredicateEvaluationService {
                 }
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 yield source != null && source.getId().equals(permanent.getId());
+            }
+            case PermanentIsSourceOrPairedPredicate ignored -> {
+                Permanent source = context == null ? null : context.sourcePermanentSnapshot();
+                if (context != null && context.gameData() != null && context.sourcePermanentId() != null) {
+                    source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+                }
+                yield source != null && (source.getId().equals(permanent.getId())
+                        || source.getId().equals(permanent.getPairedWithId()));
             }
             case PermanentIsTriggeringPermanentPredicate ignored -> {
                 UUID triggeringPermanentId = context == null ? null : context.triggeringPermanentId();
@@ -4238,6 +4349,28 @@ public class PredicateEvaluationService {
                 && permanent.isAttacking()
                 && gameData.declaredAttackerIdsThisCombat.size() == 1
                 && gameData.declaredAttackerIdsThisCombat.contains(permanent.getId());
+    }
+
+    private boolean isAttackingOrBlockingAlone(GameData gameData, Permanent permanent) {
+        if (isAttackingAlone(gameData, permanent)) {
+            return true;
+        }
+        if (gameData == null || !permanent.isBlocking()) {
+            return false;
+        }
+
+        Set<UUID> blockingPermanentIds = new HashSet<>();
+        blockingPermanentIds.add(permanent.getId());
+        gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(Permanent::isBlocking)
+                .map(Permanent::getId)
+                .forEach(blockingPermanentIds::add);
+        gameData.simultaneousDyingPermanents.values().stream()
+                .filter(Permanent::isBlocking)
+                .map(Permanent::getId)
+                .forEach(blockingPermanentIds::add);
+        return blockingPermanentIds.size() == 1;
     }
 
     private boolean isAttackingSourceControllerOrPlaneswalker(GameData gameData, Permanent attacker,

@@ -263,6 +263,10 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PlanarAbilityHandCardChoice.class,
@@ -296,6 +300,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
                 this::projectFaceUpExiledCardChoice);
+        register(PendingInteraction.SuspendedCardTimeCounterChoice.class,
+                this::projectSuspendedCardTimeCounterChoice);
         register(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class,
                 this::projectOpponentOwnedExiledCardToGraveyardChoice);
         register(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class,
@@ -1693,6 +1699,16 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may put a face-up exiled card they own into their graveyard.");
+    }
+
+    private InteractionPromptMessage projectSuspendedCardTimeCounterChoice(
+            GameData gameData, PendingInteraction.SuspendedCardTimeCounterChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                interaction.sourceCardName() + " — choose a suspended card you own to remove "
+                        + interaction.amount() + " time counter(s) from.");
     }
 
     private InteractionPromptMessage projectOpponentOwnedExiledCardToGraveyardChoice(

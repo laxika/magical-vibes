@@ -104,6 +104,10 @@ public class AttackLegalityService {
                 && !gameData.onlyPermanentCanAttackThisCombatId.equals(creature.getId())) {
             return false;
         }
+        if (gameData.onlyPermanentsCanAttackThisCombatIds != null
+                && !gameData.onlyPermanentsCanAttackThisCombatIds.contains(creature.getId())) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -296,6 +300,7 @@ public class AttackLegalityService {
      * {@link CreaturesCantAttackControllerUnlessPredicateEffect}, and the attacker does not match its
      * exemption predicate (e.g. Form of the Dragon's "Creatures without flying can't attack you").
      * When the attack is aimed at a planeswalker, only restrictions whose {@code protectsPlaneswalkers}
+     * flag applies; attackable permanents additionally require {@code protectsPermanents}.
      * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
@@ -360,7 +365,8 @@ public class AttackLegalityService {
                         return false;
                     }
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                            && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (targetIsPlayer || restriction.protectsPlaneswalkers()
+                            || restriction.protectsPermanents())
                             && (restriction.restrictedAttackerId() == null
                             || restriction.restrictedAttackerId().equals(
                             gameData.findControllerOf(attacker)))
@@ -390,7 +396,8 @@ public class AttackLegalityService {
                         || (scopedToAttacker && protectedPlayerId.equals(fe.controllerId()))) {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                            && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (targetIsPlayer || restriction.protectsPlaneswalkers()
+                            || restriction.protectsPermanents())
                             && (restriction.restrictedAttackerId() == null
                             || restriction.restrictedAttackerId().equals(
                             gameData.findControllerOf(attacker)))
@@ -873,11 +880,7 @@ public class AttackLegalityService {
 
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
-                    && (floatingEffect.affectedPermanentId() == null
-                    || creature.getId().equals(floatingEffect.affectedPermanentId()))
-                    && predicateEvaluationService.matchesPermanentPredicate(creature,
-                    requirement.affectedPredicate(), FilterContext.of(gameData)
-                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                    && floatingRequirementMatches(gameData, creature, floatingEffect, requirement)) {
                 Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
                 UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
@@ -1029,11 +1032,7 @@ public class AttackLegalityService {
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
                     || !requirement.requiresAttackAtOtherPlayerIfAble()
-                    || (floatingEffect.affectedPermanentId() != null
-                    && !creature.getId().equals(floatingEffect.affectedPermanentId()))
-                    || !predicateEvaluationService.matchesPermanentPredicate(creature,
-                    requirement.affectedPredicate(), FilterContext.of(gameData)
-                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                    || !floatingRequirementMatches(gameData, creature, floatingEffect, requirement)) {
                 continue;
             }
 
@@ -1086,6 +1085,17 @@ public class AttackLegalityService {
         synchronized (gameData.floatingEffects) {
             return List.copyOf(gameData.floatingEffects);
         }
+    }
+
+    private boolean floatingRequirementMatches(GameData gameData, Permanent creature,
+                                               FloatingContinuousEffect floatingEffect,
+                                               CombatAttackRequirementEffect requirement) {
+        if (floatingEffect.affectedPermanentId() != null) {
+            return creature.getId().equals(floatingEffect.affectedPermanentId());
+        }
+        return predicateEvaluationService.matchesPermanentPredicate(creature,
+                requirement.affectedPredicate(), FilterContext.of(gameData)
+                        .withSourceControllerId(floatingEffect.controllerId()));
     }
 
     /**

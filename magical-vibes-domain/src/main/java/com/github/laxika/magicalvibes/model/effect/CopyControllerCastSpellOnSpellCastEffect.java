@@ -183,6 +183,16 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 firstSpellFilters, beforeCopyEffect);
     }
 
+    /** Free mandatory copy of the first matching spell, with copy exceptions. */
+    public static CopyControllerCastSpellOnSpellCastEffect firstMatchingCopy(
+            List<CardPredicate> firstSpellFilters, CardEffect beforeCopyEffect,
+            Set<CardSupertype> removedSupertypes, boolean mayChooseNewTargets) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                new CardAnyOfPredicate(firstSpellFilters), null, null, null, null, Set.of(), null,
+                false, Set.of(), true, mayChooseNewTargets, false, false, null,
+                firstSpellFilters, beforeCopyEffect, null, null, false, false, removedSupertypes);
+    }
+
     /** Free mandatory copy trigger gated by a source condition checked when the spell is cast. */
     public static CopyControllerCastSpellOnSpellCastEffect withTriggerCondition(
             CardPredicate spellFilter, Condition triggerCondition) {

@@ -1713,7 +1713,7 @@ public class ActivatedAbilityExecutionService {
                             }
                         }
                         lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                         gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
                         int lifeLoss = effectiveDamage
@@ -1936,7 +1936,7 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int lifeLoss = effectiveDamage

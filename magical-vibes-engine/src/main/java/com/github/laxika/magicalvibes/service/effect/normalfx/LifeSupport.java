@@ -174,6 +174,11 @@ public class LifeSupport {
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
+            if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+                return false;
+            }
             if (replaceLifeLossWithShield(gameData, playerId)) {
                 return true;
             }
@@ -187,7 +192,7 @@ public class LifeSupport {
 
     public void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
         if (amount <= 0) return;
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
@@ -210,7 +215,7 @@ public class LifeSupport {
     /** Applies a life payment and fires both life-loss and life-payment triggers. */
     public void applyLifePayment(GameData gameData, UUID playerId, int amount, String sourceName) {
         if (amount <= 0) return;
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;

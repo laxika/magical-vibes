@@ -175,6 +175,8 @@ public class StackResolutionService {
         // (e.g. Sacred Ground) can tell whether a permanent left the battlefield because of an
         // opponent's spell or ability. Cleared once resolution finishes.
         gameData.currentlyResolvingControllerId = entry.getControllerId();
+        gameData.currentlyResolvingTriggeredAbilityControllerId =
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getControllerId() : null;
         try {
             if (beginDirectTriggeredModal(gameData, entry)) {
                 return;
@@ -190,6 +192,7 @@ public class StackResolutionService {
             }
         } finally {
             gameData.currentlyResolvingControllerId = null;
+            gameData.currentlyResolvingTriggeredAbilityControllerId = null;
         }
 
         if (gameData.waitingForSubgame) return;
@@ -381,9 +384,11 @@ public class StackResolutionService {
             }
         }
         perm.setCastFromZone(entry.getSourceZone());
+        perm.setExileIfLeavesBattlefield(entry.isExilePermanentIfLeavesBattlefield());
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         perm.setAlternateCost(entry.isAlternateCost());
+        perm.setAlternateCostSacrificedToughness(entry.getSacrificedToughness());
         perm.setCastWithWarp(entry.isCastWithWarp());
         perm.setMadness(entry.isMadness());
         if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
@@ -1427,6 +1432,7 @@ public class StackResolutionService {
             case 3 -> "III";
             case 4 -> "IV";
             case 5 -> "V";
+            case 6 -> "VI";
             default -> null;
         };
         if (finalChapter == null

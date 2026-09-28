@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 import java.util.List;
 
+@CardRegistration(set = "WHO", collectorNumber = "169")
 @CardRegistration(set = "OTC", collectorNumber = "250")
 public class WreckAndRebuild extends Card {
 
@@ -35,8 +36,8 @@ public class WreckAndRebuild extends Card {
                         "Destroy target artifact or enchantment",
                         new DestroyTargetPermanentEffect(), artifactOrEnchantment),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Mill five cards, then you may put a land card from your graveyard onto the battlefield tapped.",
-                        new MillControllerThenEffect(5, new MayEffect(
+                                "Mill five cards, then you may put a land card from your graveyard onto the battlefield tapped.",
+                                new MillControllerThenEffect(5, new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardTypePredicate(CardType.LAND))

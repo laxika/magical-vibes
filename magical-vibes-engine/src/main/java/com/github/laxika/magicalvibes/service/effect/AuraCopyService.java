@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -167,6 +168,18 @@ public class AuraCopyService {
      */
     public void revertExpiredCopies(GameData gameData, List<FloatingContinuousEffect> expired) {
         for (FloatingContinuousEffect floating : expired) {
+            if (floating.effect() instanceof BecomeCopyOfTargetCreatureWhileTargetTappedEffect) {
+                Permanent copy = gameQueryService.findPermanentById(gameData, floating.affectedPermanentId());
+                if (copy != null && copy.isCopyUntilEndOfTurn()) {
+                    String copyName = copy.getCard().getName();
+                    copy.revertEndOfTurnCopy();
+                    gameLogService.append(gameData, GameLog.text(
+                            copyName + " is no longer a copy and reverts to " + copy.getCard().getName() + "."));
+                    log.info("Game {} - {} reverts from target-tapped copy back to {}",
+                            gameData.id, copyName, copy.getCard().getName());
+                }
+                continue;
+            }
             if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect
                     || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
                     || floating.effect() instanceof AttachedCreatureIsCopyOfExiledCreatureEffect)) {

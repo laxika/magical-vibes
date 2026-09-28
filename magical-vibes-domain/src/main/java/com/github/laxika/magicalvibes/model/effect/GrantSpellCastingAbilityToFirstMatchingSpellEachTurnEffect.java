@@ -15,13 +15,13 @@ public record GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
     }
 
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
-            Keyword grantedAbility, int abilityValue, CardPredicate filter) {
-        this(grantedAbility, filter, null, abilityValue);
+            Keyword grantedAbility, CardPredicate filter, Zone sourceZone) {
+        this(grantedAbility, filter, sourceZone, 0);
     }
 
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
-            Keyword grantedAbility, CardPredicate filter, Zone sourceZone) {
-        this(grantedAbility, filter, sourceZone, 0);
+            Keyword grantedAbility, int abilityValue, CardPredicate filter) {
+        this(grantedAbility, filter, null, abilityValue);
     }
 
     public GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect {

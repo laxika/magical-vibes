@@ -42,6 +42,8 @@ public class CloneOperationState {
     public boolean copyColor = true;
     // Cursed Mirror: the copy replacement expires during cleanup rather than persisting.
     public boolean copyUntilEndOfTurn;
+    // Flesh Duplicate: add vanishing 3 only when the copied permanent lacks vanishing.
+    public boolean addVanishingIfCopiedPermanentLacksIt;
     // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
     public boolean entersTapped;
     public boolean ninjutsuEntry;

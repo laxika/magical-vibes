@@ -28,6 +28,7 @@ public class EachOpponentFacesVillainousChoiceEffectHandler implements NormalEff
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final VillainousChoiceSupport villainousChoiceSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -99,6 +100,9 @@ public class EachOpponentFacesVillainousChoiceEffectHandler implements NormalEff
     private void advance(GameData gameData, StackEntry entry,
                          EachOpponentFacesVillainousChoiceEffect effect) {
         VillainousChoiceState state = gameData.villainousChoice;
+        if (villainousChoiceSupport.repeatIfNeeded(gameData)) {
+            return;
+        }
         while (!state.remaining.isEmpty()) {
             UUID opponentId = state.remaining.removeFirst();
             if (!gameData.playerIds.contains(opponentId)) {
@@ -115,11 +119,9 @@ public class EachOpponentFacesVillainousChoiceEffectHandler implements NormalEff
                 String putOption = "Let the controller put a " + effect.label()
                         + " card onto the battlefield";
                 gameData.rerunCurrentEffectAfterInteraction = true;
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                        opponentId, null, null,
-                        new ChoiceContext.VillainousChoice(opponentId, entry.getCard().getName(), putOption),
+                villainousChoiceSupport.beginChoice(gameData, opponentId, entry.getCard().getName(), putOption,
                         List.of(ChoiceContext.VillainousChoice.DISCARD, putOption),
-                        entry.getCard().getName() + " — Choose a villainous choice."));
+                        entry.getCard().getName() + " — Choose a villainous choice.");
                 return;
             }
             if (canDiscard) {

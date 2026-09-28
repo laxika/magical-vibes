@@ -1,0 +1,75 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GoldForgedSentinel;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({TheCyberController.class, Forest.class, GoldForgedSentinel.class, GrizzlyBears.class})
+class TheCyberControllerTest extends BaseCardTest {
+
+    @Test
+    void millsEachOpponentAndReturnsAllMilledCreaturesAsBoostedCybermen() {
+        Card ownLibraryCard = new GrizzlyBears();
+        Card opponentCreature = new GrizzlyBears();
+        Card opponentLand = new Forest();
+        harness.setLibrary(player1, List.of(ownLibraryCard));
+        harness.setLibrary(player2, List.of(opponentCreature, opponentLand));
+        Permanent existingArtifact = harness.addToBattlefieldAndReturn(player1, new GoldForgedSentinel());
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new TheCyberController()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castArtifact(player1, 0, 2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent cyberman = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(opponentCreature.getId()))
+                .findFirst().orElseThrow();
+        assertThat(cyberman.isFaceDown()).isTrue();
+        assertThat(cyberman.getFaceDownPower()).isEqualTo(2);
+        assertThat(cyberman.getFaceDownToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardTypes(gd, cyberman))
+                .containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, cyberman))
+                .containsExactly(CardSubtype.CYBERMAN);
+        assertThat(gqs.getEffectivePower(gd, cyberman)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cyberman)).isEqualTo(3);
+
+        assertThat(gqs.getEffectivePower(gd, existingArtifact)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, existingArtifact)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownLibraryCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentLand);
+    }
+
+    @Test
+    void zeroXDoesNotMillOrReturnCreatures() {
+        Card opponentCreature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(opponentCreature));
+
+        harness.setHand(player1, List.of(new TheCyberController()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castArtifact(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(opponentCreature.getId()));
+    }
+}

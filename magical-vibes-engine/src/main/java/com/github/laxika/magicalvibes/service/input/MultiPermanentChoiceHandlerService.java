@@ -273,6 +273,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
             playerChoosesUpToPermanentsThenSacrificesRestEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ChooseUpToNMatchingCreaturesThenMayExileRestEffectHandler
+            chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.NihiloorTapAndStealEffectHandler
             nihiloorTapAndStealEffectHandler;
 
@@ -896,6 +899,11 @@ public class MultiPermanentChoiceHandlerService {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext
+                .ChooseUpToNMatchingCreaturesThenMayExileRest ctx) {
+            chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler.completeChoice(
+                    gameData, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext
                 .PlayerChoosesUpToPermanentsThenSacrificesRestChoice ctx) {
             playerChoosesUpToPermanentsThenSacrificesRestEffectHandler.completeChoice(
@@ -2769,7 +2777,7 @@ public class MultiPermanentChoiceHandlerService {
                     if (treatAsInfect) {
                         lifeSupport.applyPoisonCounters(gameData, defendingPlayerId, damage,
                                 sourceName, playerId);
-                    } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
+                    } else if (!gameQueryService.canPlayerLoseLife(gameData, defendingPlayerId)) {
                         gameLogService.append(gameData, GameLog.text(defenderName + "'s life total can't change."));
                     } else {
                         int lifeLoss = damage

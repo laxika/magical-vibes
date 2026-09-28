@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -184,6 +186,32 @@ public class PlayedCardNameTriggerCollectorService {
         }
 
         return enqueueLandPlayTrigger(match, resolved, landPlayed.playingPlayerId());
+    }
+
+    @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleFoodWhenPlayingLandFromLibraryTop(TriggerMatchContext match,
+            CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
+        if (landPlayed.playZone() != Zone.LIBRARY
+                || !predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), trigger.filter(),
+                match.permanent().getOriginalCard().getId(), match.gameData(), match.controllerId())
+                || !match.gameData().oncePerTurnLibraryPlayPermissionsUsedThisTurn
+                .contains(match.permanent().getId())) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(CreateTokenEffect.ofFoodToken(1))),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
     }
 
     /**

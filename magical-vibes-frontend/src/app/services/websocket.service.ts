@@ -203,6 +203,8 @@ export interface Card {
   graveyardCastDiscardCount?: number;
   graveyardCastExileCount?: number;
   graveyardCastExileLabel?: string | null;
+  graveyardCastRequiresPermanentExile?: boolean;
+  graveyardCastExilePermanentLabel?: string | null;
   additionalBeholdSubtype: string | null;
   additionalBeholdCount: number;
   additionalBeholdFlashbackOnly: boolean;

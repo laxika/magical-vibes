@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffec
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -1640,6 +1642,50 @@ public class MayCastHandlerService {
                 afterSuccessfulCastEffect);
     }
 
+    /** Handles The Face of Boe's offer to cast a suspended spell while paying its suspend cost. */
+    public void handleMayCastSpellWithSuspendCost(GameData gameData, Player player, boolean accepted,
+                                                   PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int cardIndex = hand == null ? -1 : indexOfCard(hand, cardToCast.getId());
+        ActivatedAbility suspendAbility = cardToCast.getHandActivatedAbilities().stream()
+                .filter(ActivatedAbility::isSuspendsSourceFromHand)
+                .filter(suspend -> suspend.getManaCost() != null)
+                .findFirst()
+                .orElse(null);
+
+        if (!accepted) {
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (cardIndex < 0 || suspendAbility == null || cardToCast.isCastOnlyFromGraveyard()) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " is no longer available to cast with its suspend cost."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card paymentCard = cardToCast.createRuntimeCopy();
+        paymentCard.setManaCost(suspendAbility.getManaCost());
+        try {
+            spellCastingService.paySpellManaCost(gameData, player.getId(), paymentCard, 0, List.of());
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be cast with its suspend cost."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()
+                .anyMatch(effect -> effect.getClass() == MayCastSpellWithSuspendCostFromHandEffect.class));
+        hand.remove(cardIndex);
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast,
+                suspendAbility.getManaCost(), "suspend", 0, false, Zone.HAND);
+    }
+
     /** Casts an accepted commander-zone offer without paying its mana cost. */
     public void castCardFromCommandZoneWithoutPaying(GameData gameData, Player player, Card card) {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0, false, Zone.COMMAND);
@@ -1732,6 +1778,7 @@ public class MayCastHandlerService {
         String playerName = player.getUsername();
 
         if (!accepted) {
+            queueDeclineEffect(gameData, ability);
             if (scryIfDeclined) {
                 queueScryFallback(gameData);
                 gameLogService.append(gameData,
@@ -1769,6 +1816,7 @@ public class MayCastHandlerService {
         }
 
         if (cardIndex == -1) {
+            queueDeclineEffect(gameData, ability);
             if (scryIfDeclined) {
                 queueScryFallback(gameData);
             }
@@ -1779,6 +1827,7 @@ public class MayCastHandlerService {
         }
 
         if (cardToCast.isCastOnlyFromGraveyard()) {
+            queueDeclineEffect(gameData, ability);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " cannot be cast from hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1794,21 +1843,52 @@ public class MayCastHandlerService {
         // Remove from hand and cast
         hand.remove(cardIndex);
         castCardFromHandWithoutPaying(gameData, player, cardToCast, exileInsteadOfGraveyard,
-                ability.sourcePermanentId(), afterSuccessfulCastEffect);
+                declineEffect(ability), ability.sourcePermanentId(), afterSuccessfulCastEffect);
     }
 
     private void queueScryFallback(GameData gameData) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {
-            pendingEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex, List.of(new ScryEffect(1)));
+            queueEffectAfterMayChoice(gameData, new ScryEffect(1));
+        }
+    }
+
+    private void queueDeclineEffect(GameData gameData, PendingMayAbility ability) {
+        CardEffect declineEffect = declineEffect(ability);
+        if (declineEffect != null) {
+            queueEffectAfterMayChoice(gameData, declineEffect);
+        }
+    }
+
+    private CardEffect declineEffect(PendingMayAbility ability) {
+        return ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .map(MayCastFromHandWithoutPayingManaCostEffect::declineEffect)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void queueEffectAfterMayChoice(GameData gameData, CardEffect effect) {
+        if (effect != null) {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry != null) {
+                pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(effect));
+            }
         }
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
                                                boolean exileInsteadOfGraveyard) {
+        castCardFromHandWithoutPaying(gameData, player, card, exileInsteadOfGraveyard, null);
+    }
+
+    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
+                                               boolean exileInsteadOfGraveyard,
+                                               CardEffect noCastEffect) {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
-                exileInsteadOfGraveyard);
+                exileInsteadOfGraveyard, Zone.HAND, noCastEffect);
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
@@ -1817,6 +1897,15 @@ public class MayCastHandlerService {
                                                 CardEffect afterSuccessfulCastEffect) {
         castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
                 exileInsteadOfGraveyard, Zone.HAND, sourcePermanentId, afterSuccessfulCastEffect);
+    }
+
+    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card,
+                                                boolean exileInsteadOfGraveyard,
+                                                CardEffect noCastEffect, UUID sourcePermanentId,
+                                                CardEffect afterSuccessfulCastEffect) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0,
+                exileInsteadOfGraveyard, Zone.HAND, noCastEffect,
+                sourcePermanentId, afterSuccessfulCastEffect);
     }
 
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
@@ -1855,6 +1944,25 @@ public class MayCastHandlerService {
                                                      String paidCostDescription, String costLabel,
                                                      int xValue, boolean exileInsteadOfGraveyard,
                                                      Zone sourceZone, UUID afterCastSourcePermanentId,
+                                                     CardEffect afterSuccessfulCastEffect) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel,
+                xValue, exileInsteadOfGraveyard, sourceZone, null,
+                afterCastSourcePermanentId, afterSuccessfulCastEffect);
+    }
+
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue, boolean exileInsteadOfGraveyard,
+                                                     Zone sourceZone, CardEffect noCastEffect) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel,
+                xValue, exileInsteadOfGraveyard, sourceZone, noCastEffect, null, null);
+    }
+
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue, boolean exileInsteadOfGraveyard,
+                                                     Zone sourceZone, CardEffect noCastEffect,
+                                                     UUID afterCastSourcePermanentId,
                                                      CardEffect afterSuccessfulCastEffect) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
@@ -1906,6 +2014,7 @@ public class MayCastHandlerService {
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-{} has no valid targets", gameData.id, card.getName(),
                         sourceZone == Zone.COMMAND ? "command-zone" : "hand");
+                queueEffectAfterMayChoice(gameData, noCastEffect);
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }

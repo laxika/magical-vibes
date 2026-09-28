@@ -216,6 +216,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
@@ -1677,6 +1679,11 @@ public class GameQueryService {
                 && !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
     }
 
+    /** Returns whether the player can lose life, including damage and life payments. */
+    public boolean canPlayerLoseLife(GameData gameData, UUID playerId) {
+        return canPlayerLifeChange(gameData, playerId) && !gameData.playersCantLoseLifeThisTurn;
+    }
+
     /**
      * Returns {@code true} if the player is able to gain life (i.e. no
      * a global {@link PlayersCantGainLifeEffect} is present on any battlefield, no enchanted-player
@@ -1729,7 +1736,8 @@ public class GameQueryService {
     }
 
     public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
-        return (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
+        return !gameData.playersCantLoseLifeThisTurn
+                && (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
                 && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
                 && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
     }
@@ -1779,6 +1787,45 @@ public class GameQueryService {
             return true;
         }
         return !playerBattlefieldHasStaticEffect(gameData, playerId, OpponentEffectsCantCauseSacrificeEffect.class);
+    }
+
+    /**
+     * Returns whether a triggered ability currently resolving may sacrifice or exile the specified
+     * creature token. The restriction applies only when the ability controller also controls the
+     * token and a source of the matching static effect.
+     */
+    public boolean triggeredAbilityCanMoveCreatureToken(GameData gameData, Permanent permanent) {
+        if (!isCreatureToken(gameData, permanent)) {
+            return true;
+        }
+        UUID abilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
+        if (abilityControllerId == null && gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            abilityControllerId = gameData.pendingEffectResolutionEntry.getControllerId();
+        }
+        if (abilityControllerId == null) {
+            return true;
+        }
+        UUID tokenControllerId = findPermanentController(gameData, permanent.getId());
+        return !abilityControllerId.equals(tokenControllerId)
+                || !playerBattlefieldHasStaticEffect(
+                        gameData, tokenControllerId,
+                        TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect.class);
+    }
+
+    /** Returns whether a delayed triggered ability may move this creature token. */
+    public boolean delayedTriggeredAbilityCanMoveCreatureToken(GameData gameData, Permanent permanent) {
+        if (!isCreatureToken(gameData, permanent)) {
+            return true;
+        }
+        UUID tokenControllerId = findPermanentController(gameData, permanent.getId());
+        return tokenControllerId == null || !playerBattlefieldHasStaticEffect(
+                gameData, tokenControllerId,
+                TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect.class);
+    }
+
+    private boolean isCreatureToken(GameData gameData, Permanent permanent) {
+        return permanent != null && permanent.getCard().isToken() && isCreature(gameData, permanent);
     }
 
     /**
@@ -2632,9 +2679,7 @@ public class GameQueryService {
     /** Returns the player's life total after applying damage replacement floors. */
     public int lifeAfterDamage(GameData gameData, UUID playerId, int damage) {
         int currentLife = gameData.getLife(playerId);
-        if (damageDoesNotCauseLifeLoss(gameData, playerId)) {
-            return currentLife;
-        }
+        if (!canPlayerLoseLife(gameData, playerId)) return currentLife;
         int newLife = currentLife - damage;
         int lifeFloor = damageLifeFloor(gameData, playerId, currentLife);
         return lifeFloor > 0 ? Math.max(newLife, lifeFloor) : newLife;
@@ -7022,6 +7067,24 @@ public class GameQueryService {
                 .count();
     }
 
+    /** Returns the number of The Valeyard effects affecting an opponent's villainous choice. */
+    public int countAdditionalVillainousChoices(GameData gameData, UUID affectedPlayerId) {
+        if (affectedPlayerId == null) {
+            return 0;
+        }
+        return gameData.playerBattlefields.keySet().stream()
+                .filter(controllerId -> !controllerId.equals(affectedPlayerId))
+                .mapToInt(controllerId -> countPlayerControlledStaticEffects(
+                        gameData, controllerId, TheValeyardEffect.class))
+                .sum();
+    }
+
+    /** Returns the number of additional votes The Valeyard grants to a player. */
+    public int countAdditionalVotes(GameData gameData, UUID voterId) {
+        return voterId == null ? 0
+                : countPlayerControlledStaticEffects(gameData, voterId, TheValeyardEffect.class);
+    }
+
     /**
      * Returns {@code true} if the target permanent cannot be targeted by spells of the
      * given color. Checks both the permanent's own static effects and effects granted by
@@ -9112,6 +9175,7 @@ public class GameQueryService {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (!bonus.subtypeOverriding()) {
             if (permanent.isFaceDown()) {
+                addCreatureSubtypes(result, List.copyOf(permanent.getFaceDownSubtypes()));
                 addCreatureSubtypes(result, permanent.getFaceDownSubtypes());
             } else {
                 addCreatureSubtypes(result, permanent.getCard().getSubtypes());
@@ -10504,8 +10568,28 @@ public class GameQueryService {
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(DamagePreventionBySelfEffect.class::isInstance)
                 .map(DamagePreventionBySelfEffect.class::cast)
-                .anyMatch(effect -> effect.targetFilter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.targetFilter()));
+                .anyMatch(effect -> (!effect.combatOnly() || isCombatDamage)
+                        && (effect.targetFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.targetFilter())));
+    }
+
+    /** Returns whether the source's combat-damage prevention also shuffles the damaged creature away. */
+    public boolean shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
+            GameData gameData, Permanent source, Permanent target) {
+        if (!isDamagePreventable(gameData, true) || source == null || target == null
+                || !isCreature(gameData, source) || !isCreature(gameData, target)) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) return false;
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
+                .filter(DamagePreventionBySelfEffect.class::isInstance)
+                .map(DamagePreventionBySelfEffect.class::cast)
+                .anyMatch(effect -> effect.combatOnly()
+                        && effect.shuffleTargetIntoOwnersLibrary()
+                        && (effect.targetFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.targetFilter())));
     }
 
     /**

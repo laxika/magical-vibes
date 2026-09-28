@@ -38,7 +38,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
         }
         if (playerId == null) return;
 
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;

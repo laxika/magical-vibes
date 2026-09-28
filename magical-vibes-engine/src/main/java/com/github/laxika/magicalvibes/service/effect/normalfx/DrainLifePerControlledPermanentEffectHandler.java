@@ -51,7 +51,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
 
         // Target loses life
         String targetName = gameData.playerIdToName.get(targetPlayerId);
-        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);

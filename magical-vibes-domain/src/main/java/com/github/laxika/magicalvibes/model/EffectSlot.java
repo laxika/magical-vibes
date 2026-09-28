@@ -202,6 +202,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers whenever an opponent scries. Checked by
+     *  {@code TriggerCollectionService.checkScryTriggers}; the scrying player is supplied as
+     *  the triggered ability's implicit player context. */
+    ON_OPPONENT_SCRIES,
     /** Triggers whenever this permanent's controller searches their own library. */
     ON_CONTROLLER_SEARCHES_LIBRARY,
     /** Triggers after all players finish a voting event. */
@@ -215,6 +219,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever an opponent surveils. Checked by
+     *  {@code TriggerCollectionService.checkSurveilTriggers}; the surveiling player is supplied
+     *  as the triggered ability's implicit player context. */
+    ON_OPPONENT_SURVEILS,
     /** Triggers whenever this permanent's controller manifests dread. */
     ON_CONTROLLER_MANIFESTS_DREAD,
     /** Triggers whenever this permanent's controller completes a dungeon. */
@@ -491,6 +499,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (CR 702.26b). Queued as a non-targeting triggered ability whose {@code sourcePermanentId} is
      *  the phased-out permanent. Used by Teferi's Imp ({@code DiscardEffect}). */
     ON_SELF_PHASES_OUT,
+    /** Triggers whenever one or more other permanents phase out. Checked before the phased-out
+     *  permanent leaves the battlefield, and fires on every permanent with this slot except the
+     *  permanent that phased out. */
+    ON_ANY_OTHER_PERMANENT_PHASES_OUT,
     /** Triggers whenever this permanent phases in during its controller's untap step (CR 702.26a).
      *  Fires only on the permanent that phased in, driven from {@code PhasingService} via
      *  {@code TriggerCollectionService.checkPhasesInTriggers} after it is back on the battlefield.
@@ -667,6 +679,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+    /** Triggers whenever a creature deals combat damage to its owner. */
+    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER,
     /** Triggers once when one or more goaded creatures deal combat damage to one of this permanent's controller's opponents. */
     ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
@@ -717,6 +731,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_IV,
     /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
     SAGA_CHAPTER_V,
+    /** Saga chapter VI ability. Triggers when the sixth lore counter is placed. */
+    SAGA_CHAPTER_VI,
     /** Triggers when the final chapter ability of a Saga finishes resolving. */
     ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
     /** Triggers at the beginning of combat on the controller's turn.
@@ -982,6 +998,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+    /** Triggers whenever the controller puts one or more time counters on a permanent they control. */
+    ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT,
     /** Triggers once per counter-placement event whenever the controller puts one or more counters
      *  of any kind on another creature, regardless of that creature's controller. */
     ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
@@ -997,6 +1015,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_EVOLVES,
     /** Triggers whenever one or more loyalty counters are removed from this permanent. */
     ON_SELF_LOYALTY_COUNTERS_REMOVED,
+    /** Triggers whenever one or more time counters are removed from this permanent. */
+    ON_SELF_TIME_COUNTERS_REMOVED,
     /** Triggers whenever one or more counters are removed from a permanent the controller controls. */
     ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
     /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */
@@ -1246,6 +1266,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
      *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
     GRANT_CASCADE_TO_SLIVER_SPELL,
+    /** Marker slot: "The first spell you cast from anywhere other than your hand each turn has
+     *  demonstrate." Holds a {@code MayEffect} wrapping {@code DemonstrateEffect}; detected by
+     *  {@code TriggerCollectionService.checkSpellCastTriggers} when the outside-hand cast count
+     *  for the casting player becomes one. */
+    GRANT_DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND,
     /** Marker slot: during your turn, hand-cast spells with mana value at most the life lost by
      *  your opponents this turn have cascade. Holds a {@code CascadeEffect}; detected by presence
      *  on the casting player's battlefield when a qualifying spell is cast. */

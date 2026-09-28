@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExilePermanentCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
@@ -2966,6 +2967,15 @@ public class CastingCostService {
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))
                         .count();
                 if (matchingCount < sacrificeCost.count()) {
+                    return false;
+                }
+            } else if (cost instanceof ExilePermanentCastingCost exileCost) {
+                long matchingCount = battlefield.stream()
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, exileCost.filter(),
+                                FilterContext.of(gameData).withSourceControllerId(playerId)))
+                        .count();
+                if (matchingCount < 1) {
                     return false;
                 }
             } else if (cost instanceof ExileNCardsFromGraveyardCastingCost exileCost) {

@@ -1,4 +1,8 @@
 # CARD_PATTERN_INDEX
+| combat damage from a creature prevents and shuffles the damaged creature | `w/WeepingAngel.java` + `PreventCombatDamageBySelfToCreaturesAndShuffleEffect` |
+| artifact creature death → may exile it, then highest-life opponent faces a villainous choice | `t/TheMasterGallifreysEnd.java` + `TheMasterGallifreysEndEffect` |
+| activated ability offers a suspended hand spell for its suspend cost | `t/TheFaceOfBoe.java` + `MayCastSpellWithSuspendCostFromHandEffect` |
+| turn-scoped shuffle replacement for creatures entering from exile or cast from exile | `d/DontBlink.java` + `ShuffleCreaturesEnteringFromExileEffect` |
 | equipment attack counter plus combat-damage d12 comparison that doubles attached-creature +1/+1 counters | `s/SwordOfHours.java` + `RollD12AndResolveIfGreaterThanEventValueEffect` + `DoublePlusOneCountersOnEnchantedCreatureEffect` |
 | temporary triggered ability on all opponent permanents, including later entrants | `h/HellishRebuke.java` + `GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect` + `GrantTriggeredAbilityEffect` |
 | notes the greatest mana value of every card put into exile this turn and has that power with a fixed toughness, while its upkeep trigger grants normal-cost play permission for the top card | `b/BellBorcaSpectralSergeant.java` + `ON_ANY_CARD_EXILED` note marker + `GreatestManaValueNotedForSourceThisTurn` + `ExileTopCardMayPlayThisTurnEffect(false)` |
@@ -28,7 +32,6 @@
 
 | activated two-card library search with one card to the battlefield tapped and one to hand | `n/NavigationOrb.java` + `SacrificeSelfCost` + `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect.forCardsMatching(...)` |
 | once-per-turn optional spell-cast trigger that bottoms the triggering spell, then reveals until a nonland card for a free cast | `n/NeeraWildMage.java` + `PutTriggeringSpellOnBottomThenRevealEffect` |
-
 | d20 after revealing up to two basic lands from the library | `DruidOfTheEmeraldGrove.java` + `SearchLibraryForUpToTwoBasicLandsThenRollD20Effect` |
 | death-time last-known power captured into a source-independent one-time creature-spell perpetual boost boon | `d/DragonbornImmolator.java` + `ConditionalEffect(SourcePowerAtLeast(1), RegisterOneShotCreatureSpellPerpetualPowerBoostEffect)` + `PerpetuallyBoostTriggeringCardEffect` |
 | look at four cards, choose one name, take all matching looked-at cards and lose life per card, random-bottom the rest | `s/StrokeOfLuck.java` + `LookAtTopCardsChooseSameNameToHandEffect` |
@@ -64,6 +67,9 @@
 | upkeep draft from a spellbook, exile the choice, and grant end-of-turn play permission | `a/ArmsScavenger.java` + `DraftCardFromSpellbookEffect(..., true)` + `ReduceEquipCostEffect(1)` |
 | planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect` + `DraftCardFromSpellbookEffect(..., false, true)` |
 | random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
+| each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `EnsnaredByTheMaraVillainousChoiceEffect` |
+| villainous-choice replacement plus additional vote | `t/TheValeyard.java` + `TheValeyardEffect` |
+| draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
 | randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreaturesEffect` |
 | command-zone secret mission with end-step threshold, optional reveal/reward, and one-shot face-down completion | `m/MarchesasSurpriseParty.java` + `COMMAND_ZONE_END_STEP_TRIGGERED` + `ConditionalEffect(AnyOf(...), MayEffect(SequenceEffect.of(TurnFaceDownCommandZoneCardEffect, DrawCardEffect(1))))` |
 | command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `COMMAND_ZONE_STATIC CombatAttackCountRestrictionEffect` + `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` |
@@ -257,6 +263,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
 | face-down top-library exile plus two-player hidden 1/2/3 match ability | `e/ExpertLevelSafe.java` + `ExpertLevelSafeEffect` |
 | foretell, enters with counters based on turns since foretell | `l/LupineHarbingers.java` + `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, new TurnsBegunSinceForetell())` |
+| self-damage trigger exiles the source face down and makes it foretold | `t/TheForetoldSoldier.java` + `ExileSelfAndBecomeForetoldEffect` |
 | ETB secretly choose an opponent permanent, then opponent sacrifices another and the chosen permanent | `TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentEffect` + CARD_PATTERNS_CREATURES_ETB.md |
 | airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -270,6 +277,8 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage mill + energy, brain counter, copy activated abilities from marked exiled cards | `r/RexCyberHound.java` and EFFECTS_QUICK_REFERENCE.md |
 | clone copy with an added subtype and a same-name global combat-damage trigger | `p/PiratedCopy.java` + `CopyPermanentOnEnterEffect` + `ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER` |
 | combat damage → untap creatures + additional combat + repeat-player attack restriction | `p/PortRazer.java` |
+| cast trigger, takeover counter, enter as a copy of a marked exiled creature card | `t/TheMasterFormedAnew.java` and EFFECTS_QUICK_REFERENCE.md |
+| two target creatures get counters/keywords and only those creatures may attack in an added combat | `l/LastNightTogether.java` + target-bound untap/counter/keyword effects + `AdditionalCombatMainPhaseEffect(..., onlyTargetCreaturesCanAttack)` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | ETB goads up to one creature per opponent and adds their total power as +1/+1 counters | `h/HavocEater.java` + `targetUpTo(PlayersInGame - 1, creatureAnOpponentControls)` + `AT_MOST_ONE_PER_CONTROLLER` + `TotalPowerOfTargetGroup` |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -278,6 +287,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | counter placement followed by goad of exactly the affected creatures, including an overload branch | `PutCountersOnTargetPermanentThenReflexiveEffect` with `GoadTriggeringCreatureUntilNextTurnEffect` for the targeted branch; `PutCounterOnEachMatchingPermanentThenGoadEffect` for the overloaded branch; see `s/SpectacularShowdown.java` |
 | ward-like spell/ability counter plus target opponent copies a copied spell | `p/ParnesseTheSubtleBrush.java` |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| attack-triggered uniformly random choice among several effects | `c/CultOfSkaro.java` + `RandomChoiceEffect` |
 | beginning-of-combat random-opponent attack trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | enter/turn face up power-scaled boost with negamorph | `f/FlavorDisaster.java` |
@@ -286,10 +296,12 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → damaged player chooses a nonland permanent controlled by one of the source controller's opponents to destroy | `b/BladegriffPrototype.java` + `ON_COMBAT_DAMAGE_TO_PLAYER DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffect` |
 | combat damage to an opponent, same damage to each other opponent | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| cast-trigger temporary creature theft plus enter tapped/stun counters and combat-damage-to-owner untap/draw | `t/TheBeastDeathlessPrince.java` + existing control, keyword, untap, counter, and draw effects |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | cast trigger reveals each player's top card and sets entry counters | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
 | exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` + `GhyrsonStarnKelermorphEffect` |
 | beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |
 | attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |
@@ -342,6 +354,9 @@ This index has been split into smaller files for faster lookup. Each file is und
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | Aura turns a creature into a planeswalker whose toughness is its loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| Saga searches until a legendary card, then grants source-duration normal-cost play permission | `t/TheDayOfTheDoctor.java` + `ExileUntilCardPredicateMayPlayWhileSourceControlledEffect` |
+| upkeep life loss, exile top card, and indefinite play permission | `r/RassilonTheWarPresident.java` + `ExileTopCardMayPlayWhileExiledEffect` |
+| Saga chooses matching creatures, then optionally exiles the rest and deals damage | `t/TheDayOfTheDoctor.java` + `ChooseUpToNMatchingCreaturesThenMayExileRestEffect` |
 | Saga reveal of up to five nonland hand cards, grouped by mana value into Treasure tokens | `v/Vault21HouseGambit.java` + `RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffect` |
 | template, copy-paste, skeleton | CARD_COPY_PASTE_TEMPLATES.md |
 
@@ -361,6 +376,14 @@ When implementing a card, use these as the **best** test file to read for each c
 | ETB creature (targeted) | `BriarpackAlphaTest.java` | Covers targeted ETB + fizzle + flash |
 | Counterspell | `CancelTest.java` | Covers counter + graveyard |
 | Target creature exile with suspend counters | `s/SuspendTest.java` | Covers exile, suspend countdown, free cast, and creature-only targeting |
+| ETB reveal until nonland mana value 3 or greater, exile it with suspend, and bottom the rest randomly | `s/SibyllineSoothsayer.java` | `RevealUntilNonlandWithManaValueAtLeastAndSuspendEffect(3, 3)` |
+| Draw, then controller and target opponent may exile nonland hand cards with mana-value time counters | `t/TheWeddingOfRiverSongTest.java` | Covers draw order, target-player may choice, nonland hand filtering, and dynamic suspend counters |
+| Exile top cards, play them, and put time counters on exiled cards with suspend | `e/EcstaticBeautyTest.java` | Covers scoped suspend counters, play permissions, and the suspend-from-hand ability |
+| combat damage chooses one suspended card you own and removes that many time counters | `a/AmyPond.java` + `ChooseSuspendedCardAndRemoveTimeCountersEffect` |
+| combat damage may exile any hand card with mana-value time counters and suspend it | `t/TheEleventhDoctor.java` + `ExileCardFromHandWithManaValueTimeCountersEffect` |
+| upkeep time counter, controlled-creature untap and source-linked phase-out, then sorcery-speed nonland sweep by source counters and self-sacrifice | `t/TheMoment.java` + `PermanentManaValueAtMostSourceCountersPredicate` + `PhaseOutTargetCreatureUntilSourceLeavesEffect` |
+| Time-counter placement trigger plus optional dynamic attack boost | `k/KateStewartTest.java` | Covers controlled-permanent scope, entry counters, attacking-only boost, and mana payment |
+| Vanishing enchantment whose time-counter removal scries, gains life, and exiles for an extra turn on the last counter | `r/RegenerationsRestored.java` | Dedicated permanent time-counter-removal trigger plus existing vanishing/exile/extra-turn effects |
 | Draw spell | `CounselOfTheSoratamiTest.java` | Covers draw count + graveyard |
 | Destroy spell | `TerrorTest.java` | Covers destroy + filter + fizzle |
 | Equipment | `LeoninScimitarTest.java` | Covers equip + boost + unequip |

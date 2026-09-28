@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "223")
+@CardRegistration(set = "WHO", collectorNumber = "238")
 @CardRegistration(set = "MOC", collectorNumber = "340")
 @CardRegistration(set = "DSC", collectorNumber = "237")
 @CardRegistration(set = "TDC", collectorNumber = "308")

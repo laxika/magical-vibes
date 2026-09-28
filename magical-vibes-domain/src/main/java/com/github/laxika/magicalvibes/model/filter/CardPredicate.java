@@ -18,6 +18,7 @@ public sealed interface CardPredicate permits
         CardSharesCreatureTypeWithSourcePredicate,
         CardSharesCreatureTypeWithCommanderPredicate,
         CardHasDisturbPredicate,
+        CardHasCascadePredicate,
         CardHasCyclingPredicate,
         CardHasAdventurePredicate,
         CardHasMorphAbilityPredicate,

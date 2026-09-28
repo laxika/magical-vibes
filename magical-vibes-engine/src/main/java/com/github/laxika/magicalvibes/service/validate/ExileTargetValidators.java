@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEff
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileOnBottomOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardFromExileIntoOwnersLibraryEffect;
@@ -208,6 +209,17 @@ public class ExileTargetValidators {
                 exiled.card(), effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
+        }
+    }
+
+    @ValidatesTarget(PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect.class)
+    public void validatePutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLife(
+            TargetValidationContext ctx,
+            PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect effect) {
+        validateFaceUpExileCard(ctx);
+        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
+        if (ctx.defendingPlayerId() != null && !ctx.defendingPlayerId().equals(exiled.ownerId())) {
+            throw new IllegalStateException("Target card must be owned by the damaged player");
         }
     }
 

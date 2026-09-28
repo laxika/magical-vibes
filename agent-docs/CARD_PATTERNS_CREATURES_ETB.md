@@ -53,6 +53,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 ## ETB creatures
 
 | ETB mass bounce by opponent creature toughness and controlled subtype count | `s/ScourgeOfFleets.java` | `ReturnToHandEffect.allPermanentsMatching(AllOf(IsCreature, Not(ControlledBySourceController), PermanentToughnessAtMostControlledSubtypeCountPredicate(ISLAND)))` — the subtype count and effective toughness are evaluated when the trigger resolves |
+| ETB each-opponent mill and face-down Cyberman reanimation | `t/TheCyberController.java` | ON_ENTER_BATTLEFIELD `MillEachOpponentAndPutMilledCreaturesFaceDownAsCybermenEffect(new XValue())` — each opponent mills X, then every creature card actually put into a graveyard this way enters under your control face down as a 2/2 artifact Cyberman |
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|

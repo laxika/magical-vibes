@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "243")
 @CardRegistration(set = "AKR", collectorNumber = "293")
+@CardRegistration(set = "WHO", collectorNumber = "277")
 @CardRegistration(set = "PIP", collectorNumber = "265")
 @CardRegistration(set = "PIP", collectorNumber = "496")
 @CardRegistration(set = "PIP", collectorNumber = "793")

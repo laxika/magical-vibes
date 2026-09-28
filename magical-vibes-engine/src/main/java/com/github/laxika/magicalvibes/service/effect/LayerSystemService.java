@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmount
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -1519,12 +1520,18 @@ public class LayerSystemService {
 
     private void applyL3Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
                                  Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
-        if (!(instance.effect() instanceof SetNameEffect setName)) {
-            return;
-        }
-        for (PermanentSlot target : scopeTargets(gameData, instance, setName.scope(), null,
-                slots, slotsById, board)) {
-            board.states().get(target.permanent().getId()).setName(setName.name());
+        if (instance.effect() instanceof SetNameEffect setName) {
+            for (PermanentSlot target : scopeTargets(gameData, instance, setName.scope(), null,
+                    slots, slotsById, board)) {
+                board.states().get(target.permanent().getId()).setName(setName.name());
+            }
+        } else if (instance.effect() instanceof SetChosenNameAndCreatureTypeEffect set) {
+            if (instance.source() == null || instance.source().permanent().getChosenName() == null) return;
+            for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null,
+                    slots, slotsById, board)) {
+                board.states().get(target.permanent().getId()).setName(
+                        instance.source().permanent().getChosenName());
+            }
         }
     }
 
@@ -1768,6 +1775,18 @@ public class LayerSystemService {
                     states.get(target.permanent().getId()).addSubtype(chosen);
                     record(board, instance, target, new L4Contribution(
                             chosen, false, false, null, null));
+                }
+            }
+            case SetChosenNameAndCreatureTypeEffect set -> {
+                manage(board, instance);
+                if (instance.source() == null) return;
+                CardSubtype chosen = instance.source().permanent().getChosenSubtype();
+                if (chosen == null) return;
+                for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null,
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    setCreatureType(state, chosen);
+                    record(board, instance, target, new L4Contribution(chosen, true, false, null, null));
                 }
             }
             case GrantSubtypeToOwnCreaturesInAllZonesEffect grant -> {

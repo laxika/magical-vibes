@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "266")
+@CardRegistration(set = "WHO", collectorNumber = "283")
 @CardRegistration(set = "LTC", collectorNumber = "313")
 @CardRegistration(set = "SOC", collectorNumber = "375")
 @CardRegistration(set = "MSC", collectorNumber = "247")

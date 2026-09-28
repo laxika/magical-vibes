@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -99,7 +100,13 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                 perm.tap();
             }
             perm.getPersistentGrantedKeywords().addAll(returnEffect.grantedKeywords());
-            applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
+            if (returnEffect.enterFaceDown()) {
+                Set<CardSubtype> subtypes = returnEffect.grantedSubtype() == null
+                        ? Set.of() : Set.of(returnEffect.grantedSubtype());
+                perm.setFaceDown(2, 2, Set.of(CardType.ARTIFACT, CardType.CREATURE), subtypes);
+            } else {
+                applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
             entry.rememberReturnedPermanent(perm.getId());

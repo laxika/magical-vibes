@@ -305,7 +305,7 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
                 lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
                         cardName, match.controllerId());
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
                 int lifeLoss = effectiveDamage
@@ -927,7 +927,7 @@ public class DiscardTriggerCollectorService {
         log.info("Game {} - {} triggers on discard, {} loses {} life",
                 gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
 
-        if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
             int lifeLoss = amount

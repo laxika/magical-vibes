@@ -124,7 +124,7 @@ public class OutsideGameNormalCostCastSupport {
         ChooseOneEffect expandedModal = new ChooseOneEffect(
                 modal.options(), modal.optional(), modal.choicesRequired(), context.maximumChoices(),
                 modal.allModesWhenOptionalCostPaid(), modal.modesMayRepeat(), null,
-                modal.modeCosts(), modal.modeBudget());
+                modal.modeCosts(), modal.modeBudget(), modal.choicesEqualModalXValue());
         int modalIndex = spellEffects.indexOf(modal);
         if (modalIndex < 0) {
             modalIndex = 0;

@@ -8,6 +8,11 @@ public interface GraveyardPlayPermission extends CardEffect {
         return false;
     }
 
+    /** Whether a permanent entering through this permission is exiled if it would leave. */
+    default boolean exileIfLeavesBattlefield() {
+        return false;
+    }
+
     /** True if the permission applies only to cards put into a graveyard from a library this turn. */
     default boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn() {
         return false;

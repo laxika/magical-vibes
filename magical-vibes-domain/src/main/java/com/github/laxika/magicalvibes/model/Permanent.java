@@ -189,6 +189,8 @@ public class Permanent {
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
     @Setter private int chosenNumber;
+    /** Numbers already chosen for The Toymaker's Trap while this permanent remains on the battlefield. */
+    private final Set<Integer> toymakersTrapChosenNumbers = new HashSet<>();
     /** The ten digits written down by Duelists' Convocation International. */
     @Setter private List<Integer> chosenNumberDigits = List.of();
     /** The positions of digits crossed out by Duelists' Convocation International. */
@@ -368,6 +370,7 @@ public class Permanent {
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
+    private int timeCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
     private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
@@ -589,6 +592,8 @@ public class Permanent {
     @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
     @Setter private boolean alternateCost;
+    /** Effective toughness of the permanent sacrificed to pay this permanent's alternate cost. */
+    @Setter private int alternateCostSacrificedToughness;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this permanent was cast for its spectacle cost. */
@@ -811,6 +816,7 @@ public class Permanent {
         this.chosenAttackDirection = source.chosenAttackDirection;
         this.chosenModeByPlayer.putAll(source.chosenModeByPlayer);
         this.chosenNumber = source.chosenNumber;
+        this.toymakersTrapChosenNumbers.addAll(source.toymakersTrapChosenNumbers);
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
         this.chosenModeLabels.addAll(source.chosenModeLabels);
@@ -894,6 +900,7 @@ public class Permanent {
         this.counters.putAll(source.counters);
         this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
+        this.timeCountersRemovedSinceTriggerCheck = source.timeCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
@@ -965,6 +972,7 @@ public class Permanent {
         this.castWithWarp = source.castWithWarp;
         this.madness = source.madness;
         this.alternateCost = source.alternateCost;
+        this.alternateCostSacrificedToughness = source.alternateCostSacrificedToughness;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
@@ -1347,6 +1355,9 @@ public class Permanent {
         if (counterType == CounterType.LOYALTY && newCount < previousCount) {
             loyaltyCountersRemovedSinceTriggerCheck += previousCount - newCount;
         }
+        if (counterType == CounterType.TIME && newCount < previousCount) {
+            timeCountersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (count <= 0) {
             counters.remove(counterType);
         } else {
@@ -1363,6 +1374,12 @@ public class Permanent {
     public int drainLoyaltyCountersRemovedSinceTriggerCheck() {
         int removed = loyaltyCountersRemovedSinceTriggerCheck;
         loyaltyCountersRemovedSinceTriggerCheck = 0;
+        return removed;
+    }
+
+    public int drainTimeCountersRemovedSinceTriggerCheck() {
+        int removed = timeCountersRemovedSinceTriggerCheck;
+        timeCountersRemovedSinceTriggerCheck = 0;
         return removed;
     }
 

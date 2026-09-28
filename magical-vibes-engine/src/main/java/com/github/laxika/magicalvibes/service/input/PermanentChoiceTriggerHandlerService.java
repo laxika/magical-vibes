@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDama
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -84,6 +85,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
     private final MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler blackGateHandler;
+    private final TheMasterGallifreysEndEffectHandler theMasterHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -1039,23 +1041,26 @@ public class PermanentChoiceTriggerHandlerService {
         if ((target != null || isPlayerTarget || isExiledCardTarget) && !declined) {
             StackEntry entry = isExiledCardTarget
                     ? new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            att.sourceCard(),
-                            att.controllerId(),
-                            att.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(att.effects()),
-                            permanentId,
-                            Zone.EXILE,
-                            att.sourcePermanentId())
+                      StackEntryType.TRIGGERED_ABILITY,
+                    att.sourceCard(),
+                    att.controllerId(),
+                    att.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(att.effects()),
+                    permanentId,
+                    Zone.EXILE,
+                    att.sourcePermanentId())
                     : new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            att.sourceCard(),
-                            att.controllerId(),
-                            att.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(att.effects()),
-                            null,
-                            att.sourcePermanentId());
-            entry.setTargetId(permanentId);
+                    StackEntryType.TRIGGERED_ABILITY,
+                    att.sourceCard(),
+                    att.controllerId(),
+                    att.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(att.effects()),
+                    null,
+                    att.sourcePermanentId()
+            );
+              if (!isExiledCardTarget) {
+                  entry.setTargetId(permanentId);
+              }
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());
             }
@@ -1693,6 +1698,12 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleBlackGateMostLifeChoice(GameData gameData, UUID playerId,
                                                PermanentChoiceContext.BlackGateMostLifeChoice context) {
         blackGateHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTheMasterMostLifeChoice(GameData gameData, UUID playerId,
+                                               PermanentChoiceContext.TheMasterMostLifeChoice context) {
+        theMasterHandler.completeMostLifeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

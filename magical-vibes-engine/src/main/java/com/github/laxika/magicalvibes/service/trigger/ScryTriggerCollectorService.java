@@ -34,16 +34,19 @@ public class ScryTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
     private boolean handleSequenceOnScry(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }
 
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
+    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
     private boolean handleMayPayOnScry(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
     private boolean handleSingleEffectOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }
@@ -52,7 +55,22 @@ public class ScryTriggerCollectorService {
         TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
         Card sourceCard = match.permanent().getCard();
         TargetSpec targetSpec = trigger.targetSpec();
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+        if (!match.controllerId().equals(scry.scryingPlayerId())) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger)),
+                    scry.scryingPlayerId(),
+                    match.permanent().getId());
+            entry.setEventValue(scry.bottomedCardCount());
+            entry.setNonTargeting(true);
+            if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                entry.setMarkSourceOncePerTurnOnAcceptance(true);
+            }
+            match.gameData().enqueueTrigger(entry);
+        } else if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,

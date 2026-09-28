@@ -1697,7 +1697,7 @@ public class DamageSupport {
                             source != null ? source.getName() : entry.getCard().getName(),
                             entry.getControllerId());
                 }
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else if (effectiveDamage > 0 && gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)) {
@@ -1904,7 +1904,7 @@ public class DamageSupport {
                     gameData, targetId, redirectEffective);
 
             if (redirectEffective > 0) {
-                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                     int lifeLoss = redirectEffective
                             * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                     gameData.playerLifeTotals.put(targetId,
@@ -1989,7 +1989,7 @@ public class DamageSupport {
                         gameData, targetId, redirectEffective);
 
                 if (redirectEffective > 0) {
-                    if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                         int lifeLoss = redirectEffective
                                 * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                         gameData.playerLifeTotals.put(targetId,

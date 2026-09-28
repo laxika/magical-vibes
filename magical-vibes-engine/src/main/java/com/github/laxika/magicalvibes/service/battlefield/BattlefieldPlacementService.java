@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -229,6 +232,9 @@ public class BattlefieldPlacementService {
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
             return;
         }
+        if (applyShuffleCreatureEnteringFromExile(gameData, controllerId, permanent, request.sourceStackEntry())) {
+            return;
+        }
         if (!applyRequiredGraveyardExileReplacement(gameData, controllerId, permanent, xValue)) {
             return;
         }
@@ -282,6 +288,7 @@ public class BattlefieldPlacementService {
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
             applyEntryReplacementEffects(gameData, controllerId, permanent, xValue);
+            applyControlledPermanentEntryCharacteristics(gameData, controllerId, permanent);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
@@ -369,7 +376,11 @@ public class BattlefieldPlacementService {
                 continue;
             }
             int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
-                permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(
+            if (counter.getKey() == CounterType.TIME && added > 0) {
+                triggerCollectionService.checkYouPutTimeCountersTriggers(
+                        gameData, permanent, controllerId, added);
+            }
+            permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(
                         gameData, permanent, added, controllerId);
         }
         gameData.permanentsEnteredBattlefieldThisTurn
@@ -644,6 +655,43 @@ public class BattlefieldPlacementService {
         }
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
         log.info("Game {} - {} exiled instead of entering due to an entry replacement", gameData.id, card.getName());
+        return true;
+    }
+
+    /** Don't Blink replacement effect: creatures entering from exile are shuffled into their owners' libraries instead. */
+    private boolean applyShuffleCreatureEnteringFromExile(GameData gameData, UUID controllerId, Permanent permanent,
+                                                           StackEntry sourceStackEntry) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)
+                || gameData.playersShufflingCreaturesEnteringFromExileThisTurn.isEmpty()) {
+            return false;
+        }
+        boolean enteredFromExile = permanent.isEnteredFromExile()
+                || permanent.getEnteredFromZone() == Zone.EXILE
+                || (permanent.isCast() && permanent.getCastFromZone() == Zone.EXILE);
+        if (!enteredFromExile) {
+            return false;
+        }
+
+        Card card = permanent.getCard();
+        if (!card.isToken()) {
+            Card physicalCard = permanent.getOriginalCard();
+            UUID ownerId = sourceStackEntry != null && sourceStackEntry.getOwnerId() != null
+                    ? sourceStackEntry.getOwnerId()
+                    : physicalCard.getOwnerId() != null ? physicalCard.getOwnerId() : controllerId;
+            gameData.removeFromExile(physicalCard.getId());
+            List<Card> library = gameData.playerDecks.get(ownerId);
+            if (library != null && library.stream().noneMatch(existing -> existing.getId().equals(physicalCard.getId()))) {
+                library.add(physicalCard);
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
+                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            }
+            if (sourceStackEntry != null) {
+                sourceStackEntry.setSpellDispositionHandled(true);
+            }
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is shuffled into its owner's library instead of entering the battlefield."));
+        log.info("Game {} - {} shuffled into its owner's library instead of entering", gameData.id, card.getName());
         return true;
     }
 
@@ -1948,6 +1996,47 @@ public class BattlefieldPlacementService {
                         permanent.getCounterCount(counterType) + count);
                 log.info("Game {} - {} enters with {} additional {} counter(s) from a battlefield static effect",
                         gameData.id, permanent.getCard().getName(), count, counterType);
+            }
+        }
+    }
+
+    private void applyControlledPermanentEntryCharacteristics(GameData gameData, UUID controllerId,
+                                                               Permanent permanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null || battlefield.isEmpty()) return;
+
+        for (Permanent source : battlefield) {
+            FilterContext sourceContext = FilterContext.of(gameData)
+                    .withSourceCardId(source.getCard().getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentSnapshot(source)
+                    .withSourcePermanentId(source.getId())
+                    .withEnteringControllerId(controllerId);
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof ControlledPermanentEntryCharacteristicsEffect characteristics)
+                        || !predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, characteristics.enteringPermanentPredicate(), sourceContext)) {
+                    continue;
+                }
+
+                permanent.getPersistentGrantedCardTypes().addAll(characteristics.addedCardTypes());
+                characteristics.addedSubtypes().forEach(subtype -> {
+                    if (!permanent.getGrantedSubtypes().contains(subtype)) {
+                        permanent.getGrantedSubtypes().add(subtype);
+                    }
+                });
+
+                long timestamp = gameData.nextTimestamp();
+                if (characteristics.basePower() != null) {
+                    permanent.setBasePowerOverriddenPermanently(true);
+                    permanent.setPermanentBasePowerOverride(characteristics.basePower());
+                    permanent.setPermanentBasePowerOverrideTimestamp(timestamp);
+                }
+                if (characteristics.baseToughness() != null) {
+                    permanent.setBaseToughnessOverriddenPermanently(true);
+                    permanent.setPermanentBaseToughnessOverride(characteristics.baseToughness());
+                    permanent.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+                }
             }
         }
     }

@@ -374,6 +374,9 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for time counters placed on a permanent controlled by the placing player. */
+    record TimeCountersPlaced(Permanent target, UUID placingPlayerId, int amount) implements TriggerContext {}
+
     /** Context for a lore counter placed on a Saga the placing player controls. */
     record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
 
@@ -381,6 +384,9 @@ public sealed interface TriggerContext {
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for time-counter-removal triggers. */
+    record TimeCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for counters being removed from a permanent controlled by the watcher. */
     record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
@@ -858,6 +864,12 @@ public sealed interface TriggerContext {
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
 
     record CardsExiledDuringTurn(UUID activePlayerId) implements TriggerContext {}
+
+    /** Context for a permanent phasing out, before it leaves the battlefield. */
+    record PermanentPhasedOut(Permanent phasedOutPermanent) implements TriggerContext {}
+
+    /** Context for a card being put into exile from any zone. */
+    record CardExiled() implements TriggerContext {}
 
     /**
      * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers. Carries the damage source object, its

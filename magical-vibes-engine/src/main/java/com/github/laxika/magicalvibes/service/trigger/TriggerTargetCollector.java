@@ -407,7 +407,9 @@ public class TriggerTargetCollector {
                         targetValidationService.checkEffectTargets(
                                 List.of(effect),
                                 new TargetValidationContext(gameData, cardId, Zone.EXILE, sourceCard,
-                                        0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                                        0, controllerId, sourcePermanentSnapshot,
+                                        sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
+                                        null, defendingPlayerId)).isEmpty());
                 if (valid) {
                     validTargets.add(cardId);
                 }

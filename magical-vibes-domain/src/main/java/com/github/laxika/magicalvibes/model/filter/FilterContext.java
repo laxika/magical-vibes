@@ -24,8 +24,18 @@ public record FilterContext(
         UUID defendingPlayerId,
         UUID triggeringPermanentId,
         UUID targetCardId,
-        UUID triggeringPermanentControllerId
+        UUID triggeringPermanentControllerId,
+        UUID enteringControllerId
 ) {
+    public FilterContext(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
+                         Integer xValue, Permanent sourcePermanentSnapshot, UUID sourcePermanentId,
+                         boolean madness, UUID defendingPlayerId, UUID triggeringPermanentId,
+                         UUID targetCardId, UUID triggeringPermanentControllerId) {
+        this(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId,
+                targetCardId, triggeringPermanentControllerId, null);
+    }
+
     public FilterContext(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
                          Integer xValue, Permanent sourcePermanentSnapshot, UUID sourcePermanentId,
                          boolean madness, UUID defendingPlayerId, UUID triggeringPermanentId) {
@@ -77,60 +87,66 @@ public record FilterContext(
     public FilterContext withSourceCardId(UUID sourceCardId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withSourceControllerId(UUID sourceControllerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withXValue(int xValue) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withSourcePermanentSnapshot(Permanent sourcePermanentSnapshot) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withSourcePermanentId(UUID sourcePermanentId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withMadness(boolean madness) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withDefendingPlayerId(UUID defendingPlayerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withTriggeringPermanentId(UUID triggeringPermanentId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withTriggeringPermanentControllerId(UUID triggeringPermanentControllerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
     }
 
     public FilterContext withTargetCardId(UUID targetCardId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId);
+                triggeringPermanentControllerId, enteringControllerId);
+    }
+
+    public FilterContext withEnteringControllerId(UUID enteringControllerId) {
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
+                triggeringPermanentControllerId, enteringControllerId);
     }
 }

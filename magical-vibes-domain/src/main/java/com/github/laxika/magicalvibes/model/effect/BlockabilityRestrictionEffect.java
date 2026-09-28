@@ -79,6 +79,14 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
     }
 
     /**
+     * Whether this creature can't be blocked unless it is attacking its owner or a permanent
+     * controlled by its owner.
+     */
+    default boolean unblockableUnlessAttackingOwnerOrOwnerControlledPermanent() {
+        return false;
+    }
+
+    /**
      * When non-{@code null}, this creature can be blocked <em>only</em> by blockers matching this
      * predicate; any other blocker is illegal. Paired with {@link #blockableOnlyByDescription()}.
      */

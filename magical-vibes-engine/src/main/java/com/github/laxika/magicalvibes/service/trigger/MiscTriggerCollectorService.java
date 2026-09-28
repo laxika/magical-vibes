@@ -2965,19 +2965,26 @@ public class MiscTriggerCollectorService {
     }
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
+        UUID surveilingPlayerId = ((TriggerContext.Surveil) ctx).surveilingPlayerId();
+        boolean opponentSurveil = !match.controllerId().equals(surveilingPlayerId);
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
+                opponentSurveil ? surveilingPlayerId : null,
+                match.permanent().getId());
+        if (opponentSurveil) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on surveil (put counter on self)", gameData.id, cardName);
@@ -2985,6 +2992,7 @@ public class MiscTriggerCollectorService {
     }
 
     @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2993,14 +3001,19 @@ public class MiscTriggerCollectorService {
             return false;
         }
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect.wrapped())),
-                null,
-                source.getId()));
+                !match.controllerId().equals(((TriggerContext.Surveil) ctx).surveilingPlayerId())
+                        ? ((TriggerContext.Surveil) ctx).surveilingPlayerId() : null,
+                source.getId());
+        if (!match.controllerId().equals(((TriggerContext.Surveil) ctx).surveilingPlayerId())) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
         gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
@@ -3009,9 +3022,12 @@ public class MiscTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Permanent source = match.permanent();
+        UUID surveilingPlayerId = ((TriggerContext.Surveil) ctx).surveilingPlayerId();
+        boolean opponentSurveil = !match.controllerId().equals(surveilingPlayerId);
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -3019,8 +3035,11 @@ public class MiscTriggerCollectorService {
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                null,
+                opponentSurveil ? surveilingPlayerId : null,
                 source.getId());
+        if (opponentSurveil) {
+            entry.setNonTargeting(true);
+        }
         if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
             entry.setMarkSourceOncePerTurnOnAcceptance(true);
         }
@@ -3700,6 +3719,31 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent-owned card exiled)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CARD_EXILED)
+    })
+    boolean handleGlobalPhaseOutOrCardExileTriggers(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.PermanentPhasedOut)
+                && !(ctx instanceof TriggerContext.CardExiled)) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on a permanent phasing out or a card being exiled",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

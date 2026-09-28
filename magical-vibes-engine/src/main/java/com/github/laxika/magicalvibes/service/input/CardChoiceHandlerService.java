@@ -2239,6 +2239,60 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    public void handleExileNonlandCardFromHandWithTimeCountersChosen(
+            GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice choice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        if (!choice.validIndices().contains(cardIndex)) {
+            log.warn("Game {} - {} sent invalid nonland exile card index {}, re-prompting",
+                    gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginExileNonlandCardFromHandWithTimeCountersChoice(
+                    gameData, player.getId(), new ArrayList<>(choice.validIndices()), choice.prompt());
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card card = hand.remove(cardIndex);
+        exileService.exileCard(gameData, player.getId(), card);
+        gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is exiled with " + card.getManaValue() + " time counters."));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    public void handleExileCardFromHandWithTimeCountersChosen(
+            GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ExileCardFromHandWithTimeCountersChoice choice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        if (!choice.validIndices().contains(cardIndex)) {
+            log.warn("Game {} - {} sent invalid hand exile card index {}, re-prompting",
+                    gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginExileCardFromHandWithTimeCountersChoice(
+                    gameData, player.getId(), new ArrayList<>(choice.validIndices()), choice.prompt());
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card card = hand.remove(cardIndex);
+        exileService.exileCard(gameData, player.getId(), card);
+        gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is exiled with " + card.getManaValue() + " time counters."));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private boolean resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {

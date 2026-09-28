@@ -326,6 +326,58 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Exile a selected nonland hand card with mana-value time counters. */
+    @Component
+    public static class ExileNonlandCardFromHandWithTimeCountersChoiceInteractionHandler
+            extends Base<PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public ExileNonlandCardFromHandWithTimeCountersChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice> handledType() {
+            return PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleExileNonlandCardFromHandWithTimeCountersChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
+    /** Exile a selected hand card with mana-value time counters. */
+    @Component
+    public static class ExileCardFromHandWithTimeCountersChoiceInteractionHandler
+            extends Base<PendingInteraction.ExileCardFromHandWithTimeCountersChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public ExileCardFromHandWithTimeCountersChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.ExileCardFromHandWithTimeCountersChoice> handledType() {
+            return PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.ExileCardFromHandWithTimeCountersChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleExileCardFromHandWithTimeCountersChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /**
      * ACTIVATED_ABILITY_DISCARD_COST_CHOICE — discard a card as an activation cost. Matching
      * the originating begin site, no "Awaiting …" log line is emitted on prompt.

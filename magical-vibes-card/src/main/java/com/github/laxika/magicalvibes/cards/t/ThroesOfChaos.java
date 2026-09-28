@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "150")
+@CardRegistration(set = "WHO", collectorNumber = "227")
 @CardRegistration(set = "MB2", collectorNumber = "62")
 @CardRegistration(set = "SOC", collectorNumber = "257")
 @CardRegistration(set = "AFC", collectorNumber = "146")

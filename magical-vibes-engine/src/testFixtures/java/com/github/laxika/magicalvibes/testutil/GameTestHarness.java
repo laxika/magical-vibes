@@ -253,7 +253,7 @@ public class GameTestHarness {
         gameData.playerHands.put(player.getId(), new ArrayList<>(cards));
     }
 
-    public void setLibrary(Player player, List<Card> cards) {
+    public void setLibrary(Player player, List<? extends Card> cards) {
         gameData.playerDecks.put(player.getId(), new ArrayList<>(cards));
     }
 

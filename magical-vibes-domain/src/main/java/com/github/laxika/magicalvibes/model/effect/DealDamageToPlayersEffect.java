@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,9 +22,31 @@ import java.util.UUID;
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
-                                        boolean recordDamageDealt, List<UUID> selectedPlayerIds)
+                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
+                                        List<UUID> selectedPlayerIds)
         implements DamageDealingEffect, AcceptedPlayersAwareEffect,
         CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, TargetFilter triggeredTargetFilter) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                triggeredTargetFilter, List.of());
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, List<UUID> selectedPlayerIds) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                null, selectedPlayerIds);
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt,
+                null, List.of());
+    }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable) {
@@ -33,7 +56,13 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     /** Records actual damage in the entry's event value for a subsequent effect. */
     public DealDamageToPlayersEffect recordingDamageDealt() {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true,
-                selectedPlayerIds);
+                triggeredTargetFilter, selectedPlayerIds);
+    }
+
+    /** Supplies a target filter for trigger-time target selection when the effect is granted. */
+    public DealDamageToPlayersEffect withTriggeredTargetFilter(TargetFilter targetFilter) {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
+                recordDamageDealt, targetFilter, selectedPlayerIds);
     }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
@@ -55,7 +84,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     }
 
     public DealDamageToPlayersEffect {
-        selectedPlayerIds = List.copyOf(selectedPlayerIds);
+        selectedPlayerIds = selectedPlayerIds == null ? List.of() : List.copyOf(selectedPlayerIds);
     }
 
     public static DealDamageToPlayersEffect selectedOpponents(DynamicAmount amount) {
@@ -69,7 +98,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
 
     public DealDamageToPlayersEffect withSelectedPlayerIds(List<UUID> playerIds) {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, playerIds);
+                recordDamageDealt, triggeredTargetFilter, playerIds);
     }
 
     @Override

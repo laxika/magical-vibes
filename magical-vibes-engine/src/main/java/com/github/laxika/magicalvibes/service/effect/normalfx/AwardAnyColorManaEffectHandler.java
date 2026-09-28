@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Resolves {@link AwardAnyColorManaEffect} on the stack (Manamorphose), mirroring the mana-ability
  * path in {@code ActivatedAbilityExecutionService}. The chosen-subtype restrictions read their type
@@ -49,8 +51,10 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
         if (e.markSourceAsHavingAddedManaThisTurn() && amount > 0 && entry.getSourcePermanentId() != null) {
             gameData.permanentsThatAddedManaWithAbilityThisTurn.add(entry.getSourcePermanentId());
         }
+        UUID colorChoicePlayerId = e.manaColorChosenByRecipient() && e.manaRecipientIsTargetPlayer()
+                && entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
-                entry.getControllerId(), e, amount, false, source == null ? null : source.getChosenSubtype(),
+                colorChoicePlayerId, e, amount, false, source == null ? null : source.getChosenSubtype(),
                 source == null ? null : source.getCard(), source == null ? null : source.getId(),
                 e.manaRecipientIsTargetPlayer() ? entry.getTargetId() : null,
                 source != null && gameQueryService.hasEffectiveSupertype(
@@ -60,7 +64,7 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
                 source != null && GameQueryService.permanentHasSubtype(source, CardSubtype.TREASURE),
                 source != null && GameQueryService.permanentHasSubtype(source, CardSubtype.DESERT));
         if (prompted) {
-            String playerName = gameData.playerIdToName.get(entry.getControllerId());
+            String playerName = gameData.playerIdToName.get(colorChoicePlayerId);
             log.info("Game {} - Awaiting {} to choose a mana color ({})", gameData.id, playerName, e.restriction());
         }
     }

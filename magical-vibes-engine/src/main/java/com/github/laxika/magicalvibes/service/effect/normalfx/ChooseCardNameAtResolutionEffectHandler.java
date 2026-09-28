@@ -28,11 +28,18 @@ public class ChooseCardNameAtResolutionEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var chooseEffect = (ChooseCardNameAtResolutionEffect) effect;
         var choiceContext = new ChoiceContext.ChooseCardNameAtResolutionChoice(
-                entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId());
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+                entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
+                chooseEffect.requiredType());
+        List<String> cardNames = chooseEffect.requiredType() == null
+                ? libraryRevealSupport.collectAllCardNamesInGame(gameData)
+                : libraryRevealSupport.collectCardNamesInGameOfType(gameData, chooseEffect.requiredType());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
+                entry.getControllerId(), null, null, choiceContext, cardNames,
+                chooseEffect.requiredType() == null
+                        ? "Choose a card name."
+                        : "Choose a " + chooseEffect.requiredType().getDisplayName().toLowerCase() + " card name."));
 
         log.info("Game {} - Awaiting {} to choose a card name for {}",
                 gameData.id, gameData.playerIdToName.get(entry.getControllerId()), entry.getCard().getName());

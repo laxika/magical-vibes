@@ -104,6 +104,15 @@ public record CopyControllerCastSpellEffect(
                 startingLoyaltyFromX, false, false);
     }
 
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
+            Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean markSourceOncePerTurnOnAccept) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
+                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell,
+                markSourceOncePerTurnOnAccept, false);
+    }
+
     public CopyControllerCastSpellEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);

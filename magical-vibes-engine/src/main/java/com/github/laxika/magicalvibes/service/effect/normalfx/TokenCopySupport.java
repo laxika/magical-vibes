@@ -216,7 +216,7 @@ public class TokenCopySupport {
         boolean hasPTOverride = effect.powerOverride() != null || effect.toughnessOverride() != null;
 
         Card tokenCard = new Card();
-        tokenCard.setName(sourceCard.getName());
+        tokenCard.setName(effect.nameOverride() != null ? effect.nameOverride() : sourceCard.getName());
         tokenCard.setType(sourceCard.getType());
         tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
         tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");

@@ -7,10 +7,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -41,10 +45,18 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         }
 
         gameData.additionalCombatMainPhasePairs += e.count();
-        if (e.additionalCombatBeginningEffect() != null) {
+        CardEffect additionalCombatBeginningEffect = e.additionalCombatBeginningEffect();
+        if (e.onlyTargetCreaturesCanAttack()) {
+            CardEffect attackRestriction = new OnlyTargetCreaturesCanAttackThisCombatEffect(
+                    Set.copyOf(entry.getTargetIds()));
+            additionalCombatBeginningEffect = additionalCombatBeginningEffect == null
+                    ? attackRestriction
+                    : SequenceEffect.of(additionalCombatBeginningEffect, attackRestriction);
+        }
+        if (additionalCombatBeginningEffect != null) {
             for (int i = 0; i < e.count(); i++) {
                 gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(), e.additionalCombatBeginningEffect(),
+                        entry.getControllerId(), entry.getCard(), additionalCombatBeginningEffect,
                         entry.getSourcePermanentId()));
             }
         }

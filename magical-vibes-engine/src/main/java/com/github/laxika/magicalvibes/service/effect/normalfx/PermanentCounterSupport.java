@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -181,6 +182,10 @@ public class PermanentCounterSupport {
                 }
             }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+            if (counterType == CounterType.TIME) {
+                triggerCollectionService.checkYouPutTimeCountersTriggers(
+                        gameData, target, placingPlayerId, amount);
+            }
             fireYouPutCountersOnCreatureTriggers(gameData, target, amount, placingPlayerId);
         }
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
@@ -1027,6 +1032,7 @@ public class PermanentCounterSupport {
             case 3 -> EffectSlot.SAGA_CHAPTER_III;
             case 4 -> EffectSlot.SAGA_CHAPTER_IV;
             case 5 -> EffectSlot.SAGA_CHAPTER_V;
+            case 6 -> EffectSlot.SAGA_CHAPTER_VI;
             default -> null;
         };
         if (chapterSlot == null) return;
@@ -1040,6 +1046,7 @@ public class PermanentCounterSupport {
             case 3 -> "III";
             case 4 -> "IV";
             case 5 -> "V";
+            case 6 -> "VI";
             default -> String.valueOf(loreCount);
         };
 
@@ -1658,7 +1665,13 @@ public class PermanentCounterSupport {
     private void fireSelfCountersPutTriggers(GameData gameData, Permanent target,
                                               CounterType counterType, int previousCount) {
         Card card = target.getCard();
-        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_COUNTERS_PUT);
+        List<CardEffect> effects = new ArrayList<>(card.getEffects(EffectSlot.ON_SELF_COUNTERS_PUT));
+        gameQueryService.getGrantedEffects(gameData, target).stream()
+                .filter(GrantTriggeredAbilityEffect.class::isInstance)
+                .map(GrantTriggeredAbilityEffect.class::cast)
+                .filter(grant -> grant.slot() == EffectSlot.ON_SELF_COUNTERS_PUT)
+                .map(GrantTriggeredAbilityEffect::grantedEffect)
+                .forEach(effects::add);
         if (effects.isEmpty()) {
             return;
         }

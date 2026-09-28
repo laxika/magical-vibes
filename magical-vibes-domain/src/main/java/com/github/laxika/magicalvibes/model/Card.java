@@ -891,6 +891,7 @@ public class Card {
         effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
             case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case ConditionalReplacementEffect e -> {
                 if (e.baseEffect() != null) registerEffectTargetIndex(e.baseEffect(), targetIndex);
                 registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
@@ -912,7 +913,6 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
-            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.
@@ -1813,6 +1813,7 @@ public class Card {
      * Returns 0 if the card has no chapter abilities.
      */
     public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_VI).isEmpty()) return 6;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
         if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
