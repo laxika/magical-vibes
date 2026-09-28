@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "106")
 @CardRegistration(set = "NCC", collectorNumber = "210")
 @CardRegistration(set = "TDC", collectorNumber = "133")
+@CardRegistration(set = "MKC", collectorNumber = "87")
 @CardRegistration(set = "AFC", collectorNumber = "73")
 @CardRegistration(set = "OTC", collectorNumber = "87")
 public class SunTitan extends Card {

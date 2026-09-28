@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "NCC", collectorNumber = "61")
 @CardRegistration(set = "NCC", collectorNumber = "161")
+@CardRegistration(set = "MKC", collectorNumber = "174")
 public class KillerService extends Card {
 
     public KillerService() {

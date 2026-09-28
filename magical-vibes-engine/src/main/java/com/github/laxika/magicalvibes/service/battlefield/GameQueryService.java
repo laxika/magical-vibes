@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LethalDamageModifierEffect;
@@ -552,13 +553,14 @@ public class GameQueryService {
 
     /** Returns whether a creature currently has a goad attack requirement. */
     public boolean isGoaded(GameData gameData, Permanent creature) {
-        if (creature == null) {
+        if (creature == null || !isCreature(gameData, creature)) {
             return false;
         }
 
+        final long[] latestTimestamp = {Long.MIN_VALUE};
         final boolean[] goaded = {false};
         gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
-            if (goaded[0] || sourcePermanent.isFaceDown()
+            if (sourcePermanent.isFaceDown()
                     || hasLostPrintedAbilities(gameData, sourcePermanent)) {
                 return;
             }
@@ -569,37 +571,36 @@ public class GameQueryService {
                     .withSourcePermanentId(sourcePermanent.getId())
                     .withSourcePermanentSnapshot(sourcePermanent);
             for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CombatAttackRequirementEffect requirement
-                        && requirement.requiresAttackAtOtherPlayerIfAble()
-                        && requirement.isActive(gameData, sourcePermanent)
+                if (effect instanceof GoadStatusEffect status
+                        && (!(effect instanceof CombatAttackRequirementEffect requirement)
+                        || requirement.isActive(gameData, sourcePermanent))
                         && predicateEvaluationService.matchesPermanentPredicate(
-                        creature, requirement.affectedPredicate(), context)) {
-                    goaded[0] = true;
-                    return;
+                        creature, status.affectedPredicate(), context)
+                        && sourcePermanent.getTimestamp() >= latestTimestamp[0]) {
+                    latestTimestamp[0] = sourcePermanent.getTimestamp();
+                    goaded[0] = status.makesGoaded();
                 }
             }
         });
-        if (goaded[0]) {
-            return true;
-        }
 
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
-                if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
-                        || !requirement.requiresAttackAtOtherPlayerIfAble()
+                if (!(floatingEffect.effect() instanceof GoadStatusEffect status)
                         || (floatingEffect.affectedPermanentId() != null
                         && !creature.getId().equals(floatingEffect.affectedPermanentId()))) {
                     continue;
                 }
                 if (predicateEvaluationService.matchesPermanentPredicate(
-                        creature, requirement.affectedPredicate(),
+                        creature, status.affectedPredicate(),
                         FilterContext.of(gameData)
-                                .withSourceControllerId(floatingEffect.controllerId()))) {
-                    return true;
+                                .withSourceControllerId(floatingEffect.controllerId()))
+                        && floatingEffect.timestamp() >= latestTimestamp[0]) {
+                    latestTimestamp[0] = floatingEffect.timestamp();
+                    goaded[0] = status.makesGoaded();
                 }
             }
         }
-        return false;
+        return latestTimestamp[0] != Long.MIN_VALUE && goaded[0];
     }
 
     private boolean playerBattlefieldHasGrantedEffect(GameData gameData, UUID playerId,
@@ -8278,6 +8279,8 @@ public class GameQueryService {
                             || (additional.attackOnly() && !attackTrigger)
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
+                            || (additional.permanentTurnsFaceUpOnly()
+                            && !(triggerContext instanceof TriggerContext.PermanentTurnsFaceUp))
                             || (additional.controlledCreatureDealtDamageOnly()
                             && !controlledCreatureWasDealtDamage(gameData, controllerId, triggerContext))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
@@ -9237,7 +9240,7 @@ public class GameQueryService {
      */
     public boolean isEquipped(GameData gameData, Permanent creature) {
         return gameData.anyPermanentMatches(p ->
-                p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
                         && p.isAttached() && p.getAttachedTo().equals(creature.getId()));
     }
 

@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "THB", collectorNumber = "55")
 @CardRegistration(set = "MOC", collectorNumber = "228")
 @CardRegistration(set = "NCC", collectorNumber = "228")
+@CardRegistration(set = "MKC", collectorNumber = "112")
 public class NadirKraken extends Card {
 
     public NadirKraken() {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ONS", collectorNumber = "250")
 @CardRegistration(set = "A25", collectorNumber = "162")
+@CardRegistration(set = "MKC", collectorNumber = "167")
 public class BroodhatchNantuko extends Card {
 
     public BroodhatchNantuko() {

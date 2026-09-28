@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOM", collectorNumber = "55")
+@CardRegistration(set = "MKC", collectorNumber = "103")
 public class EpharasDispersal extends Card {
 
     public EpharasDispersal() {

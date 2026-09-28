@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EsixFractalBloomEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "10")
+@CardRegistration(set = "MKC", collectorNumber = "210")
 public class EsixFractalBloom extends Card {
 
     public EsixFractalBloom() {

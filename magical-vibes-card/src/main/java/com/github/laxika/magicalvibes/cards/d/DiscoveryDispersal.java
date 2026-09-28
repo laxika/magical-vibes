@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "223")
+@CardRegistration(set = "MKC", collectorNumber = "207")
 public class DiscoveryDispersal extends Card {
 
     public DiscoveryDispersal() {

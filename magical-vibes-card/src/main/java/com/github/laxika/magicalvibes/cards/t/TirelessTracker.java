@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "PIP", collectorNumber = "1000")
 @CardRegistration(set = "FIC", collectorNumber = "316")
 @CardRegistration(set = "MOC", collectorNumber = "314")
+@CardRegistration(set = "MKC", collectorNumber = "190")
 public class TirelessTracker extends Card {
 
     public TirelessTracker() {

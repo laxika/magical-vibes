@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "AVR", collectorNumber = "229")
 @CardRegistration(set = "SLD", collectorNumber = "356")
 @CardRegistration(set = "C21", collectorNumber = "318")
+@CardRegistration(set = "MKC", collectorNumber = "295")
 public class SlayersStronghold extends Card {
 
     public SlayersStronghold() {

@@ -83,6 +83,7 @@ public enum Keyword {
     JUMP,
     JUMP_START,
     BANDING,
+    EXALTED,
     INGEST,
     TANTRUM,
     EMERGE,

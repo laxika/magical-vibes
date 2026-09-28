@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequir
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureWithManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -774,6 +775,51 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(resolutionEffect))
         ));
         return true;
+    }
+
+    @CollectsTrigger(value = CopySpellForEachOtherCreatureWithManaEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCopySpellForEachOtherCreatureWithMana(TriggerMatchContext match,
+            CopySpellForEachOtherCreatureWithManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellSnapshot() != null || sc.spellCard().hasType(CardType.CREATURE)) {
+            return false;
+        }
+
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (!spellTargetsOnlyPermanent(spellEntry, match.permanent().getId())) {
+            return false;
+        }
+
+        StackEntry snapshot = new StackEntry(spellEntry);
+        CopySpellForEachOtherCreatureWithManaEffect resolutionEffect =
+                new CopySpellForEachOtherCreatureWithManaEffect(
+                        snapshot, sc.castingPlayerId(), match.permanent().getId(), trigger.manaCost());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolutionEffect)),
+                null,
+                match.permanent().getId()));
+        return true;
+    }
+
+    private boolean spellTargetsOnlyPermanent(StackEntry spellEntry, UUID permanentId) {
+        if (spellEntry == null || spellEntry.getTargetZone() != null
+                || !spellEntry.getTargetCardIds().isEmpty()) {
+            return false;
+        }
+
+        List<UUID> targetOccurrences = new ArrayList<>();
+        if (spellEntry.getTargetId() != null) {
+            targetOccurrences.add(spellEntry.getTargetId());
+        }
+        targetOccurrences.addAll(spellEntry.getDeclaredTargetIds());
+        return !targetOccurrences.isEmpty()
+                && targetOccurrences.stream().distinct().count() == 1
+                && permanentId.equals(targetOccurrences.getFirst());
     }
 
     private boolean hasOtherLegalCreatureTarget(GameData gameData, Card spellCard,

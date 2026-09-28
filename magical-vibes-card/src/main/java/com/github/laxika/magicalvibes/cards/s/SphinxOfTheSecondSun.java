@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalBeginningPhaseEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1720")
+@CardRegistration(set = "MKC", collectorNumber = "118")
 public class SphinxOfTheSecondSun extends Card {
 
     public SphinxOfTheSecondSun() {

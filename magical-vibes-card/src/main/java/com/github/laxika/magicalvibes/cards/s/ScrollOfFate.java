@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ManifestCardFromHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "DSC", collectorNumber = "251")
+@CardRegistration(set = "MKC", collectorNumber = "235")
 public class ScrollOfFate extends Card {
 
     public ScrollOfFate() {

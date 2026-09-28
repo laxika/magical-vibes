@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "163")
+@CardRegistration(set = "MKC", collectorNumber = "13")
+@CardRegistration(set = "MKC", collectorNumber = "324")
 public class RedemptionArc extends Card {
 
     public RedemptionArc() {

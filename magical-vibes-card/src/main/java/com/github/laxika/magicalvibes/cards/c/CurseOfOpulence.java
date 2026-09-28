@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "274")
 @CardRegistration(set = "TDC", collectorNumber = "209")
+@CardRegistration(set = "MKC", collectorNumber = "150")
 public class CurseOfOpulence extends Card {
 
     public CurseOfOpulence() {

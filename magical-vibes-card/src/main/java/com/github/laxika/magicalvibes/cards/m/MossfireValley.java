@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "321")
+@CardRegistration(set = "MKC", collectorNumber = "274")
 @CardRegistration(set = "AFC", collectorNumber = "250")
 @CardRegistration(set = "C20", collectorNumber = "290")
 @CardRegistration(set = "PIP", collectorNumber = "273")

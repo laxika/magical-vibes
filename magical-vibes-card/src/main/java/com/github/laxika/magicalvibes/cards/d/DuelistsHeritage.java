@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "TLE", collectorNumber = "153")
 @CardRegistration(set = "C21", collectorNumber = "90")
 @CardRegistration(set = "NCC", collectorNumber = "197")
+@CardRegistration(set = "MKC", collectorNumber = "60")
 public class DuelistsHeritage extends Card {
 
     public DuelistsHeritage() {

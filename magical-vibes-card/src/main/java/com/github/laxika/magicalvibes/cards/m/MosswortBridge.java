@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "303")
 @CardRegistration(set = "C20", collectorNumber = "291")
 @CardRegistration(set = "DSC", collectorNumber = "288")
+@CardRegistration(set = "MKC", collectorNumber = "275")
 @CardRegistration(set = "AFC", collectorNumber = "251")
 @CardRegistration(set = "LCC", collectorNumber = "342")
 public class MosswortBridge extends Card {

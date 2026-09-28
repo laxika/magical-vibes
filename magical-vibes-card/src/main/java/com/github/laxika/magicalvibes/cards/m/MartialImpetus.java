@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "156")
 @CardRegistration(set = "C21", collectorNumber = "96")
+@CardRegistration(set = "MKC", collectorNumber = "72")
 @CardRegistration(set = "C20", collectorNumber = "28")
 public class MartialImpetus extends Card {
 

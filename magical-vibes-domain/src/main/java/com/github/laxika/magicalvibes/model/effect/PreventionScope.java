@@ -41,6 +41,8 @@ public enum PreventionScope {
     ALL_COMBAT_BY_ATTACKING_CREATURES,
     /** "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). */
     ALL_COMBAT_TO_PLAYERS,
+    /** "Prevent all combat damage that would be dealt to you and planeswalkers you control this turn" (Take the Bait). */
+    ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */
     ALL_TO_CREATURES,
     /** "Prevent all damage that would be dealt this turn to creatures you control." (Divine Light). */

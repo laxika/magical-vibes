@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "TLE", collectorNumber = "44")
 @CardRegistration(set = "LCC", collectorNumber = "252")
 @CardRegistration(set = "C21", collectorNumber = "205")
+@CardRegistration(set = "MKC", collectorNumber = "181")
 @CardRegistration(set = "AFC", collectorNumber = "168")
 @CardRegistration(set = "OTC", collectorNumber = "203")
 public class ReturnOfTheWildspeaker extends Card {

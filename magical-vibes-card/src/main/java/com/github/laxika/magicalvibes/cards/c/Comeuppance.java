@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromOpponentS
 @CardRegistration(set = "MAR", collectorNumber = "1")
 @CardRegistration(set = "OMB", collectorNumber = "1")
 @CardRegistration(set = "C14", collectorNumber = "4")
+@CardRegistration(set = "MKC", collectorNumber = "58")
 public class Comeuppance extends Card {
 
     public Comeuppance() {

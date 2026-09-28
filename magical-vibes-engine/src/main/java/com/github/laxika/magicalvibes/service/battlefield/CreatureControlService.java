@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffe
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -472,6 +473,7 @@ public class CreatureControlService {
             boolean sourceControllerDependent = fe.isControlEffect()
                     || (fe.effect() instanceof CombatAttackRequirementEffect requirement
                     && requirement.endsWhenSourceControllerChanges())
+                    || fe.effect() instanceof GoadStatusEffect
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges());
             if (!sourceControllerDependent) continue;

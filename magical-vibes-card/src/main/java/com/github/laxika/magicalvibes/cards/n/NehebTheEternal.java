@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "CMM", collectorNumber = "244")
 @CardRegistration(set = "CMM", collectorNumber = "545")
 @CardRegistration(set = "CMM", collectorNumber = "678")
+@CardRegistration(set = "MKC", collectorNumber = "158")
 public class NehebTheEternal extends Card {
 
     public NehebTheEternal() {

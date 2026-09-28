@@ -1041,7 +1041,7 @@ public class PermanentChoiceTriggerHandlerService {
         if ((target != null || isPlayerTarget || isExiledCardTarget) && !declined) {
             StackEntry entry = isExiledCardTarget
                     ? new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+                      StackEntryType.TRIGGERED_ABILITY,
                     att.sourceCard(),
                     att.controllerId(),
                     att.sourceCard().getName() + "'s ability",
@@ -1058,9 +1058,9 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     att.sourcePermanentId()
             );
-            if (!isExiledCardTarget) {
-                entry.setTargetId(permanentId);
-            }
+              if (!isExiledCardTarget) {
+                  entry.setTargetId(permanentId);
+              }
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());
             }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "40")
+@CardRegistration(set = "MKC", collectorNumber = "102")
 public class EnhancedSurveillance extends Card {
 
     public EnhancedSurveillance() {

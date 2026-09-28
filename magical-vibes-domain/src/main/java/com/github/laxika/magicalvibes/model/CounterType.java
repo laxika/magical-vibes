@@ -46,6 +46,7 @@ public enum CounterType {
     DOOM,
     DREAD,
     DREAM,
+    DUTY,
     ECHO,
     EGG,
     EMBER,

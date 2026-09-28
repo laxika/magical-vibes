@@ -803,6 +803,12 @@ public class TriggerCollectionService {
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
                                        Zone castZone, UUID exiledSourcePermanentId) {
+        checkSpellCastTriggers(gameData, spellCard, castingPlayerId, castZone, exiledSourcePermanentId, false);
+    }
+
+    public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                       Zone castZone, UUID exiledSourcePermanentId,
+                                       boolean castFaceDown) {
         gameData.recordSpellCastFromZone(castingPlayerId, castZone);
         if (castZone == Zone.HAND) {
             gameData.recordSpellCastFromHand(spellCard);
@@ -854,6 +860,7 @@ public class TriggerCollectionService {
                 fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
                         && castingPlayerId.equals(fe.controllerId())
                         && fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
+                        && (!reduction.faceDownOnly() || castFaceDown)
                         && predicateEvaluationService.matchesCardPredicate(
                                 spellCard, reduction.predicate(), null, gameData, castingPlayerId));
 
@@ -2802,8 +2809,9 @@ public class TriggerCollectionService {
                     resolvedEffect = conditional.wrapped();
                 }
                 while (matches && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
-                            conditional.predicate())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(creature,
+                            conditional.predicate(),
+                            FilterContext.of(gameData).withSourceControllerId(controllerId))) {
                         matches = false;
                         break;
                     }
@@ -12580,7 +12588,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                registry.dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
+                dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
                         EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP, effect, ctx);
             }
         }
@@ -12598,7 +12606,7 @@ public class TriggerCollectionService {
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
-                    registry.dispatch(new TriggerMatchContext(gameData, perm, ownerId, effect),
+                    dispatch(new TriggerMatchContext(gameData, perm, ownerId, effect),
                             EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP, effect, ctx);
                 }
             }
@@ -12619,7 +12627,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                registry.dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
+                dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
                         EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP, effect, ctx);
             }
         }

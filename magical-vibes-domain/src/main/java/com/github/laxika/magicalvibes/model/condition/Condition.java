@@ -43,6 +43,7 @@ public sealed interface Condition permits
         AnyPlayerControlsNoPermanent,
         AnyPlayerDiscardedCardThisTurn,
         AnyOf,
+        AtLeastPlayersLostGame,
         AttachedPermanentControllerControlsNoOther,
         AttackedOpponentHasMoreLifeThanAnotherOpponent,
         AttackingPlayerIsOpponent,

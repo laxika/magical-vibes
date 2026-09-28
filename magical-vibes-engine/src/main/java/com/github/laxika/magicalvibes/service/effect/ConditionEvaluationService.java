@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamage
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AtLeastPlayersLostGame;
 import com.github.laxika.magicalvibes.model.condition.ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
@@ -859,6 +860,10 @@ public class ConditionEvaluationService {
                     countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter(), false) <= c.maxCount();
             case AnyPlayerControlsNoPermanent c ->
                     anyPlayerControlsNoMatchingPermanent(gameData, ctx, c.filter());
+            case AtLeastPlayersLostGame c ->
+                    gameData.playersWhoLostGameThisMatch.stream()
+                            .filter(gameData.playerIds::contains)
+                            .count() >= c.minimum();
             case ControlsPermanentCount c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->

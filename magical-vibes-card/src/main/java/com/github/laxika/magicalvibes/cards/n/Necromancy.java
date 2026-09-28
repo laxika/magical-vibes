@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnL
 
 @CardRegistration(set = "VIS", collectorNumber = "64")
 @CardRegistration(set = "AA3", collectorNumber = "9")
+@CardRegistration(set = "MKC", collectorNumber = "131")
 public class Necromancy extends Card {
 
     public Necromancy() {

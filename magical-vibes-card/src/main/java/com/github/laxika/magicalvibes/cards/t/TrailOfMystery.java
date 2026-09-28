@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "154")
 @CardRegistration(set = "DSC", collectorNumber = "203")
+@CardRegistration(set = "MKC", collectorNumber = "192")
 public class TrailOfMystery extends Card {
 
     public TrailOfMystery() {

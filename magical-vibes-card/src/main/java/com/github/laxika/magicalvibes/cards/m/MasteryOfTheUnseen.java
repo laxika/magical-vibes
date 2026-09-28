@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "19")
+@CardRegistration(set = "MKC", collectorNumber = "74")
 public class MasteryOfTheUnseen extends Card {
 
     public MasteryOfTheUnseen() {

@@ -224,6 +224,13 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT_TO_PLAYERS, null, false, null, null, null);
     }
 
+    /** "Prevent all combat damage that would be dealt to you and planeswalkers you control this turn" (Take the Bait). */
+    public static PreventDamageEffect allCombatToControllerAndPlaneswalkers() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS,
+                null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to creatures this turn." */
     public static PreventDamageEffect allToCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CREATURES, null, false, null, null, null);

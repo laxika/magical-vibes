@@ -1032,9 +1032,9 @@ public class TriggeredAbilityQueueService {
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
                             : result.canTargetExiledCards() && result.canTargetPermanents()
-                                    ? "target permanent or suspended card"
+                                    ? "target permanent or card in exile"
                                     : result.canTargetExiledCards()
-                                            ? "target suspended card"
+                                            ? "target card in exile"
                                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
