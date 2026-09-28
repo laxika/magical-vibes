@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ME4", collectorNumber = "45")
 @CardRegistration(set = "CMM", collectorNumber = "630")
 @CardRegistration(set = "CMM", collectorNumber = "81")
+@CardRegistration(set = "MB2", collectorNumber = "158")
 @CardRegistration(set = "DSC", collectorNumber = "114")
 public class Counterspell extends Card {
 

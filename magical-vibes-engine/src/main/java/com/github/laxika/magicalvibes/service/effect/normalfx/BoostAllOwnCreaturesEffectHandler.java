@@ -59,7 +59,8 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
-                .withSourcePermanentSnapshot(source);
+                .withSourcePermanentSnapshot(source)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId());
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (boost.excludeTargets()

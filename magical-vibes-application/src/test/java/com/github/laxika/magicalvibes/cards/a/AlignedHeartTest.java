@@ -56,13 +56,22 @@ class AlignedHeartTest extends BaseCardTest {
         castTwoSpells();
         assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        do {
+            harness.passBothPriorities();
+        } while (!gd.stack.isEmpty());
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        do {
+            harness.passBothPriorities();
+        } while (!gd.stack.isEmpty());
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(2);
 
         assertThat(heart.getCounterCount(CounterType.RALLY)).isEqualTo(2);
         assertThat(countPermanents(player1, "Monk")).isEqualTo(3);

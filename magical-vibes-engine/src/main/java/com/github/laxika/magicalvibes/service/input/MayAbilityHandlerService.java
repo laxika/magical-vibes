@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
@@ -783,7 +784,9 @@ public class MayAbilityHandlerService {
                     GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
             gameData.resolvedMayAccepted = false;
         }
-        if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+        }
         if (gameData.interaction.isAwaitingInput()) { return; }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -929,6 +932,7 @@ public class MayAbilityHandlerService {
         if (ability.effects().isEmpty()) return null;
         CardEffect first = ability.effects().getFirst();
         if (first instanceof MayEffect may) { return may.wrapped(); }
+        if (first instanceof MayPayLandDropEffect mayPayLandDrop) { return mayPayLandDrop.wrapped(); }
         if (first instanceof MayPayManaEffect mayPay) { return mayPay.wrapped(); }
         return first;
     }

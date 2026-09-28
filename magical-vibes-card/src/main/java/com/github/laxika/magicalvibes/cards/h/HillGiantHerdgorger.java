@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "187")
+@CardRegistration(set = "HBG", collectorNumber = "213")
 public class HillGiantHerdgorger extends Card {
 
     public HillGiantHerdgorger() {

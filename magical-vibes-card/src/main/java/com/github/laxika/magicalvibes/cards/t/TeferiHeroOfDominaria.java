@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "207")
 @CardRegistration(set = "SLD", collectorNumber = "248")
+@CardRegistration(set = "MB2", collectorNumber = "90")
 public class TeferiHeroOfDominaria extends Card {
 
     public TeferiHeroOfDominaria() {

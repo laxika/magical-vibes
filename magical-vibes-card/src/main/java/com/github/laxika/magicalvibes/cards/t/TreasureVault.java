@@ -13,6 +13,10 @@ import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "261")
 @CardRegistration(set = "HOC", collectorNumber = "97")
+@CardRegistration(set = "PIP", collectorNumber = "314")
+@CardRegistration(set = "PIP", collectorNumber = "526")
+@CardRegistration(set = "PIP", collectorNumber = "842")
+@CardRegistration(set = "PIP", collectorNumber = "1054")
 public class TreasureVault extends Card {
 
     public TreasureVault() {

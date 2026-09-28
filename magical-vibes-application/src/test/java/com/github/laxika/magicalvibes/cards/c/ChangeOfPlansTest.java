@@ -64,7 +64,7 @@ class ChangeOfPlansTest extends BaseCardTest {
                 .isNotNull();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
@@ -81,12 +81,12 @@ class ChangeOfPlansTest extends BaseCardTest {
 
     private void addManaForXOne() {
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private void addManaForXTwo() {
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
     private void discardByName(String cardName) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZNR", collectorNumber = "27")
+@CardRegistration(set = "MOC", collectorNumber = "195")
 public class MaulOfTheSkyclaves extends Card {
 
     public MaulOfTheSkyclaves() {

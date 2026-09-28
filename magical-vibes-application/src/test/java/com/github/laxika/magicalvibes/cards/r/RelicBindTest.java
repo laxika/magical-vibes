@@ -130,7 +130,8 @@ class RelicBindTest extends BaseCardTest {
     @DisplayName("Damage mode does not offer an opponent with hexproof as a target")
     void damageModeCannotTargetHexproofOpponent() {
         Permanent artifact = attachAuraToOpponentArtifact();
-        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.addToBattlefieldAndReturn(player2, new ShalaiVoiceOfPlenty());
+        assertThat(gqs.playerHasHexproof(gd, player2.getId())).isTrue();
 
         artifact.tap();
         harness.inMutationScope(

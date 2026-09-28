@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "25")
 @CardRegistration(set = "MH1", collectorNumber = "160")
+@CardRegistration(set = "MB2", collectorNumber = "204")
 public class CrashingFootfalls extends Card {
 
     public CrashingFootfalls() {

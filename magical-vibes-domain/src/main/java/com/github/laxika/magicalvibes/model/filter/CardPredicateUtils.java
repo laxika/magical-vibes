@@ -123,6 +123,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
+        if (predicate instanceof CardManaValueAtMostSourceCountersPredicate) {
+            return "card with mana value at most this permanent's counters";
+        }
         if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
             return "card with mana value less than this creature's power";
         }
@@ -150,6 +153,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueLessThanXPredicate) {
             return "card with mana value less than X";
         }
+        if (predicate instanceof CardManaValueEqualsXPredicate) {
+            return "card with mana value X";
+        }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
@@ -173,6 +179,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardNameStartsWithPredicate p) {
             return "card whose name starts with " + p.prefix();
+        }
+        if (predicate instanceof CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate) {
+            return "card put into a graveyard from a non-battlefield zone this turn";
         }
         if (predicate instanceof CardNotPredicate p) {
             String inner = describeFilter(p.predicate());

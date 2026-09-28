@@ -61,6 +61,7 @@ public class BattlefieldEntryService {
 
     public void putLandOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                        Zone landPlayZone) {
+        permanent.setEnteredFromZone(landPlayZone);
         if (beginLandCardNameChoice(gameData, controllerId, permanent, landPlayZone)) {
             return;
         }
@@ -210,6 +211,11 @@ public class BattlefieldEntryService {
     public void completeSacrificePermanentToEnter(
             GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
         placementService.completeSacrificePermanentToEnter(gameData, controllerId, permanent, sacrificed);
+    }
+
+    public void completeLandCasualtyToEnter(
+            GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
+        placementService.completeLandCasualtyToEnter(gameData, controllerId, permanent, sacrificed);
     }
 
     public void completeSacrificePermanentsToEnter(

@@ -25,6 +25,7 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ArborElf());
 
         advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
@@ -42,15 +43,17 @@ class GaladrielElvenQueenTest extends BaseCardTest {
     void guidanceWinsOnTieAndDrawsACard() {
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.addToBattlefield(player1, new GaladrielElvenQueen());
         harness.enterBattlefieldAndReturn(player1, new ArborElf());
 
         advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
 
         harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
         harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest).hasSize(handSizeBefore + 1);
         assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
     }
 

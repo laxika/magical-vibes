@@ -2,14 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSourceCardFromGraveyardWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,16 +41,10 @@ public class CastSourceCardFromGraveyardWithoutPayingManaCostEffectHandler imple
             return;
         }
 
-        CardEffect castEffect = new CastCardFromGraveyardEffect(
-                new CardTruePredicate(),
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                new CardAnyOfPredicate(List.of()),
-                false,
-                true);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 graveyardCard,
                 controllerId,
-                List.of(castEffect),
+                List.of(effect),
                 graveyardCard.getName() + " — Cast it without paying its mana cost?"));
     }
 }

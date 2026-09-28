@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsCreateTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromAnywhereInLibraryReplacement;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryReplacement;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
@@ -66,8 +68,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -139,6 +143,7 @@ public class DrawService {
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
+    private static final CreateTokenEffect HULLBREACHER_TREASURE = CreateTokenEffect.ofTreasureToken(1);
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
     private final ExileBottomRandomSupport exileBottomRandomSupport;
@@ -181,6 +186,11 @@ public class DrawService {
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         resolveDrawCards(gameData, playerId, 1);
+    }
+
+    /** Resolves a draw after the controller chose its one-based position in the library. */
+    public void resolveDrawCardFromLibraryPosition(GameData gameData, UUID playerId, int position) {
+        performDrawCardAtPosition(gameData, playerId, position - 1);
     }
 
     public void resolveCyclingDrawCard(GameData gameData, UUID playerId, Card cycledCard) {
@@ -284,7 +294,23 @@ public class DrawService {
 
     private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
                                         Card cycledCard) {
+        resolveCurrentDrawCard(gameData, playerId, originalFirstDrawStepDraw, cycledCard, false);
+    }
+
+    /** Continues the pending draw through the remaining replacement effects after dredge is declined. */
+    public void continueDrawAfterDecliningDredge(GameData gameData, UUID playerId) {
+        resolveCurrentDrawCard(gameData, playerId, gameData.pendingDrawFirstDrawStepFlags.get(playerId),
+                pendingCyclingCard(gameData, playerId), true);
+    }
+
+    private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw,
+                                        Card cycledCard, boolean skipDredge) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return;
+        }
+
+        if (resolveEmptyLibraryDrawReplacement(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
@@ -319,7 +345,8 @@ public class DrawService {
             return;
         }
 
-        List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
+        List<Integer> dredgeIndices = skipDredge ? List.of()
+                : dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
             interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                     .builder(playerId, dredgeIndices, GraveyardChoiceDestination.DREDGE,
@@ -598,6 +625,37 @@ public class DrawService {
                 performDrawCard(gameData, thiefController);
                 return;
             }
+
+            Card hullbreacher = findOpponentExtraDrawsCreateTreasureSourceCard(gameData, playerId);
+            if (hullbreacher != null) {
+                UUID hullbreacherController = gameQueryService.getOpponentId(gameData, playerId);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
+                        .card(hullbreacher)
+                        .text(" makes " + gameData.playerIdToName.get(hullbreacherController)
+                                + " create a Treasure token instead.")
+                        .build());
+                permanentControlSupport.applyCreateToken(
+                        gameData, hullbreacherController, HULLBREACHER_TREASURE, 1,
+                        hullbreacher.getSetCode());
+                return;
+            }
+        }
+
+        if (!firstDrawStepDraw) {
+            FirstNonDrawStepDrawReplacement replacement =
+                    findFirstNonDrawStepDrawReplacement(gameData, playerId);
+            if (replacement != null
+                    && gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.add(replacement.source().getId())) {
+                int drawCount = replacement.effect().replacementDrawCount();
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount
+                        + " cards instead with " + replacement.source().getCard().getName() + "."));
+                for (int i = 0; i < drawCount; i++) {
+                    performDrawCard(gameData, playerId);
+                }
+                return;
+            }
         }
 
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
@@ -643,6 +701,16 @@ public class DrawService {
         if (cycloneSource != null) {
             resolveUnpredictableCycloneDrawReplacement(gameData, playerId, cycledCard, cycloneSource);
             return;
+        }
+
+        Permanent drawFromAnywhereSource = findDrawFromAnywhereSource(gameData, playerId);
+        if (drawFromAnywhereSource != null) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck != null && !deck.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData,
+                        new PendingInteraction.DrawFromLibraryPositionChoice(playerId, deck.size()));
+                return;
+            }
         }
 
         Permanent drawFromBottomSource = findDrawFromBottomSource(gameData, playerId);
@@ -937,6 +1005,22 @@ public class DrawService {
         return null;
     }
 
+    private Permanent findDrawFromAnywhereSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DrawFromAnywhereInLibraryReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
     private Permanent findDrawFromBottomSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1061,6 +1145,7 @@ public class DrawService {
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled, source.getId());
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionSourcePermanents.put(exiled.getId(), source.getId());
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
 
         gameLogService.append(gameData, GameLog.builder()
@@ -1171,6 +1256,27 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /** The opponent-controlled Hullbreacher-style source that replaces extra draws with Treasures. */
+    private Card findOpponentExtraDrawsCreateTreasureSourceCard(GameData gameData, UUID playerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        if (opponentId == null) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof OpponentExtraDrawsCreateTreasureEffect);
             if (hasEffect) {
                 return permanent.getCard();
             }
@@ -1304,6 +1410,31 @@ public class DrawService {
         return null;
     }
 
+    private FirstNonDrawStepDrawReplacement findFirstNonDrawStepDrawReplacement(
+            GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.contains(permanent.getId())) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstNonDrawStepDrawReplacementEffect replacement) {
+                    return new FirstNonDrawStepDrawReplacement(permanent, replacement);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record FirstNonDrawStepDrawReplacement(
+            Permanent source,
+            FirstNonDrawStepDrawReplacementEffect effect) {
+    }
+
     private Card findReturnFromGraveyardInsteadOfDrawSourceCard(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1315,6 +1446,65 @@ public class DrawService {
                     .anyMatch(effect -> effect instanceof ReturnFromGraveyardInsteadOfDrawEffect);
             if (hasEffect) {
                 return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves replacements whose condition is specifically an empty-library draw. These must be
+     * checked before {@link #performDrawCard} applies the normal empty-library loss.
+     */
+    private boolean resolveEmptyLibraryDrawReplacement(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        if (library != null && !library.isEmpty()) {
+            return false;
+        }
+
+        Permanent source = findEmptyLibraryDrawReplacementSource(gameData, playerId);
+        if (source == null) {
+            return false;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> creatureIndices = graveyard == null
+                ? List.of()
+                : IntStream.range(0, graveyard.size())
+                        .filter(index -> graveyard.get(index).hasType(CardType.CREATURE))
+                        .boxed()
+                        .toList();
+        if (creatureIndices.isEmpty()) {
+            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                String lossLog = gameData.playerIdToName.get(playerId)
+                        + " can't return a creature card from their graveyard and loses the game.";
+                gameLogService.append(gameData, GameLog.text(lossLog));
+                log.info("Game {} - {} loses ({}: no creature in graveyard on empty-library draw)",
+                        gameData.id, gameData.playerIdToName.get(playerId), source.getCard().getName());
+                gameOutcomeService.declareWinner(gameData, winnerId);
+            }
+            return true;
+        }
+
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(playerId, creatureIndices, GraveyardChoiceDestination.BATTLEFIELD,
+                        "Return a creature card from your graveyard to the battlefield.")
+                .mandatory(true)
+                .build());
+        return true;
+    }
+
+    private Permanent findEmptyLibraryDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(EmptyLibraryDrawReplacementEffect.class::isInstance);
+            if (hasEffect) {
+                return permanent;
             }
         }
         return null;
@@ -1691,6 +1881,24 @@ public class DrawService {
         performDrawCard(gameData, playerId, false);
     }
 
+    private void performDrawCardAtPosition(GameData gameData, UUID playerId, int position) {
+        if (preventDrawIfNeeded(gameData, playerId)) {
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            performDrawCard(gameData, playerId);
+            return;
+        }
+        if (position < 0 || position >= deck.size()) {
+            throw new IllegalArgumentException("Library position is outside the library");
+        }
+
+        Card drawn = deck.remove(position);
+        completeDrawCard(gameData, playerId, drawn);
+    }
+
     private void performDrawCardFromBottom(GameData gameData, UUID playerId) {
         performDrawCard(gameData, playerId, true);
     }
@@ -1737,6 +1945,10 @@ public class DrawService {
         }
 
         Card drawn = fromBottom ? deck.removeLast() : deck.removeFirst();
+        completeDrawCard(gameData, playerId, drawn);
+    }
+
+    private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
         gameData.addCardToHand(playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
@@ -2166,7 +2378,8 @@ public class DrawService {
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : drawEffects) {
-                    CardEffect effect = authoredEffect;
+                    CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
+                    if (effect == null) continue;
                     if (effect instanceof ExceptFirstDrawStepTriggerEffect
                             && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                         continue;
@@ -2222,6 +2435,7 @@ public class DrawService {
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         });

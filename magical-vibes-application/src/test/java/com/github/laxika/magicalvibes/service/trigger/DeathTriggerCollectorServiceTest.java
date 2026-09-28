@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -56,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -800,6 +803,45 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("handleEquippedCreatureDelayedReturn")
+    class EquippedCreatureDelayedReturn {
+
+        @Test
+        @DisplayName("Binds the dying card to the delayed return trigger")
+        void bindsDyingCard() {
+            Card equipment = createEquipment("Resurrection Orb");
+            Card dying = createCreature("Dying Creature", 2, 2);
+            Permanent perm = new Permanent(equipment);
+            var effect = new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                    false, null, 0, null, null, false, true, false);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
+
+            assertThat(svc.handleEquippedCreatureDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("Does not fire without a dying card")
+        void noDyingCard() {
+            Card equipment = createEquipment("Resurrection Orb");
+            Permanent perm = new Permanent(equipment);
+            var effect = new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                    false, null, 0, null, null, false, true, false);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
+
+            assertThat(svc.handleEquippedCreatureDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("handleExileEquippedCreature")
     class ExileEquippedCreature {
 
@@ -1478,6 +1520,31 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isFalse();
             assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("CreateTokenCopyOfDyingCreature binds the dying permanent")
+        void createTokenCopyBindsDyingPermanent() {
+            Card watcher = createCreature("Genestealer Patriarch", 4, 4);
+            Card dying = createCreature("Dead Creature", 2, 2);
+            Permanent perm = new Permanent(watcher);
+            Permanent dyingPermanent = new Permanent(dying);
+            var copyEffect = new CreateTokenCopyOfDyingCreatureEffect(
+                    new CreateTokenCopyOfTargetPermanentEffect(
+                            List.of(), java.util.Set.of(), null, null, Map.of()));
+            var ctx = new TriggerContext.CreatureDeath(
+                    dying, PLAYER2_ID, 2, 2, dyingPermanent.getId(), dyingPermanent);
+
+            assertThat(svc.handleAnyCreatureDeathCreateTokenCopy(
+                    match(perm, PLAYER1_ID, copyEffect), copyEffect, ctx)).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
+            var bound = (CreateTokenCopyOfDyingCreatureEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.getFirst().lastKnownPermanentCard(dyingPermanent.getId()))
+                    .isEqualTo(dying);
         }
 
         @Test

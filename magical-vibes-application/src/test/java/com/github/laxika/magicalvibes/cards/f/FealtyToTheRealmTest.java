@@ -36,7 +36,9 @@ class FealtyToTheRealmTest extends BaseCardTest {
         castFealtyToTheRealm(player1, creature);
 
         gd.monarchPlayerId = player2.getId();
-        harness.runStateBasedActions();
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .reconcileControl(gd));
 
         assertThat(gd.findControllerOf(creature)).isEqualTo(player2.getId());
         creature.setSummoningSick(false);
@@ -45,7 +47,7 @@ class FealtyToTheRealmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(creatureIndex)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

@@ -62,10 +62,12 @@ class KryShieldTest extends BaseCardTest {
         Permanent target = addReadyCrawGiant(player2);
 
         activateShield(archer);
+        assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
 
         declareAttackers(List.of(2));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+        assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();

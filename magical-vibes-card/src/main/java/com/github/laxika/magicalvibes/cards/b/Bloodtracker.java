@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "186")
+@CardRegistration(set = "C21", collectorNumber = "137")
 public class Bloodtracker extends Card {
 
     public Bloodtracker() {

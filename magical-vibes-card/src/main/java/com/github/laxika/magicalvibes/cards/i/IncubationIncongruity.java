@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "226")
+@CardRegistration(set = "C21", collectorNumber = "219")
 public class IncubationIncongruity extends Card {
 
     public IncubationIncongruity() {

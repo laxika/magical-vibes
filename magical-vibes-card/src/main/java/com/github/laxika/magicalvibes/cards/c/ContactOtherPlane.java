@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "52")
+@CardRegistration(set = "HBG", collectorNumber = "114")
 public class ContactOtherPlane extends Card {
 
     public ContactOtherPlane() {

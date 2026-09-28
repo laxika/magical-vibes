@@ -50,6 +50,7 @@ class VaziKeenNegotiatorTest extends BaseCardTest {
         Card drawn = new Card();
         drawn.setName("Drawn card");
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GiantGrowth()));
         harness.forceActivePlayer(player2);
 
@@ -73,6 +74,7 @@ class VaziKeenNegotiatorTest extends BaseCardTest {
         Card drawn = new Card();
         drawn.setName("Drawn card");
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
 

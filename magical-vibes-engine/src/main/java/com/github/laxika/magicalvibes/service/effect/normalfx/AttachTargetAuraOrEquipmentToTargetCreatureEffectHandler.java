@@ -41,15 +41,9 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
 
         Permanent attachment = gameQueryService.findPermanentById(gameData, targets.get(0));
         Permanent destination = gameQueryService.findPermanentById(gameData, targets.get(1));
-        if (attachment == null || destination == null || !attachment.isAttached()
+        if (attachment == null || destination == null
                 || !gameQueryService.isCreature(gameData, destination)
                 || !entry.getControllerId().equals(gameData.findControllerOf(destination))) {
-            return;
-        }
-
-        Permanent host = gameQueryService.findPermanentById(gameData, attachment.getAttachedTo());
-        if (host == null || !gameQueryService.isCreature(gameData, host)
-                || !entry.getControllerId().equals(gameData.findControllerOf(host))) {
             return;
         }
 

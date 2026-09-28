@@ -23,17 +23,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter the permanents eligible to be sacrificed
  * @param trackSacrificedPower whether the sacrificed permanents' total effective power becomes X
  * @param excludeSource whether the activated ability's source is excluded from the selection
+ * @param maximumCount maximum number of permanents that may be selected, or {@code 0} for no cap
+ * @param trackDistinctCardTypes whether an activated ability's X value is the number of distinct
+ *                               effective card types among the selected permanents
  */
 public record SacrificeAnyNumberOfPermanentsCost(PermanentPredicate filter, boolean trackSacrificedPower,
-                                                 boolean excludeSource)
+                                                 boolean excludeSource, int maximumCount,
+                                                 boolean trackDistinctCardTypes)
         implements CostEffect {
 
     public SacrificeAnyNumberOfPermanentsCost(PermanentPredicate filter) {
-        this(filter, false, false);
+        this(filter, false, false, 0, false);
     }
 
     public SacrificeAnyNumberOfPermanentsCost(PermanentPredicate filter, boolean trackSacrificedPower) {
-        this(filter, trackSacrificedPower, false);
+        this(filter, trackSacrificedPower, false, 0, false);
+    }
+
+    public SacrificeAnyNumberOfPermanentsCost(PermanentPredicate filter, boolean trackSacrificedPower,
+                                               boolean excludeSource) {
+        this(filter, trackSacrificedPower, excludeSource, 0, false);
     }
 
     @Override

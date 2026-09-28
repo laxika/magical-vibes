@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "153")
 @CardRegistration(set = "RVR", collectorNumber = "132")
+@CardRegistration(set = "HBG", collectorNumber = "200")
 public class BandTogether extends Card {
 
     public BandTogether() {

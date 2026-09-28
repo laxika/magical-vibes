@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
+import com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
@@ -62,6 +64,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -124,6 +128,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
@@ -133,7 +138,11 @@ public class LibraryChoiceHandlerService {
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport landEquilibriumSupport;
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
+    @Autowired @Lazy
+    private AbilityActivationService abilityActivationService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -186,6 +195,7 @@ public class LibraryChoiceHandlerService {
         Integer totalManaValueBound = librarySearch.totalManaValueBound();
         List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
         boolean grantHaste = librarySearch.grantHaste();
+        boolean sacrificeAtEndStep = librarySearch.sacrificeAtEndStep();
         boolean exileAtEndStep = librarySearch.exileAtEndStep();
         boolean returnToHandAtEndStep = librarySearch.returnToHandAtEndStep();
         AnimatePermanentsEffect animateFound = librarySearch.animateFound();
@@ -199,6 +209,7 @@ public class LibraryChoiceHandlerService {
         com.github.laxika.magicalvibes.model.filter.CardPredicate battlefieldIfChosenPredicate =
                 librarySearch.battlefieldIfChosenPredicate();
         boolean battlefieldIfChosenTapped = librarySearch.battlefieldIfChosenTapped();
+        boolean battlefieldIfOpponentControlsMoreLands = librarySearch.battlefieldIfOpponentControlsMoreLands();
         boolean placeBattlefieldCardsSimultaneously = librarySearch.placeBattlefieldCardsSimultaneously();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -224,7 +235,13 @@ public class LibraryChoiceHandlerService {
                 && sourceCards == null
                 && librarySearch.decisionPlayerId() == null
                 && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
-            handleLibrarySearchCast(gameData, player, activeSearch, searchCards.get(cardIndex));
+            Card selectedCard = searchCards.get(cardIndex);
+            LibraryNinjutsuEffect libraryNinjutsu = librarySearchSupport.libraryNinjutsuEffect(selectedCard);
+            if (libraryNinjutsu != null) {
+                handleLibraryNinjutsu(gameData, player, activeSearch, selectedCard, libraryNinjutsu);
+            } else {
+                handleLibrarySearchCast(gameData, player, activeSearch, selectedCard);
+            }
             return;
         }
 
@@ -248,6 +265,14 @@ public class LibraryChoiceHandlerService {
                     : deck;
         }
 
+        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                && followUp.selectedCardFollowUp() != null
+                && followUp.selectedCardFollowUp().d20BasicLandSearch() != null) {
+            handleD20BasicLandSearchChoice(gameData, player, cardIndex, searchCards, deck,
+                    remainingCount, followUp, filterPredicate, accumulatedCards);
+            return;
+        }
+
         if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
@@ -256,7 +281,7 @@ public class LibraryChoiceHandlerService {
             // Sunbird's Invocation: cast chosen card without paying, rest to bottom in random order
             if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
                 handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
-                        searchCards, sourceCards, deck);
+                        searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep);
                 return;
             }
 
@@ -364,11 +389,15 @@ public class LibraryChoiceHandlerService {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
                     Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+                    var landEquilibriumPlan = playerId.equals(battlefieldControllerId) ? null
+                            : landEquilibriumSupport.findPlan(gameData, playerId, perm);
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+                    initializeBattleDefenseCounters(perm);
+                    landEquilibriumSupport.applyPlan(gameData, playerId, perm, landEquilibriumPlan, null);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
@@ -636,6 +665,9 @@ public class LibraryChoiceHandlerService {
                 performStateBasedActionsIfResolutionComplete(gameData);
             }
 
+            if (chosenCard != null) {
+                insertSelectedCardFollowUp(gameData, followUp, chosenCard, playerId);
+            }
             finishSearchAndResume(gameData);
             return;
         }
@@ -851,6 +883,16 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.HAND
+                && battlefieldIfOpponentControlsMoreLands
+                && gameQueryService.anyOpponentControlsMoreLands(gameData, playerId)) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearchDestinationChoice(
+                    playerId, chosenCard, true));
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
             exileService.exileCard(gameData, deckOwnerId, chosenCard);
             accumulatedCards.add(chosenCard);
@@ -993,6 +1035,7 @@ public class LibraryChoiceHandlerService {
                 Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+                initializeBattleDefenseCounters(perm);
                 if (chosenCard.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                 }
@@ -1045,7 +1088,7 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
-            castCardWithoutPaying(gameData, player, chosenCard);
+            castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep);
             return;
         }
 
@@ -1424,6 +1467,7 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPlayerId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
@@ -1435,6 +1479,7 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
@@ -1449,7 +1494,7 @@ public class LibraryChoiceHandlerService {
                 if (!accumulatedCards.isEmpty()) {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
                             toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
-                            animateFound, battlefieldCounter, enterWithCounters);
+                            animateFound, battlefieldCounter, enterWithCounters, false, playerId);
                 }
                 gameData.addCardToHand(handOwnerId, chosenCard);
             } else if (remainingCount > 1) {
@@ -1461,7 +1506,7 @@ public class LibraryChoiceHandlerService {
                 allCards.add(chosenCard);
                 placeCardsOnBattlefieldSimultaneously(gameData, allCards, battlefieldControllerId, toBattlefieldTapped,
                         grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
-                        battlefieldCounter, enterWithCounters);
+                        battlefieldCounter, enterWithCounters, false, playerId);
             }
         }
 
@@ -1483,7 +1528,8 @@ public class LibraryChoiceHandlerService {
                 final int bound = manaValueBoundValue;
                 final boolean exact = manaValueExact;
                 newSearchCards = newSearchCards.stream()
-                        .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                        .filter(c -> c.hasAllCardNames()
+                                || (exact ? c.getManaValue() == bound : c.getManaValue() <= bound))
                         .toList();
             }
             if (totalManaValueBound != null) {
@@ -1492,7 +1538,7 @@ public class LibraryChoiceHandlerService {
                         .sum();
                 int remainingManaValue = totalManaValueBound - selectedManaValue;
                 newSearchCards = newSearchCards.stream()
-                        .filter(c -> c.getManaValue() <= remainingManaValue)
+                        .filter(c -> c.hasAllCardNames() || c.getManaValue() <= remainingManaValue)
                         .toList();
             }
             if (requireDifferentNames && !excludedCardNames.isEmpty()) {
@@ -1572,6 +1618,7 @@ public class LibraryChoiceHandlerService {
                     .totalManaValueBound(totalManaValueBound)
                     .excludedCardNames(excludedCardNames)
                     .grantHaste(grantHaste)
+                    .sacrificeAtEndStep(sacrificeAtEndStep)
                     .exileAtEndStep(exileAtEndStep)
                     .returnToHandAtEndStep(returnToHandAtEndStep)
                     .animateFound(animateFound)
@@ -1798,7 +1845,8 @@ public class LibraryChoiceHandlerService {
             int bound = librarySearch.manaValueBoundValue();
             boolean exact = librarySearch.manaValueExact();
             matches = matches.stream()
-                    .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                    .filter(c -> c.hasAllCardNames()
+                            || (exact ? c.getManaValue() == bound : c.getManaValue() <= bound))
                     .toList();
         }
         if (librarySearch.totalManaValueBound() != null) {
@@ -1807,7 +1855,9 @@ public class LibraryChoiceHandlerService {
             int selectedManaValue = accumulatedCards.stream()
                     .mapToInt(Card::getManaValue).sum();
             int remainingManaValue = librarySearch.totalManaValueBound() - selectedManaValue;
-            matches = matches.stream().filter(c -> c.getManaValue() <= remainingManaValue).toList();
+            matches = matches.stream()
+                    .filter(c -> c.hasAllCardNames() || c.getManaValue() <= remainingManaValue)
+                    .toList();
         }
         if (librarySearch.requireDifferentNames() && !excludedCardNames.isEmpty()) {
             Set<String> excluded = Set.copyOf(excludedCardNames);
@@ -1851,6 +1901,57 @@ public class LibraryChoiceHandlerService {
         LibrarySearchParams librarySearch = activeSearch.params();
         spellCastingService.castCardFromLibraryWhileSearching(gameData, player, librarySearch.playerId(), card);
         gameData.interaction.clearAwaitingInput();
+
+        continueLibrarySearchAfterLibraryAction(gameData, player, activeSearch, card);
+    }
+
+    private void handleLibraryNinjutsu(GameData gameData, Player player,
+                                       PendingInteraction.LibrarySearch activeSearch, Card card,
+                                       LibraryNinjutsuEffect libraryNinjutsu) {
+        UUID playerId = player.getId();
+        List<UUID> attackers = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
+                .map(Permanent::getId)
+                .toList();
+        if (attackers.isEmpty()) {
+            throw new IllegalStateException("Library ninjutsu requires an unblocked attacker you control");
+        }
+
+        playerInputService.beginPermanentChoice(
+                gameData,
+                playerId,
+                attackers,
+                new PermanentChoiceContext.LibraryNinjutsu(activeSearch, card, libraryNinjutsu.manaCost()),
+                "Choose an unblocked attacker to shuffle into your library for library ninjutsu.");
+    }
+
+    /** Completes the attacker choice made after a library-ninjutsu card was selected. */
+    public void completeLibraryNinjutsuChoice(GameData gameData, Player player, UUID attackerId,
+                                              PermanentChoiceContext.LibraryNinjutsu choice) {
+        try {
+            abilityActivationService.activateLibraryNinjutsu(
+                    gameData, player, choice.card(), choice.manaCost(), attackerId);
+        } catch (IllegalStateException exception) {
+            List<UUID> attackers = gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!attackers.isEmpty()) {
+                playerInputService.beginPermanentChoice(
+                        gameData, player.getId(), attackers, choice,
+                        "Choose an unblocked attacker to shuffle into your library for library ninjutsu.");
+            }
+            throw exception;
+        }
+
+        continueLibrarySearchAfterLibraryAction(gameData, player, choice.search(), choice.card());
+    }
+
+    private void continueLibrarySearchAfterLibraryAction(GameData gameData, Player player,
+                                                         PendingInteraction.LibrarySearch activeSearch, Card card) {
+        LibrarySearchParams librarySearch = activeSearch.params();
 
         List<Card> remainingCards = librarySearch.cards().stream()
                 .filter(searchCard -> !searchCard.getId().equals(card.getId()))
@@ -1956,6 +2057,56 @@ public class LibraryChoiceHandlerService {
                         + controllerName + "'s graveyard. The rest go to their hand.", count));
     }
 
+    private void handleD20BasicLandSearchChoice(GameData gameData, Player player, int cardIndex,
+                                                 List<Card> searchCards, List<Card> deck,
+                                                 int remainingCount, LibrarySearchFollowUp followUp,
+                                                 com.github.laxika.magicalvibes.model.filter.CardPredicate filterPredicate,
+                                                 List<Card> previouslyAccumulatedCards) {
+        List<Card> accumulatedCards = new ArrayList<>(previouslyAccumulatedCards);
+
+        if (cardIndex >= 0) {
+            Card chosenCard = searchCards.get(cardIndex);
+            deck.removeIf(card -> card.getId().equals(chosenCard.getId()));
+            accumulatedCards.add(chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+
+            List<Card> remainingMatches = deck.stream()
+                    .filter(card -> filterPredicate == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, filterPredicate, null, gameData, player.getId()))
+                    .toList();
+            if (remainingCount > 1 && !remainingMatches.isEmpty()) {
+                int newRemaining = remainingCount - 1;
+                beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(player.getId(), new ArrayList<>(remainingMatches))
+                                .remainingCount(newRemaining)
+                                .reveals(true)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .filterPredicate(filterPredicate)
+                                .accumulatedCards(accumulatedCards)
+                                .followUp(followUp)
+                                .build(),
+                        "Search your library for another basic land card to reveal ("
+                                + newRemaining + " remaining).", true));
+                return;
+            }
+        }
+
+        finishD20BasicLandSearch(gameData, player.getId(), accumulatedCards, followUp);
+    }
+
+    private void finishD20BasicLandSearch(GameData gameData, UUID controllerId, List<Card> cards,
+                                           LibrarySearchFollowUp followUp) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(followUp.selectedCardFollowUp().d20BasicLandSearch().rollEffect(cards)));
+        }
+        finishSearchAndResume(gameData);
+    }
+
     private void finishExileAndCreateTokensSearch(GameData gameData, Player player, UUID deckOwnerId,
                                                    List<Card> exiledCards, CreateTokenEffect tokenTemplate,
                                                    String sourceSetCode, boolean shuffleAfterSelection) {
@@ -1980,8 +2131,18 @@ public class LibraryChoiceHandlerService {
     /** Completes the destination choice for a revealed single-card library search. */
     public void handleLibrarySearchDestinationChosen(GameData gameData, Player player, Card card,
                                                      boolean toHand) {
+        handleLibrarySearchDestinationChosen(gameData, player, card, toHand, false);
+    }
+
+    /** Completes a library search destination choice, including conditional battlefield entry. */
+    public void handleLibrarySearchDestinationChosen(GameData gameData, Player player, Card card,
+                                                     boolean toHand, boolean toBattlefieldTapped) {
         UUID playerId = player.getId();
-        if (toHand) {
+        if (toBattlefieldTapped) {
+            placeCardsOnBattlefieldSimultaneously(gameData, List.of(card), playerId,
+                    true, false, false, false, null, null, null);
+            performStateBasedActionsIfResolutionComplete(gameData);
+        } else if (toHand) {
             gameData.addCardToHand(playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", card, " into their hand."));
@@ -2133,6 +2294,19 @@ public class LibraryChoiceHandlerService {
                                                         CounterType battlefieldCounter,
                                                         com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters,
                                                         boolean cloaked) {
+        return placeCardsOnBattlefieldSimultaneously(gameData, cards, ownerId, tapped, grantHaste,
+                exileAtEndStep, returnToHandAtEndStep, animateFound, battlefieldCounter,
+                enterWithCounters, cloaked, ownerId);
+    }
+
+    private List<Permanent> placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
+                                                        UUID ownerId, boolean tapped,
+                                                        boolean grantHaste, boolean exileAtEndStep,
+                                                        boolean returnToHandAtEndStep,
+                                                        AnimatePermanentsEffect animateFound,
+                                                        CounterType battlefieldCounter,
+                                                        com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters,
+                                                        boolean cloaked, UUID puttingPlayerId) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -2157,6 +2331,8 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
             Permanent perm = new Permanent(card, Zone.LIBRARY);
+            var landEquilibriumPlan = puttingPlayerId.equals(ownerId) ? null
+                    : landEquilibriumSupport.findPlan(gameData, puttingPlayerId, perm);
             if (cloaked) {
                 perm.setFaceDownAsCloaked();
             }
@@ -2165,6 +2341,8 @@ public class LibraryChoiceHandlerService {
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
                     enterWithCounters);
+            initializeBattleDefenseCounters(perm);
+            landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
             if (tapped) {
@@ -2242,6 +2420,13 @@ public class LibraryChoiceHandlerService {
         }
     }
 
+    private void initializeBattleDefenseCounters(Permanent permanent) {
+        Integer defense = permanent.getCard().getDefense();
+        if (permanent.getCard().hasType(CardType.BATTLE) && defense != null) {
+            permanent.setCounterCount(CounterType.DEFENSE, defense);
+        }
+    }
+
     /**
      * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
      * starts the follow-up library search and returns true. Otherwise returns false.
@@ -2254,14 +2439,20 @@ public class LibraryChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(playerId);
 
         List<Card> matchingCards = deck.stream()
-                .filter(card -> !pick.basicOnly()
-                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
+                .filter(card -> pick.filter() != null
+                        ? predicateEvaluationService.matchesCardPredicate(
+                                card, pick.filter(), null, gameData, playerId)
+                        : !pick.basicOnly()
+                                || (card.hasType(CardType.LAND)
+                                && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .filter(card -> pick.subtype() == null || card.getSubtypes().contains(pick.subtype()))
                 .toList();
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-            String description = pick.subtype() == null
+            String description = pick.description() != null
+                    ? pick.description() + " cards"
+                    : pick.subtype() == null
                     ? (pick.basicOnly() ? "basic land cards" : "land cards")
                     : (pick.basicOnly() ? "basic " : "") + pick.subtype().getDisplayName() + " cards";
             String logMsg = playerName + " finds no more " + description + ". Library is shuffled.";
@@ -2269,7 +2460,9 @@ public class LibraryChoiceHandlerService {
             return false;
         }
 
-        String cardDescription = pick.subtype() == null
+        String cardDescription = pick.description() != null
+                ? pick.description()
+                : pick.subtype() == null
                 ? (pick.basicOnly() ? "basic land" : "land")
                 : (pick.basicOnly() ? "basic " : "") + pick.subtype().getDisplayName();
         String prompt = "Search your library for a " + cardDescription + " card to put into your hand.";
@@ -2587,6 +2780,15 @@ public class LibraryChoiceHandlerService {
             } else {
                 handleDubiousChallengeOpponentChoice(gameData, allRevealedCards, cardIds, dubiousChallenge);
             }
+            return;
+        }
+
+        PendingReturnTwoExiledWithSourceCards returnTwoExiled =
+                gameData.pollPendingInteraction(PendingReturnTwoExiledWithSourceCards.class);
+        if (returnTwoExiled != null) {
+            returnTwoExiledCardsWithSourceHandler.completeChoice(
+                    gameData, returnTwoExiled, allRevealedCards, cardIds);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -3586,7 +3788,8 @@ public class LibraryChoiceHandlerService {
      */
     private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
                                                 boolean canFailToFind, List<Card> searchCards,
-                                                List<Card> sourceCards, List<Card> deck) {
+                                                List<Card> sourceCards, List<Card> deck,
+                                                boolean grantHaste, boolean sacrificeAtEndStep) {
         String playerName = player.getUsername();
 
         Card chosenCard = null;
@@ -3636,7 +3839,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        castCardWithoutPaying(gameData, player, chosenCard);
+        castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep);
     }
 
     private void handleCastWithoutPayingAndShuffleLibraryChoice(
@@ -4056,7 +4259,7 @@ public class LibraryChoiceHandlerService {
             List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));
             spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
             boolean needsTarget = EffectResolution.needsSpellCastTarget(
-                    effects, evaluationCard.isAura(), evaluationCard.isEnchantPlayer());
+                    effects, evaluationCard.isAuraThatRequiresAttachment(), evaluationCard.isEnchantPlayer());
             if (!needsTarget || !computeCastWithoutPayingTargets(gameData, evaluationCard, effects, controllerId).isEmpty()) {
                 legalOptions.add(option);
                 modeIndices.add(modeIndex);
@@ -4097,7 +4300,7 @@ public class LibraryChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", card, "."));
 
         boolean needsTarget = EffectResolution.needsSpellCastTarget(
-                spellEffects, card.isAura(), card.isEnchantPlayer());
+                spellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         if (needsTarget) {
             List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, card, spellEffects,
                     ctx.controllerId());
@@ -4221,20 +4424,35 @@ public class LibraryChoiceHandlerService {
      * because where it goes instead is the calling effect's decision, not this method's.
      */
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard) {
-        castCardWithoutPaying(gameData, player, chosenCard, null);
+        castCardWithoutPaying(gameData, player, chosenCard, null, false, false);
     }
 
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
                                        Integer discoverValue) {
+        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, false, false);
+    }
+
+    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
+                                       Integer discoverValue, boolean grantHaste,
+                                       boolean sacrificeAtEndStep) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
+        boolean creatureSpell = chosenCard.hasType(CardType.CREATURE);
+        Card castCard = chosenCard;
+        if (creatureSpell && sacrificeAtEndStep) {
+            castCard = chosenCard.createRuntimeCopy();
+            castCard.setSacrificeAtEndStep(true);
+        }
+        if (creatureSpell && grantHaste) {
+            gameData.spellsGrantedHasteOnEntry.add(castCard.getId());
+        }
 
         // Cast the chosen card without paying its mana cost
-        StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
+        StackEntryType spellType = mapCardTypeToSpellType(castCard);
 
-        LegalModalOptions modalOptions = legalModalOptions(gameData, chosenCard, playerId);
+        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId);
         if (modalOptions != null) {
-            Card runtimeCard = chosenCard.createRuntimeCopy();
+            Card runtimeCard = castCard.createRuntimeCopy();
             playerInputService.beginLibraryCastModeChoice(gameData, playerId, runtimeCard,
                     modalOptions.effect(), spellType, modalOptions.modeIndices(), discoverValue);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", runtimeCard,
@@ -4244,44 +4462,44 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(castCard.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(chosenCard)) {
-            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, chosenCard);
+        if (EffectResolution.needsTarget(castCard)) {
+            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, castCard);
 
             if (validTargets.isEmpty()) {
                 throw new IllegalStateException("Uncastable card reached castCardWithoutPaying: "
-                        + chosenCard.getName() + " — callers must check canCastWithoutPaying first");
+                        + castCard.getName() + " — callers must check canCastWithoutPaying first");
             }
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
-                            chosenCard, playerId, spellEffects, spellType, null, discoverValue));
+                            castCard, playerId, spellEffects, spellType, null, discoverValue));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
-                    "Choose a target for " + chosenCard.getName() + ".");
+                    "Choose a target for " + castCard.getName() + ".");
 
             gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ",
-                    chosenCard, " without paying its mana cost — choosing target."));
+                    castCard, " without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} (Sunbird's Invocation), choosing target",
-                    gameData.id, playerName, chosenCard.getName());
+                    gameData.id, playerName, castCard.getName());
             return;
         }
 
         // Non-targeted spell — put directly on stack
         gameData.stack.add(new StackEntry(
-                spellType, chosenCard, playerId, chosenCard.getName(),
+                spellType, castCard, playerId, castCard.getName(),
                 spellEffects, 0, (UUID) null, null
         ));
 
-        gameData.recordSpellCast(playerId, chosenCard);
+        gameData.recordSpellCast(playerId, castCard);
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.textCardText(
-                playerName + " casts ", chosenCard, " without paying its mana cost."));
+                playerName + " casts ", castCard, " without paying its mana cost."));
         log.info("Game {} - {} casts {} (Sunbird's Invocation) without paying mana",
-                gameData.id, playerName, chosenCard.getName());
+                gameData.id, playerName, castCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, false);
         checkDiscoverTriggers(gameData, playerId, discoverValue);
         // The free spell now sits on the stack, but the ability that cast it is still parked
         // mid-resolution. Only the shared tail drains that park; a bare view invalidation leaves it

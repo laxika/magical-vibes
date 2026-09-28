@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "M14", collectorNumber = "224")
 @CardRegistration(set = "A25", collectorNumber = "232")
 @CardRegistration(set = "LCC", collectorNumber = "116")
+@CardRegistration(set = "MOC", collectorNumber = "384")
 public class StrionicResonator extends Card {
 
     public StrionicResonator() {

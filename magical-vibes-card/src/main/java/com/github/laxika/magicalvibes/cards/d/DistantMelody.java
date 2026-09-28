@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEff
 @CardRegistration(set = "HA1", collectorNumber = "5")
 @CardRegistration(set = "ECC", collectorNumber = "45")
 @CardRegistration(set = "LCC", collectorNumber = "154")
+@CardRegistration(set = "MOC", collectorNumber = "220")
 public class DistantMelody extends Card {
 
     public DistantMelody() {

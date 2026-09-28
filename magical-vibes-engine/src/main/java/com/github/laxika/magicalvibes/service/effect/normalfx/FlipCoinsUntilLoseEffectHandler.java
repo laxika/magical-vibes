@@ -48,7 +48,9 @@ public class FlipCoinsUntilLoseEffectHandler implements NormalEffectHandlerBean 
             if (!won) {
                 return;
             }
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+            if (result.isActualCoinFlip()) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+            }
         }
 
         dispatch(gameData, entry, flipEffect.allWinsEffect());

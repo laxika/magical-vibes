@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "212")
+@CardRegistration(set = "HBG", collectorNumber = "228")
 public class WildShape extends Card {
 
     public WildShape() {

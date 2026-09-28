@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 
 @CardRegistration(set = "AFR", collectorNumber = "107")
+@CardRegistration(set = "HBG", collectorNumber = "159")
 public class GrimWanderer extends Card {
 
     public GrimWanderer() {

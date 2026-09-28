@@ -20,6 +20,10 @@ import java.util.Set;
 @CardRegistration(set = "GTC", collectorNumber = "142")
 @CardRegistration(set = "PIO", collectorNumber = "204")
 @CardRegistration(set = "RVR", collectorNumber = "163")
+@CardRegistration(set = "PIP", collectorNumber = "210")
+@CardRegistration(set = "PIP", collectorNumber = "474")
+@CardRegistration(set = "PIP", collectorNumber = "738")
+@CardRegistration(set = "PIP", collectorNumber = "1002")
 @CardRegistration(set = "NCC", collectorNumber = "327")
 public class AssembleTheLegion extends Card {
 

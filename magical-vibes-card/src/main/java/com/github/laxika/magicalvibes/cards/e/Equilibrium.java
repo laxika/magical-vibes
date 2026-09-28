@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "71")
 @CardRegistration(set = "EXO", collectorNumber = "32")
+@CardRegistration(set = "MB2", collectorNumber = "162")
 public class Equilibrium extends Card {
 
     public Equilibrium() {

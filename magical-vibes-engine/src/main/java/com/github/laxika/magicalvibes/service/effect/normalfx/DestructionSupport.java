@@ -991,6 +991,11 @@ public class DestructionSupport {
                         gameData, controllerId, token)
                 : null;
         int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
+        int additionalFoodTokenCount = TokenCreationReplacementSupport.additionalFoodTokenCount(
+                gameData, controllerId, totalAmount);
+        CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalFoodToken(token)
+                : null;
         List<CreateTokenEffect> academyManufactorTokenBlueprints =
                 TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
                         gameData, controllerId, token, totalAmount);
@@ -1012,6 +1017,9 @@ public class DestructionSupport {
         }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);
+        }
+        for (int i = 0; i < additionalFoodTokenCount; i++) {
+            tokenBlueprints.add(additionalFoodToken);
         }
         for (CreateTokenEffect tokenToCreate : tokenBlueprints) {
             int tokenPower = tokenToCreate.tokenPower();

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "290")
+@CardRegistration(set = "C21", collectorNumber = "69")
 public class TrudgeGarden extends Card {
 
     public TrudgeGarden() {

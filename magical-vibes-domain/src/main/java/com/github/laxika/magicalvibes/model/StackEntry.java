@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,8 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
+    /** Effects to evaluate once this stack entry has finished resolving. */
+    private List<CardEffect> postResolutionEffects = List.of();
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
     /** Index of the effect currently being dispatched by EffectResolutionService. */
     @Setter private int resolvingEffectIndex = -1;
@@ -65,6 +68,8 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
+    private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
     /** Effective colors of declared targets just before they left the battlefield. */
     private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
@@ -684,6 +689,8 @@ public class StackEntry {
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
+        this.postResolutionEffects = source.postResolutionEffects.isEmpty()
+                ? List.of() : new ArrayList<>(source.postResolutionEffects);
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
         this.resolvingEffectIndex = source.resolvingEffectIndex;
@@ -696,6 +703,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.returnedPermanentIds.addAll(source.returnedPermanentIds);
         this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
@@ -950,6 +958,19 @@ public class StackEntry {
 
     public void replaceEffectsToResolve(List<CardEffect> effects) {
         effectsToResolve = List.copyOf(effects);
+    }
+
+    public void addPostResolutionEffect(CardEffect effect) {
+        List<CardEffect> updated = new ArrayList<>(postResolutionEffects);
+        updated.add(effect);
+        postResolutionEffects = updated;
+    }
+
+    /** Returns and clears the one-shot effects waiting for this entry to finish resolving. */
+    public List<CardEffect> takePostResolutionEffects() {
+        List<CardEffect> effects = postResolutionEffects;
+        postResolutionEffects = List.of();
+        return effects;
     }
 
     /**
@@ -1463,6 +1484,16 @@ public class StackEntry {
 
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
+    }
+
+    public void clearReturnedPermanentIds() {
+        returnedPermanentIds.clear();
+    }
+
+    public void rememberReturnedPermanent(UUID permanentId) {
+        if (permanentId != null) {
+            returnedPermanentIds.add(permanentId);
+        }
     }
 
     /**

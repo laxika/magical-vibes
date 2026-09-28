@@ -15,9 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KillerServiceTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Creates one Food token for the opponent")
+    @DisplayName("Creates one Food token for one opponent")
     void createsFoodForEachOpponent() {
-        harness.addToBattlefield(player1, new KillerService());
+        harness.enterBattlefieldAndReturn(player1, new KillerService());
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(1);
     }
@@ -25,16 +26,17 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Pays and sacrifices a token to create a Rhino Warrior")
     void paysAndSacrificesTokenToCreateRhinoWarrior() {
-        harness.addToBattlefield(player1, new KillerService());
+        harness.enterBattlefieldAndReturn(player1, new KillerService());
+        harness.passBothPriorities();
         Permanent food = findPermanent(player1, "Food");
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         advanceToEndStep();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, food.getId());
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
         Permanent rhino = findPermanent(player1, "Rhino Warrior");
@@ -45,7 +47,8 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the end-step ability keeps the token")
     void mayBeDeclined() {
-        harness.addToBattlefield(player1, new KillerService());
+        harness.enterBattlefieldAndReturn(player1, new KillerService());
+        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         advanceToEndStep();

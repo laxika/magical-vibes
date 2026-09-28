@@ -28,6 +28,7 @@ public record GameStateMessage(
         List<Integer> lifeTotals,
         List<Integer> poisonCounters,
         List<Integer> energyCounters,
+        List<Integer> radCounters,
         List<CardView> hand,
         List<CardView> opponentHand,
         int mulliganCount,
@@ -87,7 +88,7 @@ public record GameStateMessage(
         DayNight dayNight,
         PlanechaseView planechase,
         UUID monarchPlayerId) {
-        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, null);
+        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, List.of(), hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, null);
     }
 
     public GameStateMessage(MessageType type,

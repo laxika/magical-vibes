@@ -44,8 +44,10 @@ public class FlipCoinsWithResultEffectsEffectHandler implements NormalEffectHand
             boolean won = result.heads();
             if (won) {
                 wins++;
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
-            } else {
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                }
+            } else if (result.isActualCoinFlip()) {
                 triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
             }
             gameLogService.append(gameData, GameLog.text(playerName

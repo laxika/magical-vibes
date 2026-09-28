@@ -22,7 +22,7 @@ class OwynShieldmaidenTest extends BaseCardTest {
     @Test
     void createsTwoHastyTramplingHumanKnightsAfterAnotherHumanEnters() {
         harness.addToBattlefield(player1, new OwynShieldmaiden());
-        harness.addToBattlefield(player1, new YouthfulKnight());
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
 
         advanceToCombat(player1);
 
@@ -41,7 +41,7 @@ class OwynShieldmaidenTest extends BaseCardTest {
     @Test
     void drawsAfterCreatingTokensWhenTheyBringHumanCountToSix() {
         harness.addToBattlefield(player1, new OwynShieldmaiden());
-        harness.addToBattlefield(player1, new YouthfulKnight());
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
         harness.addToBattlefield(player1, new YouthfulKnight());
         harness.addToBattlefield(player1, new YouthfulKnight());
         harness.addToBattlefield(player1, new YouthfulKnight());

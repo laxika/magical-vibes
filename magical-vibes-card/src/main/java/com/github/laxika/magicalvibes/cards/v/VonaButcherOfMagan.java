@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "XLN", collectorNumber = "231")
 @CardRegistration(set = "SLD", collectorNumber = "1413")
 @CardRegistration(set = "LCC", collectorNumber = "293")
+@CardRegistration(set = "MOC", collectorNumber = "342")
 public class VonaButcherOfMagan extends Card {
 
     public VonaButcherOfMagan() {

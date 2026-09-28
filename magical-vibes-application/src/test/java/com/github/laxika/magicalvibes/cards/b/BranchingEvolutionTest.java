@@ -27,7 +27,7 @@ class BranchingEvolutionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimberlandGuide()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, List.of(bears.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -35,15 +35,16 @@ class BranchingEvolutionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("does not double counters put on a creature an opponent controls")
-    void doesNotDoubleOpponentCreatureCounters() {
+    @DisplayName("does not double +1/+1 counters on a creature an opponent controls")
+    void doesNotDoubleOnOpponentCreature() {
         harness.addToBattlefield(player1, new BranchingEvolution());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new TimberlandGuide()));
         harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, List.of(bears.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -58,7 +59,7 @@ class BranchingEvolutionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pentavus()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent pentavus = findPermanent(player1, "Pentavus");

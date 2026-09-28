@@ -54,6 +54,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 case CONTROLLER -> resolveController(gameData, entry, e);
                 case DEFENDING_PLAYER -> resolveDefendingPlayer(gameData, entry, e);
                 case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
+                case SELECTED_OPPONENTS -> resolveSelectedOpponents(gameData, entry, e);
                 case EACH_OTHER_OPPONENT -> resolveEachOtherOpponent(gameData, entry, e);
                 case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
                 case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
@@ -143,6 +144,19 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                     ? evaluateAmount(gameData, entry, e, controllerId)
                     : evaluateAmount(gameData, entry, e, playerId);
             int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+            damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
+        }
+    }
+
+    private void resolveSelectedOpponents(GameData gameData, StackEntry entry,
+                                           DealDamageToPlayersEffect e) {
+        if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        UUID controllerId = entry.getControllerId();
+        for (UUID playerId : e.selectedPlayerIds()) {
+            if (!gameData.playerIds.contains(playerId) || playerId.equals(controllerId)) continue;
+            int amount = evaluateAmount(gameData, entry, e, controllerId);
+            int damage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
     }

@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "174")
 @CardRegistration(set = "TD2", collectorNumber = "2")
+@CardRegistration(set = "MB2", collectorNumber = "228")
 public class Memnite extends Card {
 }

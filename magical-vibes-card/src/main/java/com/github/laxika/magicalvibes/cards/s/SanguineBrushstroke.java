@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "YMID", collectorNumber = "32")
+@CardRegistration(set = "MB2", collectorNumber = "260")
 public class SanguineBrushstroke extends Card {
 
     public SanguineBrushstroke() {

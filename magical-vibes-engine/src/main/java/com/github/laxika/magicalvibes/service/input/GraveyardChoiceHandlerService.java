@@ -135,6 +135,7 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -312,6 +313,7 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -339,7 +341,8 @@ public class GraveyardChoiceHandlerService {
             // Owner of the graveyard the card is leaving — used to return it if a continuous effect
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
             UUID cardGraveyardOwnerId = null;
-            if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
+            if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY) {
                 // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
                 if (cardPool != null) {
                     card = cardPool.get(cardIndex);
@@ -407,7 +410,7 @@ public class GraveyardChoiceHandlerService {
                                 next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                                 next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                                 next.distinctManaValues(), next.distinctNames(), excludedManaValues,
-                                next.excludedCardIds()));
+                                next.excludedCardIds(), next.choosingPlayerId()));
                     }
                 }
                 case BATTLEFIELD -> {
@@ -572,6 +575,18 @@ public class GraveyardChoiceHandlerService {
                         }
                     }
                 }
+                case RANDOM_PLAYER_GRAVEYARD_COPY -> {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry == null) {
+                        throw new IllegalStateException("No pending effect resolution for graveyard copy choice");
+                    }
+                    pendingEntry.setTargetId(card.getId());
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " chooses ", card,
+                            " to exile from their graveyard."));
+                    log.info("Game {} - {} chooses {} for a random-player graveyard copy ability",
+                            gameData.id, player.getUsername(), card.getName());
+                }
                 case MAY_ABILITY_TARGET -> {
                     // Resolution-time flow: set target on pending entry and resume resolution
                     if (gameData.resolvedMayTargetingEntry != null) {
@@ -632,7 +647,7 @@ public class GraveyardChoiceHandlerService {
                         next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                         next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
                         next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
-                        excludedCardIds));
+                        excludedCardIds, next.choosingPlayerId()));
             }
         }
 

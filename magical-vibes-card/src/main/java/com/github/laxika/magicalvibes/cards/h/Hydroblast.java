@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "ICE", collectorNumber = "72")
 @CardRegistration(set = "ME1", collectorNumber = "37")
 @CardRegistration(set = "EMA", collectorNumber = "55")
+@CardRegistration(set = "MB2", collectorNumber = "165")
 public class Hydroblast extends Card {
 
     public Hydroblast() {

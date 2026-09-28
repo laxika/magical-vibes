@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "228")
+@CardRegistration(set = "C21", collectorNumber = "46")
 public class VeinwitchCoven extends Card {
 
     public VeinwitchCoven() {

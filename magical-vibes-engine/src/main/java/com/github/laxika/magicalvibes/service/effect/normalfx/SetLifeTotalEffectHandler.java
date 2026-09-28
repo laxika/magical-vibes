@@ -88,6 +88,7 @@ public class SetLifeTotalEffectHandler implements NormalEffectHandlerBean {
 
     private void applyAndLog(GameData gameData, UUID playerId, int newLife) {
         int currentLife = gameData.getLife(playerId);
+        newLife = gameData.capLifeTotal(playerId, newLife);
         if (lifeSupport.applySetLifeTotal(gameData, playerId, newLife) && currentLife != newLife) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(

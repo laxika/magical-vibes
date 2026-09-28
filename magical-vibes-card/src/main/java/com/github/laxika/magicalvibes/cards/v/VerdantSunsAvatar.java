@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "213")
 @CardRegistration(set = "LCC", collectorNumber = "262")
+@CardRegistration(set = "C21", collectorNumber = "208")
 public class VerdantSunsAvatar extends Card {
 
     public VerdantSunsAvatar() {

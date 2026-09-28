@@ -40,7 +40,7 @@ class GimliOfTheGlitteringCavesTest extends BaseCardTest {
         gimli.setAttacking(true);
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
     }

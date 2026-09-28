@@ -10,4 +10,9 @@ public interface GlobalAttackCostEffect extends CardEffect {
      * Generic mana required for each creature declared as an attacker.
      */
     int attackCostPerCreature();
+
+    /** Whether the tax also applies to attacks against the defender's planeswalkers. */
+    default boolean protectsPlaneswalkers() {
+        return true;
+    }
 }

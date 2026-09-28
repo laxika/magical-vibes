@@ -321,6 +321,9 @@ public class CardChoiceHandlerService {
         Integer sacrificeUnlessPayGenericReduction = null;
         CounterType artifactCounterType = null;
         int artifactCounterCount = 0;
+        CounterType entryCounterType = null;
+        int entryCounterCount = 0;
+        CardPredicate entryCounterCondition = null;
         CardEffect thenEffect = null;
         CardPredicate thenCondition = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
@@ -352,6 +355,9 @@ public class CardChoiceHandlerService {
             blockingAttackerId = hc.blockingAttackerId();
             artifactCounterType = hc.artifactCounterType();
             artifactCounterCount = hc.artifactCounterCount();
+            entryCounterType = hc.entryCounterType();
+            entryCounterCount = hc.entryCounterCount();
+            entryCounterCondition = hc.entryCounterCondition();
             thenEffect = hc.thenEffect();
             thenCondition = hc.thenCondition();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
@@ -444,6 +450,9 @@ public class CardChoiceHandlerService {
                 UUID sourceCardId = gameData.pendingEffectResolutionEntry == null
                         || gameData.pendingEffectResolutionEntry.getCard() == null
                         ? null : gameData.pendingEffectResolutionEntry.getCard().getId();
+                boolean applyEntryCounters = entryCounterType != null
+                        && (entryCounterCondition == null || predicateEvaluationService.matchesCardPredicate(
+                        card, entryCounterCondition, sourceCardId, gameData, playerId));
                 boolean enterTappedAndAttacking = enterTappedAndAttackingIf != null
                         && predicateEvaluationService.matchesCardPredicate(card, enterTappedAndAttackingIf,
                         sourceCardId, gameData, playerId);
@@ -452,7 +461,9 @@ public class CardChoiceHandlerService {
                 Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, selectedEnterTapped, grantHaste,
                         sacrificeAtEndStep, returnToHandAtEndStep, attachEquipmentCardId, selectedEnterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                        cloaked, returnExiledSourceCardId, blockingAttackerId);
+                        cloaked, returnExiledSourceCardId, blockingAttackerId,
+                        applyEntryCounters ? entryCounterType : null,
+                        applyEntryCounters ? entryCounterCount : 0);
                 if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData,
                             gameData.pendingEffectResolutionEntry, enteredPermanent,
@@ -1241,7 +1252,8 @@ public class CardChoiceHandlerService {
                     exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
             return;
         }
 
@@ -1291,6 +1303,13 @@ public class CardChoiceHandlerService {
         }
         log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
 
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null && exileChoice.chosenCardThenEffect() != null) {
+            pendingEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(exileChoice.chosenCardThenEffect().withChosenCard(card)));
+        }
+
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
@@ -1301,7 +1320,8 @@ public class CardChoiceHandlerService {
                     exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -1315,7 +1335,8 @@ public class CardChoiceHandlerService {
                     exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
                     exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect());
         } else {
             gameData.interaction.clearAwaitingInput();
 
@@ -2231,7 +2252,8 @@ public class CardChoiceHandlerService {
                                              int faceDownPower, int faceDownToughness,
                                              Set<CardType> faceDownCardTypes,
                                              boolean cloaked,
-                                             UUID returnExiledSourceCardId, UUID blockingAttackerId) {
+                                             UUID returnExiledSourceCardId, UUID blockingAttackerId,
+                                             CounterType entryCounterType, int entryCounterCount) {
         Permanent permanent = new Permanent(card);
         if (cloaked) {
             permanent.setFaceDownAsCloaked();
@@ -2251,6 +2273,10 @@ public class CardChoiceHandlerService {
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        if (entryCounterType != null && entryCounterCount > 0) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData,
+                    gameData.pendingEffectResolutionEntry, permanent, entryCounterType, entryCounterCount);
+        }
         if (blockingAttackerId != null) {
             combatBlockService.markTokenAsBlocking(gameData, permanent,
                     gameQueryService.findPermanentById(gameData, blockingAttackerId));

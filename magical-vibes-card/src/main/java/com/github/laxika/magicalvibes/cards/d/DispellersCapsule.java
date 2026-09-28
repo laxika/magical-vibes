@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "8")
 @CardRegistration(set = "MMA", collectorNumber = "12")
+@CardRegistration(set = "C21", collectorNumber = "89")
 public class DispellersCapsule extends Card {
 
     public DispellersCapsule() {

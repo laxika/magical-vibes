@@ -9,6 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "327")
+@CardRegistration(set = "PIP", collectorNumber = "291")
+@CardRegistration(set = "PIP", collectorNumber = "509")
+@CardRegistration(set = "PIP", collectorNumber = "819")
+@CardRegistration(set = "PIP", collectorNumber = "1037")
+@CardRegistration(set = "40K", collectorNumber = "294")
 public class SkycloudExpanse extends Card {
 
     public SkycloudExpanse() {

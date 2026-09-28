@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoLibraryEffect;
 
 @CardRegistration(set = "YMID", collectorNumber = "44")
+@CardRegistration(set = "MB2", collectorNumber = "261")
 public class ToralfsDisciple extends Card {
 
     public ToralfsDisciple() {

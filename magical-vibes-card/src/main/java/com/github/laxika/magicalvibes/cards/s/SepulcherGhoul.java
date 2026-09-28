@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "118")
+@CardRegistration(set = "HBG", collectorNumber = "166")
 public class SepulcherGhoul extends Card {
 
     public SepulcherGhoul() {

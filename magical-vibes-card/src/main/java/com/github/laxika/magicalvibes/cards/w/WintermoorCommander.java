@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "205")
+@CardRegistration(set = "MOC", collectorNumber = "345")
 public class WintermoorCommander extends Card {
 
     public WintermoorCommander() {

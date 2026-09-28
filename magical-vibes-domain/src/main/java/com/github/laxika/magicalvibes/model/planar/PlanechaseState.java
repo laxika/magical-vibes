@@ -21,6 +21,10 @@ public final class PlanechaseState {
     public long rollSequence;
     public PlanarDieResult lastRoll;
     public UUID lastRollPlayerId;
+    /** Turn number in which the currently face-up planes were last entered by planeswalking. */
+    public int planeswalkedToTurn = -1;
+    /** Plane names entered by planeswalking during that turn. */
+    public final Set<String> planeswalkedToNamesThisTurn = new HashSet<>();
 
     public int rollCost(UUID playerId, int turn) {
         return rollTurn == turn ? specialActionRolls.getOrDefault(playerId, 0) : 0;
@@ -45,6 +49,8 @@ public final class PlanechaseState {
         copy.rollSequence = rollSequence;
         copy.lastRoll = lastRoll;
         copy.lastRollPlayerId = lastRollPlayerId;
+        copy.planeswalkedToTurn = planeswalkedToTurn;
+        copy.planeswalkedToNamesThisTurn.addAll(planeswalkedToNamesThisTurn);
         return copy;
     }
 }

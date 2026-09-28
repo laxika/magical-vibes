@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "MH1", collectorNumber = "91")
+@CardRegistration(set = "MOC", collectorNumber = "248")
 public class FirstSphereGargantua extends Card {
 
     public FirstSphereGargantua() {

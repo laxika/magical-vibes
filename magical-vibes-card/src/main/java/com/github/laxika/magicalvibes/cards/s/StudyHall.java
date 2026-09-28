@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "407")
+@CardRegistration(set = "C21", collectorNumber = "80")
 public class StudyHall extends Card {
 
     public StudyHall() {

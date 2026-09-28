@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.Set;
 
 @CardRegistration(set = "DMU", collectorNumber = "231")
+@CardRegistration(set = "FIC", collectorNumber = "346")
 public class HerosHeirloom extends Card {
 
     public HerosHeirloom() {

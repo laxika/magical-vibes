@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "241")
+@CardRegistration(set = "C21", collectorNumber = "49")
 public class CreativeTechnique extends Card {
 
     public CreativeTechnique() {

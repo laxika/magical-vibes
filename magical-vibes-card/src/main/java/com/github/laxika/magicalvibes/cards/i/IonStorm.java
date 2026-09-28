@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "68")
 @CardRegistration(set = "2XM", collectorNumber = "132")
+@CardRegistration(set = "MOC", collectorNumber = "286")
 public class IonStorm extends Card {
 
     public IonStorm() {

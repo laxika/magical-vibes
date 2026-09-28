@@ -69,6 +69,9 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
     }
 
     private boolean containsEffect(CardEffect candidate, CardEffect target) {
+        if (candidate == null) {
+            return false;
+        }
         if (candidate.equals(target)) {
             return true;
         }
@@ -76,8 +79,7 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
             return sequence.steps().stream().anyMatch(step -> containsEffect(step, target));
         }
         if (candidate instanceof MayEffect may) {
-            return containsEffect(may.wrapped(), target)
-                    || may.elseEffect() != null && containsEffect(may.elseEffect(), target);
+            return containsEffect(may.wrapped(), target) || containsEffect(may.elseEffect(), target);
         }
         return false;
     }

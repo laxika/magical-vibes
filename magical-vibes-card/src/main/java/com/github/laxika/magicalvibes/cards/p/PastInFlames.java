@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "SS3", collectorNumber = "4")
 @CardRegistration(set = "TSR", collectorNumber = "350")
 @CardRegistration(set = "SIS", collectorNumber = "43")
+@CardRegistration(set = "40K", collectorNumber = "206")
 public class PastInFlames extends Card {
 
     public PastInFlames() {

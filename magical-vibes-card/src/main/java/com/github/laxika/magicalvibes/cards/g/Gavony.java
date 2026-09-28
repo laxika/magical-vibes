@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "OPC2", collectorNumber = "15")
 @CardRegistration(set = "OPCA", collectorNumber = "27")
+@CardRegistration(set = "MOC", collectorNumber = "142")
 public class Gavony extends Card {
 
     public Gavony() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredi
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "346")
+@CardRegistration(set = "C21", collectorNumber = "76")
 public class ElementalistsPalette extends Card {
 
     public ElementalistsPalette() {

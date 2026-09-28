@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "61")
 @CardRegistration(set = "PIO", collectorNumber = "369")
+@CardRegistration(set = "40K", collectorNumber = "195")
 public class BileBlight extends Card {
 
     public BileBlight() {

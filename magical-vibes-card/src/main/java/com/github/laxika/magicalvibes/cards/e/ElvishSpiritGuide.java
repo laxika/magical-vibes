@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "ME2", collectorNumber = "159")
 @CardRegistration(set = "SLD", collectorNumber = "423")
 @CardRegistration(set = "DMR", collectorNumber = "157")
+@CardRegistration(set = "MB2", collectorNumber = "68")
 public class ElvishSpiritGuide extends Card {
 
     public ElvishSpiritGuide() {

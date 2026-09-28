@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "EMA", collectorNumber = "199")
 @CardRegistration(set = "SLD", collectorNumber = "251")
 @CardRegistration(set = "SLD", collectorNumber = "1689")
+@CardRegistration(set = "MB2", collectorNumber = "80")
 public class DackFayden extends Card {
 
     public DackFayden() {

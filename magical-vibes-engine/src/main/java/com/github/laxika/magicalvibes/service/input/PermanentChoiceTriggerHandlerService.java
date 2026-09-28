@@ -322,6 +322,7 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
                                             PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
         boolean isPlayerTarget = targetId != null && gameData.playerIdToName.containsKey(targetId);
+        boolean isExiledCardTarget = targetId != null && gameData.findExiledCard(targetId) != null;
         boolean declined = (slt.optionalTarget() || hasOptionalSingleTarget(slt.sourceCard(), slt.effects()))
                 && isPlayerTarget
                 && targetId.equals(slt.controllerId());
@@ -336,6 +337,9 @@ public class PermanentChoiceTriggerHandlerService {
         );
         if (!declined) {
             entry.setTargetId(targetId);
+        }
+        if (!declined && isExiledCardTarget) {
+            entry.setTargetZone(Zone.EXILE);
         }
         entry.setSourcePermanentSnapshot(slt.sourcePermanentSnapshot());
         if (slt.eventValue() != null) {
@@ -1083,6 +1087,8 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.attackedTargetId() != null) {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
+            entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
             log.info("Game {} - {} attack trigger declined targeting", gameData.id, att.sourceCard().getName());
@@ -2261,6 +2267,10 @@ public class PermanentChoiceTriggerHandlerService {
         StackEntry entry;
         StackEntry selectedSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
         boolean spellTarget = selectedSpell != null && isSpell(selectedSpell);
+        boolean declined = !spellTarget
+                && etbTtt.effects().stream().anyMatch(OptionalTargetEffect.class::isInstance)
+                && etbTtt.controllerId().equals(targetId)
+                && gameData.playerIdToName.containsKey(targetId);
         if (spellTarget) {
             entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -2283,7 +2293,7 @@ public class PermanentChoiceTriggerHandlerService {
                     etbTtt.controllerId(),
                      etbTtt.sourceCard().getName() + "'s ETB ability",
                      new ArrayList<>(etbTtt.effects()),
-                     targetId,
+                     declined ? (UUID) null : targetId,
                      gameData.findExiledCard(targetId) != null ? Zone.EXILE : null,
                      etbTtt.sourcePermanentId()
              );
@@ -2307,10 +2317,18 @@ public class PermanentChoiceTriggerHandlerService {
         }
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, targetId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(etbTtt.sourceCard()).text("'s ETB ability targets " + targetName + ".").build());
-        log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id, etbTtt.sourceCard().getName(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(etbTtt.sourceCard())
+                    .text("'s ETB ability targets nothing.").build());
+            log.info("Game {} - {} ETB token-target trigger declined targeting", gameData.id,
+                    etbTtt.sourceCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, targetId);
+            gameLogService.append(gameData, GameLog.builder().card(etbTtt.sourceCard())
+                    .text("'s ETB ability targets " + targetName + ".").build());
+            log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id,
+                    etbTtt.sourceCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);

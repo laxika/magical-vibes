@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
@@ -32,6 +33,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,14 +52,17 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
                     entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
-                    precedingGroupSizes, entry.getXValue(), List.of(), false));
+                    precedingGroupSizes, queueEffect.useEventValueAsX()
+                            ? entry.getEventValue() : entry.getXValue(), List.of(), false,
+                    null, null, entry.getEventValue()));
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }
         if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
                 || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0, xValue));
             return;
         }
         if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget(),
@@ -76,6 +81,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (queueEffect.useEventValueAsX()) {
             reflexiveEntry.setEventValue(entry.getEventValue());
         }
+        reflexiveEntry.setAttackedTargetId(entry.getAttackedTargetId());
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             reflexiveEntry.setTriggeringPermanentId(entry.getTargetId());
         }
@@ -111,6 +117,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withSourcePermanentId(entry.getSourcePermanentId())
+                .withDefendingPlayerId(defendingPlayerId(gameData, entry.getAttackedTargetId()))
                 .withXValue(xValue);
 
         List<UUID> validPermanentIds = new ArrayList<>();
@@ -156,13 +163,22 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 entry.getCard(), entry.getControllerId(), List.of(effect), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), entry.getEventValue(), xValue,
-                optionalTarget));
+                entry.getSourcePermanentSnapshot(), entry.getEventValue(), xValue, optionalTarget,
+                entry.getAttackedTargetId()));
         playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), validPermanentIds,
                 validPlayerIds, entry.getCard().getName() + "'s reflexive ability - Choose a target.");
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 "'s reflexive ability - choose a target."));
         return true;
+    }
+
+    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
     private boolean isSpellStackEntry(StackEntry entry) {

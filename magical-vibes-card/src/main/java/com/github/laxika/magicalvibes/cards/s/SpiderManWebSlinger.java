@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "16")
 @CardRegistration(set = "OM1", collectorNumber = "9")
+@CardRegistration(set = "MSC", collectorNumber = "776")
 public class SpiderManWebSlinger extends Card {
 
     public SpiderManWebSlinger() {

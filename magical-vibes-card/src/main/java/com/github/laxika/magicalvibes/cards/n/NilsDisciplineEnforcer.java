@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOC", collectorNumber = "158")
+@CardRegistration(set = "C21", collectorNumber = "20")
 public class NilsDisciplineEnforcer extends Card {
 
     public NilsDisciplineEnforcer() {

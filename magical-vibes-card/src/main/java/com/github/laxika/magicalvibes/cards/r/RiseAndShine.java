@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "58")
+@CardRegistration(set = "MOC", collectorNumber = "233")
 public class RiseAndShine extends Card {
 
     public RiseAndShine() {

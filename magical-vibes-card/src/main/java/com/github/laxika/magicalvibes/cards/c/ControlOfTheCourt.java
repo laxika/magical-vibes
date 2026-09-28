@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "105")
+@CardRegistration(set = "MB2", collectorNumber = "189")
 public class ControlOfTheCourt extends Card {
 
     public ControlOfTheCourt() {

@@ -96,6 +96,8 @@ class CardImmutabilityArchTest {
             "SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler", // changes a fresh runtime copy
             "VentureIntoDungeonEffectHandler", // assembles a fresh initiative source card
             "CardChoiceHandlerService", // applies perpetual changes to fresh runtime copies
+            "LibraryChoiceHandlerService", // marks a fresh runtime copy for end-step sacrifice before casting
+            "ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler", // stamps owner on a fresh runtime copy when missing
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 

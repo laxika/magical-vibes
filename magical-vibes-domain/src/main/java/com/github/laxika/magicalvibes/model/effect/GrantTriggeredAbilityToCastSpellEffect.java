@@ -7,5 +7,5 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  * battlefield.
  */
 public record GrantTriggeredAbilityToCastSpellEffect(EffectSlot slot, CardEffect grantedEffect)
-        implements CardEffect {
+        implements TriggeringSpellReferencingEffect {
 }

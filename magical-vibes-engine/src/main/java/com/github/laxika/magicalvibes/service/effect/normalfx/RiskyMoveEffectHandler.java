@@ -120,11 +120,15 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean {
                 + sourceName + coinFlipService.replacementDetails(result) + "."));
 
         if (result.heads()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            if (result.isActualCoinFlip()) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            }
             return;
         }
 
-        triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        if (result.isActualCoinFlip()) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        }
         Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
         if (creature != null) {
             creatureControlService.applyControlEffect(gameData, opponentId, creature,

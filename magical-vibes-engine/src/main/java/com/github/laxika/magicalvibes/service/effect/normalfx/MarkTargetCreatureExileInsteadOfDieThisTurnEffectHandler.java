@@ -27,5 +27,9 @@ public class MarkTargetCreatureExileInsteadOfDieThisTurnEffectHandler implements
             return;
         }
         target.setExileInsteadOfDieThisTurn(true);
+        var mark = (MarkTargetCreatureExileInsteadOfDieThisTurnEffect) effect;
+        if (mark.trackWithSource()) {
+            target.setExileInsteadOfDieSourcePermanentId(entry.getSourcePermanentId());
+        }
     }
 }

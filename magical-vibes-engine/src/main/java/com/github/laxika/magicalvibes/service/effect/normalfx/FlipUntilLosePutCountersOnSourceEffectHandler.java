@@ -38,14 +38,18 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler implements NormalEffe
                     + entry.getCard().getName() + coinFlipService.replacementDetails(result) + "."));
 
             if (!won) {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(
-                        gameData, entry.getControllerId());
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerLosesCoinFlipTriggers(
+                            gameData, entry.getControllerId());
+                }
                 break;
             }
 
             wins++;
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(
-                    gameData, entry.getControllerId());
+            if (result.isActualCoinFlip()) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(
+                        gameData, entry.getControllerId());
+            }
         }
 
         if (wins > 0) {

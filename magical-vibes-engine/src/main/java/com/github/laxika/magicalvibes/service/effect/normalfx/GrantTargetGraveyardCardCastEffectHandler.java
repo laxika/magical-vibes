@@ -69,7 +69,8 @@ public class GrantTargetGraveyardCardCastEffectHandler implements NormalEffectHa
 
         gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
                 new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(), entry.getControllerId(),
-                        false, e.exileInsteadOfGraveyard(), e.additionalGenericCost(), e.anyManaType()));
+                        false, e.exileInsteadOfGraveyard(), e.additionalGenericCost(), e.anyManaType(),
+                        false, e.additionalGraveyardExileCount(), e.escape()));
 
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard,
                 " to be cast from a graveyard."));

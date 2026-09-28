@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "317")
 @CardRegistration(set = "SLD", collectorNumber = "1838")
 @CardRegistration(set = "SOC", collectorNumber = "157")
+@CardRegistration(set = "C21", collectorNumber = "19")
 @CardRegistration(set = "DSC", collectorNumber = "100")
 public class MonologueTax extends Card {
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "175")
+@CardRegistration(set = "HBG", collectorNumber = "202")
 public class ChooseYourWeapon extends Card {
 
     public ChooseYourWeapon() {

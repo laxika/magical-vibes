@@ -53,7 +53,11 @@ class EnchantersBaneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EnchantersBane());
         harness.addToBattlefield(player2, new BadMoon());
 
-        moveToEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.turn.StepTriggerService.class)
+                .handleEndStepTriggers(gd);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

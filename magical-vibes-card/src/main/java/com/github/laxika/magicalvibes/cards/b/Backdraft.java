@@ -7,18 +7,15 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtByTargetPlayerSorc
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerCastSorceryThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.ChooseSorceryCasterForBackdraftEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "132")
 public class Backdraft extends Card {
 
     public Backdraft() {
-        target(new PlayerPredicateTargetFilter(
-                new PlayerCastSorceryThisTurnPredicate(),
-                "Target player must have cast a sorcery this turn."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
+        addEffect(EffectSlot.SPELL, new ChooseSorceryCasterForBackdraftEffect());
+        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
                 new Divided(new DamageDealtByTargetPlayerSorceryThisTurn(), 2),
-                DamageRecipient.TARGET_PLAYER));
+                DamageRecipient.CHOSEN_PLAYER));
     }
 }
