@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "236")
+@CardRegistration(set = "MKC", collectorNumber = "117")
 public class ShimmerDragon extends Card {
 
     public ShimmerDragon() {

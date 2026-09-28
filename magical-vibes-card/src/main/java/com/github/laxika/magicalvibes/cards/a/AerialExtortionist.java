@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "11")
 @CardRegistration(set = "NCC", collectorNumber = "112")
+@CardRegistration(set = "MKC", collectorNumber = "54")
 public class AerialExtortionist extends Card {
 
     public AerialExtortionist() {

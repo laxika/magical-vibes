@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "69")
 @CardRegistration(set = "SLD", collectorNumber = "1763")
+@CardRegistration(set = "MKC", collectorNumber = "128")
 public class DoomWhisperer extends Card {
 
     public DoomWhisperer() {

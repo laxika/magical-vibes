@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "LTC", collectorNumber = "227")
 @CardRegistration(set = "OTC", collectorNumber = "180")
 @CardRegistration(set = "TDC", collectorNumber = "231")
+@CardRegistration(set = "MKC", collectorNumber = "161")
 @CardRegistration(set = "AFC", collectorNumber = "138")
 @CardRegistration(set = "C20", collectorNumber = "55")
 public class ShinyImpetus extends Card {

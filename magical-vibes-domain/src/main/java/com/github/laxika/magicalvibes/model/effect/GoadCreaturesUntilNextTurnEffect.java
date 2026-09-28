@@ -7,10 +7,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * evaluated continuously, so creatures that enter later are affected as well.
  */
 public record GoadCreaturesUntilNextTurnEffect(PermanentPredicate affectedPredicate)
-        implements CombatAttackRequirementEffect {
+        implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     @Override
     public boolean requiresAttackAtOtherPlayerIfAble() {
+        return true;
+    }
+
+    @Override
+    public boolean makesGoaded() {
         return true;
     }
 }

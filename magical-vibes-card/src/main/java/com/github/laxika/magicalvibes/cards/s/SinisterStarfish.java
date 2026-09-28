@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "99")
+@CardRegistration(set = "MKC", collectorNumber = "140")
 public class SinisterStarfish extends Card {
 
     public SinisterStarfish() {

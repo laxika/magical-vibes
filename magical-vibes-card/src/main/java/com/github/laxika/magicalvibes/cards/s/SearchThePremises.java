@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "29")
+@CardRegistration(set = "MKC", collectorNumber = "81")
 public class SearchThePremises extends Card {
 
     public SearchThePremises() {

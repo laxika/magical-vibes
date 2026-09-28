@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "E02", collectorNumber = "30")
 @CardRegistration(set = "GN3", collectorNumber = "88")
 @CardRegistration(set = "CMD", collectorNumber = "138")
+@CardRegistration(set = "MKC", collectorNumber = "164")
 public class VowOfLightning extends Card {
 
     public VowOfLightning() {

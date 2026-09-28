@@ -453,6 +453,11 @@ public class DamagePreventionService {
             // Divine Light: prevent all damage to creatures controlled by the protected player.
             if (controllerId != null && gameData.playersWithAllCreatureDamagePrevented.contains(controllerId)) return 0;
             if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
+            if (isCombatDamage && gameQueryService.isPlaneswalker(gameData, permanent)
+                    && controllerId != null
+                    && gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.contains(controllerId)) {
+                return 0;
+            }
         }
         // Protean Hydra / Unbreathing Horde / Rock Hydra / Ugin's Conjurant / Magma Pummeler:
         // counter-based damage replacement.
@@ -1095,6 +1100,11 @@ public class DamagePreventionService {
             }
         }
         if (combatDamage && gameData.preventAllCombatDamageToPlayers) {
+            notifyControllerDamagePrevented(gameData, playerId, damage);
+            return 0;
+        }
+        if (combatDamage
+                && gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.contains(playerId)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "DTK", collectorNumber = "181")
+@CardRegistration(set = "MKC", collectorNumber = "169")
 public class DenProtector extends Card {
 
     public DenProtector() {

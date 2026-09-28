@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "55")
+@CardRegistration(set = "MKC", collectorNumber = "122")
 public class ThoughtboundPhantasm extends Card {
 
     public ThoughtboundPhantasm() {

@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "343")
 @CardRegistration(set = "40K", collectorNumber = "238")
 @CardRegistration(set = "LTC", collectorNumber = "278")
+@CardRegistration(set = "MKC", collectorNumber = "227")
 @CardRegistration(set = "LCC", collectorNumber = "111")
 public class EverflowingChalice extends Card {
 

@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "222")
 @CardRegistration(set = "RVR", collectorNumber = "242")
+@CardRegistration(set = "MKC", collectorNumber = "203")
 public class ConniveConcoct extends Card {
 
     public ConniveConcoct() {

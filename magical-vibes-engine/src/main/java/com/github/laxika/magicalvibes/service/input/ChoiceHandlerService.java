@@ -166,6 +166,8 @@ public class ChoiceHandlerService {
             sailIntoTheWestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
             eachOpponentChoosesMasterOfCeremoniesEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PrisonersDilemmaEffectHandler
+            prisonersDilemmaEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CouncilDilemmaEffectHandler
@@ -893,6 +895,17 @@ public class ChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             eachOpponentChoosesMasterOfCeremoniesEffectHandler.completeChoice(
                     gameData, colorName, player.getId(), ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.PrisonersDilemmaChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Prisoner's Dilemma choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            prisonersDilemmaEffectHandler.completeChoice(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }

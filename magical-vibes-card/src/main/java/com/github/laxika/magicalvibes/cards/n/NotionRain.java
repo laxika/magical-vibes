@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "193")
+@CardRegistration(set = "MKC", collectorNumber = "217")
 public class NotionRain extends Card {
 
     public NotionRain() {

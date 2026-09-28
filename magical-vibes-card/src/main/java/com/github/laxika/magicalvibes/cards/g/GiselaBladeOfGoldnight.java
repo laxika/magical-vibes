@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToController
 @CardRegistration(set = "CMM", collectorNumber = "338")
 @CardRegistration(set = "CMM", collectorNumber = "579")
 @CardRegistration(set = "CMM", collectorNumber = "682")
+@CardRegistration(set = "MKC", collectorNumber = "211")
 public class GiselaBladeOfGoldnight extends Card {
 
     public GiselaBladeOfGoldnight() {

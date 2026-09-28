@@ -1993,6 +1993,19 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Prisoner's Dilemma: the current opponent secretly chooses silence or snitch. */
+    record PrisonersDilemmaChoice(UUID currentPlayerId, List<UUID> remainingOpponentIds,
+                                  Map<UUID, String> choices, String sourceName) implements ChoiceContext {
+        public static final String SILENCE = "Silence";
+        public static final String SNITCH = "Snitch";
+        public static final List<String> OPTIONS = List.of(SILENCE, SNITCH);
+
+        public PrisonersDilemmaChoice {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            choices = Map.copyOf(new java.util.LinkedHashMap<>(choices));
+        }
+    }
+
     /** Expropriate: the current player voted for time or money. */
     record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                              List<UUID> moneyVoterIds, int timeVotes, String sourceName)

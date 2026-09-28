@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "166")
+@CardRegistration(set = "MKC", collectorNumber = "206")
 public class DimirSpybug extends Card {
 
     public DimirSpybug() {

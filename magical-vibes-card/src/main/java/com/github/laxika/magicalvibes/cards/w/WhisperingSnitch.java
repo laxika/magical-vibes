@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "90")
+@CardRegistration(set = "MKC", collectorNumber = "144")
 public class WhisperingSnitch extends Card {
 
     public WhisperingSnitch() {

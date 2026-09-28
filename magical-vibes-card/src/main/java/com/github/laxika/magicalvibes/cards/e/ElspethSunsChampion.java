@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "SLC", collectorNumber = "75")
 @CardRegistration(set = "PIO", collectorNumber = "321")
 @CardRegistration(set = "MOC", collectorNumber = "182")
+@CardRegistration(set = "MKC", collectorNumber = "62")
 public class ElspethSunsChampion extends Card {
 
     public ElspethSunsChampion() {

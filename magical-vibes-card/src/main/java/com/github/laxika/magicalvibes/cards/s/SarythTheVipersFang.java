@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "197")
 @CardRegistration(set = "DBL", collectorNumber = "197")
+@CardRegistration(set = "MKC", collectorNumber = "185")
 public class SarythTheVipersFang extends Card {
 
     public SarythTheVipersFang() {

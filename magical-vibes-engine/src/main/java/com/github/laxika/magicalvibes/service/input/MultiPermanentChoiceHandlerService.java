@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherCreatureWithManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -115,6 +116,8 @@ public class MultiPermanentChoiceHandlerService {
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
     private final ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler
             chooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
+    private final CopySpellForEachOtherCreatureWithManaEffectHandler
+            copySpellForEachOtherCreatureWithManaEffectHandler;
     private final RemoveCounterFromTwoCreaturesThenEffectHandler removeCounterFromTwoCreaturesThenEffectHandler;
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
@@ -125,6 +128,9 @@ public class MultiPermanentChoiceHandlerService {
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler exileUntilSourceLeavesHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffectHandler
+            eachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             attachAnyNumberOfControlledEquipmentHandler;
@@ -242,6 +248,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CirdanTheShipwrightEffectHandler cirdanTheShipwrightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .MobVerdictEffectHandler mobVerdictEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExpropriateEffectHandler expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
@@ -326,6 +334,11 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two players must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves exileChoice
+                && permanentIds.size() != exileChoice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + exileChoice.requiredCount()
+                    + " permanents must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice
                 && permanentIds.size() > 1) {
             throw new IllegalStateException("At most one creature may be selected");
@@ -351,6 +364,7 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.SecretCouncilChoice
                 || context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice
                 || context instanceof MultiPermanentChoiceContext.CirdanVoteChoice
+                || context instanceof MultiPermanentChoiceContext.MobVerdictChoice
                 || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
                 && permanentIds.size() != 1) {
@@ -957,6 +971,8 @@ public class MultiPermanentChoiceHandlerService {
             handleElrondFellowshipChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice ctx) {
             handleCirdanVoteChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.MobVerdictChoice ctx) {
+            handleMobVerdictChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CirdanHandChoice ctx) {
             handleCirdanHandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice ctx) {
@@ -1022,6 +1038,9 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificePermanentsToEnter(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PayManaPerCreatureUntap ctx) {
             handlePayManaPerCreatureUntap(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CopySpellForEachOtherCreatureWithMana ctx) {
+            copySpellForEachOtherCreatureWithManaEffectHandler.completeChoice(gameData, permanentIds, ctx);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap ctx) {
             handleStaticOrbUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource ctx) {
@@ -1105,6 +1124,12 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.ExileOwnNontokenCreaturesUntilSourceLeaves ctx) {
             exileUntilSourceLeavesHandler.completeChoice(gameData, permanentIds, ctx.sourcePermanentId());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves ctx) {
+            eachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesHandler.completeChoice(
+                    gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.SagaChapterCounterDistribution ctx) {
             handleSagaChapterCounterDistribution(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CounterDistribution ctx) {
@@ -3428,6 +3453,9 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice vote) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
                     "player:" + selectedIds.getFirst());
+        } else if (context instanceof MultiPermanentChoiceContext.MobVerdictChoice vote) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
+                    "player:" + selectedIds.getFirst());
         }
     }
 
@@ -3456,6 +3484,17 @@ public class MultiPermanentChoiceHandlerService {
     private void handleCirdanVoteChoice(GameData gameData, List<UUID> playerIds,
             MultiPermanentChoiceContext.CirdanVoteChoice context) {
         cirdanTheShipwrightEffectHandler.completeVote(gameData, playerIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleMobVerdictChoice(GameData gameData, List<UUID> playerIds,
+            MultiPermanentChoiceContext.MobVerdictChoice context) {
+        mobVerdictEffectHandler.completeVote(gameData, playerIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

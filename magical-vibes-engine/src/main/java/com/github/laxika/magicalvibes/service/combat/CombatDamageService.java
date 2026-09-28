@@ -4086,6 +4086,12 @@ public class CombatDamageService {
             damage *= gameQueryService.getDamageToRecipientMultiplier(
                     gameData, pwControllerId, sourceControllerId, true);
             if (gameQueryService.isDamagePreventable(gameData, true)
+                    && pwControllerId != null
+                    && gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.contains(pwControllerId)) {
+                state.combatDamageDealt.merge(atk, 0, Integer::sum);
+                return;
+            }
+            if (gameQueryService.isDamagePreventable(gameData, true)
                     && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;

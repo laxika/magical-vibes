@@ -476,6 +476,8 @@ public class BattlefieldPlacementService {
             return;
         }
         boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof UnleashEffect)
+                || gameQueryService.getGrantedEffects(gameData, permanent).stream()
                 .anyMatch(e -> e instanceof UnleashEffect);
         if (!unleash || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
             return;

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -94,6 +95,12 @@ public class FaceUpTriggerCollectorService {
         } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
             resolvedEffect = conditional.wrapped();
         }
+        CardEffect authoredEffect = effect;
+        resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                match.gameData(), match.permanent(), resolvedEffect);
+        if (resolvedEffect == null) {
+            return false;
+        }
         boolean untapsTurnedPermanent = resolvedEffect instanceof UntapPermanentsEffect untap
                 && untap.scope() == TapUntapScope.TARGET;
         if (!untapsTurnedPermanent && resolvedEffect.targetSpec().declaredTarget() != null) {
@@ -103,6 +110,7 @@ public class FaceUpTriggerCollectorService {
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers when {} is turned face up (awaiting target)",
                     match.gameData().id, sourceCard.getName(), faceUp.turnedPermanent().getCard().getName());
+            OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), authoredEffect);
             return true;
         }
         StackEntry entry = new StackEntry(
@@ -119,6 +127,7 @@ public class FaceUpTriggerCollectorService {
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), authoredEffect);
         log.info("Game {} - {} triggers when {} is turned face up",
                 match.gameData().id, sourceCard.getName(), faceUp.turnedPermanent().getCard().getName());
         return true;

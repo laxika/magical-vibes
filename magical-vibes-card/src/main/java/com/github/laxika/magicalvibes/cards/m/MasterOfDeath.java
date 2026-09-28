@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "205")
+@CardRegistration(set = "MKC", collectorNumber = "216")
 public class MasterOfDeath extends Card {
 
     public MasterOfDeath() {

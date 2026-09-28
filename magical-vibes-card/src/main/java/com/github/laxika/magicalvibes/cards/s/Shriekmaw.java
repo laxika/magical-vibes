@@ -26,6 +26,7 @@ import java.util.Set;
 @CardRegistration(set = "CMD", collectorNumber = "100")
 @CardRegistration(set = "C14", collectorNumber = "160")
 @CardRegistration(set = "C15", collectorNumber = "137")
+@CardRegistration(set = "MKC", collectorNumber = "139")
 @CardRegistration(set = "AFC", collectorNumber = "110")
 @CardRegistration(set = "C20", collectorNumber = "136")
 public class Shriekmaw extends Card {

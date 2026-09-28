@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "347")
+@CardRegistration(set = "MKC", collectorNumber = "222")
 public class AncientStoneIdol extends Card {
 
     public AncientStoneIdol() {

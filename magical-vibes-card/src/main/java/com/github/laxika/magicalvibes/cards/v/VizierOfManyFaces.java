@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "74")
 @CardRegistration(set = "AKR", collectorNumber = "87")
+@CardRegistration(set = "MKC", collectorNumber = "123")
 public class VizierOfManyFaces extends Card {
 
     public VizierOfManyFaces() {

@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
@@ -851,6 +852,8 @@ public class AmountEvaluationService {
                     targetEffectivePower(gameData, ctx);
             case TargetPowerPlusToughness ignored ->
                     targetEffectivePowerPlusToughness(gameData, ctx);
+            case TotalPowerOfTargetGroup targetGroup ->
+                    totalPowerOfTargetGroup(gameData, targetGroup, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
             case TargetCardsManaValueSum ignored ->
@@ -2808,6 +2811,21 @@ public class AmountEvaluationService {
         return ctx.stackEntry() == null
                 ? 0
                 : ctx.stackEntry().targetsForGroup(amount.groupIndex()).size();
+    }
+
+    private int totalPowerOfTargetGroup(GameData gameData, TotalPowerOfTargetGroup amount,
+                                        AmountContext ctx) {
+        if (ctx.stackEntry() == null) {
+            return 0;
+        }
+        int total = 0;
+        for (UUID targetId : ctx.stackEntry().targetsForGroup(amount.groupIndex())) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && gameQueryService.isCreature(gameData, target)) {
+                total += gameQueryService.getEffectivePower(gameData, target);
+            }
+        }
+        return total;
     }
 
     private int opponentsWithMoreCardsInHandThanController(GameData gameData, AmountContext ctx) {

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SOI", collectorNumber = "271")
 @CardRegistration(set = "DSC", collectorNumber = "272")
 @CardRegistration(set = "TDC", collectorNumber = "359")
+@CardRegistration(set = "MKC", collectorNumber = "259")
 public class DrownyardTemple extends Card {
 
     public DrownyardTemple() {

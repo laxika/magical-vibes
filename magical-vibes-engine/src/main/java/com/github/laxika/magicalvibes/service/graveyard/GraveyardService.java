@@ -1928,6 +1928,10 @@ public class GraveyardService {
             if (libraryTracked != null) {
                 libraryTracked.remove(leavingCard.getId());
             }
+            Set<UUID> surveilled = gameData.cardsSurveilledThisTurn.get(ownerId);
+            if (surveilled != null) {
+                surveilled.remove(leavingCard.getId());
+            }
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             firePerpetualTriggeredAbilities(gameData, ownerId, List.of(leavingCard));
@@ -1954,6 +1958,10 @@ public class GraveyardService {
         Set<UUID> libraryTracked = gameData.cardsPutIntoGraveyardFromLibraryThisTurn.get(ownerId);
         if (libraryTracked != null) {
             leavingCards.forEach(card -> libraryTracked.remove(card.getId()));
+        }
+        Set<UUID> surveilled = gameData.cardsSurveilledThisTurn.get(ownerId);
+        if (surveilled != null) {
+            leavingCards.forEach(card -> surveilled.remove(card.getId()));
         }
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));

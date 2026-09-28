@@ -1020,6 +1020,12 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Feather, Radiant Arbiter: choose creatures to receive spell copies and pay per creature. */
+    record CopySpellForEachOtherCreatureWithMana(
+            com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureWithManaEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tetravus second upkeep trigger: exile the chosen tokens (each of which must be a token
      * {@code sourcePermanentId} created, tracked in {@code GameData.sourceCreatedTokens}), then put
@@ -1032,6 +1038,18 @@ public sealed interface MultiPermanentChoiceContext {
     /** The controller chose other nontoken creatures to exile until the source leaves. */
     record ExileOwnNontokenCreaturesUntilSourceLeaves(UUID sourcePermanentId)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** Each player chooses the required number of matching permanents they control to exile until the source leaves. */
+    record EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves(
+            List<UUID> remainingPlayerIds, List<UUID> chosenIds, PermanentPredicate filter,
+            Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId, String sourceName,
+            int maxCount, int requiredCount) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
     }
 
     /**
@@ -1327,6 +1345,18 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Círdan the Shipwright: a player chose a permanent card to put onto the battlefield. */
+    /** Mob Verdict: the current player secretly voted for another player. */
+    record MobVerdictChoice(UUID effectControllerId,
+                            java.util.List<UUID> remainingVoterIds,
+                            java.util.Map<UUID, Integer> votes,
+                            String sourceName)
+            implements MultiPermanentChoiceContext {
+        public MobVerdictChoice {
+            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
+            votes = java.util.Map.copyOf(votes);
+        }
+    }
+
     record CirdanHandChoice(UUID playerId,
                             java.util.List<UUID> remainingPlayerIds,
                             java.util.List<UUID> chosenCardIds,
