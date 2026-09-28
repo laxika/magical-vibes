@@ -38,6 +38,7 @@ class LifestreamsBlessingTest extends BaseCardTest {
 
     @Test
     void foretellCastDrawsAndGainsTwiceTheGreatestPower() {
+        harness.addToBattlefield(player1, new HillGiant());
         List<Card> library = List.of(new Forest(), new Island(), new Mountain());
         LifestreamsBlessing blessing = new LifestreamsBlessing();
         harness.setLibrary(player1, library);
@@ -47,7 +48,7 @@ class LifestreamsBlessingTest extends BaseCardTest {
         harness.foretell(player1, 0);
 
         gd.turnNumber++;
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromExile(player1, blessing.getId());
         harness.passBothPriorities();

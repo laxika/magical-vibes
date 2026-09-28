@@ -330,6 +330,21 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 sourcePermanentSnapshot, eventValue, discardedCardSelectionControllerId, discardedCardIds);
     }
 
+    /** The same reflexive discard follow-up with a fixed draw count performed first. */
+    public DiscardFollowUp withRummageDrawCount(int drawCount) {
+        return new DiscardFollowUp(drawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount,
+                thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
+                thenEffectAlternateCardType, thenEffectAlternate,
+                targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue,
+                discardedCardSelectionControllerId, discardedCardIds);
+    }
+
     /**
      * The same follow-up with the each-player remainder (both choosers and their per-player amounts)
      * advanced past the current chooser.

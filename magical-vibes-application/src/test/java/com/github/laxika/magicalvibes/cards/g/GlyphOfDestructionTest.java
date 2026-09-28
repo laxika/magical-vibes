@@ -36,7 +36,7 @@ class GlyphOfDestructionTest extends BaseCardTest {
         harness.castInstant(player2, 0, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(12);
         assertThat(wall.getEffectiveToughness()).isEqualTo(1);
 
         resolveCombat(player1);
@@ -78,11 +78,11 @@ class GlyphOfDestructionTest extends BaseCardTest {
         harness.castInstant(player1, 0, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(12);
 
         resolveCombat(player2);
 
-        assertThat(wall.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
     }
 
     @Test

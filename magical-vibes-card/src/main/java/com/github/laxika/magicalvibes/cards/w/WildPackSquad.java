@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "23")
 @CardRegistration(set = "OM1", collectorNumber = "11")
+@CardRegistration(set = "MSC", collectorNumber = "781")
 public class WildPackSquad extends Card {
 
     public WildPackSquad() {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MRD", collectorNumber = "230")
+@CardRegistration(set = "MB2", collectorNumber = "140")
 public class ProteusStaff extends Card {
 
     public ProteusStaff() {

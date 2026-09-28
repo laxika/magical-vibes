@@ -220,7 +220,7 @@ class GameQueryServiceTest {
 
     @Test
     void urzaLandTypesAreNotCreatureTypes() {
-        for (CardSubtype subtype : List.of(CardSubtype.URZAS, CardSubtype.MINE,
+        for (CardSubtype subtype : List.of(CardSubtype.URZAS, CardSubtype.ULAMOGS, CardSubtype.MINE,
                 CardSubtype.POWER_PLANT, CardSubtype.TOWER)) {
             assertThat(gqs.isCreatureSubtype(subtype)).isFalse();
             assertThat(com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport

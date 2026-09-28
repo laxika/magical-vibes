@@ -179,8 +179,8 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A chosen source remains protected after changing color")
-    void chosenSourceRemainsProtectedAfterChangingColor() {
+    @DisplayName("A chosen source that changes color is no longer protected")
+    void chosenSourceChangingColorIsNoLongerProtected() {
         harness.setLife(player1, 20);
         addCreatureReady(player1, new CircleOfProtectionWhite());
         Permanent source = addCreatureReady(player2, new PearledUnicorn());
@@ -198,8 +198,9 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         source.setAttacking(true);
         resolveCombat(player2);
 
-        harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.sourceId().equals(source.getId()));
     }
 
     @Test

@@ -55,7 +55,7 @@ public class TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToTough
                 new PermanentChoiceContext.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughness(
                         targetPlayerId, entry, e.tokenTemplate()));
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, validIds,
-                entry.getCard().getName() + " — Choose an attacking creature to sacrifice.");
+                entry.getCard().getName() + " â€” Choose an attacking creature to sacrifice.");
     }
 
     public void sacrificeAndCreateTokens(GameData gameData, Permanent creature, UUID sacrificingPlayerId,

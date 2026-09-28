@@ -88,13 +88,18 @@ class FlashConscriptionTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new BorosRecruit());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new FlashConscription(), new FlashConscription()));
+        FlashConscription first = new FlashConscription();
+        FlashConscription second = new FlashConscription();
+        harness.setHand(player1, List.of(first, second));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 10);
 
         harness.castInstant(player1, 0, target.getId());
+        assertThat(gd.getSpellCastManaSpentByColor(first.getId(), ManaColor.WHITE)).isPositive();
         harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(5);
         harness.castInstant(player1, 0, target.getId());
+        assertThat(gd.getSpellCastManaSpentByColor(second.getId(), ManaColor.WHITE)).isPositive();
         harness.passBothPriorities();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(target)));

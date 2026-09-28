@@ -16,6 +16,8 @@ import java.util.List;
 @CardRegistration(set = "M12", collectorNumber = "224")
 @CardRegistration(set = "2XM", collectorNumber = "312")
 @CardRegistration(set = "C14", collectorNumber = "286")
+@CardRegistration(set = "PIP", collectorNumber = "254")
+@CardRegistration(set = "PIP", collectorNumber = "782")
 public class BuriedRuin extends Card {
 
     public BuriedRuin() {

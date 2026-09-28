@@ -30,9 +30,9 @@ public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler imp
         UUID redirectTargetId = entry.getTargetId();
         if (controllerId == null || redirectTargetId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 

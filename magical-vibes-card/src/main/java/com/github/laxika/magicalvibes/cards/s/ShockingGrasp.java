@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "72")
+@CardRegistration(set = "HBG", collectorNumber = "132")
 public class ShockingGrasp extends Card {
 
     public ShockingGrasp() {

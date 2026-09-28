@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "225")
 @CardRegistration(set = "THB", collectorNumber = "245")
+@CardRegistration(set = "PIP", collectorNumber = "303")
+@CardRegistration(set = "PIP", collectorNumber = "517")
+@CardRegistration(set = "PIP", collectorNumber = "831")
+@CardRegistration(set = "PIP", collectorNumber = "1045")
 @CardRegistration(set = "DSC", collectorNumber = "307")
 public class TempleOfDeceit extends Card {
 

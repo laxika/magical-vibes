@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SLC", collectorNumber = "51")
 @CardRegistration(set = "CMM", collectorNumber = "362")
 @CardRegistration(set = "CMM", collectorNumber = "595")
+@CardRegistration(set = "MB2", collectorNumber = "253")
 public class XantchaSleeperAgent extends Card {
 
     public XantchaSleeperAgent() {

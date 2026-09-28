@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "98")
 @CardRegistration(set = "OM1", collectorNumber = "98")
+@CardRegistration(set = "MSC", collectorNumber = "813")
 public class Wisecrack extends Card {
 
     public Wisecrack() {

@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2046")
 @CardRegistration(set = "2XM", collectorNumber = "274")
 @CardRegistration(set = "BRR", collectorNumber = "34")
+@CardRegistration(set = "MB2", collectorNumber = "97")
 public class MishrasBauble extends Card {
 
     public MishrasBauble() {

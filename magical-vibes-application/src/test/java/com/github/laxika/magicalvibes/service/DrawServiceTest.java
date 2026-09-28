@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawFourReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -444,6 +446,29 @@ class DrawServiceTest {
         sut.resolveDrawCards(gd, player1Id, 2);
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(firstCard, secondCard, thirdCard);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+    }
+
+    @Test
+    void firstNonDrawStepReplacementAppliesOnlyOncePerTurn() {
+        Card sourceCard = createCard("Reed Richards, Smartest Man", CardType.CREATURE);
+        sourceCard.addEffect(EffectSlot.STATIC, new FirstNonDrawStepDrawFourReplacementEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card firstCard = createCard("First card", CardType.CREATURE);
+        Card secondCard = createCard("Second card", CardType.CREATURE);
+        Card thirdCard = createCard("Third card", CardType.CREATURE);
+        Card fourthCard = createCard("Fourth card", CardType.CREATURE);
+        Card fifthCard = createCard("Fifth card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(
+                firstCard, secondCard, thirdCard, fourthCard, fifthCard)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        sut.resolveDrawCard(gd, player1Id);
+        sut.resolveDrawCard(gd, player1Id);
+
+        assertThat(gd.playerHands.get(player1Id)).hasSize(5);
         assertThat(gd.playerDecks.get(player1Id)).isEmpty();
     }
 

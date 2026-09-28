@@ -1,58 +1,65 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.a.AstralSlide;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OKagachiVengefulKami.class, FountainOfYouth.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({OKagachiVengefulKami.class, AstralSlide.class, Forest.class, GrizzlyBears.class})
 class OKagachiVengefulKamiTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exiles a nonland permanent controlled by a player who attacked its controller last turn")
-    void exilesQualifyingPlayersNonlandPermanent() {
-        Permanent okagachi = addCreatureReady(player1, new OKagachiVengefulKami());
-        okagachi.setAttacking(true);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        gd.playersWhoAttackedPlayersLastTurn.put(player1.getId(), new HashSet<>(Set.of(player2.getId())));
+    @DisplayName("Exiles a nonland permanent when the damaged player attacked last turn")
+    void exilesPermanentAfterLastTurnAttack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.playerHands.get(player1.getId()).clear();
+        gd.playerHands.get(player2.getId()).clear();
 
-        resolveCombat();
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        resolveCombat(player2);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(artifact.getId())
-                .doesNotContain(land.getId(), ownArtifact.getId());
-
-        harness.handlePermanentChosen(player1, artifact.getId());
+        Permanent kami = addCreatureReady(player1, new OKagachiVengefulKami());
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kami)));
+        resolveCombat(player1);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(target.getId(), attacker.getId())
+                .doesNotContain(land.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Astral Slide");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getName().equals("Astral Slide"));
     }
 
     @Test
-    @DisplayName("Does not trigger for a player who did not attack its controller last turn")
-    void doesNotTriggerWithoutQualifyingAttack() {
-        Permanent okagachi = addCreatureReady(player1, new OKagachiVengefulKami());
-        okagachi.setAttacking(true);
-        harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+    @DisplayName("Does not trigger when the damaged player did not attack last turn")
+    void doesNotTriggerWithoutLastTurnAttack() {
+        Permanent kami = addCreatureReady(player1, new OKagachiVengefulKami());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
 
-        resolveCombat();
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kami)));
+        resolveCombat(player1);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Fountain of Youth");
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Astral Slide");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(card -> card.getName().equals(target.getCard().getName()));
     }
+
 }

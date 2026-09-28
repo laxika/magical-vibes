@@ -47,6 +47,7 @@ class WaveOfRatsTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent rats = findPermanent(player1, "Wave of Rats");
         assertThat(gqs.hasKeyword(gd, rats, Keyword.HASTE)).isTrue();

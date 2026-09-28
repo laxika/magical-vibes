@@ -19,7 +19,7 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<CardView> hand, int mulliganCount, List<Integer> deckSizes, List<Integer> handSizes,
                        List<List<PermanentView>> battlefields, Map<String, Integer> manaPool,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
-                       List<Integer> energyCounters,
+                       List<Integer> energyCounters, List<Integer> radCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
                        List<Integer> speeds, DayNight dayNight, PlanechaseView planechase,
                        UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander) {
@@ -29,11 +29,11 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<CardView> hand, int mulliganCount, List<Integer> deckSizes, List<Integer> handSizes,
                        List<List<PermanentView>> battlefields, Map<String, Integer> manaPool,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
-                       List<Integer> energyCounters,
+                       List<Integer> energyCounters, List<Integer> radCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
                        List<Integer> speeds, DayNight dayNight, PlanechaseView planechase,
                        UUID monarchPlayerId) {
-        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, stack, graveyards, speeds, dayNight, planechase, monarchPlayerId, null);
+        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, radCounters, stack, graveyards, speeds, dayNight, planechase, monarchPlayerId, null);
     }
 
     public JoinGame(UUID id, String gameName, GameStatus status,
@@ -45,7 +45,7 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<Integer> energyCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
                        List<Integer> speeds, DayNight dayNight) {
-        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, stack, graveyards, speeds, dayNight, null, null);
+        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, List.of(), stack, graveyards, speeds, dayNight, null, null);
     }
 
 }

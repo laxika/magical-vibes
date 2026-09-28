@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 
 @CardRegistration(set = "SPG", collectorNumber = "71")
 @CardRegistration(set = "MH2", collectorNumber = "145")
+@CardRegistration(set = "MB2", collectorNumber = "63")
 public class UnholyHeat extends Card {
 
     public UnholyHeat() {

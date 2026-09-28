@@ -229,7 +229,8 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        if (effect.chooseAuraAttachment() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+        if (effect.chooseAuraAttachment() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                && targetCard.isAura()) {
             List<UUID> attachTargetIds = new ArrayList<>();
             for (UUID battlefieldPlayerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldPlayerId);

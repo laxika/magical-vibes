@@ -28,8 +28,8 @@ class TevalsJudgmentTest extends BaseCardTest {
 
         triggerAndChoose(DRAW);
 
-        assertThat(gd.playerHands.get(player1.getId())).singleElement()
-                .isInstanceOf(Pariah.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     @Test

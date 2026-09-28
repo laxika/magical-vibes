@@ -33,7 +33,7 @@ class TombBladeTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(13);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -49,7 +49,7 @@ class TombBladeTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

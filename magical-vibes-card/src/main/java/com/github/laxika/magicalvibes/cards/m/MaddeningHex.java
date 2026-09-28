@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchant
 import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "70")
+@CardRegistration(set = "MB2", collectorNumber = "195")
 public class MaddeningHex extends Card {
 
     public MaddeningHex() {

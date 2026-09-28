@@ -99,8 +99,8 @@ class SinsOfThePastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can cast the targeted spell later in the turn after declining an immediate offer")
-    void canCastTargetLaterThisTurnAfterDecliningImmediateOffer() {
+    @DisplayName("Declining the cast does not grant permission to cast the targeted spell later")
+    void decliningCastDoesNotGrantLaterPermission() {
         LastGasp lastGasp = new LastGasp();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrayscaledGharial());
         SinsOfThePast sins = new SinsOfThePast();
@@ -114,13 +114,14 @@ class SinsOfThePastTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false);
         }
 
-        harness.castFromGraveyardTargeting(player1, 0, target.getId());
-        harness.passBothPriorities();
-
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card cannot be cast from graveyard");
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(lastGasp);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(sins.getId(), lastGasp.getId());
+                .containsExactly(sins.getId());
     }
 }

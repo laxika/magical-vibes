@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 @CardRegistration(set = "SPG", collectorNumber = "15")
 @CardRegistration(set = "CMM", collectorNumber = "347")
 @CardRegistration(set = "CMM", collectorNumber = "585")
+@CardRegistration(set = "MB2", collectorNumber = "252")
 public class MirriWeatherlightDuelist extends Card {
 
     public MirriWeatherlightDuelist() {

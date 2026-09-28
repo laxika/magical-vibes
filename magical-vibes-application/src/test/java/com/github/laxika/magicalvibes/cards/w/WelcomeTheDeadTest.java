@@ -33,7 +33,7 @@ class WelcomeTheDeadTest extends BaseCardTest {
                 new Millstone(), new WelcomeTheDead(), discarded)));
         harness.setLibrary(player1, List.of(firstMilled, secondMilled, firstDraw, secondDraw));
         addMana(player1, ManaColor.BLACK, 1);
-        addMana(player1, ManaColor.COLORLESS, 6);
+        addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();

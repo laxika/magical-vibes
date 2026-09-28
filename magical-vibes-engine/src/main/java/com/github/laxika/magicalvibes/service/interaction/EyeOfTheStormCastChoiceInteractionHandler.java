@@ -39,6 +39,11 @@ public class EyeOfTheStormCastChoiceInteractionHandler
             throw new IllegalStateException("Choose distinct copies created by Eye of the Storm");
         }
 
+        for (UUID copyId : interaction.validCopyIds()) {
+            if (!chosenCopyIds.contains(copyId)) {
+                gameData.removeFromExile(copyId);
+            }
+        }
         exileFreeCastQueueSupport.castChosenCopiesWithoutPaying(gameData, player.getId(), chosenCopyIds);
     }
 }

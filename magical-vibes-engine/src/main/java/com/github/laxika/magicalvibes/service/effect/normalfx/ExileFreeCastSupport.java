@@ -120,7 +120,7 @@ public class ExileFreeCastSupport {
             gameData.recordCardPlayedFromExile(playerId);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, playerId, spellEffects, spellType, false, List.of(), 0, false, 0,
-                    false, false, null, exiledEntry.sourcePermanentId()));
+                    false, false, null, exiledEntry.sourcePermanentId(), 0));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 

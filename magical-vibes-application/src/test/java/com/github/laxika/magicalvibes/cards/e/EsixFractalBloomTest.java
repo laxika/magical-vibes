@@ -35,7 +35,7 @@ class EsixFractalBloomTest extends BaseCardTest {
                         && permanent.getCard().getName().equals(opponentCreature.getCard().getName())
                         && permanent.getCard().getPower() == opponentCreature.getCard().getPower()
                         && permanent.getCard().getToughness() == opponentCreature.getCard().getToughness());
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jadeMage).doesNotContain(esix);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jadeMage, esix);
     }
 
     @Test

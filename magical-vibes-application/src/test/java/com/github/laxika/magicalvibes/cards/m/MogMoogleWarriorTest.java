@@ -62,7 +62,7 @@ class MogMoogleWarriorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .containsExactly("Shock");
+                .containsExactly("Shock", "Grizzly Bears");
         assertThat(mog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanents(player1, "Moogle")).isEmpty();
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "185")
+@CardRegistration(set = "HBG", collectorNumber = "212")
 public class GnollHunter extends Card {
 
     public GnollHunter() {

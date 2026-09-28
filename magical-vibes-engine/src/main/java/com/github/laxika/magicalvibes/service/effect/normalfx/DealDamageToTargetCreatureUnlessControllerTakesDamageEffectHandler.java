@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class DealDamageToTargetCreatureUnlessControllerTakesDamageEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,9 +42,17 @@ public class DealDamageToTargetCreatureUnlessControllerTakesDamageEffectHandler
             return;
         }
 
-        String prompt = "Have " + entry.getCard().getName() + " deal " + e.controllerDamage()
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
+        int controllerDamage = amountEvaluationService.evaluate(gameData, e.controllerDamage(), amountContext);
+        int targetDamage = amountEvaluationService.evaluate(gameData, e.targetDamage(), amountContext);
+        String prompt = "Have " + entry.getCard().getName() + " deal " + controllerDamage
                 + " damage to you? If you don't, " + entry.getCard().getName() + " deals "
-                + e.targetDamage() + " damage to " + target.getCard().getName() + ". ("
+                + targetDamage + " damage to " + target.getCard().getName() + ". ("
                 + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

@@ -50,6 +50,10 @@ class SummonMagusSistersTest extends BaseCardTest {
             }
 
             assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+
+            gd.playerBattlefields.get(player1.getId()).remove(saga);
+            gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+            gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
         }
 
         assertThat(modes).containsExactlyInAnyOrder("combine", "defense", "fight");

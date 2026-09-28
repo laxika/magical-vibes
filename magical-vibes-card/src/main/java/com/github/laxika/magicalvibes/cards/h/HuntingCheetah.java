@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "138")
 @CardRegistration(set = "ME3", collectorNumber = "124")
+@CardRegistration(set = "MB2", collectorNumber = "134")
 public class HuntingCheetah extends Card {
 
     public HuntingCheetah() {

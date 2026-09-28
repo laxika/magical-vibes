@@ -11,7 +11,8 @@ public interface EntryCostReplacementEffect extends ReplacementEffect {
 
     enum Kind {
         SACRIFICE_PERMANENT,
-        DISCARD_CARD
+        DISCARD_CARD,
+        LAND_CASUALTY
     }
 
     Kind kind();

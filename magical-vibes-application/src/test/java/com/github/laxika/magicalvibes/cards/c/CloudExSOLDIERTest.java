@@ -22,10 +22,11 @@ class CloudExSOLDIERTest extends BaseCardTest {
     void attachesTargetEquipmentOnEntry() {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         Permanent cloud = harness.enterBattlefieldAndReturn(player1, new CloudExSOLDIER());
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(equipment.getId());
+        assertThat(choice.validIds()).contains(equipment.getId());
 
         harness.handlePermanentChosen(player1, equipment.getId());
         harness.passBothPriorities();

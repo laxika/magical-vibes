@@ -31,6 +31,7 @@ class EmetSelchOfTheThirdSeatTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -58,6 +59,7 @@ class EmetSelchOfTheThirdSeatTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(firstCounsel.getId()));
@@ -65,6 +67,7 @@ class EmetSelchOfTheThirdSeatTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
@@ -84,6 +87,7 @@ class EmetSelchOfTheThirdSeatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =

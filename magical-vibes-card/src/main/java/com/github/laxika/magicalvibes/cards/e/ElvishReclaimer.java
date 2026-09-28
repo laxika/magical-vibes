@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "169")
 @CardRegistration(set = "SLD", collectorNumber = "2015")
+@CardRegistration(set = "MB2", collectorNumber = "205")
 public class ElvishReclaimer extends Card {
 
     public ElvishReclaimer() {

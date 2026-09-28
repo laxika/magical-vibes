@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 
 @CardRegistration(set = "FCA", collectorNumber = "12")
+@CardRegistration(set = "HBG", collectorNumber = "174")
 public class AncientCopperDragon extends Card {
 
     public AncientCopperDragon() {

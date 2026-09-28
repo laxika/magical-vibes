@@ -10,6 +10,9 @@ public interface CardEffect {
     /** Whether paying for this effect is a special action that does not use the stack. */
     default boolean isSpecialAction() { return false; }
 
+    /** Optional prompt suffix for a pregame action offered while deciding whether to mulligan. */
+    default String mulliganActionDescription() { return null; }
+
     /** Whether this pending choice must finish before the next card of a draw instruction. */
     default boolean pausesDrawInstruction() { return false; }
 

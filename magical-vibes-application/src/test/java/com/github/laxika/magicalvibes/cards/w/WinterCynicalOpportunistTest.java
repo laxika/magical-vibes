@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.r.Regrowth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WinterCynicalOpportunist.class, DarkRitual.class, Forest.class,
+@CardUsed({WinterCynicalOpportunist.class, Regrowth.class, Forest.class,
         GrizzlyBears.class, Shock.class})
 class WinterCynicalOpportunistTest extends BaseCardTest {
 
@@ -25,7 +25,7 @@ class WinterCynicalOpportunistTest extends BaseCardTest {
     void attacksAndMillsThreeCards() {
         Card forest = new Forest();
         Card shock = new Shock();
-        Card ritual = new DarkRitual();
+        Card ritual = new Regrowth();
         setLibrary(forest, shock, ritual);
         addCreatureReady(player1, new WinterCynicalOpportunist());
 
@@ -39,7 +39,7 @@ class WinterCynicalOpportunistTest extends BaseCardTest {
     void exilesFourCardTypesThenReturnsAChosenPermanentWithFinality() {
         Card forest = new Forest();
         Card shock = new Shock();
-        Card ritual = new DarkRitual();
+        Card ritual = new Regrowth();
         Card bears = new GrizzlyBears();
         harness.addToBattlefield(player1, new WinterCynicalOpportunist());
         harness.setGraveyard(player1, List.of(forest, shock, ritual, bears));
@@ -71,7 +71,7 @@ class WinterCynicalOpportunistTest extends BaseCardTest {
     void rejectsASelectionWithFewerThanFourCardTypes() {
         Card forest = new Forest();
         Card shock = new Shock();
-        Card ritual = new DarkRitual();
+        Card ritual = new Regrowth();
         harness.addToBattlefield(player1, new WinterCynicalOpportunist());
         harness.setGraveyard(player1, List.of(forest, shock, ritual));
 

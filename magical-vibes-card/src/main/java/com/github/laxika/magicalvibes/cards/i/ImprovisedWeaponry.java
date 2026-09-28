@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "150")
+@CardRegistration(set = "HBG", collectorNumber = "184")
 public class ImprovisedWeaponry extends Card {
 
     public ImprovisedWeaponry() {

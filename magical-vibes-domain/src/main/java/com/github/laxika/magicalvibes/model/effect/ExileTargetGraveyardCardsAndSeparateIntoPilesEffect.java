@@ -1,22 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Exile up to {@code maxTargets} target cards matching the filter from any graveyard.
- * An opponent separates those cards into two piles. Controller chooses one pile
- * to put onto the battlefield under their control; the rest go to their owners' graveyards.
- * (e.g. Boneyard Parley)
+ * Exile up to {@code maxTargets} target cards matching the filter from the declared graveyard
+ * scope, then separate them into two piles. The disposition and separating/choosing roles are
+ * configurable for Boneyard Parley and Split the Spoils.
  *
  * <p>Flow:
  * <ol>
  *   <li>At cast time: controller targets up to {@code maxTargets} cards matching
- *       {@code filter} from any graveyard (all-graveyards multi-target selection).</li>
+ *       {@code filter} from {@code graveyardScope}.</li>
  *   <li>On resolution: targeted cards are exiled from their graveyards.</li>
- *   <li>An opponent separates the exiled cards into two piles (multi-graveyard choice).</li>
- *   <li>Controller chooses a pile (may-ability choice: Yes = Pile 1, No = Pile 2).</li>
- *   <li>Chosen pile enters the battlefield under controller's control;
- *       other pile returns to owners' graveyards.</li>
+ *   <li>The configured separator assigns the exiled cards to two piles.</li>
+ *   <li>The configured chooser selects a pile (Yes = Pile 1, No = Pile 2).</li>
+ *   <li>The configured {@code disposition} moves the chosen and other piles.</li>
  * </ol>
  *
  * <p>Multi-target graveyard selection is handled by SpellCastingService at cast time.
@@ -24,6 +24,30 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record ExileTargetGraveyardCardsAndSeparateIntoPilesEffect(
         CardPredicate filter,
-        int maxTargets
+        int maxTargets,
+        GraveyardSearchScope graveyardScope,
+        CardPileDisposition disposition,
+        boolean controllerSeparates
 ) implements CardEffect {
+
+    /** Boneyard Parley: target matching cards from any graveyard. */
+    public ExileTargetGraveyardCardsAndSeparateIntoPilesEffect(CardPredicate filter, int maxTargets) {
+        this(filter, maxTargets, GraveyardSearchScope.ALL_GRAVEYARDS,
+                CardPileDisposition.BATTLEFIELD, false);
+    }
+
+    public ExileTargetGraveyardCardsAndSeparateIntoPilesEffect(CardPredicate filter, int maxTargets,
+                                                                GraveyardSearchScope graveyardScope) {
+        this(filter, maxTargets, graveyardScope, CardPileDisposition.BATTLEFIELD, false);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        if (graveyardScope == GraveyardSearchScope.ALL_GRAVEYARDS
+                && disposition == CardPileDisposition.BATTLEFIELD
+                && !controllerSeparates) {
+            return TargetSpec.NONE;
+        }
+        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, graveyardScope));
+    }
 }

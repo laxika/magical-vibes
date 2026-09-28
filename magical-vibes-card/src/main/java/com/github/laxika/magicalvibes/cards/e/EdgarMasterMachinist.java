@@ -27,7 +27,7 @@ public class EdgarMasterMachinist extends Card {
         // Once during each of your turns, you may cast an artifact spell from your graveyard.
         // Artifact spells cast this way enter the battlefield tapped.
         addEffect(EffectSlot.STATIC, new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
-                artifactSpell, null, true));
+                artifactSpell, null, false, true));
 
         // Tools — Whenever Edgar attacks, it gets +X/+0 until end of turn, where X is the
         // greatest mana value among artifacts you control.

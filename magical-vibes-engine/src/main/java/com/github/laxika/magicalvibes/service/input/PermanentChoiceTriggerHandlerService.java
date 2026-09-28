@@ -325,6 +325,7 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
                                             PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
         boolean isPlayerTarget = targetId != null && gameData.playerIdToName.containsKey(targetId);
+        boolean isExiledCardTarget = targetId != null && gameData.findExiledCard(targetId) != null;
         boolean declined = (slt.optionalTarget() || hasOptionalSingleTarget(slt.sourceCard(), slt.effects()))
                 && isPlayerTarget
                 && targetId.equals(slt.controllerId());
@@ -339,6 +340,9 @@ public class PermanentChoiceTriggerHandlerService {
         );
         if (!declined) {
             entry.setTargetId(targetId);
+        }
+        if (!declined && isExiledCardTarget) {
+            entry.setTargetZone(Zone.EXILE);
         }
         entry.setSourcePermanentSnapshot(slt.sourcePermanentSnapshot());
         if (slt.eventValue() != null) {
@@ -1086,6 +1090,8 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.attackedTargetId() != null) {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
+            entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
             log.info("Game {} - {} attack trigger declined targeting", gameData.id, att.sourceCard().getName());

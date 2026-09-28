@@ -307,7 +307,9 @@ public class StaticEffectSupport {
      * attachment scopes (equipped/enchanted) never cover the source.
      */
     private boolean selfInScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) return true;
+        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) {
+            return matchesStaticFilter(context, context.target(), filter);
+        }
         boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF

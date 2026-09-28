@@ -23,6 +23,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Set<CardType> additionalTypesOverride,
         Set<CardSubtype> additionalSubtypesOverride,
         Set<Keyword> additionalKeywordsOverride,
+        EffectSlot retainedEffectSlot,
         Map<EffectSlot, List<CardEffect>> additionalSlotEffectsOverride
 ) implements TemporaryCopyEffect {
 
@@ -47,13 +48,13 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
             Set<Keyword> additionalKeywordsOverride) {
         this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
-                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride, Map.of());
+                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride, null, Map.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             String nameOverride, Set<CardSupertype> additionalSupertypesOverride) {
         this(nameOverride, additionalSupertypesOverride, null, null,
-                Set.of(), Set.of(), Set.of());
+                Set.of(), Set.of(), Set.of(), null, Map.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
@@ -61,16 +62,26 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
             Set<Keyword> additionalKeywordsOverride) {
         this(null, Set.of(), powerOverride, toughnessOverride, additionalTypesOverride,
-                additionalSubtypesOverride, additionalKeywordsOverride, Map.of());
+                additionalSubtypesOverride, additionalKeywordsOverride, null, Map.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect() {
-        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), Map.of());
+        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, Map.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Map<EffectSlot, List<CardEffect>> additionalSlotEffectsOverride) {
-        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), additionalSlotEffectsOverride);
+        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, additionalSlotEffectsOverride);
+    }
+
+    public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+            String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
+            Integer powerOverride, Integer toughnessOverride,
+            Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
+            Set<Keyword> additionalKeywordsOverride, EffectSlot retainedEffectSlot) {
+        this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
+                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride,
+                retainedEffectSlot, Map.of());
     }
 
     @Override

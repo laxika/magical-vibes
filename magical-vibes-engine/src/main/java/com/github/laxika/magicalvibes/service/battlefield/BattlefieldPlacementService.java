@@ -1198,6 +1198,9 @@ public class BattlefieldPlacementService {
         if (permanent.isEntryCostPaid()) {
             return true;
         }
+        if (permanent.isEntryCostResolved()) {
+            return true;
+        }
         EntryCostReplacementEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(EntryCostReplacementEffect.class::isInstance)
                 .map(EntryCostReplacementEffect.class::cast)
@@ -1207,6 +1210,9 @@ public class BattlefieldPlacementService {
         }
         if (effect.kind() == EntryCostReplacementEffect.Kind.DISCARD_CARD) {
             return applyDiscardCardToEnter(gameData, controllerId, permanent, effect);
+        }
+        if (effect.kind() == EntryCostReplacementEffect.Kind.LAND_CASUALTY) {
+            return applyLandCasualtyToEnter(gameData, controllerId, permanent, effect);
         }
 
         List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
@@ -1233,6 +1239,24 @@ public class BattlefieldPlacementService {
                 permanent.getCard().getName() + " — Sacrifice " + effect.description()
                         + "? (Choose yourself to decline; " + permanent.getCard().getName()
                         + " is then put into its owner's graveyard.)");
+        return false;
+    }
+
+    private boolean applyLandCasualtyToEnter(GameData gameData, UUID controllerId, Permanent permanent,
+                                              EntryCostReplacementEffect effect) {
+        List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.permanentFilter()))
+                .map(Permanent::getId)
+                .toList();
+        if (sacrificeable.isEmpty()) {
+            return true;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.LandCasualty(controllerId, permanent));
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, sacrificeable, List.of(controllerId),
+                permanent.getCard().getName() + " — Land casualty: sacrifice " + effect.description()
+                        + "? (Choose yourself to decline.)");
         return false;
     }
 
@@ -1294,6 +1318,16 @@ public class BattlefieldPlacementService {
             return;
         }
         permanent.setEntryCostPaid(true);
+        place(gameData, defaultRequest(gameData, controllerId, permanent));
+    }
+
+    /** Resumes land casualty after the controller's optional sacrifice choice. */
+    public void completeLandCasualtyToEnter(GameData gameData, UUID controllerId, Permanent permanent,
+                                             boolean sacrificed) {
+        permanent.setEntryCostResolved(true);
+        if (sacrificed) {
+            permanent.setEntryCostPaid(true);
+        }
         place(gameData, defaultRequest(gameData, controllerId, permanent));
     }
 

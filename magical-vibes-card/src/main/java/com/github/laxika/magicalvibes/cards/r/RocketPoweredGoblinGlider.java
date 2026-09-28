@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "SPM", collectorNumber = "172")
 @CardRegistration(set = "SPM", collectorNumber = "281")
 @CardRegistration(set = "OM1", collectorNumber = "175")
+@CardRegistration(set = "MSC", collectorNumber = "825")
 public class RocketPoweredGoblinGlider extends Card {
 
     public RocketPoweredGoblinGlider() {

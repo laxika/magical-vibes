@@ -21,9 +21,8 @@ class HellkiteCourserTest extends BaseCardTest {
     @Test
     void mayPutCommanderOntoBattlefieldWithHasteUntilNextEndStep() {
         Card commander = commander();
-        Permanent hellkite = harness.addToBattlefieldAndReturn(player1, new HellkiteCourser());
+        Permanent hellkite = harness.enterBattlefieldAndReturn(player1, new HellkiteCourser());
 
-        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -34,7 +33,7 @@ class HellkiteCourserTest extends BaseCardTest {
         assertThat(gd.playerCommandZones.get(player1.getId())).isEmpty();
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -47,9 +46,8 @@ class HellkiteCourserTest extends BaseCardTest {
     @Test
     void mayDeclineCommanderEntry() {
         Card commander = commander();
-        harness.addToBattlefieldAndReturn(player1, new HellkiteCourser());
+        harness.enterBattlefieldAndReturn(player1, new HellkiteCourser());
 
-        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

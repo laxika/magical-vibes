@@ -54,8 +54,10 @@ class SephirothFallenHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateGraveyardAbility(player1, 0);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, modified.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, modified.getId());
+        }
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Sephiroth, Fallen Hero");

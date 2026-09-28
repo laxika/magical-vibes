@@ -32,6 +32,7 @@ public class ConcertedEffort extends Card {
             Keyword.ISLANDWALK,
             Keyword.SWAMPWALK,
             Keyword.PLAINSWALK,
+            Keyword.DESERTWALK,
             Keyword.TRAMPLE,
             Keyword.VIGILANCE
     );

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "SPM", collectorNumber = "48")
 @CardRegistration(set = "OM1", collectorNumber = "43")
+@CardRegistration(set = "MSC", collectorNumber = "790")
 public class Whoosh extends Card {
 
     public Whoosh() {

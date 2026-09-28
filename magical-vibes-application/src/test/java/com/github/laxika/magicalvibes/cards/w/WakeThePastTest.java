@@ -38,7 +38,8 @@ class WakeThePastTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard)
                 .containsExactlyInAnyOrder(worker, relic);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature)
+                .anyMatch(card -> card instanceof WakeThePast);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentArtifact);
         Permanent returnedWorker = findPermanent(player1, "Arcbound Worker");
         assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isTrue();
