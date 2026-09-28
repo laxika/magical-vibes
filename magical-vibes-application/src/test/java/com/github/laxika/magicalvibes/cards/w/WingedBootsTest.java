@@ -50,6 +50,7 @@ class WingedBootsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.castInstant(player2, 0, bears.getId());
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(4);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();

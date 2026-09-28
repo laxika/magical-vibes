@@ -48,6 +48,8 @@ class HellishRebukeTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Prodigal Sorcerer");
         harness.assertLife(player1, 19);

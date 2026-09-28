@@ -193,7 +193,14 @@ public class StackResolutionService {
         }
 
         if (gameData.waitingForSubgame) return;
-        if (gameData.pendingEffectResolutionEntry != null) return;
+        if (gameData.pendingEffectResolutionEntry != null) {
+            // An effect may pause after queuing a payment choice. Present that choice before
+            // returning so its answer can resume the parked resolution.
+            if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+            }
+            return;
+        }
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingMayAbilities.isEmpty()) {
             CardAdvantagePostResolutionService.process(gameData, entry);
         }
