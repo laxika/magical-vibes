@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "165")
+@CardRegistration(set = "C20", collectorNumber = "164")
 public class VigilanteJustice extends Card {
 
     public VigilanteJustice() {

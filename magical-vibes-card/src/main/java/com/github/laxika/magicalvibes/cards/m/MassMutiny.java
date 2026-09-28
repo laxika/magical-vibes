@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "E02", collectorNumber = "27")
 @CardRegistration(set = "PCA", collectorNumber = "48")
 @CardRegistration(set = "C13", collectorNumber = "116")
+@CardRegistration(set = "OTC", collectorNumber = "174")
 public class MassMutiny extends Card {
 
     public MassMutiny() {

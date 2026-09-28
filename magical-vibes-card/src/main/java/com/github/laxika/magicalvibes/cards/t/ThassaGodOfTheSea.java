@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "THS", collectorNumber = "66")
 @CardRegistration(set = "SLD", collectorNumber = "71")
 @CardRegistration(set = "PIO", collectorNumber = "288")
+@CardRegistration(set = "LCC", collectorNumber = "176")
 public class ThassaGodOfTheSea extends Card {
 
     public ThassaGodOfTheSea() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "51")
+@CardRegistration(set = "LCC", collectorNumber = "170")
 public class SeafloorOracle extends Card {
 
     public SeafloorOracle() {

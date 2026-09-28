@@ -47,6 +47,8 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsCardExiledWithSourcePredicate,
         StackEntrySharesNameWithCardExiledWithSourcePredicate,
         StackEntrySourceIsColorlessPredicate,
+        StackEntrySourceHasSupertypePredicate,
+        StackEntrySourceIsCommanderPredicate,
         StackEntrySupertypeInPredicate,
         StackEntryTargetsAnyPlayerPredicate,
         StackEntryTargetsOnlySinglePermanentOrPlayerPredicate,

@@ -867,29 +867,35 @@ public sealed interface TriggerContext {
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
                              int totalDamage, Map<UUID, Integer> damageToPlayers,
                              UUID singleCreatureSpellTargetId,
-                             Map<UUID, Integer> damageToPermanents) implements TriggerContext {
+                             Map<UUID, Integer> damageToPermanents,
+                             boolean combatDamage) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of(), false);
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
                                  Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of(), false);
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
                                  int totalDamage, Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of());
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of(), false);
         }
     }
 
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
                                    UUID sourcePermanentId, int totalDamage,
-                                   int damageToPlayers) implements TriggerContext {
+                                   int damageToPlayers, UUID damagedPlayerId) implements TriggerContext {
         public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
                                        UUID sourcePermanentId, int totalDamage) {
-            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage);
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage, null);
+        }
+
+        public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                       UUID sourcePermanentId, int totalDamage, int damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null);
         }
     }
 

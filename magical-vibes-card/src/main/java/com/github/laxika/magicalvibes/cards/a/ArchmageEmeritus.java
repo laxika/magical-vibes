@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "261")
 @CardRegistration(set = "SOC", collectorNumber = "188")
 @CardRegistration(set = "TDC", collectorNumber = "145")
+@CardRegistration(set = "OTC", collectorNumber = "90")
 public class ArchmageEmeritus extends Card {
 
     public ArchmageEmeritus() {

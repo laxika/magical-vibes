@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "151")
 @CardRegistration(set = "PIO", collectorNumber = "377")
+@CardRegistration(set = "DMC", collectorNumber = "126")
 public class RadiantFlames extends Card {
 
     public RadiantFlames() {

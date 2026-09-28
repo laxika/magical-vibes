@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "230")
 @CardRegistration(set = "SOC", collectorNumber = "136")
+@CardRegistration(set = "LCC", collectorNumber = "101")
 @CardRegistration(set = "C21", collectorNumber = "12")
 public class ArchaeomancersMap extends Card {
 

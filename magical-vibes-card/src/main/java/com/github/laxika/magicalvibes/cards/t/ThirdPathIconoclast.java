@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "223")
 @CardRegistration(set = "TDC", collectorNumber = "307")
+@CardRegistration(set = "OTC", collectorNumber = "244")
 public class ThirdPathIconoclast extends Card {
 
     public ThirdPathIconoclast() {

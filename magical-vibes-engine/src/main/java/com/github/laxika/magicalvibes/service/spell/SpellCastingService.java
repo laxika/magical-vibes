@@ -202,6 +202,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -1303,6 +1304,13 @@ public class SpellCastingService {
         if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
                 || card.hasKeyword(Keyword.FREERUNNING)) {
             subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.MERCENARY)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.PIRATE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.ROGUE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.WARLOCK)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.OUTLAW);
         }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
@@ -2477,7 +2485,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card does not have spellmorph");
         }
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : player.getId();
-        gameData.exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, gameData.turnNumber));
+        gameData.addToExile(ownerId, card);
         try {
             playCardFromExileInternal(gameData, player, card.getId(), xValue, targetId,
                     List.of(), List.of(), List.of(), false, targetIds != null ? targetIds : List.of(),
@@ -8793,7 +8801,8 @@ public class SpellCastingService {
                 && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND;
         if (graveyardCastPermanent || grantedPermanentCast || isGrantedGraveyardCast
                 || (isGrantedCyclingGraveyardCast && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)
-                || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)) {
+                || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)
+                || (isRetrace && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
             if (isGrantedGraveyardCast && graveyardCastSourceId.isPresent()) {
                 // Track which permanent type slot was used, keyed by the granting permanent's UUID
@@ -9113,6 +9122,44 @@ public class SpellCastingService {
             gameData.stack.add(noTargetStackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
+        }
+
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect returnToBattlefieldEffect = spellEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (returnToBattlefieldEffect != null && !returnToBattlefieldEffect.xScaled()) {
+            int targetXValue = effectiveXValue;
+            List<UUID> graveyardOwners = switch (returnToBattlefieldEffect.source()) {
+                case CONTROLLERS_GRAVEYARD -> List.of(playerId);
+                case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
+                        .filter(ownerId -> !ownerId.equals(playerId))
+                        .toList();
+                case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
+            };
+            int maxTargets = returnToBattlefieldEffect.maxTargets();
+            long matchingCount = graveyardOwners.stream()
+                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                            .filter(candidate -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
+                                    || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                    .getOrDefault(ownerId, Set.of()).contains(candidate.getId()))
+                            .filter(candidate -> !returnToBattlefieldEffect.hasTotalManaValueCap()
+                                    || candidate.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue()))
+                    .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
+                            candidate, returnToBattlefieldEffect.filter(), card.getId(), gameData,
+                            playerId, null, null, targetXValue))
+                    .count();
+            if (matchingCount < returnToBattlefieldEffect.minTargets()) {
+                throw new IllegalStateException("Not enough legal graveyard targets");
+            }
+            if (matchingCount > 0 && maxTargets > 0) {
+                graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, returnToBattlefieldEffect,
+                        maxTargets, targetXValue, spellEffects);
+                gameData.graveyardTargetOperation.flashback = true;
+                return;
+            }
         }
 
         StackEntry stackEntry;
@@ -10848,6 +10895,7 @@ public class SpellCastingService {
         int treasureManaBefore = pool.getTreasureManaTotal();
         int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
+        var desertManaBefore = pool.getDesertManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -10877,6 +10925,7 @@ public class SpellCastingService {
         recordSnowManaSpent(gameData, card, snowManaBefore, pool.getSnowManaTotals());
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
+        recordDesertManaSpent(gameData, card, desertManaBefore, pool.getDesertManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
                 artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
@@ -10943,6 +10992,7 @@ public class SpellCastingService {
         int treasureManaBefore = pool.getTreasureManaTotal();
         int artifactSourceManaBefore = pool.getArtifactSourceManaTotal();
         var caveManaBefore = pool.getCaveManaTotals();
+        var desertManaBefore = pool.getDesertManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
@@ -10963,6 +11013,7 @@ public class SpellCastingService {
         recordSnowManaSpent(gameData, card, snowManaBefore, pool.getSnowManaTotals());
         recordTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordCaveManaSpent(gameData, card, caveManaBefore, pool.getCaveManaTotals());
+        recordDesertManaSpent(gameData, card, desertManaBefore, pool.getDesertManaTotals());
         recordSpellCastTreasureManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal());
         recordSpellCastArtifactManaSpent(gameData, card, treasureManaBefore, pool.getTreasureManaTotal(),
                 artifactSourceManaBefore, pool.getArtifactSourceManaTotal());
@@ -11033,6 +11084,16 @@ public class SpellCastingService {
             total += Math.max(0, before.getOrDefault(color, 0) - after.getOrDefault(color, 0));
         }
         gameData.setSpellCastCaveManaSpent(card.getId(), total);
+    }
+
+    private void recordDesertManaSpent(GameData gameData, Card card,
+                                       EnumMap<ManaColor, Integer> before,
+                                       EnumMap<ManaColor, Integer> after) {
+        int total = 0;
+        for (ManaColor color : ManaColor.values()) {
+            total += Math.max(0, before.getOrDefault(color, 0) - after.getOrDefault(color, 0));
+        }
+        gameData.setSpellCastDesertManaSpent(card.getId(), total);
     }
 
     private void recordSpellCastManaSources(GameData gameData, Card card,
@@ -11346,6 +11407,9 @@ public class SpellCastingService {
                 ? pool.promoteCommanderOnlyMana() : null;
         ManaPool.NonHandSpellOnlyManaState nonHandMana = effectiveSourceZone != null && effectiveSourceZone != Zone.HAND
                 ? pool.promoteNonHandSpellOnlyMana() : null;
+        ManaPool.NonOwnedSpellOnlyManaState nonOwnedMana = card.getOwnerId() != null
+                && !playerId.equals(card.getOwnerId())
+                ? pool.promoteNonOwnedSpellOnlyMana() : null;
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 || card.hasKeyword(Keyword.CHANGELING))
@@ -11386,6 +11450,12 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState multicoloredMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.CreatureSpellWithoutAbilitiesManaState creatureSpellWithoutAbilitiesMana =
+                card.hasType(CardType.CREATURE)
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, new CardHasNoAbilitiesPredicate(), null)
+                        && pool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0
+                        ? pool.promoteCreatureSpellWithoutAbilitiesOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
@@ -11452,6 +11522,9 @@ public class SpellCastingService {
             if (coloredSpellWithoutXMana != null) {
                 pool.restorePromotedColoredSpellWithoutXOnlyMana(coloredSpellWithoutXMana);
             }
+            if (nonOwnedMana != null) {
+                pool.restorePromotedNonOwnedSpellOnlyMana(nonOwnedMana);
+            }
             if (nonHandMana != null) {
                 pool.restorePromotedNonHandSpellOnlyMana(nonHandMana);
             }
@@ -11463,6 +11536,9 @@ public class SpellCastingService {
             }
             if (seanceBoardMana != null) {
                 pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
+            }
+            if (creatureSpellWithoutAbilitiesMana != null) {
+                pool.restorePromotedCreatureSpellWithoutAbilitiesOnlyMana(creatureSpellWithoutAbilitiesMana);
             }
         }
     }

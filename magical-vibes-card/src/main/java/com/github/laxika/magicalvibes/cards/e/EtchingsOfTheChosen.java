@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "198")
+@CardRegistration(set = "LCC", collectorNumber = "269")
 public class EtchingsOfTheChosen extends Card {
 
     public EtchingsOfTheChosen() {

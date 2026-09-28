@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFr
 
 @CardRegistration(set = "RIX", collectorNumber = "99")
 @CardRegistration(set = "AFC", collectorNumber = "121")
+@CardRegistration(set = "OTC", collectorNumber = "162")
+@CardRegistration(set = "LCC", collectorNumber = "223")
 public class DireFleetDaredevil extends Card {
 
     public DireFleetDaredevil() {

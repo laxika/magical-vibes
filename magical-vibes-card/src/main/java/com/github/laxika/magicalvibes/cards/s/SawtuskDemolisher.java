@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HA4", collectorNumber = "16")
+@CardRegistration(set = "C20", collectorNumber = "64")
 public class SawtuskDemolisher extends Card {
 
     public SawtuskDemolisher() {

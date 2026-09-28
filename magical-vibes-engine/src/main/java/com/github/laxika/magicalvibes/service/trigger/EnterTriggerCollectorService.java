@@ -359,6 +359,9 @@ public class EnterTriggerCollectorService {
                 filterContext)) {
             return false;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         if (conditional.wrapped() instanceof MayEffect may
                 && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
@@ -389,11 +392,17 @@ public class EnterTriggerCollectorService {
                 filterContext)) {
             return false;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         return enqueueAllyPermanentEnter(match, conditional.wrapped(), pe);
     }
 
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
+        if (effect instanceof MayPayManaEffect mayPay) {
+            return handleEnterMayPay(match, mayPay, pe);
+        }
         if (effect instanceof ConditionalEffect conditional
                 && conditional.interveningIf()
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
@@ -478,6 +487,9 @@ public class EnterTriggerCollectorService {
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            if (effect instanceof TriggeringPermanentManaValueEffect) {
+                entry.setEventValue(pe.enteringCard().getManaValue());
+            }
             if (match.sourcePlanarObject() != null) {
                 entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
             }
@@ -1049,11 +1061,15 @@ public class EnterTriggerCollectorService {
         UUID mayTargetId = gainLifeEqualToEnteringPower
                 || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget
                 ? enteringPermanentId : pe.defaultTargetPlayerId();
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     mayTargetId,
                     match.permanent().getId(),
-                    match.markSourceOncePerTurnOnAcceptance());
+                    match.markSourceOncePerTurnOnAcceptance(),
+                    enteringPermanent == null ? null : gameQueryService.getEffectiveToughness(
+                            match.gameData(), enteringPermanent));
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",
@@ -1275,6 +1291,10 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class,
+                    slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class,
+                    slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
@@ -2449,6 +2469,8 @@ public class EnterTriggerCollectorService {
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
                 entry.setTriggeringPermanentPowerAtTrigger(
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
+                entry.setTriggeringPermanentToughnessAtTrigger(
+                        gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent));
             }
             match.gameData().stack.add(entry);
         }

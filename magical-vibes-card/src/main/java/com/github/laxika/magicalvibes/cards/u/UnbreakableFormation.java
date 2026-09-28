@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "RVR", collectorNumber = "32")
 @CardRegistration(set = "MOC", collectorNumber = "213")
 @CardRegistration(set = "LTC", collectorNumber = "179")
+@CardRegistration(set = "DMC", collectorNumber = "106")
 public class UnbreakableFormation extends Card {
 
     public UnbreakableFormation() {

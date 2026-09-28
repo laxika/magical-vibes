@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -391,6 +392,13 @@ public class GameActionAvailabilityService {
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
         if (card.getType() != null && card.getType().isPlanar()) return false;
+        if (card.hasType(CardType.CREATURE)
+                && predicateEvaluationService.matchesCardPredicate(card, new CardHasNoAbilitiesPredicate(), null)
+                && pool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+        }
         boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         if (instantOrSorcery
                 && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
@@ -428,6 +436,11 @@ public class GameActionAvailabilityService {
         if (playerId.equals(gameData.commandCastPlayerId)) {
             pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNonHandSpellOnlyMana();
+        }
+        if (card.getOwnerId() != null && !playerId.equals(card.getOwnerId())
+                && pool.getNonOwnedSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteNonOwnedSpellOnlyMana();
         }
         if (gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(commander -> commander.getId().equals(card.getId()))) {
@@ -775,6 +788,13 @@ public class GameActionAvailabilityService {
                 || card.hasKeyword(Keyword.FREERUNNING)) {
             subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.MERCENARY)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.PIRATE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.ROGUE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.WARLOCK)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.OUTLAW);
+        }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             subtypeSpellOrAbilityContext.remove(CardSubtype.ELDRAZI);
@@ -998,6 +1018,13 @@ public class GameActionAvailabilityService {
         if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
                 || card.hasKeyword(Keyword.FREERUNNING)) {
             subtypeSpellOrAbilityContext.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
+        if (subtypeSpellOrAbilityContext.contains(CardSubtype.ASSASSIN)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.MERCENARY)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.PIRATE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.ROGUE)
+                || subtypeSpellOrAbilityContext.contains(CardSubtype.WARLOCK)) {
+            subtypeSpellOrAbilityContext.add(CardSubtype.OUTLAW);
         }
         Set<CardSubtype> subtypeSpellOnlyContext = new HashSet<>(subtypeSpellOrAbilityContext);
         if (!gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {

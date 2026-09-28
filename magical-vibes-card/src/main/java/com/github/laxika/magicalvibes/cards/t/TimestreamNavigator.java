@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "59")
+@CardRegistration(set = "LCC", collectorNumber = "178")
 public class TimestreamNavigator extends Card {
 
     public TimestreamNavigator() {

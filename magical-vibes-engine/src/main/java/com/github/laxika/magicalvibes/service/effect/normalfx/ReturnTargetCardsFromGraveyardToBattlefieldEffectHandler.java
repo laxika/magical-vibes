@@ -54,6 +54,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.setEventValue(0);
         var returnEffect = (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
         if (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
             resolveFromAllGraveyards(gameData, entry, returnEffect);
@@ -127,6 +128,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         }
 
         if (!returnedCards.isEmpty()) {
+            entry.setEventValue(returnedCards.size());
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " returns " + returnedCards.size()
                             + " card(s) from graveyards to the battlefield."));
@@ -238,6 +240,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         }
 
         if (!returnedCards.isEmpty()) {
+            entry.setEventValue(returnedCards.size());
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(graveyardOwnerId) + " returns " + returnedCards.size()
                             + " card(s) from the graveyard to the battlefield."));

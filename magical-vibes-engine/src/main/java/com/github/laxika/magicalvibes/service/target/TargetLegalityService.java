@@ -89,6 +89,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
@@ -4820,6 +4822,21 @@ public class TargetLegalityService {
             return stackEntry.getCard() != null
                     && gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).isEmpty();
         }
+        if (predicate instanceof StackEntrySourceHasSupertypePredicate sourceSupertype) {
+            Permanent sourcePermanent = sourcePermanentForStackEntry(gameData, stackEntry);
+            if (sourcePermanent != null) {
+                return gameQueryService.hasEffectiveSupertype(gameData, sourcePermanent, sourceSupertype.supertype());
+            }
+            return stackEntry.getCard() != null
+                    && stackEntry.getCard().getSupertypes().contains(sourceSupertype.supertype());
+        }
+        if (predicate instanceof StackEntrySourceIsCommanderPredicate) {
+            Permanent sourcePermanent = sourcePermanentForStackEntry(gameData, stackEntry);
+            return sourcePermanent != null
+                    && (sourcePermanent.isCommander()
+                    || sourcePermanent.getOriginalCard() != null
+                    && gameData.isCommander(sourcePermanent.getOriginalCard().getId()));
+        }
         if (predicate instanceof StackEntryIsMulticoloredPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;
         }
@@ -5067,6 +5084,17 @@ public class TargetLegalityService {
                     xValue, sourcePowerAtLastKnown);
         }
         return false;
+    }
+
+    private Permanent sourcePermanentForStackEntry(GameData gameData, StackEntry stackEntry) {
+        if (stackEntry.getSourcePermanentId() != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, stackEntry.getSourcePermanentId());
+            if (sourcePermanent != null) {
+                return sourcePermanent;
+            }
+        }
+        return stackEntry.getSourcePermanentSnapshot();
     }
 
     private int countControlledMatching(GameData gameData, UUID controllerId, PermanentPredicate filter) {

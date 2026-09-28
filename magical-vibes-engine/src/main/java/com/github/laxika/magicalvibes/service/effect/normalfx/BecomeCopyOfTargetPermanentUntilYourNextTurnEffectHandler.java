@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -89,6 +90,13 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
             keywords.addAll(source.getCard().getKeywords());
             keywords.addAll(copyEffect.additionalKeywordsOverride());
             source.getCard().setKeywords(keywords);
+        }
+        if (copyEffect.retainedAbilitySlot() != null) {
+            for (EffectRegistration registration : source.getOriginalCard()
+                    .getEffectRegistrations(copyEffect.retainedAbilitySlot())) {
+                source.getCard().addEffect(copyEffect.retainedAbilitySlot(),
+                        registration.effect(), registration.triggerMode());
+            }
         }
 
         source.setCopyUntilControllerNextTurn(true);

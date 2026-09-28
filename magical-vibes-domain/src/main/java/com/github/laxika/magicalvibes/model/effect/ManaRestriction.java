@@ -106,6 +106,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast creature spells with no abilities (Jasmine Boreal of the Seven). */
+    record CreatureSpellsWithoutAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellWithoutAbilitiesOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells with no abilities only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override
@@ -146,6 +159,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "spells cast from outside hand only";
+        }
+    }
+
+    /** Mana spendable only to cast spells the controller does not own. */
+    record NonOwnedSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonOwnedSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells you don't own only";
         }
     }
 
@@ -372,6 +398,23 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return subtype + " spells only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with one of the given subtypes. */
+    record SubtypeSpellOnly(Set<CardSubtype> subtypes) implements ManaRestriction {
+        public SubtypeSpellOnly {
+            subtypes = Set.copyOf(subtypes);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeSpellOnlyMana(subtypes, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtypes + " spells only";
         }
     }
 

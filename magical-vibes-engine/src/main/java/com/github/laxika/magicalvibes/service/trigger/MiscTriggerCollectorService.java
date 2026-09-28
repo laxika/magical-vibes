@@ -1845,6 +1845,8 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
         CardEffect triggerEffect = effect;
+        Card triggeringCard = ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut
+                ? cardPut.card() : null;
         if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut
                 && effect instanceof TriggeringCardsAwareEffect aware) {
             triggerEffect = aware.withTriggeringCards(cardsPut.cards());
@@ -1857,7 +1859,7 @@ public class MiscTriggerCollectorService {
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(triggerEffect)),
                     "card put into the graveyard", match.permanent().getId()));
         } else {
-            gameData.enqueueTrigger(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
@@ -1865,7 +1867,11 @@ public class MiscTriggerCollectorService {
                     new ArrayList<>(List.of(triggerEffect)),
                     null,
                     match.permanent().getId()
-            ));
+            );
+            if (triggeringCard != null) {
+                entry.setTriggeringCardId(triggeringCard.getId());
+            }
+            gameData.enqueueTrigger(entry);
         }
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));

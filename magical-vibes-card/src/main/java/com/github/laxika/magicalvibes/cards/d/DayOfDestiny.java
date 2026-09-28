@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "BOK", collectorNumber = "1")
+@CardRegistration(set = "DMC", collectorNumber = "99")
 public class DayOfDestiny extends Card {
 
     public DayOfDestiny() {

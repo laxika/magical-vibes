@@ -1117,6 +1117,8 @@ public class ActivatedAbilityExecutionService {
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+        boolean desertSource = predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
         boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
                 && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
@@ -1140,6 +1142,7 @@ public class ActivatedAbilityExecutionService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1158,6 +1161,9 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
                 if (caveSource) {
                     gameData.playerManaPools.get(playerId).addCaveManaTag(ManaColor.COLORLESS, 1);
+                }
+                if (desertSource) {
+                    gameData.playerManaPools.get(playerId).addDesertManaTag(ManaColor.COLORLESS, 1);
                 }
                 
                 gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
@@ -1192,6 +1198,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, totalMana);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(effectiveColor, totalMana);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(effectiveColor, totalMana);
                     }
@@ -1214,6 +1223,9 @@ public class ActivatedAbilityExecutionService {
                             pool.add(color, totalMana);
                             if (caveSource) {
                                 pool.addCaveManaTag(color, totalMana);
+                            }
+                            if (desertSource) {
+                                pool.addDesertManaTag(color, totalMana);
                             }
                             if (isCreatureSource) {
                                 pool.addCreatureMana(color, totalMana);
@@ -1292,6 +1304,9 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (desertSource) {
+                        pool.addDesertManaTag(effectiveColor, amount);
                     }
                     if (award.tracksProducingSourceForSpellCastTriggers()
                             || gameQueryService.isArtifact(gameData, permanent)) {
@@ -1387,7 +1402,7 @@ public class ActivatedAbilityExecutionService {
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
                         permanent.getId(), null, snowSource,
                         caveSource, gameQueryService.getEffectiveColors(gameData, permanent),
-                        GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE));
+                        GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE), desertSource);
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
@@ -1444,6 +1459,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, picks);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(manaColor, picks);
+                    }
                     if (ofColors.grantsRiot()) {
                         pool.addRiotGrantingMana(manaColor, picks);
                     }
@@ -1459,6 +1477,7 @@ public class ActivatedAbilityExecutionService {
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource)
                             .withSourcePermanentId(permanent.getId());
                     if (ofColors.grantsRiot()) {
@@ -1478,6 +1497,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(arm.color(), amount);
                     }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(arm.color(), amount);
+                    }
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
@@ -1496,6 +1518,9 @@ public class ActivatedAbilityExecutionService {
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
@@ -1531,6 +1556,9 @@ public class ActivatedAbilityExecutionService {
                     if (caveSource) {
                         pool.addCaveManaTag(manaColor, manaMultiplier);
                     }
+                    if (desertSource) {
+                        pool.addDesertManaTag(manaColor, manaMultiplier);
+                    }
                     if (isCreatureSource) {
                         pool.addCreatureMana(manaColor, manaMultiplier);
                     }
@@ -1554,6 +1582,9 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (caveSource) {
                         gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        gameData.playerManaPools.get(playerId).addDesertManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));

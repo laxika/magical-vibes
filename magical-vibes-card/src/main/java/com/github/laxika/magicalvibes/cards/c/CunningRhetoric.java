@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "38")
+@CardRegistration(set = "OTC", collectorNumber = "129")
 public class CunningRhetoric extends Card {
 
     public CunningRhetoric() {

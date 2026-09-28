@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 @CardRegistration(set = "40K", collectorNumber = "215")
 @CardRegistration(set = "SLD", collectorNumber = "2365")
 @CardRegistration(set = "SOC", collectorNumber = "272")
+@CardRegistration(set = "LCC", collectorNumber = "243")
 public class HardenedScales extends Card {
 
     public HardenedScales() {

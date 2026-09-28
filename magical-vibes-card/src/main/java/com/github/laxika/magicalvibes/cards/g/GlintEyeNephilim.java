@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "115")
+@CardRegistration(set = "DMC", collectorNumber = "152")
 public class GlintEyeNephilim extends Card {
 
     public GlintEyeNephilim() {

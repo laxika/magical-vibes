@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 @CardRegistration(set = "HBG", collectorNumber = "126")
 @CardRegistration(set = "MSC", collectorNumber = "150")
 @CardRegistration(set = "MSC", collectorNumber = "334")
+@CardRegistration(set = "LCC", collectorNumber = "159")
 public class KindredDiscovery extends Card {
 
     public KindredDiscovery() {

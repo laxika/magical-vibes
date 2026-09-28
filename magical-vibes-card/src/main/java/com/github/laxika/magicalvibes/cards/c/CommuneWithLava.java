@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 
 @CardRegistration(set = "DTK", collectorNumber = "131")
 @CardRegistration(set = "AFC", collectorNumber = "118")
+@CardRegistration(set = "C20", collectorNumber = "149")
 public class CommuneWithLava extends Card {
 
     public CommuneWithLava() {

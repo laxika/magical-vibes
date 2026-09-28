@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "C15", collectorNumber = "309")
 @CardRegistration(set = "DSC", collectorNumber = "300")
 @CardRegistration(set = "AFC", collectorNumber = "263")
+@CardRegistration(set = "C20", collectorNumber = "316")
 public class SpinerockKnoll extends Card {
 
     public SpinerockKnoll() {

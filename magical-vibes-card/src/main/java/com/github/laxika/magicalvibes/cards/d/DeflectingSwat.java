@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "532")
 @CardRegistration(set = "CMM", collectorNumber = "698")
 @CardRegistration(set = "TLE", collectorNumber = "311")
+@CardRegistration(set = "C20", collectorNumber = "50")
 public class DeflectingSwat extends Card {
 
     public DeflectingSwat() {

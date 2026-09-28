@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "170")
 @CardRegistration(set = "RAV", collectorNumber = "163")
+@CardRegistration(set = "DMC", collectorNumber = "133")
 @CardRegistration(set = "SLD", collectorNumber = "2222")
 @CardRegistration(set = "TSR", collectorNumber = "363")
 @CardRegistration(set = "FCA", collectorNumber = "45")
@@ -26,6 +27,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "173")
 @CardRegistration(set = "MSC", collectorNumber = "815")
 @CardRegistration(set = "TDC", collectorNumber = "255")
+@CardRegistration(set = "LCC", collectorNumber = "242")
 public class Farseek extends Card {
 
     public Farseek() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "251")
 @CardRegistration(set = "CMD", collectorNumber = "196")
+@CardRegistration(set = "OTC", collectorNumber = "221")
 public class EdricSpymasterOfTrest extends Card {
 
     public EdricSpymasterOfTrest() {

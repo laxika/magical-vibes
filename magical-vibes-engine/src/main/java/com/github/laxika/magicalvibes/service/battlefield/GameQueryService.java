@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTrigge
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalSpellCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -223,6 +224,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDunge
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
@@ -357,6 +359,7 @@ public class GameQueryService {
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
             CardSubtype.ASSASSIN_OR_FREERUNNING,
+            CardSubtype.OUTLAW,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS
@@ -1055,6 +1058,11 @@ public class GameQueryService {
                 .getOrDefault(card.getId(), Set.of()).contains(subtype)) {
             return true;
         }
+        if (gameData != null && cardOwnerId != null && !isOnBattlefield(card, gameData)
+                && cardHasType(card, CardType.LAND, gameData, cardOwnerId)
+                && computeGrantedSubtypesForOwnedLandCard(gameData, cardOwnerId).contains(subtype)) {
+            return true;
+        }
         GameData.GraveyardCardAnimation graveyardAnimation = activeGraveyardCardAnimation(gameData, card);
         if (graveyardAnimation != null && graveyardAnimation.grantedSubtypes().contains(subtype)) {
             return true;
@@ -1071,6 +1079,21 @@ public class GameQueryService {
         return isCardInGraveyard(gameData, cardOwnerId, card)
                 && computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card)
                 .contains(subtype);
+    }
+
+    private List<CardSubtype> computeGrantedSubtypesForOwnedLandCard(GameData gameData, UUID ownerId) {
+        List<CardSubtype> result = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+        if (battlefield == null) return result;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof OwnLandSubtypeGrantingEffect grant
+                        && !result.contains(grant.subtype())) {
+                    result.add(grant.subtype());
+                }
+            }
+        }
+        return result;
     }
 
     private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
@@ -5795,6 +5818,14 @@ public class GameQueryService {
         if (target.getProtectionFromPlayerIdsUntilEndOfTurn().contains(sourceControllerId)) {
             return true;
         }
+        UUID targetControllerId = findPermanentController(gameData, target.getId());
+        if (targetControllerId != null && isPlaneswalker(gameData, target)) {
+            Set<UUID> protectedPlayers = gameData.playerProtectionFromPlayerIdsUntilNextTurn
+                    .get(targetControllerId);
+            if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
+                return true;
+            }
+        }
         if (target.isProtectionFromOpponentsPermanently()
                 && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
             return true;
@@ -7473,6 +7504,10 @@ public class GameQueryService {
         if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
             return true;
         }
+        protectedPlayers = gameData.playerProtectionFromPlayerIdsUntilNextTurn.get(playerId);
+        if (protectedPlayers != null && protectedPlayers.contains(sourceControllerId)) {
+            return true;
+        }
         if (playerId.equals(sourceControllerId)) {
             return false;
         }
@@ -8133,6 +8168,23 @@ public class GameQueryService {
         return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent, false);
     }
 
+    /** Returns one additional spell copy for each active global spell-copy replacement effect. */
+    public int countAdditionalSpellCopies(GameData gameData) {
+        int count = 0;
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AdditionalSpellCopyEffect) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
     /**
      * Returns the number of additional copies for a triggered ability sourced by a permanent,
      * optionally restricting matching static effects to triggers directly caused by an attack.
@@ -8158,9 +8210,13 @@ public class GameQueryService {
                 for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
                             || additional.allyCreatureBecomesTarget()
+                            || (additional.combatDamageToPlayerOnly()
+                            && !matchesCombatDamageToPlayerTrigger(gameData, controllerId, triggerContext))
                             || (additional.attackOnly() && !attackTrigger)
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
+                            || (additional.controlledCreatureDealtDamageOnly()
+                            && !controlledCreatureWasDealtDamage(gameData, controllerId, triggerContext))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
                             || (!additional.includeSourcePermanent()
                             && staticSource.getId().equals(triggeringPermanent.getId()))) {
@@ -8181,6 +8237,77 @@ public class GameQueryService {
             }
         }
         return count;
+    }
+
+    private boolean matchesCombatDamageToPlayerTrigger(GameData gameData, UUID controllerId,
+                                                       TriggerContext context) {
+        if (context == null) {
+            return false;
+        }
+        return switch (context) {
+            case TriggerContext.SourceDealsCombatDamage damage ->
+                    controllerId.equals(damage.sourceControllerId())
+                            && damage.damageToPlayers() > 0
+                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
+            case TriggerContext.AllyCreaturesDealDamageToPlayer damage ->
+                    controllerId.equals(damage.sourceControllerId());
+            case TriggerContext.DamageToController damage when damage.isCombatDamage() -> {
+                Permanent source = findPermanentById(gameData, damage.sourcePermanentId());
+                yield source != null
+                        && isCreature(gameData, source)
+                        && controllerId.equals(findPermanentController(gameData, source.getId()));
+            }
+            case TriggerContext.SourceDealsDamage damage ->
+                    damage.combatDamage()
+                            && !damage.damageToPlayers().isEmpty()
+                            && controllerId.equals(damage.sourceControllerId())
+                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
+            default -> false;
+        };
+    }
+
+    private boolean controlledCreatureWasDealtDamage(GameData gameData, UUID controllerId,
+                                                     TriggerContext context) {
+        if (controllerId == null || context == null) return false;
+        return switch (context) {
+            case TriggerContext.DamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
+            case TriggerContext.SourceDealsNoncombatDamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
+            case TriggerContext.AnyCreatureDealtDamage damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
+                            damage.damagedCreatureControllerId());
+            case TriggerContext.AnyPermanentDealtDamage damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(),
+                            damage.damagedPermanentControllerId());
+            case TriggerContext.CreatureDealsDamageToCreature damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
+                            damage.damagedCreatureControllerId());
+            case TriggerContext.CreatureDamageToYouOrYourPermanent damage ->
+                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(), null);
+            case TriggerContext.SourceDamageToYouOrYourPermanent damage ->
+                    isControlledCreature(gameData, controllerId,
+                            findPermanentById(gameData, damage.damagedPermanentId()), null);
+            case TriggerContext.SourceDealsDamage damage ->
+                    damage.damageToPermanents().keySet().stream()
+                            .map(targetId -> findPermanentById(gameData, targetId))
+                            .anyMatch(target -> isControlledCreature(gameData, controllerId, target, null));
+            default -> false;
+        };
+    }
+
+    private boolean sourceIsCreature(GameData gameData, Card sourceCard, UUID sourcePermanentId) {
+        Permanent source = sourcePermanentId == null ? null : findPermanentById(gameData, sourcePermanentId);
+        return source != null ? isCreature(gameData, source)
+                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
+    }
+
+    private boolean isControlledCreature(GameData gameData, UUID controllerId,
+                                         Permanent permanent, UUID capturedControllerId) {
+        if (permanent == null || !isCreature(gameData, permanent)) return false;
+        UUID actualControllerId = capturedControllerId != null
+                ? capturedControllerId : findPermanentController(gameData, permanent.getId());
+        return controllerId.equals(actualControllerId);
     }
 
     private boolean matchesInstantSorceryCastOrCopy(TriggerContext triggerContext, UUID controllerId) {
@@ -9780,6 +9907,10 @@ public class GameQueryService {
             if (!playerId.equals(controllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AdditionalControllerDamageEffect acde) {
+                    if (acde.anotherSourceOnly()
+                            && p.getId().equals(entry.getSourcePermanentId())) {
+                        continue;
+                    }
                     if (acde.stackFilter() == null
                             || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null)) {
                         bonus[0] += acde.amount();

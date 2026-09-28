@@ -187,6 +187,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = copyEffect.cardFilter();
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
@@ -241,6 +242,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.mimeoplasmGraveyardChoicePending = true;
         gameData.cloneOperation.mimeoplasmCopyChoicePending = false;
@@ -261,9 +263,10 @@ public class CloneService {
                                                            Card physicalCard, boolean transformed,
                                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect,
                                                            int xValue) {
-        long creatureCardCount = gameData.playerGraveyards.values().stream()
-                .flatMap(List::stream)
-                .filter(graveyardCard -> graveyardCard.hasType(CardType.CREATURE))
+        long creatureCardCount = gameData.playerGraveyards.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .filter(graveyardCard -> isValidGraveyardCopyCard(
+                                gameData, controllerId, entry.getKey(), graveyardCard, copyEffect)))
                 .count();
         int requiredCreatureCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
         if (creatureCardCount < requiredCreatureCards) {
@@ -300,6 +303,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.graveyardCopyEffect = copyEffect;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 copyEffect.exileCopiedGraveyardCardAfterEntry();
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters =
@@ -318,9 +322,9 @@ public class CloneService {
         return true;
     }
 
-    private boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
-                                             Card graveyardCard,
-                                             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+    public boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
+                                            Card graveyardCard,
+                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             return false;
         }
@@ -332,10 +336,16 @@ public class CloneService {
                 graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
             return false;
         }
-        return !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+        boolean putIntoGraveyardFromLibraryThisTurn = !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
                 || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of())
                 .contains(graveyardCard.getId());
+        boolean putIntoGraveyardFromBattlefieldThisTurn =
+                !copyEffect.onlyCardsPutIntoGraveyardFromBattlefieldThisTurn()
+                        || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                        .getOrDefault(graveyardOwnerId, Set.of())
+                        .contains(graveyardCard.getId());
+        return putIntoGraveyardFromLibraryThisTurn && putIntoGraveyardFromBattlefieldThisTurn;
     }
 
     private boolean prepareFixedGraveyardCloneReplacementEffect(GameData gameData, UUID controllerId, Card card,
@@ -378,6 +388,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
         gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
@@ -545,6 +556,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
         gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();

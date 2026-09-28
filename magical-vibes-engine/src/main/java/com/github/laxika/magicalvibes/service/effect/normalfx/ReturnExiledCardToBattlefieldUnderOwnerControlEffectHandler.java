@@ -50,6 +50,9 @@ public class ReturnExiledCardToBattlefieldUnderOwnerControlEffectHandler impleme
         UUID ownerId = exiled.ownerId();
         Permanent permanent = new Permanent(card);
         permanent.setEnteredFromExile(true);
+        if (((ReturnExiledCardToBattlefieldUnderOwnerControlEffect) effect).enterTapped()) {
+            permanent.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(ownerId) + " returns ", card,

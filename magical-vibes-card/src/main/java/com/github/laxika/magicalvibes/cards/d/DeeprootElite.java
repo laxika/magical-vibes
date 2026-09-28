@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "127")
+@CardRegistration(set = "LCC", collectorNumber = "237")
 public class DeeprootElite extends Card {
 
     public DeeprootElite() {

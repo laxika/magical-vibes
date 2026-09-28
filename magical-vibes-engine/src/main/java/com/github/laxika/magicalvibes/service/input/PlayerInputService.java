@@ -1053,10 +1053,19 @@ public class PlayerInputService {
             boolean modesResetEachTurn, boolean consumeModes,
             List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
             UUID triggeringCardId, UUID attackedTargetId) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId, null);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
+            UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                        consumeModes, chosenModes, triggeringCardId, attackedTargetId);
+                        consumeModes, chosenModes, triggeringCardId, attackedTargetId, triggeringPermanentId);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
@@ -1419,6 +1428,20 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card type for {}", gameData.id, playerName, card.getName());
+    }
+
+    public void beginCraftedCardTypeOnEnterChoice(GameData gameData, UUID playerId,
+                                                  Permanent permanent, List<CardType> allowedTypes) {
+        ChoiceContext.CraftedCardTypeOnEnterChoice choiceContext =
+                new ChoiceContext.CraftedCardTypeOnEnterChoice(permanent, playerId, allowedTypes);
+        List<String> cardTypes = allowedTypes.stream().map(CardType::name).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, cardTypes,
+                "Choose a card type shared by the two craft materials."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a shared craft card type for {}", gameData.id,
+                playerName, permanent.getCard().getName());
     }
 
     public void beginSpellColorChoice(GameData gameData, UUID playerId) {

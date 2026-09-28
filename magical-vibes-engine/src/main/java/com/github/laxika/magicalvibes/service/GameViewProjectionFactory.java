@@ -676,6 +676,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (card.hasType(CardType.CREATURE) && card.getCardText() == null && card.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
             if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -999,6 +1004,12 @@ public class GameViewProjectionFactory {
             if (!topCard.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
+            }
+            if (topCard.hasType(CardType.CREATURE) && topCard.getCardText() == null
+                    && topCard.getKeywords().isEmpty()
+                    && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
             }
             if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {

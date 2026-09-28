@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "ISD", collectorNumber = "245")
 @CardRegistration(set = "SLD", collectorNumber = "351")
 @CardRegistration(set = "SLD", collectorNumber = "2274")
+@CardRegistration(set = "LCC", collectorNumber = "344")
 public class NephaliaDrownyard extends Card {
 
     public NephaliaDrownyard() {

@@ -387,7 +387,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The controller chooses one matching permanent they control to exile until the source leaves. */
     record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
-                                      PermanentPredicate filter) implements PermanentChoiceContext {}
+                                      PermanentPredicate filter, CardEffect thenEffect)
+            implements PermanentChoiceContext {
+        public PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
+                                          PermanentPredicate filter) {
+            this(sourceCard, sourcePermanentId, controllerId, filter, null);
+        }
+    }
 
     /** Fear of Change: choose another creature to exile before conjuring a random creature. */
     record ExileAnotherCreatureAndConjureRandomCreature(
@@ -1233,42 +1239,50 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,
-                                 UUID attackedTargetId) implements PermanentChoiceContext {
+                                 UUID attackedTargetId, UUID triggeringPermanentId) implements PermanentChoiceContext {
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn,
+                                     boolean consumeModes, UUID triggeringCardId,
+                                     UUID attackedTargetId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                    consumeModes, triggeringCardId, attackedTargetId, null);
+        }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, UUID triggeringCardId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, null, null);
+                    consumeModes, null, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes, UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, triggeringCardId, null);
+                    consumeModes, triggeringCardId, null, null);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    false, triggeringCardId, null);
+                    false, triggeringCardId, null, null);
         }
     }
 
@@ -1306,13 +1320,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        UUID triggeringPermanentId, UUID permanentTargetControllerId,
                                        UUID choosingPlayerId, Integer triggeringSpellManaValue,
                                        com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
-                                       boolean nonTargeting)
+                                       boolean nonTargeting, UUID triggeringCardId)
             implements PermanentChoiceContext {
         public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
             return planarSource == null ? this : new SpellTargetTriggerAnyTarget(sourceCard, controllerId,
                     effects, playerTargetOnly, targetFilter, spellManaSpentX, sourcePermanentId,
                     sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
-                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(), nonTargeting);
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(),
+                    nonTargeting, triggeringCardId);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
+                                           Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                                           UUID triggeringPermanentId, UUID permanentTargetControllerId,
+                                           UUID choosingPlayerId, Integer triggeringSpellManaValue,
+                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                           boolean nonTargeting) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
+                    nonTargeting, null);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2593,6 +2622,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** Kathril: choose a controlled creature for the current graveyard keyword counter. */
+    record KathrilKeywordCounterChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                       CounterType counterType, List<CounterType> remainingCounterTypes,
+                                       int countersPlaced) implements PermanentChoiceContext {
+        public KathrilKeywordCounterChoice {
+            remainingCounterTypes = List.copyOf(remainingCounterTypes);
+        }
+    }
 
     /** The controller is choosing the creature that will be their Ring-bearer. */
     record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}

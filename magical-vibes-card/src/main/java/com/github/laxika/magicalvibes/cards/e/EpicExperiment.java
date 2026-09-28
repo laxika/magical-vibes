@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EpicExperimentEffect;
 @CardRegistration(set = "PIO", collectorNumber = "223")
 @CardRegistration(set = "C15", collectorNumber = "216")
 @CardRegistration(set = "C21", collectorNumber = "216")
+@CardRegistration(set = "OTC", collectorNumber = "222")
 public class EpicExperiment extends Card {
 
     public EpicExperiment() {

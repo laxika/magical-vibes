@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "SLZ", collectorNumber = "84")
 @CardRegistration(set = "SLZ", collectorNumber = "205")
 @CardRegistration(set = "SLZ", collectorNumber = "326")
+@CardRegistration(set = "OTC", collectorNumber = "205")
 public class ScuteSwarm extends Card {
 
     public ScuteSwarm() {

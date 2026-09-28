@@ -122,7 +122,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(),
-                null
+                null,
+                entry.getTriggeringPermanentToughnessAtTrigger()
         ));
     }
 

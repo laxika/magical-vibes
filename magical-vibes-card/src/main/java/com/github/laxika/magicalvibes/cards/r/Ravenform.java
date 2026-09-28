@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "72")
+@CardRegistration(set = "LCC", collectorNumber = "167")
 public class Ravenform extends Card {
 
     public Ravenform() {

@@ -150,6 +150,19 @@ public final class AnyColorManaChoiceSupport {
                                            Card sourceCard, UUID sourcePermanentId,
                                            UUID recipientPlayerId, boolean fromSnowSource,
                                            boolean fromCaveSource, Set<CardColor> sourceColors, boolean fromTreasureSource) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
+                fromSnowSource, fromCaveSource, sourceColors, fromTreasureSource, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData, UUID playerId,
+                                           AwardAnyColorManaEffect effect, int amount,
+                                           boolean fromCreature, CardSubtype chosenSubtype,
+                                           Card sourceCard, UUID sourcePermanentId,
+                                           UUID recipientPlayerId, boolean fromSnowSource,
+                                           boolean fromCaveSource, Set<CardColor> sourceColors,
+                                           boolean fromTreasureSource, boolean fromDesertSource) {
         if (amount <= 0) {
             return false;
         }
@@ -213,6 +226,15 @@ public final class AnyColorManaChoiceSupport {
                     && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
         }
+        if (fromDesertSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withDesertSource(true);
+        } else if (fromDesertSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withDesertSource(true);
+        } else if (fromDesertSource
+                && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
+            choiceContext = multicoloredChoice.withDesertSource(true);
+        }
         if (effect.tracksProducingSourceForSpellCastTriggers()
                 && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSourceTracking();
@@ -262,6 +284,9 @@ public final class AnyColorManaChoiceSupport {
                 }
                 if (fromCaveSource) {
                     manaPool.addCaveManaTag(effectiveColor, amount);
+                }
+                if (fromDesertSource) {
+                    manaPool.addDesertManaTag(effectiveColor, amount);
                 }
                 if (fromCreature) {
                     manaPool.addCreatureMana(effectiveColor, amount);

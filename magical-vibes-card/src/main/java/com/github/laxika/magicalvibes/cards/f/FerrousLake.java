@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "968")
 @CardRegistration(set = "SOC", collectorNumber = "370")
 @CardRegistration(set = "TDC", collectorNumber = "361")
+@CardRegistration(set = "OTC", collectorNumber = "294")
 public class FerrousLake extends Card {
 
     public FerrousLake() {

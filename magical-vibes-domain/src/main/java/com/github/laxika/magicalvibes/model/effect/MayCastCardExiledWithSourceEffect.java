@@ -9,21 +9,36 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * offered spells to cards with exactly that mana value.
  *
  * <p>The <em>ability's controller</em> — not the exiled card's owner — is offered the cast, and
- * only one of the exiled cards may be cast. Contrast {@link MayCastCardsExiledWithSourceEffect},
+ * only one of the exiled cards may be cast. When {@code random} is true, one eligible card is
+ * selected at random before the single may-cast offer is created. Contrast
+ * {@link MayCastCardsExiledWithSourceEffect},
  * which offers <em>every</em> card exiled with a departing permanent to its own owner (Spell
  * Queller).</p>
  */
-public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter) implements CardEffect {
+public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
+                                                boolean random) implements CardEffect {
 
     public MayCastCardExiledWithSourceEffect() {
-        this(null, null);
+        this(null, null, false);
     }
 
     public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue) {
-        this(manaValue, null);
+        this(manaValue, null, false);
     }
 
     public MayCastCardExiledWithSourceEffect(CardPredicate filter) {
-        this(null, filter);
+        this(null, filter, false);
+    }
+
+    public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter) {
+        this(manaValue, filter, false);
+    }
+
+    public MayCastCardExiledWithSourceEffect(boolean random) {
+        this(null, null, random);
+    }
+
+    public static MayCastCardExiledWithSourceEffect randomSelection() {
+        return new MayCastCardExiledWithSourceEffect(null, null, true);
     }
 }

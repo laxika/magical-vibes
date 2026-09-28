@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "281")
+@CardRegistration(set = "DMC", collectorNumber = "166")
 public class RienneAngelOfRebirth extends Card {
 
     public RienneAngelOfRebirth() {

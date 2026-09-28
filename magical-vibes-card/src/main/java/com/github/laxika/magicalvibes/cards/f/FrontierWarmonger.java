@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "CMM", collectorNumber = "224")
 @CardRegistration(set = "LTC", collectorNumber = "217")
+@CardRegistration(set = "C20", collectorNumber = "52")
 public class FrontierWarmonger extends Card {
 
     public FrontierWarmonger() {

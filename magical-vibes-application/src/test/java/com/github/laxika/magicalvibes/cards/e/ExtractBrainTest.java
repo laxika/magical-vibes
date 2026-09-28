@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,96 +17,77 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExtractBrain.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ExtractBrain.class, Divination.class, Forest.class, GrizzlyBears.class})
 class ExtractBrainTest extends BaseCardTest {
 
     @Test
-    @DisplayName("The target opponent chooses the X cards and the caster may cast a selected nonland")
-    void targetOpponentChoosesCardsAndCasterCastsSelectedSpell() {
-        Card forest = new Forest();
-        Card bears = new GrizzlyBears();
-        Card otherForest = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(forest, bears, otherForest)));
+    @DisplayName("The target chooses X cards and the caster may cast a revealed spell for free")
+    void targetChoosesCardsAndCasterCastsRevealedSpell() {
+        Card land = new Forest();
+        Card spell = new Divination();
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, new ArrayList<>(List.of(land, spell, creature)));
         harness.setHand(player1, List.of(new ExtractBrain()));
-        addExtractBrainMana(2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.TargetPlayerChoosesCardsFromHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.choosingPlayerId()).isEqualTo(player2.getId());
-        assertThat(choice.remainingCount()).isEqualTo(2);
+        PendingInteraction.RevealCardsDiscardChoice reveal =
+                gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
+        assertThat(reveal).isNotNull();
+        assertThat(reveal.revealStage()).isTrue();
+        assertThat(reveal.decidingPlayerId()).isEqualTo(player2.getId());
 
-        harness.handleCardChosen(player2, 1);
-        assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class).validIndices())
-                .containsExactly(0, 2);
         harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
+        PendingInteraction.RevealCardsDiscardChoice castChoice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
+        assertThat(castChoice).isNotNull();
+        assertThat(castChoice.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(castChoice.validIndices()).containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(bears);
-        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(otherForest);
+        assertThat(gd.stack).singleElement().extracting(entry -> entry.getCard().getId())
+                .isEqualTo(spell.getId());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, creature);
     }
 
     @Test
-    @DisplayName("A selected land is not offered for casting")
-    void selectedLandIsNotOffered() {
-        Card forest = new Forest();
-        Card bears = new GrizzlyBears();
-        harness.setHand(player2, new ArrayList<>(List.of(forest, bears)));
+    @DisplayName("Lands among the chosen cards are not offered as spells")
+    void landsAreNotOffered() {
+        Card land = new Forest();
+        harness.setHand(player2, new ArrayList<>(List.of(land)));
         harness.setHand(player1, List.of(new ExtractBrain()));
-        addExtractBrainMana(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, 1, player2.getId());
         harness.passBothPriorities();
-        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, bears);
     }
 
     @Test
-    @DisplayName("When X exceeds the hand size, all cards are selected")
-    void xExceedsHandSize() {
-        Card bears = new GrizzlyBears();
-        harness.setHand(player2, new ArrayList<>(List.of(bears)));
-        harness.setHand(player1, List.of(new ExtractBrain()));
-        addExtractBrainMana(2);
-
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(bears);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-    }
-
-    @Test
-    @DisplayName("The spell cannot target its controller")
+    @DisplayName("Extract Brain cannot target its controller")
     void cannotTargetController() {
         harness.setHand(player1, List.of(new ExtractBrain()));
-        addExtractBrainMana(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-    }
-
-    private void addExtractBrainMana(int xValue) {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, xValue);
     }
 }

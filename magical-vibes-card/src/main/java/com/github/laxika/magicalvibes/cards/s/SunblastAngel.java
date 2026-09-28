@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1290")
 @CardRegistration(set = "C14", collectorNumber = "92")
 @CardRegistration(set = "AFC", collectorNumber = "74")
+@CardRegistration(set = "C20", collectorNumber = "102")
 public class SunblastAngel extends Card {
 
     public SunblastAngel() {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "674")
 @CardRegistration(set = "PIP", collectorNumber = "966")
 @CardRegistration(set = "SOC", collectorNumber = "367")
+@CardRegistration(set = "OTC", collectorNumber = "287")
 public class DesolateMire extends Card {
 
     public DesolateMire() {

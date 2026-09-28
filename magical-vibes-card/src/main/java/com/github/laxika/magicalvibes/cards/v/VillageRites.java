@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 @CardRegistration(set = "SLD", collectorNumber = "2248")
 @CardRegistration(set = "STA", collectorNumber = "35")
 @CardRegistration(set = "GN3", collectorNumber = "64")
+@CardRegistration(set = "LCC", collectorNumber = "212")
 public class VillageRites extends Card {
 
     public VillageRites() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "205")
+@CardRegistration(set = "LCC", collectorNumber = "257")
 public class SavageStomp extends Card {
 
     public SavageStomp() {

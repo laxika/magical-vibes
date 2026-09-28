@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "40K", collectorNumber = "226")
 @CardRegistration(set = "DSC", collectorNumber = "91")
 @CardRegistration(set = "AFC", collectorNumber = "195")
+@CardRegistration(set = "LCC", collectorNumber = "292")
 public class UtterEnd extends Card {
 
     public UtterEnd() {

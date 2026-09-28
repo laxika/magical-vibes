@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantPayLifeEqualToSpellManaV
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "43")
+@CardRegistration(set = "OTC", collectorNumber = "139")
 public class MarshlandBloodcaster extends Card {
 
     public MarshlandBloodcaster() {

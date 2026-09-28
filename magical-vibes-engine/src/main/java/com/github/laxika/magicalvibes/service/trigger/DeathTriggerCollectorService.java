@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscar
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -802,6 +803,7 @@ public class DeathTriggerCollectorService {
                     sd.dyingCard().getName() + "'s ability",
                     new ArrayList<>(List.of(resolvedMay))
             );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
             match.gameData().stack.add(entry);
         }
@@ -2812,6 +2814,31 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathBountyReward(TriggerMatchContext match,
+            EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureDeath death)
+                || death.dyingPermanent() == null
+                || death.dyingPermanent().getCounterCount(CounterType.BOUNTY) < 1) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                death.dyingCreatureControllerId(),
+                match.permanent().getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().stack.add(entry);
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = PutCountersOnTargetForEachDyingSourcePowerEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handlePutCountersOnTargetForEachDyingSourcePower(TriggerMatchContext match,
             PutCountersOnTargetForEachDyingSourcePowerEffect effect, TriggerContext ctx) {
@@ -3402,6 +3429,9 @@ public class DeathTriggerCollectorService {
                 match.gameData(), death.dyingCreatureControllerId())) {
             return true;
         }
+        if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
+            return handleAllyNontokenMayPay(match, mayPay, ctx);
+        }
         return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
     }
 
@@ -3685,12 +3715,16 @@ public class DeathTriggerCollectorService {
             logOpponentCreatureDeath(match);
             return true;
         }
+        CardEffect resolvedEffect = effect;
+        if (effect instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
+            resolvedEffect = aware.boundToDyingCard(cd.dyingCard().getId());
+        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             TargetFilter targetFilter = targetFilterForDeathTrigger(
                     match.permanent().getCard(), declaredTargetEffect);
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
                     null, null, targetFilter));
             logOpponentCreatureDeath(match);
             return true;
@@ -3700,7 +3734,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(List.of(resolvedEffect)),
                 cd.dyingCreatureControllerId(),
                 match.permanent().getId()
         ));

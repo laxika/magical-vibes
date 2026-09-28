@@ -19,7 +19,8 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
         boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn,
         boolean grantHaste,
         boolean exileCopiedGraveyardCardAfterEntry,
-        boolean exileTwoAndAddOtherPowerCounters) implements ReplacementEffect {
+        boolean exileTwoAndAddOtherPowerCounters,
+        boolean onlyCardsPutIntoGraveyardFromBattlefieldThisTurn) implements ReplacementEffect {
 
     public CopyCreatureCardInGraveyardOnEnterEffect(
             String nameOverride,
@@ -27,7 +28,7 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
             int toughnessOverride,
             Set<CardSubtype> additionalSubtypesOverride) {
         this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
-                null, false, false, false, true, false);
+                null, false, false, false, true, false, false);
     }
 
     public CopyCreatureCardInGraveyardOnEnterEffect(
@@ -37,7 +38,7 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
             Set<CardSubtype> additionalSubtypesOverride,
             boolean exileTwoAndAddOtherPowerCounters) {
         this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
-                null, false, false, false, true, exileTwoAndAddOtherPowerCounters);
+                null, false, false, false, true, exileTwoAndAddOtherPowerCounters, false);
     }
 
     public CopyCreatureCardInGraveyardOnEnterEffect(
@@ -52,7 +53,7 @@ public record CopyCreatureCardInGraveyardOnEnterEffect(
             boolean exileCopiedGraveyardCardAfterEntry) {
         this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
                 cardFilter, controllerGraveyardOnly, onlyCardsPutIntoGraveyardFromLibraryThisTurn,
-                grantHaste, exileCopiedGraveyardCardAfterEntry, false);
+                grantHaste, exileCopiedGraveyardCardAfterEntry, false, false);
     }
 
     public CopyCreatureCardInGraveyardOnEnterEffect {

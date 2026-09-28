@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "225")
 @CardRegistration(set = "AKR", collectorNumber = "269")
+@CardRegistration(set = "DMC", collectorNumber = "179")
 public class BontusMonument extends Card {
 
     public BontusMonument() {

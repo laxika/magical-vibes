@@ -742,12 +742,12 @@ public class MayCastHandlerService {
                         freeCast.setSourceZone(Zone.GRAVEYARD);
                         gameData.stack.add(freeCast);
 
-                        for (int i = 0; i < copyCount; i++) {
+                        int adjustedCopyCount = copySupport.adjustedSpellCopyCount(gameData, copyCount);
+                        for (int i = 0; i < adjustedCopyCount; i++) {
                             Card copyCard = copySupport.createCopyCard(cardToCast);
                             StackEntry copyEntry = copySupport.createCopyStackEntry(
                                     freeCast, copyCard, player.getId(), freeCast.getTargetId());
-                            gameData.stack.add(copyEntry);
-                            copySupport.checkSpellCopyTriggers(gameData, copyEntry);
+                            copySupport.addCopyToStack(gameData, copyEntry, false);
                             if (copyEntry.getTargetId() != null) {
                                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                                         cardToCast, player.getId(), List.of(new CopySpellEffect()),
@@ -1631,8 +1631,9 @@ public class MayCastHandlerService {
         CardEffect afterSuccessfulCastEffect = ability.effects().stream()
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
-                .findFirst()
                 .map(MayCastFromHandWithoutPayingManaCostEffect::afterSuccessfulCastEffect)
+                .filter(Objects::nonNull)
+                .findFirst()
                 .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
                 revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,

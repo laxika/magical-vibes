@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -58,15 +59,16 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
         if (matchingIds.size() == 1) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
             if (permanent != null) {
-                exileSupport.exilePermanentAndTrackWithSource(gameData, permanent,
-                        sourcePermanentId, entry.getCard());
+                exileAndQueueFollowUp(gameData, entry, permanent, sourcePermanentId,
+                        entry.getCard(), exileEffect.thenEffect());
             }
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.PermanentYouControlToExile(
-                        entry.getCard(), sourcePermanentId, controllerId, exileEffect.filter()));
+                        entry.getCard(), sourcePermanentId, controllerId, exileEffect.filter(),
+                        exileEffect.thenEffect()));
         playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
                 entry.getCard().getName() + " — choose a permanent to exile.");
     }
@@ -79,8 +81,22 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
                 permanentId))
                 && matches(gameData, permanent, context.sourceCard(), context.controllerId(),
                 context.sourcePermanentId(), context.filter())) {
-            exileSupport.exilePermanentAndTrackWithSource(gameData, permanent,
-                    context.sourcePermanentId(), context.sourceCard());
+            exileAndQueueFollowUp(gameData, gameData.pendingEffectResolutionEntry, permanent,
+                    context.sourcePermanentId(), context.sourceCard(), context.thenEffect());
+        }
+    }
+
+    private void exileAndQueueFollowUp(GameData gameData, StackEntry entry, Permanent permanent,
+                                       UUID sourcePermanentId, Card sourceCard, CardEffect thenEffect) {
+        int exiledPower = thenEffect == null ? 0 : gameQueryService.getEffectivePower(gameData, permanent);
+        if (!exileSupport.exilePermanentAndTrackWithSource(
+                gameData, permanent, sourcePermanentId, sourceCard)) {
+            return;
+        }
+        if (thenEffect != null && entry != null) {
+            entry.setEventValue(exiledPower);
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new QueueReflexiveAbilityEffect(thenEffect)));
         }
     }
 

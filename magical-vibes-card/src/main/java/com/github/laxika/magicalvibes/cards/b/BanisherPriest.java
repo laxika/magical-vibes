@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDO", collectorNumber = "2")
 @CardRegistration(set = "GN3", collectorNumber = "7")
 @CardRegistration(set = "MOC", collectorNumber = "173")
+@CardRegistration(set = "C20", collectorNumber = "77")
 public class BanisherPriest extends Card {
 
     public BanisherPriest() {

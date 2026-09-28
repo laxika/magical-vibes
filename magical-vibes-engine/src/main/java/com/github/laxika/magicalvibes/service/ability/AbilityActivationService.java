@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
@@ -325,6 +326,7 @@ public class AbilityActivationService {
         boolean isLandSource = gameQueryService.isLand(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = permanent.getCard().hasType(CardType.LAND)
                 && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         // Mana-production replacement effects are applied to the tapped permanent.
@@ -353,6 +355,7 @@ public class AbilityActivationService {
             ChoiceContext.ManaColorChoice choiceContext =
                     new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                             .withCaveSource(caveSource)
+                            .withDesertSource(desertSource)
                             .withBasicLandSource(basicLandSource)
                             .withArtifactSource(nonTreasureArtifactSource);
             List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
@@ -382,6 +385,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(fixedLandColor, totalMana);
                 }
@@ -407,6 +413,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
@@ -439,6 +446,9 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(color, totalMana);
                     }
@@ -449,6 +459,7 @@ public class AbilityActivationService {
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource)
                                     .withArtifactSource(nonTreasureArtifactSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
@@ -468,6 +479,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(overriddenManaColors.getFirst(), manaMultiplier);
+                }
                 if (basicLandSource) {
                     manaPool.addBasicLandManaTag(overriddenManaColors.getFirst(), manaMultiplier);
                 }
@@ -478,6 +492,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
                                 .withArtifactSource(nonTreasureArtifactSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
@@ -505,6 +520,9 @@ public class AbilityActivationService {
                     manaPool.add(ManaColor.COLORLESS, manaMultiplier);
                     if (caveSource) {
                         manaPool.addCaveManaTag(ManaColor.COLORLESS, manaMultiplier);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(ManaColor.COLORLESS, manaMultiplier);
                     }
                     if (basicLandSource) {
                         manaPool.addBasicLandManaTag(ManaColor.COLORLESS, manaMultiplier);
@@ -535,6 +553,9 @@ public class AbilityActivationService {
                         }
                         if (caveSource) {
                             manaPool.addCaveManaTag(effectiveColor, amount);
+                        }
+                        if (desertSource) {
+                            manaPool.addDesertManaTag(effectiveColor, amount);
                         }
                         if (basicLandSource) {
                             manaPool.addBasicLandManaTag(effectiveColor, amount);
@@ -906,6 +927,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         boolean caveSource = isCaveSource(gameData, permanent);
+        boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
         boolean anyColorReplacement = fixedLandColor == null
@@ -934,6 +956,9 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(fixedLandColor, totalMana);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
+                }
             }
         } else if (anyColorReplacement) {
             int totalMana = 0;
@@ -951,6 +976,7 @@ public class AbilityActivationService {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -979,11 +1005,15 @@ public class AbilityActivationService {
                     if (caveSource) {
                         manaPool.addCaveManaTag(color, totalMana);
                     }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(color, totalMana);
+                    }
                 } else {
                     // Piracy + multi-type under Reality Twist: pick one color for all mana.
                     ChoiceContext.ManaColorChoice choiceContext =
                             new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
                                     .withCaveSource(caveSource)
+                                    .withDesertSource(desertSource)
                                     .withBasicLandSource(basicLandSource);
                     List<String> colors = twistedColors.stream().map(Enum::name).toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1003,10 +1033,14 @@ public class AbilityActivationService {
                 if (caveSource) {
                     manaPool.addCaveManaTag(effectiveColor, 1);
                 }
+                if (desertSource) {
+                    manaPool.addDesertManaTag(effectiveColor, 1);
+                }
             } else {
                 ChoiceContext.ManaColorChoice choiceContext =
                         new ChoiceContext.ManaColorChoice(playerId, false, 1)
                                 .withCaveSource(caveSource)
+                                .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource);
                 List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1026,6 +1060,9 @@ public class AbilityActivationService {
                     }
                     if (caveSource) {
                         manaPool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(effectiveColor, amount);
                     }
                 }
             }
@@ -2228,6 +2265,12 @@ public class AbilityActivationService {
         // being cycled still counts toward the hand-size condition, so check the current hand size
         // before it is discarded below as part of the cost.
         String abilityCost = ability.getManaCost();
+        UUID firstCardCycledFreeSourceId = abilityCost != null
+                ? findFirstCardCycledFreeSource(gameData, playerId, ability)
+                : null;
+        if (firstCardCycledFreeSourceId != null) {
+            abilityCost = null;
+        }
         if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
             abilityCost = null;
         }
@@ -2248,6 +2291,12 @@ public class AbilityActivationService {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, card.getName());
             }
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeCosts);
+        }
+
+        if (firstCardCycledFreeSourceId != null) {
+            gameData.firstCardCycledFreeUsesThisTurn
+                    .computeIfAbsent(firstCardCycledFreeSourceId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
         }
 
         if (ability.isSourceStaysInHand() && ability.isRevealsSourceFromHand()) {
@@ -2635,6 +2684,29 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", card, " from their hand for mana."));
         log.info("Game {} - {} exiles {} from hand for mana", gameData.id, player.getUsername(), card.getName());
+    }
+
+    /** Returns the unused source permanent granting Gavi-style first-card-free cycling, if any. */
+    private UUID findFirstCardCycledFreeSource(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (!ability.isCyclingAbility()) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (gameData.firstCardCycledFreeUsesThisTurn
+                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FirstCardCycledFreeEffect) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -5991,7 +6063,7 @@ public class AbilityActivationService {
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
         AmountContext activationCostContext = new AmountContext(
-                playerId, permanent, targetId, effectiveXValue, 0);
+                playerId, permanent, targetId, effectiveXValue, 0).withTargetIds(targetIds);
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
@@ -7000,7 +7072,7 @@ public class AbilityActivationService {
                                                        CraftMaterialCost cost) {
         List<Card> candidates = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
+        if (battlefield != null && !cost.graveyardOnly()) {
             battlefield.stream()
                     .filter(permanent -> permanent != source)
                     .filter(permanent -> matchesCraftMaterial(gameData, permanent, cost))
@@ -7020,13 +7092,18 @@ public class AbilityActivationService {
                                                   CraftMaterialCost cost) {
         List<Card> candidates = collectCraftMaterialCandidates(gameData, playerId, source, cost);
         if (candidates.size() < cost.minimumCount()
-                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)) {
+                || !canSatisfyRequiredCraftSubtypes(gameData, candidates, cost)
+                || (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, candidates, playerId))) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
         return candidates;
     }
 
     private boolean matchesCraftMaterial(GameData gameData, Permanent permanent, CraftMaterialCost cost) {
+        if (cost.graveyardOnly()) {
+            return false;
+        }
         if (cost.nonlandOnly() && gameQueryService.isLand(gameData, permanent)) {
             return false;
         }
@@ -7045,6 +7122,12 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(subtype ->
                 predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, new PermanentHasSubtypePredicate(subtype)))) {
+            return false;
+        }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                permanent.getCard(), cost.requiredCardPredicate(), null,
+                gameData, gameQueryService.findPermanentController(gameData, permanent.getId()))) {
             return false;
         }
         return !cost.requireActivatedAbility() || hasActivatedAbility(gameData, permanent);
@@ -7066,6 +7149,11 @@ public class AbilityActivationService {
                 && cost.requiredSubtypes().stream().noneMatch(card.getSubtypes()::contains)) {
             return false;
         }
+        if (cost.requiredCardPredicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                card, cost.requiredCardPredicate(), null)) {
+            return false;
+        }
         return !cost.requireActivatedAbility()
                 || !card.getActivatedAbilities().isEmpty()
                 || !card.getEffects(EffectSlot.ON_TAP).isEmpty();
@@ -7077,6 +7165,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialPrompt(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "two craft materials that share a card type to exile as craft materials";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "one of each required creature type to exile as craft materials";
         }
@@ -7084,6 +7175,9 @@ public class AbilityActivationService {
     }
 
     private String craftMaterialError(CraftMaterialCost cost) {
+        if (cost.requiresSharedCardType()) {
+            return "Must have two craft materials that share a card type";
+        }
         if (!cost.requiredSubtypes().isEmpty()) {
             return "Must have one of each required creature type to exile as craft materials";
         }
@@ -7106,6 +7200,9 @@ public class AbilityActivationService {
         }
         if (cost.requiredType() != null) {
             return cost.requiredType().name().toLowerCase() + "s";
+        }
+        if (cost.graveyardOnly()) {
+            return "matching cards from your graveyard";
         }
         return "matching craft materials";
     }
@@ -7189,6 +7286,7 @@ public class AbilityActivationService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Permanent> battlefieldChoices = new ArrayList<>();
         List<Card> graveyardChoices = new ArrayList<>();
+        List<Card> selectedMaterials = new ArrayList<>();
         List<Set<CardSubtype>> selectedSubtypes = new ArrayList<>();
         for (UUID cardId : cardIds) {
             Permanent battlefieldChoice = battlefield == null ? null : battlefield.stream()
@@ -7200,6 +7298,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Selected card is not a legal craft material");
                 }
                 battlefieldChoices.add(battlefieldChoice);
+                selectedMaterials.add(battlefieldChoice.getCard());
                 selectedSubtypes.add(craftSubtypesForPermanent(gameData, battlefieldChoice, cost));
                 continue;
             }
@@ -7211,11 +7310,16 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Selected card is not a legal craft material");
             }
             graveyardChoices.add(graveyardChoice);
+            selectedMaterials.add(graveyardChoice);
             selectedSubtypes.add(craftSubtypesForCard(graveyardChoice, cost));
         }
 
         if (!canAssignCraftSubtypes(selectedSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[selectedSubtypes.size()])) {
+            throw new IllegalStateException(craftMaterialError(cost));
+        }
+        if (cost.requiresSharedCardType()
+                && !canSatisfySharedCraftCardType(gameData, selectedMaterials, playerId)) {
             throw new IllegalStateException(craftMaterialError(cost));
         }
 
@@ -7256,6 +7360,34 @@ public class AbilityActivationService {
                 .toList();
         return canAssignCraftSubtypes(candidateSubtypes, cost.requiredSubtypes(), 0,
                 new boolean[candidateSubtypes.size()]);
+    }
+
+    private boolean canSatisfySharedCraftCardType(GameData gameData, List<Card> candidates,
+                                                   UUID playerId) {
+        for (int first = 0; first < candidates.size(); first++) {
+            Set<CardType> firstTypes = craftCardTypes(gameData, candidates.get(first), playerId);
+            for (int second = first + 1; second < candidates.size(); second++) {
+                Set<CardType> secondTypes = craftCardTypes(gameData, candidates.get(second), playerId);
+                if (firstTypes.stream().anyMatch(secondTypes::contains)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Set<CardType> craftCardTypes(GameData gameData, Card card, UUID playerId) {
+        Permanent permanent = findBattlefieldPermanentByCardId(gameData, card.getId());
+        if (permanent != null) {
+            return gameQueryService.getEffectiveCardTypes(gameData, permanent);
+        }
+        Set<CardType> types = new HashSet<>();
+        for (CardType type : CardType.values()) {
+            if (gameQueryService.cardHasType(card, type, gameData, playerId)) {
+                types.add(type);
+            }
+        }
+        return types;
     }
 
     private Permanent findBattlefieldPermanentByCardId(GameData gameData, UUID cardId) {
@@ -8165,6 +8297,13 @@ public class AbilityActivationService {
         }
         if (subtypes.contains(CardSubtype.ASSASSIN)) {
             subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
+        }
+        if (subtypes.contains(CardSubtype.ASSASSIN)
+                || subtypes.contains(CardSubtype.MERCENARY)
+                || subtypes.contains(CardSubtype.PIRATE)
+                || subtypes.contains(CardSubtype.ROGUE)
+                || subtypes.contains(CardSubtype.WARLOCK)) {
+            subtypes.add(CardSubtype.OUTLAW);
         }
         return subtypes;
     }
@@ -9489,5 +9628,10 @@ public class AbilityActivationService {
     private boolean isCaveSource(GameData gameData, Permanent permanent) {
         return predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
+    }
+
+    private boolean isDesertSource(GameData gameData, Permanent permanent) {
+        return predicateEvaluationService.matchesPermanentPredicate(
+                gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
     }
 }

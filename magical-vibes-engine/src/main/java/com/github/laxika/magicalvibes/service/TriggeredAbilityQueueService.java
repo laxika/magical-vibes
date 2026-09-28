@@ -1095,7 +1095,8 @@ public class TriggeredAbilityQueueService {
             }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
-                    List.of(), pending.triggeringCardId(), pending.attackedTargetId());
+                    List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
+                    pending.triggeringPermanentId());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1154,6 +1155,13 @@ public class TriggeredAbilityQueueService {
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
             UUID attackedTargetId) {
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId, chosenModes,
+                triggeringCardId, attackedTargetId, null);
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
+            UUID attackedTargetId, UUID triggeringPermanentId) {
         if (chosenModes.isEmpty()) {
             return;
         }
@@ -1207,6 +1215,7 @@ public class TriggeredAbilityQueueService {
                 triggerTargetId,
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
+        entry.setTriggeringPermanentId(triggeringPermanentId);
         if (attackedTargetId != null) {
             entry.setAttackedTargetId(attackedTargetId);
         }
@@ -1267,25 +1276,48 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getTargetFilter(),
                     pending.controllerId(),
                     pending.sourceCard(),
-                    TriggerTargetCollector.Options.ATTACK);
+                    TriggerTargetCollector.Options.ATTACK,
+                    gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+            boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
-                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s discard trigger has no valid targets."));
-                log.info("Game {} - {} discard trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
+                if (optionalTarget) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(),
+                            pending.controllerId(),
+                            pending.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(pending.effects()),
+                            null,
+                            pending.sourcePermanentId()));
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s discard trigger triggers without a target."));
+                    log.info("Game {} - {} discard trigger pushed without a target",
+                            gameData.id, pending.sourceCard().getName());
+                } else {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s discard trigger has no valid targets."));
+                    log.info("Game {} - {} discard trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName());
+                }
                 continue;
             }
 
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
-                            : "target permanent";
+                            : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
-                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            if (optionalTarget) {
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), result.validTargets(),
+                        List.of(pending.controllerId()),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            } else {
+                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s discard trigger - choose " + targetDescription + "."));
@@ -2304,6 +2336,11 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromBattlefieldThisTurn()
+                            && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
                             && gameData.cardsPutIntoGraveyardThisCombat
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {

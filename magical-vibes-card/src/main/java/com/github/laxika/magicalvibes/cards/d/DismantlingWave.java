@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "129")
 @CardRegistration(set = "MSC", collectorNumber = "300")
 @CardRegistration(set = "TDC", collectorNumber = "112")
+@CardRegistration(set = "C20", collectorNumber = "25")
 public class DismantlingWave extends Card {
 
     public DismantlingWave() {

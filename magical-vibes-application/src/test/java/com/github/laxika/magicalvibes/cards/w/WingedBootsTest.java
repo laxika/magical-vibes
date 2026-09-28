@@ -20,65 +20,69 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WingedBootsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Equipping Winged Boots gives the creature flying")
-    void equippingGivesFlying() {
-        Permanent boots = addBootsReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+    @DisplayName("Equipped creature has flying and ward {4}")
+    void equippedCreatureGetsFlyingAndWard() {
+        Permanent boots = addReadyBoots(player1);
+        Permanent bears = addCreatureReady(player1);
+        boots.setAttachedTo(bears.getId());
 
-        harness.activateAbility(player1, 0, null, creature.getId());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(boots.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Ward counters an opponent's spell when they do not pay {4}")
-    void wardCountersUnpaidSpell() {
-        Permanent creature = addEquippedCreature(player1);
-        castShockAtCreature(creature);
-
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
-
+        assertThat(bears.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player2, "Shock");
     }
 
     @Test
-    @DisplayName("Paying {4} lets an opponent's spell targeting the equipped creature resolve")
+    @DisplayName("Paying ward {4} lets an opponent's spell resolve")
     void payingWardLetsSpellResolve() {
-        Permanent creature = addEquippedCreature(player1);
-        castShockAtCreature(creature);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        Permanent boots = addReadyBoots(player1);
+        Permanent bears = addCreatureReady(player1);
+        boots.setAttachedTo(bears.getId());
 
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Shock");
-        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(bears.getMarkedDamage()).isEqualTo(2);
     }
 
-    private Permanent addEquippedCreature(Player player) {
-        Permanent creature = addCreatureReady(player, new GrizzlyBears());
-        Permanent boots = addBootsReady(player);
-        boots.setAttachedTo(creature.getId());
-        return creature;
+    @Test
+    @DisplayName("Equip ability attaches Winged Boots to a creature")
+    void equipAttachesBoots() {
+        Permanent boots = addReadyBoots(player1);
+        Permanent bears = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(boots.getAttachedTo()).isEqualTo(bears.getId());
     }
 
-    private void castShockAtCreature(Permanent creature) {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, creature.getId());
-    }
-
-    private Permanent addBootsReady(Player player) {
+    private Permanent addReadyBoots(Player player) {
         Permanent boots = harness.addToBattlefieldAndReturn(player, new WingedBoots());
         boots.setSummoningSick(false);
         return boots;
+    }
+
+    private Permanent addCreatureReady(Player player) {
+        return addCreatureReady(player, new GrizzlyBears());
+    }
+
+    private void prepareOpponentTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
     }
 }

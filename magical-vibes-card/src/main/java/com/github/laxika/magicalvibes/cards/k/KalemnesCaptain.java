@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "C15", collectorNumber = "5")
+@CardRegistration(set = "C20", collectorNumber = "92")
 public class KalemnesCaptain extends Card {
 
     public KalemnesCaptain() {

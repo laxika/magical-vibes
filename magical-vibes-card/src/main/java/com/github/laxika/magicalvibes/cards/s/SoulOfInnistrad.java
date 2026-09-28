@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "115")
+@CardRegistration(set = "C20", collectorNumber = "137")
 public class SoulOfInnistrad extends Card {
 
     public SoulOfInnistrad() {

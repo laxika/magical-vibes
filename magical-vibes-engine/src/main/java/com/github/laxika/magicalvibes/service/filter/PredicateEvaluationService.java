@@ -212,6 +212,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingAlonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingMonarchPredicate;
@@ -374,6 +375,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWit
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
@@ -1153,6 +1156,12 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isArtifact(gameData, permanent);
             }
+            case PermanentIsDoubleFacedPredicate ignored ->
+                    permanent.getOriginalCard().getBackFaceCard() != null
+                            && (permanent.getOriginalCard().isModalDoubleFaced()
+                            || permanent.getOriginalCard().hasType(CardType.BATTLE)
+                            || permanent.getOriginalCard().getKeywords().contains(Keyword.TRANSFORM)
+                            || permanent.getOriginalCard().getKeywords().contains(Keyword.DISTURB));
             case PermanentIsHistoricPredicate ignored -> {
                 boolean artifact = gameData == null
                         ? gameQueryService.isArtifact(permanent)
@@ -2998,6 +3007,7 @@ public class PredicateEvaluationService {
             case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
                     context == null ? null : context.gameData(), permanent, p.supertype());
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsDoubleFacedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingAlonePredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -4402,6 +4412,8 @@ public class PredicateEvaluationService {
             case StackEntryIsCardExiledWithSourcePredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;
             case StackEntrySourceIsColorlessPredicate ignored -> false;
+            case StackEntrySourceHasSupertypePredicate ignored -> false;
+            case StackEntrySourceIsCommanderPredicate ignored -> false;
         };
     }
 

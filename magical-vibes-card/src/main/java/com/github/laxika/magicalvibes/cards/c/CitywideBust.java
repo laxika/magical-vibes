@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "4")
+@CardRegistration(set = "C20", collectorNumber = "82")
 public class CitywideBust extends Card {
 
     public CitywideBust() {

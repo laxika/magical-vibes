@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFC", collectorNumber = "92")
+@CardRegistration(set = "C20", collectorNumber = "37")
 public class PsychicImpetus extends Card {
 
     public PsychicImpetus() {

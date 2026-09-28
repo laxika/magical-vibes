@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "25")
+@CardRegistration(set = "OTC", collectorNumber = "93")
 public class DazzlingSphinx extends Card {
 
     public DazzlingSphinx() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 @CardRegistration(set = "GTC", collectorNumber = "188")
 @CardRegistration(set = "RVR", collectorNumber = "211")
 @CardRegistration(set = "C15", collectorNumber = "230")
+@CardRegistration(set = "LCC", collectorNumber = "278")
 public class PrimeSpeakerZegana extends Card {
 
     public PrimeSpeakerZegana() {

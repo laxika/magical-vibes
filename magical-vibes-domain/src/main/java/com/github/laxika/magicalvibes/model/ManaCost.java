@@ -800,11 +800,16 @@ public class ManaCost {
         pool.setWhiteSpendableAsAnyColorWithoutRestriction(false);
         pool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
         pool.setAllManaSpendableAsAnyColorForActivatedAbilities(false);
+        EnumMap<ManaColor, Integer> availableMana = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            availableMana.put(color, pool.get(color));
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            convertAnyManaTo(pool, entry.getKey(), entry.getValue());
+            convertAnyManaTo(pool, entry.getKey(), entry.getValue(), availableMana);
         }
         for (HybridSymbol hybrid : hybridCosts) {
-            hybrid.colors().stream().findFirst().ifPresent(color -> convertAnyManaTo(pool, color, 1));
+            hybrid.colors().stream().findFirst()
+                    .ifPresent(color -> convertAnyManaTo(pool, color, 1, availableMana));
         }
     }
 
@@ -831,6 +836,29 @@ public class ManaCost {
                 pool.remove(source);
                 pool.add(target);
             }
+            remaining -= amount;
+        }
+    }
+
+    /** Converts mana for one colored requirement without reusing mana converted for an earlier one. */
+    private static void convertAnyManaTo(ManaPool pool, ManaColor target, int count,
+                                         EnumMap<ManaColor, Integer> availableMana) {
+        if (target == null || count <= 0) {
+            return;
+        }
+        int nativeMana = Math.min(count, availableMana.getOrDefault(target, 0));
+        availableMana.merge(target, -nativeMana, Integer::sum);
+        int remaining = count - nativeMana;
+        for (ManaColor source : ManaColor.values()) {
+            if (remaining <= 0 || source == target) {
+                continue;
+            }
+            int amount = Math.min(remaining, availableMana.getOrDefault(source, 0));
+            for (int i = 0; i < amount; i++) {
+                pool.remove(source);
+                pool.add(target);
+            }
+            availableMana.merge(source, -amount, Integer::sum);
             remaining -= amount;
         }
     }
