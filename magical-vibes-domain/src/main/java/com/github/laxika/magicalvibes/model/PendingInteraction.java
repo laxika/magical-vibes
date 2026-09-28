@@ -924,11 +924,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validCardIds, maxCount, prompt, false, maxTotalManaValue);
         }
 
-        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                               int maxCount, String prompt, boolean castAsCopies) {
-            this(playerId, validCardIds, maxCount, prompt, castAsCopies, null);
-        }
-
         public ImprovisationCapstoneCastChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             prompt = prompt == null ? "You may cast spells from among the exiled cards without paying "
