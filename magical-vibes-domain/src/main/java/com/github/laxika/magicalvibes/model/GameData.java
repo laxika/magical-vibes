@@ -654,6 +654,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithDiscoveryCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have collection counters (Evelyn, the Covetous). */
     public final Set<UUID> exiledCardsWithCollectionCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have fetch counters (Pako, Arcane Retriever). */
+    public final Set<UUID> exiledCardsWithFetchCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have hatching counters (The Dragon-Kami Reborn). */
     public final Set<UUID> exiledCardsWithHatchingCounters = ConcurrentHashMap.newKeySet();
     public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
@@ -1468,6 +1470,9 @@ public class GameData {
     /** Per-player: this player has protection from these players until end of turn. */
     public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilEndOfTurn = new ConcurrentHashMap<>();
 
+    /** Per-player: this player has protection from these players until the beginning of their next turn. */
+    public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilNextTurn = new ConcurrentHashMap<>();
+
     /** Per-player: this player has a temporary targeting keyword until end of turn. */
     public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
@@ -2131,6 +2136,9 @@ public class GameData {
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks how many cards each player cycled this turn. Cleared at the start of each turn. */
+    public final Map<UUID, Integer> cardsCycledThisTurn = new ConcurrentHashMap<>();
+
     /** Player and count for a discard event whose cards are being processed one at a time. */
     public UUID discardEventPlayerId;
     public int discardEventCardCount;
@@ -2609,6 +2617,9 @@ public class GameData {
      *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
+    public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks keyed once-per-turn trigger uses independently for each source permanent. */
     public final Map<UUID, Set<String>> keyedOncePerTurnTriggersFiredThisTurn = new ConcurrentHashMap<>();
@@ -3963,9 +3974,12 @@ public class GameData {
 
     /** Records a card cycled by the given player during this game. */
     public void recordCardCycled(UUID playerId, Card card) {
-        if (card == null || card.getName() == null) return;
-        cardNameCycleCountsThisGame.computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
-                .merge(card.getName(), 1, Integer::sum);
+        if (card == null) return;
+        cardsCycledThisTurn.merge(playerId, 1, Integer::sum);
+        if (card.getName() != null) {
+            cardNameCycleCountsThisGame.computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
+                    .merge(card.getName(), 1, Integer::sum);
+        }
     }
 
     /** Records a spell cast and whether it was cast for an alternate Warp cost. */
@@ -5413,6 +5427,21 @@ public class GameData {
         exiledCardsWithDiscoveryCounters.add(card.getId());
     }
 
+    /** Adds a card to exile with a fetch counter and records the player whose ability exiled it. */
+    public void addToExileWithFetchCounter(UUID ownerId, Card card, UUID exilerId) {
+        addToExileWithFetchCounter(ownerId, card, null, exilerId);
+    }
+
+    /** Adds a card to exile with a fetch counter and source-permanent tracking. */
+    public void addToExileWithFetchCounter(UUID ownerId, Card card, UUID sourcePermanentId,
+                                           UUID exilerId) {
+        spellsWithDreamCounterOnResolution.remove(card.getId());
+        spellsWithPlotOnResolution.remove(card.getId());
+        if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
+        addToExile(ownerId, card, sourcePermanentId, false, exilerId);
+        exiledCardsWithFetchCounters.add(card.getId());
+    }
+
     /** Adds a card to exile with a collection counter and records the exiling ability's controller. */
     public void addToExileWithCollectionCounter(UUID ownerId, Card card, UUID exilerId) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -5529,6 +5558,7 @@ public class GameData {
             exiledCardsWithVoidCounters.remove(cardId);
             exiledCardsWithDiscoveryCounters.remove(cardId);
             exiledCardsWithCollectionCounters.remove(cardId);
+            exiledCardsWithFetchCounters.remove(cardId);
             exiledCardsWithHatchingCounters.remove(cardId);
             exiledCardsWithStudyCounters.remove(cardId);
             exiledCardsWithIntelCounters.remove(cardId);
@@ -5689,6 +5719,7 @@ public class GameData {
         removedIds.forEach(exiledCardsWithIntelCounters::remove);
         removedIds.forEach(exiledCardsWithKickCounters::remove);
         removedIds.forEach(exiledCardsWithMemoryCounters::remove);
+        removedIds.forEach(exiledCardsWithFetchCounters::remove);
         removedIds.forEach(exiledCardsWithBrainCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
@@ -6509,6 +6540,7 @@ public class GameData {
         copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
         copy.exiledCardsWithDiscoveryCounters.addAll(this.exiledCardsWithDiscoveryCounters);
         copy.exiledCardsWithCollectionCounters.addAll(this.exiledCardsWithCollectionCounters);
+        copy.exiledCardsWithFetchCounters.addAll(this.exiledCardsWithFetchCounters);
         copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
         copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
@@ -6722,6 +6754,7 @@ public class GameData {
         copy.cardsDrawnLastTurn.putAll(this.cardsDrawnLastTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
+        copy.cardsCycledThisTurn.putAll(this.cardsCycledThisTurn);
         copy.discardEventPlayerId = this.discardEventPlayerId;
         copy.discardEventCardCount = this.discardEventCardCount;
         copy.discardEventCards.addAll(this.discardEventCards);
@@ -6801,6 +6834,8 @@ public class GameData {
         copy.oneShotExileCastPermissionsUsed.addAll(this.oneShotExileCastPermissionsUsed);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
+                copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {
             Set<String> keys = ConcurrentHashMap.newKeySet();
             keys.addAll(v);
@@ -6892,6 +6927,7 @@ public class GameData {
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.exiledCardsWithStudyCounters.addAll(this.exiledCardsWithStudyCounters);
+        copy.exiledCardsWithFetchCounters.addAll(this.exiledCardsWithFetchCounters);
         copy.exiledCardsWithKickCounters.addAll(this.exiledCardsWithKickCounters);
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
@@ -7341,6 +7377,8 @@ public class GameData {
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerProtectionFromPlayerIdsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromPlayerIdsUntilEndOfTurn.put(k, new HashSet<>(v)));
+        this.playerProtectionFromPlayerIdsUntilNextTurn.forEach((k, v) ->
+                copy.playerProtectionFromPlayerIdsUntilNextTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerKeywordsUntilNextTurn.forEach((k, v) ->

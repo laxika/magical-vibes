@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "C20", collectorNumber = "289")
 @CardRegistration(set = "PIP", collectorNumber = "272")
 @CardRegistration(set = "PIP", collectorNumber = "800")
 public class MortuaryMire extends Card {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffe
 
 @CardRegistration(set = "DSC", collectorNumber = "108")
 @CardRegistration(set = "LTC", collectorNumber = "180")
+@CardRegistration(set = "C20", collectorNumber = "29")
 public class VergeRangers extends Card {
 
     public VergeRangers() {

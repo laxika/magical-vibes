@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "22")
+@CardRegistration(set = "C20", collectorNumber = "99")
 public class SolemnRecruit extends Card {
 
     public SolemnRecruit() {

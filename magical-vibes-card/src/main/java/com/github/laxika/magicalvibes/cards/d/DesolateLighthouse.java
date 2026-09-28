@@ -19,6 +19,7 @@ import java.util.List;
  * {1}{U}{R}, {T}: Draw a card, then discard a card.
  */
 @CardRegistration(set = "AVR", collectorNumber = "227")
+@CardRegistration(set = "C20", collectorNumber = "269")
 @CardRegistration(set = "SLD", collectorNumber = "352")
 @CardRegistration(set = "UMA", collectorNumber = "242")
 @CardRegistration(set = "LTC", collectorNumber = "303")

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "65")
+@CardRegistration(set = "C20", collectorNumber = "115")
 public class LunarMystic extends Card {
 
     public LunarMystic() {

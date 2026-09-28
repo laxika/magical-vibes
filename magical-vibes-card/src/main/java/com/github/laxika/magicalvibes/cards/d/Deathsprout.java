@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "189")
+@CardRegistration(set = "C20", collectorNumber = "208")
 public class Deathsprout extends Card {
 
     public Deathsprout() {

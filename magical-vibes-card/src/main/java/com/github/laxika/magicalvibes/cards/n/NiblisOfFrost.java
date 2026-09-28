@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "72")
 @CardRegistration(set = "PIO", collectorNumber = "66")
+@CardRegistration(set = "C20", collectorNumber = "120")
 public class NiblisOfFrost extends Card {
 
     public NiblisOfFrost() {

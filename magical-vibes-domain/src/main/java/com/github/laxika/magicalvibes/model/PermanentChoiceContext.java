@@ -387,7 +387,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The controller chooses one matching permanent they control to exile until the source leaves. */
     record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
-                                      PermanentPredicate filter) implements PermanentChoiceContext {}
+                                      PermanentPredicate filter, CardEffect thenEffect)
+            implements PermanentChoiceContext {
+        public PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
+                                          PermanentPredicate filter) {
+            this(sourceCard, sourcePermanentId, controllerId, filter, null);
+        }
+    }
 
     /** Fear of Change: choose another creature to exile before conjuring a random creature. */
     record ExileAnotherCreatureAndConjureRandomCreature(
@@ -2593,6 +2599,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** Kathril: choose a controlled creature for the current graveyard keyword counter. */
+    record KathrilKeywordCounterChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                       CounterType counterType, List<CounterType> remainingCounterTypes,
+                                       int countersPlaced) implements PermanentChoiceContext {
+        public KathrilKeywordCounterChoice {
+            remainingCounterTypes = List.copyOf(remainingCounterTypes);
+        }
+    }
 
     /** The controller is choosing the creature that will be their Ring-bearer. */
     record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}

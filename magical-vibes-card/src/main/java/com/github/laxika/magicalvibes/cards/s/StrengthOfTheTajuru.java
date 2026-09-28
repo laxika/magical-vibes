@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "113")
+@CardRegistration(set = "C20", collectorNumber = "192")
 public class StrengthOfTheTajuru extends Card {
 
     public StrengthOfTheTajuru() {

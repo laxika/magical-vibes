@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "17")
+@CardRegistration(set = "C20", collectorNumber = "87")
 public class DevoutChaplain extends Card {
 
     public DevoutChaplain() {

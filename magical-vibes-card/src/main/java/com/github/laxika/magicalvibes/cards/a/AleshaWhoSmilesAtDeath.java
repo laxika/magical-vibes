@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "101")
 @CardRegistration(set = "EA1", collectorNumber = "8")
 @CardRegistration(set = "TSR", collectorNumber = "338")
+@CardRegistration(set = "C20", collectorNumber = "143")
 public class AleshaWhoSmilesAtDeath extends Card {
 
     public AleshaWhoSmilesAtDeath() {

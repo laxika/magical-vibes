@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "LTC", collectorNumber = "281")
 @CardRegistration(set = "TDC", collectorNumber = "102")
 @CardRegistration(set = "LCC", collectorNumber = "114")
+@CardRegistration(set = "C20", collectorNumber = "245")
 public class LightningGreaves extends Card {
 
     public LightningGreaves() {

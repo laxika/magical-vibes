@@ -88,11 +88,19 @@ public class ExileSupport {
     }
 
     /** Exiles a permanent and keeps the card associated with the source permanent. */
-    public void exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
-                                                 UUID sourcePermanentId, Card sourceCard) {
+    public boolean exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
+                                                    UUID sourcePermanentId, Card sourceCard) {
         Card exiledCard = permanent.getOriginalCard();
         UUID fallbackOwnerId = gameData.findControllerOf(permanent);
-        permanentRemovalService.removePermanentToExile(gameData, permanent);
+        if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+            return false;
+        }
+
+        if (exiledCard.isToken()) {
+            gameData.removeFromExile(exiledCard.getId());
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return true;
+        }
 
         var exiledEntry = gameData.findExiledCard(exiledCard.getId());
         UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : fallbackOwnerId;
@@ -103,6 +111,7 @@ public class ExileSupport {
         log.info("Game {} - {} exiles {} (tracked with source)",
                 gameData.id, sourceCard.getName(), exiledCard.getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
+        return true;
     }
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,

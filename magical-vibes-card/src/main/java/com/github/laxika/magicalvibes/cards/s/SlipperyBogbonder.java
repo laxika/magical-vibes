@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NCC", collectorNumber = "312")
+@CardRegistration(set = "C20", collectorNumber = "66")
 public class SlipperyBogbonder extends Card {
 
     public SlipperyBogbonder() {
