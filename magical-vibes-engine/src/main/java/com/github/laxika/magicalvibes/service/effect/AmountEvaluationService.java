@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
+import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
@@ -161,6 +162,7 @@ import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.amount.NonCreatureSubtypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
@@ -436,6 +438,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case NonCreatureSubtypesAmongCardsInGraveyard c ->
+                    countNonCreatureSubtypesAmongCardsInGraveyard(gameData, c, ctx);
             case CardTypesAmongControlledPermanents c ->
                     countCardTypesAmongControlledPermanents(gameData, c, ctx);
             case CardTypesAmongSpellsCastThisTurn ignored ->
@@ -663,6 +667,8 @@ public class AmountEvaluationService {
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
+            case DefendingPlayerPoisonCounters ignored ->
+                    countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case PartySize ignored ->
@@ -1078,10 +1084,11 @@ public class AmountEvaluationService {
             boolean isTriggeringSpell = triggeringCardId != null
                     && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
-                return se.getCard().getManaValue() + se.getXValue();
+                Card spellCard = se.getTargetingCard();
+                return (spellCard == null ? se.getCard() : spellCard).getManaValue() + se.getXValue();
             }
         }
-        return 0;
+        return ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventValue();
     }
 
     /** Printed power of the targeted creature spell on the stack (Essence Backlash); 0 if gone. */
@@ -1139,6 +1146,21 @@ public class AmountEvaluationService {
             case Sum s -> s.amounts().stream().anyMatch(this::referencesEventValue);
             case Min m -> m.amounts().stream().anyMatch(this::referencesEventValue);
             case Max m -> m.amounts().stream().anyMatch(this::referencesEventValue);
+            default -> false;
+        };
+    }
+
+    /** Whether the amount reads the mana value of the spell that caused a trigger. */
+    public boolean referencesTargetSpellManaValue(DynamicAmount amount) {
+        return switch (amount) {
+            case null -> false;
+            case TargetSpellManaValue ignored -> true;
+            case Scaled scaled -> referencesTargetSpellManaValue(scaled.amount());
+            case Divided divided -> referencesTargetSpellManaValue(divided.amount());
+            case HalvedRoundedUp halved -> referencesTargetSpellManaValue(halved.amount());
+            case Sum sum -> sum.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
+            case Min min -> min.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
+            case Max max -> max.amounts().stream().anyMatch(this::referencesTargetSpellManaValue);
             default -> false;
         };
     }
@@ -1379,6 +1401,27 @@ public class AmountEvaluationService {
                     found.add(card.getType());
                 }
                 found.addAll(card.getAdditionalTypes());
+            }
+        }
+        return found.size();
+    }
+
+    /**
+     * Distinct noncreature subtypes among non-token cards in the scoped graveyard(s). A card can
+     * contribute multiple subtypes, and creature subtypes such as Human or Lhurgoyf are excluded.
+     */
+    private int countNonCreatureSubtypesAmongCardsInGraveyard(
+            GameData gameData, NonCreatureSubtypesAmongCardsInGraveyard amount, AmountContext ctx) {
+        Set<CardSubtype> found = EnumSet.noneOf(CardSubtype.class);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                found.addAll(gameQueryService.getCardSubtypes(card, gameData, playerId).stream()
+                        .filter(subtype -> !gameQueryService.isCreatureSubtype(subtype))
+                        .toList());
             }
         }
         return found.size();
@@ -2818,6 +2861,13 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int countDefendingPlayerPoisonCounters(GameData gameData, AmountContext ctx) {
+        UUID defendingPlayerId = defendingPlayerId(gameData, ctx);
+        return defendingPlayerId == null
+                ? 0
+                : gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
     }
 
     /**

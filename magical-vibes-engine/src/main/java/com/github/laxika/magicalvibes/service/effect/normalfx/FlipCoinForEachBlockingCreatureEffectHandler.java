@@ -48,12 +48,16 @@ public class FlipCoinForEachBlockingCreatureEffectHandler implements NormalEffec
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (wonFlip) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                }
                 gameData.creaturesPreventedFromDealingCombatDamage.add(blocker.getId());
                 gameLogService.append(gameData,
                         GameLog.cardThen(blocker.getCard(), " will deal no combat damage this turn."));
             } else {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
+                }
             }
         }
     }

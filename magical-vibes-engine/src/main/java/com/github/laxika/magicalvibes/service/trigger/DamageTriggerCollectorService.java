@@ -784,6 +784,30 @@ public class DamageTriggerCollectorService {
     private boolean handleAnyPermanentDealtDamageToAnyTarget(TriggerMatchContext match,
             DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
+        return queueAnyPermanentDealtDamageTrigger(match, trigger, dc);
+    }
+
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE)
+    private boolean handleAnyPermanentDealtDamageConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
+        if (conditional.predicate() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                dc.damagedPermanent(), conditional.predicate(),
+                FilterContext.of(match.gameData())
+                        .withSourceCardId(match.permanent().getCard().getId())
+                        .withSourceControllerId(match.controllerId())
+                        .withSourcePermanentId(match.permanent().getId())
+                        .withSourcePermanentSnapshot(match.permanent()))) {
+            return false;
+        }
+        if (!(conditional.wrapped() instanceof DamageDealingEffect damageEffect)) return false;
+        return queueAnyPermanentDealtDamageTrigger(match, damageEffect, dc);
+    }
+
+    private boolean queueAnyPermanentDealtDamageTrigger(TriggerMatchContext match,
+            CardEffect trigger, TriggerContext.AnyPermanentDealtDamage dc) {
         if (dc.damageDealt() <= 0 || match.permanent() == null || match.controllerId() == null
                 || !match.controllerId().equals(dc.damagedPermanentControllerId())) return false;
 
@@ -791,7 +815,8 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sourcePermanent.getCard();
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
-                null, dc.damageDealt(), sourcePermanent.getId(), new Permanent(sourcePermanent)));
+                targetFilterForTriggeredEffect(sourceCard, trigger), dc.damageDealt(),
+                sourcePermanent.getId(), new Permanent(sourcePermanent)));
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_ANY_PERMANENT_DEALT_DAMAGE deal-damage-to-any-target trigger fires",

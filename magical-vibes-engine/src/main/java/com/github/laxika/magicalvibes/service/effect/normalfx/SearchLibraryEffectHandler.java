@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -98,6 +101,11 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         CardPredicate filter = effect.filter();
         ManaValueBound bound = effect.manaValueBound();
         boolean restricted = filter != null || bound != null || totalManaValueBound != null;
+        CardPredicate searchFilter = restricted
+                ? new CardAnyOfPredicate(List.of(
+                        filter == null ? new CardTruePredicate() : filter,
+                        new CardHasAllCardNamesPredicate()))
+                : null;
         Integer boundValue = bound == null ? null
                 : amountEvaluationService.evaluate(gameData, bound.amount(), amountContext) + bound.offset();
 
@@ -125,12 +133,12 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Predicate<Card> deckFilter = card ->
-                (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
+        Predicate<Card> deckFilter = card -> card.hasAllCardNames()
+                || ((filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
                         && matchesBound(card, boundValue, bound)
                         && (totalManaValueBound == null || card.getManaValue() <= totalManaValueBound)
                         && (!putsOntoBattlefield(effect.destination())
-                        || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY));
+                        || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)));
         List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
 
         String baseDesc = describe(filter, boundValue, bound);
@@ -153,7 +161,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .canFailToFind(true)
                                 .destination(destination)
                                 .topLibraryPosition(effect.topLibraryPosition())
-                                .filterPredicate(restricted ? filter : null)
+                                .filterPredicate(restricted ? searchFilter : null)
                                 .requireDifferentNames(effect.requireDifferentNames())
                                 .manaValueBound(boundValue, bound != null && bound.exact())
                                 .totalManaValueBound(totalManaValueBound)
@@ -196,7 +204,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .canFailToFind(restricted)
                         .destination(destination)
                         .topLibraryPosition(effect.topLibraryPosition())
-                        .filterPredicate(restricted ? filter : null)
+                        .filterPredicate(restricted ? searchFilter : null)
                         .requireDifferentNames(effect.requireDifferentNames())
                         .manaValueBound(boundValue, bound != null && bound.exact())
                         .totalManaValueBound(totalManaValueBound)

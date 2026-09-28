@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1782")
+@CardRegistration(set = "HBG", collectorNumber = "217")
 public class MonsterManualZoologicalStudy extends Card {
 
     public MonsterManualZoologicalStudy() {

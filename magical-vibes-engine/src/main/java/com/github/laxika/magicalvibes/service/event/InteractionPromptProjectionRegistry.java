@@ -64,6 +64,8 @@ public class InteractionPromptProjectionRegistry {
         this.gameQueryService = gameQueryService;
 
         register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
+        register(PendingInteraction.DrawFromLibraryPositionChoice.class,
+                this::projectDrawFromLibraryPositionChoice);
         register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
         register(PendingInteraction.TurnFaceUpXValueChoice.class, this::projectTurnFaceUpXValueChoice);
         register(PendingInteraction.Scry.class, this::projectScry);
@@ -182,6 +184,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
         register(PendingInteraction.PutCardFromHandOrGraveyardChoice.class,
                 this::projectPutCardFromHandOrGraveyardChoice);
+        register(PendingInteraction.WerewhatOnEnterChoice.class,
+                this::projectWerewhatOnEnterChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
@@ -334,6 +338,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.numberPick(
                 interaction.prompt(), interaction.minValue(), interaction.maxValue(),
                 interaction.cardName(), interaction.manaPayment());
+    }
+
+    private InteractionPromptMessage projectDrawFromLibraryPositionChoice(
+            GameData gameData, PendingInteraction.DrawFromLibraryPositionChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                "Choose a position in your library to draw from (1 is the top card).",
+                1, interaction.librarySize(), "Heart of a Duelist", false);
     }
 
     private InteractionPromptMessage projectAlternateCastXValueChoice(
@@ -1134,6 +1145,20 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "Choose up to one " + interaction.label()
                         + " card from your " + zones + " to put onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectWerewhatOnEnterChoice(
+            GameData gameData, PendingInteraction.WerewhatOnEnterChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "Choose up to one creature card from your hand or graveyard to exile.");
     }
 
     private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(

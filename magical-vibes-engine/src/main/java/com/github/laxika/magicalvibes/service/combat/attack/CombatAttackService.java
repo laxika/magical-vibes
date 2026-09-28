@@ -783,6 +783,7 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
+        CombatHelper.validateCommandZoneAttackCount(gameData, playerId, attackerIndices.size());
         CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets,
                 gameQueryService);
 
@@ -790,10 +791,13 @@ public class CombatAttackService {
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
         // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
         int selfTaxTotal = 0;
+        int defenderTaxTotal = 0;
         int totalTax = 0;
         for (int idx : attackerIndices) {
-            totalTax += castingCostService.getAttackPaymentPerCreature(
+            int defenderTax = castingCostService.getAttackPaymentPerCreature(
                     gameData, playerId, resolvedTargets.get(idx), battlefield.get(idx));
+            defenderTaxTotal += defenderTax;
+            totalTax += defenderTax;
             selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
         }
         totalTax += selfTaxTotal;
@@ -841,6 +845,10 @@ public class CombatAttackService {
         if (totalTax > 0) {
             payGenericManaPreservingPhyrexianColors(
                     gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, attackerIndices.size());
+        }
+        if (defenderTaxTotal > 0) {
+            triggerCollectionService.checkTaxPaymentTriggers(
+                    gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), defenderTaxTotal);
         }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
@@ -1718,6 +1726,8 @@ public class CombatAttackService {
             }
         }
 
+        checkCommandZoneAllyCreatureAttackTriggers(gameData, playerId, attackerIndices.size());
+
         if (!attackerIndices.isEmpty()) {
             triggerCollectionService.checkTemporaryGlobalAllyCreatureAttackTriggers(gameData, playerId);
         }
@@ -2006,6 +2016,8 @@ public class CombatAttackService {
                     ? attackedTargetId
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
+            triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
+                    gameData, attacker, attackedPlayerId);
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
@@ -2485,6 +2497,49 @@ public class CombatAttackService {
         attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    private void checkCommandZoneAllyCreatureAttackTriggers(GameData gameData, UUID playerId,
+                                                              int attackerCount) {
+        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
+        if (commandZone == null) {
+            return;
+        }
+        for (Card card : new ArrayList<>(commandZone)) {
+            if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                continue;
+            }
+            List<CardEffect> effects = new ArrayList<>(
+                    card.getEffects(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            boolean needsTarget = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        card, playerId, effects, null, playerId, null, null, attackerCount));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s attack trigger",
+                        effects,
+                        attackerCount,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null));
+            }
+            gameLogService.append(gameData,
+                    GameLog.builder().card(card).text("'s attack ability triggers.").build());
+            log.info("Game {} - {} command-zone attack trigger queued", gameData.id, card.getName());
+        }
     }
 
     private boolean beginEnlistmentChoice(GameData gameData, UUID playerId, List<Permanent> battlefield,

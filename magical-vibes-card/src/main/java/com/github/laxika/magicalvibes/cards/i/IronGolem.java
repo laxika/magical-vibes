@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "247")
+@CardRegistration(set = "HBG", collectorNumber = "258")
 public class IronGolem extends Card {
 
     public IronGolem() {

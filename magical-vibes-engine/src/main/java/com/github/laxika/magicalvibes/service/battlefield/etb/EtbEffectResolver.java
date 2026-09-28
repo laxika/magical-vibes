@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
+import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -167,6 +168,9 @@ public class EtbEffectResolver {
                         conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
                                 ? conditional.wrapped() : null;
                 case SourceUntapped ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
+                                ? conditional.wrapped() : null;
+                case SourceEntryCostPaid ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;
                 // "if you cast it" is true for a spell cast from any zone, but not for a copy or

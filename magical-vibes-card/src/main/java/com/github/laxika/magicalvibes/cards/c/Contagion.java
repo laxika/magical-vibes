@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "ALL", collectorNumber = "45")
 @CardRegistration(set = "DKM", collectorNumber = "2")
 @CardRegistration(set = "ME1", collectorNumber = "64")
+@CardRegistration(set = "MB2", collectorNumber = "126")
 public class Contagion extends Card {
 
     public Contagion() {

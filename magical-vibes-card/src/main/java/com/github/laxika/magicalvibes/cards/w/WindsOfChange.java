@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDraw
 @CardRegistration(set = "SLD", collectorNumber = "1128")
 @CardRegistration(set = "MAR", collectorNumber = "30")
 @CardRegistration(set = "OMB", collectorNumber = "30")
+@CardRegistration(set = "MB2", collectorNumber = "201")
 public class WindsOfChange extends Card {
 
     public WindsOfChange() {

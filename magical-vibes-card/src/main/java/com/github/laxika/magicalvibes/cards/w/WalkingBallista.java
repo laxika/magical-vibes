@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "306")
 @CardRegistration(set = "PIP", collectorNumber = "352")
 @CardRegistration(set = "PIP", collectorNumber = "880")
+@CardRegistration(set = "MB2", collectorNumber = "238")
 public class WalkingBallista extends Card {
 
     public WalkingBallista() {

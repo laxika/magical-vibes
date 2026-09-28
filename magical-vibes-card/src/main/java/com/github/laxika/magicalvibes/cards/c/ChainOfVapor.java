@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLZ", collectorNumber = "14")
 @CardRegistration(set = "SLZ", collectorNumber = "135")
 @CardRegistration(set = "SLZ", collectorNumber = "256")
+@CardRegistration(set = "MB2", collectorNumber = "156")
 public class ChainOfVapor extends Card {
 
     public ChainOfVapor() {

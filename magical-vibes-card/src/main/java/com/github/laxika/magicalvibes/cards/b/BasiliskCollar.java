@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "PIP", collectorNumber = "480")
 @CardRegistration(set = "PIP", collectorNumber = "753")
 @CardRegistration(set = "PIP", collectorNumber = "1008")
+@CardRegistration(set = "HBG", collectorNumber = "253")
 @CardRegistration(set = "DSC", collectorNumber = "241")
 public class BasiliskCollar extends Card {
 

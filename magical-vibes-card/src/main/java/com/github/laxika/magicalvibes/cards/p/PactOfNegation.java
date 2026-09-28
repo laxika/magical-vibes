@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterPayManaOrLoseGameAtNe
 @CardRegistration(set = "MP2", collectorNumber = "16")
 @CardRegistration(set = "A25", collectorNumber = "68")
 @CardRegistration(set = "TSR", collectorNumber = "77")
+@CardRegistration(set = "MB2", collectorNumber = "169")
 public class PactOfNegation extends Card {
 
     public PactOfNegation() {

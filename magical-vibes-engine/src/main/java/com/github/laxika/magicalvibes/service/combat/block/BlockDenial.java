@@ -43,6 +43,9 @@ public record BlockDenial(Reason reason, String detail) {
         /** CR 702.129a — the attacker has skulk and the blocker's power is greater than its own. */
         SKULK,
 
+        /** The attacker has nimble and the blocker's power is 3 or greater. */
+        NIMBLE,
+
         /** The attacker and blocker do not agree on shadow. */
         SHADOW,
 
@@ -127,6 +130,7 @@ public record BlockDenial(Reason reason, String detail) {
     public static final BlockDenial FEAR = new BlockDenial(Reason.FEAR, null);
     public static final BlockDenial INTIMIDATE = new BlockDenial(Reason.INTIMIDATE, null);
     public static final BlockDenial SKULK = new BlockDenial(Reason.SKULK, null);
+    public static final BlockDenial NIMBLE = new BlockDenial(Reason.NIMBLE, null);
     public static final BlockDenial SHADOW = new BlockDenial(Reason.SHADOW, null);
     public static final BlockDenial CANT_BE_BLOCKED_BY_MATCHING = new BlockDenial(Reason.CANT_BE_BLOCKED_BY_MATCHING, null);
     public static final BlockDenial CANT_BE_BLOCKED_BY_LESS_POWER =

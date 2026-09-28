@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -556,6 +557,8 @@ public class DamagePreventionService {
             // Seraph of the Sword: "Prevent all combat damage that would be dealt to this creature."
             if (isCombatDamage && gameQueryService.hasActiveStaticEffect(gameData, permanent,
                     PreventAllCombatDamageToSelfEffect.class)) return 0;
+            // Hope: prevent all damage that would be dealt to an attacking creature with hope.
+            if (permanent.isAttacking() && gameQueryService.hasKeyword(gameData, permanent, Keyword.HOPE)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             // Mark of Asylum / Inner Sanctum: "Prevent all [noncombat] damage that would be dealt to creatures you control."

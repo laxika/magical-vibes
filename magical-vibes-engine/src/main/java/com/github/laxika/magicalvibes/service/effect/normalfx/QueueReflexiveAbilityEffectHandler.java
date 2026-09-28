@@ -52,14 +52,17 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
                     entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
-                    precedingGroupSizes, entry.getXValue(), List.of(), false));
+                    precedingGroupSizes, queueEffect.useEventValueAsX()
+                            ? entry.getEventValue() : entry.getXValue(), List.of(), false,
+                    null, null, entry.getEventValue()));
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }
         if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
                 || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0, xValue));
             return;
         }
         if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget(),

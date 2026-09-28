@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "194")
+@CardRegistration(set = "HBG", collectorNumber = "216")
 public class LurkingRoper extends Card {
 
     public LurkingRoper() {

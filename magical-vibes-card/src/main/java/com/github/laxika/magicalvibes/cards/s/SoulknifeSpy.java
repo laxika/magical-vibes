@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "75")
+@CardRegistration(set = "HBG", collectorNumber = "133")
 public class SoulknifeSpy extends Card {
 
     public SoulknifeSpy() {

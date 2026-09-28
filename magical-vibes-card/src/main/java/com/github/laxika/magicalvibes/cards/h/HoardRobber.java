@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "110")
+@CardRegistration(set = "HBG", collectorNumber = "161")
 public class HoardRobber extends Card {
 
     public HoardRobber() {

@@ -170,6 +170,8 @@ All paths relative to `cards/`.
 
 ## Equipment
 
+| Attached life-loss protection + draw/reveal mana-value attack rider | `p/PactWeapon.java` | STATIC `ConditionalEffect(SourceIsAttached, CantLoseGameFromLifeEffect)` + `ON_ATTACK SequenceEffect(DrawCardEffect(1), RevealDrawnCardAndBoostEquippedCreatureByManaValueEffect())` + sorcery-speed equip with `DiscardCardTypeCost` and `EquipEffect` |
+
 - `d/DancingSword.java` — STATIC `StaticBoostEffect(2, 1, EQUIPPED_CREATURE)` + `ON_EQUIPPED_CREATURE_DIES MayEffect(BecomeCreatureEffect(2, 1, CONSTRUCT, {FLYING}, {ARTIFACT}))` + conditional STATIC ward grant while the transformed source is a creature + `EquipActivatedAbility("{1}")`
 | Pattern | Reference | Notes |
 |---------|-----------|-------|

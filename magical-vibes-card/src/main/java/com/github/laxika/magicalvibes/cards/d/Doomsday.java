@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "SLZ", collectorNumber = "39")
 @CardRegistration(set = "SLZ", collectorNumber = "160")
 @CardRegistration(set = "SLZ", collectorNumber = "281")
+@CardRegistration(set = "MB2", collectorNumber = "182")
 @CardRegistration(set = "MSC", collectorNumber = "796")
 public class Doomsday extends Card {
 

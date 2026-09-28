@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "DKA", collectorNumber = "149")
 @CardRegistration(set = "M20", collectorNumber = "227")
 @CardRegistration(set = "MM3", collectorNumber = "221")
+@CardRegistration(set = "MB2", collectorNumber = "222")
 @CardRegistration(set = "SLD", collectorNumber = "324")
 @CardRegistration(set = "SLD", collectorNumber = "942")
 public class GrafdiggersCage extends Card {

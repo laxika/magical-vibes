@@ -26,8 +26,9 @@ public class ShuffleLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // Fall back to controller when no explicit target (e.g. Ponder "You may shuffle")
-        UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        // Untargeted shuffles always affect the controller; only the targeted form reads targetId.
+        ShuffleLibraryEffect shuffleEffect = (ShuffleLibraryEffect) effect;
+        UUID playerId = shuffleEffect.targetPlayer() ? entry.getTargetId() : entry.getControllerId();
         String playerName = gameData.playerIdToName.get(playerId);
 
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);

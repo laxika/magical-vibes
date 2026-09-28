@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "ICE", collectorNumber = "270")
 @CardRegistration(set = "CST", collectorNumber = "40")
 @CardRegistration(set = "ME2", collectorNumber = "184")
+@CardRegistration(set = "MB2", collectorNumber = "215")
 public class TinderWall extends Card {
 
     public TinderWall() {

@@ -329,6 +329,10 @@ public class BlockLegalityService {
                 && Collections.disjoint(blk.colors(), atk.colors())) {
             return BlockDenial.INTIMIDATE;
         }
+        if (atk.nimble()
+                && gameQueryService.getEffectivePower(gameData, blocker) >= 3) {
+            return BlockDenial.NIMBLE;
+        }
         // Skulk: can't be blocked by creatures with greater power (CR 702.129a).
         if ((atk.skulk() || atk.ringBearerCantBeBlockedByGreaterPower())
                 && gameQueryService.getEffectivePower(gameData, blocker)
@@ -676,6 +680,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
+                gameQueryService.hasKeyword(attacker, bonus, Keyword.NIMBLE),
                 gameQueryService.isRingBearer(gameData, attacker),
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SHADOW),
                 cantBeBlockedByLessPower,

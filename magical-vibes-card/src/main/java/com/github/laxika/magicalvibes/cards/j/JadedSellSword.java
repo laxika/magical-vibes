@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "152")
+@CardRegistration(set = "HBG", collectorNumber = "185")
 public class JadedSellSword extends Card {
 
     public JadedSellSword() {

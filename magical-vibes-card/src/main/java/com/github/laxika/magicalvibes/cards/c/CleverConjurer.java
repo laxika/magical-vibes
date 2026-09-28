@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "51")
+@CardRegistration(set = "HBG", collectorNumber = "113")
 public class CleverConjurer extends Card {
 
     public CleverConjurer() {

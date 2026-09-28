@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "128")
 @CardRegistration(set = "BRB", collectorNumber = "79")
+@CardRegistration(set = "MB2", collectorNumber = "214")
 public class SpikeWeaver extends Card {
 
     public SpikeWeaver() {

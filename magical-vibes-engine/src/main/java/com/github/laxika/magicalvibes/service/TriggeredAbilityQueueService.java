@@ -2280,8 +2280,14 @@ public class TriggeredAbilityQueueService {
                 filter = graveyardFilter.predicate();
                 scope = graveyardFilter.scope();
             }
+            Integer aggregateManaValueCap = describedTarget != null && describedTarget.maximumManaValue() != null
+                    ? amountEvaluationService.evaluate(gameData, describedTarget.maximumManaValue(),
+                    new AmountContext(pending.controllerId(), null, null,
+                            pending.xValue(), pending.xValue()))
+                    : null;
             // "mana value X or less, where X is the life you gained or lost this turn"
-            int maxManaValue = lifeGainedCap
+            int maxManaValue = aggregateManaValueCap != null ? aggregateManaValueCap
+                    : lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId())
                     : lifeLostCap
                     ? gameData.lifeLostThisTurn.getOrDefault(pending.controllerId(), 0)
@@ -2367,6 +2373,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.totalManaValueCap = aggregateManaValueCap;
             gameData.graveyardTargetOperation.singleGraveyard =
                     describedTarget != null && describedTarget.singleGraveyard();
             gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
@@ -2404,10 +2411,18 @@ public class TriggeredAbilityQueueService {
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
             String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
-                    minTargets,
-                    pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
-                            + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".");
+            String prompt = pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
+                    + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".";
+            if (aggregateManaValueCap != null) {
+                prompt = prompt.substring(0, prompt.length() - 1)
+                        + " with total mana value " + aggregateManaValueCap + " or less.";
+                playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
+                        gameData, pending.controllerId(), matchingCards, maxTargets, minTargets,
+                        aggregateManaValueCap, prompt);
+            } else {
+                playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
+                        maxTargets, minTargets, prompt);
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability triggers — choose a graveyard target."));

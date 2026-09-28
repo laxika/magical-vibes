@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "69")
+@CardRegistration(set = "HBG", collectorNumber = "130")
+@CardRegistration(set = "HBG", collectorNumber = "310")
 public class RimeshieldFrostGiant extends Card {
 
     public RimeshieldFrostGiant() {

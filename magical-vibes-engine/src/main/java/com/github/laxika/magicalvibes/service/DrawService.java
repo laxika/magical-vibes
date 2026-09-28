@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsCreateTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromAnywhereInLibraryReplacement;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryReplacement;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
@@ -141,6 +143,7 @@ public class DrawService {
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
+    private static final CreateTokenEffect HULLBREACHER_TREASURE = CreateTokenEffect.ofTreasureToken(1);
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
     private final ExileBottomRandomSupport exileBottomRandomSupport;
@@ -183,6 +186,11 @@ public class DrawService {
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         resolveDrawCards(gameData, playerId, 1);
+    }
+
+    /** Resolves a draw after the controller chose its one-based position in the library. */
+    public void resolveDrawCardFromLibraryPosition(GameData gameData, UUID playerId, int position) {
+        performDrawCardAtPosition(gameData, playerId, position - 1);
     }
 
     public void resolveCyclingDrawCard(GameData gameData, UUID playerId, Card cycledCard) {
@@ -617,6 +625,21 @@ public class DrawService {
                 performDrawCard(gameData, thiefController);
                 return;
             }
+
+            Card hullbreacher = findOpponentExtraDrawsCreateTreasureSourceCard(gameData, playerId);
+            if (hullbreacher != null) {
+                UUID hullbreacherController = gameQueryService.getOpponentId(gameData, playerId);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
+                        .card(hullbreacher)
+                        .text(" makes " + gameData.playerIdToName.get(hullbreacherController)
+                                + " create a Treasure token instead.")
+                        .build());
+                permanentControlSupport.applyCreateToken(
+                        gameData, hullbreacherController, HULLBREACHER_TREASURE, 1,
+                        hullbreacher.getSetCode());
+                return;
+            }
         }
 
         if (!firstDrawStepDraw) {
@@ -678,6 +701,16 @@ public class DrawService {
         if (cycloneSource != null) {
             resolveUnpredictableCycloneDrawReplacement(gameData, playerId, cycledCard, cycloneSource);
             return;
+        }
+
+        Permanent drawFromAnywhereSource = findDrawFromAnywhereSource(gameData, playerId);
+        if (drawFromAnywhereSource != null) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck != null && !deck.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData,
+                        new PendingInteraction.DrawFromLibraryPositionChoice(playerId, deck.size()));
+                return;
+            }
         }
 
         Permanent drawFromBottomSource = findDrawFromBottomSource(gameData, playerId);
@@ -972,6 +1005,22 @@ public class DrawService {
         return null;
     }
 
+    private Permanent findDrawFromAnywhereSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DrawFromAnywhereInLibraryReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
     private Permanent findDrawFromBottomSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1207,6 +1256,27 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /** The opponent-controlled Hullbreacher-style source that replaces extra draws with Treasures. */
+    private Card findOpponentExtraDrawsCreateTreasureSourceCard(GameData gameData, UUID playerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        if (opponentId == null) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof OpponentExtraDrawsCreateTreasureEffect);
             if (hasEffect) {
                 return permanent.getCard();
             }
@@ -1811,6 +1881,24 @@ public class DrawService {
         performDrawCard(gameData, playerId, false);
     }
 
+    private void performDrawCardAtPosition(GameData gameData, UUID playerId, int position) {
+        if (preventDrawIfNeeded(gameData, playerId)) {
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            performDrawCard(gameData, playerId);
+            return;
+        }
+        if (position < 0 || position >= deck.size()) {
+            throw new IllegalArgumentException("Library position is outside the library");
+        }
+
+        Card drawn = deck.remove(position);
+        completeDrawCard(gameData, playerId, drawn);
+    }
+
     private void performDrawCardFromBottom(GameData gameData, UUID playerId) {
         performDrawCard(gameData, playerId, true);
     }
@@ -1857,6 +1945,10 @@ public class DrawService {
         }
 
         Card drawn = fromBottom ? deck.removeLast() : deck.removeFirst();
+        completeDrawCard(gameData, playerId, drawn);
+    }
+
+    private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
         gameData.addCardToHand(playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)

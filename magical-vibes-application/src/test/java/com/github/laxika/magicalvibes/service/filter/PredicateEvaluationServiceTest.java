@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValue
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
@@ -144,6 +145,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalA
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -2532,6 +2534,20 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("a mana ability predicate matches permanents with printed mana abilities")
+        void manaAbilityPredicateMatches() {
+            Card manaLand = createLand("Mana Land");
+            manaLand.addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
+            Permanent manaPermanent = addPermanent(player1Id, manaLand);
+            Permanent nonManaPermanent = addPermanent(player1Id, createLand("Utility Land"));
+
+            var predicate = new PermanentHasManaAbilityPredicate();
+
+            assertThat(evaluator.matchesStaticFilter(manaPermanent, predicate, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(nonManaPermanent, predicate, ctx())).isFalse();
+        }
+
+        @Test
         @DisplayName("composites propagate the recursion-safe evaluation to their operands")
         void compositesPropagate() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes(
@@ -3056,6 +3072,57 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesStaticFilter(
                     target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
                     .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate")
+    class SharesNameWithControlledCreatureOrGraveyardCreature {
+
+        @Test
+        void matchesAnotherControlledCreature() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+            addPermanent(player1Id,
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+
+            var predicate = new PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, context)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(target, predicate, context)).isTrue();
+        }
+
+        @Test
+        void matchesCreatureCardInSourceControllersGraveyard() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+            gd.playerGraveyards.get(player1Id).add(
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+
+            var predicate = new PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, context)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(target, predicate, context)).isTrue();
+        }
+
+        @Test
+        void ignoresNoncreaturesAndOpponentsZones() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+            addPermanent(player1Id, createEnchantment("Shared Name"));
+            gd.playerBattlefields.get(player2Id).add(
+                    new Permanent(createCreature("Shared Name", 2, 2, CardColor.GREEN)));
+            gd.playerGraveyards.get(player1Id).add(createEnchantment("Shared Name"));
+            gd.playerGraveyards.get(player2Id).add(
+                    createCreature("Shared Name", 2, 2, CardColor.GREEN));
+
+            var predicate = new PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate();
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, context)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(target, predicate, context)).isFalse();
         }
     }
 

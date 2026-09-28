@@ -1448,9 +1448,11 @@ public class CastingPermissionService {
     private boolean matchesLandFilter(GameData gameData, UUID playerId, Card card,
                                       PlayLandsFromGraveyardPermission permission,
                                       UUID sourceCardId) {
-        return permission.landFilter() == null
+        return (!permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                || cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card))
+                && (permission.landFilter() == null
                 || predicateEvaluationService.matchesCardPredicate(
-                card, permission.landFilter(), sourceCardId, gameData, playerId);
+                card, permission.landFilter(), sourceCardId, gameData, playerId));
     }
 
     public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
@@ -1523,6 +1525,22 @@ public class CastingPermissionService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
                 && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 && gameData.stack.isEmpty()
+                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !isLandPlayRestricted(gameData, playerId)
+                && !isLandPlayForbiddenByChosenName(gameData, card)
+                && !isCardPlayRestrictedInHand(gameData, playerId, card);
+    }
+
+    /**
+     * Returns true when a land discarded with madness may be played. Madness permits the land
+     * play outside the normal main-phase/empty-stack timing window, but it still requires the
+     * active player's turn, an available land play, and the usual land-play restrictions.
+     */
+    public boolean canPlayLandForMadness(GameData gameData, UUID playerId, Card card) {
+        return card.hasType(CardType.LAND)
+                && playerId.equals(gameData.activePlayerId)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
+                < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !isLandPlayRestricted(gameData, playerId)
                 && !isLandPlayForbiddenByChosenName(gameData, card)
@@ -1668,7 +1686,8 @@ public class CastingPermissionService {
     }
 
     private static boolean isCastableSpellCard(Card card) {
-        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
+        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)
+                || card.hasType(CardType.EMBLEM)) {
             return true;
         }
         CardType primary = card.getType();
@@ -1738,6 +1757,29 @@ public class CastingPermissionService {
                 .map(CastSpellsFromGraveyardPermission.class::cast)
                 .anyMatch(permission -> predicateEvaluationService.matchesCardPredicate(
                         card, permission.filter(), null));
+    }
+
+    private boolean matchesGraveyardPlayPermission(GameData gameData, UUID playerId, Card card,
+                                                    GraveyardPlayPermission permission) {
+        if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                && !cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card)) {
+            return false;
+        }
+        if (permission instanceof CastSpellsFromGraveyardPermission castPermission) {
+            return predicateEvaluationService.matchesCardPredicate(card, castPermission.filter(), null);
+        }
+        if (permission instanceof PlayLandsFromGraveyardPermission landPermission) {
+            return matchesLandFilter(gameData, playerId, card, landPermission, null);
+        }
+        return false;
+    }
+
+    private boolean cardWasPutIntoGraveyardFromLibraryThisTurn(GameData gameData, Card card) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        return graveyardOwnerId != null
+                && gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of())
+                .contains(card.getId());
     }
 
     /**

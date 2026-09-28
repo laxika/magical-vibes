@@ -52,6 +52,7 @@ filter directly rather than reusing a factory whose wording does not match.
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `PermanentAdjacentToSourcePredicate` | `()` | the permanent immediately to the left or right of the source in its controller's battlefield order; used by Defender of the Queue (MB2 276/512) |
 | `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentThatSaddledSourceThisTurnPredicate` | `()` | creatures that saddled the source Mount during the current turn; requires the source permanent context and reads `GameData.creaturesThatSaddledPermanentThisTurn` |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
@@ -66,6 +67,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentCouldProduceManaPredicate` | `(ManaColor)` | permanents whose current mana abilities could produce the requested mana type, including basic-land types and applicable mana replacements; needs game data |
 | `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
+| `PermanentHasNoNonKeywordAbilitiesPredicate` | `()` | permanents with no currently effective abilities other than keywords; keyword abilities alone do not count (TL;DR) |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
@@ -138,6 +140,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasExactlyTwoColorsPredicate` | `()` | permanents with exactly two effective colors; Invasion of Ravnica's non-two-color target restriction |
 | `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
+| `PermanentHostedBySourcePredicate` | `()` | permanents currently hosted by the source Realm; used by Immersturm Battlefield's static boost |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
 | `PermanentHasSupertypePredicate` | `(CardSupertype)` | permanents with specific supertype (e.g. LEGENDARY). Evaluated through `GameQueryService.hasEffectiveSupertype`, so a global `PermanentsMatchingLoseSupertypeEffect` (Melting) correctly makes it false |
 | `PermanentIsCommanderPredicate` | `()` | permanents whose original card is designated as a commander in `GameData`; unlike a legendary filter, this tracks the Commander designation and does not make copies commanders | `gameData` |
@@ -225,7 +228,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentCrewedBySourceThisTurnPredicate` | `()` | permanents that were tapped to pay the source Vehicle's crew cost this turn | source permanent snapshot |
 | `PermanentEnteredBattlefieldThisOrLastTurnPredicate` | `()` | permanents whose physical card entered during the current or immediately preceding turn; requires the source controller to have had a previous turn | `gameData` + `sourceControllerId` |
 | `PermanentDealtDamageToAnythingThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat, to any player or creature — this turn ("target creature that dealt damage this turn", Avenging Arrow). Checks `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn` + `creatureCardsDamagedThisTurnBySourcePermanent`, keyed by the candidate permanent. Note the opposite direction from `PermanentDealtDamageThisTurnPredicate` (which means *was* dealt damage) | `gameData` |
-| `PermanentDealtCombatDamageToPlayerThisTurnPredicate` | `()` | permanents that dealt combat damage to a player this turn | `gameData` |
+| `PermanentDealtCombatDamageToPlayerThisTurnPredicate` | `()` | permanents that dealt combat damage to a player this turn; combine with `PermanentIsCreaturePredicate` for "each creature you control that dealt combat damage to a player this turn" | `gameData` |
 | `PermanentFoughtThisTurnPredicate` | `()` | creatures that fought at least once this turn; reads `GameData.permanentsThatFoughtThisTurn` | `gameData` |
 | `PermanentDealtDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat — to the source's controller this turn ("target creature that dealt damage to you this turn", Giltspire Avenger). Checks `GameData.combatDamageToPlayersThisTurn` + `GameData.noncombatDamageToPlayersThisTurn` for `sourceControllerId` | `gameData` + `sourceControllerId` |
 | `PermanentDealtCombatDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt combat damage to the source's controller this turn; unlike the predicate above, noncombat damage does not match | `gameData` + `sourceControllerId` |
@@ -238,6 +241,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentNamedPredicate` | `(String cardName)` | permanents with the given name (exact `Card.getName()` equality); e.g. "a permanent named Guan Yu, Sainted Warrior" | none |
 | `PermanentSharesNameWithAnotherPermanentPredicate` | `()` | permanent shares its name with at least one other permanent on any battlefield (Eye of Singularity ETB wipe) | `gameData` |
 | `PermanentSharesNameWithAnotherControlledPermanentPredicate` | `()` | permanent shares its name with at least one other permanent controlled by that permanent's current controller | `gameData` |
+| `PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate` | `()` | permanent shares its name with another creature controlled by the source controller or with a creature card in that controller's graveyard | `gameData`, source controller |
 | `PermanentSharesNameWithControlledTokenPredicate` | `()` | permanent shares its name with a token controlled by the source's controller | `gameData`, source controller |
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
@@ -314,6 +318,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
+| `StackEntryCastWithAdventurePredicate` | `()` | spells cast using an Adventure alternative casting option |
 | `StackEntryCastWithWarpCostPredicate` | `()` | spells cast using a Warp alternative cost |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The source aura's attachment is supplied externally by the evaluating service. Used by Curse of Echoes and Curse of Silence |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |

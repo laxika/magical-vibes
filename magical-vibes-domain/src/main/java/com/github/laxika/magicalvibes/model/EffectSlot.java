@@ -165,6 +165,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** End-step trigger fired from a card in its owner's graveyard during that owner's end step. */
     GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
+    /** End-step trigger fired from a card in its owner's command zone. */
+    COMMAND_ZONE_END_STEP_TRIGGERED,
     /** "At the beginning of each opponent's end step" — fires during the end step of any player who
      *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
      *  Checked in {@code StepTriggerService.handleEndStepTriggers}, which bakes the end-step player
@@ -198,6 +200,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers whenever this permanent's controller searches their own library. */
+    ON_CONTROLLER_SEARCHES_LIBRARY,
     /** Triggers after all players finish a voting event. */
     ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
@@ -222,6 +226,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DISCOVERS,
     /** Triggers whenever this permanent's controller seeks one or more cards. */
     ON_CONTROLLER_SEEKS,
+    /** Triggers whenever this permanent's controller conjures one or more cards. */
+    ON_CONTROLLER_CONJURES,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -809,6 +815,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_COUNTERS_ON_CREATURE,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
+    /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
+    ON_OPPONENT_PAYS_TAX,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
     ON_SELF_LEAVES_BATTLEFIELD,
@@ -854,6 +862,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield by any means. */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
+    /** Triggers once whenever one or more permanents controlled by this permanent's controller
+     *  leave the battlefield in a single event, including this permanent itself. */
+    ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
@@ -1037,6 +1048,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
     ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
+    /** Triggers whenever one or more cards owned by an opponent are put into exile. */
+    ON_OPPONENT_OWNED_CARD_EXILED,
     /** Triggers during your turn whenever one or more cards are exiled from graveyards and/or the battlefield. */
     ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN,
     /** Triggers whenever this permanent's controller proliferates. */

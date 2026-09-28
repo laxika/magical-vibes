@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "PIP", collectorNumber = "356")
 @CardRegistration(set = "PIP", collectorNumber = "752")
 @CardRegistration(set = "PIP", collectorNumber = "884")
+@CardRegistration(set = "MB2", collectorNumber = "254")
 @CardRegistration(set = "FIC", collectorNumber = "332")
 @CardRegistration(set = "FIC", collectorNumber = "333")
 @CardRegistration(set = "FIC", collectorNumber = "334")

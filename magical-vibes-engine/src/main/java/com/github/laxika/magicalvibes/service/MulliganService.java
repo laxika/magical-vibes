@@ -146,7 +146,7 @@ public class MulliganService {
             throw new IllegalStateException("You have already kept your hand");
         }
 
-        if (queueSerumPowderChoice(gameData, player)) {
+        if (queueMulliganActionChoice(gameData, player)) {
             return;
         }
 
@@ -187,13 +187,21 @@ public class MulliganService {
                         + (drawn == 1 ? "" : "s") + " with ", ability.sourceCard(), "."));
         log.info("Game {} - {} used Serum Powder to exile {} card(s) and draw {} card(s)",
                 gameData.id, player.getUsername(), cardsToExile.size(), drawn);
+        continueMulliganDecision(gameData, player);
+    }
+
+    public void declineMulliganAction(GameData gameData, Player player) {
+        performMulligan(gameData, player);
+    }
+
+    public void continueMulliganDecision(GameData gameData, Player player) {
         if (gameData.status != GameStatus.FINISHED) {
             invalidateForAllPlayers(gameData);
             requestMulliganDecision(gameData, player);
         }
     }
 
-    private boolean queueSerumPowderChoice(GameData gameData, Player player) {
+    private boolean queueMulliganActionChoice(GameData gameData, Player player) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         if (hand == null) {
             return false;
@@ -203,12 +211,13 @@ public class MulliganService {
             if (effects.isEmpty()) {
                 continue;
             }
+            CardEffect effect = effects.getFirst();
+            String description = effect.mulliganActionDescription();
+            if (description == null) {
+                description = "Use this mulligan action?";
+            }
             gameData.pendingMayAbilities.add(new PendingMayAbility(
-                    card,
-                    player.getId(),
-                    List.of(effects.getFirst()),
-                    card.getName() + " - Use this card to exile your hand and draw that many cards?"
-            ));
+                    card, player.getId(), List.of(effect), card.getName() + " — " + description));
             invalidateForAllPlayers(gameData);
             playerInputService.processNextMayAbility(gameData);
             return true;

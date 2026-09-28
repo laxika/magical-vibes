@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -135,6 +136,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
     private final LifeSupport lifeSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -210,6 +212,8 @@ public class MayPenaltyChoiceHandlerService {
                             && gameData.getLife(player.getId()) >= lifeCost);
             if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
+                triggerCollectionService.checkTaxPaymentTriggers(
+                        gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                 if (lifeCost > 0) {
                     lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
                             ability.sourceCard().getName());
@@ -1093,6 +1097,13 @@ public class MayPenaltyChoiceHandlerService {
                 ManaPool pool = gameData.playerManaPools.get(ability.controllerId());
                 if (cost.canPay(pool)) {
                     cost.pay(pool);
+                    UUID taxingPlayerId = ability.sourceControllerId();
+                    if (taxingPlayerId == null) {
+                        taxingPlayerId = gameQueryService.findPermanentController(
+                                gameData, ability.sourcePermanentId());
+                    }
+                    triggerCollectionService.checkTaxPaymentTriggers(
+                            gameData, ability.controllerId(), taxingPlayerId, cost.getManaValue());
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
                     log.info("Game {} - {} pays {} to prevent draw ({})",

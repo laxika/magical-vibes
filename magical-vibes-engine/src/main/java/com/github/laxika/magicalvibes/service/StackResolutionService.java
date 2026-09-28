@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
+import com.github.laxika.magicalvibes.service.effect.CardAdvantagePostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -192,6 +193,10 @@ public class StackResolutionService {
         }
 
         if (gameData.waitingForSubgame) return;
+        if (gameData.pendingEffectResolutionEntry != null) return;
+        if (!gameData.interaction.isAwaitingInput() && gameData.pendingMayAbilities.isEmpty()) {
+            CardAdvantagePostResolutionService.process(gameData, entry);
+        }
 
         // Resolution-time may choices are part of the resolving ability, so present them before
         // state-based actions can orphan an Aura that the choice may move.
@@ -594,6 +599,10 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        if (exileWithRebound(gameData, entry)) {
+            return;
+        }
+
         // Buyback on a creature (Innocuous Insect) returns it as it resolves,
         // before it can enter the battlefield.
         if (entry.isBuyback()) {
@@ -801,10 +810,35 @@ public class StackResolutionService {
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
+        if (exileWithRebound(gameData, entry)) {
+            return;
+        }
+
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
         // CR 702.146: a spell cast via Disturb has the characteristics of its back face while on the stack.
         Card characteristics = disturbCharacteristics(entry, card);
+
+        // Don't Worry About It enchants a card that remains in its controller's hand.
+        if (characteristics.isAura() && entry.getTargetZone() == Zone.HAND && entry.getTargetId() != null) {
+            Card handCard = gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
+                    .filter(candidate -> candidate.getId().equals(entry.getTargetId()))
+                    .findFirst().orElse(null);
+            if (handCard == null) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(characteristics)
+                        .text(" fizzles (enchanted card is no longer in its owner's hand).")
+                        .build());
+                disposeFizzledPermanentSpell(gameData, entry, card);
+            } else {
+                Permanent aura = createEnteringPermanent(entry, card, characteristics);
+                aura.setAttachedTo(handCard.getId());
+                putResolvedPermanentOntoBattlefield(gameData, controllerId, aura, entry);
+                queueWarpExileIfPresent(gameData, entry, aura);
+                processResolvedPermanentEtb(gameData, controllerId, characteristics, entry.getTargetId(), entry);
+            }
+            return;
+        }
 
         if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, characteristics, entry.getTargetId(),
                 entry.getXValue())) {
@@ -857,7 +891,7 @@ public class StackResolutionService {
                 processResolvedPermanentEtb(gameData, controllerId, characteristics, targetPlayerId, entry);
             }
         // Aura fizzles if its target is no longer on the battlefield
-        } else if (characteristics.isAura() && entry.getTargetId() != null) {
+        } else if (characteristics.isAuraThatRequiresAttachment() && entry.getTargetId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) {
                 gameLogService.append(gameData, GameLog.builder()
@@ -1049,6 +1083,9 @@ public class StackResolutionService {
             resolveCreatureSpell(gameData, entry);
             return;
         }
+        if (exileWithRebound(gameData, entry)) {
+            return;
+        }
 
         Card card = entry.getCard();
         Card characteristics = disturbCharacteristics(entry, card);
@@ -1168,6 +1205,10 @@ public class StackResolutionService {
     }
 
     private void resolvePlaneswalkerSpell(GameData gameData, StackEntry entry) {
+        if (exileWithRebound(gameData, entry)) {
+            return;
+        }
+
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
@@ -1211,6 +1252,10 @@ public class StackResolutionService {
     }
 
     private void resolveBattleSpell(GameData gameData, StackEntry entry) {
+        if (exileWithRebound(gameData, entry)) {
+            return;
+        }
+
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
@@ -1334,12 +1379,34 @@ public class StackResolutionService {
         battlefieldEntryService.processCreatureETBEffects(gameData, entry.getControllerId(), characteristics,
                 entry.getTargetId(), true, entry.getTargetIds());
         handleSpellDisposition(gameData, entry);
+        CardAdvantagePostResolutionService.process(gameData, entry);
     }
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
+        CardAdvantagePostResolutionService.process(gameData, entry);
+    }
+
+    private boolean exileWithRebound(GameData gameData, StackEntry entry) {
+        if (entry.getSourceZone() != Zone.HAND || entry.isCastFaceDown() || entry.isCopy()) {
+            return false;
+        }
+        Card card = entry.getCard();
+        if (!card.getKeywords().contains(Keyword.REBOUND)
+                && !entry.getGrantedKeywordsOnEntry().contains(Keyword.REBOUND)
+                && !gameQueryService.hasSpellCastingAbilityGrant(
+                        gameData, entry.getControllerId(), card, Keyword.REBOUND)) {
+            return false;
+        }
+
+        gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
+        gameData.addToExile(entry.getOwnerId(), card);
+        gameData.queueDelayedAction(new ReboundAtNextUpkeep(
+                entry.getControllerId(), entry.getOwnerId(), card));
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled with rebound."));
+        return true;
     }
 
     private void checkSagaFinalChapterResolution(GameData gameData, StackEntry entry) {
