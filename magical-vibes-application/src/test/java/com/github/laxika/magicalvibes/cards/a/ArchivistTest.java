@@ -71,9 +71,7 @@ class ArchivistTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWhileSummoningSick() {
-        Permanent archivist = new Permanent(new Archivist());
-        archivist.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(archivist);
+        harness.addToBattlefield(player1, new Archivist());
         harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AetherTide;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PeaceOfMind.class, AetherTide.class})
+@CardUsed({PeaceOfMind.class, HonorGuard.class})
 class PeaceOfMindTest extends BaseCardTest {
 
     @Test
@@ -21,7 +21,7 @@ class PeaceOfMindTest extends BaseCardTest {
     void activationStartsDiscardChoice() {
         harness.addToBattlefield(player1, new PeaceOfMind());
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.setHand(player1, List.of(new AetherTide()));
+        harness.setHand(player1, List.of(new HonorGuard()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -33,7 +33,7 @@ class PeaceOfMindTest extends BaseCardTest {
     void gains3LifeOnResolution() {
         harness.addToBattlefield(player1, new PeaceOfMind());
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.setHand(player1, List.of(new AetherTide()));
+        harness.setHand(player1, List.of(new HonorGuard()));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, null);
@@ -41,13 +41,27 @@ class PeaceOfMindTest extends BaseCardTest {
 
         // Discard was paid as a cost
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Aether Tide");
+        harness.assertInGraveyard(player1, "Honor Guard");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         harness.assertLife(player1, lifeBefore);
 
         harness.passBothPriorities(); // resolve the ability
 
         harness.assertLife(player1, lifeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Discards the selected card when several cards are in hand")
+    void discardsSelectedCardFromMultipleCardHand() {
+        harness.addToBattlefield(player1, new PeaceOfMind());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new HonorGuard(), new PeaceOfMind()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Peace of Mind");
+        harness.assertInHand(player1, "Honor Guard");
     }
 
     @Test
@@ -65,7 +79,7 @@ class PeaceOfMindTest extends BaseCardTest {
     @DisplayName("Cannot activate without white mana")
     void cannotActivateWithoutWhiteMana() {
         harness.addToBattlefield(player1, new PeaceOfMind());
-        harness.setHand(player1, List.of(new AetherTide()));
+        harness.setHand(player1, List.of(new HonorGuard()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

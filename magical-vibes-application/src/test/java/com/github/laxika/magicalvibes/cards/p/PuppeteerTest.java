@@ -26,7 +26,7 @@ class PuppeteerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
-        Permanent puppeteer = addReadyPuppeteer(player1);
+        addReadyPuppeteer(player1);
         Permanent target = addCreatureReady(player2, new EmberBeast());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -48,6 +48,19 @@ class PuppeteerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         assertThat(puppeteer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target Puppeteer itself and untap it")
+    void canTargetItself() {
+        Permanent puppeteer = addReadyPuppeteer(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, puppeteer.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(puppeteer.isTapped()).isFalse();
     }
 
     // ===== Tapping untapped creatures =====
@@ -139,6 +152,17 @@ class PuppeteerTest extends BaseCardTest {
     void cannotActivateWithoutMana() {
         addReadyPuppeteer(player1);
         Permanent target = addCreatureReady(player2, new EmberBeast());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with only nonblue mana")
+    void cannotActivateWithWrongColorMana() {
+        addReadyPuppeteer(player1);
+        Permanent target = addCreatureReady(player2, new EmberBeast());
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

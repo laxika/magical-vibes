@@ -19,14 +19,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Chastise.class, GrizzlyBears.class})
 class ChastiseTest extends BaseCardTest {
 
-    private void castChastise(UUID targetId) {
+    private void prepareChastise() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Chastise()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
+    }
+
+    private void castChastise(UUID targetId) {
+        prepareChastise();
         harness.castInstant(player2, 0, targetId);
+    }
+
+    private void castAndResolveChastise(UUID targetId) {
+        prepareChastise();
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 
     private Permanent addAttacker(Player owner) {
@@ -41,8 +50,7 @@ class ChastiseTest extends BaseCardTest {
         harness.setLife(player2, 15);
         Permanent attacker = addAttacker(player1);
 
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
+        castAndResolveChastise(attacker.getId());
 
         // Grizzly Bears (2/2) destroyed -> into owner's graveyard
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -58,8 +66,7 @@ class ChastiseTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1);
         attacker.setPowerModifier(3); // 2 + 3 = 5 effective power
 
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
+        castAndResolveChastise(attacker.getId());
 
         // Effective power 5 -> caster gains 5 life (10 + 5 = 15)
         harness.assertLife(player2, 15);
@@ -72,8 +79,7 @@ class ChastiseTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1);
         attacker.setRegenerationShield(1);
 
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
+        castAndResolveChastise(attacker.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -90,12 +96,7 @@ class ChastiseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Chastise()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.passPriority(player1);
+        prepareChastise();
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)

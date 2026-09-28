@@ -92,8 +92,7 @@ class RathiDragonTest extends BaseCardTest {
         // More Mountains than needed — a multi-permanent choice is required.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        List<UUID> mountainIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
+        List<UUID> mountainIds = findPermanents(player1, "Mountain").stream()
                 .map(p -> p.getId())
                 .limit(2)
                 .toList();

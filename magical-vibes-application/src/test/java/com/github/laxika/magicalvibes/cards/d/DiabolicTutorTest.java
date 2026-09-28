@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiabolicTutor.class, AvenFisher.class, Plains.class, Swamp.class})
+@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class})
 class DiabolicTutorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -48,7 +47,7 @@ class DiabolicTutorTest extends BaseCardTest {
         // All cards from library are presented (not just a subset)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Plains", "Swamp", "Aven Fisher", "Aven Fisher");
+                .containsExactlyInAnyOrder("Caves of Koilos", "Caves of Koilos", "Aven Fisher", "Aven Fisher");
     }
 
     @Test
@@ -98,6 +97,20 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.handleCardChosen(player1, fisherIndex);
 
         harness.assertInHand(player1, "Aven Fisher");
+    }
+
+    @Test
+    @DisplayName("Diabolic Tutor searches its controller's library")
+    void searchesControllerLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new AvenFisher()));
+        harness.setLibrary(player2, List.of(new CavesOfKoilos()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Aven Fisher");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 
     @Test
@@ -200,7 +213,8 @@ class DiabolicTutorTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new AvenFisher(), new AvenFisher()));
+        harness.setLibrary(player1, List.of(
+                new CavesOfKoilos(), new AvenFisher(), new CavesOfKoilos(), new AvenFisher()));
     }
 }
 

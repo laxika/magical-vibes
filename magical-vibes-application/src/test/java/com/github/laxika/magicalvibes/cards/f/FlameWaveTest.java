@@ -76,6 +76,22 @@ class FlameWaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target its controller and damages that player's creatures")
+    void damagesItsControllerAndTheirCreatures() {
+        harness.setHand(player1, List.of(new FlameWave()));
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

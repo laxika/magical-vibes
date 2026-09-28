@@ -44,6 +44,16 @@ class SpinelessThugTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spineless Thug can still be declared as an attacker")
+    void canBeDeclaredAsAttacker() {
+        Permanent thug = addCreatureReady(player1, new SpinelessThug());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(thug.isAttacking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Spineless Thug cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new SpinelessThug());

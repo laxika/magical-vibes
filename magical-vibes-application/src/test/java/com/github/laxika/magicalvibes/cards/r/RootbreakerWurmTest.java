@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.h.HeartwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,20 +11,17 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({RootbreakerWurm.class, HeartwoodTreefolk.class})
+@CardUsed({RootbreakerWurm.class, GiantSpider.class})
 class RootbreakerWurmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleAssignsExcessCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent attacker = addCreatureReady(player1, new RootbreakerWurm());
-        Permanent blocker = addCreatureReady(player2, new HeartwoodTreefolk());
+        addCreatureReady(player1, new RootbreakerWurm());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -32,8 +29,8 @@ class RootbreakerWurmTest extends BaseCardTest {
                 blocker.getId(), 4,
                 player2.getId(), 2));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Rootbreaker Wurm");
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
     }
 }

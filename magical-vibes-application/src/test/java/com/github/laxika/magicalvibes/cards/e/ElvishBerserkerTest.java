@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,17 +16,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ElvishBerserker.class, GrizzlyBears.class})
+@CardUsed({ElvishBerserker.class, GrizzlyBears.class, HornedTurtle.class})
 class ElvishBerserkerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Becoming blocked creates one becomes-blocked trigger")
     void becomingBlockedCreatesTrigger() {
         Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
-        berserker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
@@ -37,10 +38,9 @@ class ElvishBerserkerTest extends BaseCardTest {
     @DisplayName("With one blocker Elvish Berserker gets +1/+1 until end of turn")
     void oneBlockerGivesPlusOnePlusOne() {
         Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
-        berserker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -54,11 +54,10 @@ class ElvishBerserkerTest extends BaseCardTest {
     @DisplayName("With two blockers Elvish Berserker gets +2/+2 until end of turn")
     void twoBlockersGivesPlusTwoPlusTwo() {
         Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
-        berserker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -75,14 +74,36 @@ class ElvishBerserkerTest extends BaseCardTest {
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
         Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
-        berserker.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(berserker.getPowerModifier()).isZero();
         assertThat(berserker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The blocker-based boost expires at end of turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent berserker = addCreatureReady(player1, new ElvishBerserker());
+        addCreatureReady(player2, new HornedTurtle());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(berserker.getEffectivePower()).isEqualTo(2);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(berserker.getEffectivePower()).isEqualTo(1);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(1);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BogWraith.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({BogWraith.class, Forest.class, GrizzlyBears.class, Swamp.class})
 class BogWraithTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -67,6 +68,26 @@ class BogWraithTest extends BaseCardTest {
     @Test
     @DisplayName("Bog Wraith can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new BogWraith());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bog Wraith can be blocked when defending player controls a non-Swamp land")
+    void canBeBlockedWhenDefenderControlsNonSwampLand() {
+        harness.addToBattlefield(player2, new Forest());
+
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new BogWraith());

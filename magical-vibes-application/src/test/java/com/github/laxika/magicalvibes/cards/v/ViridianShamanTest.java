@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.cards.e.EzurisArchers;
+import com.github.laxika.magicalvibes.cards.e.EtheriumSculptor;
 import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViridianShaman.class, GreatFurnace.class, EzurisArchers.class, DarksteelPlate.class})
+@CardUsed({ViridianShaman.class, GreatFurnace.class, EzurisArchers.class, DarksteelPlate.class,
+        EtheriumSculptor.class})
 class ViridianShamanTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -79,10 +81,7 @@ class ViridianShamanTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Great Furnace");
         harness.castCreature(player1, 0, targetId);
 
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -100,13 +99,26 @@ class ViridianShamanTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Great Furnace");
         harness.castCreature(player1, 0, targetId);
 
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Great Furnace");
         harness.assertInGraveyard(player1, "Great Furnace");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact creature with ETB")
+    void canDestroyArtifactCreature() {
+        harness.addToBattlefield(player2, new EtheriumSculptor());
+        harness.setHand(player1, List.of(new ViridianShaman()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Etherium Sculptor");
+        harness.castCreature(player1, 0, targetId);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Etherium Sculptor");
+        harness.assertInGraveyard(player2, "Etherium Sculptor");
     }
 
     @Test
@@ -145,8 +157,7 @@ class ViridianShamanTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Darksteel Plate");
         harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Darksteel Plate");
         harness.assertNotInGraveyard(player2, "Darksteel Plate");
@@ -167,15 +178,29 @@ class ViridianShamanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Chooses an artifact when the ETB ability is put on the stack")
+    void choosesTargetWhenEtbIsPutOnStack() {
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
+        harness.addToBattlefield(player2, new GreatFurnace());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        UUID targetId = harness.getPermanentId(player2, "Great Furnace");
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Great Furnace");
+        harness.assertInGraveyard(player2, "Great Furnace");
+    }
+
     // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no artifacts on battlefield")
     void canCastWithoutTargetWhenNoArtifacts() {
-        harness.setHand(player1, List.of(new ViridianShaman()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -185,10 +210,7 @@ class ViridianShamanTest extends BaseCardTest {
     @Test
     @DisplayName("ETB ability is not put on the stack when cast without a target")
     void etbAbilityIsNotPutOnStackWithoutTarget() {
-        harness.setHand(player1, List.of(new ViridianShaman()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ViridianShaman(), "{2}{G}");
 
         // Resolve creature spell
         harness.passBothPriorities();

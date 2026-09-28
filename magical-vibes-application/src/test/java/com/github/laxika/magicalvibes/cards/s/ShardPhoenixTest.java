@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.w.WallOfBlossoms;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShardPhoenix.class, YouthfulKnight.class, SkyshroudFalcon.class})
+@CardUsed({ShardPhoenix.class, YouthfulKnight.class, SkyshroudFalcon.class, WallOfBlossoms.class})
 class ShardPhoenixTest extends BaseCardTest {
 
     // ===== Sacrifice ability =====
@@ -52,6 +53,19 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.assertInGraveyard(player1, "Youthful Knight");
             harness.assertNotOnBattlefield(player2, "Youthful Knight");
             harness.assertInGraveyard(player2, "Youthful Knight");
+        }
+
+        @Test
+        @DisplayName("Deals exactly 2 damage to a nonflying creature")
+        void dealsExactlyTwoDamageToNonFlyingCreature() {
+            harness.addToBattlefield(player1, new ShardPhoenix());
+            var wall = harness.addToBattlefieldAndReturn(player2, new WallOfBlossoms());
+
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+
+            assertThat(wall.getMarkedDamage()).isEqualTo(2);
+            harness.assertOnBattlefield(player2, "Wall of Blossoms");
         }
 
         @Test

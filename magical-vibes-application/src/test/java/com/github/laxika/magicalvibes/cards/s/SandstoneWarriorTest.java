@@ -78,10 +78,7 @@ class SandstoneWarriorTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Sandstone Warrior");
         harness.assertInGraveyard(player2, "Trained Armodon");
@@ -91,6 +88,17 @@ class SandstoneWarriorTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new SandstoneWarrior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the red activation cost with mana of another color")
+    void cannotActivateWithWrongColorMana() {
+        addCreatureReady(player1, new SandstoneWarrior());
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

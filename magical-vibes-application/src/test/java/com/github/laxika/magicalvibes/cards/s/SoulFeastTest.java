@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, MetathranSoldier.class, SoulFeast.class})
+@CardUsed({GrizzlyBears.class, SoulFeast.class})
 class SoulFeastTest extends BaseCardTest {
 
 
@@ -101,7 +100,7 @@ class SoulFeastTest extends BaseCardTest {
     @Test
     @DisplayName("Soul Feast cannot target a creature")
     void cannotTargetCreatureUpstreamReview() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SoulFeast()));
         harness.addMana(player1, ManaColor.BLACK, 5);

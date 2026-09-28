@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
-import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
+import com.github.laxika.magicalvibes.cards.f.ForceOfNature;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScaledWurm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({
         BloodfireColossus.class,
         GrizzlyBears.class,
-        EnormousBaloth.class,
+        ForceOfNature.class,
+        ScaledWurm.class,
         DarksteelSentinel.class,
         GloriousAnthem.class
 })
@@ -98,14 +100,29 @@ class BloodfireColossusTest extends BaseCardTest {
     void creaturesWithHighToughnessSurvive() {
         BloodfireColossus colossus = new BloodfireColossus();
         harness.addToBattlefield(player1, colossus);
-        harness.addToBattlefield(player2, new EnormousBaloth());
+        harness.addToBattlefield(player2, new ForceOfNature());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // 7/7 survives 6 damage
-        harness.assertOnBattlefield(player2, "Enormous Baloth");
+        // 8/8 survives 6 damage
+        harness.assertOnBattlefield(player2, "Force of Nature");
+    }
+
+    @Test
+    @DisplayName("Creatures with toughness exactly 6 die to the damage")
+    void creatureWithExactlySixToughnessDies() {
+        BloodfireColossus colossus = new BloodfireColossus();
+        harness.addToBattlefield(player1, colossus);
+        harness.addToBattlefield(player2, new ScaledWurm());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Scaled Wurm");
+        harness.assertInGraveyard(player2, "Scaled Wurm");
     }
 
     // ===== Indestructible =====

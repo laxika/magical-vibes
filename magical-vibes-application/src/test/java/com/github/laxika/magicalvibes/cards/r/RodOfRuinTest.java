@@ -24,7 +24,17 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, LlanowarElves.class, Plains.class, RodOfRuin.class})
+@CardUsed({
+        RodOfRuin.class,
+        GrizzlyBears.class,
+        LlanowarElves.class,
+        Plains.class,
+        AjaniMentorOfHeroes.class,
+        InvasionOfTolvada.class,
+        TheBrokenSky.class,
+        InvasionOfZendikar.class,
+        AwakenedSkyclave.class
+})
 class RodOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")

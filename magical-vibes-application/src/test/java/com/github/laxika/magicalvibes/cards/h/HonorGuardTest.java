@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HonorGuard.class, SpinedWurm.class})
+@CardUsed({HonorGuard.class, GrizzlyBears.class})
 class HonorGuardTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -27,10 +27,7 @@ class HonorGuardTest extends BaseCardTest {
     @DisplayName("Casting Honor Guard puts it on the stack")
     void castingPutsItOnStack() {
         HonorGuard guard = new HonorGuard();
-        harness.setHand(player1, List.of(guard));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, guard, "{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -42,10 +39,7 @@ class HonorGuardTest extends BaseCardTest {
     @DisplayName("Resolving Honor Guard puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
         HonorGuard guard = new HonorGuard();
-        harness.setHand(player1, List.of(guard));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, guard, "{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -103,14 +97,29 @@ class HonorGuardTest extends BaseCardTest {
     @DisplayName("Resolving ability does not boost another creature")
     void resolvingAbilityOnlyBoostsHonorGuard() {
         addHonorGuardReady(player1);
-        Permanent wurm = addCreatureReady(player1, new SpinedWurm());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wurm.getEffectivePower()).isEqualTo(5);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolving ability only boosts the activated Honor Guard")
+    void resolvingAbilityOnlyBoostsActivatedHonorGuard() {
+        Permanent activatedGuard = addHonorGuardReady(player1);
+        Permanent otherGuard = addHonorGuardReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(activatedGuard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherGuard.getEffectivePower()).isEqualTo(1);
+        assertThat(otherGuard.getEffectiveToughness()).isEqualTo(1);
     }
 
     @Test
@@ -242,7 +251,7 @@ class HonorGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability on permanent with no ability")
     void cannotActivateOnPermanentWithNoAbility() {
-        addCreatureReady(player1, new SpinedWurm());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

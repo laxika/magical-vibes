@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DarkBanishing.class, CanopySpider.class, Forest.class, MetallicSliver.class, PitImp.class,
-        SoltariMonk.class})
+        SoltariMonk.class, DarksteelMyr.class})
 class DarkBanishingTest extends BaseCardTest {
 
     @Test
@@ -152,7 +152,6 @@ class DarkBanishingTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DarksteelMyr.class)
     @DisplayName("Dark Banishing cannot destroy an indestructible creature")
     void cannotDestroyIndestructibleCreature() {
         Permanent myr = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());

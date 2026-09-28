@@ -71,6 +71,7 @@ class ForceOfNatureTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
@@ -81,8 +82,7 @@ class ForceOfNatureTest extends BaseCardTest {
         addCreatureReady(player1, new ForceOfNature());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

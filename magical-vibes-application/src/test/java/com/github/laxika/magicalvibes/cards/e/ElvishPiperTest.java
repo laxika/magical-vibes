@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvishPiper.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ElvishPiper.class, Forest.class, GrizzlyBears.class, Ornithopter.class})
 class ElvishPiperTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoiceFirst() {
-        addCreatureReady(player1, new ElvishPiper());
+        addReadyPiper();
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -56,7 +57,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may then resolving prompts card choice with only creature indices")
     void resolvingPromptsOnlyCreatureChoices() {
-        addCreatureReady(player1, new ElvishPiper());
+        addReadyPiper();
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -72,9 +73,30 @@ class ElvishPiperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting may allows an artifact creature card")
+    void acceptingMayAllowsArtifactCreatureCard() {
+        addReadyPiper();
+        harness.setHand(player1, List.of(new Forest(), new Ornithopter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Choosing a creature puts it onto the battlefield")
     void choosingCreaturePutsItOntoBattlefield() {
-        addCreatureReady(player1, new ElvishPiper());
+        addReadyPiper();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -93,7 +115,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Declining may leaves hand unchanged")
     void decliningMayLeavesHandUnchanged() {
-        addCreatureReady(player1, new ElvishPiper());
+        addReadyPiper();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -110,9 +132,9 @@ class ElvishPiperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability does not prompt when controller has no creature cards in hand")
-    void noCreaturesInHandSkipsChoice() {
-        addCreatureReady(player1, new ElvishPiper());
+    @DisplayName("Accepting may with no creature cards in hand does nothing")
+    void noCreaturesInHandDoesNothing() {
+        addReadyPiper();
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -152,7 +174,7 @@ class ElvishPiperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without green mana")
     void cannotActivateWithoutMana() {
-        addCreatureReady(player1, new ElvishPiper());
+        addReadyPiper();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

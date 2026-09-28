@@ -22,8 +22,7 @@ class AirElementalTest extends BaseCardTest {
         Permanent elemental = addCreatureReady(player1, new AirElemental());
         addCreatureReady(player2, new GoblinPiker());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -36,8 +35,7 @@ class AirElementalTest extends BaseCardTest {
         addCreatureReady(player1, new AirElemental());
         Permanent blocker = addCreatureReady(player2, new AirElemental());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -49,8 +47,7 @@ class AirElementalTest extends BaseCardTest {
         addCreatureReady(player1, new GoblinPiker());
         Permanent blocker = addCreatureReady(player2, new AirElemental());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

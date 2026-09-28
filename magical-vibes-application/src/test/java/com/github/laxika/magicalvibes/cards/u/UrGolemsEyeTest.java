@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(UrGolemsEye.class)
+@CardUsed({UrGolemsEye.class})
 class UrGolemsEyeTest extends BaseCardTest {
 
     // ===== Mana ability =====
@@ -25,6 +25,17 @@ class UrGolemsEyeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
         assertThat(eye.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapping for mana adds two colorless mana to the existing pool")
+    void addsToExistingManaPool() {
+        harness.addToBattlefield(player1, new UrGolemsEye());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
     }
 
     @Test

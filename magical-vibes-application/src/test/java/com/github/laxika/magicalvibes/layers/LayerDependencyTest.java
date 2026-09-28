@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link Card}s stand in for effect combinations the card pool cannot produce (an Urborg-style
  * ability-granting land).
  */
+@CardUsed({BloodMoon.class, Forest.class, GrizzlyBears.class, MarchOfTheMachines.class,
+        Xenograft.class})
 class LayerDependencyTest extends BaseCardTest {
 
     private Permanent addPermanent(Player player, Card card) {

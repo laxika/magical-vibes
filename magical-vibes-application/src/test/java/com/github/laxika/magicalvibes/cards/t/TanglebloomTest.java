@@ -39,8 +39,8 @@ class TanglebloomTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -53,7 +53,7 @@ class TanglebloomTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test

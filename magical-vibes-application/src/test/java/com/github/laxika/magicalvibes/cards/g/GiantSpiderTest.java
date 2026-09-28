@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantSpider.class, WindDrake.class})
+@CardUsed({GiantSpider.class, WindDrake.class, GrizzlyBears.class})
 class GiantSpiderTest extends BaseCardTest {
 
     @Test
@@ -19,8 +19,18 @@ class GiantSpiderTest extends BaseCardTest {
         addCreatureReady(player1, new WindDrake());
         Permanent spider = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spider.isBlocking()).isTrue();
+    }
+
+    @Test
+    void reachDoesNotRestrictBlockingNonFlyingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();

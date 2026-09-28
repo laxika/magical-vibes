@@ -48,4 +48,20 @@ class VenerableMonkTest extends BaseCardTest {
         harness.assertLife(player1, 11);
         harness.assertLife(player2, 15);
     }
+
+    @Test
+    void lifeGainResolvesEvenIfMonkLeavesBeforeTriggerResolves() {
+        harness.setLife(player1, 11);
+
+        harness.castFromHand(player1, new VenerableMonk(), "{2}{W}");
+        harness.passBothPriorities();
+
+        var monk = findPermanent(player1, "Venerable Monk");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, monk));
+
+        harness.assertInGraveyard(player1, "Venerable Monk");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 13);
+    }
 }

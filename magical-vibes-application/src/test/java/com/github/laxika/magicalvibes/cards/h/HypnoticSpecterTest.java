@@ -148,4 +148,21 @@ class HypnoticSpecterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Damage to its controller does not trigger random discard")
+    void doesNotTriggerWhenDealingDamageToController() {
+        GameData gd = harness.getGameData();
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, specter.getCard(), player1.getId(), Map.of(player1.getId(), 1)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
@@ -28,14 +26,10 @@ class ZombifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(creature.getId()));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -72,13 +66,11 @@ class ZombifyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castSorcery(player1, 0, creature.getId());
-        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -89,8 +81,7 @@ class ZombifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();

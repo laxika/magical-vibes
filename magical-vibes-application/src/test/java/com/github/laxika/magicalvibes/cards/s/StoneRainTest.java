@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Brushland;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.r.RishadanPort;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoneRain.class, Mountain.class, RishadanPort.class, SteadfastGuard.class})
+@CardUsed({StoneRain.class, Mountain.class, Brushland.class, GrizzlyBears.class})
 class StoneRainTest extends BaseCardTest {
 
     @Test
@@ -71,15 +73,29 @@ class StoneRainTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy a nonbasic land")
     void canDestroyNonbasicLand() {
-        harness.addToBattlefield(player2, new RishadanPort());
+        harness.addToBattlefield(player2, new Brushland());
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Rishadan Port");
+        UUID targetId = harness.getPermanentId(player2, "Brushland");
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Rishadan Port");
-        harness.assertInGraveyard(player2, "Rishadan Port");
+        harness.assertNotOnBattlefield(player2, "Brushland");
+        harness.assertInGraveyard(player2, "Brushland");
+    }
+
+    @Test
+    @DisplayName("Does not destroy an indestructible land")
+    void indestructibleLandSurvives() {
+        var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0, mountain.getId());
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
     }
 
     @Test
@@ -124,11 +140,11 @@ class StoneRainTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with Stone Rain")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new SteadfastGuard());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID creatureId = harness.getPermanentId(player2, "Steadfast Guard");
+        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -147,15 +163,15 @@ class StoneRainTest extends BaseCardTest {
     @DisplayName("Destroys only the targeted land")
     void destroysOnlyTargetedLand() {
         harness.addToBattlefield(player2, new Mountain());
-        harness.addToBattlefield(player2, new RishadanPort());
+        harness.addToBattlefield(player2, new Brushland());
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Rishadan Port");
+        UUID targetId = harness.getPermanentId(player2, "Brushland");
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Mountain");
-        harness.assertNotOnBattlefield(player2, "Rishadan Port");
-        harness.assertInGraveyard(player2, "Rishadan Port");
+        harness.assertNotOnBattlefield(player2, "Brushland");
+        harness.assertInGraveyard(player2, "Brushland");
     }
 }

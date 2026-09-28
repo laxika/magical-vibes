@@ -50,16 +50,11 @@ class BlinkingSpiritTest extends BaseCardTest {
         harness.assertInHand(player1, "Blinking Spirit");
 
         // Re-cast it
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 4);
-        int spiritIndex = -1;
-        var hand = gd.playerHands.get(player1.getId());
-        for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).getName().equals("Blinking Spirit")) {
-                spiritIndex = i;
-                break;
-            }
-        }
-        gs.playCard(gd, player1, spiritIndex, 0, null, null);
+        var spiritCard = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Blinking Spirit"))
+                .findFirst()
+                .orElseThrow();
+        harness.castFromHand(player1, spiritCard, "{3}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Blinking Spirit");

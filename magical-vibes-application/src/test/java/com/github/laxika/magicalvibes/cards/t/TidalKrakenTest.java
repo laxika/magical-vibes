@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,17 +12,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalKraken.class, DeadlyInsect.class})
+@CardUsed({TidalKraken.class, GrizzlyBears.class})
 class TidalKrakenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tidal Kraken cannot be blocked by a ground creature")
     void cannotBeBlocked() {
-        addCreatureReady(player2, new DeadlyInsect());
-
-        Permanent attacker = addCreatureReady(player1, new TidalKraken());
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new TidalKraken());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -35,9 +32,8 @@ class TidalKrakenTest extends BaseCardTest {
     void dealsDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent attacker = addCreatureReady(player1, new TidalKraken());
-        attacker.setAttacking(true);
-        resolveCombat();
+        addCreatureReady(player1, new TidalKraken());
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }

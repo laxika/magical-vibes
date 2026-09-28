@@ -41,6 +41,22 @@ class SlateOfAncestryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts creatures controlled when the ability resolves")
+    void countsCreaturesAtResolution() {
+        addReadySlate(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("With no creatures, discards hand but draws no cards")
     void noCreaturesDrawsNothing() {
         addReadySlate(player1);

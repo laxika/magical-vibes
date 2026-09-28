@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BottomlessPit;
+import com.github.laxika.magicalvibes.cards.b.BraidsCabalMinion;
 import com.github.laxika.magicalvibes.cards.r.Ruination;
 import com.github.laxika.magicalvibes.cards.v.VerdantTouch;
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
@@ -110,6 +111,25 @@ class SacredGroundTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Volrath's Stronghold");
         harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
+    }
+
+    @Test
+    @CardUsed(BraidsCabalMinion.class)
+    @DisplayName("An opponent's sacrifice ability returns the land chosen for sacrifice")
+    void opponentAbilitySacrificingYourLandReturnsIt() {
+        harness.addToBattlefield(player1, new SacredGround());
+        harness.addToBattlefield(player2, new BraidsCabalMinion());
+        harness.addToBattlefield(player1, new StrongholdAssassin());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
+        harness.assertOnBattlefield(player1, "Stronghold Assassin");
     }
 
     @Test

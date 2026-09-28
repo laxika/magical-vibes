@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Cloudpost;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.k.KrarkClanGrunt;
 import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IcyManipulator.class, KrarkClanGrunt.class, Shatter.class, YotianSoldier.class})
+@CardUsed({Cloudpost.class, IcyManipulator.class, KrarkClanGrunt.class, Shatter.class, YotianSoldier.class})
 class ShatterTest extends BaseCardTest {
 
     @Test
@@ -137,6 +138,17 @@ class ShatterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonartifact land with Shatter")
+    void cannotTargetNonArtifactLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Cloudpost());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

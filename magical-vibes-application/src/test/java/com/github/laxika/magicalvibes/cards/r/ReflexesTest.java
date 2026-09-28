@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinRaider.class, GrizzlyBears.class, Mountain.class, Reflexes.class})
+@CardUsed({GrizzlyBears.class, HillGiant.class, Mountain.class, Reflexes.class})
 class ReflexesTest extends BaseCardTest {
 
     @Test
@@ -35,7 +35,7 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Reflexes puts it on the stack as an enchantment spell")
     void castingPutsOnStackUpstreamReview() {
-        Permanent target = addCreatureReady(player1, new GoblinRaider());
+        Permanent target = addCreatureReady(player1, new HillGiant());
 
         harness.setHand(player1, List.of(new Reflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -68,7 +68,7 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Reflexes attaches it and grants first strike to the enchanted creature")
     void resolvingAttachesAndGrantsFirstStrikeUpstreamReview() {
-        Permanent target = addCreatureReady(player1, new GoblinRaider());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Reflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -99,8 +99,8 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Reflexes does not affect other creatures")
     void doesNotAffectOtherCreaturesUpstreamReview() {
-        Permanent target = addCreatureReady(player1, new GoblinRaider());
-        Permanent otherCreature = addCreatureReady(player1, new GoblinRaider());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        Permanent otherCreature = addCreatureReady(player1, new HillGiant());
 
         Permanent reflexesPerm = harness.addToBattlefieldAndReturn(player1, new Reflexes());
         reflexesPerm.setAttachedTo(target.getId());
@@ -126,7 +126,7 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses first strike when Reflexes leaves the battlefield")
     void creatureLosesFirstStrikeWhenRemovedUpstreamReview() {
-        Permanent target = addCreatureReady(player1, new GoblinRaider());
+        Permanent target = addCreatureReady(player1, new HillGiant());
 
         Permanent reflexesPerm = harness.addToBattlefieldAndReturn(player1, new Reflexes());
         reflexesPerm.setAttachedTo(target.getId());
@@ -159,7 +159,7 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Reflexes fizzles if the target creature is removed before resolution")
     void fizzlesIfTargetRemovedUpstreamReview() {
-        Permanent target = addCreatureReady(player1, new GoblinRaider());
+        Permanent target = addCreatureReady(player1, new HillGiant());
 
         harness.setHand(player1, List.of(new Reflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -206,7 +206,7 @@ class ReflexesTest extends BaseCardTest {
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALandUpstreamReview() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new GoblinRaider());
+        harness.addToBattlefield(player2, new HillGiant());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new Reflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -221,7 +221,7 @@ class ReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Reflexes can enchant a creature an opponent controls")
     void canEnchantCreatureOpponentControls() {
-        Permanent opponentCreature = addCreatureReady(player2, new GoblinRaider());
+        Permanent opponentCreature = addCreatureReady(player2, new HillGiant());
         harness.setHand(player1, List.of(new Reflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
 

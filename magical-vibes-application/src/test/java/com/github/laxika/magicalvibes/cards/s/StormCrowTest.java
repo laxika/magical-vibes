@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -54,5 +55,16 @@ class StormCrowTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Flying does not prevent Storm Crow from blocking a nonflying creature")
+    void flyingDoesNotPreventStormCrowFromBlockingNonflyingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new StormCrow());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
 }

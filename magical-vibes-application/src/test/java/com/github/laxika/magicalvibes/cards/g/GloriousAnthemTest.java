@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BullHippo;
-import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BullHippo.class, GloriousAnthem.class, GorillaWarrior.class, GrizzlyBears.class, PouncingJaguar.class})
+@CardUsed({CrawWurm.class, GloriousAnthem.class, GrizzlyBears.class})
 class GloriousAnthemTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -42,50 +41,47 @@ class GloriousAnthemTest extends BaseCardTest {
     @Test
     @DisplayName("Own creatures get +1/+1")
     void buffsOwnCreatures() {
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Does not buff opponent's creatures")
     void doesNotBuffOpponentCreatures() {
         harness.addToBattlefield(player1, new GloriousAnthem());
-        Permanent opponentGorilla = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(gqs.getEffectivePower(gd, opponentGorilla)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opponentGorilla)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Buffs all own creatures regardless of subtype")
     void buffsAllOwnCreaturesRegardlessOfSubtype() {
         harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new BullHippo());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        Permanent hippo = findPermanent(player1, "Bull Hippo");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, hippo)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, hippo)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Buffs all own creatures regardless of subtype")
     void buffsAllOwnCreaturesRegardlessOfSubtypeUpstreamReview() {
         harness.addToBattlefield(player1, new GloriousAnthem());
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
-        Permanent jaguar = harness.addToBattlefieldAndReturn(player1, new PouncingJaguar());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, jaguar)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, jaguar)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 
     // ===== Multiple sources =====
@@ -95,10 +91,10 @@ class GloriousAnthemTest extends BaseCardTest {
     void twoAnthemsStack() {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GloriousAnthem());
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -107,15 +103,15 @@ class GloriousAnthemTest extends BaseCardTest {
     @DisplayName("Bonus is removed when Glorious Anthem leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
 
         // Remove Glorious Anthem
         gd.playerBattlefields.get(player1.getId()).remove(anthem);
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
     }
 
     // ===== Bonus applies on resolve =====
@@ -123,9 +119,7 @@ class GloriousAnthemTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Glorious Anthem resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
@@ -141,15 +135,15 @@ class GloriousAnthemTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Glorious Anthem resolves onto battlefield")
     void bonusAppliesOnResolveUpstreamReview() {
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
 
         harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 
     // ===== Static bonus survives end-of-turn reset =====
@@ -158,17 +152,17 @@ class GloriousAnthemTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new GloriousAnthem());
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
         // Simulate a temporary spell boost
-        gorilla.setPowerModifier(gorilla.getPowerModifier() + 3);
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(7); // 3 base + 3 spell + 1 static
+        wurm.setPowerModifier(wurm.getPowerModifier() + 3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(10); // 6 base + 3 spell + 1 static
 
         // Reset end-of-turn modifiers
-        gorilla.resetModifiers();
+        wurm.resetModifiers();
 
         // Spell bonus gone, static bonus still computed
-        assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(4); // 3 base + 1 static
-        assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7); // 6 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(YavimayaCoast.class)
+@CardUsed({YavimayaCoast.class, SamiteHealer.class})
 class YavimayaCoastTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class YavimayaCoastTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, lifeBefore);
     }
 
     @Test
@@ -41,7 +42,7 @@ class YavimayaCoastTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, lifeBefore - 1);
     }
 
     @Test
@@ -56,21 +57,38 @@ class YavimayaCoastTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, lifeBefore - 1);
     }
 
     @Test
     @DisplayName("Pain-land damage is dealt only to its controller")
     void painLandDamageOnlyAffectsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new YavimayaCoast());
-        GameData gd = harness.getGameData();
-        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
-        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore - 1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Pain-land damage can be prevented while mana is still added")
+    void painLandDamageCanBePrevented() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        harness.addToBattlefield(player1, new YavimayaCoast());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

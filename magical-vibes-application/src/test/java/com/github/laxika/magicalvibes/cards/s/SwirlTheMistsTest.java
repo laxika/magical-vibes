@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Paladin en-Vec's printed "protection from black and from red" is the observable probe: under a
  * chosen green, both words become "green".
  */
+@CardUsed({SwirlTheMists.class, PaladinEnVec.class})
 class SwirlTheMistsTest extends BaseCardTest {
 
     private Permanent addSwirl(CardColor chosenColor) {

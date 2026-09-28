@@ -69,8 +69,8 @@ class CavesOfKoilosTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Multiple pain land activations across turns accumulate damage")
-    void cumulativeDamageAcrossTurns() {
+    @DisplayName("Multiple pain land activations after untapping accumulate damage")
+    void cumulativeDamageAfterUntapping() {
         harness.setLife(player1, 20);
         Permanent caves = addReadyCaves(player1);
 

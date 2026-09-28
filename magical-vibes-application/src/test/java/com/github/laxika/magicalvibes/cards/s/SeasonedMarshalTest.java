@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -15,14 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeasonedMarshal.class, PouncingJaguar.class, Telepathy.class})
+@CardUsed({SeasonedMarshal.class, GrizzlyBears.class, Telepathy.class})
 class SeasonedMarshalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking queues attack trigger for creature target selection")
     void attackingQueuesTargetSelection() {
         addCreatureReady(player1, new SeasonedMarshal());
-        addCreatureReady(player2, new PouncingJaguar());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -35,22 +35,22 @@ class SeasonedMarshalTest extends BaseCardTest {
     @DisplayName("Accepting attack may taps target opponent creature")
     void acceptingMayTapsOpponentCreature() {
         addCreatureReady(player1, new SeasonedMarshal());
-        Permanent jaguar = addCreatureReady(player2, new PouncingJaguar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        attackChooseTargetAndAccept(jaguar);
+        attackChooseTargetAndAccept(bears);
 
-        assertThat(jaguar.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Accepting attack may taps a creature controlled by the attacker")
     void acceptingMayTapsOwnCreature() {
         addCreatureReady(player1, new SeasonedMarshal());
-        Permanent jaguar = addCreatureReady(player1, new PouncingJaguar());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        attackChooseTargetAndAccept(jaguar);
+        attackChooseTargetAndAccept(bears);
 
-        assertThat(jaguar.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
@@ -67,14 +67,14 @@ class SeasonedMarshalTest extends BaseCardTest {
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
         addCreatureReady(player1, new SeasonedMarshal());
-        Permanent jaguar = addCreatureReady(player2, new PouncingJaguar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, jaguar.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(jaguar.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class SeasonedMarshalTest extends BaseCardTest {
     void attackTriggerRejectsNoncreatureTargets() {
         addCreatureReady(player1, new SeasonedMarshal());
         Permanent telepathy = harness.addToBattlefieldAndReturn(player2, new Telepathy());
-        addCreatureReady(player2, new PouncingJaguar());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -102,11 +102,26 @@ class SeasonedMarshalTest extends BaseCardTest {
     @DisplayName("Accepting attack may leaves an already tapped target tapped")
     void acceptingMayLeavesAlreadyTappedTargetTapped() {
         addCreatureReady(player1, new SeasonedMarshal());
-        Permanent bears = addCreatureReady(player2, new PouncingJaguar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         bears.tap();
 
         attackChooseTargetAndAccept(bears);
 
         assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attack trigger does nothing if its target leaves before resolution")
+    void attackTriggerDoesNothingIfTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

@@ -188,6 +188,24 @@ class ZursWeirdingTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertInHand(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Draws are no longer replaced after Zur's Weirding leaves the battlefield")
+    void drawReplacementEndsWhenZurLeavesBattlefield() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
     @Test
     @DisplayName("Both players see each other's hands while Zur's Weirding is on the battlefield")
     void bothHandsRevealed() {

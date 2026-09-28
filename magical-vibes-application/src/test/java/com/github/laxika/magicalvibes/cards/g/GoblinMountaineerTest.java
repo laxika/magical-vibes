@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinMountaineer.class, AlabornTrooper.class, Mountain.class})
+@CardUsed({GoblinMountaineer.class, HillGiant.class, Mountain.class})
 class GoblinMountaineerTest extends BaseCardTest {
 
     @Test
@@ -22,12 +22,12 @@ class GoblinMountaineerTest extends BaseCardTest {
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent blockerPerm = addCreatureReady(player2, new AlabornTrooper());
+        Permanent blockerPerm = addCreatureReady(player2, new HillGiant());
 
         Permanent atkPerm = addCreatureReady(player1, new GoblinMountaineer());
-        atkPerm.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -40,12 +40,12 @@ class GoblinMountaineerTest extends BaseCardTest {
     @Test
     @DisplayName("Goblin Mountaineer can be blocked when defending player does not control a Mountain")
     void canBeBlockedWhenDefenderDoesNotControlMountain() {
-        Permanent blockerPerm = addCreatureReady(player2, new AlabornTrooper());
+        Permanent blockerPerm = addCreatureReady(player2, new HillGiant());
 
         Permanent atkPerm = addCreatureReady(player1, new GoblinMountaineer());
-        atkPerm.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -60,11 +60,11 @@ class GoblinMountaineerTest extends BaseCardTest {
     void canBeBlockedWhenOnlyAttackingPlayerControlsMountain() {
         harness.addToBattlefield(player1, new Mountain());
 
-        Permanent blockerPerm = addCreatureReady(player2, new AlabornTrooper());
+        Permanent blockerPerm = addCreatureReady(player2, new HillGiant());
         Permanent atkPerm = addCreatureReady(player1, new GoblinMountaineer());
-        atkPerm.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

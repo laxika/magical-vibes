@@ -72,10 +72,9 @@ class WillOTheWispTest extends BaseCardTest {
 
     @Test
     void flyingPreventsGroundBlocker() {
-        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
-        wisp.setAttacking(true);
+        addCreatureReady(player1, new WillOTheWisp());
         addCreatureReady(player2, new GrizzlyBears());
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -83,31 +82,27 @@ class WillOTheWispTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves Will-o'-the-Wisp from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
-        wisp.setRegenerationShield(1);
-        wisp.setBlocking(true);
-        wisp.addBlockingTarget(0);
+        addCreatureReady(player1, new WillOTheWisp()).setRegenerationShield(1);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
         Permanent survivor = findPermanent(player1, "Will-o'-the-Wisp");
         assertThat(survivor.isTapped()).isTrue();
         assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(survivor.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Will-o'-the-Wisp dies in combat without a regeneration shield")
     void diesWithoutShield() {
-        Permanent wisp = addCreatureReady(player1, new WillOTheWisp());
-        wisp.setBlocking(true);
-        wisp.addBlockingTarget(0);
+        addCreatureReady(player1, new WillOTheWisp());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Will-o'-the-Wisp");

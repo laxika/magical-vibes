@@ -38,8 +38,7 @@ class DancingScimitarTest extends BaseCardTest {
         addCreatureReady(player1, new DancingScimitar());
         Permanent blocker = addCreatureReady(player2, new AirElemental());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -51,8 +50,7 @@ class DancingScimitarTest extends BaseCardTest {
         addCreatureReady(player1, new DancingScimitar());
         Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

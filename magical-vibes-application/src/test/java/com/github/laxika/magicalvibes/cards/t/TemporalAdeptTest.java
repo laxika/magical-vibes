@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.MossDiamond;
+import com.github.laxika.magicalvibes.cards.w.WurmsTooth;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BraidwoodCup.class, GloriousAnthem.class, GoliathBeetle.class, GrizzlyBears.class, Island.class, MossDiamond.class, TemporalAdept.class})
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, WurmsTooth.class})
 class TemporalAdeptTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -29,7 +27,7 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a permanent")
     void activatingPutsOnStack() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -45,7 +43,7 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Activating ability taps Temporal Adept and consumes {U}{U}{U}")
     void activatingTapsAndConsumesMana() {
         Permanent adept = addCreatureReady(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -61,15 +59,15 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns opponent's creature to owner's hand")
     void resolvingReturnsOpponentCreature() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Goliath Beetle");
-        harness.assertInHand(player2, "Goliath Beetle");
-        harness.assertNotInGraveyard(player2, "Goliath Beetle");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -104,14 +102,14 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns a target artifact to its owner's hand")
     void resolvingReturnsArtifact() {
         addReadyAdept(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new MossDiamond());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Moss Diamond");
-        harness.assertInHand(player2, "Moss Diamond");
+        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
+        harness.assertInHand(player2, "Wurm's Tooth");
     }
 
     @Test
@@ -149,7 +147,7 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -175,12 +173,23 @@ class TemporalAdeptTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent adept = addCreatureReady(player1, new TemporalAdept());
         adept.tap();
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player because the ability targets a permanent")
+    void cannotTargetPlayer() {
+        addReadyAdept(player1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid target permanent");
     }
 
     // ===== Fizzle =====
@@ -189,13 +198,13 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GoliathBeetle());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
         harness.getGameData().playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Goliath Beetle"));
+                .removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
 
         harness.passBothPriorities();
 
@@ -215,13 +224,13 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns an opponent's noncreature permanent to its owner's hand")
     void resolvingReturnsOpponentNoncreaturePermanent() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BraidwoodCup());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Braidwood Cup");
-        harness.assertInHand(player2, "Braidwood Cup");
+        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
+        harness.assertInHand(player2, "Wurm's Tooth");
     }
 }

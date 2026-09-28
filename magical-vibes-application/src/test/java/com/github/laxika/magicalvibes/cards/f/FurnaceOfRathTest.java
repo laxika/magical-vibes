@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -79,7 +78,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     @DisplayName("Doubles damage from activated ability to a player")
     void doublesActivatedAbilityDamageToPlayer() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        addReadyInvoker(player1);
+        addCreatureReady(player1, new FlamewaveInvoker());
         harness.addMana(player1, ManaColor.RED, 8);
         harness.setLife(player2, 20);
 
@@ -175,15 +174,11 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 attacker
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // 4/4 blocker — base 2 damage wouldn't kill it, but doubled 4 does
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new SerraAngel());
 
         prepareDeclareBlockers();
 
@@ -218,18 +213,14 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 first strike attacker
-        Permanent attacker = new Permanent(new BenalishKnight());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // 3/3 blocker — base 2 first-strike damage < 3, but doubled 4 >= 3
         GrizzlyBears creature3_3 = new GrizzlyBears();
         creature3_3.setPower(3);
         creature3_3.setToughness(3);
-        Permanent blocker = new Permanent(creature3_3);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, creature3_3);
 
         prepareDeclareBlockers();
 
@@ -248,18 +239,14 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 first strike attacker
-        Permanent attacker = new Permanent(new BenalishKnight());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // 3/5 blocker — doubled first strike deals 4 < 5, survives
         GrizzlyBears creature3_5 = new GrizzlyBears();
         creature3_5.setPower(3);
         creature3_5.setToughness(5);
-        Permanent blocker = new Permanent(creature3_5);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, creature3_5);
 
         prepareDeclareBlockers();
 
@@ -294,19 +281,15 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 1/1 double strike flying attacker
-        Permanent attacker = new Permanent(new SkyhunterSkirmisher());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SkyhunterSkirmisher());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // 3/3 with reach — without Furnace: 1+1=2 < 3, survives. With Furnace: 2+2=4 >= 3, dies.
         GrizzlyBears creature3_3 = new GrizzlyBears();
         creature3_3.setPower(3);
         creature3_3.setToughness(3);
         creature3_3.setKeywords(Set.of(Keyword.REACH));
-        Permanent blocker = new Permanent(creature3_3);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, creature3_3);
 
         prepareDeclareBlockers();
 
@@ -323,19 +306,15 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 1/1 double strike flying attacker
-        Permanent attacker = new Permanent(new SkyhunterSkirmisher());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SkyhunterSkirmisher());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // 3/5 with reach — total doubled damage 2+2=4 < 5, survives
         GrizzlyBears creature3_5 = new GrizzlyBears();
         creature3_5.setPower(3);
         creature3_5.setToughness(5);
         creature3_5.setKeywords(Set.of(Keyword.REACH));
-        Permanent blocker = new Permanent(creature3_5);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, creature3_5);
 
         prepareDeclareBlockers();
 
@@ -460,10 +439,5 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
-
-    private void addReadyInvoker(Player player) {
-        addCreatureReady(player, new FlamewaveInvoker());
-    }
 }
 

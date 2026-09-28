@@ -248,6 +248,10 @@ class SevenLayerTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Layer 1: copy effects")
+    @CardUsed({Clone.class, GrizzlyBears.class, GloriousAnthem.class, GiantGrowth.class,
+            Dub.class, AirElemental.class, Lignify.class, CoralMerfolk.class, TwistedImage.class,
+            PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Maro.class,
+            ElvishChampion.class, LlanowarElves.class})
     class Layer1Copy {
 
         @Test
@@ -334,6 +338,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Copy does not include text changes (CR 707.2)")
+        @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Clone.class})
         void copyIgnoresTextChanges() {
             Permanent paladin = addReady(player1, new PaladinEnVec());
             addPermanent(player2, new Swamp());
@@ -409,6 +414,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A later control effect (Threaten) overrides an earlier one (Sower of Temptation)")
+        @CardUsed({SowerOfTemptation.class, GrizzlyBears.class, Threaten.class})
         void laterControlEffectWins() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             castSowerOfTemptation(player1, bears);
@@ -421,6 +427,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("When the later control effect expires, control falls to the still-active earlier effect")
+        @CardUsed({SowerOfTemptation.class, GrizzlyBears.class, Threaten.class})
         void expiredControlEffectFallsBackToEarlierEffect() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             Permanent sower = castSowerOfTemptation(player1, bears);
@@ -437,6 +444,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Removing the earlier control effect leaves the later one in charge until it expires")
+        @CardUsed({SowerOfTemptation.class, GrizzlyBears.class, Threaten.class})
         void removedControlEffectLeavesLaterOneActive() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             Permanent sower = castSowerOfTemptation(player1, bears);
@@ -455,6 +463,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two temporary steal effects, the later timestamp wins")
+        @CardUsed({GrizzlyBears.class, Threaten.class})
         void latestOfTwoTemporaryStealsWins() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             castThreaten(player1, bears);
@@ -467,6 +476,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Control change does not change ownership: stolen creature dies to owner's graveyard")
+        @CardUsed({GrizzlyBears.class, Threaten.class})
         void controlChangeDoesNotChangeOwnership() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             castThreaten(player1, bears);
@@ -479,6 +489,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("'Creatures you control' statics apply to a creature stolen afterwards")
+        @CardUsed({GloriousAnthem.class, GrizzlyBears.class, Threaten.class})
         void anthemAppliesToStolenCreature() {
             addPermanent(player1, new GloriousAnthem());
             Permanent bears = addReady(player2, new GrizzlyBears());
@@ -491,6 +502,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Controller-scoped lord boost stops applying once the creature is stolen")
+        @CardUsed({ImperiousPerfect.class, LlanowarElves.class, Threaten.class})
         void controllerScopedLordStopsApplyingWhenStolen() {
             addReady(player2, new ImperiousPerfect());
             Permanent elves = addReady(player2, new LlanowarElves());
@@ -515,6 +527,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Temporary steal overrides Aura control until cleanup, then reverts to the Aura")
+        @CardUsed({GrizzlyBears.class, InBolassClutches.class, Threaten.class})
         void temporaryStealOverridesAuraControlUntilCleanup() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             castInBolassClutches(player1, bears);
@@ -530,6 +543,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("An attached Aura keeps applying to a creature after it changes controller")
+        @CardUsed({GrizzlyBears.class, Dub.class, Threaten.class})
         void attachedAuraKeepsApplyingAfterControlChange() {
             Permanent bears = addReady(player2, new GrizzlyBears());
             attach(player2, new Dub(), bears);
@@ -552,6 +566,8 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing a protection color word changes what the creature is protected from")
+        @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, AirElemental.class,
+                MindBend.class})
         void textChangeRewritesProtectionColor() {
             Permanent paladin = addReady(player1, new PaladinEnVec()); // pro black, pro red
             addPermanent(player2, new Swamp());
@@ -580,6 +596,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing the land type word on an Aura changes the type it grants in layer 4")
+        @CardUsed({Forest.class, SeasClaim.class, MindBend.class})
         void textChangeOnAuraChangesGrantedLandType() {
             Permanent forest = addPermanent(player1, new Forest());
             attach(player1, new SeasClaim(), forest);
@@ -594,6 +611,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing Mountain to Island on Blood Moon makes nonbasics tap for blue")
+        @CardUsed({Glimmerpost.class, BloodMoon.class, MindBend.class})
         void textChangeOnBloodMoon() {
             Permanent glimmerpost = addPermanent(player1, new Glimmerpost());
             Permanent moon = addPermanent(player1, new BloodMoon());
@@ -608,6 +626,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A text change does not change the object's actual color")
+        @CardUsed({GrizzlyBears.class, MindBend.class})
         void textChangeDoesNotChangeColor() {
             Permanent bears = addReady(player1, new GrizzlyBears());
 
@@ -618,6 +637,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Text changes are not part of the copiable values")
+        @CardUsed({PaladinEnVec.class, Swamp.class, Nightmare.class, MindBend.class, Clone.class})
         void textChangeIsNotCopiable() {
             Permanent paladin = addReady(player1, new PaladinEnVec());
             addPermanent(player2, new Swamp());
@@ -645,6 +665,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing Swamp to Forest on Evil Presence makes the enchanted land tap for green")
+        @CardUsed({Mountain.class, EvilPresence.class, MindBend.class})
         void textChangeOnEvilPresence() {
             Permanent mountain = addPermanent(player1, new Mountain());
             attach(player1, new EvilPresence(), mountain);
@@ -695,6 +716,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two land-type-setting Auras, the later timestamp wins (Sea's Claim then Evil Presence)")
+        @CardUsed({Forest.class, SeasClaim.class, EvilPresence.class})
         void laterLandTypeOverrideWins() {
             Permanent forest = addPermanent(player1, new Forest());
             attach(player1, new SeasClaim(), forest);
@@ -708,6 +730,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two land-type-setting Auras, the later timestamp wins (Evil Presence then Sea's Claim)")
+        @CardUsed({Forest.class, EvilPresence.class, SeasClaim.class})
         void laterLandTypeOverrideWinsReversedOrder() {
             Permanent forest = addPermanent(player1, new Forest());
             attach(player1, new EvilPresence(), forest);
@@ -721,6 +744,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Blood Moon entering after Sea's Claim wins by timestamp")
+        @CardUsed({Glimmerpost.class, SeasClaim.class, BloodMoon.class})
         void bloodMoonAfterAuraWins() {
             Permanent glimmerpost = addPermanent(player1, new Glimmerpost());
             attach(player1, new SeasClaim(), glimmerpost);
@@ -734,6 +758,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Sea's Claim attached after Blood Moon wins by timestamp")
+        @CardUsed({BloodMoon.class, Glimmerpost.class, SeasClaim.class})
         void auraAfterBloodMoonWins() {
             addPermanent(player1, new BloodMoon());
             Permanent glimmerpost = addPermanent(player1, new Glimmerpost());
@@ -834,6 +859,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("'Becomes red' overrides the creature's natural color")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, Incite.class})
         void becomesRedOverridesNaturalColor() {
             Permanent paladin = addReady(player2, new PaladinEnVec()); // pro black, pro red
             Permanent bears = addReady(player1, new GrizzlyBears());
@@ -846,6 +872,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two color setters, the later timestamp wins (Deep Freeze then Incite)")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, DeepFreeze.class, Incite.class})
         void laterColorSetterWins() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent bears = addReady(player1, new GrizzlyBears());
@@ -858,6 +885,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("When the later color setter expires, the earlier one applies again")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, DeepFreeze.class, Incite.class})
         void expiredColorSetterRevertsToEarlier() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent bears = addReady(player1, new GrizzlyBears());
@@ -873,6 +901,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two color-setting attachments, the later attach timestamp wins")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, DeepFreeze.class, NimDeathmantle.class})
         void laterAttachmentColorOverridesEarlier() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent bears = addReady(player1, new GrizzlyBears());
@@ -899,6 +928,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Color changes are not part of the copiable values")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, Incite.class, Clone.class})
         void colorChangeIsNotCopiable() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent bears = addReady(player2, new GrizzlyBears());
@@ -924,6 +954,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Color setters apply to tokens like any other permanent")
+        @CardUsed({PaladinEnVec.class, ImperiousPerfect.class, Incite.class})
         void colorSetterAppliesToToken() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent perfect = addReady(player1, new ImperiousPerfect());
@@ -939,6 +970,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("'Becomes red until end of turn' expires at cleanup")
+        @CardUsed({PaladinEnVec.class, GrizzlyBears.class, Incite.class})
         void temporaryColorSetterExpires() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             Permanent bears = addReady(player1, new GrizzlyBears());
@@ -952,6 +984,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A color change does not disturb subtype-keyed effects in other layers")
+        @CardUsed({PaladinEnVec.class, ElvishChampion.class, LlanowarElves.class, Incite.class})
         void colorChangeDoesNotAffectOtherLayers() {
             Permanent paladin = addReady(player2, new PaladinEnVec());
             addReady(player1, new ElvishChampion());
@@ -1187,6 +1220,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A copied CDA counts the copy controller's resources")
+        @CardUsed({Swamp.class, Nightmare.class, Clone.class})
         void copiedCdaCountsNewControllersResources() {
             addPermanent(player2, new Swamp());
             addPermanent(player2, new Swamp());
@@ -1407,6 +1441,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("An anthem applies to a creature whose controller changed after the anthem entered")
+        @CardUsed({GloriousAnthem.class, GrizzlyBears.class, Threaten.class})
         void anthemAppliesToCreatureStolenLater() {
             addPermanent(player1, new GloriousAnthem());
             Permanent bears = addReady(player2, new GrizzlyBears());

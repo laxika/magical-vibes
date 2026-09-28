@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
-import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinSpelunkers.class, RelentlessAssault.class, VedalkenOrrery.class, WuInfantry.class})
+@CardUsed({GrizzlyBears.class, RelentlessAssault.class, VedalkenOrrery.class})
 class RelentlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -34,11 +33,11 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving untaps only creatures that attacked this turn")
     void resolvingUntapsOnlyAttackedCreatures() {
-        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
-        Permanent nonAttackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent attackedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttackedCreature = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        nonAttackedGoblin.tap();
+        nonAttackedCreature.tap();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -46,8 +45,8 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(attackedGoblin.isTapped()).isFalse();
-        assertThat(nonAttackedGoblin.isTapped()).isTrue();
+        assertThat(attackedCreature.isTapped()).isFalse();
+        assertThat(nonAttackedCreature.isTapped()).isTrue();
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 
@@ -56,7 +55,7 @@ class RelentlessAssaultTest extends BaseCardTest {
     @DisplayName("Resolving untaps creatures that attacked this turn regardless of controller")
     void resolvingUntapsAnOpponentsAttacker() {
         harness.addToBattlefield(player1, new VedalkenOrrery());
-        Permanent opponentAttacker = addCreatureReady(player2, new GoblinSpelunkers());
+        Permanent opponentAttacker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));
 
@@ -129,24 +128,24 @@ class RelentlessAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
-        Permanent goblin = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        assertThat(goblin.isAttackedThisTurn()).isTrue();
+        assertThat(creature.isAttackedThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.CLEANUP);
         gs.advanceStep(gd);
-        assertThat(goblin.isAttackedThisTurn()).isFalse();
+        assertThat(creature.isAttackedThisTurn()).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        goblin.tap();
+        creature.tap();
 
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(goblin.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
@@ -184,9 +183,9 @@ class RelentlessAssaultTest extends BaseCardTest {
     @DisplayName("Resolving outside a main phase only untaps attacked creatures")
     void resolvingOutsideMainPhaseOnlyUntapsAttackedCreatures() {
         harness.addToBattlefield(player1, new VedalkenOrrery());
-        Permanent attackedGoblin = addCreatureReady(player1, new GoblinSpelunkers());
-        attackedGoblin.setAttackedThisTurn(true);
-        attackedGoblin.tap();
+        Permanent attackedCreature = addCreatureReady(player1, new GrizzlyBears());
+        attackedCreature.setAttackedThisTurn(true);
+        attackedCreature.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
@@ -195,7 +194,7 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(attackedGoblin.isTapped()).isFalse();
+        assertThat(attackedCreature.isTapped()).isFalse();
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
     }
 

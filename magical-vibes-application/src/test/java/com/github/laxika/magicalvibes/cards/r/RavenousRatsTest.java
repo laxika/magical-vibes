@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinBerserker;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,11 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RavenousRats.class, GoblinBerserker.class})
+@CardUsed({RavenousRats.class, Forest.class})
 class RavenousRatsTest extends BaseCardTest {
 
     
@@ -37,13 +38,32 @@ class RavenousRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB trigger chooses an opponent after the creature enters")
+    void etbTriggerChoosesTargetWhenPutOnStack() {
+        castRavenousRats();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(targetChoice.validPermanentIds()).isEmpty();
+        assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
+
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("ETB trigger makes target opponent discard one card")
     void etbMakesTargetOpponentDiscard() {
-        harness.setHand(player2, List.of(new GoblinBerserker()));
+        harness.setHand(player2, List.of(new Forest()));
         castRavenousRats(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
@@ -53,7 +73,7 @@ class RavenousRatsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Goblin Berserker");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -62,8 +82,7 @@ class RavenousRatsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         castRavenousRats(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
@@ -77,9 +96,18 @@ class RavenousRatsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
-    private void castRavenousRats(java.util.UUID targetPlayerId) {
+    private void castRavenousRats() {
+        prepareRavenousRats();
+        harness.castCreature(player1, 0);
+    }
+
+    private void castRavenousRats(UUID targetPlayerId) {
+        prepareRavenousRats();
+        harness.castCreature(player1, 0, targetPlayerId);
+    }
+
+    private void prepareRavenousRats() {
         harness.setHand(player1, List.of(new RavenousRats()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castCreature(player1, 0, targetPlayerId);
     }
 }

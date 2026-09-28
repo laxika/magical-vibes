@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.Taiga;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -61,13 +60,13 @@ class KirdApeTest extends BaseCardTest {
     @DisplayName("Loses bonus when the Forest leaves the battlefield")
     void losesBonusWhenForestLeaves() {
         harness.addToBattlefield(player1, new KirdApe());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         Permanent ape = findPermanent(player1, "Kird Ape");
         assertThat(gqs.getEffectivePower(gd, ape)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getSubtypes().contains(CardSubtype.FOREST));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, forest));
 
         assertThat(gqs.getEffectivePower(gd, ape)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, ape)).isEqualTo(1);

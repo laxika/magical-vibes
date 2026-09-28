@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -72,5 +73,16 @@ class SerrasBlessingTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(warthog.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("An animated Serra's Blessing also gains vigilance")
+    void animatedBlessingGainsVigilance() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent blessing = harness.addToBattlefieldAndReturn(player1, new SerrasBlessing());
+
+        assertThat(gqs.isCreature(gd, blessing)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blessing, Keyword.VIGILANCE)).isTrue();
     }
 }

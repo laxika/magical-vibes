@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlanchwoodArmor.class, Forest.class, FountainOfYouth.class, GoblinRaider.class, GrizzlyBears.class})
+@CardUsed({BlanchwoodArmor.class, Forest.class, GrizzlyBears.class, Island.class})
 class BlanchwoodArmorTest extends BaseCardTest {
 
     @Test
@@ -34,7 +33,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Blanchwood Armor puts it on the stack")
     void castingPutsOnStackUpstreamReview() {
-        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GoblinRaider());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BlanchwoodArmor()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -66,7 +65,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Blanchwood Armor attaches it and grants +1/+1 per Forest you control")
     void resolvesAndBoostsPerForestUpstreamReview() {
-        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GoblinRaider());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
 
@@ -108,7 +107,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Blanchwood Armor updates dynamically when Forest count changes")
     void updatesDynamicallyWithForestCountUpstreamReview() {
-        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GoblinRaider());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent armor = harness.addToBattlefieldAndReturn(player1, new BlanchwoodArmor());
         armor.setAttachedTo(raider.getId());
 
@@ -126,6 +125,19 @@ class BlanchwoodArmorTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof Forest);
         assertThat(gqs.getEffectivePower(gd, raider)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, raider)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Blanchwood Armor does not count non-Forest lands")
+    void doesNotCountNonForestLands() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new BlanchwoodArmor());
+        armor.setAttachedTo(bears.getId());
+
+        harness.addToBattlefield(player1, new Island());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -149,7 +161,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Blanchwood Armor counts Forests controlled by aura controller, even on opponent creature")
     void countsAurasControllersForestsUpstreamReview() {
-        Permanent opponentRaider = harness.addToBattlefieldAndReturn(player2, new GoblinRaider());
+        Permanent opponentRaider = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
@@ -186,7 +198,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Blanchwood Armor effect ends when aura leaves battlefield")
     void effectEndsWhenAuraLeavesBattlefieldUpstreamReview() {
-        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GoblinRaider());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
 
@@ -205,11 +217,11 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Blanchwood Armor")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new BlanchwoodArmor()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -244,7 +256,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Blanchwood Armor fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolutionUpstreamReview() {
-        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GoblinRaider());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BlanchwoodArmor()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -252,9 +264,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(raider);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof BlanchwoodArmor);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof BlanchwoodArmor);
+        harness.assertInGraveyard(player1, "Blanchwood Armor");
+        harness.assertNotOnBattlefield(player1, "Blanchwood Armor");
     }
 }

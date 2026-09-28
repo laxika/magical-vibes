@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.j.JohtullWurm;
 import com.github.laxika.magicalvibes.cards.t.TimeBomb;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KarplusanYeti.class, BalduvianBears.class, KarplusanGiant.class, TimeBomb.class})
+@CardUsed({KarplusanYeti.class, BalduvianBears.class, KarplusanGiant.class, JohtullWurm.class, TimeBomb.class})
 class KarplusanYetiTest extends BaseCardTest {
 
     @Test
@@ -51,10 +52,10 @@ class KarplusanYetiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Source leaving before resolution prevents both creatures from fighting")
-    void sourceLeavingBeforeResolutionPreventsFight() {
+    @DisplayName("Source leaving before resolution still deals damage to the target")
+    void sourceLeavingBeforeResolutionStillDamagesTarget() {
         Permanent yeti = addCreatureReady(player1, new KarplusanYeti());
-        Permanent target = addCreatureReady(player2, new KarplusanGiant());
+        Permanent target = addCreatureReady(player2, new JohtullWurm());
 
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(yeti);
@@ -62,7 +63,7 @@ class KarplusanYetiTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test

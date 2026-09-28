@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedReversal;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefenseGrid.class, BlessedReversal.class})
+@CardUsed({DefenseGrid.class, HolyDay.class})
 class DefenseGridTest extends BaseCardTest {
 
     @Test
@@ -17,8 +20,8 @@ class DefenseGridTest extends BaseCardTest {
     void notTaxedOnOwnTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        // {1}{W} is enough on the caster's own turn
-        harness.castFromHand(player1, new BlessedReversal(), "{1}{W}");
+        // {W} is enough on the caster's own turn
+        harness.castFromHand(player1, new HolyDay(), "{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -29,8 +32,8 @@ class DefenseGridTest extends BaseCardTest {
     void taxedOnOpponentsTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        // {1}{W} is not enough during player1's turn - needs {4}{W}
-        assertThatThrownBy(() -> harness.castFromHand(player2, new BlessedReversal(), "{1}{W}"))
+        // {W} is not enough during player1's turn - needs {3}{W}
+        assertThatThrownBy(() -> harness.castFromHand(player2, new HolyDay(), "{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -40,7 +43,7 @@ class DefenseGridTest extends BaseCardTest {
     void castableWithExtraManaOnOpponentsTurn() {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
-        harness.castFromHand(player2, new BlessedReversal(), "{4}{W}");
+        harness.castFromHand(player2, new HolyDay(), "{3}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
@@ -52,7 +55,7 @@ class DefenseGridTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player2);
         // Even Defense Grid's controller pays {3} more when it's not their turn
-        assertThatThrownBy(() -> harness.castFromHand(player1, new BlessedReversal(), "{1}{W}"))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new HolyDay(), "{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -63,7 +66,7 @@ class DefenseGridTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player2);
 
-        harness.castFromHand(player2, new BlessedReversal(), "{1}{W}");
+        harness.castFromHand(player2, new HolyDay(), "{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
@@ -76,8 +79,23 @@ class DefenseGridTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DefenseGrid());
         harness.forceActivePlayer(player1);
 
-        // {1}{W} plus {3} for each Grid = {7}{W}
-        harness.castFromHand(player2, new BlessedReversal(), "{7}{W}");
+        // {W} plus {3} for each Grid = {6}{W}
+        harness.castFromHand(player2, new HolyDay(), "{6}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed(IcyManipulator.class)
+    @DisplayName("An activated ability is not taxed")
+    void doesNotTaxActivatedAbilities() {
+        Permanent grid = harness.addToBattlefieldAndReturn(player1, new DefenseGrid());
+        harness.addToBattlefield(player2, new IcyManipulator());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, grid.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();

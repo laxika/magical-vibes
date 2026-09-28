@@ -28,8 +28,7 @@ class InspiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inspirit()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
@@ -43,8 +42,7 @@ class InspiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inspirit()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
@@ -64,8 +62,7 @@ class InspiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inspirit()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
@@ -79,8 +76,7 @@ class InspiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inspirit()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
@@ -90,7 +86,6 @@ class InspiritTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addTappedCreature(player1);
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new Inspirit()));

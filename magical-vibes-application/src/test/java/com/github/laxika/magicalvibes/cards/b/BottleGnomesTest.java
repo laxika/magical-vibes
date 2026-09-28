@@ -46,4 +46,18 @@ class BottleGnomesTest extends BaseCardTest {
 
         harness.assertLife(player1, 13);
     }
+
+    @Test
+    @DisplayName("Bottle Gnomes's sacrifice ability can be activated while summoning sick")
+    void sacrificeAbilityCanBeActivatedWhileSummoningSick() {
+        Permanent gnomes = harness.addToBattlefieldAndReturn(player1, new BottleGnomes());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(gnomes.getCard().getId()));
+    }
 }

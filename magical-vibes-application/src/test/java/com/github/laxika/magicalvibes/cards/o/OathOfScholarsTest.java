@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,15 +10,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OathOfScholars.class, AngelicBlessing.class})
+@CardUsed(OathOfScholars.class)
 class OathOfScholarsTest extends BaseCardTest {
 
     @Test
     void activePlayerMayDiscardTheirHandAndDrawThreeCards() {
         harness.addToBattlefield(player1, new OathOfScholars());
-        harness.setHand(player1, List.of(new AngelicBlessing(), new AngelicBlessing(), new AngelicBlessing()));
-        harness.setHand(player2, List.of(new AngelicBlessing()));
-        harness.setLibrary(player2, List.of(new AngelicBlessing(), new AngelicBlessing(), new AngelicBlessing()));
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
+        harness.setHand(player2, List.of(new OathOfScholars()));
+        harness.setLibrary(player2, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
 
         advanceToUpkeep(player2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -32,16 +31,16 @@ class OathOfScholarsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
-        harness.assertInGraveyard(player2, "Angelic Blessing");
+        harness.assertInGraveyard(player2, "Oath of Scholars");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
     @Test
     void decliningLeavesTheActivePlayersHandUntouched() {
         harness.addToBattlefield(player1, new OathOfScholars());
-        harness.setHand(player1, List.of(new AngelicBlessing(), new AngelicBlessing()));
-        harness.setHand(player2, List.of(new AngelicBlessing()));
-        harness.setLibrary(player2, List.of(new AngelicBlessing(), new AngelicBlessing(), new AngelicBlessing()));
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars()));
+        harness.setHand(player2, List.of(new OathOfScholars()));
+        harness.setLibrary(player2, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
 
         advanceToUpkeep(player2);
         harness.handlePermanentChosen(player2, player1.getId());
@@ -50,19 +49,19 @@ class OathOfScholarsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Angelic Blessing");
+                .containsExactly("Oath of Scholars");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     @Test
     void targetMustStillHaveMoreCardsWhenTheAbilityResolves() {
         harness.addToBattlefield(player1, new OathOfScholars());
-        harness.setHand(player1, List.of(new AngelicBlessing(), new AngelicBlessing()));
-        harness.setHand(player2, List.of(new AngelicBlessing()));
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars()));
+        harness.setHand(player2, List.of(new OathOfScholars()));
 
         advanceToUpkeep(player2);
         harness.handlePermanentChosen(player2, player1.getId());
-        harness.setHand(player2, List.of(new AngelicBlessing(), new AngelicBlessing()));
+        harness.setHand(player2, List.of(new OathOfScholars(), new OathOfScholars()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -73,8 +72,8 @@ class OathOfScholarsTest extends BaseCardTest {
     @Test
     void doesNotTriggerWhenNoOpponentHasMoreCardsInHand() {
         harness.addToBattlefield(player1, new OathOfScholars());
-        harness.setHand(player1, List.of(new AngelicBlessing(), new AngelicBlessing()));
-        harness.setHand(player2, List.of(new AngelicBlessing(), new AngelicBlessing()));
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars()));
+        harness.setHand(player2, List.of(new OathOfScholars(), new OathOfScholars()));
 
         advanceToUpkeep(player2);
 
@@ -86,9 +85,9 @@ class OathOfScholarsTest extends BaseCardTest {
     @Test
     void activePlayerMayDiscardTheirHandOnTheirOwnUpkeep() {
         harness.addToBattlefield(player1, new OathOfScholars());
-        harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.setHand(player2, List.of(new AngelicBlessing(), new AngelicBlessing()));
-        harness.setLibrary(player1, List.of(new AngelicBlessing(), new AngelicBlessing(), new AngelicBlessing()));
+        harness.setHand(player1, List.of(new OathOfScholars()));
+        harness.setHand(player2, List.of(new OathOfScholars(), new OathOfScholars()));
+        harness.setLibrary(player1, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
 
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -101,7 +100,7 @@ class OathOfScholarsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        harness.assertInGraveyard(player1, "Angelic Blessing");
+        harness.assertInGraveyard(player1, "Oath of Scholars");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 }

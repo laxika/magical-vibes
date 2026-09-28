@@ -21,10 +21,7 @@ class SiftTest extends BaseCardTest {
     @DisplayName("Casting Sift puts it on the stack")
     void castingPutsOnStack() {
         Sift sift = new Sift();
-        harness.setHand(player1, List.of(sift));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, sift, "{3}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -49,10 +46,7 @@ class SiftTest extends BaseCardTest {
     void resolvingDrawsThreeThenPromptsForDiscard() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new Sift()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Sift(), "{3}{U}");
         harness.passBothPriorities();
 
         // The spell left hand, then three cards were drawn.
@@ -65,10 +59,7 @@ class SiftTest extends BaseCardTest {
     @Test
     @DisplayName("Completing discard results in net gain of two cards")
     void completingDiscardResultsInNetGainOfTwo() {
-        harness.setHand(player1, List.of(new Sift()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Sift(), "{3}{U}");
         harness.passBothPriorities();
 
         harness.handleCardChosen(player1, 0);
@@ -81,10 +72,7 @@ class SiftTest extends BaseCardTest {
     @DisplayName("Sift goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         Sift sift = new Sift();
-        harness.setHand(player1, List.of(sift));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, sift, "{3}{U}");
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
@@ -101,15 +89,34 @@ class SiftTest extends BaseCardTest {
         Sift discardedDraw = new Sift();
         harness.setHand(player1, List.of(sift));
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, discardedDraw));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, sift, "{3}{U}");
         harness.passBothPriorities();
 
         harness.handleCardChosen(player1, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sift, discardedDraw);
+    }
+
+    @Test
+    @DisplayName("Can discard a card that was already in hand")
+    void canDiscardCardAlreadyInHand() {
+        Sift sift = new Sift();
+        SkyshroudFalcon preexistingCard = new SkyshroudFalcon();
+        SkyshroudFalcon firstDraw = new SkyshroudFalcon();
+        SkyshroudFalcon secondDraw = new SkyshroudFalcon();
+        SkyshroudFalcon thirdDraw = new SkyshroudFalcon();
+        harness.setHand(player1, List.of(sift, preexistingCard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sift, preexistingCard);
     }
 }
 

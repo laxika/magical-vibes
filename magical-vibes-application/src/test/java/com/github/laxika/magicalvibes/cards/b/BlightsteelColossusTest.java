@@ -122,8 +122,7 @@ class BlightsteelColossusTest extends BaseCardTest {
         // Player 1 also has Blightsteel Colossus
         harness.addToBattlefield(player1, new BlightsteelColossus());
         // Player 2 has a creature that should NOT be forced to sacrifice
-        Permanent opponentCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Player 2 casts Cruel Edict targeting player 1 — forces sacrifice of Blightsteel Colossus
         harness.setHand(player2, List.of(new CruelEdict()));
@@ -143,10 +142,8 @@ class BlightsteelColossusTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyMillstone(Player player) {
-        Millstone card = new Millstone();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Millstone());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

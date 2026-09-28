@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.f.FleshlessGladiator;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlissaSunslayer.class, FleshlessGladiator.class, PhyrexianArena.class})
 class GlissaSunslayerTest extends BaseCardTest {
 
     private static final String DRAW_AND_LOSE = "You draw a card and lose 1 life";
@@ -25,9 +25,9 @@ class GlissaSunslayerTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage mode draws a card and loses 1 life")
     void drawAndLoseLifeMode() {
-        addReadyGlissa().setAttacking(true);
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
         harness.setLife(player1, 20);
-        setDeck(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new FleshlessGladiator()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
@@ -42,7 +42,7 @@ class GlissaSunslayerTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage mode destroys a targeted enchantment")
     void destroysEnchantment() {
-        addReadyGlissa().setAttacking(true);
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
         Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
 
         resolveCombat();
@@ -57,8 +57,8 @@ class GlissaSunslayerTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy-enchantment mode rejects a non-enchantment target")
     void destroyEnchantmentRejectsCreatureTarget() {
-        addReadyGlissa().setAttacking(true);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FleshlessGladiator());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -71,8 +71,8 @@ class GlissaSunslayerTest extends BaseCardTest {
     @Test
     @DisplayName("Counter mode removes up to three chosen counters, including mixed kinds")
     void removesChosenMixedCounters() {
-        addReadyGlissa().setAttacking(true);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FleshlessGladiator());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         target.setCounterCount(CounterType.CHARGE, 2);
 
@@ -95,8 +95,8 @@ class GlissaSunslayerTest extends BaseCardTest {
     @Test
     @DisplayName("Counter mode may remove fewer than three counters")
     void removesFewerCounters() {
-        addReadyGlissa().setAttacking(true);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FleshlessGladiator());
         target.setCounterCount(CounterType.CHARGE, 2);
 
         resolveCombat();
@@ -108,17 +108,5 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.handleListChoice(player1, "Done");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-    }
-
-    private Permanent addReadyGlissa() {
-        Permanent glissa = new Permanent(new GlissaSunslayer());
-        glissa.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(glissa);
-        return glissa;
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }

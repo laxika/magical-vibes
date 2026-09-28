@@ -115,10 +115,7 @@ class UrborgMindsuckerTest extends BaseCardTest {
     void cannotActivateWithNonEmptyStack() {
         addCreatureReady(player1, new UrborgMindsucker());
         readyForSorcerySpeed();
-        harness.setHand(player1, List.of(new KingCheetah()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KingCheetah(), "{3}{G}");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gd.stack).hasSize(1);

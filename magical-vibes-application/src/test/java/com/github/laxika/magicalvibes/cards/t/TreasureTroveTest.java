@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -31,6 +33,23 @@ class TreasureTroveTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId()).get(1).getName()).isEqualTo("Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Drawing from an empty library loses the game")
+    void drawingFromEmptyLibraryLosesTheGame() {
+        Permanent trove = addTrove(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, indexOf(player1, trove), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("no cards to draw"));
     }
 
     @Test

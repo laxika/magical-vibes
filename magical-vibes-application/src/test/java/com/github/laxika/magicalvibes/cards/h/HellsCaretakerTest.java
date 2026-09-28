@@ -5,32 +5,37 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HellsCaretaker.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class HellsCaretakerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a creature during upkeep returns target creature card from graveyard to the battlefield")
     void reanimatesTargetCreatureDuringUpkeep() {
-        addCreatureReady(player1, new HellsCaretaker());
+        Permanent caretaker = addCreatureReady(player1, new HellsCaretaker());
         Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
 
         Card target = new LlanowarElves();
         harness.setGraveyard(player1, List.of(target));
 
-        enterUpkeep(player1);
+        advanceToUpkeep(player1);
 
         harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
         harness.handlePermanentChosen(player1, fodder.getId());
+        assertThat(caretaker.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
         // Sacrificed creature is in the graveyard
@@ -68,16 +73,64 @@ class HellsCaretakerTest extends BaseCardTest {
         Card target = new Shock();
         harness.setGraveyard(player1, List.of(target));
 
-        enterUpkeep(player1);
+        advanceToUpkeep(player1);
 
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void enterUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Cannot target a creature card in an opponent's graveyard")
+    void cannotTargetOpponentGraveyard() {
+        addCreatureReady(player1, new HellsCaretaker());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("allowed graveyard");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the targeted creature card leaves the graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyard() {
+        addCreatureReady(player1, new HellsCaretaker());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+
+        Card target = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("May sacrifice itself as the creature cost")
+    void maySacrificeItselfAsCost() {
+        Permanent caretaker = addCreatureReady(player1, new HellsCaretaker());
+        Card target = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hell's Caretaker");
+        harness.assertNotOnBattlefield(player1, "Hell's Caretaker");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 }

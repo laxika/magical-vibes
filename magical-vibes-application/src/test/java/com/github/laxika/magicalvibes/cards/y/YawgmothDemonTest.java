@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,14 +12,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({YawgmothDemon.class, Ornithopter.class, MycosynthLattice.class})
 class YawgmothDemonTest extends BaseCardTest {
-
-    private Permanent demon(Player owner) {
-        UUID id = harness.getPermanentId(owner, "Yawgmoth Demon");
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst().orElseThrow();
-    }
 
     @Test
     @DisplayName("Declining the sacrifice taps the Demon and deals 2 damage to its controller")
@@ -34,8 +28,8 @@ class YawgmothDemonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(demon(player1).isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore - 2);
         // Artifact was not sacrificed
         harness.assertOnBattlefield(player1, "Ornithopter");
     }
@@ -52,8 +46,8 @@ class YawgmothDemonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
-        assertThat(demon(player1).isTapped()).isFalse();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isFalse();
+        harness.assertLife(player1, lifeBefore);
     }
 
     @Test
@@ -74,8 +68,8 @@ class YawgmothDemonTest extends BaseCardTest {
 
         long artifactsLeft = countPermanents(player1, "Ornithopter");
         assertThat(artifactsLeft).isEqualTo(1);
-        assertThat(demon(player1).isTapped()).isFalse();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isFalse();
+        harness.assertLife(player1, lifeBefore);
     }
 
     @Test
@@ -87,8 +81,45 @@ class YawgmothDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger → penalty (no artifact to sacrifice)
 
-        assertThat(demon(player1).isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice itself when it has become an artifact")
+    void canSacrificeItselfWhenItIsAnArtifact() {
+        harness.addToBattlefield(player1, new YawgmothDemon());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        UUID demonId = harness.getPermanentId(player1, "Yawgmoth Demon");
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, demonId);
+
+        harness.assertInGraveyard(player1, "Yawgmoth Demon");
+        harness.assertOnBattlefield(player1, "Mycosynth Lattice");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cannot use an artifact controlled by an opponent to pay the upkeep cost")
+    void opponentArtifactDoesNotPay() {
+        harness.addToBattlefield(player1, new YawgmothDemon());
+        harness.addToBattlefield(player2, new Ornithopter());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore - 2);
+        harness.assertOnBattlefield(player2, "Ornithopter");
     }
 
     @Test
@@ -101,8 +132,8 @@ class YawgmothDemonTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(demon(player1).isTapped()).isFalse();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(findPermanent(player1, "Yawgmoth Demon").isTapped()).isFalse();
+        harness.assertLife(player1, lifeBefore);
         harness.assertOnBattlefield(player1, "Ornithopter");
     }
 }

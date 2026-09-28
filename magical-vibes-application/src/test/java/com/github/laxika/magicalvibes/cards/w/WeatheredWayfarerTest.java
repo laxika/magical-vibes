@@ -50,6 +50,20 @@ class WeatheredWayfarerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate when an opponent controls more lands even if you control a land")
+    void activatesWhenOpponentHasStrictlyMoreLands() {
+        addWayfarer();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Resolving presents only land cards for the search")
     void resolvingPresentsOnlyLands() {
         activateWithOpponentAhead();
@@ -60,6 +74,28 @@ class WeatheredWayfarerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND));
+    }
+
+    @Test
+    @DisplayName("Land search reveals the choices and may fail to find")
+    void landSearchRevealsChoicesAndMayFailToFind() {
+        activateWithOpponentAhead();
+        setupLibrary();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

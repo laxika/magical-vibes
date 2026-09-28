@@ -64,6 +64,15 @@ class LevitationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncreatures you control do not gain flying")
+    void noncreaturesDoNotGainFlying() {
+        Permanent levitation = harness.addToBattlefieldAndReturn(player1, new Levitation());
+
+        assertThat(gqs.isCreature(gd, levitation)).isFalse();
+        assertThat(gqs.hasKeyword(gd, levitation, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Flying bonus is removed when Levitation leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         Permanent cockroach = addCreatureReady(player1, new GiantCockroach());

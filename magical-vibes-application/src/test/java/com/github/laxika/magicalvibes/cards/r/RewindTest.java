@@ -41,7 +41,7 @@ class RewindTest extends BaseCardTest {
         findPermanents(player, "Island").forEach(Permanent::tap);
     }
 
-    private void castRewindCounteringBears(GrizzlyBears bears) {
+    private void castRewindOntoBears(GrizzlyBears bears) {
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -51,6 +51,10 @@ class RewindTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
+    }
+
+    private void castRewindCounteringBears(GrizzlyBears bears) {
+        castRewindOntoBears(bears);
         harness.passBothPriorities();
     }
 
@@ -159,5 +163,19 @@ class RewindTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not untap lands when its target leaves the stack before resolution")
+    void fizzlesWithoutUntappingWhenTargetLeavesStack() {
+        addTappedIslands(player2, 4);
+        GrizzlyBears bears = new GrizzlyBears();
+        castRewindOntoBears(bears);
+
+        gd.stack.removeIf(entry -> entry.getTargetableId().equals(bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(untappedIslands(player2)).isZero();
+        harness.assertInGraveyard(player2, "Rewind");
     }
 }

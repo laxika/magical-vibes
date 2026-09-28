@@ -65,6 +65,29 @@ class InfantryVeteranTest extends BaseCardTest {
         assertThat(veteran.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot activate ability with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new InfantryVeteran());
+        Permanent attacker = addAttackingCreature(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability when already tapped")
+    void cannotActivateWhenAlreadyTapped() {
+        Permanent veteran = addReadyVeteran(player1);
+        veteran.tap();
+        Permanent attacker = addAttackingCreature(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
     // ===== Target restriction: must be attacking =====
 
     @Test

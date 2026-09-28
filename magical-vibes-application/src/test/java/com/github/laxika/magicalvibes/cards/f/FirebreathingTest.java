@@ -15,20 +15,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Firebreathing.class, FeralShadow.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({Firebreathing.class, GrizzlyBears.class, Mountain.class})
 class FirebreathingTest extends BaseCardTest {
 
     private Permanent attachTo(Permanent host) {
-        Permanent aura = new Permanent(new Firebreathing());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Firebreathing());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
     @Test
     @DisplayName("Resolving Firebreathing attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent creature = addCreatureReady(player1, new FeralShadow());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Firebreathing()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -46,8 +45,8 @@ class FirebreathingTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can activate {R}: +1/+0")
     void grantedAbilityBoostsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player1, new FeralShadow());
-        attachFirebreathing(creature);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachTo(creature);
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -59,8 +58,8 @@ class FirebreathingTest extends BaseCardTest {
     @Test
     @DisplayName("Activations stack and expire at end of turn")
     void activationsStackAndExpireAtEndOfTurn() {
-        Permanent creature = addCreatureReady(player1, new FeralShadow());
-        attachFirebreathing(creature);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachTo(creature);
 
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -69,7 +68,7 @@ class FirebreathingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -81,8 +80,8 @@ class FirebreathingTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can be activated while the enchanted creature is tapped")
     void abilityCanBeActivatedWhileTapped() {
-        Permanent creature = addCreatureReady(player1, new FeralShadow());
-        attachFirebreathing(creature);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachTo(creature);
         creature.tap();
 
         harness.addMana(player1, ManaColor.RED, 1);
@@ -96,9 +95,9 @@ class FirebreathingTest extends BaseCardTest {
     @Test
     @DisplayName("Only the enchanted creature gains the activated ability")
     void onlyEnchantedCreatureGainsAbility() {
-        Permanent enchantedCreature = addCreatureReady(player1, new FeralShadow());
-        addCreatureReady(player1, new FeralShadow());
-        attachFirebreathing(enchantedCreature);
+        Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        attachTo(enchantedCreature);
 
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -114,8 +113,8 @@ class FirebreathingTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot be activated without red mana")
     void cannotActivateWithoutRedMana() {
-        Permanent creature = addCreatureReady(player1, new FeralShadow());
-        attachFirebreathing(creature);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachTo(creature);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -170,7 +169,7 @@ class FirebreathingTest extends BaseCardTest {
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new FeralShadow());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new Firebreathing()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -180,8 +179,4 @@ class FirebreathingTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void attachFirebreathing(Permanent creature) {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Firebreathing());
-        aura.setAttachedTo(creature.getId());
-    }
 }

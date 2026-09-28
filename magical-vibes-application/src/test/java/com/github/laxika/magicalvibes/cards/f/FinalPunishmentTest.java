@@ -40,6 +40,29 @@ class FinalPunishmentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses damage dealt rather than the target's current life total")
+    void usesDamageAmountInsteadOfCurrentLifeTotal() {
+        carbonizePlayer(player2.getId());
+        harness.setLife(player2, 30);
+
+        castFinalPunishment(player2.getId());
+
+        harness.assertLife(player2, 27);
+    }
+
+    @Test
+    @DisplayName("Does not count Final Punishment's own life loss as damage")
+    void doesNotCountItsOwnLifeLossAsDamage() {
+        carbonizePlayer(player2.getId());
+        castFinalPunishment(player2.getId());
+        harness.assertLife(player2, 14);
+
+        castFinalPunishment(player2.getId());
+
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
     @DisplayName("Target that took no damage loses no life")
     void noDamageMeansNoLifeLoss() {
         carbonizePlayer(player2.getId());

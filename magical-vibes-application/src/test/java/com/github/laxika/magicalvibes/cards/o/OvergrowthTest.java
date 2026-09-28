@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Overgrowth.class, Forest.class})
+@CardUsed({Overgrowth.class, Forest.class, GrizzlyBears.class, Piracy.class})
 class OvergrowthTest extends BaseCardTest {
 
     @Test
@@ -55,9 +55,8 @@ class OvergrowthTest extends BaseCardTest {
     @DisplayName("Tapping enchanted Forest adds {G}{G} in addition to normal land mana")
     void enchantedLandAddsExtraMana() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent aura = new Permanent(new Overgrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
 
@@ -65,13 +64,26 @@ class OvergrowthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Overgrowth adds its own bonus mana to the enchanted land")
+    void multipleAurasEachAddMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
+        firstAura.setAttachedTo(forest.getId());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Only enchanted land gets Overgrowth bonus")
     void onlyEnchantedLandGetsBonus() {
         Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        Permanent aura = new Permanent(new Overgrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
         aura.setAttachedTo(firstForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         // Tap second (non-enchanted) Forest at index 1.
         harness.tapPermanent(player1, 1);
@@ -83,9 +95,8 @@ class OvergrowthTest extends BaseCardTest {
     @DisplayName("Controller of enchanted land gets bonus mana even if aura is controlled by opponent")
     void enchantedLandControllerGetsBonus() {
         Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent aura = new Permanent(new Overgrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
         aura.setAttachedTo(opponentsForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player2, 0);
 
@@ -98,13 +109,10 @@ class OvergrowthTest extends BaseCardTest {
     @DisplayName("Foreign land tap gives Overgrowth's bonus to the enchanted land's controller")
     void foreignLandTapBenefitsEnchantedLandController() {
         Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent aura = new Permanent(new Overgrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
         aura.setAttachedTo(opponentsForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        harness.setHand(player1, List.of(new Piracy()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
         harness.passBothPriorities();
 
         harness.tapForeignLandForMana(player1, opponentsForest.getId());
@@ -117,9 +125,8 @@ class OvergrowthTest extends BaseCardTest {
     @DisplayName("Overgrowth bonus stops when aura leaves battlefield")
     void bonusStopsWhenAuraLeavesBattlefield() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent aura = new Permanent(new Overgrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.tapPermanent(player1, 0);

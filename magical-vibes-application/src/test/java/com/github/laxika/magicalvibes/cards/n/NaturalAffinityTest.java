@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GerrardsIrregulars;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NaturalAffinity.class, Forest.class, Mountain.class, GerrardsIrregulars.class, ImprisonedInTheMoon.class})
+@CardUsed({NaturalAffinity.class, Forest.class, Mountain.class, AirElemental.class, ImprisonedInTheMoon.class})
 class NaturalAffinityTest extends BaseCardTest {
 
     @Test
@@ -26,10 +26,8 @@ class NaturalAffinityTest extends BaseCardTest {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         forest.setSummoningSick(false);
 
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
@@ -50,33 +48,29 @@ class NaturalAffinityTest extends BaseCardTest {
     @DisplayName("Does not animate non-land permanents")
     void doesNotAnimateNonLands() {
         harness.addToBattlefield(player1, new Forest());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GerrardsIrregulars());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
 
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, creature)).isTrue();
         assertThat(gqs.isLand(gd, creature)).isFalse();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Animates a non-land card that is currently a land")
     void animatesPermanentThatBecameLand() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GerrardsIrregulars());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
         aura.setAttachedTo(creature.getId());
 
         assertThat(gqs.isCreature(gd, creature)).isFalse();
         assertThat(gqs.isLand(gd, creature)).isTrue();
 
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, creature)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -85,13 +79,25 @@ class NaturalAffinityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not animate a land that enters after resolution")
+    void doesNotAnimateLandEnteringAfterResolution() {
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.playLand(player1, 0);
+
+        Permanent mountain = findPermanent(player1, "Mountain");
+        assertThat(gqs.isCreature(gd, mountain)).isFalse();
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
+    }
+
+    @Test
     @DisplayName("Animation wears off at end of turn")
     void animationWearsOff() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
 

@@ -23,9 +23,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 20) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(deck.size() - 20, deck.size()));
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
@@ -39,9 +37,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 11) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(deck.size() - 11, deck.size()));
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -57,9 +53,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, deck.subList(deck.size() - 10, deck.size()));
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
@@ -76,9 +70,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 1) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(deck.size() - 1, deck.size()));
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -93,7 +85,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Traumatize()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -120,9 +112,8 @@ class TraumatizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 4) {
-            deck.removeFirst();
-        }
+        deck = deck.subList(deck.size() - 4, deck.size());
+        harness.setLibrary(player2, deck);
 
         // Record the top 2 cards (half of 4)
         Card firstCard = deck.get(0);

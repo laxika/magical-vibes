@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Frogmite;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,14 +11,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LeoninSkyhunter.class, Frogmite.class})
+@CardUsed({LeoninSkyhunter.class, GrizzlyBears.class})
 class LeoninSkyhunterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Leonin Skyhunter")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new LeoninSkyhunter());
-        addCreatureReady(player2, new Frogmite());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

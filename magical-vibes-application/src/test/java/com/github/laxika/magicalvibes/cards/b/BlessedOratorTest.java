@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlessedOrator.class, GrizzlyBears.class, Plains.class})
+@CardUsed({BlessedOrator.class, GrizzlyBears.class, Island.class})
 class BlessedOratorTest extends BaseCardTest {
 
     @Test
@@ -57,10 +57,10 @@ class BlessedOratorTest extends BaseCardTest {
     @DisplayName("Does not buff own noncreature permanents")
     void doesNotBuffNoncreaturePermanents() {
         harness.addToBattlefield(player1, new BlessedOrator());
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
 
-        assertThat(gqs.getEffectivePower(gd, plains)).isZero();
-        assertThat(gqs.getEffectiveToughness(gd, plains)).isZero();
+        assertThat(gqs.getEffectivePower(gd, island)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, island)).isZero();
     }
 
     @Test

@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImiStatue;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.t.TitaniasSong;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StorageMatrix.class, GrizzlyBears.class, Forest.class, AngelsFeather.class, TitaniasSong.class})
+@CardUsed({StorageMatrix.class, GrizzlyBears.class, Forest.class, AngelsFeather.class, TitaniasSong.class,
+        ImiStatue.class, Ornithopter.class})
 class StorageMatrixTest extends BaseCardTest {
 
     @Test
@@ -108,6 +112,39 @@ class StorageMatrixTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact creature untaps when either of its types is chosen")
+    void artifactCreatureUntapsWhenCreatureTypeIsChosen() {
+        addCreatureReady(player1, new StorageMatrix());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        ornithopter.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleListChoice(player1, "CREATURE");
+
+        assertThat(ornithopter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Storage Matrix combines with Imi Statue's artifact untap limit")
+    void combinesWithArtifactUntapLimit() {
+        addCreatureReady(player1, new StorageMatrix());
+        addCreatureReady(player1, new ImiStatue());
+        Permanent firstFeather = addCreatureReady(player1, new AngelsFeather());
+        Permanent secondFeather = addCreatureReady(player1, new AngelsFeather());
+        firstFeather.tap();
+        secondFeather.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleListChoice(player1, "ARTIFACT");
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice) {
+            harness.handleMultiplePermanentsChosen(player1, List.of(firstFeather.getId()));
+        }
+
+        assertThat(firstFeather.isTapped()).isFalse();
+        assertThat(secondFeather.isTapped()).isTrue();
     }
 
     @Test

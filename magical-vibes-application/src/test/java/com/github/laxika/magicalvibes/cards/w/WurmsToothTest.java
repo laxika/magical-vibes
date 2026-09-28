@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
-import com.github.laxika.magicalvibes.cards.t.TangleSpider;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WurmsTooth.class, TangleSpider.class, MyrMoonvessel.class})
+@CardUsed({WurmsTooth.class, FugitiveWizard.class, LlanowarElves.class})
 class WurmsToothTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,10 +25,7 @@ class WurmsToothTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Wurm's Tooth puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new WurmsTooth()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new WurmsTooth(), "{2}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -41,16 +38,12 @@ class WurmsToothTest extends BaseCardTest {
     @Test
     @DisplayName("Wurm's Tooth resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new WurmsTooth()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new WurmsTooth(), "{2}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof WurmsTooth);
+        harness.assertOnBattlefield(player1, "Wurm's Tooth");
     }
 
     // ===== Triggered ability: controller casts green spell =====
@@ -59,12 +52,10 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Controller casts green spell, accepts may ability, gains 1 life")
     void controllerCastsGreenSpellAndAccepts() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new TangleSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
 
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
@@ -86,12 +77,10 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Controller casts green spell, declines may ability, no life gain")
     void controllerCastsGreenSpellAndDeclines() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new TangleSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -117,12 +106,9 @@ class WurmsToothTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new TangleSpider()));
-        harness.addMana(player2, ManaColor.GREEN, 6);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
 
         // Player1 (controller of Wurm's Tooth) should be prompted
         GameData gd = harness.getGameData();
@@ -142,10 +128,8 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Non-green spell does not trigger Wurm's Tooth")
     void nonGreenSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new MyrMoonvessel()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
 
         GameData gd = harness.getGameData();
         // Should not be awaiting may ability
@@ -162,12 +146,10 @@ class WurmsToothTest extends BaseCardTest {
     void multipleTeethTriggerIndependently() {
         harness.addToBattlefield(player1, new WurmsTooth());
         harness.addToBattlefield(player1, new WurmsTooth());
-        harness.setHand(player1, List.of(new TangleSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
 
         // First tooth prompt
         harness.handleMayAbilityChosen(player1, true);
@@ -193,8 +175,8 @@ class WurmsToothTest extends BaseCardTest {
     @DisplayName("Wurm's Tooth does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
         // Wurm's Tooth is in the hand, not on the battlefield
-        harness.setHand(player1, List.of(new WurmsTooth(), new TangleSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.setHand(player1, List.of(new WurmsTooth(), new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 1);
 

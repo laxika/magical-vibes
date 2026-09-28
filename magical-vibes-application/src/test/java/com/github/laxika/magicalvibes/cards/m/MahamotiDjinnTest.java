@@ -92,8 +92,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         addCreatureReady(player2, new AirElemental());
         addCreatureReady(player1, new MahamotiDjinn());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
@@ -105,8 +104,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         addCreatureReady(player2, new GiantSpider());
         addCreatureReady(player1, new MahamotiDjinn());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();

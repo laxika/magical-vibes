@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuddenImpact.class, Plains.class, Island.class, WindDrake.class})
+@CardUsed({SuddenImpact.class, Plains.class, Island.class, GrizzlyBears.class})
 class SuddenImpactTest extends BaseCardTest {
 
     @Test
@@ -39,7 +39,7 @@ class SuddenImpactTest extends BaseCardTest {
     void dealsDamageEqualToHandSize() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new SuddenImpact()));
-        harness.setHand(player2, List.of(new Plains(), new Island(), new WindDrake()));
+        harness.setHand(player2, List.of(new Plains(), new Island(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
@@ -56,7 +56,7 @@ class SuddenImpactTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, player2.getId());
-        gd.playerHands.get(player2.getId()).add(new WindDrake());
+        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -90,13 +90,13 @@ class SuddenImpactTest extends BaseCardTest {
     @Test
     @DisplayName("Sudden Impact cannot target a creature")
     void cannotTargetCreature() {
-        Permanent drake = new Permanent(new WindDrake());
-        gd.playerBattlefields.get(player2.getId()).add(drake);
+        Permanent bear = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bear);
 
         harness.setHand(player1, List.of(new SuddenImpact()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, drake.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

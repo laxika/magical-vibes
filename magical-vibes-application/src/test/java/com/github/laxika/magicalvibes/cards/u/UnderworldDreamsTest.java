@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
@@ -25,11 +23,8 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
-
-    
 
     @Test
     @DisplayName("Opponent draw step draw causes 1 life loss")
@@ -40,7 +35,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -51,7 +46,7 @@ class UnderworldDreamsTest extends BaseCardTest {
 
         advanceToDraw(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -72,7 +67,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve first Underworld Dreams trigger
         harness.passBothPriorities(); // resolve second Underworld Dreams trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -86,7 +81,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve first trigger
         harness.passBothPriorities(); // resolve second trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -99,12 +94,11 @@ class UnderworldDreamsTest extends BaseCardTest {
 
         Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariah);
 
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("redirected Underworld Dreams damage"));
+        harness.assertLife(player2, 20);
+        assertThat(gameLogContains("redirected Underworld Dreams damage")).isTrue();
     }
 }

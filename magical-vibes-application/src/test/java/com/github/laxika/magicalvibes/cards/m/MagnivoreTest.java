@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.k.KrosanAvenger;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,6 +24,16 @@ class MagnivoreTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Magnivore dies to state-based actions when no sorcery cards are in graveyards")
+    void diesWhenNoSorceriesAreInGraveyards() {
+        harness.castFromHand(player1, new Magnivore(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Magnivore");
+        harness.assertInGraveyard(player1, "Magnivore");
     }
 
     @Test
@@ -96,11 +105,7 @@ class MagnivoreTest extends BaseCardTest {
     @DisplayName("Magnivore can attack the turn it enters because it has haste")
     void canAttackTheTurnItEnters() {
         harness.setGraveyard(player1, createSorceryCards(1));
-        harness.setHand(player1, List.of(new Magnivore()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Magnivore(), "{2}{R}{R}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Magnivore");

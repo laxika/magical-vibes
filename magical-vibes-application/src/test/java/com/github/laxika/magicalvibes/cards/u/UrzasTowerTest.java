@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.s.SpreadingSeas;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -70,10 +67,6 @@ class UrzasTowerTest extends BaseCardTest {
                 .getPotentialManaTotal(gd, player1.getId())).isEqualTo(7);
     }
 
-    @BeforeEach
-    void preload5edOracleData() {
-        GameTestHarness.cardCatalog().findByCollectorNumber(CardSet.SET_5ED, "429");
-    }
     @Test
     @DisplayName("Tapping alone adds one colorless mana")
     void tapAloneAddsOne() {

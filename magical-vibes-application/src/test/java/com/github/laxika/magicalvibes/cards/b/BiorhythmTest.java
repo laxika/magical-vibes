@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DaruLancer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-@CardUsed({Biorhythm.class, DaruLancer.class, Forest.class})
+@CardUsed({Biorhythm.class, GrizzlyBears.class, Forest.class})
 class BiorhythmTest extends BaseCardTest {
 
     @Test
@@ -18,13 +15,11 @@ class BiorhythmTest extends BaseCardTest {
     void setsLifeToCreatureCount() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new DaruLancer());
-        harness.addToBattlefield(player1, new DaruLancer());
-        harness.addToBattlefield(player2, new DaruLancer());
-        harness.setHand(player1, List.of(new Biorhythm()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Biorhythm(), "{6}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 2);
@@ -36,11 +31,9 @@ class BiorhythmTest extends BaseCardTest {
     void setsLifeToZeroWithNoCreatures() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new DaruLancer());
-        harness.setHand(player1, List.of(new Biorhythm()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Biorhythm(), "{6}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 1);
@@ -52,13 +45,11 @@ class BiorhythmTest extends BaseCardTest {
     void ignoresNoncreaturePermanents() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new DaruLancer());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
-        harness.setHand(player1, List.of(new Biorhythm()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Biorhythm(), "{6}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 1);

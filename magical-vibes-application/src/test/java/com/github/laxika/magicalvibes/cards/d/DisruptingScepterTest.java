@@ -44,6 +44,23 @@ class DisruptingScepterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability resolves after the Scepter leaves the battlefield")
+    void abilityResolvesAfterScepterLeavesBattlefield() {
+        Permanent scepter = addReadyScepter(player1);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Can target the controller as the player who discards")
     void canTargetController() {
         addReadyScepter(player1);

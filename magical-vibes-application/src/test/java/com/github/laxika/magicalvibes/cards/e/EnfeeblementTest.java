@@ -76,9 +76,29 @@ class EnfeeblementTest extends BaseCardTest {
         harness.setHand(player1, List.of(enfeeblement));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castEnchantment(player1, 0, armodon.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(armodon);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, armodon));
 
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Enfeeblement");
+        harness.assertNotOnBattlefield(player1, "Enfeeblement");
+    }
+
+    @Test
+    @DisplayName("Enfeeblement goes to its owner's graveyard when its enchanted creature leaves")
+    void goesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent armodon = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        Enfeeblement enfeeblement = new Enfeeblement();
+
+        harness.setHand(player1, List.of(enfeeblement));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, armodon.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, armodon));
+        harness.runStateBasedActions();
 
         harness.assertInGraveyard(player1, "Enfeeblement");
         harness.assertNotOnBattlefield(player1, "Enfeeblement");

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HermeticStudy.class, ThievingMagpie.class, TormentedAngel.class})
+@CardUsed({HermeticStudy.class, ThievingMagpie.class})
 class ThievingMagpieTest extends BaseCardTest {
 
     @Test
@@ -19,13 +19,13 @@ class ThievingMagpieTest extends BaseCardTest {
         prepareDrawState();
         harness.setLife(player2, 20);
 
-        Permanent magpie = addReadyMagpie(player1);
-        magpie.setAttacking(true);
+        addCreatureReady(player1, new ThievingMagpie());
 
+        declareAttackers(List.of(0));
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -36,16 +36,18 @@ class ThievingMagpieTest extends BaseCardTest {
         prepareDrawState();
         harness.setLife(player2, 20);
 
-        Permanent magpie = addReadyMagpie(player1);
-        magpie.setAttacking(true);
+        Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
+        Permanent blocker = addCreatureReady(player2, new ThievingMagpie());
 
-        Permanent blocker = addReadyMagpie(player2);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -56,15 +58,14 @@ class ThievingMagpieTest extends BaseCardTest {
         prepareDrawState();
         harness.setLife(player2, 20);
 
-        Permanent magpie = addReadyMagpie(player1);
+        Permanent magpie = addCreatureReady(player1, new ThievingMagpie());
         Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         study.setAttachedTo(magpie.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -75,23 +76,16 @@ class ThievingMagpieTest extends BaseCardTest {
         prepareDrawState();
         harness.setLife(player1, 20);
 
-        Permanent magpie = addReadyMagpie(player1);
+        Permanent magpie = addCreatureReady(player1, new ThievingMagpie());
         Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         study.setAttachedTo(magpie.getId());
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-    }
-
-    private Permanent addReadyMagpie(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent magpie = harness.addToBattlefieldAndReturn(player, new ThievingMagpie());
-        magpie.setSummoningSick(false);
-        return magpie;
     }
 
     private void prepareDrawState() {
@@ -102,8 +96,7 @@ class ThievingMagpieTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card when it deals combat damage to an opponent")
     void drawsOnCombatDamageToOpponent() {
-        harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new ThievingMagpie()));
+        prepareDrawState();
         harness.setLife(player2, 20);
         addCreatureReady(player1, new ThievingMagpie());
 
@@ -111,7 +104,7 @@ class ThievingMagpieTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Thieving Magpie");
@@ -120,11 +113,10 @@ class ThievingMagpieTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw when blocked and no combat damage reaches the opponent")
     void doesNotDrawWhenBlocked() {
-        harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new ThievingMagpie()));
+        prepareDrawState();
         harness.setLife(player2, 20);
         Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
-        Permanent blocker = addCreatureReady(player2, new TormentedAngel());
+        Permanent blocker = addCreatureReady(player2, new ThievingMagpie());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();
@@ -134,7 +126,7 @@ class ThievingMagpieTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

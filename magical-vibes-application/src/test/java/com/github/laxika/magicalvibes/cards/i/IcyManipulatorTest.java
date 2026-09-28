@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GoblinStriker;
-import com.github.laxika.magicalvibes.cards.h.HumOfTheRadix;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IcyManipulator.class, Bonesplitter.class, Forest.class, GoblinStriker.class, HumOfTheRadix.class})
+@CardUsed({IcyManipulator.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, Millstone.class})
 class IcyManipulatorTest extends BaseCardTest {
 
     @Test
@@ -48,7 +48,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         Permanent icy = addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -64,7 +64,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Target is not tapped until the ability resolves")
     void targetIsNotTappedUntilResolution() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -80,7 +80,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Activating ability taps Icy Manipulator")
     void activatingTapsIcy() {
         Permanent icy = addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -92,7 +92,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTargetCreature() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -142,6 +142,21 @@ class IcyManipulatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target Icy Manipulator itself")
+    void canTargetItself() {
+        Permanent icy = addReadyIcy(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, icy.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(icy.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Can target an already tapped permanent")
     void canTargetAlreadyTappedPermanent() {
         addReadyIcy(player1);
@@ -175,7 +190,7 @@ class IcyManipulatorTest extends BaseCardTest {
         // Do NOT clear summoning sickness — artifacts should be able to use tap abilities regardless
         icy.setSummoningSick(true);
 
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Should not throw — artifacts ignore summoning sickness
@@ -188,7 +203,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -200,7 +215,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -212,7 +227,7 @@ class IcyManipulatorTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent icy = addReadyIcy(player1);
         icy.tap();
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -224,7 +239,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -242,7 +257,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
         addReadyIcy(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GoblinStriker());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -255,7 +270,7 @@ class IcyManipulatorTest extends BaseCardTest {
     @DisplayName("Resolving ability adds to game log")
     void resolvingAddsToGameLog() {
         addReadyIcy(player1);
-        Permanent target = addCreatureReady(player2, new GoblinStriker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -275,11 +290,11 @@ class IcyManipulatorTest extends BaseCardTest {
     }
 
     private Permanent addReadyArtifact(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Bonesplitter());
+        return harness.addToBattlefieldAndReturn(player, new Millstone());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new HumOfTheRadix());
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 }
 

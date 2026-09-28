@@ -27,7 +27,7 @@ class PlagueWindTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Plague Wind");
+        assertThat(entry.getCard()).isInstanceOf(PlagueWind.class);
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Nightmare;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({QuicksilverGargantuan.class, AirElemental.class, AngelOfMercy.class, Clone.class,
+        GrizzlyBears.class, Nightmare.class, Swamp.class})
 class QuicksilverGargantuanTest extends BaseCardTest {
 
     // ===== Copying with P/T override =====

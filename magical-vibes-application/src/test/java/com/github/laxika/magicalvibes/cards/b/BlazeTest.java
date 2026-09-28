@@ -3,14 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
-import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, DisciplesOfTheInferno.class, ForestBear.class, GiantSpider.class, GrizzlyBears.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class, SouthernElephant.class})
+@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, DisciplesOfTheInferno.class, GiantSpider.class, GrizzlyBears.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class})
 class BlazeTest extends BaseCardTest {
 
     @Test
@@ -58,6 +56,19 @@ class BlazeTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getXValue()).isEqualTo(2);
         assertThat(entry.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

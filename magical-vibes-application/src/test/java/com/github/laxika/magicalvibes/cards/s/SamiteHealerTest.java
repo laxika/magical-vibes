@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.Earthquake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBlast;
+import com.github.laxika.magicalvibes.cards.v.VolcanicHammer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, GrizzlyBears.class, LightningBlast.class, SamiteHealer.class})
+@CardUsed({Earthquake.class, GrizzlyBears.class, SamiteHealer.class, VolcanicHammer.class})
 class SamiteHealerTest extends BaseCardTest {
 
     @Test
@@ -112,8 +112,7 @@ class SamiteHealerTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        declareAttackers(player1, List.of(attackerIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         harness.passBothPriorities();
 
@@ -152,13 +151,33 @@ class SamiteHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new LightningBlast()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player1, List.of(new VolcanicHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target creature's shield prevents its next noncombat damage")
+    void targetCreatureShieldPreventsNoncombatDamage() {
+        addReadyHealer(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new VolcanicHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(target.getDamagePreventionShield()).isZero();
     }
 
     @Test

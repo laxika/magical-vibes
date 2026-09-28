@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reclaim.class, Resuscitate.class})
+@CardUsed({Reclaim.class, GrizzlyBears.class})
 class ReclaimTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving puts targeted card from own graveyard on top of own library")
     void resolvePutsCardOnTopOfOwnLibrary() {
-        Card target = new Resuscitate();
+        Card target = new GrizzlyBears();
         Card existingTop = new Reclaim();
         harness.setGraveyard(player1, List.of(target));
         harness.setLibrary(player1, List.of(existingTop));
@@ -36,7 +37,7 @@ class ReclaimTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a card in an opponent's graveyard")
     void cannotTargetOpponentGraveyard() {
-        Card opponentsCard = new Resuscitate();
+        Card opponentsCard = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(opponentsCard));
         harness.setHand(player1, List.of(new Reclaim()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -64,7 +65,7 @@ class ReclaimTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if targeted card leaves graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
-        Card target = new Resuscitate();
+        Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new Reclaim()));
         harness.addMana(player1, ManaColor.GREEN, 1);

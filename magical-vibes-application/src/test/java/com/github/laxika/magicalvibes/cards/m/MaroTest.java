@@ -98,11 +98,7 @@ class MaroTest extends BaseCardTest {
     @Test
     @DisplayName("Maro dies as a 0/0 when it resolves with an empty hand")
     void diesWithEmptyHandAfterResolving() {
-        harness.setHand(player1, List.of(new Maro()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Maro(), "{2}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Maro");

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.h.HornedTroll;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HuntedWumpus.class, Forest.class, HornedTroll.class})
+@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class})
 class HuntedWumpusTest extends BaseCardTest {
 
     /**
@@ -30,18 +30,13 @@ class HuntedWumpusTest extends BaseCardTest {
      * stack is non-empty so auto-pass doesn't fire), but we still have priority state.
      */
     private void setupAndCastWumpus() {
-        harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
     }
 
     @Test
     @DisplayName("Casting Hunted Wumpus puts it on the stack as a creature spell")
     void castingWumpusPutsItOnStack() {
-        harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
 
         GameData gd = harness.getGameData();
 
@@ -59,7 +54,7 @@ class HuntedWumpusTest extends BaseCardTest {
         // Hand is now empty (had 1 card, played it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Mana was spent ({3}{G} = 4 green total)
+        // Mana was spent ({3}{G}).
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
@@ -93,7 +88,7 @@ class HuntedWumpusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Give opponent a hand with a creature
-        harness.setHand(player2, List.of(new HornedTroll()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         // Resolve ETB → opponent should be asked to choose a card
         harness.passBothPriorities();
@@ -110,23 +105,23 @@ class HuntedWumpusTest extends BaseCardTest {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
 
-        // Give opponent a hand with [Forest, Horned Troll, Forest]
-        harness.setHand(player2, List.of(new Forest(), new HornedTroll(), new Forest()));
+        // Give opponent a hand with [Forest, Grizzly Bears, Forest]
+        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest()));
 
         harness.passBothPriorities(); // resolve ETB → awaiting card choice
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        // Valid indices should be [1] (Horned Troll is at index 1)
+        // Valid indices should be [1] (Grizzly Bears is at index 1)
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
 
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
-        // Opponent chooses Horned Troll (index 1)
+        // Opponent chooses Grizzly Bears (index 1)
         harness.handleCardChosen(player2, 1);
 
-        // Horned Troll is on player2's battlefield
-        harness.assertOnBattlefield(player2, "Horned Troll");
+        // Grizzly Bears is on player2's battlefield
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Opponent's hand decreased by 1
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore - 1);
@@ -141,7 +136,7 @@ class HuntedWumpusTest extends BaseCardTest {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
 
-        harness.setHand(player2, List.of(new HornedTroll()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
 
         harness.passBothPriorities(); // resolve ETB → awaiting card choice
 
@@ -176,6 +171,22 @@ class HuntedWumpusTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("has no creature cards in hand"));
+    }
+
+    @Test
+    @DisplayName("ETB does not let the controller put a creature from their own hand onto the battlefield")
+    void wumpusEtbDoesNotUseControllerHand() {
+        setupAndCastWumpus();
+        harness.passBothPriorities(); // resolve creature spell
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.passBothPriorities(); // resolve ETB
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -228,8 +239,8 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(secondEtb.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(secondEtb.getControllerId()).isEqualTo(player2.getId());
 
-        // Give player1 a Horned Troll so they can use the second Wumpus's ETB
-        harness.setHand(player1, List.of(new HornedTroll()));
+        // Give player1 a Grizzly Bears so they can use the second Wumpus's ETB
+        harness.setHand(player1, List.of(new GrizzlyBears()));
 
         // Resolve second ETB → player1 (opponent of controller player2) is asked to choose
         harness.passBothPriorities();
@@ -238,20 +249,20 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(0);
 
-        // Player1 puts their Horned Troll
+        // Player1 puts their Grizzly Bears
         harness.handleCardChosen(player1, 0);
 
-        // Horned Troll is on player1's battlefield (alongside the first Wumpus)
+        // Grizzly Bears is on player1's battlefield (alongside the first Wumpus)
         harness.assertOnBattlefield(player1, "Hunted Wumpus");
-        harness.assertOnBattlefield(player1, "Horned Troll");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Player2 has their Wumpus on the battlefield
         harness.assertOnBattlefield(player2, "Hunted Wumpus");
 
-        // Player1's hand is now empty (they put the Horned Troll)
+        // Player1's hand is now empty (they put the Grizzly Bears)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Stack is empty (Horned Troll has no ETB, chain is done)
+        // Stack is empty (Grizzly Bears has no ETB, chain is done)
         assertThat(gd.stack).isEmpty();
     }
 
@@ -261,11 +272,8 @@ class HuntedWumpusTest extends BaseCardTest {
         setupAndCastWumpus();
 
         // Give player1 another creature + mana to try casting it
-        harness.setHand(player1, List.of(new HornedTroll()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
         // Attempting to play while stack is non-empty should fail
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

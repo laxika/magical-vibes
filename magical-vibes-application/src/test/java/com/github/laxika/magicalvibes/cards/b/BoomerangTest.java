@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlue;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.MossDiamond;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Boomerang.class, CircleOfProtectionBlue.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, MossDiamond.class})
+@CardUsed({Boomerang.class, CircleOfProtectionBlack.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Spellbook.class})
 class BoomerangTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -75,15 +75,15 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns target enchantment to owner's hand")
     void resolvingReturnsEnchantmentToHandUpstreamReview() {
-        harness.addToBattlefield(player2, new CircleOfProtectionBlue());
+        harness.addToBattlefield(player2, new CircleOfProtectionBlack());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Blue");
+        UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Black");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Circle of Protection: Blue");
-        harness.assertInHand(player2, "Circle of Protection: Blue");
+        harness.assertNotOnBattlefield(player2, "Circle of Protection: Black");
+        harness.assertInHand(player2, "Circle of Protection: Black");
     }
 
     @Test
@@ -133,15 +133,15 @@ class BoomerangTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns target artifact to owner's hand")
     void resolvingReturnsArtifactToHand() {
-        harness.addToBattlefield(player2, new MossDiamond());
+        harness.addToBattlefield(player2, new Spellbook());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Moss Diamond");
+        UUID targetId = harness.getPermanentId(player2, "Spellbook");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Moss Diamond");
-        harness.assertInHand(player2, "Moss Diamond");
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInHand(player2, "Spellbook");
     }
 
     @Test

@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Anaconda;
+import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.u.UnderworldDreams;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DemonsHorn.class, DuskImp.class, GrizzlyBears.class})
+@CardUsed({DemonsHorn.class, BogImp.class, Anaconda.class, UnderworldDreams.class})
 class DemonsHornTest extends BaseCardTest {
 
     @Test
@@ -49,7 +51,7 @@ class DemonsHornTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DemonsHorn());
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player1, new DuskImp(), "{2}{B}");
+        harness.castFromHand(player1, new BogImp(), "{1}{B}");
 
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
@@ -73,7 +75,7 @@ class DemonsHornTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DemonsHorn());
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player1, new DuskImp(), "{2}{B}");
+        harness.castFromHand(player1, new BogImp(), "{1}{B}");
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -100,7 +102,7 @@ class DemonsHornTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player2, new DuskImp(), "{2}{B}");
+        harness.castFromHand(player2, new BogImp(), "{1}{B}");
 
         // Player1 (controller of Demon's Horn) should be prompted
         GameData gd = harness.getGameData();
@@ -109,8 +111,24 @@ class DemonsHornTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the triggered ability and then the creature spell
-        harness.passBothPriorities(); // resolve triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Casting a black noncreature spell triggers Demon's Horn")
+    void blackNoncreatureSpellTriggers() {
+        harness.addToBattlefield(player1, new DemonsHorn());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new UnderworldDreams(), "{B}{B}{B}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -119,7 +137,7 @@ class DemonsHornTest extends BaseCardTest {
     @DisplayName("Non-black spell does not trigger Demon's Horn")
     void nonBlackSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new DemonsHorn());
-        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.castFromHand(player1, new Anaconda(), "{3}{G}");
 
         GameData gd = harness.getGameData();
         // Should not be awaiting may ability
@@ -136,7 +154,7 @@ class DemonsHornTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DemonsHorn());
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player1, new DuskImp(), "{2}{B}");
+        harness.castFromHand(player1, new BogImp(), "{1}{B}");
 
         // First horn prompt
         harness.handleMayAbilityChosen(player1, true);
@@ -151,9 +169,7 @@ class DemonsHornTest extends BaseCardTest {
         assertThat(triggeredCount).isEqualTo(2);
 
         // Resolve all
-        harness.passBothPriorities(); // resolve second triggered ability
-        harness.passBothPriorities(); // resolve first triggered ability
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -161,8 +177,8 @@ class DemonsHornTest extends BaseCardTest {
     @Test
     @DisplayName("Demon's Horn does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
-        harness.setHand(player1, List.of(new DuskImp(), new DemonsHorn()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setHand(player1, List.of(new BogImp(), new DemonsHorn()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
 

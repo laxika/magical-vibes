@@ -76,11 +76,24 @@ class ShivanDragonTest extends BaseCardTest {
     @DisplayName("Activating the ability does not tap Shivan Dragon")
     void activatingAbilityDoesNotTap() {
         Permanent dragon = addCreatureReady(player1, new ShivanDragon());
-        dragon.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
+        assertThat(dragon.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can activate the ability while tapped")
+    void canActivateWhileTapped() {
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        dragon.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(6);
         assertThat(dragon.isTapped()).isTrue();
     }
 
@@ -164,8 +177,7 @@ class ShivanDragonTest extends BaseCardTest {
         addCreatureReady(player1, new ShivanDragon());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulWarden.class, RagingGoblin.class})
+@CardUsed({SoulWarden.class, RagingGoblin.class, Island.class})
 class SoulWardenTest extends BaseCardTest {
 
     @Test
@@ -54,6 +55,18 @@ class SoulWardenTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when a noncreature permanent enters")
+    void doesNotTriggerForNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new Island());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
     }
 
     @Test
