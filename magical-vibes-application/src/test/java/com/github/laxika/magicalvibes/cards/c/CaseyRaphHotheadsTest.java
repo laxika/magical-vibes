@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CaseyRaphHotheads.class, GrizzlyBears.class})
 class CaseyRaphHotheadsTest extends BaseCardTest {
@@ -57,14 +56,16 @@ class CaseyRaphHotheadsTest extends BaseCardTest {
     }
 
     @Test
-    void bothModesCannotTargetTheSamePlayer() {
+    void bothModesCanTargetTheSamePlayer() {
         castCasey();
         harness.handleListChoice(player1, EXILE_MODE);
         harness.handleListChoice(player1, TREASURE_MODE);
         harness.handlePermanentChosen(player1, player2.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player2.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack.getLast().getTargetIds())
+                .containsExactly(player2.getId(), player2.getId());
     }
 
     private void castCasey() {

@@ -34,7 +34,7 @@ public class FelotharTheSteadfast extends Card {
                 true,
                 "{3}",
                 List.of(
-                        new SacrificeCreatureCost(false, true, true, true),
+                        new SacrificeCreatureCost(false, false, false, true, null, true),
                         new DrawCardEffect(new SacrificedPermanentToughness()),
                         new DiscardEffect(new SacrificedPermanentPower(), DiscardRecipient.CONTROLLER)
                 ),

@@ -26,8 +26,9 @@ class EdgarMasterMachinistTest extends BaseCardTest {
     void castsArtifactFromGraveyardTapped() {
         harness.addToBattlefield(player1, new EdgarMasterMachinist());
         TheMindStone mindStone = new TheMindStone();
-        harness.setGraveyard(player1, List.of(mindStone));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setGraveyard(player1, List.of(mindStone, new DarksteelIngot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         prepareMainPhase(player1);
 
         harness.castFromGraveyard(player1, 0);
@@ -62,7 +63,7 @@ class EdgarMasterMachinistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(edgar.getPowerModifier()).isEqualTo(4);
+        assertThat(edgar.getPowerModifier()).isEqualTo(3);
         assertThat(edgar.getToughnessModifier()).isZero();
 
         harness.forceStep(TurnStep.END_STEP);

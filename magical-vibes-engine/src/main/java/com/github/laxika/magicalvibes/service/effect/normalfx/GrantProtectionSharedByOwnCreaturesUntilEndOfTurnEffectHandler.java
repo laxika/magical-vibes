@@ -140,6 +140,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                 || !protection.protectionFromSubtypes().isEmpty()
                 || protection.protectionFromManaValueAtLeast().isPresent()
                 || protection.protectionFromMulticolored()
+                || protection.protectionFromMonocolored()
                 || protection.protectionFromColoredSpells()
                 || protection.protectsFromEverything()) {
             protectionEffects.add(protection);

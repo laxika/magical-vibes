@@ -132,7 +132,9 @@ public class LibraryRevealSupport {
                 for (CardSet set : CardSet.values()) {
                     for (var printing : cardCatalog.getPrintings(set)) {
                         Card card = printing.createCard();
-                        if (!(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))) {
+                        if (card.getName() != null
+                                && !(card.hasType(CardType.LAND)
+                                && card.getSupertypes().contains(CardSupertype.BASIC))) {
                             catalogNames.add(card.getName());
                         }
                     }

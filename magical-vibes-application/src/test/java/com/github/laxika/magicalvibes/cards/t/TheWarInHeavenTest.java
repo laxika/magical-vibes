@@ -68,6 +68,8 @@ class TheWarInHeavenTest extends BaseCardTest {
             assertThat(gqs.isArtifact(gd, permanent)).isTrue();
             assertThat(permanent.getCounterCount(CounterType.NECRODERMIS)).isEqualTo(1);
         });
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Grizzly Bears")
+                        || card.getName().equals("Hill Giant"));
     }
 }

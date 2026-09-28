@@ -50,7 +50,7 @@ class WreckingBallArmTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be blocked");
+                .hasMessageContaining("cannot block");
         gs.declareBlockers(gd, player2, List.of());
     }
 
@@ -105,7 +105,7 @@ class WreckingBallArmTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(arm.getAttachedTo()).isEqualTo(creature.getId());

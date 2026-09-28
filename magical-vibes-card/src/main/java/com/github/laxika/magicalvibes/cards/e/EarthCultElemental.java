@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "AFR", collectorNumber = "141")
+@CardRegistration(set = "HBG", collectorNumber = "180")
 public class EarthCultElemental extends Card {
 
     public EarthCultElemental() {

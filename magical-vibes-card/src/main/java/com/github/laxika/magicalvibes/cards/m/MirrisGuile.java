@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "236")
+@CardRegistration(set = "MB2", collectorNumber = "209")
 public class MirrisGuile extends Card {
 
     public MirrisGuile() {

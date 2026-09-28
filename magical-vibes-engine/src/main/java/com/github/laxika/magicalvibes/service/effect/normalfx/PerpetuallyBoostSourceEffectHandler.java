@@ -32,7 +32,7 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
                 ? findBattlefieldSource(gameData, sourceCard)
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
-            applyToGraveyardSource(gameData, entry, sourceCard, boost);
+            applyToGraveyardSource(gameData, sourceCard, boost);
         } else {
             Card copy = boostedCopy(source.getCard(), boost);
             source.exchangeCard(copy);
@@ -66,20 +66,18 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
         return null;
     }
 
-    private void applyToGraveyardSource(GameData gameData, StackEntry entry, Card sourceCard,
+    private void applyToGraveyardSource(GameData gameData, Card sourceCard,
                                         PerpetuallyBoostSourceEffect boost) {
-        if (sourceCard == null || entry.getControllerId() == null) {
+        if (sourceCard == null) {
             return;
         }
-        List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
-        if (graveyard == null) {
-            return;
-        }
-        for (int i = 0; i < graveyard.size(); i++) {
-            Card card = graveyard.get(i);
-            if (card.getId().equals(sourceCard.getId())) {
-                graveyard.set(i, boostedCopy(card, boost));
-                return;
+        for (List<Card> graveyard : gameData.playerGraveyards.values()) {
+            for (int i = 0; i < graveyard.size(); i++) {
+                Card card = graveyard.get(i);
+                if (card.getId().equals(sourceCard.getId())) {
+                    graveyard.set(i, boostedCopy(card, boost));
+                    return;
+                }
             }
         }
     }

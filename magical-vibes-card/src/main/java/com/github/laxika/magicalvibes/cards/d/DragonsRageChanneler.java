@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "2048")
 @CardRegistration(set = "SLD", collectorNumber = "2053")
 @CardRegistration(set = "MH2", collectorNumber = "121")
+@CardRegistration(set = "MB2", collectorNumber = "56")
 public class DragonsRageChanneler extends Card {
 
     public DragonsRageChanneler() {

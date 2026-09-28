@@ -33,6 +33,7 @@ class ScholarOfNewHorizonsTest extends BaseCardTest {
         Permanent scholar = addScholar();
         harness.addToBattlefield(player2, new Forest());
         harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(scholar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -79,6 +80,8 @@ class ScholarOfNewHorizonsTest extends BaseCardTest {
     }
 
     private Permanent addScholar() {
-        return addCreatureReady(player1, new ScholarOfNewHorizons());
+        Permanent scholar = harness.enterBattlefieldAndReturn(player1, new ScholarOfNewHorizons());
+        scholar.setSummoningSick(false);
+        return scholar;
     }
 }

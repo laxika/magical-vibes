@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "SLZ", collectorNumber = "66")
 @CardRegistration(set = "SLZ", collectorNumber = "187")
 @CardRegistration(set = "SLZ", collectorNumber = "308")
+@CardRegistration(set = "MB2", collectorNumber = "198")
 public class Pyroblast extends Card {
 
     public Pyroblast() {

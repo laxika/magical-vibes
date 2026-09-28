@@ -131,6 +131,11 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
             attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.InventoryManagementEffectHandler
+            inventoryManagementEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
+            returnAurasAttachedToDyingCreatureAndAttachEquipmentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -159,6 +164,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler keepOneOfEachTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesPartyThenSacrificesRestEffectHandler eachPlayerChoosesPartyHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseCreatureForEachPlayerThenSacrificeNonsharingCreaturesEffectHandler winnowingHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PromiseOfLoyaltyEffectHandler promiseOfLoyaltyHandler;
@@ -176,6 +183,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandler
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerSacrificesCreatureEffectHandler eachPlayerSacrificesCreatureHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachOpponentSacrificesCreatureCreateTokensEffectHandler
             eachOpponentSacrificesCreatureCreateTokensHandler;
@@ -222,6 +231,8 @@ public class MultiPermanentChoiceHandlerService {
             .DefendingPlayerChoosesPermanentsToExileEffectHandler defendingPlayerChoosesPermanentsToExileHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .VoteForCreatureThenDestroyMostVotedEffectHandler voteForCreatureThenDestroyMostVotedEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .SecretCouncilEffectHandler secretCouncilEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -338,6 +349,10 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
@@ -753,6 +768,13 @@ public class MultiPermanentChoiceHandlerService {
             attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler.completeChoice(
                     gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.InventoryManagementAttachmentSelection) {
+            inventoryManagementEffectHandler.completeAttachmentSelection(gameData, playerId, permanentIds);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature ctx) {
+            returnAurasAttachedToDyingCreatureAndAttachEquipmentHandler.completeChoice(
+                    gameData, playerId, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.UnattachEquipmentFromControlledCreature ctx) {
             chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -869,6 +891,11 @@ public class MultiPermanentChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreature ctx) {
+            eachPlayerSacrificesCreatureHandler.completeChoice(gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx) {
             eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -905,6 +932,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx) {
+            handleVoteForCreatureThenDestroyMostVotedChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice ctx) {
             handleSecretCouncilChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice ctx) {
@@ -984,6 +1013,13 @@ public class MultiPermanentChoiceHandlerService {
             handleFadeAwaySacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
             handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice ctx) {
+            eachPlayerChoosesPartyHandler.completeChoice(gameData, permanentIds, ctx);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.WinnowingChoice ctx) {
             handleWinnowingChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PromiseOfLoyaltyChoice ctx) {
@@ -3319,6 +3355,12 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleVoteForCreatureThenDestroyMostVotedChoice(GameData gameData,
+            List<UUID> permanentIds,
+            MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice context) {
+        voteForCreatureThenDestroyMostVotedEffectHandler.completeVote(gameData, permanentIds, context);
     }
 
     private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId,

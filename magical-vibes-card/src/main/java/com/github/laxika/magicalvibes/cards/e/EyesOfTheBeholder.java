@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "101")
+@CardRegistration(set = "HBG", collectorNumber = "154")
 public class EyesOfTheBeholder extends Card {
 
     public EyesOfTheBeholder() {

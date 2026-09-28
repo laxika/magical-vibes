@@ -36,6 +36,7 @@ class TrapTheTrespassersTest extends BaseCardTest {
     @Test
     void putsTwoStunCountersOnCreatureReceivingBothVotes() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         castTrap();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());

@@ -29,7 +29,9 @@ class BackdraftTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
 
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
@@ -68,7 +70,9 @@ class BackdraftTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }

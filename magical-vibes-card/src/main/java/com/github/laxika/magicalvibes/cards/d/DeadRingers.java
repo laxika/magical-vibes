@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "37")
+@CardRegistration(set = "MB2", collectorNumber = "41")
 public class DeadRingers extends Card {
 
     public DeadRingers() {

@@ -47,8 +47,9 @@ class EstinienVarlineauTest extends BaseCardTest {
         addCreatureReady(player1, new ShivanDragon());
         addCreatureReady(player1, new GrizzlyBears());
         GrizzlyBears drawnCard = new GrizzlyBears();
+        GrizzlyBears secondDrawnCard = new GrizzlyBears();
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setLibrary(player1, List.of(drawnCard, secondDrawnCard));
         harness.setLife(player1, 20);
 
         declareAttackers(List.of(0, 1, 2));
@@ -56,8 +57,8 @@ class EstinienVarlineauTest extends BaseCardTest {
         advanceToPostcombatMain(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(drawnCard, secondDrawnCard);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
     @Test

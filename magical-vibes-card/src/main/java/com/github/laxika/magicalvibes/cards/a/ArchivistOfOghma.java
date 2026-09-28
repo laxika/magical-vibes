@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "874")
+@CardRegistration(set = "HBG", collectorNumber = "83")
 public class ArchivistOfOghma extends Card {
 
     public ArchivistOfOghma() {

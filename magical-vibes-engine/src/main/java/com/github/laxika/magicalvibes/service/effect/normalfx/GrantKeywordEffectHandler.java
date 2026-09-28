@@ -100,6 +100,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 addLegacyBucket(permanent, grant.duration(), grantableKeywords);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                        entry.getCard().getName(), null, entry.getControllerId(),
+                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
+                                grant.duration(), grant.grantCondition()),
+                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
                 count++;
             }
 

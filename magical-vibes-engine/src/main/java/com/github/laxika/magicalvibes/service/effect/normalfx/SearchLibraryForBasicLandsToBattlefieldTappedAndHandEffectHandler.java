@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -36,6 +37,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,8 +65,12 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
         CardSubtype subtype = effect.subtype();
         List<Card> matchingCards = deck.stream()
-                .filter(card -> !effect.basicOnly()
-                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
+                .filter(card -> effect.filter() != null
+                        ? predicateEvaluationService.matchesCardPredicate(
+                                card, effect.filter(), null, gameData, controllerId)
+                        : !effect.basicOnly()
+                                || (card.hasType(CardType.LAND)
+                                && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .filter(card -> subtype == null || card.getSubtypes().contains(subtype))
                 .toList();
 
@@ -81,7 +87,9 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
         String cardDescription = describeCardType(effect);
 
         if (effect.battlefieldCount() > 1) {
-            CardPredicate filter = effect.basicOnly()
+            CardPredicate filter = effect.filter() != null
+                    ? effect.filter()
+                    : effect.basicOnly()
                     ? effect.subtype() == null
                             ? CardPredicateUtils.basicLand()
                             : new CardAllOfPredicate(List.of(
@@ -113,7 +121,9 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
         // First pick: land to battlefield tapped (no shuffle yet); the follow-up
         // hand search rides the search interaction
-        LibrarySearchFollowUp followUp = effect.basicOnly()
+        LibrarySearchFollowUp followUp = effect.filter() != null
+                ? LibrarySearchFollowUp.forCardsToHand(toHandCount, effect.filter(), effect.cardDescription())
+                : effect.basicOnly()
                 ? LibrarySearchFollowUp.forBasicLandToHand(toHandCount, subtype)
                 : LibrarySearchFollowUp.forLandSubtypeToHand(toHandCount, subtype);
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
@@ -129,6 +139,9 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
     }
 
     private String describeCardType(SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect effect) {
+        if (effect.cardDescription() != null) {
+            return effect.cardDescription();
+        }
         if (effect.subtype() == null) {
             return effect.basicOnly() ? "basic land" : "land";
         }

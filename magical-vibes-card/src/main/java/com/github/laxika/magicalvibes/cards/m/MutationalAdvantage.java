@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 import java.util.Set;
 
+@CardRegistration(set = "PIP", collectorNumber = "111")
+@CardRegistration(set = "PIP", collectorNumber = "422")
+@CardRegistration(set = "PIP", collectorNumber = "639")
+@CardRegistration(set = "PIP", collectorNumber = "950")
 @CardRegistration(set = "SLD", collectorNumber = "2454")
 public class MutationalAdvantage extends Card {
 

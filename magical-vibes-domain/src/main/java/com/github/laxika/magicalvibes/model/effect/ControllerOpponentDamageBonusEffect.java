@@ -14,6 +14,10 @@ public interface ControllerOpponentDamageBonusEffect extends CardEffect {
         return true;
     }
 
+    default boolean excludesSource() {
+        return false;
+    }
+
     default boolean appliesToOpponentPermanents() {
         return true;
     }

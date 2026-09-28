@@ -41,7 +41,9 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
         for (CoinFlipService.CoinFlipResult result : results) {
             if (result.heads()) {
                 heads++;
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                if (result.isActualCoinFlip()) {
+                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                }
             }
         }
 

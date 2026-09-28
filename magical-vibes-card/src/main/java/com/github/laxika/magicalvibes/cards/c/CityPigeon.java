@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "4")
 @CardRegistration(set = "OM1", collectorNumber = "5")
+@CardRegistration(set = "MSC", collectorNumber = "769")
 public class CityPigeon extends Card {
 
     public CityPigeon() {

@@ -55,6 +55,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
                 ? gameQueryService.getEffectivePower(gameData, source)
                 : gameQueryService.getEffectiveToughness(gameData, source);
         int currentLife = gameData.getLife(playerId);
+        currentStat = gameData.capLifeTotal(playerId, currentStat);
 
         // CR 118.7: if the player's life total can't change, the exchange doesn't occur
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {

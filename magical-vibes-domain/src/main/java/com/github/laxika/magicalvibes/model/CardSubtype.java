@@ -19,11 +19,13 @@ public enum CardSubtype {
     CAVE("Cave"),
     LAIR("Lair"),
     URZAS("Urza's"),
+    ULAMOGS("Ulamog's"),
     MINE("Mine"),
     POWER_PLANT("Power-Plant"),
     TOWER("Tower"),
     ANGEL("Angel"),
     ARCHON("Archon"),
+    ARMORED("Armored"),
     AETHERBORN("Aetherborn"),
     ALIEN("Alien"),
     ANTELOPE("Antelope"),
@@ -37,6 +39,7 @@ public enum CardSubtype {
     ARTIFICER("Artificer"),
     ADVISOR("Advisor"),
     ASSASSIN("Assassin"),
+    ATHLETE("Athlete"),
     ASSASSIN_OR_FREERUNNING("Assassin or Freerunning"),
     WALL("Wall"),
     BARD("Bard"),
@@ -60,6 +63,7 @@ public enum CardSubtype {
     DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
+    SPUZZEM("Spuzzem"),
     SYMBIOTE("Symbiote"),
     GAMMA("Gamma"),
     VILLAIN("Villain"),
@@ -69,6 +73,7 @@ public enum CardSubtype {
     KREE("Kree"),
     HERO("Hero"),
     CLERIC("Cleric"),
+    TIEFLING("Tiefling"),
     HALFLING("Halfling"),
     HALF("Half"),
     CLOWN("Clown"),
@@ -79,6 +84,7 @@ public enum CardSubtype {
     HOMARID("Homarid"),
     CEPHALID("Cephalid"),
     NAUTILID("Nautilid"),
+    NAGA("Naga"),
     CENTAUR("Centaur"),
     SOLDIER("Soldier"),
     SERVO("Servo"),
@@ -96,6 +102,7 @@ public enum CardSubtype {
     RUNE("Rune"),
     PLAN("Plan"),
     ROOM("Room"),
+    REALM("Realm"),
     NOMAD("Nomad"),
     ALLY("Ally"),
     KOR("Kor"),
@@ -141,6 +148,7 @@ public enum CardSubtype {
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
     COWARD("Coward"),
+    COW("Cow"),
     COYOTE("Coyote"),
     VARMINT("Varmint"),
     DESERTER("Deserter"),
@@ -157,6 +165,7 @@ public enum CardSubtype {
     DRONE("Drone"),
     SPAWN("Spawn"),
     SCION("Scion"),
+    SCORPION("Scorpion"),
     WARRIOR("Warrior"),
     WARLOCK("Warlock"),
     METATHRAN("Metathran"),
@@ -190,6 +199,7 @@ public enum CardSubtype {
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
+    GITH("Gith"),
     HIPPO("Hippo"),
     PHELDDAGRIF("Phelddagrif"),
     PHOENIX("Phoenix"),
@@ -264,6 +274,7 @@ public enum CardSubtype {
     PERFORMER("Performer"),
     PEST("Pest"),
     PILOT("Pilot"),
+    BRUSHWAGG("Brushwagg"),
     PIRATE("Pirate"),
     TEZZERET("Tezzeret"),
     VIVIEN("Vivien"),
@@ -292,6 +303,7 @@ public enum CardSubtype {
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
     BOOK("Book"),
+    BOBBLEHEAD("Bobblehead"),
     CITIZEN("Citizen"),
     SCARECROW("Scarecrow"),
     CARIBOU("Caribou"),
@@ -312,6 +324,7 @@ public enum CardSubtype {
     ZUBERA("Zubera"),
     YANGGU("Yanggu"),
     YANLING("Yanling"),
+    WRENN("Wrenn"),
     MITE("Mite"),
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
@@ -324,6 +337,7 @@ public enum CardSubtype {
     RIGGER("Rigger"),
     MIRRODIN("Mirrodin"),
     SERRAS_REALM("Serra's Realm"),
+SYNTH("Synth"),
     NECRON("Necron"),
     TYRANID("Tyranid");
 
@@ -332,11 +346,11 @@ public enum CardSubtype {
 
     private static final List<CardSubtype> LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, CLOUD, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
-            URZAS, MINE, POWER_PLANT, TOWER);
+            URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANGGU, YANLING);
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANGGU, YANLING, WRENN);
 
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;

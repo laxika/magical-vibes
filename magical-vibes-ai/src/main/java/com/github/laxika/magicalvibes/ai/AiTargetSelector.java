@@ -899,6 +899,7 @@ class AiTargetSelector {
             boolean compatible = switch (constraint) {
                 case SHARE_CREATURE_TYPES -> gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
+                case SHARE_TOUGHNESS -> gameQueryService.haveEqualToughness(gameData, other, candidate);
                 case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
                         gameQueryService.sharesArtifactCreatureOrLandType(gameData, other, candidate);
                 case SHARE_ARTIFACT_OR_CREATURE_TYPE ->

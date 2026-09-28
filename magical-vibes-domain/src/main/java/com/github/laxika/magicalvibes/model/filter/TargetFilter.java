@@ -10,6 +10,7 @@ public sealed interface TargetFilter permits
         ControlledPermanentPredicateTargetFilter,
         ExiledCardPredicateTargetFilter,
         GraveyardCardPredicateTargetFilter,
+        HandCardPredicateTargetFilter,
         OwnedPermanentPredicateTargetFilter,
         PermanentPredicateTargetFilter,
         PlayerPredicateTargetFilter,

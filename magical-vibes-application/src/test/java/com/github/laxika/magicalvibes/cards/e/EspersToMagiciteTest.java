@@ -33,7 +33,7 @@ class EspersToMagiciteTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.EspersToMagiciteCreatureChoice.class);
         assertThat(choice.validCardIds()).containsExactly(bears.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
 
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 

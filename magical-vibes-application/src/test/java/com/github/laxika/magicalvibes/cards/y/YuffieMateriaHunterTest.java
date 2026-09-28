@@ -26,6 +26,7 @@ class YuffieMateriaHunterTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -43,6 +44,7 @@ class YuffieMateriaHunterTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(equipment);
@@ -55,6 +57,7 @@ class YuffieMateriaHunterTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
         castYuffie(equipment.getId());
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

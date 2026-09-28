@@ -49,6 +49,8 @@ export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecke
   @Input() poisonCounters1 = 0;
   @Input() energyCounters0 = 0;
   @Input() energyCounters1 = 0;
+  @Input() radCounters0 = 0;
+  @Input() radCounters1 = 0;
   @Input() playerId0 = '';
   @Input() playerId1 = '';
   @Input() stackTargetId: string | null = null;
@@ -178,6 +180,7 @@ export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecke
   get opponentBadgeLifeTotal(): number { return this.opponentPlayerIndex === 0 ? this.lifeTotal0 : this.lifeTotal1; }
   get opponentBadgePoisonCounters(): number { return this.opponentPlayerIndex === 0 ? this.poisonCounters0 : this.poisonCounters1; }
   get opponentBadgeEnergyCounters(): number { return this.opponentPlayerIndex === 0 ? this.energyCounters0 : this.energyCounters1; }
+  get opponentBadgeRadCounters(): number { return this.opponentPlayerIndex === 0 ? this.radCounters0 : this.radCounters1; }
   get opponentBadgePlayerId(): string { return this.opponentPlayerIndex === 0 ? this.playerId0 : this.playerId1; }
   get opponentBadgeHandSize(): number { return this.opponentPlayerIndex === 0 ? this.player1HandSize : this.player2HandSize; }
   get opponentBadgeDeckSize(): number { return this.opponentPlayerIndex === 0 ? this.player1DeckSize : this.player2DeckSize; }
@@ -188,6 +191,7 @@ export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecke
   get myBadgeLifeTotal(): number { return this.myPlayerIndex === 0 ? this.lifeTotal0 : this.lifeTotal1; }
   get myBadgePoisonCounters(): number { return this.myPlayerIndex === 0 ? this.poisonCounters0 : this.poisonCounters1; }
   get myBadgeEnergyCounters(): number { return this.myPlayerIndex === 0 ? this.energyCounters0 : this.energyCounters1; }
+  get myBadgeRadCounters(): number { return this.myPlayerIndex === 0 ? this.radCounters0 : this.radCounters1; }
   get myBadgePlayerId(): string { return this.myPlayerIndex === 0 ? this.playerId0 : this.playerId1; }
   get myBadgeHandSize(): number { return this.myPlayerIndex === 0 ? this.player1HandSize : this.player2HandSize; }
   get myBadgeDeckSize(): number { return this.myPlayerIndex === 0 ? this.player1DeckSize : this.player2DeckSize; }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 @CardRegistration(set = "SLC", collectorNumber = "60")
 @CardRegistration(set = "SOC", collectorNumber = "254")
 @CardRegistration(set = "CMM", collectorNumber = "258")
+@CardRegistration(set = "MB2", collectorNumber = "247")
 public class SqueeGoblinNabob extends Card {
 
     public SqueeGoblinNabob() {

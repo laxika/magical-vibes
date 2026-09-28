@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MSH", collectorNumber = "16")
+@CardRegistration(set = "MSC", collectorNumber = "840")
 public class HeroInTraining extends Card {
 
     public HeroInTraining() {

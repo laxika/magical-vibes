@@ -51,9 +51,11 @@ public class ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler
                 continue;
             }
 
-            Card exiled = graveyard.get(ThreadLocalRandom.current().nextInt(graveyard.size()));
-            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
-            if (exiled.getOwnerId() == null) {
+            Card graveyardCard = graveyard.get(ThreadLocalRandom.current().nextInt(graveyard.size()));
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, graveyardCard.getId());
+            Card exiled = graveyardCard;
+            if (graveyardCard.getOwnerId() == null) {
+                exiled = graveyardCard.createRuntimeCopy();
                 exiled.setOwnerId(opponentId);
             }
             exileService.exileCard(gameData, opponentId, exiled);

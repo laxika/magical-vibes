@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "50")
 @CardRegistration(set = "ELD", collectorNumber = "40")
+@CardRegistration(set = "HBG", collectorNumber = "112")
 public class CharmedSleep extends Card {
 
     public CharmedSleep() {

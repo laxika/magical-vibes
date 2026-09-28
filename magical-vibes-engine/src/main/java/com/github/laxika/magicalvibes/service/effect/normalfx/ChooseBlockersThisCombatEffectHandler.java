@@ -24,7 +24,8 @@ public class ChooseBlockersThisCombatEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         gameData.queueDelayedAction(
-                new DelayedBlockerDeclarationControl(controllerId, entry.getCard()));
+                new DelayedBlockerDeclarationControl(controllerId, entry.getCard(),
+                        ((ChooseBlockersThisCombatEffect) effect).untilEndOfTurn()));
         log.info("Game {} - {} hands blocker declaration to {} for this combat",
                 gameData.id, entry.getCard().getName(), controllerId);
     }

@@ -12,11 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Fires {@link EffectSlot#ON_OPPONENT_SEARCHES_LIBRARY} triggers (Ob Nixilis, Unshackled) from the
- * unified library-search choke point. The searching player is baked onto the triggered ability as
- * its {@code targetId}, so {@code TARGET_PLAYER}-scoped effects (sacrifice, life loss) act on them.
- */
+/** Fires library-search triggers from the unified library-search choke point. */
 public final class LibrarySearchTriggerHelper {
 
     private LibrarySearchTriggerHelper() {}
@@ -25,10 +21,11 @@ public final class LibrarySearchTriggerHelper {
                                                    UUID searchingPlayerId) {
         gameData.playersWhoSearchedLibraryThisTurn.add(searchingPlayerId);
         gameData.forEachBattlefield((controllerId, battlefield) -> {
-            if (controllerId.equals(searchingPlayerId)) return;
-
             for (var perm : List.copyOf(battlefield)) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY);
+                boolean controllerSearch = controllerId.equals(searchingPlayerId);
+                List<CardEffect> effects = perm.getCard().getEffects(controllerSearch
+                        ? EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY
+                        : EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY);
                 if (effects.isEmpty()) continue;
 
                 gameData.enqueueTrigger(new StackEntry(
@@ -37,7 +34,7 @@ public final class LibrarySearchTriggerHelper {
                         controllerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(effects),
-                        searchingPlayerId,
+                        controllerSearch ? null : searchingPlayerId,
                         perm.getId()
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

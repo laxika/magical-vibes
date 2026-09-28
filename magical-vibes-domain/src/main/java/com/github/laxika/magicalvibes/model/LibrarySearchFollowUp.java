@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,15 +72,34 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
                                        boolean useSelectedCardManaValue,
-                                       CardEffect effectIfNoCardChosen) {
+                                       CardEffect effectIfNoCardChosen,
+                                       D20BasicLandSearch d20BasicLandSearch) {
+
+        public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
+                                    boolean useSelectedCardManaValue,
+                                    CardEffect effectIfNoCardChosen) {
+            this(predicate, effect, useSelectedCardManaValue, effectIfNoCardChosen, null);
+        }
 
         public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
                                     boolean useSelectedCardManaValue) {
-            this(predicate, effect, useSelectedCardManaValue, null);
+            this(predicate, effect, useSelectedCardManaValue, null, null);
         }
 
         public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
-            this(predicate, effect, false, null);
+            this(predicate, effect, false, null, null);
+        }
+    }
+
+    /** Completion data for a search that reveals basic lands before rolling a d20. */
+    public record D20BasicLandSearch(
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect oneToNine,
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect tenToNineteen,
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect twenty) {
+
+        public RollD20Effect rollEffect(List<Card> cards) {
+            return new RollD20Effect(oneToNine.withCards(cards), tenToNineteen.withCards(cards),
+                    twenty.withCards(cards));
         }
     }
 
@@ -247,19 +267,29 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
-     * The remaining "search your library for a land card and put it into your hand" picks of a
-     * Cultivate-style search: how many picks are still owed, the land {@code subtype} the found
-     * cards must have, and whether they must be basic lands.
+     * The remaining "search your library for a card and put it into your hand" picks of a
+     * Cultivate-style search: how many picks are still owed, the optional land {@code subtype} or
+     * custom {@code filter} the found cards must have, and whether they must be basic lands.
      */
-    public record BasicLandToHandPick(int count, CardSubtype subtype, boolean basicOnly) {
+    public record BasicLandToHandPick(int count, CardSubtype subtype, boolean basicOnly,
+                                      CardPredicate filter, String description) {
+
+        public BasicLandToHandPick(int count, CardSubtype subtype, boolean basicOnly) {
+            this(count, subtype, basicOnly, null, null);
+        }
 
         public BasicLandToHandPick(int count, CardSubtype subtype) {
             this(count, subtype, true);
         }
 
+        public BasicLandToHandPick(int count, CardPredicate filter, String description) {
+            this(count, null, false, filter, description);
+        }
+
         /** The same pick with one card taken off the remaining count (null once none are left). */
         public BasicLandToHandPick decremented() {
-            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype, basicOnly);
+            return count <= 1 ? null : new BasicLandToHandPick(
+                    count - 1, subtype, basicOnly, filter, description);
         }
     }
 
@@ -448,6 +478,16 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 new SelectedCardFollowUp(predicate, effect, true));
     }
 
+    public static LibrarySearchFollowUp forD20BasicLandSearch(
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect oneToNine,
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect tenToNineteen,
+            com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect twenty) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(null, null, false, null,
+                        new D20BasicLandSearch(oneToNine, tenToNineteen, twenty)));
+    }
+
     /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */
     public static LibrarySearchFollowUp forSelectedCardWithRandomRest(
             CardPredicate predicate, CardEffect effect) {
@@ -468,6 +508,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /** Further land-subtype cards to hand, including nonbasic cards with that subtype. */
     public static LibrarySearchFollowUp forLandSubtypeToHand(int count, CardSubtype subtype) {
         return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype, false), null, List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
+                List.of(), null, null, null);
+    }
+
+    /** Further cards matching a custom predicate to hand. */
+    public static LibrarySearchFollowUp forCardsToHand(int count, CardPredicate filter,
+                                                       String description) {
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, filter, description), null,
+                List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
                 List.of(), null, null, null);
     }
 

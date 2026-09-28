@@ -38,7 +38,7 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
-                entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName());
+                entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName(), entry);
     }
 
     public void completeVote(GameData gameData, List<UUID> permanentIds,
@@ -46,11 +46,12 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
         Map<UUID, Integer> votes = new LinkedHashMap<>(context.votes());
         votes.merge(permanentIds.getFirst(), 1, Integer::sum);
         beginNextVote(gameData, context.remainingPlayerIds(), context.effectControllerId(), votes,
-                context.sourceName());
+                context.sourceName(), gameData.pendingEffectResolutionEntry);
     }
 
     private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds,
-                               UUID effectControllerId, Map<UUID, Integer> votes, String sourceName) {
+                               UUID effectControllerId, Map<UUID, Integer> votes, String sourceName,
+                               StackEntry resolvingEntry) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID choosingPlayerId = remaining.removeFirst();
@@ -75,7 +76,7 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
         }
 
         votingFinishedSupport.finishVoting(gameData, effectControllerId);
-        resolveVotes(gameData, votes);
+        resolveVotes(gameData, votes, resolvingEntry);
     }
 
     private List<UUID> creatureIdsNotControlledBy(GameData gameData, UUID effectControllerId) {
@@ -93,8 +94,7 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
         return candidates;
     }
 
-    private void resolveVotes(GameData gameData, Map<UUID, Integer> votes) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
+    private void resolveVotes(GameData gameData, Map<UUID, Integer> votes, StackEntry entry) {
         if (entry == null) {
             throw new IllegalStateException("Secret council resolution is not resumable");
         }

@@ -155,6 +155,30 @@ public class TargetValidationService {
             return;
         }
 
+        boolean handCardTarget = predicate.admits(TargetPredicate.Kind.HAND_CARD);
+        if (handCardTarget) {
+            requireTarget(ctx);
+            UUID controllerId = ctx.sourceControllerId();
+            Card target = controllerId == null ? null : gameDataHandCard(ctx, controllerId, ctx.targetId());
+            if (target != null) {
+                TargetPredicate.HandCards restriction = (TargetPredicate.HandCards)
+                        predicate.leaf(TargetPredicate.Kind.HAND_CARD).orElseThrow();
+                UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+                if (!predicateEvaluationService.matchesCardPredicate(
+                        target, restriction.inner(), sourceCardId, ctx.gameData(), controllerId,
+                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                    throw new IllegalStateException("Target card does not match the required predicate");
+                }
+                if (!predicate.admits(TargetPredicate.Kind.PERMANENT)
+                        && !predicate.admits(TargetPredicate.Kind.PLAYER)) {
+                    return;
+                }
+            } else if (!predicate.admits(TargetPredicate.Kind.PERMANENT)
+                    && !predicate.admits(TargetPredicate.Kind.PLAYER)) {
+                throw new IllegalStateException("Target card is not in its controller's hand");
+            }
+        }
+
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
         if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
@@ -183,6 +207,13 @@ public class TargetValidationService {
         if (spec.harmful()) {
             checkProtection(ctx, target);
         }
+    }
+
+    private Card gameDataHandCard(TargetValidationContext ctx, UUID controllerId, UUID targetId) {
+        return ctx.gameData().playerHands.getOrDefault(controllerId, List.of()).stream()
+                .filter(card -> card.getId().equals(targetId))
+                .findFirst()
+                .orElse(null);
     }
 
     private void validateGraveyardTarget(TargetValidationContext ctx, TargetPredicate predicate) {

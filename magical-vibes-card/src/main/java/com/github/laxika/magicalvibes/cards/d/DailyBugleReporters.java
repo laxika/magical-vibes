@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "6")
 @CardRegistration(set = "OM1", collectorNumber = "16")
+@CardRegistration(set = "MSC", collectorNumber = "771")
 public class DailyBugleReporters extends Card {
 
     public DailyBugleReporters() {

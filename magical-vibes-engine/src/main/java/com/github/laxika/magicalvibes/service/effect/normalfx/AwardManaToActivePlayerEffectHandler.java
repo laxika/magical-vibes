@@ -60,10 +60,17 @@ public class AwardManaToActivePlayerEffectHandler implements NormalEffectHandler
             return;
         }
         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, entry.getControllerId(), e.color());
-        pool.add(effectiveColor, amount);
+        if (e.restriction() == null) {
+            pool.add(effectiveColor, amount);
+        } else {
+            e.restriction().applyTo(pool, effectiveColor, amount,
+                    source != null ? source.getChosenSubtype() : null);
+        }
 
         String playerName = gameData.playerIdToName.get(recipientId);
-        gameLogService.append(gameData, GameLog.text(playerName + " adds " + amount + " " + effectiveColor.getCode() + "."));
-        log.info("Game {} - {} adds {} {}", gameData.id, playerName, amount, effectiveColor);
+        String restriction = e.restriction() == null ? "" : " (" + e.restriction().description() + ")";
+        gameLogService.append(gameData, GameLog.text(playerName + " adds " + amount + " "
+                + effectiveColor.getCode() + restriction + "."));
+        log.info("Game {} - {} adds {} {}{}", gameData.id, playerName, amount, effectiveColor, restriction);
     }
 }

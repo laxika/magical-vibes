@@ -70,6 +70,7 @@ class BrimazBlightOfOreskosTest extends BaseCardTest {
 
         advanceToEndStep(player2);
         harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
 
         assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(2);
     }

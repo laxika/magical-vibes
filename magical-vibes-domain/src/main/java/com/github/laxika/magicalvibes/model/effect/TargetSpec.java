@@ -123,4 +123,9 @@ public record TargetSpec(
     public Optional<CardPredicate> graveyardCardPredicate() {
         return declaredTarget == null ? Optional.empty() : declaredTarget.graveyardCardPredicate();
     }
+
+    /** The card predicate applied within a hand-card target, or empty otherwise. */
+    public Optional<CardPredicate> handCardPredicate() {
+        return declaredTarget == null ? Optional.empty() : declaredTarget.handCardPredicate();
+    }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLi
 
 @CardRegistration(set = "SLD", collectorNumber = "821")
 @CardRegistration(set = "MH1", collectorNumber = "46")
+@CardRegistration(set = "MB2", collectorNumber = "160")
 public class EchoOfEons extends Card {
 
     public EchoOfEons() {

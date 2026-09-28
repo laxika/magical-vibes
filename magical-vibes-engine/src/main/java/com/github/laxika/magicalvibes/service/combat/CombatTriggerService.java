@@ -292,6 +292,8 @@ public class CombatTriggerService {
                 .collect(java.util.stream.Collectors.toSet());
         if (boundGroups.isEmpty()) {
             return card.getSpellTargets().size() > 1
+                    || card.getSpellTargets().stream().anyMatch(group -> group.getMaxTargets() > 1
+                            || group.getMinTargets() == 0 || group.getDynamicMinTargets() != null)
                     || etbTokenTargetService.needsSlotBySlotTargetSelection(card);
         }
         return boundGroups.size() > 1 || card.getSpellTargets().stream()

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "110")
+@CardRegistration(set = "MB2", collectorNumber = "51")
 public class WishclawTalisman extends Card {
 
     public WishclawTalisman() {

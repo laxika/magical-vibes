@@ -402,7 +402,7 @@ class EnterTriggerCollectorServiceTest {
         Permanent enteringPermanent = new Permanent(entering);
         gd.playerBattlefields.get(player1Id).add(enteringPermanent);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(entering), eq(predicate), eq(null), any(), any()))
+        when(predicateEvaluationService.matchesCardPredicate(eq(entering), eq(predicate), any(), any(), any()))
                 .thenReturn(true);
 
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);

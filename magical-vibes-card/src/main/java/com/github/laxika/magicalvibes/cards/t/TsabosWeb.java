@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "317")
+@CardRegistration(set = "MB2", collectorNumber = "143")
 public class TsabosWeb extends Card {
 
     public TsabosWeb() {

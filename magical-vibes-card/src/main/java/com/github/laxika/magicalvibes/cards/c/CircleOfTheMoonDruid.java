@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "177")
+@CardRegistration(set = "HBG", collectorNumber = "204")
 public class CircleOfTheMoonDruid extends Card {
 
     public CircleOfTheMoonDruid() {

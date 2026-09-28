@@ -46,6 +46,9 @@
               <svg viewBox="0 0 12 12"><path d="M7.1 0 2 6.5h3.1L4.5 12 10 5.2H6.8z"/></svg>{{ opponentBadgeEnergyCounters }}
             </span>
           }
+          @if (opponentBadgeRadCounters > 0) {
+            <span class="badge-stat badge-rad" title="Rad counters">☢{{ opponentBadgeRadCounters }}</span>
+          }
           <span class="badge-stat badge-hand" title="Hand">
             <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ opponentBadgeHandSize }}
           </span>
@@ -81,6 +84,9 @@
             <span class="badge-stat badge-energy" title="Energy">
               <svg viewBox="0 0 12 12"><path d="M7.1 0 2 6.5h3.1L4.5 12 10 5.2H6.8z"/></svg>{{ myBadgeEnergyCounters }}
             </span>
+          }
+          @if (myBadgeRadCounters > 0) {
+            <span class="badge-stat badge-rad" title="Rad counters">☢{{ myBadgeRadCounters }}</span>
           }
           <span class="badge-stat badge-hand" title="Hand">
             <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ myBadgeHandSize }}

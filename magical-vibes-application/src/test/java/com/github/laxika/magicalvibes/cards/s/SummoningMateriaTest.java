@@ -41,7 +41,8 @@ class SummoningMateriaTest extends BaseCardTest {
         materia.setAttachedTo(creature.getId());
         GrizzlyBears topCreature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCreature));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castFromLibraryTop(player1);
         harness.passBothPriorities();

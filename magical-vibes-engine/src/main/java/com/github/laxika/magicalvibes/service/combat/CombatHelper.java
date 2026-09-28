@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackCountRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -42,6 +44,10 @@ public final class CombatHelper {
                 if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                     return true;
                 }
+                if (restriction.unblockableIfDefenderHasRadCounters()
+                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
+                    return true;
+                }
                 if (hasDefenderCondition(restriction, landwalkIgnored)
                         && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
                         attacker, restriction.unblockableIfDefenderControls())) {
@@ -59,6 +65,10 @@ public final class CombatHelper {
                         attacker, restriction.unblockableIfDefenderControls())) {
                     return true;
                 }
+                if (restriction.unblockableIfDefenderHasRadCounters()
+                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
+                    return true;
+                }
             }
         }
         final boolean[] result = {false};
@@ -74,6 +84,11 @@ public final class CombatHelper {
                         return;
                     }
                     if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                        result[0] = true;
+                        return;
+                    }
+                    if (restriction.unblockableIfDefenderHasRadCounters()
+                            && defenderHasRadCounters(gameData, defenderBattlefield)) {
                         result[0] = true;
                         return;
                     }
@@ -177,6 +192,22 @@ public final class CombatHelper {
         return null;
     }
 
+    private static boolean defenderHasRadCounters(GameData gameData, List<Permanent> defenderBattlefield) {
+        UUID defenderId = null;
+        if (defenderBattlefield != null) {
+            for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+                if (entry.getValue() == defenderBattlefield) {
+                    defenderId = entry.getKey();
+                    break;
+                }
+            }
+        }
+        if (defenderId == null) {
+            defenderId = defenderControllerId(gameData, defenderBattlefield);
+        }
+        return defenderId != null && gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
+    }
+
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
                                                      GameData gameData, Permanent attacker) {
         boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -214,6 +245,22 @@ public final class CombatHelper {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     validateMaximumAttackers(limitOrNull(effect), gameData.planechase.controllerId,
                             planar.getId(), attackerIndices, attackTargets);
+                }
+            }
+        }
+    }
+
+    /** Validates attack-count restrictions carried by face-up cards in the attacking player's command zone. */
+    public static void validateCommandZoneAttackCount(GameData gameData, UUID attackingPlayerId,
+                                                      int attackerCount) {
+        for (Card card : gameData.playerCommandZones.getOrDefault(attackingPlayerId, List.of())) {
+            if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                continue;
+            }
+            for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                if (effect instanceof CombatAttackCountRestrictionEffect restriction
+                        && !restriction.allowsAttackCount(attackerCount)) {
+                    throw new IllegalStateException(restriction.restrictionViolationMessage());
                 }
             }
         }

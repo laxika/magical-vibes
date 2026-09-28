@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "DDD", collectorNumber = "55")
 @CardRegistration(set = "GVL", collectorNumber = "55")
 @CardRegistration(set = "C14", collectorNumber = "150")
+@CardRegistration(set = "MB2", collectorNumber = "45")
 @CardRegistration(set = "40K", collectorNumber = "203")
 public class Mutilate extends Card {
 

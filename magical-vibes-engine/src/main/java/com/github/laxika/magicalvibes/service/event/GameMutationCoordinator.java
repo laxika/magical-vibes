@@ -112,6 +112,7 @@ public class GameMutationCoordinator {
             try {
                 synchronized (gameData) {
                     result = mutation.get();
+                    gameData.recordWayBehindState();
                     batch = completeBatch(context);
                 }
             } finally {

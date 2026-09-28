@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "163")
 @CardRegistration(set = "OM1", collectorNumber = "164")
+@CardRegistration(set = "MSC", collectorNumber = "824")
 public class EerieGravestone extends Card {
 
     public EerieGravestone() {

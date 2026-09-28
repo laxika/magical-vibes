@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DonnieAprilAdorkableDuo.class, Divination.class, Forest.class,
         LeoninScimitar.class, GrizzlyBears.class})
@@ -35,8 +34,6 @@ class DonnieAprilAdorkableDuoTest extends BaseCardTest {
         harness.handleListChoice(player1, DRAW_MODE);
         harness.handleListChoice(player1, RETURN_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

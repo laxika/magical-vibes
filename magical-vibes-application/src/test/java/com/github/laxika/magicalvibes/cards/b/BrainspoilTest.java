@@ -150,7 +150,7 @@ class BrainspoilTest extends BaseCardTest {
         harness.setHand(player1, List.of(brainspoil));
         harness.setLibrary(player1, List.of(drawnAndDiscardedCard, matchingCard));
         harness.setHand(player2, List.of(new GrayscaledGharial()));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrayscaledGharial()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
 
@@ -10,8 +11,14 @@ import java.util.List;
  */
 public record ChooseModeNotYetChosenThisTurnOnSpellCastEffect(
         CardPredicate spellFilter,
+        StackEntryPredicate spellEntryFilter,
         List<ChooseOneEffect.ChooseOneOption> options
 ) implements CardEffect {
+
+    public ChooseModeNotYetChosenThisTurnOnSpellCastEffect(
+            CardPredicate spellFilter, List<ChooseOneEffect.ChooseOneOption> options) {
+        this(spellFilter, null, options);
+    }
 
     public ChooseModeNotYetChosenThisTurnOnSpellCastEffect {
         options = List.copyOf(options);
