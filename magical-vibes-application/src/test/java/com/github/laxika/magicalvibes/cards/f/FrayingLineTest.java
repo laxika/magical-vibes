@@ -22,6 +22,7 @@ class FrayingLineTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0, creature.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.ROPE)).isEqualTo(1);
     }
@@ -31,14 +32,18 @@ class FrayingLineTest extends BaseCardTest {
         Permanent line = harness.addToBattlefieldAndReturn(player1, new FrayingLine());
         Permanent sourceControllerCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent activeCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-
         advanceToUpkeepWithRopeTrigger(player2);
         harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(line, sourceControllerCreature);
-        assertThat(activeCreature.getCounterCount(CounterType.ROPE)).isEqualTo(1);
+        Permanent currentActiveCreature = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(activeCreature.getId()))
+                .findFirst().orElseThrow();
+        assertThat(currentActiveCreature.getCounterCount(CounterType.ROPE)).isEqualTo(1);
         assertThat(sourceControllerCreature.getCounterCount(CounterType.ROPE)).isZero();
     }
 
@@ -50,6 +55,7 @@ class FrayingLineTest extends BaseCardTest {
         roped.setCounterCount(CounterType.ROPE, 2);
 
         advanceToUpkeepWithRopeTrigger(player2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 

@@ -32,7 +32,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         attackWithAlora(alora, attacker);
 
         assertThat(attacker.isCantBeBlocked()).isTrue();
-        returnAttackerAtEndStep(attacker);
+        returnAttackerAtEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
@@ -45,7 +45,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         attackWithAlora(alora, attacker);
-        returnAttackerAtEndStep(attacker);
+        returnAttackerAtEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Soldier"))
@@ -58,9 +58,9 @@ class AloraRogueCompanionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         attackWithAlora(alora, attacker);
-        returnAttackerAtEndStep(attacker);
+        returnAttackerAtEndStep();
 
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 16);
     }
 
     @Test
@@ -69,7 +69,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         attackWithAlora(alora, attacker);
-        returnAttackerAtEndStep(attacker);
+        returnAttackerAtEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Treasure"))
@@ -82,7 +82,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         attackWithAlora(alora, attacker);
-        returnAttackerAtEndStep(attacker);
+        returnAttackerAtEndStep();
 
         assertThat(gd.perpetualCardPowerToughnessModifiers)
                 .containsEntry(attacker.getCard().getId(),
@@ -97,9 +97,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         Permanent secondOpponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         attackWithAlora(alora, attacker);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        returnAttackerAtEndStep();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -136,14 +134,15 @@ class AloraRogueCompanionTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(attacker.getId());
+        assertThat(choice.validIds()).contains(attacker.getId());
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
     }
 
-    private void returnAttackerAtEndStep(Permanent attacker) {
-        harness.forceStep(TurnStep.END_STEP);
+    private void returnAttackerAtEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

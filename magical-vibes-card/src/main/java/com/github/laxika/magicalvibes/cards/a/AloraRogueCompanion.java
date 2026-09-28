@@ -44,8 +44,8 @@ public class AloraRogueCompanion extends Card {
 
     public static void addAttackAbility(Card card, CardEffect delayedReturnEffect) {
         card.target(TargetFilters.attackingCreature(), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new MakeCreatureUnblockableEffect())
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MakeCreatureUnblockableEffect())
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                         new RegisterDelayedEndStepTriggerEffect(List.of(), delayedReturnEffect));
     }
 

@@ -131,6 +131,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
+                && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
                 && pendingIndex <= pendingEntry.getEffectsToResolve().size()) {
