@@ -39,6 +39,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
             return "card sharing a creature type with this creature";
         }
+        if (predicate instanceof CardSharesColorWithControlledPermanentPredicate) {
+            return "card sharing a color with a permanent you control";
+        }
         if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
             return "creature card sharing a creature type with your commander";
         }
@@ -110,6 +113,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardHasColorManaSymbolPredicate p) {
             return "card with a " + p.color().name().toLowerCase() + " mana symbol";
+        }
+        if (predicate instanceof CardHasHybridManaPredicate) {
+            return "card with hybrid mana in its mana cost";
         }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";

@@ -73,7 +73,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
 
         List<Card> matchingCards = new ArrayList<>(deck.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, seek.filter(), null, gameData, controllerId)
+                        card, seek.filter(), entry.getCard() == null ? null : entry.getCard().getId(),
+                        gameData, controllerId, entry.getSourcePermanentId(), null, null, source)
                         && (manaValueBound == null || (seek.manaValueBound().exact()
                         ? card.getManaValue() == manaValueBound
                         : card.getManaValue() <= manaValueBound))
@@ -92,6 +93,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
             if (seek.destination() == LibrarySearchDestination.HAND) {
                 gameData.addCardToHand(controllerId, chosen);
+                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                        gameData, controllerId, chosen);
             } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
                     || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                 Permanent permanent = new Permanent(chosen, Zone.LIBRARY);

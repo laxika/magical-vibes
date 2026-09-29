@@ -195,6 +195,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_OPPONENT_SCRIES` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_CONTROLLER_SEARCHES_LIBRARY` | `LibrarySearchTriggerHelper` | Controller searches their own library; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY` | `TriggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers` + `MiscTriggerCollectorService` | Controller's card enters their hand from their library; non-targeting effects enqueue directly |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |

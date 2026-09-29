@@ -3552,6 +3552,50 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
+    boolean handleControllerCardPutIntoHandFromLibraryConditional(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)
+                || !predicateEvaluationService.matchesCardPredicate(
+                moved.card(), conditional.predicate(), null, match.gameData(), match.controllerId())) {
+            return false;
+        }
+        return enqueueControllerCardPutIntoHandFromLibraryTrigger(match, conditional, moved.card());
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
+    boolean handleControllerCardPutIntoHandFromLibrary(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof TriggeringCardConditionalEffect
+                || !(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)) {
+            return false;
+        }
+        return enqueueControllerCardPutIntoHandFromLibraryTrigger(match, effect, moved.card());
+    }
+
+    private boolean enqueueControllerCardPutIntoHandFromLibraryTrigger(
+            TriggerMatchContext match, CardEffect effect, Card movedCard) {
+        Card snapshot = movedCard.createCardCopy();
+        snapshot.freeze();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(movedCard.getId());
+        entry.setTriggeringCardSnapshot(snapshot);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (card put into hand from library)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD)
     boolean handleControllerInstantOrSorceryCardLeavesGraveyard(TriggerMatchContext match,

@@ -73,6 +73,7 @@ class CostEffectClassificationTest {
             "PayManaCost",
             "PayMulticoloredSourceManaCost",
             "PutCounterOnSourceCost",
+            "BlightXCost",
             "PutCounterOnOpponentCreatureCost",
             "PutTypedCounterOnSourceCost",
             "PutCardsFromSingleGraveyardOnBottomOfLibraryCost",

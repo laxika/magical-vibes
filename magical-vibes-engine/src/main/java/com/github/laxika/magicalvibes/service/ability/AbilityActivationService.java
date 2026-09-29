@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
+import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -151,6 +152,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.BlightXCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.DistinctNamePermanentSacrificeCostHandler;
@@ -5285,6 +5287,7 @@ public class AbilityActivationService {
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledPermanentsCost c) return new RemoveCounterFromControlledPermanentsCostHandler(c, xValue, predicateEvaluationService, gameLogService);
+        if (effect instanceof BlightXCost c) return new BlightXCostHandler(c, xValue, gameQueryService, amountEvaluationService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof UnattachEquipmentFromSourceCost c) return new UnattachEquipmentFromSourceCostHandler(
                 c, sourcePermanentId, gameQueryService, equipSupport, gameLogService);
@@ -5886,7 +5889,11 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
+        permanent.getPersistentGrantedActivatedAbilities().forEach(ability -> {
+            if (!abilities.contains(ability)) {
+                abilities.add(ability);
+            }
+        });
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         if (gameQueryService.isCreature(gameData, permanent)) {

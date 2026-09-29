@@ -12207,6 +12207,20 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires battlefield triggers for a card put from the controller's library into their hand. */
+    public void checkControllerCardPutIntoHandFromLibraryTriggers(
+            GameData gameData, UUID libraryOwnerId, Card card) {
+        if (libraryOwnerId == null || card == null) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(libraryOwnerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.ControllerCardPutIntoHandFromLibrary(libraryOwnerId, card);
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, libraryOwnerId,
+                    EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY, ctx);
+        }
+    }
+
     public void checkControllerInstantOrSorceryCardLeavesGraveyardTriggers(
             GameData gameData, UUID graveyardOwnerId, Card card) {
         if (card == null || card.isToken()
