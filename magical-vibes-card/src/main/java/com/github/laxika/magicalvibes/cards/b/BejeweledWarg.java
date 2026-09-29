@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "117")
+@CardRegistration(set = "HOC", collectorNumber = "117")
 public class BejeweledWarg extends Card {
 
     public BejeweledWarg() {
