@@ -13271,7 +13271,10 @@ public class TriggerCollectionService {
         final UUID resolvedEnteringPermanentId = enteringPermanentId;
 
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD);
+            List<CardEffect> effects = new ArrayList<>(gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                    ? List.of() : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD));
             if (effects == null || effects.isEmpty()) return;
 
             // Each effect in this slot is its own triggered ability (Nature's Wrath has two), so a

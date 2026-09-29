@@ -65,6 +65,7 @@ class FeveredSuspicionTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
+        harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
     }

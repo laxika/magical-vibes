@@ -2224,7 +2224,8 @@ public class GraveyardChoiceHandlerService {
     private void validateGraveyardMultiTargetConstraint(GameData gameData, List<UUID> cardIds) {
         Card sourceCard = gameData.graveyardTargetOperation.card;
         if (sourceCard == null
-                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+                || (sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                && sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE)) {
             return;
         }
 

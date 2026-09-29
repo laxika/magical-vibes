@@ -2446,7 +2446,18 @@ public class TriggeredAbilityQueueService {
                     : pending.maxCount() > 0
                     ? pending.maxCount()
                     : describedTarget == null ? 1 : describedTarget.maxTargets();
+            SpellTarget declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            if (pending.maxCount() == 0 && declaredGroup != null) {
+                requestedMaxTargets = declaredGroup.getMaxTargets();
+            }
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
+            if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+                int graveyardCount = (int) matchingCards.stream()
+                        .map(candidate -> gameQueryService.findGraveyardOwnerById(gameData, candidate.getId()))
+                        .filter(java.util.Objects::nonNull).distinct().count();
+                maxTargets = Math.min(maxTargets, graveyardCount);
+                minTargets = maxTargets;
+            }
             String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
             String prompt = pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel

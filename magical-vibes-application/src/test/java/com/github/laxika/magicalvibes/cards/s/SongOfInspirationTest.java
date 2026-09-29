@@ -43,7 +43,8 @@ class SongOfInspirationTest extends BaseCardTest {
         Card permanent = new AirElemental();
         Card instant = new Shock();
         harness.setGraveyard(player1, List.of(creature, permanent, instant));
-        harness.setHand(player1, List.of(new SongOfInspiration()));
+        Card spell = new SongOfInspiration();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         setRoll(1);
@@ -53,7 +54,7 @@ class SongOfInspirationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature, permanent);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant, spell);
     }
 
     @Test
@@ -62,7 +63,8 @@ class SongOfInspirationTest extends BaseCardTest {
         Card second = new AirElemental();
         Card unselected = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(first, second, unselected));
-        harness.setHand(player1, List.of(new SongOfInspiration()));
+        Card spell = new SongOfInspiration();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setLife(player1, 10);
@@ -74,7 +76,7 @@ class SongOfInspirationTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
         assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected, spell);
     }
 
     private void setRoll(int result) {

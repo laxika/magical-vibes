@@ -1065,7 +1065,9 @@ public class ConditionEvaluationService {
                         && ctx.controllerId() != null
                         && gameData.playersWhoAttackedPlayersLastTurn
                         .getOrDefault(ctx.controllerId(), Set.of())
-                        .contains(ctx.targetId());
+                        .contains(gameData.playerIds.contains(ctx.targetId())
+                                ? ctx.targetId()
+                                : gameQueryService.findPermanentController(gameData, ctx.targetId()));
             case TargetPlayerIsAfraidOfController ignored ->
                     targetPlayerIsAfraidOfController(gameData, ctx);
             case TargetPlayerTurn ignored ->

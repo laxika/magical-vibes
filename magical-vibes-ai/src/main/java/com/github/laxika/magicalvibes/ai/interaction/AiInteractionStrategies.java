@@ -87,6 +87,12 @@ public final class AiInteractionStrategies {
         register(new HostileNegotiationsFaceUpChoiceAiStrategy());
         register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ReturnExiledCardsToHandChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.WerewhatOnEnterChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class));
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new EachPlayerChoosesOneCardOfEachColorChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());

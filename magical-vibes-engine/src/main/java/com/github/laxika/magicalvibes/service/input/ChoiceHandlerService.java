@@ -3593,6 +3593,14 @@ public class ChoiceHandlerService {
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     List<CardEffect> effects, TargetFilter targetFilter) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        // A combat-damage modal's "that player" effects reuse the damaged player already
+        // carried by the trigger; choosing a mode does not choose a different player.
+        if (pendingEntry != null && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId())
+                && ctx.effect().combatDamageTriggerContext()
+                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
+            return false;
+        }
         boolean combatContextPlayerTarget = pendingEntry != null
                 && pendingEntry.isNonTargeting()
                 && pendingEntry.getTargetId() != null
@@ -4258,6 +4266,10 @@ public class ChoiceHandlerService {
                             .build());
         }
 
+        cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                hand == null ? List.of() : hand);
+
         List<Card> toDiscard = hand == null ? List.of()
                 : new ArrayList<>(hand.stream()
                         .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
@@ -4267,7 +4279,7 @@ public class ChoiceHandlerService {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
+                graveyardService.discardCard(gameData, targetPlayerId, card);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
             triggerCollectionService.finishDiscardEvent(gameData);

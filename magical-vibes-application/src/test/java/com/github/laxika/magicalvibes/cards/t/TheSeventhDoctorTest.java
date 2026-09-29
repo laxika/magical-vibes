@@ -35,7 +35,7 @@ class TheSeventhDoctorTest extends BaseCardTest {
     }
 
     @Test
-    void correctGuessDoesNotInvestigate() {
+    void correctGuessInvestigatesBecauseNoSpellWasCast() {
         harness.addToBattlefield(player1, new DarksteelRelic());
         addDoctorWithHand(new GrizzlyBears());
 
@@ -44,7 +44,7 @@ class TheSeventhDoctorTest extends BaseCardTest {
         harness.handleListChoice(player2, "Greater than 1");
 
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
     @Test

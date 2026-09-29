@@ -1209,7 +1209,7 @@ public class PermanentCounterSupport {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     card, controllerId, new ArrayList<>(effects), false, targetFilter));
             gameLogService.append(gameData,
-                    GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+                    GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
         } else {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, card, controllerId,
@@ -1646,7 +1646,7 @@ public class PermanentCounterSupport {
                     card, controllerId, effectsToResolve,
                     "+1/+1 counter placement", target.getId()));
             gameLogService.append(gameData,
-                    GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+                    GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
         } else {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -1683,7 +1683,11 @@ public class PermanentCounterSupport {
 
         int currentCount = target.getCounterCount(counterType);
         List<CardEffect> effectsToResolve = new ArrayList<>();
-        for (CardEffect effect : effects) {
+        for (CardEffect authoredEffect : effects) {
+            CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, target, authoredEffect);
+            if (effect == null) {
+                continue;
+            }
             if (effect instanceof ConditionalEffect conditional) {
                 if (conditional.condition() instanceof SourceCounterThreshold threshold) {
                     if (conditional.interveningIf()
@@ -1698,6 +1702,7 @@ public class PermanentCounterSupport {
                     continue;
                 }
             }
+            OncePerTurnTriggerSupport.markIfNeeded(gameData, target, authoredEffect);
             effectsToResolve.add(effect);
         }
         if (effectsToResolve.isEmpty()) {

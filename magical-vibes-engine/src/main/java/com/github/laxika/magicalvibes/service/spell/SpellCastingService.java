@@ -8987,7 +8987,15 @@ public class SpellCastingService {
             StackEntryType entryType = card.hasType(CardType.INSTANT)
                     ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
             StackEntry stackEntry;
-            if (targetId != null) {
+            if (!targetIds.isEmpty()) {
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId,
+                        effectiveXValue, false);
+                List<UUID> graveyardTargets = graveyardTargetIds(gameData, targetId, targetIds);
+                stackEntry = new StackEntry(
+                        entryType, card, playerId, card.getName(), spellEffects, effectiveXValue,
+                        targetId, null, Map.of(), graveyardTargets.isEmpty() ? null : Zone.GRAVEYARD,
+                        graveyardTargets, targetIds);
+            } else if (targetId != null) {
                 boolean targetsGraveyard = spellEffects.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                 if (targetsGraveyard) {

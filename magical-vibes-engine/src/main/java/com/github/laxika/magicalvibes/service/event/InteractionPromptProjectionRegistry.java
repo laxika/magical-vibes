@@ -146,6 +146,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectWorldsWithinWorldsChoice);
         register(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class,
                 this::projectEachPlayerMayPutCardFromHandChoice);
+        register(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class,
+                this::projectEachPlayerMayPutLandFromHandThenOpponentsDrawChoice);
         register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
                 this::projectRevealAnyNumberOfCardsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
@@ -851,6 +853,16 @@ public class InteractionPromptProjectionRegistry {
                                 + " cards from your hand onto the battlefield."
                         : "You may put an " + interaction.label()
                                 + " card from your hand onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectEachPlayerMayPutLandFromHandThenOpponentsDrawChoice(
+            GameData gameData, PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice interaction) {
+        List<CardView> cards = gameData.playerHands.getOrDefault(interaction.playerId(), List.of()).stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(interaction.validCardIds(), cards, 1,
+                "You may put a land card from your hand onto the battlefield.");
     }
 
     private InteractionPromptMessage projectRevealAnyNumberOfCardsFromHandChoice(
