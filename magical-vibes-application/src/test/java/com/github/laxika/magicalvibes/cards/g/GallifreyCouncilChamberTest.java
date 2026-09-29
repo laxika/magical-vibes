@@ -51,7 +51,7 @@ class GallifreyCouncilChamberTest extends BaseCardTest {
     @Test
     @DisplayName("Restricted mana casts either a Time Lord or Alien spell")
     void restrictedManaCastsEitherListedSubtypeSpell() {
-        addReadyLand();
+        Permanent land = addReadyLand();
         produceRestrictedMana();
 
         harness.setHand(player1, List.of(createSpell("Time Lord spell", CardSubtype.TIME_LORD)));
@@ -59,6 +59,7 @@ class GallifreyCouncilChamberTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
+        land.untap();
         produceRestrictedMana();
         harness.setHand(player1, List.of(createSpell("Alien spell", CardSubtype.ALIEN)));
         harness.castInstant(player1, 0);

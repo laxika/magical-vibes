@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -20,9 +22,8 @@ class DuchessWaywardTavernkeepTest extends BaseCardTest {
     void putsQuestCounterOnCombatDamageDealer() {
         Permanent duchess = addCreatureReady(player1, new DuchessWaywardTavernkeep());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setAttacking(true);
 
-        resolveCombat();
+        declareAttackers(List.of(1));
         resolveAllTriggers();
 
         assertThat(bear.getCounterCount(CounterType.QUEST)).isEqualTo(1);

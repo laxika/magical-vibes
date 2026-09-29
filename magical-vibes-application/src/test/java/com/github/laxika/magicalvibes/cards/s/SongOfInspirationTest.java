@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,12 +48,8 @@ class SongOfInspirationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         setRoll(1);
 
-        harness.castInstant(player1, 0);
-
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(creature.getId(), permanent.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), permanent.getId()));
+        harness.castInstant(player1, 0, List.of(creature.getId(), permanent.getId()));
+        assertThat(gd.stack.getLast().getTargetCardIds()).contains(creature.getId(), permanent.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature, permanent);
@@ -73,8 +68,8 @@ class SongOfInspirationTest extends BaseCardTest {
         harness.setLife(player1, 10);
         setRoll(8);
 
-        harness.castInstant(player1, 0);
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        assertThat(gd.stack.getLast().getTargetCardIds()).contains(first.getId(), second.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);

@@ -612,9 +612,20 @@ public class MiscTriggerCollectorService {
     private boolean handleSacrificePermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        if (as.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(
-                        new Permanent(as.sacrificedCard()), conditional.predicate(),
+        if (as.sacrificedCard() == null) {
+            return false;
+        }
+        Permanent sacrificedPermanent = match.gameData().simultaneousDyingPermanents.values().stream()
+                .filter(permanent -> permanent.getCard().getId().equals(as.sacrificedCard().getId()))
+                .findFirst().orElse(null);
+        if (sacrificedPermanent == null && match.permanent().getCard().getId().equals(as.sacrificedCard().getId())) {
+            sacrificedPermanent = match.permanent();
+        }
+        if (sacrificedPermanent == null) {
+            sacrificedPermanent = new Permanent(as.sacrificedCard());
+        }
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                        sacrificedPermanent, conditional.predicate(),
                         new FilterContext(null, match.permanent().getCard().getId(),
                                 match.controllerId(), null, match.permanent(), null)
                                 .withSourceCardId(match.permanent().getCard().getId())

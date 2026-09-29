@@ -76,8 +76,8 @@ class TheSeventhDoctorTest extends BaseCardTest {
 
     private Permanent addDoctorWithHand(Card chosenCard) {
         Permanent doctor = addCreatureReady(player1, new TheSeventhDoctor());
-        doctor.setAttacking(true);
         harness.setHand(player1, List.of(chosenCard));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(doctor)));
         return doctor;
     }
 }

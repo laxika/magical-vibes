@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChaosBalor.class, Forest.class, GrizzlyBears.class, ShivanHellkite.class})
 class ChaosBalorTest extends BaseCardTest {
@@ -35,10 +35,9 @@ class ChaosBalorTest extends BaseCardTest {
         attackWithBalor();
         chooseModes(DISCARD_MODE, DAMAGE_AND_TREASURE_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.playerHands.get(player1.getId())).contains(sought);

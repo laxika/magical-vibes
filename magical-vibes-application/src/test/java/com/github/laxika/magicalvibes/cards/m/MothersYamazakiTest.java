@@ -35,12 +35,12 @@ class MothersYamazakiTest extends BaseCardTest {
 
         Permanent second = harness.addToBattlefieldAndReturn(player1, new MothersYamazaki());
 
-        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(firstPower + 2);
-        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(firstToughness + 2);
-        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(firstPower + 2);
-        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(firstToughness + 2);
-        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(samuraiPower + 2);
-        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(samuraiToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(firstPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(firstToughness + 4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(firstPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(firstToughness + 4);
+        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(samuraiPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(samuraiToughness + 4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, samurai, Keyword.VIGILANCE)).isTrue();

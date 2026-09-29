@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,12 @@ class GallifreyStandsTest extends BaseCardTest {
         nonDoctor.setName("Non-Doctor");
         nonDoctor.setType(CardType.INSTANT);
         harness.setGraveyard(player1, List.of(doctorOne, nonDoctor, doctorTwo));
+        harness.setHand(player1, List.of(new GallifreyStands()));
+        harness.addMana(player1, ManaColor.WHITE, 10);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.addToBattlefield(player1, new GallifreyStands());
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(doctorOne, doctorTwo);
@@ -76,6 +81,8 @@ class GallifreyStandsTest extends BaseCardTest {
         doctor.setName(name);
         doctor.setType(CardType.CREATURE);
         doctor.setSubtypes(List.of(CardSubtype.DOCTOR));
+        doctor.setPower(1);
+        doctor.setToughness(1);
         return doctor;
     }
 }
