@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
@@ -1954,6 +1955,123 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = EnergyCountersEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainEnergyCounters(TriggerMatchContext match,
+            EnergyCountersEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                sourceCard, match.controllerId(), sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)), null, match.permanent().getId());
+        entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
+                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
+                    slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    })
+    private boolean handleDelayedReturnMatchingCardFromGraveyard(TriggerMatchContext match,
+            RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
+        if (ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut) {
+            if (cardPut.sourceZone() != Zone.HAND
+                    || !predicateEvaluationService.matchesCardPredicate(
+                    cardPut.card(), effect.filter(), match.permanent().getCard().getId(),
+                    match.gameData(), cardPut.graveyardOwnerId())) {
+                return false;
+            }
+            enqueueDelayedReturnMatchingCard(match, effect, cardPut.card());
+            return true;
+        }
+
+        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)) {
+            return false;
+        }
+
+        boolean triggered = false;
+        for (Card card : cardsPut.cards()) {
+            if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                    card, effect.filter(), match.permanent().getCard().getId(),
+                    match.gameData(), cardsPut.graveyardOwnerId())) {
+                continue;
+            }
+            enqueueDelayedReturnMatchingCard(match, effect, card);
+            triggered = true;
+        }
+        return triggered;
+    }
+
+    private void enqueueDelayedReturnMatchingCard(TriggerMatchContext match,
+            RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, Card card) {
+        CardEffect boundEffect = new RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect(
+                effect.filter(), card.getId());
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(boundEffect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+    }
+
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleAllyCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
+                || creatureCard.sourceZone() == Zone.BATTLEFIELD
+                || !predicateEvaluationService.matchesCardPredicate(
+                creatureCard.creatureCard(), conditional.predicate(),
+                match.permanent().getCard().getId(), match.gameData(),
+                creatureCard.graveyardOwnerId())) {
+            return false;
+        }
+
+        return enqueueConditionalCreatureCardGraveyardTrigger(match, conditional, creatureCard);
+    }
+
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
+    private boolean handleCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
+                || !predicateEvaluationService.matchesCardPredicate(
+                creatureCard.creatureCard(), conditional.predicate(),
+                match.permanent().getCard().getId(), match.gameData(),
+                creatureCard.graveyardOwnerId())) {
+            return false;
+        }
+
+        return enqueueConditionalCreatureCardGraveyardTrigger(match, conditional, creatureCard);
+    }
+
+    private boolean enqueueConditionalCreatureCardGraveyardTrigger(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional,
+            TriggerContext.CreatureCardPutIntoGraveyard creatureCard) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(creatureCard.creatureCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(creatureCard.creatureCard().getId()));
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers for matching creature card entering a graveyard",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 

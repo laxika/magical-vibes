@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "C15", collectorNumber = "269")
 @CardRegistration(set = "DSC", collectorNumber = "253")
 @CardRegistration(set = "TDC", collectorNumber = "325")
+@CardRegistration(set = "M3C", collectorNumber = "306")
 public class SolemnSimulacrum extends Card {
 
     public SolemnSimulacrum() {

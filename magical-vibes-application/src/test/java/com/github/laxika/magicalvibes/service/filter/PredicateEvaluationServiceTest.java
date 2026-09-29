@@ -65,7 +65,9 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -1685,6 +1687,29 @@ class PredicateEvaluationServiceTest {
             PermanentBasePowerEqualsPredicate predicate = new PermanentBasePowerEqualsPredicate(0);
             assertThat(evaluator.matchesPermanentPredicate(gd, zeroBasePower, predicate)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(gd, nonzeroBasePower, predicate)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Base power and toughness at-most predicates ignore counters")
+        void basePowerAndToughnessAtMostPredicatesIgnoreCounters() {
+            Permanent lowPower = addPermanent(player1Id,
+                    createCreature("Low Base Power", 0, 2, CardColor.GREEN));
+            lowPower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            Permanent lowToughness = addPermanent(player1Id,
+                    createCreature("Low Base Toughness", 2, 1, CardColor.GREEN));
+            lowToughness.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            Permanent highBase = addPermanent(player1Id,
+                    createCreature("High Base", 2, 2, CardColor.GREEN));
+            highBase.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, lowPower,
+                    new PermanentBasePowerAtMostPredicate(1))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, lowToughness,
+                    new PermanentBaseToughnessAtMostPredicate(1))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, highBase,
+                    new PermanentBasePowerAtMostPredicate(1))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, highBase,
+                    new PermanentBaseToughnessAtMostPredicate(1))).isFalse();
         }
 
         @Test

@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "SOC", collectorNumber = "262")
 @CardRegistration(set = "CMD", collectorNumber = "142")
 @CardRegistration(set = "NCC", collectorNumber = "281")
+@CardRegistration(set = "M3C", collectorNumber = "222")
 public class AwakeningZone extends Card {
 
     private static final CreateTokenEffect SPAWN_TOKEN = new CreateTokenEffect(

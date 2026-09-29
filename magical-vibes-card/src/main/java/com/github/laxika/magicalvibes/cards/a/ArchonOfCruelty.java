@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "75")
+@CardRegistration(set = "M3C", collectorNumber = "197")
 public class ArchonOfCruelty extends Card {
 
     private static final PermanentPredicate CREATURE_OR_PLANESWALKER = new PermanentAnyOfPredicate(List.of(

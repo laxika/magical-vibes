@@ -251,6 +251,10 @@ public class GameData {
     /** Permanents whose once-per-your-turn graveyard play or cast permission has been used this
      * turn, keyed by the granting permanent's id. */
     public final Set<UUID> oncePerTurnGraveyardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Permanents whose once-per-your-turn land-from-graveyard permission has been used this turn. */
+    public final Set<UUID> oncePerTurnGraveyardLandPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Permanents whose once-per-your-turn spell-from-graveyard permission has been used this turn. */
+    public final Set<UUID> oncePerTurnGraveyardSpellPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** The game's current day/night designation. */
@@ -419,6 +423,8 @@ public class GameData {
     /** Players for whom Melira's poison replacement effect has already applied this turn. */
     public final Set<UUID> playersAffectedByMeliraPoisonReplacementThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
+    /** Energy counters each player has paid or lost during the current turn. */
+    public final Map<UUID, Integer> energyCountersPaidOrLostThisTurn = new ConcurrentHashMap<>();
     /** Spark counters are held by players and pay for spark abilities. */
     public final Map<UUID, Integer> playerSparkCounters = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerExperienceCounters = new ConcurrentHashMap<>();
@@ -1549,6 +1555,9 @@ public class GameData {
      * cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedHarmonizeUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs that have been granted jump-start until end of turn. Cleared at end of turn. */
+    public final Set<UUID> cardsGrantedJumpStartUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Card IDs that have been granted embalm until end of turn (e.g. Cursecloth Wrappings).
      *  The embalm cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedEmbalmUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -1754,6 +1763,9 @@ public class GameData {
      *  Each value tracks how many copies are pending for that player.
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
+
+    /** Pending one-shot spell-or-ability copy triggers from mana abilities, cleared when that mana drains. */
+    public final Map<UUID, Integer> pendingNextSpellOrAbilityCopyCount = new ConcurrentHashMap<>();
 
     /** Path of Ancestry mana choices awaiting completion, keyed by source permanent id. */
     public final Map<UUID, Integer> pendingPathOfAncestryManaChoices = new ConcurrentHashMap<>();
@@ -3389,6 +3401,33 @@ public class GameData {
         this.createdByUsername = createdByUsername;
         this.createdAt = LocalDateTime.now();
         this.status = GameStatus.WAITING;
+    }
+
+    /** Updates a player's energy total and records any counters removed by the update. */
+    public void setPlayerEnergyCounters(UUID playerId, int amount) {
+        int updated = Math.max(0, amount);
+        int current = playerEnergyCounters.getOrDefault(playerId, 0);
+        if (updated < current) {
+            energyCountersPaidOrLostThisTurn.merge(playerId, current - updated, Integer::sum);
+        }
+        if (updated == 0) {
+            playerEnergyCounters.remove(playerId);
+        } else {
+            playerEnergyCounters.put(playerId, updated);
+        }
+    }
+
+    /** Removes up to {@code amount} energy counters, recording the counters that were lost. */
+    public int removePlayerEnergyCounters(UUID playerId, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        int current = playerEnergyCounters.getOrDefault(playerId, 0);
+        int removed = Math.min(current, amount);
+        if (removed > 0) {
+            setPlayerEnergyCounters(playerId, current - removed);
+        }
+        return removed;
     }
 
     /**
@@ -6405,6 +6444,7 @@ public class GameData {
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
                 .addAll(this.playersAffectedByMeliraPoisonReplacementThisTurn);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
+        copy.energyCountersPaidOrLostThisTurn.putAll(this.energyCountersPaidOrLostThisTurn);
         copy.playerSparkCounters.putAll(this.playerSparkCounters);
         copy.playerExperienceCounters.putAll(this.playerExperienceCounters);
         copy.playerCoolness.putAll(this.playerCoolness);
@@ -7112,6 +7152,7 @@ public class GameData {
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
+        copy.pendingNextSpellOrAbilityCopyCount.putAll(this.pendingNextSpellOrAbilityCopyCount);
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
@@ -7281,6 +7322,8 @@ public class GameData {
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));
         copy.oncePerTurnGraveyardCastPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardCastPermissionsUsedThisTurn);
+        copy.oncePerTurnGraveyardLandPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardLandPermissionsUsedThisTurn);
+        copy.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardSpellPermissionsUsedThisTurn);
 
         // --- Spell-cast payment tracking (X / converge / colors spent) ---
         copy.spellCastManaSpent.putAll(this.spellCastManaSpent);
@@ -7311,6 +7354,7 @@ public class GameData {
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
         copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
+        copy.cardsGrantedJumpStartUntilEndOfTurn.addAll(this.cardsGrantedJumpStartUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         copy.playersWithFreeHandCastUntilEndOfTurn.addAll(this.playersWithFreeHandCastUntilEndOfTurn);

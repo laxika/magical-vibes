@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHarmonizeToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantJumpStartToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
@@ -1998,6 +1999,8 @@ public class ValidTargetService {
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);
         } else if (effect instanceof GrantHarmonizeToTargetGraveyardCardEffect) {
+            return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
+        } else if (effect instanceof GrantJumpStartToTargetGraveyardCardEffect) {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);

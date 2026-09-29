@@ -352,7 +352,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         entry.getControllerId(), null));
                 return;
             }
-            gameData.playerEnergyCounters.put(payer, energy - energyCost.amount());
+            gameData.setPlayerEnergyCounters(payer, energy - energyCost.amount());
             return;
         }
 

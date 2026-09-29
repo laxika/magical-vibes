@@ -66,6 +66,7 @@ class CostEffectClassificationTest {
             "GainControlOfPermanentsCost",
             "PayEchoCost",
             "PayEnergyCost",
+            "PayXEnergyCost",
             "PayLifeForEachCardInHandCost",
             "PayLifeForEachCommanderColorCost",
             "PayManaCost",

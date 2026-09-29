@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
+import com.github.laxika.magicalvibes.model.amount.ControllerEnergyCounters;
+import com.github.laxika.magicalvibes.model.amount.EnergyCountersPaidOrLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
@@ -177,6 +179,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldT
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
+import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostGame;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
@@ -397,6 +400,8 @@ public class AmountEvaluationService {
                     countPlayersWithCardsInHandAtLeast(gameData, a, ctx);
             case PlayersInGame ignored ->
                     gameData.orderedPlayerIds.size();
+            case PlayersWhoLostGame ignored ->
+                    gameData.playersWhoLostGameThisMatch.size();
             case PlayersWhoDiscardedThisTurn ignored ->
                     (int) gameData.orderedPlayerIds.stream()
                             .filter(playerId -> gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0) > 0)
@@ -666,6 +671,12 @@ public class AmountEvaluationService {
             case TargetPlayerPoisonCounters ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerPoisonCounters.getOrDefault(ctx.targetPermanentId(), 0);
+            case ControllerEnergyCounters ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.playerEnergyCounters.getOrDefault(ctx.controllerId(), 0);
+            case EnergyCountersPaidOrLostThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.energyCountersPaidOrLostThisTurn.getOrDefault(ctx.controllerId(), 0);
             case ControllerExperienceCounters ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.playerExperienceCounters.getOrDefault(ctx.controllerId(), 0);

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -60,6 +61,27 @@ public class TokenCopySupport {
                                         Permanent sourcePermanent, UUID tokenControllerId,
                                         CreateTokenCopyOfTargetPermanentEffect effect,
                                         List<UUID> attackTargetIds) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
+                attackTargetIds, null);
+    }
+
+    /**
+     * Creates token copies while applying a copy exception to each copied token card before it
+     * enters. This keeps special copy exceptions on the shared token-copy pipeline.
+     */
+    public List<UUID> createTokenCopiesWithCopyException(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                         Permanent sourcePermanent, UUID tokenControllerId,
+                                                         CreateTokenCopyOfTargetPermanentEffect effect,
+                                                         Consumer<Card> copyException) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
+                null, copyException);
+    }
+
+    private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                         Permanent sourcePermanent, UUID tokenControllerId,
+                                         CreateTokenCopyOfTargetPermanentEffect effect,
+                                         List<UUID> attackTargetIds,
+                                         Consumer<Card> copyException) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
@@ -69,6 +91,9 @@ public class TokenCopySupport {
         for (Card sourceCard : sourceCards) {
             Card tokenTemplate = buildTokenCopyCard(
                     sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
+            if (copyException != null) {
+                copyException.accept(tokenTemplate);
+            }
             int tokenMultiplier = gameQueryService.getTokenCreationAmount(
                     gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
@@ -76,6 +101,9 @@ public class TokenCopySupport {
                         ? tokenTemplate
                         : buildTokenCopyCard(
                                 sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
+                if (copy != 0 && copyException != null) {
+                    copyException.accept(tokenCard);
+                }
                 if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
                     artifactTokenTemplate = tokenCard;
                 }

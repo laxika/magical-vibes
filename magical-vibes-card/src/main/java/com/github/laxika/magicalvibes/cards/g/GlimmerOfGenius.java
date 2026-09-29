@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "49")
 @CardRegistration(set = "KLR", collectorNumber = "49")
+@CardRegistration(set = "M3C", collectorNumber = "187")
 public class GlimmerOfGenius extends Card {
 
     public GlimmerOfGenius() {

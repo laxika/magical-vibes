@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "260")
+@CardRegistration(set = "M3C", collectorNumber = "335")
 public class DemolitionField extends Card {
 
     public DemolitionField() {

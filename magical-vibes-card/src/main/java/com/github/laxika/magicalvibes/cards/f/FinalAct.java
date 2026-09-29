@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "213")
 @CardRegistration(set = "MAR", collectorNumber = "66")
+@CardRegistration(set = "M3C", collectorNumber = "52")
+@CardRegistration(set = "M3C", collectorNumber = "104")
 public class FinalAct extends Card {
 
     public FinalAct() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "172")
 @CardRegistration(set = "AKR", collectorNumber = "289")
+@CardRegistration(set = "M3C", collectorNumber = "336")
 public class DesertOfTheIndomitable extends Card {
 
     public DesertOfTheIndomitable() {

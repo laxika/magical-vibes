@@ -50,6 +50,7 @@ public enum CounterType {
     ELIXIR,
     ENLIGHTENED,
     EON,
+    EVERYTHING,
     EYEBALL,
     FADE,
     FATE,

@@ -17,6 +17,8 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1850")
 @CardRegistration(set = "2XM", collectorNumber = "12")
 @CardRegistration(set = "C15", collectorNumber = "65")
+@CardRegistration(set = "M3C", collectorNumber = "89")
+@CardRegistration(set = "M3C", collectorNumber = "168")
 public class CribSwap extends Card {
 
     public CribSwap() {

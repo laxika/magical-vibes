@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForAnotherOpponentPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
@@ -79,6 +80,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+    private final CopySpellForAnotherOpponentPermanentEffectHandler copySpellForAnotherOpponentPermanentHandler;
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -88,6 +90,12 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
         copySpellHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCopySpellForAnotherOpponentPermanent(GameData gameData, UUID permanentId,
+                                                            PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice context) {
+        copySpellForAnotherOpponentPermanentHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

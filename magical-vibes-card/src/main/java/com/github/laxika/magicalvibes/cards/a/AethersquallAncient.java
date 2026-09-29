@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "39")
+@CardRegistration(set = "M3C", collectorNumber = "174")
 public class AethersquallAncient extends Card {
 
     public AethersquallAncient() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "ECC", collectorNumber = "145")
 @CardRegistration(set = "DSC", collectorNumber = "266")
 @CardRegistration(set = "TDC", collectorNumber = "344")
+@CardRegistration(set = "M3C", collectorNumber = "325")
 public class CanyonSlough extends Card {
 
     public CanyonSlough() {

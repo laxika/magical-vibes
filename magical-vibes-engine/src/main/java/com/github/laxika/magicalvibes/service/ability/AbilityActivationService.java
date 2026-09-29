@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
@@ -1602,6 +1603,43 @@ public class AbilityActivationService {
         }
         if (maxSpeedFreeUnearth) {
             gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.add(playerId);
+        }
+
+        // Pay energy costs here as part of announcing a graveyard ability. They are cost effects,
+        // so they are removed from the stack snapshot just like mana costs, but unlike mana costs
+        // they do not have a separate payment path above.
+        PayEnergyCost payEnergyCost = abilityEffects.stream()
+                .filter(PayEnergyCost.class::isInstance)
+                .map(PayEnergyCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (payEnergyCost != null) {
+            int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            if (currentEnergy < payEnergyCost.amount()) {
+                throw new IllegalStateException("Not enough energy to pay (need "
+                        + payEnergyCost.amount() + ", have " + currentEnergy + ")");
+            }
+            gameData.setPlayerEnergyCounters(playerId, currentEnergy - payEnergyCost.amount());
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " pays " + payEnergyCost.amount()
+                            + " energy counter(s)."));
+        }
+
+        PayXEnergyCost payXEnergyCost = abilityEffects.stream()
+                .filter(PayXEnergyCost.class::isInstance)
+                .map(PayXEnergyCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (payXEnergyCost != null) {
+            int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            if (xValue < 0 || currentEnergy < xValue) {
+                throw new IllegalStateException("Not enough energy to pay (need " + xValue
+                        + ", have " + currentEnergy + ")");
+            }
+            gameData.setPlayerEnergyCounters(playerId, currentEnergy - xValue);
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " pays " + xValue
+                            + " energy counter(s)."));
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
@@ -5121,6 +5159,15 @@ public class AbilityActivationService {
         }
     }
 
+    private void recordReturnedPermanentCard(GameData gameData, CardEffect costEffect, Permanent source,
+                                             Permanent returned) {
+        if (costEffect instanceof CostEffect cost && cost.tracksReturnedPermanentCard() && returned != null) {
+            Card snapshot = returned.getCard().createRuntimeCopy();
+            snapshot.setSubtypes(new ArrayList<>(gameQueryService.effectiveLandTypes(gameData, returned)));
+            source.setChosenCard(snapshot);
+        }
+    }
+
     private Card trackedExiledCardSnapshot(List<CardEffect> abilityEffects, Permanent source) {
         boolean tracksExiledCard = abilityEffects.stream()
                 .filter(CostEffect.class::isInstance)
@@ -5198,6 +5245,7 @@ public class AbilityActivationService {
                             validateDividedDamageAssignments(gameData, player.getId(), source, ability,
                                     abilityEffects, costDerivedXValue, damageAssignments, false);
                         }
+                        recordReturnedPermanentCard(gameData, handler.costEffect(), source, chosen);
                         recordSacrificedLandCard(gameData, handler.costEffect(), source, abilityIndex, chosen);
                         recordTrackedExiledCard(handler.costEffect(), source, chosen);
                         handler.validateAndPay(gameData, player, chosen);
@@ -5393,6 +5441,7 @@ public class AbilityActivationService {
                     costDerivedXValue, context.damageAssignments(), false);
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
+        recordReturnedPermanentCard(gameData, context.costEffect(), sourcePermanent, chosen);
         recordSacrificedLandCard(gameData, context.costEffect(), sourcePermanent, effectiveIndex, chosen);
         recordTrackedExiledCard(context.costEffect(), sourcePermanent, chosen);
 
@@ -5418,6 +5467,7 @@ public class AbilityActivationService {
                 for (UUID id : validIds) {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
+                        recordReturnedPermanentCard(gameData, context.costEffect(), sourcePermanent, autoPay);
                         recordTrackedExiledCard(context.costEffect(), sourcePermanent, autoPay);
                         handler.validateAndPay(gameData, player, autoPay);
                         paymentValue = handler.lastPaymentValue();
@@ -6229,6 +6279,14 @@ public class AbilityActivationService {
             int needed = payEnergyCost.get().amount();
             if (energy < needed) {
                 throw new IllegalStateException("Not enough energy to pay (need " + needed + ", have " + energy + ")");
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(PayXEnergyCost.class::isInstance)) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            if (xValue < 0 || energy < xValue) {
+                throw new IllegalStateException("Not enough energy to pay (need " + xValue
+                        + ", have " + energy + ")");
             }
         }
 

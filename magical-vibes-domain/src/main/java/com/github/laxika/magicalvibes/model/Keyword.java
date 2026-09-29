@@ -74,6 +74,7 @@ public enum Keyword {
     SHADOW,
     FLANKING,
     CONSPIRE,
+    DEMONSTRATE,
     CASUALTY,
     REPLICATE,
     RETRACE,

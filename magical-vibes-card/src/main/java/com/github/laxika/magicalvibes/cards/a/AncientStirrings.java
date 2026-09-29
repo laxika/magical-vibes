@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 @CardRegistration(set = "A25", collectorNumber = "159")
 @CardRegistration(set = "2XM", collectorNumber = "151")
 @CardRegistration(set = "TSR", collectorNumber = "355")
+@CardRegistration(set = "M3C", collectorNumber = "219")
 public class AncientStirrings extends Card {
 
     public AncientStirrings() {

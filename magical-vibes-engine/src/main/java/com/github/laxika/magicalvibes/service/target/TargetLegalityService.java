@@ -664,7 +664,8 @@ public class TargetLegalityService {
                 }
                 if (exileCopy.filter() != null
                         && !predicateEvaluationService.matchesCardPredicate(
-                        card, exileCopy.filter(), sourceCardId, gameData, playerId)) {
+                        card, exileCopy.filter(), sourceCardId, gameData, playerId,
+                        null, null, xValue)) {
                     throw new IllegalStateException("Target card must be a "
                             + CardPredicateUtils.describeFilter(exileCopy.filter()));
                 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
@@ -97,6 +98,8 @@ public class PermanentChoiceHandlerService {
     private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
     private final TargetOpponentChoosesPlayerForRestrictionEffectHandler
             targetOpponentChoosesPlayerForRestrictionEffectHandler;
+    private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
+            benthicAnomalyEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -225,6 +228,11 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOrderOfSuccessionChoice(gameData, permanentId, orderOfSuccession);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureToExileWithSource(gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy benthicChoice) {
+            battlefieldHandler.handleEachOpponentChoosesCreatureForTokenCopy(gameData, permanentId, benthicChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseBenthicAnomalyCopy benthicCopyChoice) {
+            benthicAnomalyEffectHandler.completeCopyChoice(gameData, permanentId, benthicCopyChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentDrawAndUntap chooseOpponent) {
@@ -359,6 +367,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
             triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice copyChoice) {
+            triggerHandler.handleCopySpellForAnotherOpponentPermanent(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.DemonstrateOpponentChoice demonstrate) {
             triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {

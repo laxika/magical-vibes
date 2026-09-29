@@ -4274,7 +4274,7 @@ public class StepTriggerService {
                     continue;
                 }
                 ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(action.manaCost()),
+                        action.cost(),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 StackEntry entry = new StackEntry(

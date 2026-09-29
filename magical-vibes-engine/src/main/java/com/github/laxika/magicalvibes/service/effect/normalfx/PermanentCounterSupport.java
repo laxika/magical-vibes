@@ -477,6 +477,8 @@ public class PermanentCounterSupport {
                     case HONE -> perm.setCounterCount(CounterType.HONE, perm.getCounterCount(CounterType.HONE) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
+                    case EVERYTHING -> perm.setCounterCount(CounterType.EVERYTHING,
+                            perm.getCounterCount(CounterType.EVERYTHING) + placed);
                     case HASTE, DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF,
                          INDESTRUCTIBLE, LIFELINK, REACH, TRAMPLE, MENACE, VIGILANCE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);

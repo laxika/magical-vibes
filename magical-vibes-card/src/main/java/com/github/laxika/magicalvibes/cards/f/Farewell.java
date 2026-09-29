@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "13")
+@CardRegistration(set = "M3C", collectorNumber = "170")
 public class Farewell extends Card {
 
     public Farewell() {

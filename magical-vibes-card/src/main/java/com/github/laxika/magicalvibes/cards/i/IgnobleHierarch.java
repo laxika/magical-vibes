@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "AA2", collectorNumber = "14")
 @CardRegistration(set = "MH2", collectorNumber = "166")
 @CardRegistration(set = "ECC", collectorNumber = "52")
+@CardRegistration(set = "M3C", collectorNumber = "234")
 public class IgnobleHierarch extends Card {
 
     public IgnobleHierarch() {

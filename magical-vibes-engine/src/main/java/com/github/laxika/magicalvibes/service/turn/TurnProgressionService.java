@@ -841,6 +841,7 @@ public class TurnProgressionService {
         gameData.faceDownCreaturesEnteredBattlefieldThisTurn.clear();
         gameData.faceDownPermanentsEnteredBattlefieldThisTurn.clear();
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.clear();
+        gameData.energyCountersPaidOrLostThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.clearGreatestStackSourceCountThisTurn();
         gameData.crimeCandidatesThisTurn.clear();
@@ -856,6 +857,8 @@ public class TurnProgressionService {
         gameData.playersWhoFlippedCoinsThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
+        gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.clear();
+        gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoAttackedWithCommanderThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();

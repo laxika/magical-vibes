@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -984,6 +985,9 @@ public sealed interface ChoiceContext {
      */
     record SpellCreatureTypeChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing a nonbasic land type at resolution for a spell with no permanent to store it on. */
+    record SpellNonbasicLandTypeChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
@@ -1250,6 +1254,16 @@ public sealed interface ChoiceContext {
      */
     record EachPlayerCardNameRevealChoice(List<UUID> playerOrder,
                                           Map<UUID, String> chosenNames) implements ChoiceContext {}
+
+    /** Each player chooses a color in APNAP order before a selective permanent exile. */
+    record EachPlayerChoosesColorThenExileOtherPermanentsChoice(
+            List<UUID> playerOrder, Map<UUID, CardColor> chosenColors) implements ChoiceContext {
+
+        public EachPlayerChoosesColorThenExileOtherPermanentsChoice {
+            playerOrder = List.copyOf(playerOrder);
+            chosenColors = Map.copyOf(new LinkedHashMap<>(chosenColors));
+        }
+    }
 
     /**
      * Sphinx Ambassador: the damaged player names a card after the controller has selected

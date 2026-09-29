@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "273")
+@CardRegistration(set = "M3C", collectorNumber = "348")
 public class HiddenCataract extends Card {
 
     public HiddenCataract() {

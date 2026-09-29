@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "ZEN", collectorNumber = "201")
 @CardRegistration(set = "MM2", collectorNumber = "213")
 @CardRegistration(set = "2XM", collectorNumber = "255")
+@CardRegistration(set = "M3C", collectorNumber = "292")
 public class ExpeditionMap extends Card {
 
     public ExpeditionMap() {

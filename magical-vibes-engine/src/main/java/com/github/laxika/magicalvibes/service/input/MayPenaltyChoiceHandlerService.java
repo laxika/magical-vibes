@@ -1911,7 +1911,7 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted && effect.forcedCost() instanceof PayEnergyCost energyCost) {
             int energy = gameData.playerEnergyCounters.getOrDefault(decidingPlayerId, 0);
             if (energy >= energyCost.amount()) {
-                gameData.playerEnergyCounters.put(decidingPlayerId, energy - energyCost.amount());
+                gameData.setPlayerEnergyCounters(decidingPlayerId, energy - energyCost.amount());
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + energyCost.amount()
                                 + " energy counter(s). (", ability.sourceCard(), ")"));

@@ -1433,6 +1433,10 @@ public class TriggeredAbilityQueueService {
             } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                if (pending.optionalTarget() && !validPlayerTargets.contains(pending.controllerId())) {
+                    validPlayerTargets = new ArrayList<>(validPlayerTargets);
+                    validPlayerTargets.add(pending.controllerId());
+                }
             } else if (pending.targetFilter() != null) {
                 // Permanent-filtered path: players are not offered.
                 validPlayerTargets = pending.optionalTarget() ? List.of(pending.controllerId()) : List.of();

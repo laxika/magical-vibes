@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 
 @CardRegistration(set = "LTC", collectorNumber = "280")
 @CardRegistration(set = "MSC", collectorNumber = "287")
+@CardRegistration(set = "M3C", collectorNumber = "296")
 public class HeraldsHorn extends Card {
 
     public HeraldsHorn() {

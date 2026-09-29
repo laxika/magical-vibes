@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 @CardRegistration(set = "ARB", collectorNumber = "34")
 @CardRegistration(set = "PC2", collectorNumber = "83")
 @CardRegistration(set = "PCA", collectorNumber = "83")
+@CardRegistration(set = "M3C", collectorNumber = "255")
 public class BituminousBlast extends Card {
 
     public BituminousBlast() {

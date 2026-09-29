@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "ELD", collectorNumber = "54")
 @CardRegistration(set = "SLD", collectorNumber = "2217")
 @CardRegistration(set = "NCC", collectorNumber = "226")
+@CardRegistration(set = "M3C", collectorNumber = "189")
 public class MidnightClock extends Card {
 
     public MidnightClock() {

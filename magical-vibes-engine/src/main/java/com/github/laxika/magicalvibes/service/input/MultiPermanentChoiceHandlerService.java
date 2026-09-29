@@ -1809,7 +1809,8 @@ public class MultiPermanentChoiceHandlerService {
             if (!context.remainingChoosers().isEmpty()) {
                 // More players still need to choose — prompt the next one
                 destructionSupport.beginNextForcedSacrificeFromQueue(gameData,
-                        context.remainingChoosers(), allIds, true, context.afterSacrifices());
+                        context.remainingChoosers(), allIds, true, context.afterSacrifices(),
+                        context.recordSacrificedCount());
                 return;
             }
 

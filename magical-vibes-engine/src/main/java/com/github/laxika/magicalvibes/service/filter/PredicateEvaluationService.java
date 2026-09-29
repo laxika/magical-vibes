@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowe
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -125,6 +126,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPre
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
@@ -731,6 +734,8 @@ public class PredicateEvaluationService {
                     card.getManaValue() <= p.maxManaValue();
             case CardMaxManaValueXPredicate ignored ->
                     xValue == null || card.getManaValue() <= xValue;
+            case CardManaValueEqualsXPredicate ignored ->
+                    xValue == null || card.getManaValue() == xValue;
             case CardManaValueLessThanXPredicate ignored ->
                     xValue != null && card.getManaValue() < xValue;
             case CardMinManaValuePredicate p ->
@@ -1019,6 +1024,20 @@ public class PredicateEvaluationService {
             }
             case PermanentHasAdventurePredicate ignored ->
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
+            case PermanentBasePowerAtMostPredicate basePowerAtMostPredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                int basePower;
+                if (layered != null) {
+                    basePower = layered.getBasePower();
+                } else if (gameData == null) {
+                    basePower = permanent.getBasePower();
+                } else {
+                    GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                    basePower = bonus.basePTOverridden()
+                            ? bonus.basePowerOverride() : permanent.getBasePower();
+                }
+                yield basePower <= basePowerAtMostPredicate.maxPower();
+            }
             case PermanentBasePowerToughnessPredicate baseStats -> {
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
                 if (layered != null) {
@@ -1035,6 +1054,20 @@ public class PredicateEvaluationService {
                 int baseToughness = bonus.basePTOverridden()
                         ? bonus.baseToughnessOverride() : permanent.getBaseToughness();
                 yield basePower == baseStats.power() && baseToughness == baseStats.toughness();
+            }
+            case PermanentBaseToughnessAtMostPredicate baseToughnessAtMostPredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                int baseToughness;
+                if (layered != null) {
+                    baseToughness = layered.getBaseToughness();
+                } else if (gameData == null) {
+                    baseToughness = permanent.getBaseToughness();
+                } else {
+                    GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                    baseToughness = bonus.basePTOverridden()
+                            ? bonus.baseToughnessOverride() : permanent.getBaseToughness();
+                }
+                yield baseToughness <= baseToughnessAtMostPredicate.maxToughness();
             }
             case PermanentHasAttachedPermanentPredicate p -> {
                 if (gameData == null || p.predicate() == null) {
@@ -2998,7 +3031,9 @@ public class PredicateEvaluationService {
             case PermanentHasProtectionFromColorPredicate p -> hasRecursionSafeProtectionFrom(permanent, p.color());
             case PermanentPowerAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentBasePowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBasePowerToughnessPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentBaseToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBasePowerEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);

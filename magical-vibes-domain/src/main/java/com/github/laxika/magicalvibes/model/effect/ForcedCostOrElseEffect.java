@@ -42,6 +42,26 @@ public record ForcedCostOrElseEffect(
         paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
     }
 
+    @Override
+    public TargetSpec targetSpec() {
+        for (CardEffect paidEffect : paidEffects) {
+            if (paidEffect.targetSpec() != TargetSpec.NONE) {
+                return paidEffect.targetSpec();
+            }
+            if (paidEffect instanceof DealDividedDamageEffect damage && damage.etbAssignments()) {
+                return new TargetSpec(TargetPredicates.anyTarget(), true, null, false, 1);
+            }
+        }
+        if (elseEffects != null) {
+            for (CardEffect elseEffect : elseEffects) {
+                if (elseEffect.targetSpec() != TargetSpec.NONE) {
+                    return elseEffect.targetSpec();
+                }
+            }
+        }
+        return TargetSpec.NONE;
+    }
+
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects) {
         this(forcedCost, elseEffects, false, false, false, false, List.of());
     }

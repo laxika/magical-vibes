@@ -148,6 +148,7 @@ export interface ActivatedAbilityView {
   variableCounterCostType: string | null;
   requiresXValue?: boolean;
   xValueFromControlledCreatureCounters?: boolean;
+  xValueFromEnergyCounters?: boolean;
   xValueFromCardsInHandColor?: string | null;
   xValueFromWaterbendCost?: boolean;
   xValueMin?: number;

@@ -451,6 +451,7 @@ public class TurnCleanupService {
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
+        gameData.cardsGrantedJumpStartUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
@@ -645,6 +646,7 @@ public class TurnCleanupService {
                 if (!copyGrantManaPersists) {
                     gameData.pendingNextInstantSorceryCopyCount.remove(playerId);
                     gameData.pendingNextRedInstantSorceryCopyCount.remove(playerId);
+                    gameData.pendingNextSpellOrAbilityCopyCount.remove(playerId);
                 }
             }
         }

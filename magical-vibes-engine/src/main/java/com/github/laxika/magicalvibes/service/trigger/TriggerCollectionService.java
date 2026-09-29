@@ -113,6 +113,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpel
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
+import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
@@ -1544,6 +1545,46 @@ public class TriggerCollectionService {
                     .map(ReplicateEffect::new)
                     .forEach(selfCastEffects::add);
         }
+
+        Integer pendingSpellOrAbilityCopies = gameData.pendingNextSpellOrAbilityCopyCount.get(castingPlayerId);
+        if (pendingSpellOrAbilityCopies != null && pendingSpellOrAbilityCopies > 0) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                boolean permanentSpell = switch (spellEntry.getEntryType()) {
+                    case CREATURE_SPELL, ARTIFACT_SPELL, ENCHANTMENT_SPELL, PLANESWALKER_SPELL,
+                            BATTLE_SPELL -> true;
+                    default -> false;
+                };
+                List<CardEffect> copyEffects = new ArrayList<>(pendingSpellOrAbilityCopies);
+                for (int i = 0; i < pendingSpellOrAbilityCopies; i++) {
+                    copyEffects.add(new CopyControllerCastSpellEffect(
+                            snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true));
+                }
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName(),
+                        copyEffects
+                ));
+                gameData.pendingNextSpellOrAbilityCopyCount.remove(castingPlayerId);
+                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+                log.info("Game {} - {} mana-linked spell-or-ability copy trigger(s) queued for {}",
+                        gameData.id, pendingSpellOrAbilityCopies, spellCard.getName());
+            }
+        }
+        if (gameQueryService.hasSpellCastingAbilityGrant(
+                gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)) {
+            selfCastEffects.add(new MayEffect(
+                    new DemonstrateEffect(), "Copy " + spellCard.getName() + "?"));
+        }
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
         Map<EffectSlot, List<CardEffect>> perpetualGrants =
                 gameData.perpetualTriggeredAbilityGrants.get(spellCard.getId());
@@ -1746,9 +1787,15 @@ public class TriggerCollectionService {
                                 gameData.id, spellCard.getName(), castingPlayerId);
                     } else {
                         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
+                        boolean optionalTarget = spellCard.getSpellTargets().size() == 1
+                                && spellCard.getSpellTargets().getFirst().getMinTargets() == 0
+                                && spellCard.getSpellTargets().getFirst().getMaxTargets() == 1
+                                && selfCastTriggeredEffects.stream().anyMatch(effect ->
+                                spellCard.getEffectTargetIndex(effect)
+                                        == spellCard.getSpellTargets().getFirst().getIndex());
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
-                                playerTargetOnly, spellCard.getTargetFilter()));
+                                playerTargetOnly, spellCard.getTargetFilter(), 0, null, optionalTarget));
                         log.info("Game {} - {} self-cast targeting trigger queued for {}",
                                 gameData.id, spellCard.getName(), castingPlayerId);
                     }
@@ -9977,7 +10024,40 @@ public class TriggerCollectionService {
      */
     public void checkCardPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId,
                                                                Card card) {
-        var ctx = new TriggerContext.CardPutIntoGraveyard(card, graveyardOwnerId);
+        checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, graveyardOwnerId, card, null);
+    }
+
+    /** Queues the copy created when mana from a copy rider pays for a non-mana ability. */
+    public void checkManaLinkedAbilityCopyTrigger(GameData gameData, UUID activatingPlayerId,
+                                                   StackEntry abilityEntry, ActivatedAbility ability) {
+        if (abilityEntry == null) return;
+        Integer pendingCopies = gameData.pendingNextSpellOrAbilityCopyCount.get(activatingPlayerId);
+        if (pendingCopies == null || pendingCopies <= 0) return;
+
+        CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
+                new StackEntry(abilityEntry), ability, activatingPlayerId);
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                abilityEntry.getCard(),
+                activatingPlayerId,
+                abilityEntry.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(copyEffect))
+        ));
+        gameData.pendingNextSpellOrAbilityCopyCount.remove(activatingPlayerId);
+        gameLogService.append(gameData,
+                GameLog.textCardText("A copy of ", abilityEntry.getCard(), "'s ability is created."));
+        log.info("Game {} - mana-linked ability copy trigger queued for {}", gameData.id,
+                abilityEntry.getCard().getName());
+    }
+
+    /** Mana abilities cannot be copied; spending the linked mana on one consumes the rider. */
+    public void consumeManaLinkedCopyOnManaAbility(GameData gameData, UUID playerId) {
+        gameData.pendingNextSpellOrAbilityCopyCount.remove(playerId);
+    }
+
+    public void checkCardPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                               Card card, Zone sourceZone) {
+        var ctx = new TriggerContext.CardPutIntoGraveyard(card, graveyardOwnerId, sourceZone);
         List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
         if (battlefield == null) return;
 
@@ -10373,7 +10453,7 @@ public class TriggerCollectionService {
                 dyingCreatureControllerId, Math.max(0, ctx.dyingCreatureToughness()));
         if (!dyingCard.isToken()) {
             collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
-                    dyingCreatureControllerId, 0);
+                    dyingCreatureControllerId, Math.max(0, ctx.dyingCreaturePower()));
         }
 
         collectEmblemCreatureDeathTriggers(gameData, dyingCard, ctx);
