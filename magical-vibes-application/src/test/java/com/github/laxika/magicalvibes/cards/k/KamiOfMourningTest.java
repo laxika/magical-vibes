@@ -84,7 +84,7 @@ class KamiOfMourningTest extends BaseCardTest {
     }
 
     private void kill(Permanent permanent) {
-        permanent.setMarkedDamage(permanent.getToughness());
+        permanent.setMarkedDamage(gqs.getEffectiveToughness(gd, permanent));
         harness.runStateBasedActions();
     }
 }
