@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
-import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -50,6 +49,12 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             return;
         }
 
+        Integer maxTotalManaValue = e.maxTotalManaValue();
+        if (e.dynamicMaxTotalManaValue() != null) {
+            maxTotalManaValue = Math.max(0, amountEvaluationService.evaluate(gameData,
+                    e.dynamicMaxTotalManaValue(), AmountContext.forStackEntry(entry, null)));
+        }
+
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null || graveyard.isEmpty()) {
             return;
@@ -60,7 +65,7 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             if (e.manaValueEqualsX() && card.getManaValue() != entry.getXValue()) {
                 continue;
             }
-            if (e.maxTotalManaValue() != null && card.getManaValue() > e.maxTotalManaValue()) {
+            if (maxTotalManaValue != null && card.getManaValue() > maxTotalManaValue) {
                 continue;
             }
             if (predicateEvaluationService.matchesCardPredicate(
@@ -86,13 +91,13 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             return;
         }
 
-        if (e.maxTotalManaValue() != null) {
+        if (maxTotalManaValue != null) {
             gameData.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume = true;
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                     controllerId, matching, maxCount,
                     "Choose up to " + maxCount + " matching cards with total mana value "
-                            + e.maxTotalManaValue() + " or less from your graveyard.",
-                    0, e.maxTotalManaValue()));
+                            + maxTotalManaValue + " or less from your graveyard.",
+                    0, maxTotalManaValue));
             return;
         }
 
