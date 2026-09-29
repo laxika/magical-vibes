@@ -11,6 +11,6 @@ public class AssaultIntercessor extends Card {
 
     public AssaultIntercessor() {
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

@@ -22,7 +22,7 @@ class SteadyTortoiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(tortoise));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAdventure(player1, 0);
+        harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
         Permanent rabbit = gd.playerBattlefields.get(player1.getId()).stream()

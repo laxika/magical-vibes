@@ -31,7 +31,8 @@ class PhantomSteedTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, steed));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == bear.getCard());
     }
 
     @Test
@@ -41,16 +42,18 @@ class PhantomSteedTest extends BaseCardTest {
         Permanent steed = castSteed(bear.getId());
         steed.setSummoningSick(false);
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(steed)));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(steed)));
+            resolveAllTriggers();
 
-        Permanent token = findPermanents(player1, "Grizzly Bears").stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
-        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ILLUSION);
+            Permanent token = findPermanents(player1, "Grizzly Bears").stream()
+                    .filter(permanent -> permanent.getCard().isToken())
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ILLUSION);
+        });
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();

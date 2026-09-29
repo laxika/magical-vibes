@@ -28,9 +28,6 @@ class NaturalAffinityTest extends BaseCardTest {
 
         harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
         harness.passBothPriorities();
-
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
     }
 
     @Test

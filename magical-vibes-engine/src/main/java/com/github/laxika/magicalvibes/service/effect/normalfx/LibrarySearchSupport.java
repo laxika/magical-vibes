@@ -126,14 +126,16 @@ public class LibrarySearchSupport {
             UUID nextPlayerId = remaining.remove(0);
             String playerName = gameData.playerIdToName.get(nextPlayerId);
 
-            if (isSearchPrevented(gameData, nextPlayerId)) {
+            if (isSearchPrevented(gameData, nextPlayerId, false)) {
                 continue;
             }
 
-            gameData.playersWhoSearchedLibraryThisTurn.add(nextPlayerId);
-
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
             if (deck == null || deck.isEmpty()) {
+                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, nextPlayerId);
+                if (deck != null) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
+                }
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
                 continue;
             }
@@ -141,8 +143,11 @@ public class LibrarySearchSupport {
             List<Card> choices = creatureOnly
                     ? deck.stream().filter(card -> card.hasAllCardNames() || card.hasType(CardType.CREATURE)).toList()
                     : deck;
+            choices = restrictToTopCards(gameData, nextPlayerId, choices,
+                    opponentSearchTopCardsLimit(gameData, nextPlayerId));
 
             if (choices.isEmpty()) {
+                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, nextPlayerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
                 continue;
@@ -165,9 +170,7 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
-            params = applyOppositionAgentControl(gameData, params);
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library."));
+            sendLibrarySearchToPlayer(gameData, nextPlayerId, params, prompt, true);
             return true;
         }
         return false;
@@ -801,7 +804,8 @@ public class LibrarySearchSupport {
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
         // library. A search of someone else's library (targetPlayerId set) is not "their library".
         if ((params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
-                && params.followUp().basicLandSearchQueue() == null) {
+                && params.followUp().basicLandSearchQueue() == null
+                && params.followUp().eachPlayerToHandCount() == 0) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
         }
 

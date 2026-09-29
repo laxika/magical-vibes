@@ -74,10 +74,10 @@ class TheThirdDoctorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
+        int modeIndex = List.of(CLUE_MODE, FOOD_MODE, TREASURE_MODE).indexOf(mode);
+        harness.castCreature(player1, 0, modeIndex);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleListChoice(player1, mode);
 
         return findPermanent(player1, "The Third Doctor");
     }

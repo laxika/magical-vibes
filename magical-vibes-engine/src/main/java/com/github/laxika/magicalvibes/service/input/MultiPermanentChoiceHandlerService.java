@@ -3444,6 +3444,9 @@ public class MultiPermanentChoiceHandlerService {
             List<UUID> permanentIds,
             MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice context) {
         voteForCreatureThenDestroyMostVotedEffectHandler.completeVote(gameData, permanentIds, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
     }
 
     private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId,

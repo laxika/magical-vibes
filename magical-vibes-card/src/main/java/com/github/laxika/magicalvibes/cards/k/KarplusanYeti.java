@@ -20,7 +20,7 @@ public class KarplusanYeti extends Card {
     public KarplusanYeti() {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new SourceFightsTargetCreatureEffect()),
+                List.of(new SourceFightsTargetCreatureEffect(false)),
                 "{T}: This creature deals damage equal to its power to target creature. "
                         + "That creature deals damage equal to its power to this creature.",
                 TargetFilters.creature()

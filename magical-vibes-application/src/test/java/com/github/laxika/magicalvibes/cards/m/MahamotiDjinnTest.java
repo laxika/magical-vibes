@@ -92,6 +92,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         addCreatureReady(player1, new MahamotiDjinn());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
@@ -103,6 +104,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         addCreatureReady(player1, new MahamotiDjinn());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }

@@ -59,7 +59,7 @@ class UtopiaTreeTest extends BaseCardTest {
             harness.handleListChoice(player1, color);
 
             for (ManaColor existingColor : ManaColor.values()) {
-                int expected = existingColor == manaColor ? 2 : 1;
+                int expected = existingColor == manaColor ? 1 : 0;
                 assertThat(gd.playerManaPools.get(player1.getId()).get(existingColor))
                         .as("mana of %s", existingColor)
                         .isEqualTo(expected);

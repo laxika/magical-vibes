@@ -69,9 +69,11 @@ class JonIrenicusTheExileTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+        });
     }
 
     private List<Card> cards(int count) {
