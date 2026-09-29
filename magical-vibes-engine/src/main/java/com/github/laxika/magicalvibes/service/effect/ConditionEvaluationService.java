@@ -488,6 +488,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -3928,10 +3929,13 @@ public class ConditionEvaluationService {
     }
 
     private long countPermanentsEnteredThisTurn(GameData gameData, ConditionContext ctx, PermanentEnteredThisTurn c) {
-        if (ctx.controllerId() == null) return 0;
-        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
-                .getOrDefault(ctx.controllerId(), List.of());
-        return entered.stream()
+        Stream<Card> entered = c.scope() == CountScope.ANY_PLAYER
+                ? gameData.permanentsEnteredBattlefieldThisTurn.values().stream().flatMap(List::stream)
+                : ctx.controllerId() == null
+                        ? Stream.empty()
+                        : gameData.permanentsEnteredBattlefieldThisTurn
+                                .getOrDefault(ctx.controllerId(), List.of()).stream();
+        return entered
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, c.predicate(), null))
                 .count();
     }

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesColorWithControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAwakenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCascadePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasColorManaSymbolPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasHybridManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -536,6 +538,17 @@ public class PredicateEvaluationService {
                 yield source != null && gameQueryService.isCreature(gameData, source)
                         && gameQueryService.shareCreatureType(gameData, source, card);
             }
+            case CardSharesColorWithControlledPermanentPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null) {
+                    yield false;
+                }
+                Set<CardColor> cardColors = gameQueryService.getEffectiveCardColors(gameData, card);
+                List<Permanent> battlefield = gameData.playerBattlefields.get(cardOwnerId);
+                yield battlefield != null && battlefield.stream()
+                        .map(permanent -> gameQueryService.getEffectiveColors(gameData, permanent))
+                        .anyMatch(permanentColors -> permanentColors.stream()
+                                .anyMatch(cardColors::contains));
+            }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -588,6 +601,10 @@ public class PredicateEvaluationService {
             case CardHasColorManaSymbolPredicate p -> {
                 ManaCost manaCost = card.getParsedManaCost();
                 yield manaCost != null && manaCost.countColorSymbols(p.color()) > 0;
+            }
+            case CardHasHybridManaPredicate ignored -> {
+                ManaCost manaCost = card.getParsedManaCost();
+                yield manaCost != null && manaCost.hasHybridMana();
             }
             case CardDoesNotShareColorWithSourceControlledCreaturePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

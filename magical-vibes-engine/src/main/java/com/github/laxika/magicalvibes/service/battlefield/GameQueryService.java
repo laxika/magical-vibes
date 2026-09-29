@@ -1592,8 +1592,13 @@ public class GameQueryService {
         return Optional.empty();
     }
 
-    /** Returns the evoke alternate cast granted to a matching permanent spell by a permanent its controller controls. */
+    /** Returns the Evoke alternate cast granted to a matching card by its perpetual or battlefield grants. */
     public Optional<AlternateHandCast> findGrantedEvokeAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<AlternateHandCast> perpetual = card == null
+                ? null : gameData.perpetualEvokeAlternateCasts.get(card.getId());
+        if (perpetual != null && !perpetual.isEmpty()) {
+            return Optional.of(perpetual.getFirst());
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || card == null || card.isToken()) {
             return Optional.empty();

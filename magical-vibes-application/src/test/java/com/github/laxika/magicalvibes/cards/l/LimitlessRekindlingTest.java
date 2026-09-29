@@ -1,0 +1,40 @@
+package com.github.laxika.magicalvibes.cards.l;
+
+import com.github.laxika.magicalvibes.cards.a.AquaticSubtlety;
+import com.github.laxika.magicalvibes.cards.c.CraterousStomp;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({LimitlessRekindling.class, AquaticSubtlety.class, CraterousStomp.class})
+class LimitlessRekindlingTest extends BaseCardTest {
+
+    @Test
+    void conjuresRandomInstantOrSorceryIntoExileForFreeCastUntilEndOfTurn() {
+        harness.setHand(player1, java.util.List.of(new LimitlessRekindling()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
+        assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling");
+        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
+        assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
+
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiled.getId());
+    }
+}

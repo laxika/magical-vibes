@@ -208,6 +208,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_SCRIES,
     /** Triggers whenever this permanent's controller searches their own library. */
     ON_CONTROLLER_SEARCHES_LIBRARY,
+    /** Triggers whenever a card is put from the controller's library into their hand. */
+    ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY,
     /** Triggers after all players finish a voting event. */
     ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */

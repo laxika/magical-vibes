@@ -837,6 +837,10 @@ public sealed interface TriggerContext {
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)
             implements TriggerContext {}
 
+    /** Context for a card put from the controller's library into their hand. */
+    record ControllerCardPutIntoHandFromLibrary(UUID libraryOwnerId, Card card)
+            implements TriggerContext {}
+
     /** Context for one instant or sorcery card leaving the controller's graveyard. */
     record ControllerInstantOrSorceryCardLeavesGraveyard(UUID graveyardOwnerId, Card card)
             implements TriggerContext {}

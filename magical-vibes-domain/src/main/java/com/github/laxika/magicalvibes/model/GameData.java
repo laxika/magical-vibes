@@ -394,6 +394,8 @@ public class GameData {
     public final Map<UUID, Set<CardSubtype>> perpetualCardSubtypes = new ConcurrentHashMap<>();
     /** Perpetual activated abilities keyed by the affected card's identity. */
     public final Map<UUID, List<ActivatedAbility>> perpetualActivatedAbilities = new ConcurrentHashMap<>();
+    /** Perpetual Evoke alternate costs keyed by the affected card's identity. */
+    public final Map<UUID, List<AlternateHandCast>> perpetualEvokeAlternateCasts = new ConcurrentHashMap<>();
     /** Perpetual power bonuses attached to individual card identities, keyed by card id. */
     public final Map<UUID, Integer> perpetualCardPowerModifiers = new ConcurrentHashMap<>();
     /** Perpetually removed keywords attached to individual card identities, keyed by card id. */
@@ -6782,6 +6784,8 @@ public class GameData {
                 copy.perpetualCardSubtypes.put(cardId, Set.copyOf(subtypes)));
         this.perpetualActivatedAbilities.forEach((cardId, abilities) ->
                 copy.perpetualActivatedAbilities.put(cardId, List.copyOf(abilities)));
+        this.perpetualEvokeAlternateCasts.forEach((cardId, alternateCasts) ->
+                copy.perpetualEvokeAlternateCasts.put(cardId, List.copyOf(alternateCasts)));
         copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
         copy.perpetualCardCastCostIncreases.putAll(this.perpetualCardCastCostIncreases);
         copy.perpetualCardPowerModifiers.putAll(this.perpetualCardPowerModifiers);

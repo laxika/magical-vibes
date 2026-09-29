@@ -67,6 +67,8 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
                     ThreadLocalRandom.current().nextInt(matchingCards.size()));
             library.remove(chosen);
             gameData.addCardToHand(controllerId, chosen);
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                    gameData, controllerId, chosen);
             gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
                     controllerId, chosen.getId(), entry.getCard()));
             soughtCards.add(chosen);
