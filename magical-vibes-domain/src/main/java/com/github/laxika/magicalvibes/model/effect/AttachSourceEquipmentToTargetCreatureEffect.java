@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Attaches the source equipment to a target creature.
  * Used by equipment with "When this Equipment enters, attach it to target creature you control."
@@ -7,19 +10,32 @@ package com.github.laxika.magicalvibes.model.effect;
  * An optional continuation is queued as a reflexive ability only after the attachment succeeds.
  */
 public record AttachSourceEquipmentToTargetCreatureEffect(CardEffect thenEffect,
-                                                          boolean thenEffectOptionalTarget)
+                                                          boolean thenEffectOptionalTarget,
+                                                          PermanentPredicate targetPredicate)
         implements CardEffect {
 
     public AttachSourceEquipmentToTargetCreatureEffect() {
-        this(null, false);
+        this(null, false, null);
     }
 
     public AttachSourceEquipmentToTargetCreatureEffect(CardEffect thenEffect) {
-        this(thenEffect, false);
+        this(thenEffect, false, null);
+    }
+
+    public AttachSourceEquipmentToTargetCreatureEffect(CardEffect thenEffect,
+                                                       boolean thenEffectOptionalTarget) {
+        this(thenEffect, thenEffectOptionalTarget, null);
+    }
+
+    public static AttachSourceEquipmentToTargetCreatureEffect forCreatureYouControl() {
+        return new AttachSourceEquipmentToTargetCreatureEffect(
+                null, false, new PermanentControlledBySourceControllerPredicate());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent());
+        return targetPredicate == null
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.benign(TargetPredicates.creature(), targetPredicate);
     }
 }

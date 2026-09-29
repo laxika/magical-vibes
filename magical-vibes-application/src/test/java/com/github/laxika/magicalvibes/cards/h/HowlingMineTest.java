@@ -56,6 +56,20 @@ class HowlingMineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger for a draw outside the draw step")
+    void doesNotTriggerForNonDrawStepDraw() {
+        harness.addToBattlefield(player1, new HowlingMine());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Opponent draws an additional card during their draw step")
     void triggersDrawForOpponent() {
         harness.addToBattlefield(player1, new HowlingMine());

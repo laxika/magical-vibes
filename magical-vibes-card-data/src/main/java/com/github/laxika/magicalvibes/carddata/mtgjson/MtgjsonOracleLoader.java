@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.SetJsonCache;
 import com.github.laxika.magicalvibes.carddata.SetOracleData;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.OracleData;
 import java.io.IOException;
 import java.net.URI;
@@ -137,6 +138,19 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
             // Total cards in the set (one entry per collector number, meld results included —
             // the same count Scryfall yields) — the set-completeness denominator.
+            // MTGJSON currently omits MB2's playable emblem printing, while the official
+            // printing and Scryfall both expose it as collector number 513.
+            if ("MB2".equalsIgnoreCase(setCode) && implementedCollectorNumbers.contains("513")
+                    && !frontFaces.containsKey("513")) {
+                frontFaces.put("513", new OracleData(
+                        "Essence of Ajani", CardType.EMBLEM, Set.of(), "{2}{W}", CardColor.WHITE,
+                        List.of(CardColor.WHITE), List.of(CardColor.WHITE), Set.of(), List.of(),
+                        "(As this spell resolves, put it into the command zone.)\n"
+                                + "Whenever you cast a spell, you gain 1 life.",
+                        null, null, Set.of(), null, null, null));
+                rarities.putIfAbsent("513", "rare");
+            }
+
             return new SetOracleData(setName, cardTotal, rarities,
                     frontFaces, backFaces, faces.faceNamesByCollectorNumber(),
                     parseTokens(sourceSetCode, setData));
@@ -202,6 +216,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
     static void applyMissingPrintingAliases(String setCode, Map<String, JsonNode> frontFaces,
                                             Map<String, String> rarities) {
+        CardDataSupport.applyMissingMb2Printings(setCode, frontFaces, rarities);
         if (!"MSC".equalsIgnoreCase(setCode)) {
             return;
         }

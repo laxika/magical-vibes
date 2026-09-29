@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.c.CrystalRod;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.w.WurmsTooth;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,8 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.c.CrystalRod;
 
-@CardUsed({CrystalRod.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class})
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, WurmsTooth.class, CrystalRod.class})
 class TemporalAdeptTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -102,14 +103,14 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns a target artifact to its owner's hand")
     void resolvingReturnsArtifact() {
         addReadyAdept(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrystalRod());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Crystal Rod");
-        harness.assertInHand(player2, "Crystal Rod");
+        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
+        harness.assertInHand(player2, "Wurm's Tooth");
     }
 
     @Test
@@ -193,19 +194,7 @@ class TemporalAdeptTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate ability with summoning sickness")
-    void cannotActivateWithSummoningSickness() {
-        harness.addToBattlefield(player1, new TemporalAdept());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("summoning sickness");
-    }
-
-    @Test
-    @DisplayName("Cannot target a player")
+    @DisplayName("Cannot target a player because the ability targets a permanent")
     void cannotTargetPlayer() {
         addReadyAdept(player1);
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -247,13 +236,25 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns an opponent's noncreature permanent to its owner's hand")
     void resolvingReturnsOpponentNoncreaturePermanent() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrystalRod());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Crystal Rod");
-        harness.assertInHand(player2, "Crystal Rod");
+        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
+        harness.assertInHand(player2, "Wurm's Tooth");
+    }
+
+    @Test
+    @DisplayName("Cannot activate ability with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new TemporalAdept());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 }

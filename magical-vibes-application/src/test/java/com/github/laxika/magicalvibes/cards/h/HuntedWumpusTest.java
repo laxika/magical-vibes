@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HornedTroll;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,8 +17,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.h.HornedTroll;
 
-@CardUsed({HuntedWumpus.class, GrizzlyBears.class, Forest.class, HornedTroll.class})
+@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class, HornedTroll.class})
 class HuntedWumpusTest extends BaseCardTest {
 
     /**
@@ -51,8 +51,8 @@ class HuntedWumpusTest extends BaseCardTest {
         // Hand is now empty (had 1 card, played it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Mana was spent ({3}{G})
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        // Mana was spent ({3}{G}).
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
     @Test
@@ -169,8 +169,8 @@ class HuntedWumpusTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB ignores creatures in the Wumpus controller's hand")
-    void wumpusEtbOnlyUsesOtherPlayersHand() {
+    @DisplayName("ETB does not let the controller put a creature from their own hand onto the battlefield")
+    void wumpusEtbDoesNotUseControllerHand() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
 
@@ -179,11 +179,9 @@ class HuntedWumpusTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -269,12 +267,27 @@ class HuntedWumpusTest extends BaseCardTest {
         setupAndCastWumpus();
 
         // Give player1 another creature + mana to try casting it
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
         // Attempting to play while stack is non-empty should fail
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("ETB ignores creatures in the Wumpus controller's hand")
+    void wumpusEtbOnlyUsesOtherPlayersHand() {
+        setupAndCastWumpus();
+        harness.passBothPriorities(); // resolve creature spell
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.passBothPriorities(); // resolve ETB
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }

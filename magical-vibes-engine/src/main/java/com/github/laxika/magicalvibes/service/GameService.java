@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -1573,7 +1574,7 @@ public class GameService {
             if (!manifestedOrCloaked && morphLifeCost != null) {
                 spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
-            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
+            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true, true);
         }
     }
 
@@ -1604,24 +1605,28 @@ public class GameService {
             if (controllerId == null) {
                 return;
             }
-            finishTurningFaceUp(gameData, permanent, controllerId, null, false);
+            finishTurningFaceUp(gameData, permanent, controllerId, null, false, false);
         }
     }
 
     private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,
-                                     Integer xValue, boolean autoPass) {
+                                     Integer xValue, boolean autoPass, boolean paidTurnFaceUpCost) {
         permanent.turnFaceUp();
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
+        gameData.permanentsTurnedFaceUpThisTurn.add(permanent.getId());
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
                 .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
                 .filter(TurnFaceUpReplacementEffect.class::isInstance)
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
         for (TurnFaceUpReplacementEffect replacement : replacements) {
+            if (!paidTurnFaceUpCost && !replacement.appliesWithoutPayingCost()) {
+                continue;
+            }
             int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
                     AmountContext.forEnteringPermanent(controllerId, permanent, xValue != null ? xValue : 0));
-            permanentCounterSupport.applyPlusOnePlusOneCounters(
-                    gameData, null, permanent, counterCount);
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, replacement.counterType(), counterCount);
         }
         if (turnFaceUpCopyService != null
                 && turnFaceUpCopyService.prepareChoice(gameData, permanent, controllerId)) {
@@ -1649,9 +1654,14 @@ public class GameService {
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
         if (!effects.isEmpty()) {
+            int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    gameData, controllerId, permanent, false,
+                    new TriggerContext.PermanentTurnsFaceUp(permanent, controllerId));
             if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
-                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        permanent.getCard(), controllerId, modal, permanent.getId()));
+                for (int copy = 0; copy < triggerCopies; copy++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                            permanent.getCard(), controllerId, modal, permanent.getId()));
+                }
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);
                 }
@@ -1682,9 +1692,11 @@ public class GameService {
                 int minimumGraveyardTargets = effects.stream()
                         .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                         .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        permanent.getCard(), controllerId, effects, null,
-                        minimumGraveyardTargets, xValue != null ? xValue : 0));
+                for (int copy = 0; copy < triggerCopies; copy++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            permanent.getCard(), controllerId, effects, null,
+                            minimumGraveyardTargets, xValue != null ? xValue : 0));
+                }
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 if (autoPass) {
                     turnProgressionService.resolveAutoPass(gameData);
@@ -1697,9 +1709,11 @@ public class GameService {
                     spellFilter = filter.predicate();
                     includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
                 }
-                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                        permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
-                        permanent.getId()));
+                for (int copy = 0; copy < triggerCopies; copy++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                            permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
+                            permanent.getId()));
+                }
             } else if (targetsPlayer || targetsPermanent
                     || effects.stream().anyMatch(permanent.getCard()::hasEffectTargetIndex)) {
                 boolean multiTarget = permanent.getCard().getSpellTargets().size() > 1
@@ -1707,18 +1721,24 @@ public class GameService {
                         .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
                                 || group.getDynamicMinTargets() != null);
                 if (multiTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                            permanent.getCard(), controllerId, effects, permanent.getId(), List.of(), 0, 0));
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                permanent.getCard(), controllerId, effects, permanent.getId(), List.of(), 0, 0));
+                    }
                 } else {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            permanent.getCard(), controllerId, effects,
-                            !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                permanent.getCard(), controllerId, effects,
+                                !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
+                    }
                 }
             } else {
-                gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                        permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
-                        effects, xValue != null ? xValue : 0, permanent.getId()));
+                for (int copy = 0; copy < triggerCopies; copy++) {
+                    gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                            com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                            permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
+                            effects, xValue != null ? xValue : 0, permanent.getId()));
+                }
             }
         }
         if (autoPass) {
@@ -1816,6 +1836,20 @@ public class GameService {
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId, List.of());
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, boolean flashforwardCast) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
+                        flashforwardCast))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                    flashforwardCast);
+        }
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,

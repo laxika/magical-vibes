@@ -26,6 +26,7 @@ public class ReduceCastCostForNextMatchingSpellEffectHandler implements CostModi
         var reduction = (ReduceCastCostForNextMatchingSpellEffect) effect;
         return matchingSpellsHandler.modifyCost(context,
                 new ReduceCastCostForMatchingSpellsEffect(
-                        reduction.predicate(), reduction.amount(), CostModificationScope.SELF), source);
+                        reduction.predicate(), reduction.amount(), CostModificationScope.SELF,
+                        java.util.Set.of(), false, reduction.faceDownOnly()), source);
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "FIC", collectorNumber = "239")
 @CardRegistration(set = "NCC", collectorNumber = "15")
 @CardRegistration(set = "NCC", collectorNumber = "116")
 public class DamningVerdict extends Card {

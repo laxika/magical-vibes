@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
+@CardRegistration(set = "AFC", collectorNumber = "142")
 @CardRegistration(set = "M19", collectorNumber = "160")
 @CardRegistration(set = "TDC", collectorNumber = "234")
 public class SpitFlame extends Card {

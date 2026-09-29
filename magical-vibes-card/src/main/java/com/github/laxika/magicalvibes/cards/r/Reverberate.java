@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M12", collectorNumber = "152")
 @CardRegistration(set = "M13", collectorNumber = "145")
 @CardRegistration(set = "PD2", collectorNumber = "20")
+@CardRegistration(set = "40K", collectorNumber = "207")
 public class Reverberate extends Card {
 
     public Reverberate() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "205")
+@CardRegistration(set = "LCC", collectorNumber = "277")
 public class MerfolkSkydiver extends Card {
 
     public MerfolkSkydiver() {

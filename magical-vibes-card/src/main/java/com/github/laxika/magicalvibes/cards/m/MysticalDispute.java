@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "58")
+@CardRegistration(set = "MB2", collectorNumber = "31")
 public class MysticalDispute extends Card {
 
     public MysticalDispute() {

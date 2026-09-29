@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
+import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,11 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({
         TempestOfLight.class,
-        RuleOfLaw.class,
-        AngelicChorus.class,
+        GloriousAnthem.class,
         GrizzlyBears.class,
         HolyStrength.class,
-        LoxodonWarhammer.class,
+        FellwarStone.class,
         Plains.class
 })
 class TempestOfLightTest extends BaseCardTest {
@@ -48,26 +46,26 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys a single enchantment")
     void destroysSingleEnchantment() {
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new GloriousAnthem());
         harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
-        harness.assertInGraveyard(player1, "Rule of Law");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
     }
 
     @Test
     @DisplayName("Destroys enchantments controlled by both players")
     void destroysEnchantmentsFromBothPlayers() {
-        harness.addToBattlefield(player1, new RuleOfLaw());
-        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GloriousAnthem());
         harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player1, "Rule of Law");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
     @Test
@@ -105,16 +103,16 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Does not destroy artifacts or lands")
     void doesNotDestroyArtifactsOrLands() {
-        harness.addToBattlefield(player1, new LoxodonWarhammer());
+        harness.addToBattlefield(player1, new FellwarStone());
         harness.addToBattlefield(player2, new Plains());
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new GloriousAnthem());
 
         harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Loxodon Warhammer");
+        harness.assertOnBattlefield(player1, "Fellwar Stone");
         harness.assertOnBattlefield(player2, "Plains");
-        harness.assertNotOnBattlefield(player1, "Rule of Law");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
     }
 
     @Test
@@ -141,12 +139,12 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving logs destroyed enchantments")
     void resolvingLogsDestroyedEnchantments() {
-        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new GloriousAnthem());
         harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Rule of Law") && log.contains("destroyed"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Glorious Anthem") && log.contains("destroyed"));
     }
 }
 

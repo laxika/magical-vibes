@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1797")
+@CardRegistration(set = "HBG", collectorNumber = "231")
 public class AstarionTheDecadent extends Card {
 
     public AstarionTheDecadent() {

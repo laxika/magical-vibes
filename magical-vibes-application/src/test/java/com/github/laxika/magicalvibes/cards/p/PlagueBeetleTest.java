@@ -26,9 +26,7 @@ class PlagueBeetleTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GiantCockroach());
 
         Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
-        attackerPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -46,9 +44,7 @@ class PlagueBeetleTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GiantCockroach());
 
         Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
-        attackerPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -67,7 +63,6 @@ class PlagueBeetleTest extends BaseCardTest {
 
         Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
         attackerPerm.setAttacking(true);
-
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -77,10 +72,9 @@ class PlagueBeetleTest extends BaseCardTest {
     void attackersSwampDoesNotEnableSwampwalk() {
         Permanent blockerPerm = addCreatureReady(player2, new GiantCockroach());
         Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
-        attackerPerm.setAttacking(true);
         harness.addToBattlefield(player1, new Swamp());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);

@@ -31,6 +31,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "149")
+@CardRegistration(set = "MOC", collectorNumber = "16")
+@CardRegistration(set = "MOC", collectorNumber = "103")
 public class GuardianScalelord extends Card {
 
     public GuardianScalelord() {

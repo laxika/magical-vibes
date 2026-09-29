@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * next turn. The choice is made while the triggered modal resolves.
  */
 public record GoadChosenCreatureDamagedPlayerControlsEffect()
-        implements CombatAttackRequirementEffect, CombatDamageTriggerContextEffect {
+        implements CombatAttackRequirementEffect, CombatDamageTriggerContextEffect, GoadStatusEffect {
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
@@ -22,6 +22,11 @@ public record GoadChosenCreatureDamagedPlayerControlsEffect()
 
     @Override
     public boolean requiresAttackAtOtherPlayerIfAble() {
+        return true;
+    }
+
+    @Override
+    public boolean makesGoaded() {
         return true;
     }
 }

@@ -40,8 +40,7 @@ class GoblinBrigandTest extends BaseCardTest {
     @Test
     @DisplayName("Goblin Brigand does not need to attack with summoning sickness")
     void doesNotAttackWithSummoningSickness() {
-        Permanent brigand = new Permanent(new GoblinBrigand());
-        gd.playerBattlefields.get(player1.getId()).add(brigand);
+        Permanent brigand = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
 
         declareAttackers(List.of());
 

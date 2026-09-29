@@ -34,6 +34,7 @@ public class GrantBlitzToSpellsEffectHandler implements CostModificationHandlerB
                                    CostModificationSource source) {
         if (!context.blitzCost() || !source.controlledBy(context.castingPlayerId())
                 || !(effect instanceof BlitzGrantingEffect grant)
+                || grant.blitzCostReduction() == null
                 || !predicateEvaluationService.matchesCardPredicate(
                 context.spell(), grant.blitzGrantFilter(), source.sourceCardId(),
                 context.gameData(), context.castingPlayerId())) {

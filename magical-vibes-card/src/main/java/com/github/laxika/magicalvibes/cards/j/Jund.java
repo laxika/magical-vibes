@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "OPC2", collectorNumber = "20")
 @CardRegistration(set = "OPCA", collectorNumber = "41")
+@CardRegistration(set = "MOC", collectorNumber = "148")
 public class Jund extends Card {
 
     public Jund() {

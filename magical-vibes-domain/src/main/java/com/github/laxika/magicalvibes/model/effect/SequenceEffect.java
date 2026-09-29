@@ -47,9 +47,8 @@ import java.util.UUID;
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
                              boolean optionalTarget)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
-        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect,
-        DyingCreatureCountersAwareEffect {
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
+        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false, false);

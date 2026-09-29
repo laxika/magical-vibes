@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Diminish;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RavenousRats;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwarmOfRats.class, RavenousRats.class, GrizzlyBears.class})
+@CardUsed({SwarmOfRats.class, RavenousRats.class, SengirVampire.class})
 class SwarmOfRatsTest extends BaseCardTest {
 
     @Test
@@ -38,10 +37,25 @@ class SwarmOfRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Swarm of Rats power updates as controlled Rats enter and leave")
+    void powerUpdatesAsControlledRatsChange() {
+        Permanent swarm = addCreatureReady(player1, new SwarmOfRats());
+
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
+
+        Permanent controlledRat = harness.addToBattlefieldAndReturn(player1, new RavenousRats());
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(controlledRat);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Swarm of Rats counts only Rats, not other creatures you control")
     void countsOnlyRats() {
         Permanent swarm = addCreatureReady(player1, new SwarmOfRats());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SengirVampire());
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);

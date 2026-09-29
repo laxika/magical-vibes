@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePow
 
 @CardRegistration(set = "M21", collectorNumber = "216")
 @CardRegistration(set = "2X2", collectorNumber = "195")
+@CardRegistration(set = "MOC", collectorNumber = "320")
 public class ConclaveMentor extends Card {
 
     public ConclaveMentor() {

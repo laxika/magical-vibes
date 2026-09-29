@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -30,6 +33,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -61,6 +65,7 @@ public class MayCopyHandlerService {
     private final ValidTargetService validTargetService;
     private final LandCopyOnEnterService landCopyOnEnterService;
     private final TargetRedirectionSupport targetRedirectionSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
@@ -157,9 +162,10 @@ public class MayCopyHandlerService {
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
-                    .flatMap(List::stream)
-                    .filter(card -> card.hasType(CardType.CREATURE))
+            List<Card> creatureCards = gameData.playerGraveyards.entrySet().stream()
+                    .flatMap(entry -> entry.getValue().stream()
+                            .filter(card -> cloneService.isValidGraveyardCopyCard(
+                                    gameData, ability.controllerId(), entry.getKey(), card, copyEffect)))
                     .toList();
             int requiredCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
             if (creatureCards.size() >= requiredCards) {
@@ -260,6 +266,31 @@ public class MayCopyHandlerService {
                 " enters without copying."));
         log.info("Game {} - {} declines graveyard copy", gameData.id, player.getUsername());
         finishCloneEntryWithoutFurtherChoice(gameData);
+    }
+
+    public void handleCopyCreatureCardInExileOnEnterChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CopyCreatureCardInExileOnEnterEffect copyEffect) {
+        if (!accepted) {
+            finishCloneEntryWithoutFurtherChoice(gameData);
+            return;
+        }
+
+        List<ExiledCardEntry> eligible = gameData.exiledCards.stream()
+                .filter(entry -> !entry.faceDown())
+                .filter(entry -> entry.card().hasType(CardType.CREATURE))
+                .filter(entry -> gameData.exiledCardsWithTakeoverCounters.contains(entry.card().getId()))
+                .toList();
+        if (eligible.isEmpty()) {
+            finishCloneEntryWithoutFurtherChoice(gameData);
+        } else if (eligible.size() == 1) {
+            finishCloneEntryFromCard(gameData, eligible.getFirst().card());
+        } else {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCreatureCopyChoice(
+                    ability.controllerId(), null,
+                    eligible.stream().map(entry -> entry.card().getId()).toList(),
+                    "The Master, Formed Anew"));
+        }
     }
 
     public void finishCloneEntryWithoutFurtherChoice(GameData gameData) {
@@ -622,6 +653,10 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
+            validTargets.removeAll(targetSpellEntry.getDeclaredTargetIds());
+            if (targetSpellEntry.getTargetId() != null) {
+                validTargets.remove(targetSpellEntry.getTargetId());
+            }
         }
 
         if (validTargets.isEmpty()) {
@@ -633,7 +668,10 @@ public class MayCopyHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(spellCardId));
+        Integer targetIndex = targetSpellEntry.getTargetId() == null
+                && !targetSpellEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for " + spellCard.getName() + ".");
     }

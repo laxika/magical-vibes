@@ -15,6 +15,8 @@ import java.util.List;
 @CardRegistration(set = "RAV", collectorNumber = "282")
 @CardRegistration(set = "HOP", collectorNumber = "138")
 @CardRegistration(set = "GK1", collectorNumber = "99")
+@CardRegistration(set = "C21", collectorNumber = "319")
+@CardRegistration(set = "MKC", collectorNumber = "298")
 public class SunhomeFortressOfTheLegion extends Card {
 
     public SunhomeFortressOfTheLegion() {

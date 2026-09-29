@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "61")
+@CardRegistration(set = "HBG", collectorNumber = "121")
 public class GuildThief extends Card {
 
     public GuildThief() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "23")
+@CardRegistration(set = "WHO", collectorNumber = "209")
 public class OutOfTime extends Card {
 
     public OutOfTime() {

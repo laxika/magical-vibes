@@ -38,7 +38,7 @@ class FormOfTheDragonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -51,7 +51,21 @@ class FormOfTheDragonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, scout.getId());
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gqs.findPermanentById(gd, scout.getId())).isNull();
+        harness.assertNotOnBattlefield(player2, "Treetop Scout");
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does not fire during an opponent's upkeep")
+    void upkeepDoesNotFireDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 13);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 13);
     }
 
     // ===== End step: your life total becomes 5 =====
@@ -64,7 +78,7 @@ class FormOfTheDragonTest extends BaseCardTest {
 
         resolveEndStep(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
+        harness.assertLife(player1, 5);
     }
 
     @Test
@@ -75,7 +89,7 @@ class FormOfTheDragonTest extends BaseCardTest {
 
         resolveEndStep(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
+        harness.assertLife(player1, 5);
     }
 
     @Test
@@ -87,8 +101,8 @@ class FormOfTheDragonTest extends BaseCardTest {
 
         resolveEndStep(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 13);
     }
 
     @Test
@@ -100,8 +114,8 @@ class FormOfTheDragonTest extends BaseCardTest {
 
         resolveEndStep(player2);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 13);
     }
 
     // ===== Static: creatures without flying can't attack you =====

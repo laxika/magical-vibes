@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "265")
+@CardRegistration(set = "MKC", collectorNumber = "280")
 public class PortOfKarfell extends Card {
 
     public PortOfKarfell() {

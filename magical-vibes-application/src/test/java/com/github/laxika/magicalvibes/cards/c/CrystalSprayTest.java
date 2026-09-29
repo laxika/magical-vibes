@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrystalSpray.class, CrimsonAcolyte.class, Plains.class})
+@CardUsed({CrystalSpray.class, Plains.class, CrimsonAcolyte.class})
 class CrystalSprayTest extends BaseCardTest {
 
     @Test

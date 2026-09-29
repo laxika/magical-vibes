@@ -15,6 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "MSC", collectorNumber = "138")
 @CardRegistration(set = "MSC", collectorNumber = "314")
 @CardRegistration(set = "C14", collectorNumber = "78")
+@CardRegistration(set = "PIP", collectorNumber = "167")
+@CardRegistration(set = "PIP", collectorNumber = "454")
+@CardRegistration(set = "PIP", collectorNumber = "695")
+@CardRegistration(set = "PIP", collectorNumber = "982")
+@CardRegistration(set = "40K", collectorNumber = "189")
 @CardRegistration(set = "NCC", collectorNumber = "206")
 public class MartialCoup extends Card {
 

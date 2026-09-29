@@ -47,6 +47,26 @@ class VulshokMorningstarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Re-equipping moves the boost to the new creature")
+    void reequippingMovesBoost() {
+        Permanent star = harness.addToBattlefieldAndReturn(player1, new VulshokMorningstar());
+        Permanent firstCreature = addCreatureReady(player1, new TelJiladWolf());
+        Permanent secondCreature = addCreatureReady(player1, new TelJiladWolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, firstCreature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(star.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
         Permanent creature = addCreatureReady(player1, new TelJiladWolf());
@@ -114,6 +134,20 @@ class VulshokMorningstarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Equip can only be activated during its controller's main phase")
+    void equipIsLimitedToControllerMainPhase() {
+        harness.addToBattlefieldAndReturn(player1, new VulshokMorningstar());
+        Permanent creature = addCreatureReady(player1, new TelJiladWolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))

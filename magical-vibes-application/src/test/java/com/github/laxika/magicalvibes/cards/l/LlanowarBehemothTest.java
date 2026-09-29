@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LlanowarBehemoth.class, GrizzlyBears.class})
+@CardUsed({LlanowarBehemoth.class, GrizzlyBears.class, Forest.class})
 class LlanowarBehemothTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,36 @@ class LlanowarBehemothTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot use an untapped noncreature permanent to pay the cost")
+    void cannotTapNoncreaturePermanent() {
+        Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
+        behemoth.tap();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can tap a summoning-sick creature to pay the cost")
+    void canTapSummoningSickCreature() {
+        Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
+        harness.activateAbility(player1, idx, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
+        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
     }
 
     @Test

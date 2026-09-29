@@ -191,17 +191,19 @@ class ZursWeirdingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Zur's Weirding does not replace draws while it has lost its abilities")
-    void abilityLossDisablesDrawReplacement() {
-        Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
-        gd.turnNumber = 2;
-        advanceToUpkeep(player1);
-        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+    @DisplayName("Draws are no longer replaced after Zur's Weirding leaves the battlefield")
+    void drawReplacementEndsWhenZurLeavesBattlefield() {
+        harness.addToBattlefield(player1, new ZursWeirding());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
 
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player2, 20);
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
@@ -255,5 +257,20 @@ class ZursWeirdingTest extends BaseCardTest {
         List<String> p2Messages = harness.getConn2().getSentMessages();
         assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         assertThat(p2Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Air Elemental"));
+    }
+
+    @Test
+    @DisplayName("Zur's Weirding does not replace draws while it has lost its abilities")
+    void abilityLossDisablesDrawReplacement() {
+        Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

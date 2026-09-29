@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "51")
+@CardRegistration(set = "LCC", collectorNumber = "173")
 public class StonybrookBanneret extends Card {
 
     public StonybrookBanneret() {

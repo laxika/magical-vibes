@@ -69,7 +69,7 @@ class VerduranEnchantressTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Each Verduran Enchantress triggers independently")
+    @DisplayName("Each Verduran Enchantress triggers for the same enchantment spell")
     void eachEnchantressTriggersIndependently() {
         harness.addToBattlefield(player1, new VerduranEnchantress());
         harness.addToBattlefield(player1, new VerduranEnchantress());
@@ -77,10 +77,18 @@ class VerduranEnchantressTest extends BaseCardTest {
 
         harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Forest", "Forest");

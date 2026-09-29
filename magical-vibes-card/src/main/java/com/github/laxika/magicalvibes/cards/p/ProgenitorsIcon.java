@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "208")
 @CardRegistration(set = "MSC", collectorNumber = "449")
+@CardRegistration(set = "LCC", collectorNumber = "68")
+@CardRegistration(set = "LCC", collectorNumber = "100")
 public class ProgenitorsIcon extends Card {
 
     public ProgenitorsIcon() {

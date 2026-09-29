@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -59,13 +58,10 @@ class RagingGoblinTest extends BaseCardTest {
         harness.castFromHand(player1, card, "{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         declareAttackers(List.of(0));
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() == card)
-                .findFirst()
-                .orElseThrow();
+        Permanent goblin = findPermanent(player1, "Raging Goblin");
+        assertThat(goblin.getOriginalCard()).isSameAs(card);
         assertThat(goblin.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

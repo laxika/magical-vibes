@@ -56,7 +56,8 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         Integer boundValue = manaValueBound == null ? null
                 : amountEvaluationService.evaluate(gameData, manaValueBound.amount(),
                         AmountContext.forStackEntry(entry, null)) + manaValueBound.offset();
-        boolean librarySearchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
+        boolean librarySearchAllowed = effect.includeLibrary()
+                && !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
 
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
         List<Card> graveyardMatches = graveyard.stream()
@@ -73,7 +74,7 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
 
         List<Card> libraryMatches = List.of();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (librarySearchAllowed && deck != null) {
+        if (effect.includeLibrary() && librarySearchAllowed && deck != null) {
             int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
             libraryMatches = deck.stream()
                     .limit(Math.min(topLimit, deck.size()))
@@ -113,7 +114,8 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
                 controllerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
                 new HashSet<>(handMatches.stream().map(Card::getId).toList()), new HashSet<>(),
                 librarySearchAllowed, description, LibrarySearchDestination.BATTLEFIELD,
-                attachToPermanentId, enterWithCounterType, enterWithCounterCount));
+                attachToPermanentId, enterWithCounterType, enterWithCounterCount,
+                effect.attachAuraOrEquipment()));
         gameLogService.append(gameData, GameLog.text(playerName + " searches their library and/or graveyard."));
         log.info("Game {} - {} searches library and/or graveyard for a card to battlefield", gameData.id, playerName);
     }

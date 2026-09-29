@@ -23,6 +23,7 @@ import java.util.List;
  * may spend mana as though it were mana of any color to cast those spells.
  */
 @CardRegistration(set = "KHM", collectorNumber = "219")
+@CardRegistration(set = "LCC", collectorNumber = "272")
 public class KingNarfisBetrayal extends Card {
 
     public KingNarfisBetrayal() {

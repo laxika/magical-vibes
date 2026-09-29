@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 @CardRegistration(set = "CMM", collectorNumber = "316")
 @CardRegistration(set = "CMM", collectorNumber = "569")
 @CardRegistration(set = "CMM", collectorNumber = "651")
+@CardRegistration(set = "LCC", collectorNumber = "251")
 public class RegalBehemoth extends Card {
 
     public RegalBehemoth() {

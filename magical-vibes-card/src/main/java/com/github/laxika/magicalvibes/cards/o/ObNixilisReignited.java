@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "DDR", collectorNumber = "36")
 @CardRegistration(set = "SLD", collectorNumber = "274")
 @CardRegistration(set = "PIO", collectorNumber = "99")
+@CardRegistration(set = "C21", collectorNumber = "149")
 @CardRegistration(set = "DSC", collectorNumber = "152")
 public class ObNixilisReignited extends Card {
 

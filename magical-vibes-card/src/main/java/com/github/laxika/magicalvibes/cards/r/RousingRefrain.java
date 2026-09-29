@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "253")
+@CardRegistration(set = "C21", collectorNumber = "56")
+@CardRegistration(set = "OTC", collectorNumber = "178")
 public class RousingRefrain extends Card {
 
     public RousingRefrain() {

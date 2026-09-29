@@ -43,6 +43,13 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         }
 
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (chosenIds.isEmpty() && interaction.allowNoChoice()) {
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData,
+                    GameLog.text(player.getUsername() + " declines to play a card exiled this way."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (chosenIds.size() != 1 || !interaction.validCardIds().contains(chosenIds.getFirst())) {
             throw new IllegalStateException("Choose exactly one card exiled this way");
         }
@@ -56,7 +63,10 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
         gameData.exilePlayPermissions.put(chosenId, interaction.playerId());
         String durationDescription;
-        if (interaction.duration() == ExilePlayDuration.END_OF_TURN) {
+        if (interaction.duration() == ExilePlayDuration.WHILE_EXILED) {
+            exileSupport.grantPlayWhileExiled(gameData, chosenId, interaction.playerId());
+            durationDescription = " may be cast for as long as it remains exiled.";
+        } else if (interaction.duration() == ExilePlayDuration.END_OF_TURN) {
             gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenId);
             durationDescription = " may be played until the end of this turn.";
         } else if (interaction.duration() == ExilePlayDuration.NEXT_END_STEP) {
@@ -67,7 +77,11 @@ public class ExiledCardMayPlayChoiceInteractionHandler
             durationDescription = " may be played until the end of its controller's next turn.";
         }
         if (interaction.anyManaType()) {
-            gameData.exilePlayAnyManaType.add(chosenId);
+            if (interaction.duration() == ExilePlayDuration.WHILE_EXILED) {
+                gameData.exilePlayAnyManaTypeWhileExiled.add(chosenId);
+            } else {
+                gameData.exilePlayAnyManaType.add(chosenId);
+            }
         }
         if (interaction.withoutPayingManaCost()) {
             gameData.exilePlayWithoutPayingManaCost.add(chosenId);

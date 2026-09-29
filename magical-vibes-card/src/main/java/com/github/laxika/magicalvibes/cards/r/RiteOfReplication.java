@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SOC", collectorNumber = "202")
 @CardRegistration(set = "C14", collectorNumber = "122")
 @CardRegistration(set = "C15", collectorNumber = "105")
+@CardRegistration(set = "FIC", collectorNumber = "270")
+@CardRegistration(set = "C21", collectorNumber = "128")
 @CardRegistration(set = "TDC", collectorNumber = "165")
 public class RiteOfReplication extends Card {
 

@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,10 +26,7 @@ class BallistaSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Ballista Squad puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new BallistaSquad()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BallistaSquad(), "{3}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -41,10 +36,7 @@ class BallistaSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Ballista Squad puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new BallistaSquad()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BallistaSquad(), "{3}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ballista Squad");
@@ -170,6 +162,25 @@ class BallistaSquadTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         targetPerm.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(targetPerm);
+        assertThat(targetPerm.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if target stops blocking before resolution")
+    void abilityFizzlesIfTargetStopsBlockingBeforeResolution() {
+        addBallistaReadyToCombat(player1);
+        Permanent targetPerm = addCreatureReady(player2, new GrizzlyBears());
+        targetPerm.setBlocking(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, 1, targetPerm.getId());
+        targetPerm.setBlocking(false);
 
         harness.passBothPriorities();
 

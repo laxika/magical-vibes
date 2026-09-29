@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@CardRegistration(set = "HBG", collectorNumber = "242")
+@CardRegistration(set = "HBG", collectorNumber = "284")
 @CardRegistration(set = "SLD", collectorNumber = "2500")
 public class MiirymSentinelWyrm extends Card {
 
     public MiirymSentinelWyrm() {
-        // Whenever another nontoken Dragon you control enters, create a token that's a copy of it,
-        // except the token isn't legendary.
+        // Whenever another nontoken Dragon you control enters, create a nonlegendary token copy of it.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DRAGON),

@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
-import com.github.laxika.magicalvibes.cards.a.AvenShrine;
-import com.github.laxika.magicalvibes.cards.d.DuskImp;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,8 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 
-@CardUsed({Execute.class, GloriousAnthem.class, GlorySeeker.class, GrizzlyBears.class, AvenFlock.class, DuskImp.class, AvenShrine.class})
+@CardUsed({Execute.class, AvenFlock.class, AirElemental.class, CircleOfProtectionBlack.class, GlorySeeker.class})
 class ExecuteTest extends BaseCardTest {
 
     @Test
@@ -26,6 +24,7 @@ class ExecuteTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
 
         harness.setHand(player1, List.of(new Execute()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, target.getId());
@@ -33,8 +32,23 @@ class ExecuteTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Glory Seeker");
         harness.assertInGraveyard(player2, "Glory Seeker");
-        // Execute was cast from a one-card hand, so the only card in hand is the one drawn.
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Execute can target a white creature you control")
+    void canTargetWhiteCreatureYouControl() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+
+        harness.setHand(player1, List.of(new Execute()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
+
+        harness.assertNotOnBattlefield(player1, "Aven Flock");
+        harness.assertInGraveyard(player1, "Aven Flock");
+        harness.assertInHand(player1, "Air Elemental");
     }
 
     @Test
@@ -59,12 +73,12 @@ class ExecuteTest extends BaseCardTest {
         // A legal white target elsewhere keeps Execute playable, so the rejection is the filter message.
         harness.addToBattlefield(player1, new GlorySeeker());
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.setHand(player1, List.of(new Execute()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, elemental.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("white creature");
     }
@@ -72,15 +86,18 @@ class ExecuteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a white noncreature permanent")
     void cannotTargetWhiteNoncreaturePermanent() {
-        harness.addToBattlefield(player1, new GlorySeeker());
-        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        // A legal white creature elsewhere keeps Execute playable, so the rejection is the creature filter.
+        harness.addToBattlefield(player1, new AvenFlock());
+
+        Permanent circle = harness.addToBattlefieldAndReturn(player2, new CircleOfProtectionBlack());
 
         harness.setHand(player1, List.of(new Execute()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, anthem.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, circle.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("white creature");
+        harness.assertOnBattlefield(player2, "Circle of Protection: Black");
     }
 
     @Test
@@ -89,7 +106,7 @@ class ExecuteTest extends BaseCardTest {
         Permanent hawk = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
 
         harness.setHand(player1, List.of(new Execute()));
-        harness.setLibrary(player1, List.of(new DuskImp()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, hawk.getId());

@@ -144,6 +144,31 @@ class JestersCapTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent cap = addCapReady();
+        cap.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(cap);
+        harness.assertNotInGraveyard(player1, "Jester's Cap");
+    }
+
+    @Test
+    @DisplayName("Can target only a player")
+    void cannotTargetPermanent() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addCapReady();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a player");
+    }
+
+    @Test
     @DisplayName("Can target its controller's library")
     void targetsControllersLibrary() {
         List<Card> opponentLibrary = List.of(new GrizzlyBears());

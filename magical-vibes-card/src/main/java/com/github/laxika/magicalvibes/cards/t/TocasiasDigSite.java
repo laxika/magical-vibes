@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "266")
+@CardRegistration(set = "MKC", collectorNumber = "308")
 public class TocasiasDigSite extends Card {
 
     public TocasiasDigSite() {

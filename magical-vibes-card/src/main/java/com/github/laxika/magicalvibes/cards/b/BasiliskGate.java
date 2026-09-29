@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M3C", collectorNumber = "320")
+@CardRegistration(set = "MB2", collectorNumber = "104")
 public class BasiliskGate extends Card {
 
     public BasiliskGate() {

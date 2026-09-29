@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "PCA", collectorNumber = "124")
 @CardRegistration(set = "C13", collectorNumber = "315")
 @CardRegistration(set = "CMD", collectorNumber = "285")
+@CardRegistration(set = "C20", collectorNumber = "304")
 public class RuptureSpire extends Card {
 
     public RuptureSpire() {

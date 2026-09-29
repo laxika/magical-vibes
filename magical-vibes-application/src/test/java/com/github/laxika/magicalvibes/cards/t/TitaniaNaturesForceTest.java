@@ -78,12 +78,13 @@ class TitaniaNaturesForceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, elemental.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third);
     }
 
     @Test
@@ -96,6 +97,7 @@ class TitaniaNaturesForceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, elemental.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

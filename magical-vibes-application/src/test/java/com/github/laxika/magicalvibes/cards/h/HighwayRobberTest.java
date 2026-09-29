@@ -60,8 +60,7 @@ class HighwayRobberTest extends BaseCardTest {
     @DisplayName("ETB trigger causes target opponent to lose 2 life and controller to gain 2 life")
     void etbDrainsLife() {
         castHighwayRobber();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 22);
@@ -74,8 +73,7 @@ class HighwayRobberTest extends BaseCardTest {
         harness.setLife(player2, 15);
 
         castHighwayRobber();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         harness.assertLife(player2, 13);
         harness.assertLife(player1, 12);
@@ -85,8 +83,7 @@ class HighwayRobberTest extends BaseCardTest {
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterResolution() {
         castHighwayRobber();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
     }
@@ -95,8 +92,7 @@ class HighwayRobberTest extends BaseCardTest {
     @DisplayName("Game log records both life loss and life gain")
     void gameLogRecordsLifeChanges() {
         castHighwayRobber();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gameLogContains("loses 2 life")).isTrue();
         assertThat(gameLogContains("gains 2 life")).isTrue();

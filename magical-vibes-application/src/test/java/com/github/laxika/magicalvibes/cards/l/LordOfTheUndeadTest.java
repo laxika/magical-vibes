@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LordOfTheUndead.class, Gravedigger.class, DeepwoodGhoul.class, GrizzlyBears.class})
+@CardUsed({LordOfTheUndead.class, Gravedigger.class, ScatheZombies.class, GrizzlyBears.class, HolyDay.class})
 class LordOfTheUndeadTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -202,7 +204,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Lord of the Undead");
+        assertThat(entry.getCard()).isInstanceOf(LordOfTheUndead.class);
     }
 
     @Test
@@ -260,15 +262,15 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setHand(player1, List.of());
         Gravedigger gravedigger = new Gravedigger();
-        DeepwoodGhoul target = new DeepwoodGhoul();
+        ScatheZombies target = new ScatheZombies();
         harness.setGraveyard(player1, List.of(gravedigger, target));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Deepwood Ghoul");
+        harness.assertInHand(player1, "Scathe Zombies");
         harness.assertInGraveyard(player1, "Gravedigger");
-        harness.assertNotInGraveyard(player1, "Deepwood Ghoul");
+        harness.assertNotInGraveyard(player1, "Scathe Zombies");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -401,7 +403,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         addReadyLord(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         Gravedigger target = new Gravedigger();
-        DeepwoodGhoul otherZombie = new DeepwoodGhoul();
+        ScatheZombies otherZombie = new ScatheZombies();
         harness.setGraveyard(player1, List.of(target, otherZombie));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
@@ -409,7 +411,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Gravedigger");
-        harness.assertInGraveyard(player1, "Deepwood Ghoul");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

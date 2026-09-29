@@ -15,8 +15,6 @@ import java.util.List;
 public class MasterOfPredicamentsCardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.MasterOfPredicamentsCardChoice> {
 
-    private static final List<String> GUESS_OPTIONS = List.of("Greater than 4", "4 or less");
-
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -53,9 +51,15 @@ public class MasterOfPredicamentsCardChoiceInteractionHandler
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 interaction.guessingPlayerId(), null, null,
                 new ChoiceContext.MasterOfPredicamentsGuessChoice(
-                        interaction.playerId(), interaction.sourceCard(), selectedCard),
-                GUESS_OPTIONS,
+                        interaction.playerId(), interaction.sourceCard(), selectedCard,
+                        interaction.guessThreshold(), interaction.incorrectGuessDeclineEffect()),
+                guessOptions(interaction.guessThreshold()),
                 interaction.sourceCard().getName()
-                        + " — Guess whether the chosen card's mana value is greater than 4."));
+                        + " — Guess whether the chosen card's mana value is greater than "
+                        + interaction.guessThreshold() + "."));
+    }
+
+    private static List<String> guessOptions(int threshold) {
+        return List.of("Greater than " + threshold, threshold + " or less");
     }
 }

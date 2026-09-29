@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCar
 
 @CardRegistration(set = "ROE", collectorNumber = "128")
 @CardRegistration(set = "M3C", collectorNumber = "205")
+@CardRegistration(set = "C21", collectorNumber = "155")
 public class SufferThePast extends Card {
 
     public SufferThePast() {

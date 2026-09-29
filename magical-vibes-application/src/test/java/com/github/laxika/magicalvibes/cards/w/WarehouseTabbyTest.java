@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarehouseTabby.class, PhyrexianArena.class, GrizzlyBears.class})
+@CardUsed({WarehouseTabby.class, PhyrexianArena.class})
 class WarehouseTabbyTest extends BaseCardTest {
 
     @Test

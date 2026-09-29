@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ONS", collectorNumber = "270")
 @CardRegistration(set = "A25", collectorNumber = "177")
+@CardRegistration(set = "MKC", collectorNumber = "176")
 public class KrosanColossus extends Card {
 
     public KrosanColossus() {

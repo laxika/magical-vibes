@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GoblinBalloonBrigade.class)
+@CardUsed({GoblinBalloonBrigade.class})
 class GoblinBalloonBrigadeTest extends BaseCardTest {
 
     // ===== Flying ability =====
@@ -30,7 +30,6 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin Balloon Brigade");
         assertThat(entry.getTargetId()).isEqualTo(brigade.getId());
     }
 
@@ -112,20 +111,17 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Balloon Brigade");
     }
 
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        Permanent brigade = new Permanent(new GoblinBalloonBrigade());
-        gd.playerBattlefields.get(player1.getId()).add(brigade);
+        harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Balloon Brigade");
     }
 
     // ===== Fizzle =====

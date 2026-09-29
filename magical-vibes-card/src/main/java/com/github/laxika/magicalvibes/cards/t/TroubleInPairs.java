@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentExtraTurnSkipReplacem
 import java.util.List;
 
 @CardRegistration(set = "PZA", collectorNumber = "3")
+@CardRegistration(set = "MKC", collectorNumber = "15")
+@CardRegistration(set = "MKC", collectorNumber = "326")
 public class TroubleInPairs extends Card {
 
     public TroubleInPairs() {

@@ -24,6 +24,7 @@ public class ParleyEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final AwardManaEffectHandler awardManaEffectHandler;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
     private final LifeSupport lifeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -54,7 +55,10 @@ public class ParleyEffectHandler implements NormalEffectHandlerBean {
                     playerName + " reveals ", topCard, " from the top of their library (" + sourceName + ")."));
         }
 
-        if (nonlandCount > 0) {
+        if (nonlandCount > 0 && effect instanceof ParleyEffect parley && parley.tokenReward() != null) {
+            createTokenEffectHandler.resolve(gameData, entry,
+                    parley.tokenReward().withAmount(nonlandCount));
+        } else if (nonlandCount > 0) {
             awardManaEffectHandler.resolve(gameData, entry,
                     new AwardManaEffect(ManaColor.GREEN, nonlandCount));
             lifeSupport.applyGainLife(gameData, entry.getControllerId(), nonlandCount, sourceName,

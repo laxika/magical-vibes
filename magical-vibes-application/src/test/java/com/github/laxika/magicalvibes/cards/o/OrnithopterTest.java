@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,13 +12,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Ornithopter.class, CopperMyr.class})
+@CardUsed({Ornithopter.class, GrizzlyBears.class})
 class OrnithopterTest extends BaseCardTest {
 
     @Test
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
-        Permanent blocker = addCreatureReady(player2, new CopperMyr());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -33,7 +33,7 @@ class OrnithopterTest extends BaseCardTest {
     @Test
     void flyingCreatureCanBlockNonFlyingCreature() {
         Permanent blocker = addCreatureReady(player2, new Ornithopter());
-        Permanent attacker = addCreatureReady(player1, new CopperMyr());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

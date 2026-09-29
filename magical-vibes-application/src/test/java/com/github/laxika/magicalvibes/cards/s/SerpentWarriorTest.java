@@ -35,6 +35,17 @@ class SerpentWarriorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering the battlefield without being cast still causes the controller to lose 3 life")
+    void enteringWithoutBeingCastMakesControllerLose3Life() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new SerpentWarrior());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore - 3);
+    }
+
+    @Test
     @DisplayName("ETB does not cause an opponent to lose life")
     void etbOnlyAffectsController() {
         int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());

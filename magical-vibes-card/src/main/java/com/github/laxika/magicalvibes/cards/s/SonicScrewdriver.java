@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "803")
+@CardRegistration(set = "WHO", collectorNumber = "184")
+@CardRegistration(set = "WHO", collectorNumber = "185")
+@CardRegistration(set = "WHO", collectorNumber = "186")
 public class SonicScrewdriver extends Card {
 
     public SonicScrewdriver() {

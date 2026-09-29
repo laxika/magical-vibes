@@ -256,7 +256,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (controllerId != null && e.lifeLoss() > 0) {
-            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
             } else {
                 int lifeLoss = e.lifeLoss()

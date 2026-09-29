@@ -303,7 +303,7 @@ public class PermanentChoiceSpellHandlerService {
                 try {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData,
                             new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                            ect.cardToCast().getId(), 0, permanentId, ect.copy(),
+                            ect.cardToCast().getId(), ect.xValue(), permanentId, ect.copy(),
                             ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
                     exileCastTargetSupport.queueAfterSuccessfulCast(gameData, ect.cardToCast(), ect.controllerId(),
                             ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
@@ -330,10 +330,10 @@ public class PermanentChoiceSpellHandlerService {
                     Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
                     if (ect.payManaCost()) {
                         spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
-                                ect.cardToCast().getId(), 0, permanentId, ect.copy());
+                            ect.cardToCast().getId(), ect.xValue(), permanentId, ect.copy());
                     } else {
                         spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
-                                ect.cardToCast().getId(), 0, permanentId);
+                            ect.cardToCast().getId(), ect.xValue(), permanentId);
                     }
                 } catch (IllegalStateException ex) {
                     if (ect.genericCostReduction() > 0) {
@@ -466,7 +466,7 @@ public class PermanentChoiceSpellHandlerService {
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
                     ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
                     ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost(),
-                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId()));
+                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId(), ect.xValue()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -478,7 +478,7 @@ public class PermanentChoiceSpellHandlerService {
             try {
                 spellCastingService.playCardFromExileAsResolutionCast(gameData,
                         new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                        card.getId(), 0, chosen, ect.copy());
+                        card.getId(), ect.xValue(), chosen, ect.copy());
                 exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, ect.controllerId(),
                         ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
                 if (ect.lifeLossAfterCast() > 0) {
@@ -494,7 +494,7 @@ public class PermanentChoiceSpellHandlerService {
             try {
                 spellCastingService.playCardFromExileAsResolutionCast(gameData,
                         new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                        card.getId(), 0, chosen, false, true);
+                            card.getId(), ect.xValue(), chosen, false, true);
             } catch (IllegalStateException ex) {
                 gameData.exilePlayCostModifiers.remove(card.getId());
                 log.info("Game {} - normal-cost multi-target exile cast of {} could not be completed",
@@ -508,10 +508,10 @@ public class PermanentChoiceSpellHandlerService {
                 Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
                 if (ect.payManaCost()) {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
-                            card.getId(), 0, chosen, ect.copy());
+                            card.getId(), ect.xValue(), chosen, ect.copy());
                 } else {
                     spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
-                            card.getId(), 0, chosen);
+                            card.getId(), ect.xValue(), chosen);
                 }
             } catch (IllegalStateException ex) {
                 if (ect.genericCostReduction() > 0) {
@@ -609,12 +609,12 @@ public class PermanentChoiceSpellHandlerService {
             entry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(entry);
 
-            for (int i = 0; i < gct.copyCount(); i++) {
+            int copyCount = copySupport.adjustedSpellCopyCount(gameData, gct.copyCount());
+            for (int i = 0; i < copyCount; i++) {
                 Card copyCard = copySupport.createCopyCard(gct.cardToCast());
                 StackEntry copyEntry = copySupport.createCopyStackEntry(
                         entry, copyCard, gct.controllerId(), entry.getTargetId());
-                gameData.stack.add(copyEntry);
-                copySupport.checkSpellCopyTriggers(gameData, copyEntry);
+                copySupport.addCopyToStack(gameData, copyEntry, false);
                 if (copyEntry.getTargetId() != null) {
                     gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                             gct.cardToCast(), gct.controllerId(), List.of(new CopySpellEffect()),

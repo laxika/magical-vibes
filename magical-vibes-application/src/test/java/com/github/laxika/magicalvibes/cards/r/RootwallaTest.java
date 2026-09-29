@@ -54,6 +54,21 @@ class RootwallaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can be activated while Rootwalla is tapped")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent rootwalla = addCreatureReady(player1, new Rootwalla());
+        rootwalla.tap();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.isTapped()).isTrue();
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Second activation in same turn is rejected")
     void secondActivationInSameTurnIsRejected() {
         addCreatureReady(player1, new Rootwalla());
@@ -78,8 +93,7 @@ class RootwallaTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -101,8 +115,7 @@ class RootwallaTest extends BaseCardTest {
         assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
         assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);

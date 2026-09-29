@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 @CardRegistration(set = "MH1", collectorNumber = "202")
+@CardRegistration(set = "MB2", collectorNumber = "136")
 public class HogaakArisenNecropolis extends Card {
 
     public HogaakArisenNecropolis() {

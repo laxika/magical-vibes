@@ -25,29 +25,10 @@ class ZombifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
-    }
-
-    @Test
-    @DisplayName("Returns only the targeted creature when multiple creatures are in the graveyard")
-    void returnsOnlyTargetedCreature() {
-        Card targetedCreature = new GrizzlyBears();
-        Card otherCreature = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(targetedCreature, otherCreature));
-        harness.setHand(player1, List.of(new Zombify()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castSorcery(player1, 0, targetedCreature.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(targetedCreature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(otherCreature.getId()));
     }
 
     @Test
@@ -84,7 +65,7 @@ class ZombifyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castSorcery(player1, 0, creature.getId());
-        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -99,10 +80,27 @@ class ZombifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Zombify");
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted creature when multiple creatures are in the graveyard")
+    void returnsOnlyTargetedCreature() {
+        Card targetedCreature = new GrizzlyBears();
+        Card otherCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(targetedCreature, otherCreature));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, targetedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(targetedCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(otherCreature.getId()));
     }
 }

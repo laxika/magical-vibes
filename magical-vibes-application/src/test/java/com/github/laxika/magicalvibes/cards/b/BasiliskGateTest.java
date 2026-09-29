@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,5 +67,66 @@ class BasiliskGateTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return gate;
+    }
+
+    @Test
+    @DisplayName("Tapping Basilisk Gate adds colorless mana")
+    void tapsForColorlessMana() {
+        Permanent gate = harness.addToBattlefieldAndReturn(player1, new BasiliskGate());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gate.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boosts a target creature by the number of Gates you control")
+    void boostsByControlledGateCount() {
+        harness.addToBattlefield(player1, new BasiliskGate());
+        harness.addToBattlefield(player1, new RakdosGuildgate());
+        harness.addToBattlefield(player1, new RakdosGuildgate());
+        Permanent target = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled Gates do not increase the boost")
+    void countsOnlyGatesYouControl() {
+        harness.addToBattlefield(player1, new BasiliskGate());
+        harness.addToBattlefield(player2, new RakdosGuildgate());
+        Permanent target = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost ability can only be activated at sorcery speed")
+    void boostAbilityRequiresSorcerySpeed() {
+        harness.addToBattlefield(player1, new BasiliskGate());
+        Permanent target = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

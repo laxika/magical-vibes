@@ -72,6 +72,8 @@ public class PopulateSupport {
             // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
             // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            battlefieldEntryService.checkAllyTokenEntersTriggers(
+                    gameData, controllerId, List.of(tokenPermanent.getId()));
         }
     }
 }

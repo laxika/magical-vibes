@@ -63,9 +63,14 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                         AmountContext.forStackEntry(entry, null)));
         List<UUID> castableSpellIds = new ArrayList<>();
         List<UUID> exiledCardIds = new ArrayList<>();
+        List<UUID> uncastCardsToHandIds = new ArrayList<>();
+        List<UUID> uncastCardsToBottomIds = new ArrayList<>();
 
-        if (e.putUncastCardsIntoHand()) {
+        if (e.putUncastCardsIntoHand() || e.uncastCardsToHandFilter() != null) {
             gameData.pendingExileFreeCastRemainderToHand.clear();
+        }
+        if (e.putUncastCardsOnBottomRandom() || e.uncastCardsToHandFilter() != null) {
+            gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
         }
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
@@ -83,6 +88,14 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                     gameData.addToExile(playerId, card);
                 }
                 exiledCardIds.add(card.getId());
+                if (e.uncastCardsToHandFilter() != null) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            card, e.uncastCardsToHandFilter(), entry.getCard().getId())) {
+                        uncastCardsToHandIds.add(card.getId());
+                    } else {
+                        uncastCardsToBottomIds.add(card.getId());
+                    }
+                }
                 gameLogService.append(gameData, e.faceDown()
                         ? GameLog.text(playerName + " exiles a card face down from the top of their library.")
                         : GameLog.builder()
@@ -97,10 +110,13 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
-        if (e.putUncastCardsOnBottomRandom()) {
+        if (e.uncastCardsToHandFilter() != null) {
+            exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, uncastCardsToBottomIds);
+            gameData.pendingExileFreeCastRemainderToHand.addAll(uncastCardsToHandIds);
+        } else if (e.putUncastCardsOnBottomRandom()) {
             exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, exiledCardIds);
         }
-        if (e.putUncastCardsIntoHand()) {
+        if (e.putUncastCardsIntoHand() && e.uncastCardsToHandFilter() == null) {
             gameData.pendingExileFreeCastRemainderToHand.addAll(exiledCardIds);
         }
 
@@ -124,7 +140,10 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
                         controllerId, castableSpellIds, maxCastCount,
                         "You may cast up to " + maxCastCount
-                                + " of these spells without paying their mana costs."));
+                                + " of these spells without paying their mana costs."
+                                + (e.totalManaValueLimit() == null ? ""
+                                : " Their total mana value can't exceed " + e.totalManaValueLimit() + "."),
+                        false, e.totalManaValueLimit()));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, entry.getCard().getName(), castableSpellIds.size());
     }

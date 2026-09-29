@@ -88,6 +88,19 @@ class AvenWindreaderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Generic activation cost can be paid with additional blue mana")
+    void activateWithOnlyBlueMana() {
+        harness.addToBattlefield(player1, new AvenWindreader());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("Forest")).isTrue();
+    }
+
+    @Test
     @DisplayName("Targeting an opponent never names the controller's own top card")
     void revealReadsTheTargetLibraryOnly() {
         harness.addToBattlefield(player1, new AvenWindreader());

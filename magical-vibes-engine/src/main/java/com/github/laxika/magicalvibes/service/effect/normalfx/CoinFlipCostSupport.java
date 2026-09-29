@@ -26,9 +26,9 @@ public class CoinFlipCostSupport {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + (won ? " wins" : " loses") + " the coin flip for ", sourceCard,
                     coinFlipService.replacementDetails(result) + "."));
-            if (won) {
+            if (won && result.isActualCoinFlip()) {
                 triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
-            } else {
+            } else if (result.isActualCoinFlip()) {
                 triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, playerId);
             }
         }

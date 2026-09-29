@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "THB", collectorNumber = "229")
 @CardRegistration(set = "SLD", collectorNumber = "222")
 @CardRegistration(set = "M3C", collectorNumber = "277")
+@CardRegistration(set = "MB2", collectorNumber = "93")
 public class UroTitanOfNaturesWrath extends Card {
 
     public UroTitanOfNaturesWrath() {

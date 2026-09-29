@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
-import com.github.laxika.magicalvibes.cards.p.ProwlingPangolin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blackmail.class, ElvishWarrior.class, Forest.class, GlorySeeker.class, ProwlingPangolin.class})
+@CardUsed({Blackmail.class, ElvishWarrior.class, Forest.class, GlorySeeker.class, GrizzlyBears.class})
 class BlackmailTest extends BaseCardTest {
 
     private PendingInteraction.RevealCardsDiscardChoice activeChoice() {
@@ -70,7 +70,7 @@ class BlackmailTest extends BaseCardTest {
     @DisplayName("Target player chooses which three cards to reveal")
     void targetChoosesThreeToReveal() {
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GlorySeeker(), new ElvishWarrior(), new ProwlingPangolin(), new Forest())));
+                new GlorySeeker(), new ElvishWarrior(), new GrizzlyBears(), new Forest())));
         harness.setHand(player1, List.of(new Blackmail()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -89,9 +89,9 @@ class BlackmailTest extends BaseCardTest {
     void controllerDiscardsOneRevealed() {
         Card glorySeeker = new GlorySeeker();
         Card elvishWarrior = new ElvishWarrior();
-        Card pangolin = new ProwlingPangolin();
+        Card grizzlyBears = new GrizzlyBears();
         Card forest = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(glorySeeker, elvishWarrior, pangolin, forest)));
+        harness.setHand(player2, new ArrayList<>(List.of(glorySeeker, elvishWarrior, grizzlyBears, forest)));
         harness.setHand(player1, List.of(new Blackmail()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -115,14 +115,14 @@ class BlackmailTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Elvish Warrior");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Glory Seeker", "Prowling Pangolin", "Forest");
+                .containsExactlyInAnyOrder("Glory Seeker", "Grizzly Bears", "Forest");
     }
 
     @Test
     @DisplayName("Controller cannot choose during the reveal stage")
     void controllerCannotChooseDuringRevealStage() {
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GlorySeeker(), new ElvishWarrior(), new ProwlingPangolin(), new Forest())));
+                new GlorySeeker(), new ElvishWarrior(), new GrizzlyBears(), new Forest())));
         harness.setHand(player1, List.of(new Blackmail()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

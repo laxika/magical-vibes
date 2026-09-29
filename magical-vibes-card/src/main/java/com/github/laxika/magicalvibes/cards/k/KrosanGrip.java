@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "STA", collectorNumber = "53")
 @CardRegistration(set = "C13", collectorNumber = "153")
 @CardRegistration(set = "C15", collectorNumber = "189")
+@CardRegistration(set = "C21", collectorNumber = "198")
+@CardRegistration(set = "C20", collectorNumber = "181")
 public class KrosanGrip extends Card {
 
     public KrosanGrip() {

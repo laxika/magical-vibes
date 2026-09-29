@@ -28,11 +28,21 @@ class FoulImpTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         castFoulImp();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield without being cast still causes the life loss")
+    void enteringWithoutBeingCastMakesControllerLose2Life() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new FoulImp());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test
@@ -41,8 +51,7 @@ class FoulImpTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         castFoulImp();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }

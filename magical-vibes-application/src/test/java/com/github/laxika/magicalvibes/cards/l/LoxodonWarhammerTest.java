@@ -131,6 +131,23 @@ class LoxodonWarhammerTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("Loxodon Warhammer") && log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Equip fizzles if the equipment is removed before resolution")
+    void equipFizzlesIfEquipmentRemoved() {
+        Permanent warhammer = addWarhammerReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(warhammer);
+        harness.passBothPriorities();
+
+        assertThat(warhammer.getAttachedTo()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("Loxodon Warhammer")
+                        && log.contains("equipment no longer on the battlefield"));
+    }
+
     // ===== Static effects: power/toughness boost =====
 
     @Test

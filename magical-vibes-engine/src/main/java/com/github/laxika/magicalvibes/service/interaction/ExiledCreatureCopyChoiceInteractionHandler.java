@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class ExiledCreatureCopyChoiceInteractionHandler
 
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
+    private final MayCopyHandlerService mayCopyHandlerService;
 
     @Override
     public Class<PendingInteraction.ExiledCreatureCopyChoice> handledType() {
@@ -42,23 +44,29 @@ public class ExiledCreatureCopyChoiceInteractionHandler
         }
 
         ExiledCardEntry chosen = gameData.findExiledCard(chosenIds.getFirst());
-        if (chosen == null || !interaction.sourcePermanentId().equals(chosen.sourcePermanentId())
+        boolean sourceMatches = interaction.sourcePermanentId() == null
+                ? chosen != null && gameData.exiledCardsWithTakeoverCounters.contains(chosenIds.getFirst())
+                : chosen != null && interaction.sourcePermanentId().equals(chosen.sourcePermanentId());
+        if (chosen == null || !sourceMatches
                 || chosen.faceDown() || !chosen.card().hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Chosen card is no longer a creature card exiled with "
                     + interaction.sourceName());
         }
 
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry == null) {
-            throw new IllegalStateException("No pending effect resolution for "
-                    + interaction.sourceName() + "'s copy choice");
-        }
-
         gameData.interaction.clearAwaitingInput();
-        pendingEntry.setTargetId(chosenIds.getFirst());
-        gameData.rerunCurrentEffectAfterInteraction = false;
-        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
-                gameData.pendingEffectResolutionIndex);
+        if (interaction.sourcePermanentId() == null) {
+            mayCopyHandlerService.finishCloneEntryFromCard(gameData, chosen.card());
+        } else {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry == null) {
+                throw new IllegalStateException("No pending effect resolution for "
+                        + interaction.sourceName() + "'s copy choice");
+            }
+            pendingEntry.setTargetId(chosenIds.getFirst());
+            gameData.rerunCurrentEffectAfterInteraction = false;
+            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }

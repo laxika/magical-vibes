@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.c.CrystalVein;
-import com.github.laxika.magicalvibes.cards.f.FeralShadow;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EarlyHarvest.class, Forest.class, Island.class, CrystalVein.class, FeralShadow.class})
+@CardUsed({EarlyHarvest.class, Forest.class, Island.class, Quicksand.class, GrizzlyBears.class})
 class EarlyHarvestTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,7 @@ class EarlyHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap non-basic lands")
     void doesNotUntapNonBasicLands() {
-        Permanent nonBasic = harness.addToBattlefieldAndReturn(player2, new CrystalVein());
+        Permanent nonBasic = harness.addToBattlefieldAndReturn(player2, new Quicksand());
         nonBasic.tap();
 
         castEarlyHarvest(player2.getId());
@@ -49,7 +50,7 @@ class EarlyHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap creatures")
     void doesNotUntapCreatures() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         creature.tap();
 
         castEarlyHarvest(player2.getId());
@@ -88,6 +89,17 @@ class EarlyHarvestTest extends BaseCardTest {
         castEarlyHarvest(player2.getId());
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent instead of a player")
+    void cannotTargetPermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new EarlyHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castEarlyHarvest(java.util.UUID targetPlayerId) {

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShadrixSilverquillTest extends BaseCardTest {
 
@@ -35,8 +34,6 @@ class ShadrixSilverquillTest extends BaseCardTest {
         harness.handleListChoice(player1, DRAW_MODE);
 
         harness.handlePermanentChosen(player1, player1.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

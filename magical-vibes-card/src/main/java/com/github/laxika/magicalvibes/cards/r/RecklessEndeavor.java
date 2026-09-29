@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RecklessEndeavorEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2177")
+@CardRegistration(set = "AFC", collectorNumber = "33")
 public class RecklessEndeavor extends Card {
 
     public RecklessEndeavor() {

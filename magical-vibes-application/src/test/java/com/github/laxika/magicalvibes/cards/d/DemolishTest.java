@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Demolish.class, GrizzlyBears.class, Millstone.class, Mountain.class, PhyrexianHulk.class, FountainOfYouth.class})
+@CardUsed({Demolish.class, BottleGnomes.class, GrizzlyBears.class, Mountain.class, Millstone.class, PhyrexianHulk.class})
 class DemolishTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -60,27 +60,29 @@ class DemolishTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvingDestroysTargetArtifact() {
-        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Millstone()).getId();
+        harness.addToBattlefield(player2, new BottleGnomes());
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        UUID targetId = harness.getPermanentId(player2, "Bottle Gnomes");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Millstone");
-        harness.assertInGraveyard(player2, "Millstone");
+        harness.assertNotOnBattlefield(player2, "Bottle Gnomes");
+        harness.assertInGraveyard(player2, "Bottle Gnomes");
     }
 
     @Test
     @DisplayName("Can destroy own artifact")
     void canDestroyOwnArtifact() {
-        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Millstone()).getId();
+        harness.addToBattlefield(player1, new BottleGnomes());
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        UUID targetId = harness.getPermanentId(player1, "Bottle Gnomes");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Millstone");
-        harness.assertInGraveyard(player1, "Millstone");
+        harness.assertNotOnBattlefield(player1, "Bottle Gnomes");
+        harness.assertInGraveyard(player1, "Bottle Gnomes");
     }
 
     @Test
@@ -124,8 +126,7 @@ class DemolishTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // Demolish still goes to graveyard
         harness.assertInGraveyard(player1, "Demolish");
     }

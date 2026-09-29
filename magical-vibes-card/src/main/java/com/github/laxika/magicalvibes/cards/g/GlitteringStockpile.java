@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "107")
+@CardRegistration(set = "OTC", collectorNumber = "167")
 public class GlitteringStockpile extends Card {
 
     public GlitteringStockpile() {

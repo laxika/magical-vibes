@@ -17,8 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({VenerableKumo.class, LanternKami.class, KamiOfOldStone.class, HideousLaughter.class})
 class VenerableKumoTest extends BaseCardTest {
 
-    /** Gives all creatures -2/-2 so Venerable Kumo dies, firing its soulshift trigger. */
+    /** Venerable Kumo is 2/3, so one marked damage makes Hideous Laughter lethal. */
     private void killKumoWithHideousLaughter() {
+        findPermanent(player1, "Venerable Kumo").setMarkedDamage(1);
         harness.castFromHand(player1, new HideousLaughter(), "{2}{B}{B}");
         harness.passBothPriorities();
     }

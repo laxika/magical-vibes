@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -18,8 +16,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({DiabolicTutor.class, Plains.class, Swamp.class, GrizzlyBears.class, AvenFisher.class})
+@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class, GrizzlyBears.class})
 class DiabolicTutorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -42,7 +41,7 @@ class DiabolicTutorTest extends BaseCardTest {
     @DisplayName("Resolving Diabolic Tutor presents all cards from library for choice")
     void resolvingPresentsAllCardsForChoice() {
         setupAndCast();
-        List<Card> library = setupLibrary();
+        setupLibrary();
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
@@ -50,8 +49,9 @@ class DiabolicTutorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // All cards from library are presented (not just a subset)
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
+                .containsExactlyInAnyOrder("Caves of Koilos", "Caves of Koilos", "Aven Fisher", "Aven Fisher");
     }
 
     @Test
@@ -84,19 +84,33 @@ class DiabolicTutorTest extends BaseCardTest {
     @DisplayName("Can choose a non-land card from library")
     void canChooseNonLandCard() {
         setupAndCast();
-        List<Card> library = setupLibrary();
+        setupLibrary();
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        // Find Grizzly Bears in the search cards
-        Card bears = library.stream().filter(card -> card instanceof GrizzlyBears).findFirst().orElseThrow();
-        int bearsIndex = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().indexOf(bears);
-        assertThat(bearsIndex).isGreaterThanOrEqualTo(0);
+        // Aven Fisher is a non-land card in the search choices.
+        Card fisher = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream()
+                .filter(card -> card instanceof AvenFisher).findFirst().orElseThrow();
+        int fisherIndex = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().indexOf(fisher);
 
-        harness.handleCardChosen(player1, bearsIndex);
+        harness.handleCardChosen(player1, fisherIndex);
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+        assertThat(gd.playerHands.get(player1.getId())).contains(fisher);
+    }
+
+    @Test
+    @DisplayName("Diabolic Tutor searches its controller's library")
+    void searchesControllerLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new AvenFisher()));
+        harness.setLibrary(player2, List.of(new CavesOfKoilos()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Aven Fisher");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 
     @Test
@@ -204,9 +218,8 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.castFromHand(player1, new DiabolicTutor(), "{2}{B}{B}");
     }
 
-    private List<Card> setupLibrary() {
-        List<Card> library = List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears());
-        harness.setLibrary(player1, library);
-        return library;
+    private void setupLibrary() {
+        harness.setLibrary(player1, List.of(
+                new CavesOfKoilos(), new AvenFisher(), new CavesOfKoilos(), new AvenFisher()));
     }
 }

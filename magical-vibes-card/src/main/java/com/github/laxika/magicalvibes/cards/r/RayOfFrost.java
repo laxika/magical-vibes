@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "68")
+@CardRegistration(set = "HBG", collectorNumber = "129")
 public class RayOfFrost extends Card {
 
     public RayOfFrost() {

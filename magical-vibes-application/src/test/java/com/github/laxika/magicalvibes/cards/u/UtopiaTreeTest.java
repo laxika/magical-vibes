@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(UtopiaTree.class)
+@CardUsed({UtopiaTree.class})
 class UtopiaTreeTest extends BaseCardTest {
 
     @Test
@@ -49,12 +49,9 @@ class UtopiaTreeTest extends BaseCardTest {
             harness = new GameTestHarness();
             player1 = harness.getPlayer1();
             harness.skipMulligan();
-
             gd = harness.getGameData();
+
             addCreatureReady(player1, new UtopiaTree());
-            for (ManaColor existingColor : ManaColor.values()) {
-                harness.addMana(player1, existingColor, 1);
-            }
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, null, null);
@@ -62,7 +59,7 @@ class UtopiaTreeTest extends BaseCardTest {
             harness.handleListChoice(player1, color);
 
             for (ManaColor existingColor : ManaColor.values()) {
-                int expected = existingColor == manaColor ? 2 : 1;
+                int expected = existingColor == manaColor ? 1 : 0;
                 assertThat(gd.playerManaPools.get(player1.getId()).get(existingColor))
                         .as("mana of %s", existingColor)
                         .isEqualTo(expected);
@@ -77,6 +74,7 @@ class UtopiaTreeTest extends BaseCardTest {
         addCreatureReady(player1, new UtopiaTree());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

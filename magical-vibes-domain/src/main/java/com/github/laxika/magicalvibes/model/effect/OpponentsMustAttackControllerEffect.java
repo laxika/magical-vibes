@@ -10,5 +10,5 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Used by Trove of Temptation and similar enchantments.</p>
  */
-public record OpponentsMustAttackControllerEffect() implements CardEffect {
+public record OpponentsMustAttackControllerEffect() implements OpponentsMustAttackRequirementEffect {
 }

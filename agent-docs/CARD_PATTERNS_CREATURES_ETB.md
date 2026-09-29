@@ -1,5 +1,7 @@
 # Card Patterns: Vanilla, Keyword & ETB Creatures
 
+| ETB +1/+1 counters equal to total mana value of own instants and sorceries in graveyard | `i/InfernoProject.java` | ON_ENTER_BATTLEFIELD EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, TotalManaValueOfCardsInGraveyard(CardAnyOfPredicate(INSTANT, SORCERY), CONTROLLER)) |
+
 | ETB during declare attackers may reselect an attacking creature's target | `p/PortalMage.java` | `target(TargetFilters.attackingCreature()).addEffect(ON_ENTER_BATTLEFIELD, ConditionalEffect(new DuringDeclareAttackers(), MayEffect(new ReselectAttackingCreatureAttackTargetEffect(), ...)))`; the original attacker is chosen at trigger time and the replacement attack target is chosen on resolution using current attack legality |
 
 All paths relative to `cards/`.
@@ -51,6 +53,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 ## ETB creatures
 
 | ETB mass bounce by opponent creature toughness and controlled subtype count | `s/ScourgeOfFleets.java` | `ReturnToHandEffect.allPermanentsMatching(AllOf(IsCreature, Not(ControlledBySourceController), PermanentToughnessAtMostControlledSubtypeCountPredicate(ISLAND)))` — the subtype count and effective toughness are evaluated when the trigger resolves |
+| ETB each-opponent mill and face-down Cyberman reanimation | `t/TheCyberController.java` | ON_ENTER_BATTLEFIELD `MillEachOpponentAndPutMilledCreaturesFaceDownAsCybermenEffect(new XValue())` — each opponent mills X, then every creature card actually put into a graveyard this way enters under your control face down as a 2/2 artifact Cyberman |
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
@@ -62,6 +65,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB if cast: exile all but the bottom six cards of each library face down | `d/DoomsdayExcruciator.java` | ON_ENTER_BATTLEFIELD `ConditionalEffect(new WasCast(), new ExileAllButBottomCardsOfEachLibraryFaceDownEffect(6))` — leaves each player's bottom six cards in place and does not track the exiled cards with the source |
 | ETB draw for each artifact + first coin-flip replacement | `e/EdgarKingOfFigaro.java` | ON_ENTER_BATTLEFIELD `DrawCardEffect(PermanentCount(PermanentIsArtifactPredicate, CONTROLLER))` + STATIC `EdgarKingOfFigaroEffect`; coin flips route through `CoinFlipService`, which tracks the first coin-flip event for each player each turn and handles multiple coins flipped at once |
+| ETB flips once for each opponent with opponent-specific loss damage | `m/MutalithVortexBeast.java` | `FlipCoinForEachOpponentEffect(DrawCardEffect(), DealDamageToPlayersEffect(3, TRIGGERING_PLAYER))`; the handler flips for the source controller and temporarily binds each corresponding opponent as the triggering-player context for that loss branch |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |
 | ETB target player + any-number graveyard shuffle | `l/LoamingShaman.java` | ON_ENTER_BATTLEFIELD `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, Integer.MAX_VALUE)` — first chooses a player, then chooses any number of target cards from that player's graveyard; the shared ETB target and multi-graveyard choice flow stores both target kinds on the triggered ability |
 | ETB put a creature you control on top of library (non-targeted, self-inclusive) | `n/NulltreadGargantuan.java` | ON_ENTER_BATTLEFIELD PutControlledCreatureOnTopOfLibraryEffect() — "put a creature you control on top of its owner's library". No `target(...)`; the choice is made at resolution and the source itself is legal (forced when it's your only creature). One candidate auto-resolves; several prompt a `PutControlledCreatureOnTopOfLibrary` permanent choice |
@@ -88,6 +92,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
 | ETB opponent chooses own permanent to exile until leaves | `w/WormfangCrab.java` | STATIC CantBeBlockedEffect + ON_ENTER_BATTLEFIELD OpponentChoosesPermanentToExileUntilSourceLeavesEffect(Not(IsSourcePermanent)) + ON_SELF_LEAVES_BATTLEFIELD ReturnAllCardsExiledWithSourceEffect. The opponent chooses among the source controller's permanents; the selected card returns under its owner's control |
 | ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(FlickerEffect.exileTargetReturnAtEndStep()) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
+| ETB may exile any number of other permanents you control and return them at end step with lands tapped | `s/SilverSurferCosmicVoyager.java` | `target(PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, Not(IsSourcePermanent))), 0, 99)` + `FlickerEffect.exileTargetReturnAtEndStepWithLandsTapped()`; selected permanents return under their owners' control, but only lands enter tapped |
 | ETB may immediate flicker under your control | `r/RestorationAngel.java` | MayEffect(FlickerEffect.flickerTargetUnderYourControl()) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature, Not(HasSubtype(ANGEL)))). Flash Angel that flickers own non-Angel; returns under controller (keeps stolen creatures) |
 | Instant flicker (immediate return) + subtype bonus | `s/SirensRuse.java` | FlickerEffect.flickerTargetWithBonus(CardSubtype.PIRATE, DrawCardEffect(1)) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature)). Instant that exiles own creature and immediately returns it; draws a card if it was a Pirate |
 | Instant flicker + subtype-gated +1/+1 counter | `e/EssenceFlux.java` | FlickerEffect.flickerTargetWithBonusCounters(CardSubtype.SPIRIT, 1) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature)). Instant flicker; returned Spirit gets a +1/+1 counter |

@@ -20,8 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GeneralsKabuto.class, KamiOfAncientLaw.class, KamiOfThePaintedRoad.class,
-        HanabiBlast.class, YamabushisStorm.class})
+@CardUsed({GeneralsKabuto.class, KamiOfAncientLaw.class, KamiOfThePaintedRoad.class, HanabiBlast.class, YamabushisStorm.class})
 class GeneralsKabutoTest extends BaseCardTest {
 
     @Test

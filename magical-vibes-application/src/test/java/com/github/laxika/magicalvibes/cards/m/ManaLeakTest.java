@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaLeak.class, YouthfulKnight.class})
+@CardUsed({ManaLeak.class, Shock.class, GrizzlyBears.class})
 class ManaLeakTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,22 +25,22 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack targeting a spell")
     void castingPutsOnStackTargetingSpell() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         ManaLeak leak = new ManaLeak();
         harness.setHand(player2, List.of(leak));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, knight.getId());
+        harness.castInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         var leakEntry = gd.stack.getLast();
         assertThat(leakEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(leakEntry.getCard()).isSameAs(leak);
-        assertThat(leakEntry.getTargetId()).isEqualTo(knight.getId());
+        assertThat(leakEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== Counter-unless-pays: opponent cannot pay =====
@@ -48,18 +48,18 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Counters spell when opponent has no mana to pay")
     void countersWhenOpponentCannotPay() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, knight.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
-        harness.assertInGraveyard(player1, "Youthful Knight");
-        harness.assertNotOnBattlefield(player1, "Youthful Knight");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,15 +68,15 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Spell is not countered when opponent pays {3}")
     void spellNotCounteredWhenOpponentPays() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, knight.getId());
+        harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -86,11 +86,11 @@ class ManaLeakTest extends BaseCardTest {
         // Player1 pays {3}
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotInGraveyard(player1, "Youthful Knight");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Youthful Knight");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Counter-unless-pays: opponent declines to pay =====
@@ -98,15 +98,15 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Spell is countered when opponent declines to pay")
     void spellCounteredWhenOpponentDeclines() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, knight.getId());
+        harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -115,8 +115,8 @@ class ManaLeakTest extends BaseCardTest {
         // Player1 declines to pay
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertInGraveyard(player1, "Youthful Knight");
-        harness.assertNotOnBattlefield(player1, "Youthful Knight");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Mana payment confirmation =====
@@ -124,15 +124,15 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's mana pool is reduced after paying {3}")
     void manaPoolReducedAfterPaying() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, knight.getId());
+        harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -150,17 +150,17 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
     void fizzlesIfTargetSpellRemoved() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, knight.getId());
+        harness.castInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getId().equals(knight.getId()));
+        gd.stack.removeIf(se -> se.getCard().getId().equals(bears.getId()));
 
         harness.passBothPriorities();
 
@@ -173,14 +173,14 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Mana Leak goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        YouthfulKnight knight = new YouthfulKnight();
-        harness.castFromHand(player1, knight, "{1}{W}");
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
 
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, knight.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player2, "Mana Leak");
     }
@@ -209,12 +209,12 @@ class ManaLeakTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        var knight = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         ManaLeak leak = new ManaLeak();
         harness.setHand(player2, List.of(leak));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, knight.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("spell on the stack");
 

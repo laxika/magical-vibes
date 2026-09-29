@@ -156,6 +156,7 @@ class CircuDimirLobotomistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0, circu.getId());
         harness.passBothPriorities();
+        assertThat(gqs.hasLostAllAbilities(gd, circu)).isTrue();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

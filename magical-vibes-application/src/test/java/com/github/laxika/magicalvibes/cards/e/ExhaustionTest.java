@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.Whetstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +26,7 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Prevents creatures from untapping without tapping them on resolution")
         void setsSkipUntapOnCreatures() {
-            harness.addToBattlefield(player2, new CoralMerfolk());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent bears = addCreatureReady(player2, new CoralMerfolk());
 
             castAndResolveExhaustion(player2.getId());
 
@@ -40,8 +39,7 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Prevents lands target opponent controls from untapping")
         void setsSkipUntapOnLands() {
-            harness.addToBattlefield(player2, new Forest());
-            Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
             castAndResolveExhaustion(player2.getId());
 
@@ -70,31 +68,31 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Does not affect non-creature, non-land permanents")
         void doesNotAffectOtherPermanents() {
-            harness.addToBattlefield(player2, new Whetstone());
-            Permanent artifact = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Whetstone());
 
             castAndResolveExhaustion(player2.getId());
 
-            assertThat(artifact.getSkipUntapCount()).isZero();
+            artifact.tap();
+            advanceToUpkeep(player2);
+            assertThat(artifact.isTapped()).isFalse();
         }
 
         @Test
         @DisplayName("Does not affect caster's permanents")
         void doesNotAffectCasterPermanents() {
-            harness.addToBattlefield(player1, new CoralMerfolk());
-            harness.addToBattlefield(player2, new CoralMerfolk());
-            Permanent casterCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
+            Permanent casterCreature = addCreatureReady(player1, new CoralMerfolk());
+            casterCreature.tap();
 
             castAndResolveExhaustion(player2.getId());
 
-            assertThat(casterCreature.getSkipUntapCount()).isZero();
+            advanceToUpkeep(player1);
+            assertThat(casterCreature.isTapped()).isFalse();
         }
 
         @Test
         @DisplayName("Does not prevent a permanent from untapping after it changes controller")
         void doesNotAffectPermanentAfterControlChange() {
-            Permanent bears = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
-            bears.setSummoningSick(false);
+            Permanent bears = addCreatureReady(player2, new CoralMerfolk());
             bears.tap();
 
             castAndResolveExhaustion(player2.getId());
@@ -130,11 +128,8 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Tapped creatures and lands do not untap during the next untap step")
         void tappedPermanentsDoNotUntap() {
-            harness.addToBattlefield(player2, new CoralMerfolk());
-            harness.addToBattlefield(player2, new Forest());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).get(0);
-            Permanent forest = gd.playerBattlefields.get(player2.getId()).get(1);
-            bears.setSummoningSick(false);
+            Permanent bears = addCreatureReady(player2, new CoralMerfolk());
+            Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
             bears.tap();
             forest.tap();
 
@@ -149,9 +144,7 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Affected permanents untap normally on the turn after")
         void permanentsUntapOnFollowingTurn() {
-            harness.addToBattlefield(player2, new CoralMerfolk());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-            bears.setSummoningSick(false);
+            Permanent bears = addCreatureReady(player2, new CoralMerfolk());
             bears.tap();
 
             castAndResolveExhaustion(player2.getId());

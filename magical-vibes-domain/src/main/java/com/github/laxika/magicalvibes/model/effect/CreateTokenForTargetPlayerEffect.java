@@ -9,10 +9,21 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
  * When used as a combat-damage trigger, the damaged player is automatically used as the target.
  */
 public record CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect,
-                                               PlayerRelation targetPlayerRelation) implements CombatDamageTriggerContextEffect {
+                                               PlayerRelation targetPlayerRelation,
+                                               int targetGroup) implements CombatDamageTriggerContextEffect {
 
     public CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect) {
-        this(tokenEffect, PlayerRelation.ANY);
+        this(tokenEffect, PlayerRelation.ANY, -1);
+    }
+
+    public CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect,
+                                            PlayerRelation targetPlayerRelation) {
+        this(tokenEffect, targetPlayerRelation, -1);
+    }
+
+    public static CreateTokenForTargetPlayerEffect forTargetGroup(CreateTokenEffect tokenEffect,
+                                                                  int targetGroup) {
+        return new CreateTokenForTargetPlayerEffect(tokenEffect, PlayerRelation.ANY, targetGroup);
     }
 
     @Override

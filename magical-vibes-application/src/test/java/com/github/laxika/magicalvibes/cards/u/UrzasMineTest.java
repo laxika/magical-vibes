@@ -66,4 +66,15 @@ class UrzasMineTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("An untapped Mine contributes its full Tron output to potential mana")
+    void potentialManaIncludesFullTronOutput() {
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasTower());
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPotentialManaTotal(gd, player1.getId())).isEqualTo(7);
+    }
 }

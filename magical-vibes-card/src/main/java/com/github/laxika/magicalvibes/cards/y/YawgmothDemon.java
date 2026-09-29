@@ -23,7 +23,7 @@ public class YawgmothDemon extends Card {
         // tap this creature and it deals 2 damage to you.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(
-                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "Sacrifice an artifact"),
+                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "Sacrifice an artifact", false),
                         List.of(new TapPermanentsEffect(TapUntapScope.SELF),
                                 new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)),
                         true));

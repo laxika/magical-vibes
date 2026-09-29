@@ -37,6 +37,9 @@ public record PutCountersOnTargetForEachLeavingSourceCountersEffect(
 
     @Override
     public CardEffect boundToLeavingPermanentCounters(Map<CounterType, Integer> counters) {
+        if (counters.isEmpty()) {
+            return null;
+        }
         return new PutCountersOnTargetForEachLeavingSourceCountersEffect(counters, targetPredicate);
     }
 

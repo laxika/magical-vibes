@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "305")
 @CardRegistration(set = "SLD", collectorNumber = "1764")
 @CardRegistration(set = "GN3", collectorNumber = "59")
+@CardRegistration(set = "MKC", collectorNumber = "136")
 public class RavenousChupacabra extends Card {
 
     public RavenousChupacabra() {

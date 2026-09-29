@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHas
 @CardRegistration(set = "RNA", collectorNumber = "130")
 @CardRegistration(set = "SLD", collectorNumber = "2172")
 @CardRegistration(set = "RVR", collectorNumber = "146")
+@CardRegistration(set = "PIP", collectorNumber = "199")
+@CardRegistration(set = "PIP", collectorNumber = "469")
+@CardRegistration(set = "PIP", collectorNumber = "727")
+@CardRegistration(set = "PIP", collectorNumber = "997")
 public class GuardianProject extends Card {
 
     public GuardianProject() {

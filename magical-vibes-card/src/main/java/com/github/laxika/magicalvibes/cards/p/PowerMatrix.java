@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "309")
+@CardRegistration(set = "MB2", collectorNumber = "229")
 public class PowerMatrix extends Card {
 
     public PowerMatrix() {

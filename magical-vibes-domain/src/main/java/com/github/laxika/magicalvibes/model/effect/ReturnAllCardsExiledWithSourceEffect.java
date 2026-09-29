@@ -29,6 +29,8 @@ import java.util.Set;
  * @param enterTapped whether returned permanents enter tapped
  * @param useLinkedSource whether the death trigger uses the leaving permanent's linked source
  * @param sacrificeAtEndStep whether returned permanents are sacrificed at the beginning of the next end step
+ * @param enterFaceDown whether returned permanents enter face down as 2/2 artifact creatures;
+ *                      {@code grantedSubtype}, when present, is included among their face-down subtypes
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
@@ -39,24 +41,25 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                    CardSubtype grantedSubtype,
                                                    CounterType enteringCounterType,
                                                    boolean enterTapped, boolean useLinkedSource,
-                                                   boolean sacrificeAtEndStep) implements CardEffect {
+                                                   boolean sacrificeAtEndStep,
+                                                   boolean enterFaceDown) implements CardEffect {
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false, Set.of(), null, null, null, null, false, false, false);
+        this(false, null, false, Set.of(), null, null, null, null, false, false, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false, Set.of(), null, null, null, null, false, false, false);
+        this(underControllerControl, null, false, Set.of(), null, null, null, null, false, false, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false, Set.of(), null, null, null, null, false, false, false);
+        this(false, filter, false, Set.of(), null, null, null, null, false, false, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                 CardPredicate filter,
                                                 boolean turnFaceUp) {
-        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null, false, false, false);
+        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null, false, false, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
@@ -64,26 +67,26 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                 boolean turnFaceUp,
                                                 Set<Keyword> grantedKeywords) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords,
-                null, null, null, null, false, false, false);
+                null, null, null, null, false, false, false, false);
     }
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, boolean enterTapped, boolean useLinkedSource) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, null, null, null, null,
-                enterTapped, useLinkedSource, false);
+                enterTapped, useLinkedSource, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, boolean enterTapped, boolean useLinkedSource,
             boolean sacrificeAtEndStep) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, null, null, null, null,
-                enterTapped, useLinkedSource, sacrificeAtEndStep);
+                enterTapped, useLinkedSource, sacrificeAtEndStep, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, Integer basePower, Integer baseToughness,
             CardSubtype grantedSubtype, CounterType enteringCounterType) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
-                grantedSubtype, enteringCounterType, false, false, false);
+                grantedSubtype, enteringCounterType, false, false, false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
@@ -91,6 +94,23 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
             CardSubtype grantedSubtype, CounterType enteringCounterType, boolean enterTapped,
             boolean useLinkedSource) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
-                grantedSubtype, enteringCounterType, enterTapped, useLinkedSource, false);
+                grantedSubtype, enteringCounterType, enterTapped, useLinkedSource, false, false);
+    }
+
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
+            boolean turnFaceUp, Set<Keyword> grantedKeywords, Integer basePower, Integer baseToughness,
+            CardSubtype grantedSubtype, CounterType enteringCounterType, boolean enterTapped,
+            boolean useLinkedSource, boolean sacrificeAtEndStep) {
+        this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
+                grantedSubtype, enteringCounterType, enterTapped, useLinkedSource,
+                sacrificeAtEndStep, false);
+    }
+
+    /** Returns matching source-tracked cards under your control as face-down 2/2 Cybermen. */
+    public static ReturnAllCardsExiledWithSourceEffect faceDownUnderControllerControl(
+            CardPredicate filter, CardSubtype subtype) {
+        return new ReturnAllCardsExiledWithSourceEffect(
+                true, filter, false, Set.of(), null, null, subtype, null,
+                false, false, false, true);
     }
 }

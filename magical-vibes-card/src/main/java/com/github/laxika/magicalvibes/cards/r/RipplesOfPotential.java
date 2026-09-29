@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutPermanentsThatReceive
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2453")
+@CardRegistration(set = "LCC", collectorNumber = "45")
+@CardRegistration(set = "LCC", collectorNumber = "77")
 public class RipplesOfPotential extends Card {
 
     public RipplesOfPotential() {

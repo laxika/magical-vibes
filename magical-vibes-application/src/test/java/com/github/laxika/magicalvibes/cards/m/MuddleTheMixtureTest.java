@@ -153,7 +153,7 @@ class MuddleTheMixtureTest extends BaseCardTest {
         harness.setHand(player1, List.of(muddle));
         harness.setLibrary(player1, List.of(drawnAndDiscardedCard, matchingCard));
         harness.setHand(player2, List.of(new Darkblast()));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new Darkblast()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

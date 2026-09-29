@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "204")
+@CardRegistration(set = "OTC", collectorNumber = "17")
+@CardRegistration(set = "OTC", collectorNumber = "53")
 public class ThunderclapDrake extends Card {
 
     public ThunderclapDrake() {

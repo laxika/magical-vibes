@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FleetingImage.class)
+@CardUsed({FleetingImage.class, GrizzlyBears.class})
 class FleetingImageTest extends BaseCardTest {
 
     @Test
@@ -74,6 +78,36 @@ class FleetingImageTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Fleeting Image");
         harness.assertNotOnBattlefield(player1, "Fleeting Image");
+    }
+
+    @Test
+    @DisplayName("Activating a controlled Fleeting Image returns it to its owner's hand")
+    void activateAbilityReturnsToOwnersHandWhenControlledByOpponent() {
+        FleetingImage image = new FleetingImage();
+        image.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, image);
+
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fleeting Image");
+        harness.assertNotInHand(player2, "Fleeting Image");
+        harness.assertNotOnBattlefield(player2, "Fleeting Image");
+    }
+
+    @Test
+    @DisplayName("Flying prevents a non-flying creature from blocking Fleeting Image")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new FleetingImage());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                        gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
     }
 
     @Test

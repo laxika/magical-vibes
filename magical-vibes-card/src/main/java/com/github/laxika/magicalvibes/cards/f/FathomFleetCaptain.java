@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "106")
+@CardRegistration(set = "LCC", collectorNumber = "197")
 public class FathomFleetCaptain extends Card {
 
     public FathomFleetCaptain() {

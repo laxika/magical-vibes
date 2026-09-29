@@ -1,0 +1,81 @@
+package com.github.laxika.magicalvibes.cards.v;
+
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({ValiantFarewell.class, DoomBlade.class, GrizzlyBears.class, Mountain.class})
+class ValiantFarewellTest extends BaseCardTest {
+
+    @Test
+    void pumpsDrawsAndRewardsTheNextCreatureAfterTargetLeaves() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears nextCreature = new GrizzlyBears();
+        harness.setHand(player1, List.of(new ValiantFarewell(), new DoomBlade(), nextCreature));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent rewardedCreature = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, rewardedCreature)).isEqualTo(4);
+    }
+
+    @Test
+    void onlyRewardsOneCreatureSpell() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears firstCreature = new GrizzlyBears();
+        GrizzlyBears secondCreature = new GrizzlyBears();
+        harness.setHand(player1, List.of(new ValiantFarewell(), new DoomBlade(), firstCreature, secondCreature));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, findPermanentByCard(player1, firstCreature))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanentByCard(player1, secondCreature))).isEqualTo(2);
+    }
+
+    private Permanent findPermanentByCard(Player player, Card card) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .findFirst()
+                .orElseThrow();
+    }
+}

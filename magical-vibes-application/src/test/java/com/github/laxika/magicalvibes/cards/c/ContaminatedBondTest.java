@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
-import com.github.laxika.magicalvibes.cards.a.AncientDen;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JadeStatue;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ContaminatedBond.class, AlphaMyr.class, AncientDen.class})
+@CardUsed({ContaminatedBond.class, GrizzlyBears.class, JadeStatue.class})
 class ContaminatedBondTest extends BaseCardTest {
 
     // ===== Attack trigger =====
@@ -26,7 +26,7 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature attacking pushes Contaminated Bond trigger onto the stack")
     void attackTriggerPushesOntoStack() {
-        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachContaminatedBond(player2, creature);
 
         declareAttackers(player1, List.of(0));
@@ -46,7 +46,7 @@ class ContaminatedBondTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachContaminatedBond(player2, creature);
 
         declareAttackers(player1, List.of(0));
@@ -55,7 +55,7 @@ class ContaminatedBondTest extends BaseCardTest {
 
         // Player1 (creature's controller) loses 3 life from Contaminated Bond: 20 - 3 = 17
         harness.assertLife(player1, 17);
-        // Player2 takes 2 combat damage from the unblocked 2/1 attacker: 20 - 2 = 18
+        // Player2 takes 2 combat damage from the unblocked 2/2 attacker: 20 - 2 = 18
         harness.assertLife(player2, 18);
     }
 
@@ -64,9 +64,9 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature blocking pushes Contaminated Bond trigger onto the stack")
     void blockTriggerPushesOntoStack() {
-        Permanent creature = addCreatureReady(player2, new AlphaMyr());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
-        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachContaminatedBond(player1, creature);
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -87,9 +87,9 @@ class ContaminatedBondTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addCreatureReady(player2, new AlphaMyr());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
-        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new GrizzlyBears());
         attachContaminatedBond(player1, creature);
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -110,7 +110,7 @@ class ContaminatedBondTest extends BaseCardTest {
     void ownCreatureAttackingStillCausesLifeLoss() {
         harness.setLife(player1, 20);
 
-        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachContaminatedBond(player1, creature);
 
         declareAttackers(player1, List.of(0));
@@ -120,16 +120,34 @@ class ContaminatedBondTest extends BaseCardTest {
         harness.assertLife(player1, 17);
     }
 
+    @Test
+    @DisplayName("Each Contaminated Bond triggers when the same enchanted creature attacks")
+    void eachAuraTriggersForTheSameAttackingCreature() {
+        harness.setLife(player1, 20);
+
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachContaminatedBond(player2, creature);
+        attachContaminatedBond(player2, creature);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+    }
+
     // ===== No trigger when creature doesn't attack or block =====
 
     @Test
     @DisplayName("No trigger when enchanted creature does not attack")
     void noTriggerWhenCreatureDoesNotAttack() {
-        Permanent enchantedCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
         attachContaminatedBond(player2, enchantedCreature);
 
         // A different creature attacks
-        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(1));
 
@@ -142,7 +160,7 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Creature without Contaminated Bond does not push any aura trigger")
     void creatureWithoutAuraDoesNotTrigger() {
-        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -156,7 +174,7 @@ class ContaminatedBondTest extends BaseCardTest {
     void triggerStillResolvesIfCreatureRemoved() {
         harness.setLife(player1, 20);
 
-        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachContaminatedBond(player2, creature);
 
         declareAttackers(player1, List.of(0));
@@ -178,7 +196,7 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Contaminated Bond")
     void canTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ContaminatedBond()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -190,7 +208,7 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Contaminated Bond attaches it to the targeted creature")
     void resolvingAttachesToTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ContaminatedBond()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -204,8 +222,8 @@ class ContaminatedBondTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Contaminated Bond")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new AlphaMyr());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AncientDen());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JadeStatue());
         harness.setHand(player1, List.of(new ContaminatedBond()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -221,7 +239,7 @@ class ContaminatedBondTest extends BaseCardTest {
     void triggerGeneratesLogEntries() {
         harness.setLife(player1, 20);
 
-        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachContaminatedBond(player2, creature);
 
         declareAttackers(player1, List.of(0));

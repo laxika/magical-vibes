@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "SOC", collectorNumber = "343")
+@CardRegistration(set = "MOC", collectorNumber = "45")
+@CardRegistration(set = "MOC", collectorNumber = "132")
 public class BitterthornNissasAnimus extends Card {
 
     public BitterthornNissasAnimus() {

@@ -33,7 +33,6 @@ class PlagiarizeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Plagiarize");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -95,14 +94,35 @@ class PlagiarizeTest extends BaseCardTest {
         int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
         // Advance from UPKEEP to DRAW — this triggers handleDrawStep
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.DRAW);
 
         // Player2's hand should not increase (draw was skipped)
         assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore);
         // Player2's deck should not decrease
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
         // Player1 should have drawn a card instead
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Plagiarize replaces an empty-library draw before the target loses")
+    void replacesEmptyLibraryDraw() {
+        harness.setHand(player1, List.of(new Plagiarize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        gd.playerDecks.get(player2.getId()).clear();
+
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int player1DeckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player2);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.DRAW);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 1);
     }
@@ -155,8 +175,7 @@ class PlagiarizeTest extends BaseCardTest {
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.drawReplacementTargetToController).isEmpty();
     }
@@ -190,8 +209,7 @@ class PlagiarizeTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.DRAW);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

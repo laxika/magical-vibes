@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "112")
 @CardRegistration(set = "SLZ", collectorNumber = "233")
 @CardRegistration(set = "SLZ", collectorNumber = "354")
+@CardRegistration(set = "MB2", collectorNumber = "231")
 public class SenseisDiviningTop extends Card {
 
     public SenseisDiviningTop() {

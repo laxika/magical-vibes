@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BottomlessPit;
-import com.github.laxika.magicalvibes.cards.d.Donate;
+import com.github.laxika.magicalvibes.cards.b.BraidsCabalMinion;
 import com.github.laxika.magicalvibes.cards.r.Ruination;
 import com.github.laxika.magicalvibes.cards.v.VerdantTouch;
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
@@ -14,9 +14,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.d.Donate;
 
-@CardUsed({SacredGround.class, Ruination.class, VolrathsStronghold.class, VerdantTouch.class,
-        StrongholdAssassin.class, BottomlessPit.class, Donate.class, ShardVolley.class})
+@CardUsed({SacredGround.class, Ruination.class, VolrathsStronghold.class, VerdantTouch.class, StrongholdAssassin.class, BottomlessPit.class, Donate.class, ShardVolley.class})
 class SacredGroundTest extends BaseCardTest {
 
     @Test
@@ -112,6 +112,39 @@ class SacredGroundTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(BraidsCabalMinion.class)
+    @DisplayName("An opponent's sacrifice ability returns the land chosen for sacrifice")
+    void opponentAbilitySacrificingYourLandReturnsIt() {
+        harness.addToBattlefield(player1, new SacredGround());
+        harness.addToBattlefield(player2, new BraidsCabalMinion());
+        harness.addToBattlefield(player1, new StrongholdAssassin());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
+        harness.assertOnBattlefield(player1, "Stronghold Assassin");
+    }
+
+    @Test
+    @DisplayName("A land discarded from hand is not returned by Sacred Ground")
+    void landDiscardedFromHandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SacredGround());
+        harness.addToBattlefield(player2, new BottomlessPit());
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertInGraveyard(player1, "Volrath's Stronghold");
+    }
+
+    @Test
     @DisplayName("An opponent's spell sacrificing your controlled land as an additional cost returns it")
     void opponentsAdditionalCostSacrificeReturnsLand() {
         harness.addToBattlefield(player1, new SacredGround());
@@ -134,19 +167,5 @@ class SacredGroundTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Volrath's Stronghold");
         harness.assertNotInGraveyard(player1, "Volrath's Stronghold");
-    }
-
-    @Test
-    @DisplayName("A land discarded from hand is not returned by Sacred Ground")
-    void landDiscardedFromHandDoesNotTrigger() {
-        harness.addToBattlefield(player1, new SacredGround());
-        harness.addToBattlefield(player2, new BottomlessPit());
-        harness.setHand(player1, List.of(new VolrathsStronghold()));
-
-        advanceToUpkeep(player1);
-        resolveAllTriggers();
-
-        harness.assertNotOnBattlefield(player1, "Volrath's Stronghold");
-        harness.assertInGraveyard(player1, "Volrath's Stronghold");
     }
 }

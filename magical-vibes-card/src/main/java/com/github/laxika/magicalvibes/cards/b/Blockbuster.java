@@ -14,7 +14,7 @@ public class Blockbuster extends Card {
 
     public Blockbuster() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}{R}",
                 List.of(
                         new SacrificeSelfCost(),

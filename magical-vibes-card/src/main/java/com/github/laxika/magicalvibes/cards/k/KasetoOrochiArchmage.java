@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "C15", collectorNumber = "47")
+@CardRegistration(set = "C21", collectorNumber = "221")
 public class KasetoOrochiArchmage extends Card {
 
     public KasetoOrochiArchmage() {

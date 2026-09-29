@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.StackEntry;
 
 @CardUsed({SpinelessThug.class, GrizzlyBears.class})
 class SpinelessThugTest extends BaseCardTest {
@@ -26,6 +27,29 @@ class SpinelessThugTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Casting Spineless Thug puts it on the stack as a creature spell")
+    void castingPutsOnStackUpstreamReview() {
+        harness.setHand(player1, List.of(new SpinelessThug()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Spineless Thug can still be declared as an attacker")
+    void canBeDeclaredAsAttacker() {
+        Permanent thug = addCreatureReady(player1, new SpinelessThug());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(thug.isAttacking()).isTrue();
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "80")
 @CardRegistration(set = "OM1", collectorNumber = "77")
+@CardRegistration(set = "MSC", collectorNumber = "805")
 public class HobgoblinMantledMarauder extends Card {
 
     public HobgoblinMantledMarauder() {

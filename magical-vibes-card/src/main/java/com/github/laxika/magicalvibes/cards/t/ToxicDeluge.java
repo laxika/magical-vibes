@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 @CardRegistration(set = "CMM", collectorNumber = "191")
 @CardRegistration(set = "CMM", collectorNumber = "523")
 @CardRegistration(set = "LTC", collectorNumber = "209")
+@CardRegistration(set = "MKC", collectorNumber = "142")
 public class ToxicDeluge extends Card {
 
     public ToxicDeluge() {

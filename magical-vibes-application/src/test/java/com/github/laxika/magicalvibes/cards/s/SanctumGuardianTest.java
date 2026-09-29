@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.ArcLightning;
+import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,11 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SanctumGuardian.class, GrizzlyBears.class, ProdigalPyromancer.class})
+@CardUsed({SanctumGuardian.class, GrizzlyBears.class, AnabaShaman.class, Shock.class})
 class SanctumGuardianTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -52,20 +52,18 @@ class SanctumGuardianTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ArcLightning.class)
     @DisplayName("Can choose a damage spell on the stack as the source")
     void preventsDamageFromSpellOnStack() {
         harness.setLife(player1, 20);
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
-        ArcLightning arcLightning = new ArcLightning();
+        Shock shock = new Shock();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(arcLightning));
+        harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player2, 0, Map.of(player1.getId(), 3));
+        harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -74,8 +72,8 @@ class SanctumGuardianTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(arcLightning.getId());
-        harness.handlePermanentChosen(player1, arcLightning.getId());
+        assertThat(choice.validPermanentIds()).contains(shock.getId());
+        harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -103,14 +101,15 @@ class SanctumGuardianTest extends BaseCardTest {
     @DisplayName("Prevents the next noncombat damage from the chosen source to a creature and is consumed")
     void preventsNoncombatDamageToCreature() {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
         Permanent creature = addReadyStats(player2, 3, 3);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, pyromancer.getId());
+        harness.handlePermanentChosen(player1, shaman.getId());
 
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(0);
@@ -122,13 +121,14 @@ class SanctumGuardianTest extends BaseCardTest {
     void preventsNoncombatDamageToPlayer() {
         harness.setLife(player2, 20);
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, pyromancer.getId());
+        harness.handlePermanentChosen(player1, shaman.getId());
 
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
@@ -139,7 +139,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @DisplayName("Damage from a source other than the chosen one is not prevented")
     void doesNotAffectNonChosenSource() {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
         Permanent decoy = addReadyStats(player1, 2, 2);
         Permanent creature = addReadyStats(player2, 3, 3);
 
@@ -147,7 +147,8 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, decoy.getId());
 
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
@@ -169,11 +170,8 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertLife(player1, 20);
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
@@ -190,11 +188,8 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, blocker), 0)));
         harness.passBothPriorities();
 
@@ -235,6 +230,29 @@ class SanctumGuardianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Prevents the chosen source's next damage to a planeswalker")
+    void preventsDamageToPlaneswalker() {
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent source = addCreatureReady(player2, new AnabaShaman());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, indexOf(player2, source), null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     @Test

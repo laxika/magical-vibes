@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Fear.class, GrizzlyBears.class, DrudgeSkeletons.class, DancingScimitar.class,
-        HowlingMine.class, Mountain.class})
+        HowlingMine.class, Island.class})
 class FearTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Fear puts it on the stack")
@@ -83,7 +83,6 @@ class FearTest extends BaseCardTest {
     void cannotBeBlockedByNonBlackNonArtifactCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.setAttacking(true);
 
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
@@ -91,7 +90,7 @@ class FearTest extends BaseCardTest {
         // Blocker: GrizzlyBears (green, non-artifact) on player2
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -104,18 +103,18 @@ class FearTest extends BaseCardTest {
     void canBeBlockedByBlackCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.setAttacking(true);
 
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
 
         // Blocker: Drudge Skeletons (black creature) on player2
-        addCreatureReady(player2, new DrudgeSkeletons());
+        Permanent blocker = addCreatureReady(player2, new DrudgeSkeletons());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         // declareBlockers succeeds without throwing — black creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -123,32 +122,31 @@ class FearTest extends BaseCardTest {
     void canBeBlockedByArtifactCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.setAttacking(true);
 
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
 
         // Blocker: Dancing Scimitar (artifact creature) on player2
-        addCreatureReady(player2, new DancingScimitar());
+        Permanent blocker = addCreatureReady(player2, new DancingScimitar());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         // declareBlockers succeeds without throwing — artifact creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Creature with fear cannot be blocked by a noncreature artifact")
     void cannotBeBlockedByNonCreatureArtifact() {
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.setAttacking(true);
 
         Permanent fearPerm = harness.addToBattlefieldAndReturn(player1, new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
 
         harness.addToBattlefield(player2, new HowlingMine());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -208,13 +206,12 @@ class FearTest extends BaseCardTest {
     void innateKeywordBlockingRestriction() {
         // Simulate a creature that has fear as an innate keyword
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.setAttacking(true);
         attackerPerm.getGrantedKeywords().add(Keyword.FEAR);
 
         // Blocker: GrizzlyBears (green) on player2
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -225,13 +222,13 @@ class FearTest extends BaseCardTest {
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Island());
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
+        Permanent island = findPermanent(player1, "Island");
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

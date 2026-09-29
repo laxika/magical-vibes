@@ -66,9 +66,8 @@ class PyroclasmTest extends BaseCardTest {
         harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test

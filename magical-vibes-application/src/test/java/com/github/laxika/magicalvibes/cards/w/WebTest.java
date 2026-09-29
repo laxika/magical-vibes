@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.m.ManaVault;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Web.class, GrizzlyBears.class, ManaVault.class})
+@CardUsed({Web.class, GrizzlyBears.class, Millstone.class})
 class WebTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,7 @@ class WebTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Web()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -58,9 +58,8 @@ class WebTest extends BaseCardTest {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
         Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent webPerm = new Permanent(new Web());
+        Permanent webPerm = harness.addToBattlefieldAndReturn(player1, new Web());
         webPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(webPerm);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
@@ -75,9 +74,8 @@ class WebTest extends BaseCardTest {
     void effectsStopWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent webPerm = new Permanent(new Web());
+        Permanent webPerm = harness.addToBattlefieldAndReturn(player1, new Web());
         webPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(webPerm);
 
         gd.playerBattlefields.get(player1.getId()).remove(webPerm);
 
@@ -88,11 +86,9 @@ class WebTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Web")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new ManaVault());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
         harness.setHand(player1, List.of(new Web()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-
-        Permanent artifact = findPermanent(player1, "Mana Vault");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

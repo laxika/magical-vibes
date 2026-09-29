@@ -118,6 +118,26 @@ class DeathPitsOfRathTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({DeathPitsOfRath.class, HillGiant.class, ArcTrail.class})
+    @DisplayName("Each creature dealt damage gets its own Death Pits trigger")
+    void eachDamagedCreatureGetsItsOwnTrigger() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        Permanent firstGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent secondGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(firstGiant.getId(), secondGiant.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
     @DisplayName("A creature dealt non-lethal combat damage is destroyed by Death Pits")
     void combatDamageDestroysSurvivingBlocker() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -145,7 +165,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
     class NonCreatureAnyTargets {
 
         @Test
-        @CardUsed({ArcTrail.class, LilianaVess.class})
+        @CardUsed({DeathPitsOfRath.class, HillGiant.class, ArcTrail.class, LilianaVess.class})
         @DisplayName("Damaging a planeswalker does not trigger Death Pits, but the creature beside it still does")
         void planeswalkerDealtDamageDoesNotTrigger() {
             harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -157,8 +177,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
 
             UUID giantId = harness.getPermanentId(player2, "Hill Giant");
             // 2 damage to the planeswalker, 1 to the creature.
-            harness.castSorcery(player1, 0, List.of(liliana.getId(), giantId));
-            harness.passBothPriorities(); // Resolve Arc Trail
+            harness.castAndResolveSorcery(player1, 0, List.of(liliana.getId(), giantId));
 
             // Only the Hill Giant's trigger — the planeswalker did not queue one.
             assertThat(gd.stack).hasSize(1);
@@ -171,7 +190,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
         }
 
         @Test
-        @CardUsed(InvasionOfInnistrad.class)
+        @CardUsed({DeathPitsOfRath.class, HillGiant.class, Shock.class, InvasionOfInnistrad.class})
         @DisplayName("Damaging a battle does not trigger Death Pits")
         void battleDealtDamageDoesNotTrigger() {
             harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -180,8 +199,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
             harness.setHand(player1, List.of(new Shock()));
             harness.addMana(player1, ManaColor.RED, 1);
 
-            harness.castInstant(player1, 0, battle.getId());
-            harness.passBothPriorities(); // Resolve Shock — 2 damage to the battle
+            harness.castAndResolveInstant(player1, 0, battle.getId());
 
             assertThat(gd.stack).isEmpty();
             harness.assertOnBattlefield(player2, "Invasion of Innistrad");

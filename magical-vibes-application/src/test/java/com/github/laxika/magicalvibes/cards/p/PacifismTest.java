@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
-import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HornedTurtle.class, JayemdaeTome.class, Pacifism.class})
+@CardUsed({HornedTurtle.class, Pacifism.class, Spellbook.class})
 class PacifismTest extends BaseCardTest {
 
 
@@ -240,7 +240,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Pacifism")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JayemdaeTome());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -252,7 +252,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Pacifism")
     void cannotTargetNonCreatureUpstreamReview() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JayemdaeTome());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

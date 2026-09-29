@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGr
 
 @CardRegistration(set = "SNC", collectorNumber = "183")
 @CardRegistration(set = "OTP", collectorNumber = "44")
+@CardRegistration(set = "FIC", collectorNumber = "324")
 public class EndlessDetour extends Card {
 
     public EndlessDetour() {

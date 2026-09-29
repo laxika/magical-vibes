@@ -35,6 +35,26 @@ public class ManifestService {
         return manifestCardAndReturnPermanent(gameData, playerId, sourceCard, manifestedCard);
     }
 
+    public Permanent manifestTopCardOfLibraryUnderController(GameData gameData, UUID libraryOwnerId,
+                                                              UUID controllerId, Card sourceCard) {
+        List<Card> library = gameData.playerDecks.get(libraryOwnerId);
+        String libraryOwnerName = gameData.playerIdToName.get(libraryOwnerId);
+        if (library == null || library.isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                    " cannot manifest because " + libraryOwnerName + "'s library is empty."));
+            return null;
+        }
+
+        Card manifestedCard = library.removeFirst();
+        Permanent manifested = putManifestedCard(gameData, controllerId, manifestedCard, new ArrayList<>(),
+                battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, manifestedCard);
+
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                " manifests the top card of " + libraryOwnerName + "'s library."));
+        return manifested;
+    }
+
     public boolean manifestCard(GameData gameData, UUID playerId, Card sourceCard, Card manifestedCard) {
         return manifestCardAndReturnPermanent(gameData, playerId, sourceCard, manifestedCard) != null;
     }

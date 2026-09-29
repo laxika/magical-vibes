@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "204")
+@CardRegistration(set = "MKC", collectorNumber = "215")
 public class LonisCryptozoologist extends Card {
 
     public LonisCryptozoologist() {

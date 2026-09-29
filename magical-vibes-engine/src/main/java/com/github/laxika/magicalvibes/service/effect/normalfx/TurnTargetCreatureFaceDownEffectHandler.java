@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -38,7 +36,7 @@ public class TurnTargetCreatureFaceDownEffectHandler implements NormalEffectHand
                 continue;
             }
             target.setCard(target.getOriginalCard());
-            target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            target.setFaceDown(2, 2, turnFaceDown.faceDownCardTypes(), turnFaceDown.faceDownSubtypes());
         }
     }
 }

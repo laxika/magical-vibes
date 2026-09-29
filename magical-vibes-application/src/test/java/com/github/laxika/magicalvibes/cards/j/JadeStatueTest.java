@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JadeStatue.class, GrizzlyBears.class})
 class JadeStatueTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot activate the ability outside of combat")
     void cannotActivateOutsideCombat() {
-        Permanent statue = addStatueReady();
+        Permanent statue = addCreatureReady(player1, new JadeStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -32,9 +35,27 @@ class JadeStatueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the ability during an opponent's combat")
+    void canActivateDuringOpponentsCombat() {
+        Permanent statue = addCreatureReady(player1, new JadeStatue());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, indexOf(statue), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, statue)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(6);
+    }
+
+    @Test
     @DisplayName("Activating during combat makes it a 3/6 Golem artifact creature")
     void animatesDuringCombat() {
-        Permanent statue = addStatueReady();
+        Permanent statue = addCreatureReady(player1, new JadeStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
@@ -55,7 +76,7 @@ class JadeStatueTest extends BaseCardTest {
     @Test
     @DisplayName("Mana is consumed when activating the ability")
     void manaIsConsumed() {
-        Permanent statue = addStatueReady();
+        Permanent statue = addCreatureReady(player1, new JadeStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
@@ -69,7 +90,7 @@ class JadeStatueTest extends BaseCardTest {
     @Test
     @DisplayName("Animation reverts when combat ends")
     void revertsAtEndOfCombat() {
-        Permanent statue = addStatueReady();
+        Permanent statue = addCreatureReady(player1, new JadeStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Animate during the beginning-of-combat step.
@@ -82,14 +103,8 @@ class JadeStatueTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, statue)).isTrue();
 
         // Declare no attackers, then let priority passes cascade combat to its end.
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of());
-        for (int i = 0; i < 8 && statue.isAnimatedUntilEndOfCombat(); i++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+        declareAttackers(List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(statue.isAnimatedUntilEndOfCombat()).isFalse();
         assertThat(gqs.isCreature(gd, statue)).isFalse();
@@ -97,14 +112,14 @@ class JadeStatueTest extends BaseCardTest {
         assertThat(statue.getTransientSubtypes()).doesNotContain(CardSubtype.GOLEM);
     }
 
+    private int indexOf(Permanent perm) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
+    }
+
     private Permanent addStatueReady() {
         Permanent perm = new Permanent(new JadeStatue());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
-    }
-
-    private int indexOf(Permanent perm) {
-        return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
     }
 }

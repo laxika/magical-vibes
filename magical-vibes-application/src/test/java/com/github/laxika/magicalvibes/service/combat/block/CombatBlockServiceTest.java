@@ -174,6 +174,7 @@ class CombatBlockServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({DreamProwler.class, GrizzlyBears.class})
         @DisplayName("An attacker unblockable while attacking alone becomes blockable once joined")
         void attackingAloneUnblockableAttackerBecomesBlockableWhenJoined() {
             Permanent prowler = attacking(player1, new DreamProwler());

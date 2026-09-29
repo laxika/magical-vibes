@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CircleOfProtectionBlack.class)
+@CardUsed({BogWraith.class, CircleOfProtectionBlack.class, Corrupt.class, CryptRats.class, GiantGrowth.class, GrizzlyBears.class, KrovikanHorror.class, Oppression.class, Swamp.class})
 class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private static final String CRYPT_RATS_MANA_COST = "{2}{B}";

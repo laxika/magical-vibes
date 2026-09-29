@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.t.TribalGolem;
-import com.github.laxika.magicalvibes.cards.w.WallOfSpears;
+import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,14 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GluttonousZombie.class, GrizzlyBears.class, BogImp.class, WallOfSpears.class, GlorySeeker.class, GangrenousGoliath.class, TribalGolem.class})
+@CardUsed({GluttonousZombie.class, GlorySeeker.class, DrudgeSkeletons.class, DancingScimitar.class})
 class GluttonousZombieTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gluttonous Zombie cannot be blocked by non-black non-artifact creatures")
     void cannotBeBlockedByNonBlackNonArtifactCreatures() {
         addCreatureReady(player1, new GluttonousZombie());
-        addCreatureReady(player2, new GrizzlyBears());
+
+        addCreatureReady(player2, new GlorySeeker());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -35,10 +35,10 @@ class GluttonousZombieTest extends BaseCardTest {
     @DisplayName("Gluttonous Zombie can be blocked by black creatures")
     void canBeBlockedByBlackCreatures() {
         addCreatureReady(player1, new GluttonousZombie());
-        Permanent blocker = addCreatureReady(player2, new BogImp());
+
+        Permanent blocker = addCreatureReady(player2, new DrudgeSkeletons());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -48,10 +48,10 @@ class GluttonousZombieTest extends BaseCardTest {
     @DisplayName("Gluttonous Zombie can be blocked by artifact creatures")
     void canBeBlockedByArtifactCreatures() {
         addCreatureReady(player1, new GluttonousZombie());
-        Permanent blocker = addCreatureReady(player2, new WallOfSpears());
+
+        Permanent blocker = addCreatureReady(player2, new DancingScimitar());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

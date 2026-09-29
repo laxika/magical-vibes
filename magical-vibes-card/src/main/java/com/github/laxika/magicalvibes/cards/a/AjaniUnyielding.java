@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "AER", collectorNumber = "127")
 @CardRegistration(set = "KLR", collectorNumber = "188")
 @CardRegistration(set = "NCC", collectorNumber = "324")
+@CardRegistration(set = "C20", collectorNumber = "201")
 public class AjaniUnyielding extends Card {
 
     public AjaniUnyielding() {

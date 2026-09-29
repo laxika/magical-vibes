@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "223")
 @CardRegistration(set = "C13", collectorNumber = "286")
+@CardRegistration(set = "AFC", collectorNumber = "235")
 public class EsperPanorama extends Card {
 
     public EsperPanorama() {

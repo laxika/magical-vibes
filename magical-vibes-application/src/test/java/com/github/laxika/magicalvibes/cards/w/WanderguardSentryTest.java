@@ -37,8 +37,7 @@ class WanderguardSentryTest extends BaseCardTest {
         harness.setHand(player2, List.of(new YotianSoldier()));
         castWanderguardSentry(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Card identity is private: only the controller is told what is in the hand. The public log
         // records that the look happened without naming anything (see CardRevealService#lookAtHand).
@@ -56,8 +55,7 @@ class WanderguardSentryTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         castWanderguardSentry(player2.getId());
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
     }

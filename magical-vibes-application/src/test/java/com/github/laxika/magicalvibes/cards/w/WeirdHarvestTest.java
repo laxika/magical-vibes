@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WeirdHarvest.class, Forest.class, GrizzlyBears.class, Plains.class, SerraAngel.class})
+@CardUsed({WeirdHarvest.class, Forest.class, GrizzlyBears.class, Plains.class, SerraAngel.class,
+        AvenMindcensor.class, ObNixilisUnshackled.class, PsychogenicProbe.class})
 class WeirdHarvestTest extends BaseCardTest {
 
     private void setupCreatureLibrary(Player player) {
@@ -37,7 +41,6 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Weird Harvest");
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
@@ -128,6 +131,26 @@ class WeirdHarvestTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Library-search restrictions skip every player's optional search")
+    void searchesAreSkippedWhenProhibited() {
+        setupCreatureLibrary(player1);
+        setupCreatureLibrary(player2);
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        gd.playersCantSearchLibrariesThisTurn = true;
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Weird Harvest");
+    }
+
+    @Test
     @DisplayName("X=0 searches for nothing and resolves with no prompt")
     void xZeroResolvesWithoutSearch() {
         setupCreatureLibrary(player1);
@@ -135,11 +158,149 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeirdHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Weird Harvest");
+    }
+
+    @Test
+    @DisplayName("Searching triggers an opponent's search ability")
+    void searchingTriggersOpponentSearchAbility() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still triggers shuffle abilities")
+    void emptyLibraryStillShuffles() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Taking two cards triggers an opponent's search ability once")
+    void multiplePicksAreOneSearch() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Stopping after taking one card still shuffles the searched library")
+    void stoppingAfterFirstPickStillShuffles() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Later picks stay within the original top four and the next player still searches")
+    void restrictedSearchRunningOutAdvancesToNextPlayer() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears fifth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, new Plains(), new Forest(), new Plains(), fifth));
+        setupCreatureLibrary(player2);
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        assertThat(activeSearch().params().cards()).containsExactly(first);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(fifth);
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Declining the optional search does not shuffle the library")
+    void decliningSearchDoesNotShuffleLibrary() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        assertThat(activeSearch()).isNotNull();
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A prohibited optional search does not shuffle the library")
+    void prohibitedSearchDoesNotShuffleLibrary() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        gd.playersCantSearchLibrariesThisTurn = true;
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Aven Mindcensor limits the search to the top four cards")
+    void avenMindcensorLimitsSearchToTopFourCards() {
+        harness.setLibrary(player1, List.of(
+                new Plains(), new Forest(), new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 }

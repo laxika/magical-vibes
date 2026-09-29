@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /** Static combat requirement that goads the creature hosting this Equipment or Aura. */
-public record GoadEquippedCreatureEffect() implements CombatAttackRequirementEffect {
+public record GoadEquippedCreatureEffect()
+        implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     private static final PermanentPredicate EQUIPPED_CREATURE = new PermanentIsHostOfSourceAuraPredicate();
 
@@ -15,6 +16,11 @@ public record GoadEquippedCreatureEffect() implements CombatAttackRequirementEff
 
     @Override
     public boolean requiresAttackAtOtherPlayerIfAble() {
+        return true;
+    }
+
+    @Override
+    public boolean makesGoaded() {
         return true;
     }
 }

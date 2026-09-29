@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "313")
+@CardRegistration(set = "C21", collectorNumber = "5")
 public class GyomeMasterChef extends Card {
 
     public GyomeMasterChef() {

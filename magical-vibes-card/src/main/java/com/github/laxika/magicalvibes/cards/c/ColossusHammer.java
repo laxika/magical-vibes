@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "SLD", collectorNumber = "736")
 @CardRegistration(set = "SLD", collectorNumber = "1866")
 @CardRegistration(set = "GN3", collectorNumber = "115")
+@CardRegistration(set = "AFC", collectorNumber = "202")
+@CardRegistration(set = "LCC", collectorNumber = "110")
+@CardRegistration(set = "FIC", collectorNumber = "338")
 public class ColossusHammer extends Card {
 
     public ColossusHammer() {

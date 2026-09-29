@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardPersistentAnyColorManaEf
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 
 @CardRegistration(set = "SLD", collectorNumber = "2499")
+@CardRegistration(set = "AFC", collectorNumber = "50")
 public class KlauthUnrivaledAncient extends Card {
 
     public KlauthUnrivaledAncient() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
+import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarbleTitan.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({MarbleTitan.class, HillGiant.class, GrizzlyBears.class, DuskLegionDreadnought.class,
+        DeepFreeze.class})
 class MarbleTitanTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,18 @@ class MarbleTitanTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent with power 3+ untaps normally")
+    void noncreatureWithPowerThreeOrGreaterUntaps() {
+        addCreatureReady(player1, new MarbleTitan());
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought()); // 4/6
+        vehicle.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(vehicle.isTapped()).isFalse();
     }
 
     @Test
@@ -78,7 +92,6 @@ class MarbleTitanTest extends BaseCardTest {
         assertThat(giant.isTapped()).isFalse();
     }
 
-    @CardUsed(DeepFreeze.class)
     @Test
     @DisplayName("A Marble Titan that loses its abilities no longer prevents other creatures from untapping")
     void disabledMarbleTitanStopsLockingCreatures() {

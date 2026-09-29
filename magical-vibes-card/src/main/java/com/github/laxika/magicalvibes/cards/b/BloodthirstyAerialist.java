@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "91")
+@CardRegistration(set = "C21", collectorNumber = "136")
 public class BloodthirstyAerialist extends Card {
 
     public BloodthirstyAerialist() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "32")
+@CardRegistration(set = "LCC", collectorNumber = "145")
 public class BenthicBiomancer extends Card {
 
     public BenthicBiomancer() {

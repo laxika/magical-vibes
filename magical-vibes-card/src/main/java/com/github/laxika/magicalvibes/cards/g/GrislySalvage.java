@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "219")
 @CardRegistration(set = "TDC", collectorNumber = "290")
 @CardRegistration(set = "M3C", collectorNumber = "263")
+@CardRegistration(set = "C20", collectorNumber = "215")
 public class GrislySalvage extends Card {
 
     public GrislySalvage() {

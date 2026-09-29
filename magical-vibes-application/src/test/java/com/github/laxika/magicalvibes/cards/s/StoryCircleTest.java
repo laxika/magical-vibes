@@ -358,6 +358,36 @@ class StoryCircleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents a chosen red spell's damage to the controller but not its creature damage")
+    void preventsDamageFromChosenSpellOnlyToController() {
+        addReadyStoryCircle(player1, CardColor.RED);
+        Permanent target = addCreatureReady(player1, new WildJhovall());
+        Lunge lunge = new Lunge();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(lunge));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, List.of(target.getId(), player1.getId()));
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lunge.getId());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    // ===== Damage prevention in combat =====
+
+    @Test
     @DisplayName("Damage from a different source is not prevented")
     void doesNotPreventDamageFromUnchosenSource() {
         addReadyStoryCircle(player2, CardColor.RED);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 @CardRegistration(set = "EXO", collectorNumber = "115")
 @CardRegistration(set = "TPR", collectorNumber = "184")
 @CardRegistration(set = "VMA", collectorNumber = "223")
+@CardRegistration(set = "MB2", collectorNumber = "212")
 public class OathOfDruids extends Card {
 
     public OathOfDruids() {

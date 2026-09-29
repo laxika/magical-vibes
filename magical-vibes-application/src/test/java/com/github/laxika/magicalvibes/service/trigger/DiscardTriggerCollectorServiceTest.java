@@ -332,7 +332,7 @@ class DiscardTriggerCollectorServiceTest {
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(megrim, player1Id, effect),
@@ -513,7 +513,7 @@ class DiscardTriggerCollectorServiceTest {
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
-            // canPlayerLifeChange defaults to false — life can't change
+            // canPlayerLoseLife defaults to false — life can't change
 
             registry.dispatch(
                     match(megrim, player1Id, effect),
@@ -538,7 +538,7 @@ class DiscardTriggerCollectorServiceTest {
 
             int lifeBefore = gd.getLife(player2Id);
 
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
@@ -558,7 +558,7 @@ class DiscardTriggerCollectorServiceTest {
 
             int lifeBefore = gd.getLife(player1Id);
 
-            when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
@@ -578,7 +578,7 @@ class DiscardTriggerCollectorServiceTest {
 
             int lifeBefore = gd.getLife(player2Id);
 
-            // canPlayerLifeChange defaults to false — life can't change
+            // canPlayerLoseLife defaults to false — life can't change
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),

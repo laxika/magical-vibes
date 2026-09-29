@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ActiveVolcano.class, BenthicExplorers.class, CrimsonKobolds.class, Island.class})
+@CardUsed({ActiveVolcano.class, Island.class, BenthicExplorers.class, CrimsonKobolds.class})
 class ActiveVolcanoTest extends BaseCardTest {
 
     @Nested

@@ -80,6 +80,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
     void addsDreamCounterAtUpkeepIfItStartedUntapped() {
         Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
         rasputin.setCounterCount(CounterType.DREAM, 0);
+        rasputin.setUntappedAtTurnStart(true);
 
         advanceToUpkeep(player1);
         rasputin.tap();

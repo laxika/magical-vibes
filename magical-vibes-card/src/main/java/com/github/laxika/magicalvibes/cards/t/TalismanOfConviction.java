@@ -14,10 +14,14 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1060")
 @CardRegistration(set = "AA1", collectorNumber = "17")
 @CardRegistration(set = "MH1", collectorNumber = "230")
+@CardRegistration(set = "WHO", collectorNumber = "247")
+@CardRegistration(set = "PIP", collectorNumber = "243")
+@CardRegistration(set = "PIP", collectorNumber = "771")
 @CardRegistration(set = "LTC", collectorNumber = "285")
 @CardRegistration(set = "MSC", collectorNumber = "217")
 @CardRegistration(set = "TDC", collectorNumber = "329")
 @CardRegistration(set = "M3C", collectorNumber = "307")
+@CardRegistration(set = "MKC", collectorNumber = "240")
 public class TalismanOfConviction extends Card {
 
     public TalismanOfConviction() {

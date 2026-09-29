@@ -30,10 +30,7 @@ class ImaginaryPetTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(battlefield.stream()
-                .filter(p -> p.getCard() == pet)
-                .toList()).isEmpty();
+        harness.assertNotOnBattlefield(player1, pet.getName());
         assertThat(gd.playerHands.get(player1.getId())).contains(pet);
     }
 
@@ -47,8 +44,7 @@ class ImaginaryPetTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() == pet);
+        harness.assertOnBattlefield(player1, pet.getName());
     }
 
     @Test
@@ -65,8 +61,7 @@ class ImaginaryPetTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.passBothPriorities(); // resolve trigger — condition no longer met
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() == pet);
+        harness.assertOnBattlefield(player1, pet.getName());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(pet);
     }
 
@@ -80,8 +75,7 @@ class ImaginaryPetTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() == pet);
+        harness.assertOnBattlefield(player1, pet.getName());
     }
 
     @Test
@@ -95,8 +89,7 @@ class ImaginaryPetTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() == pet);
+        harness.assertOnBattlefield(player1, pet.getName());
     }
 
     @Test
@@ -117,8 +110,7 @@ class ImaginaryPetTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard() == pet);
+        harness.assertNotOnBattlefield(player2, pet.getName());
         assertThat(gd.playerHands.get(player1.getId())).contains(pet);
     }
 }

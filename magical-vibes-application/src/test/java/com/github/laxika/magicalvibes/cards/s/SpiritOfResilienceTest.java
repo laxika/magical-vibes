@@ -95,5 +95,6 @@ class SpiritOfResilienceTest extends BaseCardTest {
     private void resolveTrigger() {
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

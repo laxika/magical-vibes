@@ -182,6 +182,8 @@ public sealed interface TriggerContext {
     }
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
+    /** Context for controller-conjure triggers. */
+    record Conjure(UUID conjuringPlayerId, int cardCount) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -347,6 +349,9 @@ public sealed interface TriggerContext {
     /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
     record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
 
+    /** Context for mana-tax payment triggers (ON_OPPONENT_PAYS_TAX). */
+    record TaxPayment(UUID payingPlayerId, UUID taxingPlayerId, int manaPaid) implements TriggerContext {}
+
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
      * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
@@ -369,6 +374,9 @@ public sealed interface TriggerContext {
     /** Context for one counter-placement event caused by a player. */
     record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
 
+    /** Context for time counters placed on a permanent controlled by the placing player. */
+    record TimeCountersPlaced(Permanent target, UUID placingPlayerId, int amount) implements TriggerContext {}
+
     /** Context for a lore counter placed on a Saga the placing player controls. */
     record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
 
@@ -376,6 +384,9 @@ public sealed interface TriggerContext {
     record UntapStep(int untappedPermanentCount) implements TriggerContext {}
     /** Context for loyalty-counter-removal triggers. */
     record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for time-counter-removal triggers. */
+    record TimeCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
     /** Context for counters being removed from a permanent controlled by the watcher. */
     record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
@@ -841,14 +852,28 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a non-token card owned by a player other than the trigger controller entering exile. */
+    record OpponentOwnedCardExiled(UUID ownerId, Card card) implements TriggerContext {}
+
     /** Context for creatures exiled from the battlefield, regardless of controller. */
-    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
+    record CreatureExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId,
+                                         int exiledPowerAtTrigger)
+            implements TriggerContext {}
+
+    /** Context for artifacts exiled from the battlefield, regardless of controller. */
+    record ArtifactExiledFromBattlefield(Permanent exiledPermanent, UUID exiledControllerId)
             implements TriggerContext {}
 
     /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
     record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
 
     record CardsExiledDuringTurn(UUID activePlayerId) implements TriggerContext {}
+
+    /** Context for a permanent phasing out, before it leaves the battlefield. */
+    record PermanentPhasedOut(Permanent phasedOutPermanent) implements TriggerContext {}
+
+    /** Context for a card being put into exile from any zone. */
+    record CardExiled() implements TriggerContext {}
 
     /**
      * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers. Carries the damage source object, its
@@ -858,29 +883,35 @@ public sealed interface TriggerContext {
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
                              int totalDamage, Map<UUID, Integer> damageToPlayers,
                              UUID singleCreatureSpellTargetId,
-                             Map<UUID, Integer> damageToPermanents) implements TriggerContext {
+                             Map<UUID, Integer> damageToPermanents,
+                             boolean combatDamage) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of(), false);
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
                                  Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of(), false);
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
                                  int totalDamage, Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of());
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of(), false);
         }
     }
 
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
                                    UUID sourcePermanentId, int totalDamage,
-                                   int damageToPlayers) implements TriggerContext {
+                                   int damageToPlayers, UUID damagedPlayerId) implements TriggerContext {
         public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
                                        UUID sourcePermanentId, int totalDamage) {
-            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage);
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage, null);
+        }
+
+        public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                       UUID sourcePermanentId, int totalDamage, int damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null);
         }
     }
 

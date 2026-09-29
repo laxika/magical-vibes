@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -64,6 +66,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -146,6 +149,17 @@ public class EtbTriggerService {
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && independentModeChoice != null
+                && enteringPermanent.getChosenModeLabels().size() < independentModeChoice.modeGroups().size()) {
+            playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), independentModeChoice.modeGroups(),
+                    enteringPermanent.getChosenModeLabels().size());
+            return;
+        }
         ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
@@ -182,7 +196,10 @@ public class EtbTriggerService {
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+        if (enteringPermanent != null && subtypeChoice != null
+                && (subtypeChoice.writesToBuddyList()
+                ? !enteringPermanent.isBuddyListChoiceMade()
+                : enteringPermanent.getChosenSubtype() == null)) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
                     subtypeChoice, true);
             return;
@@ -237,6 +254,17 @@ public class EtbTriggerService {
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
+                .map(ChooseIndependentModesOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && independentModeChoice != null
+                && enteringPermanent.getChosenModeLabels().size() < independentModeChoice.modeGroups().size()) {
+            playerInputService.beginChooseIndependentModesOnEnterChoice(gameData, controllerId, card,
+                    enteringPermanent.getId(), independentModeChoice.modeGroups(),
+                    enteringPermanent.getChosenModeLabels().size());
+            return;
+        }
         ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
@@ -258,7 +286,10 @@ public class EtbTriggerService {
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+        if (enteringPermanent != null && subtypeChoice != null
+                && (subtypeChoice.writesToBuddyList()
+                ? !enteringPermanent.isBuddyListChoiceMade()
+                : enteringPermanent.getChosenSubtype() == null)) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(), subtypeChoice);
             return;
         }
@@ -310,9 +341,30 @@ public class EtbTriggerService {
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
+                .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
                 .filter(e -> !isEntryReplacementEffect(e))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
+            List<OncePerTurnTriggerEffect> oncePerTurnEffects = new ArrayList<>();
+            triggeredEffects = triggeredEffects.stream()
+                    .filter(effect -> {
+                        if (!(effect instanceof OncePerTurnTriggerEffect once)) return true;
+                        if (enteringPermanent != null
+                                && OncePerTurnTriggerSupport.unwrapIfAvailable(
+                                gameData, enteringPermanent, once) == null) {
+                            return false;
+                        }
+                        oncePerTurnEffects.add(once);
+                        return true;
+                    })
+                    .map(effect -> effect instanceof OncePerTurnTriggerEffect once
+                            ? once.wrapped() : effect)
+                    .toList();
+            if (triggeredEffects.isEmpty()) {
+                processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
+                return;
+            }
+
             // Extract per-mode targetFilter from ChooseOneEffect (if present)
             TargetFilter modeTargetFilter = null;
             for (CardEffect e : triggeredEffects) {
@@ -440,6 +492,11 @@ public class EtbTriggerService {
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                         mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
                         repeatedAdditionalCosts, convokeCreatureIds);
+                if (!oncePerTurnEffects.isEmpty() && enteringPermanent != null) {
+                    for (OncePerTurnTriggerEffect once : oncePerTurnEffects) {
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, enteringPermanent, once);
+                    }
+                }
             }
         }
 
@@ -497,6 +554,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkPlanarCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkPlanarAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
@@ -626,6 +684,8 @@ public class EtbTriggerService {
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                // A target-group declaration describes the ETB ability's target, but the
+                // graveyard card is chosen when that ability goes on the stack.
                 .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
@@ -817,6 +877,7 @@ public class EtbTriggerService {
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (sourcePermanent != null) {
                     etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                    etbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
                     snapshotAttachedPermanent(gameData, etbEntry, sourcePermanent);
                 }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
@@ -854,6 +915,7 @@ public class EtbTriggerService {
                     }
                     if (sourcePermanent != null) {
                         extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                        extraEtbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
                         snapshotAttachedPermanent(gameData, extraEtbEntry, sourcePermanent);
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
@@ -940,7 +1002,10 @@ public class EtbTriggerService {
         // Handle graveyard exile-and-may-play effects: target card in controller's graveyard
         for (CardEffect effect : graveyardMayPlayEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(gameData, controllerId, card, List.of(effect));
+                UUID sourcePermanentId = sourceBattlefield != null && !sourceBattlefield.isEmpty()
+                        ? sourceBattlefield.getLast().getId() : null;
+                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
+                        gameData, controllerId, card, List.of(effect), sourcePermanentId);
             }
         }
 
@@ -988,7 +1053,8 @@ public class EtbTriggerService {
             }
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue);
+                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue,
+                        returnEffect.attachToSourceHost() ? graveyardSourcePermanentId : null);
             }
         }
 

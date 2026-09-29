@@ -36,7 +36,8 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
+        ExileTargetGraveyardCardsAndSeparateIntoPilesEffect pileSeparation =
+                (ExileTargetGraveyardCardsAndSeparateIntoPilesEffect) effect;
 
         UUID controllerId = entry.getControllerId();
         List<UUID> targetCardIds = entry.getTargetCardIds();
@@ -87,10 +88,11 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
         // Store pile separation state (card-pile mode)
         gameData.recordPileGroupingOrGuess(entry);
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
-                List.of(), exiledCards, cardOwners, List.of(), List.of()));
+                List.of(), exiledCards, cardOwners, List.of(), List.of(),
+                pileSeparation.disposition(), !pileSeparation.controllerSeparates()));
 
-        // Prompt opponent to separate into two piles
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
+        UUID separatorId = pileSeparation.controllerSeparates() ? controllerId : opponentId;
+        playerInputService.beginMultiGraveyardChoice(gameData, separatorId, exiledCards, exiledCards.size(),
                 "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToChosenCreatureOrPlaneswalkerThisTurnEffect;
 
 @CardRegistration(set = "WAR", collectorNumber = "14")
+@CardRegistration(set = "MKC", collectorNumber = "68")
 public class GideonsSacrifice extends Card {
 
     public GideonsSacrifice() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "90")
+@CardRegistration(set = "MOC", collectorNumber = "249")
 public class FoulmireKnight extends Card {
 
     public FoulmireKnight() {

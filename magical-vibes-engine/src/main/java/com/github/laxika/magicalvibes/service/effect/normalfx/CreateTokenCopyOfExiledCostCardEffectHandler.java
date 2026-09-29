@@ -21,6 +21,10 @@ public class CreateTokenCopyOfExiledCostCardEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        createTokenCopyOfImprintedCardEffectHandler.resolve(gameData, entry, new CreateTokenCopyOfImprintedCardEffect(false, false));
+        CreateTokenCopyOfExiledCostCardEffect copyEffect = (CreateTokenCopyOfExiledCostCardEffect) effect;
+        for (int copy = 0; copy < copyEffect.count(); copy++) {
+            createTokenCopyOfImprintedCardEffectHandler.resolve(
+                    gameData, entry, new CreateTokenCopyOfImprintedCardEffect(false, false));
+        }
     }
 }

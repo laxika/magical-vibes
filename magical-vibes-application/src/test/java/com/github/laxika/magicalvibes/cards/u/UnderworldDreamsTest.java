@@ -17,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class,
-        PlatinumAngel.class, IvoryMask.class})
+@CardUsed({UnderworldDreams.class, CounselOfTheSoratami.class, GrizzlyBears.class, Pariah.class, PlatinumAngel.class, IvoryMask.class})
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
-        advanceToUpkeep(activePlayer);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 

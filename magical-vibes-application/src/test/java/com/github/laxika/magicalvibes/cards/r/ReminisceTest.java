@@ -81,6 +81,28 @@ class ReminisceTest extends BaseCardTest {
         assertThat(gameLogContains("shuffles their graveyard")).isTrue();
     }
 
+    @Test
+    @DisplayName("Shuffles noncreature cards from the target graveyard into its library")
+    void shufflesNoncreatureCardsIntoLibrary() {
+        Card graveyardReminisce = new Reminisce();
+        harness.setGraveyard(player1, List.of(graveyardReminisce));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .doesNotContain(graveyardReminisce.getId());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(deckSizeBefore + 1)
+                .extracting(Card::getId)
+                .contains(graveyardReminisce.getId());
+    }
+
     // ===== Resolving — target opponent =====
 
     @Test

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "79")
+@CardRegistration(set = "MOC", collectorNumber = "241")
 public class ThopterSpyNetwork extends Card {
 
     public ThopterSpyNetwork() {

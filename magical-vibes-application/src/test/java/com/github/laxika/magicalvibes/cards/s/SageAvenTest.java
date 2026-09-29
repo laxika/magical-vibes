@@ -42,8 +42,7 @@ class SageAvenTest extends BaseCardTest {
     void resolvingEtbEntersLibraryReorderState() {
         harness.castFromHand(player1, new SageAven(), "{3}{U}");
 
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
@@ -61,8 +60,7 @@ class SageAvenTest extends BaseCardTest {
         Card originalTop2 = deck.get(2);
         Card originalTop3 = deck.get(3);
 
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
@@ -82,8 +80,7 @@ class SageAvenTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
 
         harness.castFromHand(player1, new SageAven(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
@@ -100,8 +97,7 @@ class SageAvenTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         harness.castFromHand(player1, new SageAven(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

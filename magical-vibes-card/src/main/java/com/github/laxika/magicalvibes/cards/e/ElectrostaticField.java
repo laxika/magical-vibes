@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "97")
+@CardRegistration(set = "OTC", collectorNumber = "164")
 public class ElectrostaticField extends Card {
 
     public ElectrostaticField() {

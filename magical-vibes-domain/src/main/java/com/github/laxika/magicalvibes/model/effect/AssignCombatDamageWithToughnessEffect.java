@@ -25,7 +25,12 @@ public record AssignCombatDamageWithToughnessEffect(
         PermanentPredicate affectedPredicate,
         boolean alwaysUseToughness
 )
-        implements CardEffect {
+        implements CombatDamageAssignmentEffect {
+
+    @Override
+    public CombatDamageAssignmentMode assignmentMode() {
+        return CombatDamageAssignmentMode.TOUGHNESS;
+    }
 
     public AssignCombatDamageWithToughnessEffect(GrantScope scope) {
         this(scope, null, false);

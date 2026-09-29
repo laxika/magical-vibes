@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "75")
 @CardRegistration(set = "EOS", collectorNumber = "120")
 @CardRegistration(set = "EOS", collectorNumber = "165")
+@CardRegistration(set = "MKC", collectorNumber = "278")
 public class NeedleSpires extends Card {
 
     public NeedleSpires() {

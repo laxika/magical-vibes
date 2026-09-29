@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExilePermanentCastingCost;
+import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -214,6 +216,12 @@ public class CardViewFactory {
                 .flatMap(castingOption -> castingOption.getCost(ExileNCardsFromGraveyardCastingCost.class));
         int graveyardCastExileCount = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::count).orElse(0);
         String graveyardCastExileLabel = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::label).orElse(null);
+        var graveyardCastExilePermanentCost = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(ExilePermanentCastingCost.class));
+        FlashforwardCast flashforwardCast = card.getCastingOption(FlashforwardCast.class).orElse(null);
+        boolean hasFlashforward = flashforwardCast != null;
+        String flashforwardCost = flashforwardCast == null ? null
+                : flashforwardCast.getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -285,6 +293,8 @@ public class CardViewFactory {
                 graveyardCastDiscardCount,
                 graveyardCastExileCount,
                 graveyardCastExileLabel,
+                graveyardCastExilePermanentCost.isPresent(),
+                graveyardCastExilePermanentCost.map(ExilePermanentCastingCost::label).orElse(null),
                 graveyardAbilityViews,
                 handAbilityViews,
                 exileAbilityViews,
@@ -302,6 +312,8 @@ public class CardViewFactory {
                 modalEffect != null && modalEffect.modesMayRepeat(),
                 modalOptions,
                 0,
+                hasFlashforward,
+                flashforwardCost,
                 chooseCreatureTypeCost,
                 creatureTypeChoices,
                 additionalCost != null ? additionalCost.lifeAmount() : 0,

@@ -4,14 +4,16 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
 @CardUsed({BlindingAngel.class, Shock.class})
 class BlindingAngelTest extends BaseCardTest {
@@ -125,5 +127,19 @@ class BlindingAngelTest extends BaseCardTest {
         // Progression entered the combat phase rather than skipping to postcombat main.
         assertThat(gd.currentStep).isNotEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep.getPhaseName()).isEqualTo("Combat Phase");
+    }
+
+    @Test
+    @DisplayName("A queued combat skip survives a skipped precombat main phase")
+    void queuedSkipSurvivesSkippedPrecombatMainPhase() {
+        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
+        gd.skippedStepOrPhasesThisTurn.put(player2.getId(), Set.of(SkipStepOrPhaseKind.MAIN_PHASE));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
     }
 }

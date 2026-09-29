@@ -67,6 +67,21 @@ class MoggSentryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each opponent spell gives Mogg Sentry another +2/+2")
+    void triggersAndStacksForEachOpponentSpell() {
+        harness.addToBattlefield(player1, new MoggSentry());
+
+        opponentCastsSpell();
+        harness.passBothPriorities(); // Resolve the first Mogg Sentry trigger
+        harness.passBothPriorities(); // Resolve the first spell
+        opponentCastsSpell();
+        harness.passBothPriorities(); // Resolve the second Mogg Sentry trigger
+
+        assertThat(sentry().getPowerModifier()).isEqualTo(4);
+        assertThat(sentry().getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Does not trigger when the controller casts a spell")
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MoggSentry());

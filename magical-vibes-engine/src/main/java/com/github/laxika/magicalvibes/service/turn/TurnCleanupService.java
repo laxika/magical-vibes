@@ -76,6 +76,7 @@ public class TurnCleanupService {
 
     private final CreatureControlService creatureControlService;
     private final PermanentRemovalService permanentRemovalService;
+    private final ThreadLocal<Boolean> checkingGrantedHandSizeEffects = ThreadLocal.withInitial(() -> false);
 
     @Autowired
     @Lazy
@@ -238,6 +239,7 @@ public class TurnCleanupService {
                 }
             }
         }
+        gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.clear();
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
@@ -353,6 +355,7 @@ public class TurnCleanupService {
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
+        gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.clear();
         gameData.combatDamagePreventionTokenShields.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
@@ -364,6 +367,7 @@ public class TurnCleanupService {
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
+        gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
@@ -380,8 +384,10 @@ public class TurnCleanupService {
         gameData.damageLifeFloorsUntilEndOfTurn.clear();
         gameData.damageReplacementsThisTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
+        gameData.playersCantLoseLifeThisTurn = false;
         gameData.playersCantSearchLibrariesThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
+        gameData.creaturesCantAttackThisCombat = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
@@ -392,14 +398,17 @@ public class TurnCleanupService {
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 (!watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
                         || (watcher.untilEndOfNextTurn()
-                        && gameData.activePlayerId.equals(watcher.controllerId())
+                        && gameData.activePlayerId.equals(watcher.expirationPlayerId() != null
+                        ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
+        gameData.targetedCreatureDeathTriggerWatchers.clear();
         gameData.damagedCreatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawGainLife.clear();
         gameData.pendingNextDrawCreateBears.clear();
@@ -412,6 +421,7 @@ public class TurnCleanupService {
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
+        gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.controllerDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
@@ -423,6 +433,7 @@ public class TurnCleanupService {
         gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
+        gameData.playerProtectionFromPlayerIdsUntilEndOfTurn.clear();
         gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -449,19 +460,24 @@ public class TurnCleanupService {
         gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
         gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedJumpStartUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
+        gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
+        gameData.nextSpellConvokeGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
+        gameData.nextSpellPayLifeEqualToManaValueThisTurn.clear();
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
+        gameData.nextCreatureSpellCascadeThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellEntryCounters.clear();
         gameData.spellGrantedSubtypesOnEntry.clear();
@@ -479,6 +495,7 @@ public class TurnCleanupService {
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.outsideGamePlayPermissions.clear();
+        gameData.outsideGameAdditionalModalModePermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
@@ -491,6 +508,7 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
+        gameData.pendingNextXActivatedAbilityCopyThisTurnCount.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
         gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
@@ -520,6 +538,7 @@ public class TurnCleanupService {
         gameData.cardsExiledThisTurn = 0;
         gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+        gameData.graveyardLeaveNotificationPendingArtifactOwners.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
         gameData.kayaExileNotificationPendingCreatureCards.clear();
         gameData.kayaExileNotificationPendingCounts.clear();
@@ -783,6 +802,22 @@ public class TurnCleanupService {
                         .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }
+            }
+        }
+        // Computing a static bonus can evaluate a condition that asks about maximum hand size.
+        // The nested query still sees printed effects, but must not recursively compute bonuses.
+        if (bf != null && gameQueryService != null && !checkingGrantedHandSizeEffects.get()) {
+            checkingGrantedHandSizeEffects.set(true);
+            try {
+                for (Permanent perm : bf) {
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus != null && staticBonus.grantedEffects().stream()
+                            .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                        return true;
+                    }
+                }
+            } finally {
+                checkingGrantedHandSizeEffects.remove();
             }
         }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {

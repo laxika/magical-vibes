@@ -901,7 +901,7 @@ class AiDecisionEngineTest {
     // ===== Creature-targeting spell validation =====
 
     @Test
-    @CardUsed({AngelicBlessing.class, AirElemental.class, AlabornTrooper.class, Plains.class})
+    @CardUsed({AngelicBlessing.class, AlabornTrooper.class, Plains.class})
     @DisplayName("AI casts Angelic Blessing targeting own creature, not a land")
     void castsAngelicBlessingTargetingCreatureNotLand() {
         giveAiPriority();
@@ -923,7 +923,7 @@ class AiDecisionEngineTest {
     }
 
     @Test
-    @CardUsed({AngelicBlessing.class, AirElemental.class, Plains.class})
+    @CardUsed({AngelicBlessing.class, Plains.class})
     @DisplayName("AI does not cast Angelic Blessing when no creatures on battlefield")
     void doesNotCastAngelicBlessingWithoutCreatures() {
         giveAiPriority();

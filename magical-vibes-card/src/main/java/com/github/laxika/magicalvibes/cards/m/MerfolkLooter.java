@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDT", collectorNumber = "10")
 @CardRegistration(set = "EMA", collectorNumber = "61")
 @CardRegistration(set = "HA5", collectorNumber = "6")
+@CardRegistration(set = "AFC", collectorNumber = "86")
 public class MerfolkLooter extends Card {
 
     public MerfolkLooter() {

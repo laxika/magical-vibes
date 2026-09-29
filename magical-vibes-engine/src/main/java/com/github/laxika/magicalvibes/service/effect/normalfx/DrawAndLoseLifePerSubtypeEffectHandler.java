@@ -57,7 +57,7 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
             drawService.resolveDrawCard(gameData, controllerId);
         }
 
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
             
             gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
         } else {

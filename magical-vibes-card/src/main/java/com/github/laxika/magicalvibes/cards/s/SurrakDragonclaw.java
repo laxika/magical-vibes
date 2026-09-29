@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "KTK", collectorNumber = "206")
+@CardRegistration(set = "DMC", collectorNumber = "169")
 public class SurrakDragonclaw extends Card {
 
     public SurrakDragonclaw() {

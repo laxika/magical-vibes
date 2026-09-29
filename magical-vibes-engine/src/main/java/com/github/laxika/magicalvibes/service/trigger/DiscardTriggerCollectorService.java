@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -268,7 +270,8 @@ public class DiscardTriggerCollectorService {
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
         damage += gameQueryService.getControllerDamageToOpponentBonus(
-                gameData, match.controllerId(), discardingPlayerId);
+                gameData, match.controllerId(), discardingPlayerId, false,
+                match.permanent().getId());
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + "."));
@@ -302,7 +305,7 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
                 lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
                         cardName, match.controllerId());
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
                 int lifeLoss = effectiveDamage
@@ -380,6 +383,18 @@ public class DiscardTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on controller discard event (damage to each opponent)",
                 gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleDamageToAnyTargetOnDiscardEvent(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                sourceCard, match.controllerId(), List.of(trigger), match.permanent().getId(),
+                discardEvent.discardedCount()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 
@@ -660,6 +675,20 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = SourceFightsTargetCreatureEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleSourceFightOnDiscard(TriggerMatchContext match,
+            SourceFightsTargetCreatureEffect trigger, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard (fight target creature)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handlePutCounterOnTargetOnDiscard(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect trigger, TriggerContext ctx) {
@@ -898,7 +927,7 @@ public class DiscardTriggerCollectorService {
         log.info("Game {} - {} triggers on discard, {} loses {} life",
                 gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
 
-        if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
             int lifeLoss = amount

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.SeaMonster;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LurkingLizards;
+import com.github.laxika.magicalvibes.cards.r.RhinoBarrelingBrute;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,13 +18,13 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElectrosBolt.class, Forest.class, GrizzlyBears.class, SeaMonster.class})
+@CardUsed({ElectrosBolt.class, Forest.class, LurkingLizards.class, RhinoBarrelingBrute.class})
 class ElectrosBoltTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 4 damage to target creature")
     void dealsFourDamageToTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SeaMonster());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RhinoBarrelingBrute());
         harness.setHand(player1, List.of(new ElectrosBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -39,7 +39,7 @@ class ElectrosBoltTest extends BaseCardTest {
     @Test
     @DisplayName("Mayhem casts it from the graveyard for {1}{R} after it was discarded this turn")
     void mayhemCastsAfterDiscarding() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
         ElectrosBolt bolt = new ElectrosBolt();
         harness.setGraveyard(player1, List.of(bolt));
         gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(bolt.getId())));
@@ -50,7 +50,7 @@ class ElectrosBoltTest extends BaseCardTest {
         harness.castFromGraveyardTargeting(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Lurking Lizards");
         harness.assertInGraveyard(player1, "Electro's Bolt");
     }
 

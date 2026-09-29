@@ -25,10 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -36,6 +38,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ExiledCreatureCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -64,6 +67,7 @@ public class CloneService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ExiledCreatureCopyOnEnterService exiledCreatureCopyOnEnterService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
@@ -83,6 +87,10 @@ public class CloneService {
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue, int filterXValue,
                                                  Card physicalCard, boolean transformed) {
+        if (exiledCreatureCopyOnEnterService.prepare(
+                gameData, controllerId, card, targetId, xValue, physicalCard, transformed)) {
+            return true;
+        }
         MimeoplasmCopyOnEnterEffect mimeoplasmEffect = findMimeoplasmEffect(card);
         if (mimeoplasmEffect != null
                 && prepareMimeoplasmReplacementEffect(gameData, controllerId, card, physicalCard, transformed)) {
@@ -181,12 +189,15 @@ public class CloneService {
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
+        gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt =
+                copyEffect.addVanishingIfCopiedPermanentLacksIt();
         gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
         gameData.cloneOperation.copyUntilEndOfTurn = copyEffect.copyUntilEndOfTurn();
         gameData.cloneOperation.landPlay = landPlay;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = copyEffect.cardFilter();
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
@@ -241,6 +252,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.mimeoplasmGraveyardChoicePending = true;
         gameData.cloneOperation.mimeoplasmCopyChoicePending = false;
@@ -261,9 +273,10 @@ public class CloneService {
                                                            Card physicalCard, boolean transformed,
                                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect,
                                                            int xValue) {
-        long creatureCardCount = gameData.playerGraveyards.values().stream()
-                .flatMap(List::stream)
-                .filter(graveyardCard -> graveyardCard.hasType(CardType.CREATURE))
+        long creatureCardCount = gameData.playerGraveyards.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .filter(graveyardCard -> isValidGraveyardCopyCard(
+                                gameData, controllerId, entry.getKey(), graveyardCard, copyEffect)))
                 .count();
         int requiredCreatureCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
         if (creatureCardCount < requiredCreatureCards) {
@@ -300,6 +313,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.graveyardCopyEffect = copyEffect;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 copyEffect.exileCopiedGraveyardCardAfterEntry();
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters =
@@ -318,9 +332,9 @@ public class CloneService {
         return true;
     }
 
-    private boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
-                                             Card graveyardCard,
-                                             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+    public boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
+                                            Card graveyardCard,
+                                            CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             return false;
         }
@@ -332,10 +346,16 @@ public class CloneService {
                 graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
             return false;
         }
-        return !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+        boolean putIntoGraveyardFromLibraryThisTurn = !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
                 || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of())
                 .contains(graveyardCard.getId());
+        boolean putIntoGraveyardFromBattlefieldThisTurn =
+                !copyEffect.onlyCardsPutIntoGraveyardFromBattlefieldThisTurn()
+                        || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                        .getOrDefault(graveyardOwnerId, Set.of())
+                        .contains(graveyardCard.getId());
+        return putIntoGraveyardFromLibraryThisTurn && putIntoGraveyardFromBattlefieldThisTurn;
     }
 
     private boolean prepareFixedGraveyardCloneReplacementEffect(GameData gameData, UUID controllerId, Card card,
@@ -378,6 +398,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
         gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
@@ -504,6 +525,8 @@ public class CloneService {
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
         boolean copyUntilEndOfTurn = gameData.cloneOperation.copyUntilEndOfTurn;
+        boolean addVanishingIfCopiedPermanentLacksIt =
+                gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt;
         boolean entersTapped = gameData.cloneOperation.entersTapped;
         boolean ninjutsuEntry = gameData.cloneOperation.ninjutsuEntry;
         UUID ninjutsuAttackTargetId = gameData.cloneOperation.ninjutsuAttackTargetId;
@@ -537,6 +560,7 @@ public class CloneService {
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
+        gameData.cloneOperation.addVanishingIfCopiedPermanentLacksIt = false;
         gameData.cloneOperation.entersTapped = false;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.ninjutsuEntry = false;
@@ -545,6 +569,7 @@ public class CloneService {
         gameData.cloneOperation.xValue = 0;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = false;
+        gameData.cloneOperation.graveyardCopyEffect = null;
         gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
         gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
         gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
@@ -558,6 +583,8 @@ public class CloneService {
         Permanent targetPerm = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
         Card copiedCard = targetCard != null ? targetCard : targetPerm == null ? null : targetPerm.getCard();
         if (copiedCard != null) {
+            boolean copiedPermanentHasVanishing = targetPerm != null
+                    && gameQueryService.hasKeyword(gameData, targetPerm, Keyword.VANISHING);
             Card preCopyCard = perm.getCard();
             Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
             Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
@@ -597,6 +624,14 @@ public class CloneService {
                 if (creatureOnlyCharacteristicsApply) {
                     applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                             additionalPlusOnePlusOneCounters, xValue);
+                }
+                if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing
+                        && perm.getCard().hasType(CardType.CREATURE)) {
+                    applyAdditionalCopyCharacteristics(perm.getCard(), Set.of(), Set.of(Keyword.VANISHING));
+                    perm.getCard().addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                            new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+                    perm.getCard().addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                            new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
                 }
                 if (addTypeAppropriateCounters) {
                     applyTypeAppropriateCounters(gameData, controllerId, perm);

@@ -81,7 +81,9 @@ public class WarpWorldService {
     }
 
     public void placePendingWarpWorldEnchantments(GameData gameData) {
-        Set<CardType> enterTappedTypes = gameData.warpWorldOperation.enterTappedTypesSnapshot;
+        Set<CardType> enterTappedTypes = java.util.EnumSet.noneOf(CardType.class);
+        enterTappedTypes.addAll(gameData.warpWorldOperation.enterTappedTypesSnapshot);
+        enterTappedTypes.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // Warp World's enchantment group is its own simultaneous event, separate from the earlier
         // artifact/creature/land group: these enchantments do see that group, but not each other
         // (CR 614.12).

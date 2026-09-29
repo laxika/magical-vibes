@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "TSR", collectorNumber = "405")
+@CardRegistration(set = "C21", collectorNumber = "280")
+@CardRegistration(set = "C20", collectorNumber = "258")
 public class BlightedWoodland extends Card {
 
     public BlightedWoodland() {

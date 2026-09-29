@@ -14,19 +14,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CounselOfTheSoratami.class)
+@CardUsed({CounselOfTheSoratami.class})
 class CounselOfTheSoratamiTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Counsel of the Soratami puts it on the stack")
     void castingPutsOnStack() {
-        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        harness.castFromHand(player1, counsel, "{2}{U}");
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        harness.castFromHand(player1, spell, "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard()).isSameAs(counsel);
+        assertThat(entry.getCard()).isSameAs(spell);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -47,8 +47,8 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
         CounselOfTheSoratami firstDraw = new CounselOfTheSoratami();
         CounselOfTheSoratami secondDraw = new CounselOfTheSoratami();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
-        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
 
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
@@ -58,12 +58,26 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
     @Test
     @DisplayName("Counsel of the Soratami goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        harness.castFromHand(player1, counsel, "{2}{U}");
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        harness.castFromHand(player1, spell, "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(counsel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Drawing with only one card in the library draws it, then loses on the second draw")
+    void drawsOneWhenOnlyOneCardInDeck() {
+        CounselOfTheSoratami availableCard = new CounselOfTheSoratami();
+        harness.setLibrary(player1, List.of(availableCard));
+
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(availableCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test
@@ -80,4 +94,3 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }
-

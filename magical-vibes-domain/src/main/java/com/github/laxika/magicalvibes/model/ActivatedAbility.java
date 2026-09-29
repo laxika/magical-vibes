@@ -57,6 +57,8 @@ public class ActivatedAbility {
     private final boolean variableLoyaltyCost;
     /** Whether this loyalty-style ability uses player spark counters instead of loyalty counters. */
     private boolean sparkAbility;
+    /** Whether this loyalty-style ability uses the source's toughness as its loyalty resource. */
+    private boolean toughnessAsLoyalty;
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
@@ -139,12 +141,18 @@ public class ActivatedAbility {
     private boolean exactXTargets;
     /** Counter type that supplies the target limit instead of a paid X value. */
     private CounterType sourceCounterScaledTargetsType;
+    /** Dynamic amount that supplies the maximum number of targets at activation time. */
+    private DynamicAmount dynamicMaxTargets;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
     /** Minimum value that may be announced for this ability's {@code X} cost. */
     private int minimumXValue;
+    /** Counter type whose current count fixes the announced X for this ability. */
+    private CounterType requiredXSourceCounterType;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
+    /** Whether each modal option may be selected only once per permanent object. */
+    private boolean modalModesMustBeUnused;
     /**
      * Whether the chosen xValue is bounded by the +1/+1 counters on all creatures the activating
      * player controls rather than by those on the source permanent ("Remove one or more +1/+1
@@ -342,10 +350,14 @@ public class ActivatedAbility {
         copy.xScaledTargets = this.xScaledTargets;
         copy.exactXTargets = this.exactXTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
+        copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
         copy.minimumXValue = this.minimumXValue;
+        copy.requiredXSourceCounterType = this.requiredXSourceCounterType;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
+        copy.modalModesMustBeUnused = this.modalModesMustBeUnused;
         copy.sparkAbility = this.sparkAbility;
+        copy.toughnessAsLoyalty = this.toughnessAsLoyalty;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
         copy.xColorRestrictions = this.xColorRestrictions == null
@@ -367,6 +379,11 @@ public class ActivatedAbility {
             throw new IllegalArgumentException("Minimum X value cannot be negative");
         }
         this.minimumXValue = minimumXValue;
+        return this;
+    }
+
+    public ActivatedAbility withXEqualToSourceCounters(CounterType counterType) {
+        this.requiredXSourceCounterType = counterType;
         return this;
     }
 
@@ -408,6 +425,12 @@ public class ActivatedAbility {
     /** Marks this loyalty-style ability as a spark ability. */
     public ActivatedAbility withSpark() {
         this.sparkAbility = true;
+        return this;
+    }
+
+    /** Marks this loyalty-style ability as using toughness instead of loyalty counters. */
+    public ActivatedAbility withToughnessAsLoyalty() {
+        this.toughnessAsLoyalty = true;
         return this;
     }
 
@@ -703,6 +726,12 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Sets a dynamic maximum target count evaluated when this ability is activated. */
+    public ActivatedAbility withDynamicMaxTargets(DynamicAmount amount) {
+        this.dynamicMaxTargets = amount;
+        return this;
+    }
+
     public boolean isXScaledTargets() {
         return exactXTargets || xScaledTargets || sourceCounterScaledTargetsType != null;
     }
@@ -722,6 +751,16 @@ public class ActivatedAbility {
 
     public boolean isModalChoiceAtActivation() {
         return modalChoiceAtActivation;
+    }
+
+    /** Marks the modal ability as allowing each mode only once per permanent object. */
+    public ActivatedAbility withModalModesMustBeUnused() {
+        this.modalModesMustBeUnused = true;
+        return this;
+    }
+
+    public boolean isModalModesMustBeUnused() {
+        return modalModesMustBeUnused;
     }
 
     public ChooseOneEffect modalEffectAtActivation() {
@@ -771,6 +810,11 @@ public class ActivatedAbility {
             return xValue;
         }
         return isXScaledTargets() ? Math.min(xValue, maxTargets) : maxTargets;
+    }
+
+    /** Applies a dynamic maximum target count after paid-X/counter scaling. */
+    public int getEffectiveMaxTargets(int xValue, int dynamicMaxTargets) {
+        return Math.min(getEffectiveMaxTargets(xValue), Math.max(0, dynamicMaxTargets));
     }
 
     public boolean isNeedsSpellTarget() {

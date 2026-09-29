@@ -86,6 +86,29 @@ class TimeEbbTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Time Ebb puts a controlled creature on top of its owner's library")
+    void putsControlledCreatureOnTopOfOwnersLibrary() {
+        WindDrake targetCard = new WindDrake();
+        targetCard.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        int ownerDeckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
+        int controllerDeckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new TimeEbb()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(ownerDeckSizeBefore + 1)
+                .first()
+                .isSameAs(targetCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSizeBefore);
+    }
+
+    @Test
     @DisplayName("Time Ebb fizzles if the target is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WindDrake());

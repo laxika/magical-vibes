@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Fog;
-import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,8 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 
-@CardUsed({DaringApprentice.class, Fog.class, GrizzlyBears.class})
+@CardUsed({DaringApprentice.class, AngelsFeather.class, GrizzlyBears.class})
 class DaringApprenticeTest extends BaseCardTest {
 
     @Test
@@ -90,14 +90,14 @@ class DaringApprenticeTest extends BaseCardTest {
     void countersOwnSpell() {
         addCreatureReady(player1, new DaringApprentice());
 
-        Fog fog = new Fog();
+        AngelsFeather feather = new AngelsFeather();
         harness.forceActivePlayer(player1);
-        harness.castFromHand(player1, fog, "{G}");
+        harness.castFromHand(player1, feather, "{2}");
 
-        harness.activateAbility(player1, 0, null, fog.getId());
+        harness.activateAbility(player1, 0, null, feather.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Fog");
+        harness.assertInGraveyard(player1, "Angel's Feather");
         harness.assertInGraveyard(player1, "Daring Apprentice");
         assertThat(gd.stack).isEmpty();
     }
@@ -107,16 +107,16 @@ class DaringApprenticeTest extends BaseCardTest {
     void countersNoncreatureSpell() {
         addCreatureReady(player1, new DaringApprentice());
 
-        Fog fog = new Fog();
+        AngelsFeather feather = new AngelsFeather();
         harness.forceActivePlayer(player2);
-        harness.castFromHand(player2, fog, "{G}");
+        harness.castFromHand(player2, feather, "{2}");
         harness.passPriority(player2);
 
-        harness.activateAbility(player1, 0, null, fog.getId());
+        harness.activateAbility(player1, 0, null, feather.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Fog");
-        harness.assertNotOnBattlefield(player2, "Fog");
+        harness.assertInGraveyard(player2, "Angel's Feather");
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
         harness.assertInGraveyard(player1, "Daring Apprentice");
         assertThat(gd.stack).isEmpty();
     }

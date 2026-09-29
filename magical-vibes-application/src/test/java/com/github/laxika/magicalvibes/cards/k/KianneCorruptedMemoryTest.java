@@ -54,6 +54,7 @@ class KianneCorruptedMemoryTest extends BaseCardTest {
         Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
 
         advanceToDraw(player1);
+        harness.passBothPriorities();
 
         assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -63,6 +64,7 @@ class KianneCorruptedMemoryTest extends BaseCardTest {
     void oddPowerGrantsCreatureFlash() {
         harness.addToBattlefield(player1, new KianneCorruptedMemory());
         advanceToDraw(player1);
+        harness.passBothPriorities();
         prepareOpponentTurn();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));

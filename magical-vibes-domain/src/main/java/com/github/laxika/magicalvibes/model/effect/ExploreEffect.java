@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
+import java.util.UUID;
+
 /**
  * A creature explores: reveal the top card of your library.
  * If it's a land card, put it into your hand.
@@ -14,35 +16,45 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * optional amount repeats the explore process that many times.
  */
 public record ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount,
-                            boolean replacementApplied)
+                            boolean replacementApplied, UUID permanentId)
         implements CombatDamageTriggerContextEffect {
 
     public ExploreEffect() {
-        this(false, null, null, false);
+        this(false, null, null, false, null);
     }
 
     public ExploreEffect(boolean targeted) {
-        this(targeted, null, null, false);
+        this(targeted, null, null, false, null);
     }
 
     public ExploreEffect(PermanentReference reference) {
-        this(false, reference, null, false);
+        this(false, reference, null, false, null);
     }
 
     public ExploreEffect(boolean targeted, PermanentReference reference) {
-        this(targeted, reference, null, false);
+        this(targeted, reference, null, false, null);
     }
 
     public ExploreEffect(DynamicAmount amount) {
-        this(false, null, amount, false);
+        this(false, null, amount, false, null);
     }
 
     public ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount) {
-        this(targeted, reference, amount, false);
+        this(targeted, reference, amount, false, null);
     }
 
     public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference) {
-        return new ExploreEffect(targeted, reference, null, true);
+        return new ExploreEffect(targeted, reference, null, true, null);
+    }
+
+    public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference,
+                                                 UUID permanentId) {
+        return new ExploreEffect(targeted, reference, null, true, permanentId);
+    }
+
+    /** Creates an untargeted explore instruction for a specific permanent in a mass effect. */
+    public static ExploreEffect forPermanent(UUID permanentId) {
+        return new ExploreEffect(false, null, null, false, permanentId);
     }
 
     @Override

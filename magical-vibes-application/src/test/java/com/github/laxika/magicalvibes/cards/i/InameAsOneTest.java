@@ -19,8 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InameAsOne.class, KamiOfOldStone.class, GrizzlyBears.class, Zombify.class,
-        HundredTalonKami.class, WrathOfGod.class, SoullessRevival.class})
+@CardUsed({InameAsOne.class, KamiOfOldStone.class, GrizzlyBears.class, HundredTalonKami.class, Zombify.class, WrathOfGod.class, SoullessRevival.class})
 class InameAsOneTest extends BaseCardTest {
 
     @Test

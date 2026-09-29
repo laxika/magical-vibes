@@ -80,6 +80,31 @@ class AvenFlockTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires white mana rather than only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new AvenFlock());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped because tapping is not part of the cost")
+    void canActivateWhileTapped() {
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+        flock.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(flock.isTapped()).isTrue();
+        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Boost affects only the Aven Flock whose ability was activated")
     void boostAffectsOnlyItsSource() {
         Permanent flock = addCreatureReady(player1, new AvenFlock());

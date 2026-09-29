@@ -85,6 +85,20 @@ class ShivanDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the ability while tapped")
+    void canActivateWhileTapped() {
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        dragon.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
         Permanent dragon = addCreatureReady(player1, new ShivanDragon());

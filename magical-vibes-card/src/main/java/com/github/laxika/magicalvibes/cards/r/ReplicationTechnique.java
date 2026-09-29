@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOC", collectorNumber = "200")
 @CardRegistration(set = "M3C", collectorNumber = "192")
+@CardRegistration(set = "C21", collectorNumber = "31")
 public class ReplicationTechnique extends Card {
 
     public ReplicationTechnique() {

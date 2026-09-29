@@ -20,17 +20,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Chastise.class, GrizzlyBears.class})
 class ChastiseTest extends BaseCardTest {
 
-    private void castChastise(UUID targetId) {
+    private void prepareChastise() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Chastise()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
+    }
+
+    private void castChastise(UUID targetId) {
+        prepareChastise();
         harness.castInstant(player2, 0, targetId);
     }
 
-    private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
+    private void castAndResolveChastise(UUID targetId) {
+        prepareChastise();
+        harness.castAndResolveInstant(player2, 0, targetId);
+    }
+
+    private Permanent addAttacker(Player owner) {
         Permanent attacker = addCreatureReady(owner, new GrizzlyBears());
         attacker.setAttacking(true);
         return attacker;
@@ -42,8 +51,7 @@ class ChastiseTest extends BaseCardTest {
         harness.setLife(player2, 15);
         Permanent attacker = addAttacker(player1);
 
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
+        castAndResolveChastise(attacker.getId());
 
         GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) destroyed -> into owner's graveyard
@@ -60,11 +68,27 @@ class ChastiseTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1);
         attacker.setPowerModifier(3); // 2 + 3 = 5 effective power
 
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
+        castAndResolveChastise(attacker.getId());
 
         // Effective power 5 -> caster gains 5 life (10 + 5 = 15)
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Gains life even when the attacking creature regenerates")
+    void gainsLifeWhenTargetRegenerates() {
+        harness.setLife(player2, 15);
+        Permanent attacker = addAttacker(player1);
+        attacker.setRegenerationShield(1);
+
+        castAndResolveChastise(attacker.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -74,12 +98,7 @@ class ChastiseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Chastise()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.passPriority(player1);
+        prepareChastise();
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -101,24 +120,6 @@ class ChastiseTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Chastise");
-    }
-
-    @Test
-    @DisplayName("Gains life even when the attacking creature regenerates")
-    void gainsLifeWhenTargetRegenerates() {
-        harness.setLife(player2, 15);
-        Permanent attacker = addAttacker(player1);
-        attacker.setRegenerationShield(1);
-
-        castChastise(attacker.getId());
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        assertThat(attacker.isTapped()).isTrue();
-        assertThat(attacker.isAttacking()).isFalse();
-        assertThat(attacker.getRegenerationShield()).isZero();
-        harness.assertLife(player2, 17);
     }
 
     @Test

@@ -491,6 +491,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.energyCounters?.[playerIndex] ?? 0;
   }
 
+  getRadCounters(playerIndex: number): number {
+    return this.game()?.radCounters?.[playerIndex] ?? 0;
+  }
+
   getPlayerId(playerIndex: number): string {
     return this.game()?.playerIds?.[playerIndex] ?? '';
   }
@@ -525,6 +529,7 @@ export class GameComponent implements OnInit, OnDestroy {
       lifeTotals: state.lifeTotals,
       poisonCounters: state.poisonCounters,
       energyCounters: state.energyCounters,
+      radCounters: state.radCounters ?? [0, 0],
       speeds: state.speeds ?? [0, 0],
       hand: state.hand,
       opponentHand: state.opponentHand ?? [],
@@ -625,6 +630,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
+    const handCard = this.hand[index];
+    if (this.choice.targeting.selectingTarget && handCard?.id
+        && this.choice.targeting.validHandTargetIds().has(handCard.id)) {
+      this.choice.targeting.selectHandTarget(index);
+      return;
+    }
     if (this.choice.targeting.selectingGraveyardCastDiscard) {
       this.choice.targeting.selectGraveyardCastDiscardHandCard(index);
       return;
@@ -680,7 +691,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
       if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard
-          || (card?.graveyardCastExileCount ?? 0) > 0 || card?.hasHarmonize) {
+          || (card?.graveyardCastExileCount ?? 0) > 0 || card?.graveyardCastRequiresPermanentExile
+          || card?.hasHarmonize) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -1409,6 +1421,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.selectingGraveyardCastExilePermanent) {
+      if (perm && isPermanentLand(perm)) {
+        this.choice.targeting.selectGraveyardCastExilePermanent(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingKickerPermanent) {
       if (perm && this.choice.targeting.canSelectKickerPermanent(perm)) {
         this.choice.targeting.toggleKickerPermanent(perm.id);
@@ -1721,6 +1739,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
+    if (t.selectingGraveyardCastExilePermanent) { t.cancelGraveyardCastExilePermanent(); return true; }
     if (t.selectingGraveyardCastDiscard) { t.cancelGraveyardCastDiscard(); return true; }
     if (t.selectingGraveyardCastExile) { t.cancelGraveyardCastExile(); return true; }
     if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard
@@ -1757,7 +1776,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.choosingAdditionalSacrifice
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
-      || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
+      || t.selectingGraveyardCastExilePermanent || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard || t.targetingExile;
   }

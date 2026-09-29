@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiverBear.class, GrizzlyBears.class, Island.class})
+@CardUsed({RiverBear.class, GrizzlyBears.class, Island.class, Forest.class})
 class RiverBearTest extends BaseCardTest {
 
     @Test
@@ -25,12 +26,10 @@ class RiverBearTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new RiverBear());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
-        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
@@ -43,12 +42,28 @@ class RiverBearTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new RiverBear());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("River Bear can be blocked when defending player controls a Forest")
+    void canBeBlockedWhenDefenderControlsForest() {
+        harness.addToBattlefield(player2, new Forest());
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new RiverBear());
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
@@ -62,12 +77,10 @@ class RiverBearTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new RiverBear());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
-        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 

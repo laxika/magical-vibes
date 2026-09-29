@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,12 +49,26 @@ public class PlayFromOutsideHandTriggerCollectorService {
 
     private boolean enqueue(TriggerMatchContext match, PlayFromOutsideHandTriggerEffect trigger) {
         Card sourceCard = match.permanent().getCard();
+        ArrayList<CardEffect> resolvedEffects = new ArrayList<>(trigger.resolvedEffects());
+        boolean needsPlayerTarget = resolvedEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = resolvedEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (needsPlayerTarget || needsPermanentTarget) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, match.controllerId(), resolvedEffects,
+                    needsPlayerTarget && !needsPermanentTarget, trigger.targetFilter(), 0,
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
+                    "'s triggered ability triggers — choose a target."));
+            return true;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(trigger.resolvedEffects()),
+                resolvedEffects,
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

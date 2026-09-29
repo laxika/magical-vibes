@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "49")
+@CardRegistration(set = "LCC", collectorNumber = "153")
 public class DepartedDeckhand extends Card {
 
     public DepartedDeckhand() {

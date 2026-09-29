@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeToS
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +47,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TurnCleanupServiceTest {
@@ -114,6 +116,9 @@ class TurnCleanupServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
+    @Mock
+    private GameQueryService gameQueryService;
+
     @InjectMocks
     private TurnCleanupService sut;
 
@@ -123,6 +128,7 @@ class TurnCleanupServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "gameQueryService", gameQueryService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -1026,6 +1032,20 @@ class TurnCleanupServiceTest {
             Card card = createCardWithName("Spellbook");
             card.addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns true when a permanent is granted NoMaximumHandSizeEffect")
+        void returnsTrueWithGrantedNoMaxHandSizeEffect() {
+            Permanent permanent = new Permanent(createCardWithName("Enchanted creature"));
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            GameQueryService.StaticBonus bonus = new GameQueryService.StaticBonus(
+                    0, 0, Set.of(), Set.of(), false, List.of(), List.of(new NoMaximumHandSizeEffect()),
+                    Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false,
+                    Set.of(), false, null, null, false, false);
+            when(gameQueryService.computeStaticBonus(gd, permanent)).thenReturn(bonus);
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
         }

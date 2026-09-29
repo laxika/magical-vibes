@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -110,6 +111,31 @@ class CloneTest extends BaseCardTest {
 
         assertThat(clonePerm).isNotNull();
         assertThat(clonePerm.getCard().getSubtypes()).containsExactly(CardSubtype.BEAR);
+    }
+
+    @Test
+    @DisplayName("Clone can copy a creature token's characteristics without becoming a token")
+    void copiesCreatureTokenCharacteristics() {
+        Card tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        harness.addToBattlefield(player2, tokenCard);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        UUID tokenId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, tokenId);
+
+        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
+                .findFirst().orElse(null);
+
+        assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(clonePerm.getCard().getPower()).isEqualTo(2);
+        assertThat(clonePerm.getCard().getToughness()).isEqualTo(2);
+        assertThat(clonePerm.getCard().isToken()).isFalse();
     }
 
     // ===== Leaving the battlefield =====

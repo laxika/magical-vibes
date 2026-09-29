@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "YMID", collectorNumber = "63")
+@CardRegistration(set = "MB2", collectorNumber = "264")
 public class ForsakenCrossroads extends Card {
 
     public ForsakenCrossroads() {

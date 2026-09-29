@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "174")
 @CardRegistration(set = "M13", collectorNumber = "174")
+@CardRegistration(set = "C21", collectorNumber = "190")
 public class GarrukPrimalHunter extends Card {
 
     public GarrukPrimalHunter() {

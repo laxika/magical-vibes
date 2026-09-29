@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 @CardRegistration(set = "GK1", collectorNumber = "58")
 @CardRegistration(set = "DSC", collectorNumber = "215")
 @CardRegistration(set = "M3C", collectorNumber = "258")
+@CardRegistration(set = "C20", collectorNumber = "207")
 public class DeadbridgeChant extends Card {
 
     public DeadbridgeChant() {

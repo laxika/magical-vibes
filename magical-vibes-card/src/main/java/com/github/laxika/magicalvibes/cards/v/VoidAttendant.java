@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "169")
+@CardRegistration(set = "OTC", collectorNumber = "212")
 public class VoidAttendant extends Card {
 
     private static final CreateTokenEffect ELDRAZI_SCION = new CreateTokenEffect(

@@ -20,6 +20,8 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "298")
 @CardRegistration(set = "SOI", collectorNumber = "31")
 @CardRegistration(set = "SIR", collectorNumber = "39")
+@CardRegistration(set = "DMC", collectorNumber = "103")
+@CardRegistration(set = "C20", collectorNumber = "95")
 public class OdricLunarchMarshal extends Card {
 
     private static final List<Keyword> SHARED_KEYWORDS = List.of(

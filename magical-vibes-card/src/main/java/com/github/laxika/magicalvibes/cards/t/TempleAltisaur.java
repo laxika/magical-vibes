@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "28")
+@CardRegistration(set = "LCC", collectorNumber = "138")
 public class TempleAltisaur extends Card {
 
     public TempleAltisaur() {

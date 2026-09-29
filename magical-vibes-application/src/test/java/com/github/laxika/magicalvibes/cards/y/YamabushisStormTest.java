@@ -18,8 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YamabushisStorm.class, DevotedRetainer.class, SokenzanBruiser.class,
-        PaladinEnVec.class, Bandage.class, Mountain.class})
+@CardUsed({YamabushisStorm.class, PaladinEnVec.class, DevotedRetainer.class, SokenzanBruiser.class, Bandage.class, Mountain.class})
 class YamabushisStormTest extends BaseCardTest {
 
     private void castStorm() {

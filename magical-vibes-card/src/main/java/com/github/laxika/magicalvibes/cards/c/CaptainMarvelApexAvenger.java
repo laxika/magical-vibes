@@ -12,7 +12,7 @@ public class CaptainMarvelApexAvenger extends Card {
 
     public CaptainMarvelApexAvenger() {
         addEffect(EffectSlot.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
-                new MayEffect(new PutSameCountersOnSourceEffect(),
+                new MayEffect(new PutSameCountersOnSourceEffect(true),
                         "Put the same number and kind of counters on Captain Marvel?"));
     }
 }

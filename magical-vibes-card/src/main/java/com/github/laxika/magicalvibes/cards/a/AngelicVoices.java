@@ -29,6 +29,6 @@ public class AngelicVoices extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))
                 ))),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
     }
 }

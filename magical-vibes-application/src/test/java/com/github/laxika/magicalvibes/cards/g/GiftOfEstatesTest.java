@@ -30,6 +30,23 @@ class GiftOfEstatesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Matching Plains cards are revealed and the search allows up to three")
+    void searchRevealsMatchingCardsAndAllowsUpToThree() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
+        assertThat(search.params().remainingCount()).isEqualTo(3);
+        assertThat(search.params().cards()).extracting(c -> c.getName()).containsExactly("Plains");
+    }
+
+    @Test
     @DisplayName("Chosen Plains cards go to hand")
     void chosenPlainsGoToHand() {
         setupAndCast();
@@ -109,6 +126,20 @@ class GiftOfEstatesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertNotInHand(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("No search happens when the opponent controls fewer lands")
+    void noSearchWhenOpponentControlsFewerLands() {
+        setupAndCast();
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void setupAndCast() {

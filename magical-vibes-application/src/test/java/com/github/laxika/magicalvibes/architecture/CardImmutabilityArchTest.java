@@ -96,6 +96,18 @@ class CardImmutabilityArchTest {
             "SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler", // changes a fresh runtime copy
             "VentureIntoDungeonEffectHandler", // assembles a fresh initiative source card
             "CardChoiceHandlerService", // applies perpetual changes to fresh runtime copies
+            "LibraryChoiceHandlerService", // marks a fresh runtime copy for end-step sacrifice before casting
+            "ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler", // stamps owner on a fresh runtime copy when missing
+            "HandCastCardCharacteristicsService", // assembles a fresh hand-casting face and adventure copy
+            "BecomeCopyOfExiledCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card
+            "CreateModalDoubleFacedCardFromTopTwoEffectHandler", // combines two fresh runtime copies
+            "DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandler", // decorates a conjured copy
+            "EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // removes legendary from fresh clone-copy cards
+            "SeekLibraryAndConjureDuplicatesInGraveyardEffectHandler", // stamps newly conjured copies
+            "TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler", // stamps a conjured copy
+            "UnspecializeLukaminaEffectHandler", // restores a fresh runtime copy of the base face
+            "WerewhatSupport", // assembles fresh front and back face runtime copies
+            "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
@@ -106,6 +118,7 @@ class CardImmutabilityArchTest {
                 || simpleName.startsWith("CreateToken")
                 || simpleName.startsWith("CreateLifeTotal")
                 || simpleName.startsWith("Conjure") // assembles new cards or copies
+                || simpleName.startsWith("Specialize") // builds a fresh runtime copy for the chosen face
                 || simpleName.startsWith("Draft") // assembles new spellbook cards
                 || simpleName.startsWith("Perpetually") // replaces live cards with altered runtime copies
                 || javaClass.getPackageName().contains(".cards");

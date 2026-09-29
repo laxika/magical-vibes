@@ -21,6 +21,7 @@ class ValgavothHarrowerOfSoulsTest extends BaseCardTest {
     void triggersForTheFirstLifeLossDuringAnOpponentsTurn() {
         Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothHarrowerOfSouls());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
@@ -39,6 +40,7 @@ class ValgavothHarrowerOfSoulsTest extends BaseCardTest {
     void triggersOnlyOnceForAnOpponentDuringTheirTurn() {
         Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothHarrowerOfSouls());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.forceActivePlayer(player2);

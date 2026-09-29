@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "BFZ", collectorNumber = "107")
+@CardRegistration(set = "C21", collectorNumber = "142")
 public class DefiantBloodlord extends Card {
 
     public DefiantBloodlord() {

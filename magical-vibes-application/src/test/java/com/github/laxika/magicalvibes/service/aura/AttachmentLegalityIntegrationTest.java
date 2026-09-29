@@ -17,7 +17,7 @@ import java.util.UUID;
  * End-to-end CR 704.5n check: an aura whose enchanted creature gains protection from the
  * aura's color is put into its owner's graveyard by state-based actions.
  */
-@CardUsed({ApostlesBlessing.class, GrizzlyBears.class, SpiritLink.class})
+@CardUsed({SpiritLink.class, GrizzlyBears.class, ApostlesBlessing.class})
 class AttachmentLegalityIntegrationTest extends BaseCardTest {
 
     @Test

@@ -240,13 +240,17 @@ public class TriggerTargetCollector {
             if (opponentOnly) {
                 for (UUID pid : gameData.orderedPlayerIds) {
                     if (!pid.equals(controllerId)
-                            && (excludedPlayerId == null || !excludedPlayerId.equals(pid))) {
+                            && (excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
                         validTargets.add(pid);
                     }
                 }
             } else {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (excludedPlayerId == null || !excludedPlayerId.equals(pid)) {
+                    if ((excludedPlayerId == null || !excludedPlayerId.equals(pid))
+                            && !targetLegalityService.isPlayerUntargetable(
+                            gameData, pid, controllerId, sourceCard)) {
                         validTargets.add(pid);
                     }
                 }
@@ -376,9 +380,7 @@ public class TriggerTargetCollector {
                                             sourcePermanentSnapshot,
                                             false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null,
-                                            null,
-                                            triggeringPermanentId)).isPresent()) {
+                                            null, defendingPlayerId, triggeringPermanentId)).isPresent()) {
                         continue;
                     }
 
@@ -405,7 +407,9 @@ public class TriggerTargetCollector {
                         targetValidationService.checkEffectTargets(
                                 List.of(effect),
                                 new TargetValidationContext(gameData, cardId, Zone.EXILE, sourceCard,
-                                        0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                                        0, controllerId, sourcePermanentSnapshot,
+                                        sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
+                                        null, defendingPlayerId)).isEmpty());
                 if (valid) {
                     validTargets.add(cardId);
                 }

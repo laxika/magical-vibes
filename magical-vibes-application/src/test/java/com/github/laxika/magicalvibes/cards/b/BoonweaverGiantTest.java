@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoonweaverGiant.class, GrizzlyBears.class, HolyStrength.class, SpiritLink.class})
+@CardUsed({BoonweaverGiant.class, HolyStrength.class, SpiritLink.class, GrizzlyBears.class})
 class BoonweaverGiantTest extends BaseCardTest {
 
     @Test

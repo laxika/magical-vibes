@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "244")
+@CardRegistration(set = "MOC", collectorNumber = "372")
 public class ReplicatingRing extends Card {
 
     public ReplicatingRing() {

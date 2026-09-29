@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "HOU", collectorNumber = "177")
 @CardRegistration(set = "AKR", collectorNumber = "301")
 @CardRegistration(set = "M3C", collectorNumber = "347")
+@CardRegistration(set = "OTC", collectorNumber = "299")
 public class HashepOasis extends Card {
 
     public HashepOasis() {

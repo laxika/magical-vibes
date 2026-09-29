@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +46,18 @@ class BoilingSeasTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInGraveyard(player1, "Island");
         harness.assertInGraveyard(player2, "Island");
+    }
+
+    @Test
+    @CardUsed({VolcanicIsland.class})
+    @DisplayName("Destroys nonbasic lands with the Island subtype")
+    void destroysNonbasicIslands() {
+        harness.addToBattlefield(player1, new VolcanicIsland());
+        harness.castFromHand(player1, new BoilingSeas(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Volcanic Island");
+        harness.assertInGraveyard(player1, "Volcanic Island");
     }
 
     @Test

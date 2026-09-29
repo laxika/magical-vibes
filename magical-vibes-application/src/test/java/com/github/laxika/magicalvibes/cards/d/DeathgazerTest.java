@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.cards.h.HengeGuardian;
 import com.github.laxika.magicalvibes.cards.p.PrimevalShambler;
 import com.github.laxika.magicalvibes.cards.r.RockBadger;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,8 +15,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 
-@CardUsed({Deathgazer.class, GiantSpider.class, ScatheZombies.class, RockBadger.class, PrimevalShambler.class})
+@CardUsed({Deathgazer.class, HengeGuardian.class, RockBadger.class, PrimevalShambler.class, GiantSpider.class, ScatheZombies.class})
 class DeathgazerTest extends BaseCardTest {
 
     @Test
@@ -186,4 +187,52 @@ class DeathgazerTest extends BaseCardTest {
                 .extracting(DelayedPermanentAction::permanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
+
+    @Test
+    @DisplayName("When Deathgazer becomes blocked by a colorless creature, that creature is scheduled for end-of-combat destruction")
+    void becomesBlockedByColorlessSchedulesDestruction() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent hengeGuardian = addCreatureReady(player2, new HengeGuardian());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactly(hengeGuardian.getId());
+    }
+
+    @Test
+    @DisplayName("When Deathgazer becomes blocked by black and nonblack creatures, only the nonblack blocker is scheduled")
+    void becomesBlockedByMixedColorsSchedulesOnlyNonblack() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent nonblackBlocker = addCreatureReady(player2, new RockBadger());
+        Permanent blackBlocker = addCreatureReady(player2, new PrimevalShambler());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(gd.stack).filteredOn(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Deathgazer"))
+                .hasSize(1)
+                .allMatch(se -> se.getTargetId().equals(nonblackBlocker.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactly(nonblackBlocker.getId());
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .doesNotContain(blackBlocker.getId());
+    }
+
 }

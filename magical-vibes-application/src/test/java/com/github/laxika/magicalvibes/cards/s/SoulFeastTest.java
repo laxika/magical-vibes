@@ -2,8 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,8 +14,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
+import com.github.laxika.magicalvibes.model.GameStatus;
 
-@CardUsed({SoulFeast.class, CanyonWildcat.class, GrizzlyBears.class, MetathranSoldier.class})
+@CardUsed({GrizzlyBears.class, SoulFeast.class, CanyonWildcat.class, MetathranSoldier.class})
 class SoulFeastTest extends BaseCardTest {
 
     @Test
@@ -102,6 +102,18 @@ class SoulFeastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Soul Feast cannot target a creature")
+    void cannotTargetCreatureUpstreamReview() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new SoulFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Soul Feast goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
         harness.setHand(player1, List.of(new SoulFeast()));
@@ -127,15 +139,4 @@ class SoulFeastTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
-    @Test
-    @DisplayName("Soul Feast cannot target a creature")
-    void cannotTargetCreatureUpstreamReview() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
-
-        harness.setHand(player1, List.of(new SoulFeast()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
-                .isInstanceOf(IllegalStateException.class);
-    }
 }

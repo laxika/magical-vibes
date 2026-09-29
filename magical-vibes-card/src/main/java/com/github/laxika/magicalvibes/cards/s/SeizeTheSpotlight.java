@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SeizeTheSpotlightEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "52")
 @CardRegistration(set = "NCC", collectorNumber = "152")
+@CardRegistration(set = "OTC", collectorNumber = "179")
 public class SeizeTheSpotlight extends Card {
 
     public SeizeTheSpotlight() {

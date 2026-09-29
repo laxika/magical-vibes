@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOC", collectorNumber = "222")
+@CardRegistration(set = "C21", collectorNumber = "150")
+@CardRegistration(set = "C20", collectorNumber = "46")
 public class ParasiticImpetus extends Card {
 
     public ParasiticImpetus() {

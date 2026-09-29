@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -135,6 +136,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
     private final LifeSupport lifeSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -210,6 +212,8 @@ public class MayPenaltyChoiceHandlerService {
                             && gameData.getLife(player.getId()) >= lifeCost);
             if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
+                triggerCollectionService.checkTaxPaymentTriggers(
+                        gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                 if (lifeCost > 0) {
                     lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
                             ability.sourceCard().getName());
@@ -892,7 +896,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — lose life
-        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+        if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
         } else {
             int lifeLoss = effect.lifeLoss()
@@ -928,7 +932,7 @@ public class MayPenaltyChoiceHandlerService {
             } else {
                 // Can't pay — apply life loss
                 penaltyApplied = true;
-                if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
                     int lifeLoss = effect.lifeLoss()
@@ -943,7 +947,7 @@ public class MayPenaltyChoiceHandlerService {
             }
         } else {
             // Declined — lose life
-            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
                 int lifeLoss = effect.lifeLoss()
@@ -1093,6 +1097,13 @@ public class MayPenaltyChoiceHandlerService {
                 ManaPool pool = gameData.playerManaPools.get(ability.controllerId());
                 if (cost.canPay(pool)) {
                     cost.pay(pool);
+                    UUID taxingPlayerId = ability.sourceControllerId();
+                    if (taxingPlayerId == null) {
+                        taxingPlayerId = gameQueryService.findPermanentController(
+                                gameData, ability.sourcePermanentId());
+                    }
+                    triggerCollectionService.checkTaxPaymentTriggers(
+                            gameData, ability.controllerId(), taxingPlayerId, cost.getManaValue());
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
                     log.info("Game {} - {} pays {} to prevent draw ({})",
@@ -2179,14 +2190,10 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
-            List<UUID> candidates =
-                    destructionSupport.collectPermanentIdsWithAnyCounter(gameData, sourceControllerId);
-            if (!candidates.isEmpty()) {
-                // More than one candidate pauses for a permanent choice, whose completion continues
-                // the game itself — only auto-pass when the counter came off immediately.
-                forcedCostOrElseEffectHandler.removeCounterFromChosenPermanent(gameData, sourceControllerId,
-                        candidates, ability.sourceCard(), ability.sourcePermanentId(), effect);
-                if (candidates.size() == 1) {
+            if (forcedCostOrElseEffectHandler.beginControlledCounterPayment(
+                    gameData, sourceControllerId, ability, effect)) {
+                if (!gameData.interaction.isAwaitingInput()) {
+                    clearAnyPlayerPayState(gameData);
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 }
                 return;
@@ -2299,6 +2306,7 @@ public class MayPenaltyChoiceHandlerService {
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
                 ability.targetCardId(), ability.sourcePermanentId());
         syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+        syntheticEntry.setAttackedTargetId(ability.attackedTargetId());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

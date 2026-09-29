@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndCreateTreasureTokensEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "82")
+@CardRegistration(set = "MOC", collectorNumber = "237")
 public class SpellSwindle extends Card {
 
     public SpellSwindle() {

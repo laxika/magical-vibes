@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.d.DingusEgg;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({Enrage.class, GrizzlyBears.class, DingusEgg.class, GoblinBrigand.class, Stabilizer.class})
+@CardUsed({Enrage.class, Forest.class, GoblinBrigand.class, GrizzlyBears.class})
 class EnrageTest extends BaseCardTest {
 
     @Test
@@ -88,12 +87,12 @@ class EnrageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears()); // legal creature target so the spell is castable (CR 601.2c)
-        Permanent dingusEgg = harness.addToBattlefieldAndReturn(player1, new DingusEgg());
+        harness.addToBattlefield(player1, new GoblinBrigand()); // legal creature target so the spell is castable (CR 601.2c)
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Enrage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, dingusEgg.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

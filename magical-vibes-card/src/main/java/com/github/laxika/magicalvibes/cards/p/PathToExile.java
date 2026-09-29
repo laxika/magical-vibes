@@ -42,12 +42,21 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "159")
 @CardRegistration(set = "MSC", collectorNumber = "141")
 @CardRegistration(set = "ECC", collectorNumber = "65")
+@CardRegistration(set = "MKC", collectorNumber = "78")
 @CardRegistration(set = "ACR", collectorNumber = "81")
 @CardRegistration(set = "CMD", collectorNumber = "25")
 @CardRegistration(set = "CMM", collectorNumber = "49")
 @CardRegistration(set = "CMM", collectorNumber = "626")
+@CardRegistration(set = "WHO", collectorNumber = "210")
+@CardRegistration(set = "PIP", collectorNumber = "169")
+@CardRegistration(set = "PIP", collectorNumber = "697")
+@CardRegistration(set = "FIC", collectorNumber = "248")
+@CardRegistration(set = "MOC", collectorNumber = "198")
 @CardRegistration(set = "NCC", collectorNumber = "208")
 @CardRegistration(set = "LTC", collectorNumber = "175")
+@CardRegistration(set = "OTC", collectorNumber = "85")
+@CardRegistration(set = "LCC", collectorNumber = "134")
+@CardRegistration(set = "DMC", collectorNumber = "104")
 public class PathToExile extends Card {
 
     public PathToExile() {

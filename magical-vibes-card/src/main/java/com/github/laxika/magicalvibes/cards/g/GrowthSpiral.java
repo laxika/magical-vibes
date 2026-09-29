@@ -11,10 +11,14 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "178")
 @CardRegistration(set = "STA", collectorNumber = "61")
+@CardRegistration(set = "WHO", collectorNumber = "237")
 @CardRegistration(set = "DSC", collectorNumber = "88")
 @CardRegistration(set = "LTC", collectorNumber = "267")
+@CardRegistration(set = "LCC", collectorNumber = "270")
 @CardRegistration(set = "SLD", collectorNumber = "2472")
 @CardRegistration(set = "M3C", collectorNumber = "265")
+@CardRegistration(set = "DMC", collectorNumber = "153")
+@CardRegistration(set = "C20", collectorNumber = "216")
 public class GrowthSpiral extends Card {
 
     public GrowthSpiral() {

@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed(FugitiveWizard.class)
 class FugitiveWizardTest extends BaseCardTest {
 
+    // ===== Casting and resolving =====
+
     @Test
     @DisplayName("Casting Fugitive Wizard puts it on the stack")
     void castingPutsOnStack() {

@@ -88,4 +88,15 @@ class UrzasPowerPlantTest extends BaseCardTest {
         assertThat(harness.getGameActionAvailabilityService()
                 .getPotentialManaTotal(gd, player1.getId())).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Potential mana includes the full Tron output")
+    void potentialManaIncludesFullTronOutput() {
+        harness.addToBattlefield(player1, new UrzasPowerPlant());
+        harness.addToBattlefield(player1, new UrzasMine());
+        harness.addToBattlefield(player1, new UrzasTower());
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPotentialManaTotal(gd, player1.getId())).isEqualTo(7);
+    }
 }

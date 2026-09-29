@@ -106,6 +106,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast creature spells with no abilities (Jasmine Boreal of the Seven). */
+    record CreatureSpellsWithoutAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellWithoutAbilitiesOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells with no abilities only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override
@@ -146,6 +159,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "spells cast from outside hand only";
+        }
+    }
+
+    /** Mana spendable only to cast spells the controller does not own. */
+    record NonOwnedSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonOwnedSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells you don't own only";
         }
     }
 
@@ -300,6 +326,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to activate Power-up abilities (Quinjet Technician). */
+    record PowerUpAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerUpAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "Power-up abilities only";
+        }
+    }
+
     /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
     record LandAbilities() implements ManaRestriction {
         @Override
@@ -362,6 +401,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with one of the given subtypes. */
+    record SubtypeSpellOnly(Set<CardSubtype> subtypes) implements ManaRestriction {
+        public SubtypeSpellOnly {
+            subtypes = Set.copyOf(subtypes);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeSpellOnlyMana(subtypes, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtypes + " spells only";
+        }
+    }
+
     /** Colorless mana spendable only to cast colorless spells or activate abilities of the given subtype. */
     record ColorlessSubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
         @Override
@@ -398,6 +454,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "colorless spells, colorless permanent abilities, or costs containing {C} only";
+        }
+    }
+
+    /** Mana spendable only to cast colorless spells. */
+    record ColorlessSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSpellOnlyMana(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless spells only";
         }
     }
 
@@ -447,6 +516,11 @@ public sealed interface ManaRestriction {
             this(null, null);
         }
 
+        /** Mana spendable only to cast Aura or Equipment spells. */
+        public static SubtypeOrPlaneswalkerSpells auraOrEquipmentSpells() {
+            return new SubtypeOrPlaneswalkerSpells(CardSubtype.AURA, CardSubtype.EQUIPMENT);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
@@ -456,6 +530,9 @@ public sealed interface ManaRestriction {
         public String description() {
             if (spellSubtype == null && planeswalkerSubtype == null) {
                 return "planeswalker spells only";
+            }
+            if (spellSubtype == CardSubtype.AURA && planeswalkerSubtype == CardSubtype.EQUIPMENT) {
+                return "Aura or Equipment spells only";
             }
             return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
         }

@@ -76,9 +76,7 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears should have -1/-1
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
@@ -151,9 +149,7 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bear should have -1/-1 now
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
 
         // Advance to cleanup step — modifiers reset

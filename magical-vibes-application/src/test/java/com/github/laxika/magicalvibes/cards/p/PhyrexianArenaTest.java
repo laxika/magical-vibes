@@ -21,11 +21,11 @@ class PhyrexianArenaTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
         harness.assertInHand(player1, "Phyrexian Arena");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, lifeBefore - 1);
     }
 
     @Test
@@ -55,6 +55,22 @@ class PhyrexianArenaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Arena triggers independently during its controller's upkeep")
+    void eachArenaTriggersIndependently() {
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.setLibrary(player1, List.of(new PhyrexianArena(), new PhyrexianArena()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
+        harness.assertLife(player1, lifeBefore - 2);
     }
 }

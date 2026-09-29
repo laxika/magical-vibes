@@ -11,7 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "THS", collectorNumber = "228")
 @CardRegistration(set = "M20", collectorNumber = "257")
 @CardRegistration(set = "M21", collectorNumber = "256")
+@CardRegistration(set = "WHO", collectorNumber = "321")
+@CardRegistration(set = "PIP", collectorNumber = "312")
+@CardRegistration(set = "PIP", collectorNumber = "525")
+@CardRegistration(set = "PIP", collectorNumber = "840")
+@CardRegistration(set = "PIP", collectorNumber = "1053")
 @CardRegistration(set = "SOC", collectorNumber = "417")
+@CardRegistration(set = "C21", collectorNumber = "327")
+@CardRegistration(set = "MKC", collectorNumber = "306")
 public class TempleOfTriumph extends Card {
 
     public TempleOfTriumph() {

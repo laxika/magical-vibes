@@ -14,29 +14,33 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "FIC", collectorNumber = "230")
 @CardRegistration(set = "SOC", collectorNumber = "136")
+@CardRegistration(set = "LCC", collectorNumber = "101")
+@CardRegistration(set = "C21", collectorNumber = "12")
 public class ArchaeomancersMap extends Card {
 
     public ArchaeomancersMap() {
+        CardPredicate basicPlains = new CardAllOfPredicate(List.of(
+                new CardSupertypePredicate(CardSupertype.BASIC),
+                new CardTypePredicate(CardType.LAND),
+                new CardSubtypePredicate(CardSubtype.PLAINS)));
+
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SearchLibraryEffect(
-                        new Fixed(2),
-                        new CardAllOfPredicate(List.of(
-                                new CardSupertypePredicate(CardSupertype.BASIC),
-                                new CardSubtypePredicate(CardSubtype.PLAINS))),
-                        LibrarySearchDestination.HAND));
+                new SearchLibraryEffect(new Fixed(2), basicPlains, LibrarySearchDestination.HAND));
 
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
-                new MayEffect(
-                        new ConditionalEffect(
-                                new TargetPlayerControlsMoreLandsThanController(),
-                                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land")),
-                        "Put a land card from your hand onto the battlefield?"));
+                new ConditionalEffect(
+                        new TargetPlayerControlsMoreLandsThanController(),
+                        new MayEffect(
+                                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land"),
+                                "Put a land card from your hand onto the battlefield?")));
     }
 }

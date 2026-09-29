@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "113")
+@CardRegistration(set = "C21", collectorNumber = "23")
 public class CommandersInsight extends Card {
 
     public CommandersInsight() {

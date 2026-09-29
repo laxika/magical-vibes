@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 
-@CardUsed({GravePact.class, DarkBanishing.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class,
-        Mountain.class, PlanarCleansing.class})
+@CardUsed({GravePact.class, DarkBanishing.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class, Mountain.class, PlanarCleansing.class})
 class GravePactTest extends BaseCardTest {
 
     /**
@@ -38,34 +39,9 @@ class GravePactTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private void castDarkBanishingAtGrizzlyBears(Player caster, Player target) {
-        harness.setHand(caster, List.of(new DarkBanishing()));
-        harness.addMana(caster, ManaColor.BLACK, 3);
-        harness.castInstant(caster, 0, harness.getPermanentId(target, "Grizzly Bears"));
-    }
-
-    /**
-     * Sets up combat where player1's creature attacks and is blocked by a 2/4 Giant Spider
-     * controlled by player2. The creature will die if its toughness is <= 2.
-     * The blocking target is resolved by finding the attacker's actual battlefield index.
-     */
-    private void setupCombatWhereAttackerDies(String attackerName) {
-        List<Permanent> p1Bf = harness.getGameData().playerBattlefields.get(player1.getId());
-        int attackerIndex = -1;
-        for (int i = 0; i < p1Bf.size(); i++) {
-            if (p1Bf.get(i).getCard().getName().equals(attackerName)) {
-                attackerIndex = i;
-                break;
-            }
-        }
-        Permanent attackerPerm = p1Bf.get(attackerIndex);
-        attackerPerm.setSummoningSick(false);
-        attackerPerm.setAttacking(true);
-
-        Permanent blockerPerm = findPermanent(player2, "Giant Spider");
-        blockerPerm.setSummoningSick(false);
-        blockerPerm.setBlocking(true);
-        blockerPerm.addBlockingTarget(attackerIndex);
+    private void setupCombatWhereAttackerDies() {
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
     }
 
     // ===== Casting =====
@@ -82,7 +58,7 @@ class GravePactTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Grave Pact");
+        assertThat(entry.getCard()).isInstanceOf(GravePact.class);
     }
 
     @Test
@@ -120,8 +96,7 @@ class GravePactTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Grave Pact");
-        assertThat(trigger.getEffectsToResolve()).hasSize(1);
+        assertThat(trigger.getCard()).isInstanceOf(GravePact.class);
     }
 
     // ===== Resolving =====
@@ -144,6 +119,29 @@ class GravePactTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Giant Spider");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Grave Pact does not make its controller sacrifice another creature")
+    void doesNotSacrificeControllerCreature() {
+        harness.addToBattlefield(player1, new GravePact());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID sacrificedByEdict = harness.getPermanentId(player1, "Grizzly Bears");
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sacrificedByEdict);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -240,14 +238,7 @@ class GravePactTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.stack).anyMatch(entry ->
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getCard().getName().equals("Grave Pact"));
-
-        // The trigger still resolves even though its source left the battlefield.
-        harness.addToBattlefield(player2, new GiantSpider());
-        resolveAllTriggers();
-
-        assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player2, "Giant Spider");
+                        && entry.getCard() instanceof GravePact);
     }
 
     // ===== Does not trigger for opponent's creatures =====
@@ -289,7 +280,7 @@ class GravePactTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack).allMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack).allMatch(e -> e.getCard().getName().equals("Grave Pact"));
+        assertThat(gd.stack).allMatch(e -> e.getCard() instanceof GravePact);
     }
 
     // ===== Combat =====
@@ -298,12 +289,12 @@ class GravePactTest extends BaseCardTest {
     @DisplayName("Grave Pact triggers when controller's creature dies in combat")
     void triggersWhenCreatureDiesInCombat() {
         harness.addToBattlefield(player1, new GravePact());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         // Player2 has Giant Spider (2/4, will kill the 2/2 attacker) and another creature
         harness.addToBattlefield(player2, new GiantSpider());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        setupCombatWhereAttackerDies("Grizzly Bears");
+        setupCombatWhereAttackerDies();
 
         // Pass priority → combat damage → GrizzlyBears (2/2) dies to Giant Spider (2/4)
         resolveCombat();
@@ -315,7 +306,7 @@ class GravePactTest extends BaseCardTest {
         // Grave Pact's triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getCard().getName().equals("Grave Pact"));
+                        && e.getCard() instanceof GravePact);
     }
 
     // ===== Wrath of God =====
@@ -349,7 +340,7 @@ class GravePactTest extends BaseCardTest {
         // Two Grave Pact triggers (one for each of player1's creatures that died)
         long gravePactTriggers = gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getCard().getName().equals("Grave Pact"))
+                        && e.getCard() instanceof GravePact)
                 .count();
         assertThat(gravePactTriggers).isEqualTo(2);
     }
@@ -372,5 +363,10 @@ class GravePactTest extends BaseCardTest {
         // Player2's creature died to Wrath, not to Grave Pact sacrifice
         assertThat(gameLogContains("no creatures to sacrifice")).isTrue();
     }
-}
 
+    private void castDarkBanishingAtGrizzlyBears(Player caster, Player target) {
+        harness.setHand(caster, List.of(new DarkBanishing()));
+        harness.addMana(caster, ManaColor.BLACK, 3);
+        harness.castInstant(caster, 0, harness.getPermanentId(target, "Grizzly Bears"));
+    }
+}

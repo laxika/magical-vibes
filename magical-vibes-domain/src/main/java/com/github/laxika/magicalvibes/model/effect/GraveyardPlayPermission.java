@@ -26,6 +26,11 @@ public interface GraveyardPlayPermission extends CardEffect {
     }
 
     /** True if cards must have entered a graveyard from a library during the current turn. */
+    /** Whether a permanent entering through this permission is exiled if it would leave. */
+    default boolean exileIfLeavesBattlefield() {
+        return false;
+    }
+
     default boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn() {
         return false;
     }
@@ -38,5 +43,10 @@ public interface GraveyardPlayPermission extends CardEffect {
     /** Triggered ability granted to a permanent that enters through this permission. */
     default GrantTriggeredAbilityToCastSpellEffect entryTriggeredAbilityGrant() {
         return null;
+    }
+
+    /** True when a permanent cast through this permission enters the battlefield tapped. */
+    default boolean entersTapped() {
+        return false;
     }
 }

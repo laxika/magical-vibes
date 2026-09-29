@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "19")
+@CardRegistration(set = "C20", collectorNumber = "131")
+@CardRegistration(set = "C21", collectorNumber = "140")
 public class DeadlyTempest extends Card {
 
     public DeadlyTempest() {

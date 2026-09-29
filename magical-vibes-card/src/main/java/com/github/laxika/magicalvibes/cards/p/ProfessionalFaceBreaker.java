@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SNC", collectorNumber = "116")
 @CardRegistration(set = "SLD", collectorNumber = "1706")
 @CardRegistration(set = "M3C", collectorNumber = "216")
+@CardRegistration(set = "FIC", collectorNumber = "296")
 public class ProfessionalFaceBreaker extends Card {
 
     public ProfessionalFaceBreaker() {

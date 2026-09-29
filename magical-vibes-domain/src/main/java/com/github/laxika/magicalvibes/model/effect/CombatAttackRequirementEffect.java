@@ -21,6 +21,11 @@ public interface CombatAttackRequirementEffect extends CardEffect {
         return true;
     }
 
+    /** Whether this requirement ends when its source changes controllers. */
+    default boolean endsWhenSourceControllerChanges() {
+        return false;
+    }
+
     /**
      * The player or permanent that a matching creature must attack, or {@code null} when any
      * legal attack target satisfies the requirement.

@@ -26,6 +26,7 @@ public class PleaForPowerEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingFinishedSupport votingFinishedSupport;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +35,8 @@ public class PleaForPowerEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
+                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                 entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
     }
 

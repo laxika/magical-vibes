@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MikeyMonaMutantSitters.class, Forest.class, GrizzlyBears.class})
 class MikeyMonaMutantSittersTest extends BaseCardTest {
@@ -45,17 +44,22 @@ class MikeyMonaMutantSittersTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetTheSamePlayerForBothModes() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new Forest()));
+    void canTargetTheSamePlayerForBothModes() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
 
         castMikeyAndMona();
         harness.handleListChoice(player1, COUNTER_MODE);
         harness.handleListChoice(player1, RETURN_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
     }
 
     private void castMikeyAndMona() {

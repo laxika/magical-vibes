@@ -65,7 +65,8 @@ public record AmountContext(
         int sacrificedToughness,
         List<UUID> targetCardIds,
         boolean madness,
-        int convokeCreatureCount
+        int convokeCreatureCount,
+        List<UUID> targetIds
 ) {
 
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -77,7 +78,7 @@ public record AmountContext(
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
                 chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
-                sacrificedToughness, targetCardIds, madness, 0);
+                sacrificedToughness, targetCardIds, madness, 0, List.of());
     }
 
     /** Backward-compatible full context constructor for contexts that are not madness casts. */
@@ -90,7 +91,7 @@ public record AmountContext(
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
                 chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
-                sacrificedToughness, targetCardIds, false);
+                sacrificedToughness, targetCardIds, false, 0, List.of());
     }
 
     /** Backward-compatible context constructor without last-known or sacrificed-permanent snapshots. */
@@ -132,7 +133,8 @@ public record AmountContext(
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
                 stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
-                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount,
+                targetIds);
     }
 
     /** Re-points target-relative amounts at a resolved player or permanent. */
@@ -141,7 +143,17 @@ public record AmountContext(
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
                 stackEntry,
                 chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
-                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount,
+                targetIds);
+    }
+
+    /** Adds the complete flat target selection used while activating a multi-target ability. */
+    public AmountContext withTargetIds(List<UUID> selectedTargetIds) {
+        return new AmountContext(controllerId, sourcePermanent, targetPermanentId, xValue,
+                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
+                stackEntry, chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount,
+                selectedTargetIds == null ? List.of() : List.copyOf(selectedTargetIds));
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
@@ -153,7 +165,8 @@ public record AmountContext(
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness(),
                 entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()),
-                entry.isMadness(), entry.getConvokeCreatureIds().size());
+                entry.isMadness(), entry.getConvokeCreatureIds().size(),
+                entry.getTargetIds() == null ? List.of() : List.copyOf(entry.getTargetIds()));
     }
 
     /**
@@ -214,7 +227,7 @@ public record AmountContext(
     /** Cast-time context that also records whether the spell is being cast using madness. */
     public static AmountContext forCasting(UUID castingPlayerId, int xValue, boolean madness) {
         return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null,
-                List.of(), null, null, null, null, 0, 0, List.of(), madness);
+                List.of(), null, null, null, null, 0, 0, List.of(), madness, 0, List.of());
     }
 
     /** Cast-time context for a spell whose source card is still in a zone being counted. */

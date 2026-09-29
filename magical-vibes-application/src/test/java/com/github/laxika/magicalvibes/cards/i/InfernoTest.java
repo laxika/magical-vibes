@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianColossus;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Inferno.class, HowlingMine.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class, WallOfStone.class})
+@CardUsed({GlacialWall.class, HowlingMine.class, Inferno.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class, WallOfStone.class})
 class InfernoTest extends BaseCardTest {
 
     @Test

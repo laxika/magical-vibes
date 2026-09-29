@@ -29,6 +29,8 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "141")
 @CardRegistration(set = "SLZ", collectorNumber = "262")
 @CardRegistration(set = "M3C", collectorNumber = "188")
+@CardRegistration(set = "MOC", collectorNumber = "224")
+@CardRegistration(set = "AFC", collectorNumber = "85")
 public class ImprisonedInTheMoon extends Card {
 
     public ImprisonedInTheMoon() {

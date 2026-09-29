@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "46")
 @CardRegistration(set = "M21", collectorNumber = "114")
+@CardRegistration(set = "MOC", collectorNumber = "256")
 @CardRegistration(set = "DSC", collectorNumber = "147")
+@CardRegistration(set = "MKC", collectorNumber = "130")
 public class MassacreWurm extends Card {
 
     public MassacreWurm() {
@@ -22,6 +24,6 @@ public class MassacreWurm extends Card {
 
         // Whenever a creature an opponent controls dies, that player loses 2 life
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

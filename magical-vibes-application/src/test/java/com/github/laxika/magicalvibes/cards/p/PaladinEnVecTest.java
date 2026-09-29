@@ -30,10 +30,7 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Paladin en-Vec puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinEnVec(), "{1}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -54,10 +51,7 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Paladin en-Vec on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinEnVec(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -68,10 +62,7 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Paladin en-Vec enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinEnVec(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

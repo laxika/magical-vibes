@@ -124,15 +124,33 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
-
-        harness.castInstant(player2, 0, blockerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
         assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
         assertThat(blockerPerm.getPowerModifier()).isEqualTo(7);
         assertThat(blockerPerm.getToughnessModifier()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Only the targeted blocking creature gets the boost")
+    void onlyTargetedCreatureGetsBoost() {
+        Permanent targetedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        targetedBlocker.setBlocking(true);
+        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
+        otherBlocker.setBlocking(true);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Righteousness()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player2, 0, targetedBlocker.getId());
+
+        assertThat(targetedBlocker.getEffectivePower()).isEqualTo(9);
+        assertThat(targetedBlocker.getEffectiveToughness()).isEqualTo(9);
+        assertThat(otherBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
@@ -145,10 +163,8 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, blockerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
@@ -171,10 +187,8 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, blockerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Righteousness");
@@ -251,10 +265,8 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, blockerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
         // Blocker is now 9/9 — verify boost applied
         assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
@@ -284,8 +296,7 @@ class RighteousnessTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Righteousness()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, blockerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blockerPerm.getId());
 
         assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);

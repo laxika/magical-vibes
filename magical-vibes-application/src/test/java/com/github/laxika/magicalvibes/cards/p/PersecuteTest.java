@@ -5,17 +5,22 @@ import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlitteringWish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
+import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, DryadArbor.class, Forest.class, GlitteringWish.class, GrizzlyBears.class,
-        Persecute.class})
+@CardUsed({AirElemental.class, DryadArbor.class, Forest.class, GrizzlyBears.class, LibraryOfLeng.class,
+        Persecute.class, Watchwolf.class})
 class PersecuteTest extends BaseCardTest {
 
     @Test
@@ -140,7 +145,41 @@ class PersecuteTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({DryadArbor.class, GrizzlyBears.class, Persecute.class})
+    @DisplayName("A multicolored card is discarded when it contains the chosen color")
+    void discardsMulticoloredCardContainingChosenColor() {
+        harness.setHand(player2, List.of(new Watchwolf(), new AirElemental()));
+        harness.setHand(player1, List.of(new Persecute()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertInGraveyard(player2, "Watchwolf");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .singleElement()
+                .matches(c -> c.getName().equals("Air Elemental"));
+    }
+
+    @Test
+    @DisplayName("Persecute respects a discard replacement that puts the card on top of the library")
+    void respectsDiscardToTopOfLibraryReplacement() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        harness.setLibrary(player2, List.of(new AirElemental()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Persecute()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .first()
+                .matches(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
     @DisplayName("A colored land is discarded when it is of the chosen color")
     void discardsColoredLandOfChosenColorUpstreamReview() {
         harness.setHand(player2, List.of(new DryadArbor(), new GrizzlyBears()));
@@ -199,21 +238,30 @@ class PersecuteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A multicolored card is discarded when it includes the chosen color")
-    void discardsMulticoloredCardContainingChosenColor() {
-        harness.setHand(player2, List.of(new GlitteringWish(), new AirElemental(), new Forest()));
+    @DisplayName("Resolving Persecute emits a public reveal of the target hand")
+    void emitsPublicHandRevealEvent() throws Exception {
+        List<GameEventEnvelope> emittedEvents = new ArrayList<>();
+        harness.setHand(player2, List.of(new GrizzlyBears(), new AirElemental()));
         harness.setHand(player1, List.of(new Persecute()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castAndResolveSorcery(player1, 0, player2.getId());
-        harness.handleListChoice(player1, "GREEN");
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch ->
+                batch.events().forEach(emittedEvents::add))) {
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            harness.handleListChoice(player1, "GREEN");
+        }
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Glittering Wish");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Air Elemental", "Forest");
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(emittedEvents)
+                .filteredOn(event -> event.fact() instanceof GameEventFact.PrivateReveal)
+                .anySatisfy(event -> {
+                    GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+                    assertThat(reveal.subjectPlayerId()).isEqualTo(player2.getId());
+                    assertThat(reveal.zone()).isEqualTo(GameEventFact.RevealZone.HAND);
+                    assertThat(reveal.cards())
+                            .extracting(GameEventFact.CardSnapshot::name)
+                            .containsExactly("Grizzly Bears", "Air Elemental");
+                    assertThat(event.audience().playerIds())
+                            .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+                });
     }
 }

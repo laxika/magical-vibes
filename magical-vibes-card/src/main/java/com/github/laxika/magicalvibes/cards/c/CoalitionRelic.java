@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "A25", collectorNumber = "223")
 @CardRegistration(set = "TSR", collectorNumber = "266")
 @CardRegistration(set = "M3C", collectorNumber = "286")
+@CardRegistration(set = "DMC", collectorNumber = "180")
 public class CoalitionRelic extends Card {
 
     public CoalitionRelic() {

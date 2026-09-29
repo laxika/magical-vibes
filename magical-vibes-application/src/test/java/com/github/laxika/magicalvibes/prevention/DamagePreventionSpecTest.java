@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -141,6 +143,39 @@ class DamagePreventionSpecTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @CardUsed(GrizzlyBears.class)
+        @DisplayName("Take the Bait prevention protects the player and their planeswalkers")
+        void controllerAndPlaneswalkerCombatPrevention() {
+            Card planeswalkerCard = new Card();
+            planeswalkerCard.setName("Test Planeswalker");
+            planeswalkerCard.setType(CardType.PLANESWALKER);
+            Permanent planeswalker = new Permanent(planeswalkerCard);
+            planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+            gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+
+            Permanent attackerToPlayer = new Permanent(new GrizzlyBears());
+            attackerToPlayer.setSummoningSick(false);
+            attackerToPlayer.setAttacking(true);
+            gd.playerBattlefields.get(player1.getId()).add(attackerToPlayer);
+
+            Permanent attackerToPlaneswalker = new Permanent(new GrizzlyBears());
+            attackerToPlaneswalker.setSummoningSick(false);
+            attackerToPlaneswalker.setAttacking(true);
+            attackerToPlaneswalker.setAttackTarget(planeswalker.getId());
+            gd.playerBattlefields.get(player1.getId()).add(attackerToPlaneswalker);
+
+            gd.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.add(player2.getId());
+            harness.setLife(player2, 20);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         }
     }
 

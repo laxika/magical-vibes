@@ -48,6 +48,22 @@ class SeedbornMuseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Seedborn Muse works while summoning sick")
+    void worksWhileSummoningSick() {
+        Permanent muse = harness.addToBattlefieldAndReturn(player1, new SeedbornMuse());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(muse.isSummoningSick()).isTrue();
+        muse.tap();
+        forest.tap();
+
+        harness.performUntapStep(player2);
+
+        assertThat(muse.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Seedborn Muse only untaps permanents its controller controls")
     void onlyControllerPermanentsUntap() {
         Permanent p1Muse = addCreatureReady(player1, new SeedbornMuse());

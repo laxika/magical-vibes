@@ -94,8 +94,7 @@ class BoobyTrapTest extends BaseCardTest {
                 .count()).isEqualTo(2);
         assertThat(gd.stack).hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 10);
         harness.assertNotOnBattlefield(player1, "Booby Trap");

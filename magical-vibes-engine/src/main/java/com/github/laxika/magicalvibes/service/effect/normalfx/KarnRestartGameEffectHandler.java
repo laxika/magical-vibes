@@ -278,6 +278,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
+        gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
@@ -320,6 +321,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.preventAllCombatDamage = false;
         gameData.preventAllCombatDamageByAttackingCreatures = false;
         gameData.preventAllCombatDamageToPlayers = false;
+        gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.clear();
         gameData.preventAllDamageToAllCreatures = false;
         gameData.preventAllDamageByCreatures = false;
         gameData.preventAllDamageFromNonHumanSources = false;
@@ -349,6 +351,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
+        gameData.playerMaximumLifeTotals.clear();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.playerLifeTotals.put(playerId, 20);
@@ -371,6 +374,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.put(playerId, 0);
             gameData.nontokenCreatureDeathCountThisTurn.put(playerId, 0);
             gameData.creatureSubtypeDeathCountThisTurn.remove(playerId);
+            gameData.creatureSubtypeDeathPowerThisTurn.remove(playerId);
             gameData.creatureCardsDamagedThisTurnBySourcePermanent.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureCardsDamagedThisTurnBySource.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
@@ -386,6 +390,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
+        gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.playersWhoControlledModifiedCreatureDiedThisTurn.clear();
 
         gameData.interaction.clearAwaitingInput();

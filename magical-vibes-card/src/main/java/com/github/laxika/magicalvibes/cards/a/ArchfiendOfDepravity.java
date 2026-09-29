@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerChoosesUpToPermanentsTh
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "62")
+@CardRegistration(set = "FIC", collectorNumber = "273")
 public class ArchfiendOfDepravity extends Card {
 
     public ArchfiendOfDepravity() {

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /** Goads the creature referenced by a triggered ability until its controller's next turn. */
-public record GoadTriggeringCreatureUntilNextTurnEffect() implements CombatAttackRequirementEffect {
+public record GoadTriggeringCreatureUntilNextTurnEffect()
+        implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     @Override
     public PermanentPredicate affectedPredicate() {
@@ -13,6 +14,11 @@ public record GoadTriggeringCreatureUntilNextTurnEffect() implements CombatAttac
 
     @Override
     public boolean requiresAttackAtOtherPlayerIfAble() {
+        return true;
+    }
+
+    @Override
+    public boolean makesGoaded() {
         return true;
     }
 }

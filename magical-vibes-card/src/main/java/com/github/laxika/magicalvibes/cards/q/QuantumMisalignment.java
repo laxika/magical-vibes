@@ -10,14 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@CardRegistration(set = "WHO", collectorNumber = "52")
+@CardRegistration(set = "WHO", collectorNumber = "368")
 @CardRegistration(set = "MSC", collectorNumber = "152")
 @CardRegistration(set = "MSC", collectorNumber = "339")
 public class QuantumMisalignment extends Card {
 
     public QuantumMisalignment() {
-        target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL,
-                        CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
-                                List.of(), Set.of(), null, null, Map.of()));
+        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.SPELL,
+                CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
+                        List.of(), Set.of(), null, null, Map.of()));
     }
 }

@@ -20,6 +20,11 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
     /** Spells matching this predicate may be cast from the controller's graveyard. */
     CardPredicate filter();
 
+    /** True if only cards put into the controller's graveyard from a library this turn qualify. */
+    default boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn() {
+        return false;
+    }
+
     /**
      * True if the permission is limited to one spell during each of the controller's own turns
      * (Gisa and Geralf). False grants an unlimited, any-turn permission (Abandoned Sarcophagus).
@@ -60,6 +65,11 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
 
     /** Alternate mana cost used instead of the card's normal mana cost, if any. */
     default String alternateManaCost() {
+        return null;
+    }
+
+    /** Alternate non-mana cost used instead of the card's normal mana cost, if any. */
+    default CostEffect alternateCost() {
         return null;
     }
 

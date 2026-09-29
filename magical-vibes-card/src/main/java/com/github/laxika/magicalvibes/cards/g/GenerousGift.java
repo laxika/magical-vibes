@@ -20,7 +20,10 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "133")
 @CardRegistration(set = "CMM", collectorNumber = "26")
 @CardRegistration(set = "CMM", collectorNumber = "624")
+@CardRegistration(set = "MOC", collectorNumber = "187")
 @CardRegistration(set = "NCC", collectorNumber = "201")
+@CardRegistration(set = "LCC", collectorNumber = "128")
+@CardRegistration(set = "DMC", collectorNumber = "100")
 public class GenerousGift extends Card {
 
     public GenerousGift() {

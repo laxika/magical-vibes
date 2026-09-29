@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "165")
+@CardRegistration(set = "HBG", collectorNumber = "193")
 public class ValorSinger extends Card {
 
     public ValorSinger() {

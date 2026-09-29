@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -26,10 +25,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.Player;
 
-@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class,
-        GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SerraAngel.class,
-        SkyhunterSkirmisher.class})
+@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SerraAngel.class, SkyhunterSkirmisher.class})
 class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -81,7 +79,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     @DisplayName("Doubles damage from activated ability to a player")
     void doublesActivatedAbilityDamageToPlayer() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        addReadyInvoker(player1);
+        addCreatureReady(player1, new FlamewaveInvoker());
         harness.addMana(player1, ManaColor.RED, 8);
         harness.setLife(player2, 20);
 
@@ -181,7 +179,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         // 4/4 blocker — base 2 damage wouldn't kill it, but doubled 4 does
-        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+        addCreatureReady(player2, new SerraAngel());
 
         prepareDeclareBlockers();
 
@@ -223,7 +221,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         GrizzlyBears creature3_3 = new GrizzlyBears();
         creature3_3.setPower(3);
         creature3_3.setToughness(3);
-        Permanent blocker = addCreatureReady(player2, creature3_3);
+        addCreatureReady(player2, creature3_3);
 
         prepareDeclareBlockers();
 
@@ -249,7 +247,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         GrizzlyBears creature3_5 = new GrizzlyBears();
         creature3_5.setPower(3);
         creature3_5.setToughness(5);
-        Permanent blocker = addCreatureReady(player2, creature3_5);
+        addCreatureReady(player2, creature3_5);
 
         prepareDeclareBlockers();
 
@@ -292,7 +290,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_3.setPower(3);
         creature3_3.setToughness(3);
         creature3_3.setKeywords(Set.of(Keyword.REACH));
-        Permanent blocker = addCreatureReady(player2, creature3_3);
+        addCreatureReady(player2, creature3_3);
 
         prepareDeclareBlockers();
 
@@ -317,7 +315,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_5.setPower(3);
         creature3_5.setToughness(5);
         creature3_5.setKeywords(Set.of(Keyword.REACH));
-        Permanent blocker = addCreatureReady(player2, creature3_5);
+        addCreatureReady(player2, creature3_5);
 
         prepareDeclareBlockers();
 
@@ -463,10 +461,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
-
     private void addReadyInvoker(Player player) {
         addCreatureReady(player, new FlamewaveInvoker());
     }
 }
-

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "181")
+@CardRegistration(set = "AFC", collectorNumber = "213")
 public class OrazcaRelic extends Card {
 
     public OrazcaRelic() {

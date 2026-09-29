@@ -89,11 +89,9 @@ class MasterHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.castAndResolveInstant(player1, 0, player2.getId());
+        castShockAtPlayer2();
+        castShockAtPlayer2();
+        castShockAtPlayer2();
 
         harness.assertLife(player2, 18);
     }
@@ -188,6 +186,22 @@ class MasterHealerTest extends BaseCardTest {
 
         castShockAtPlayer2();
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage to the targeted player")
+    void preventsCombatDamageToTargetedPlayer() {
+        addHealerReady();
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertLife(player2, 20);
     }
 
     private void castShockAtPlayer2() {

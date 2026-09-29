@@ -22,6 +22,9 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "325")
 @CardRegistration(set = "ECC", collectorNumber = "152")
 @CardRegistration(set = "CMD", collectorNumber = "276")
+@CardRegistration(set = "MKC", collectorNumber = "265")
+@CardRegistration(set = "AFC", collectorNumber = "243")
+@CardRegistration(set = "C20", collectorNumber = "279")
 public class GruulTurf extends Card {
 
     public GruulTurf() {

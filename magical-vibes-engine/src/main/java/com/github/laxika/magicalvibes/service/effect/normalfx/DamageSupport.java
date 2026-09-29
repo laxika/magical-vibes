@@ -143,6 +143,13 @@ public class DamageSupport {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
         }
+        // Prevention that applies to the creature also applies to damage from its abilities.
+        // Combat damage and damage to players already consult this flag; keep creature damage
+        // on the same path (for example, a Kry Shield-protected D'Avenant Archer).
+        if (source != null && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
+            return 0;
+        }
         boolean sourceDamagePrevented = source != null
                 ? gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 : gameQueryService.isDamageFromStackEntryPrevented(gameData, entry);
@@ -249,6 +256,9 @@ public class DamageSupport {
         Card sourceCardForBonus = sourcePermanentForBonus == null
                 ? entry == null ? null : entry.getEffectiveDamageSourceCard()
                 : sourcePermanentForBonus.getCard();
+        UUID sourcePermanentIdForBonus = sourcePermanentForBonus == null
+                ? entry == null ? null : entry.getSourcePermanentId()
+                : sourcePermanentForBonus.getId();
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getNoncreatureSourceDamageBonus(
                     gameData, entry, null, target);
@@ -257,7 +267,8 @@ public class DamageSupport {
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, bonusSourceControllerId, targetControllerId, false, true);
+                    gameData, bonusSourceControllerId, targetControllerId, false, true,
+                    sourcePermanentIdForBonus);
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
                     gameData, entry, targetControllerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
@@ -457,7 +468,7 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
-        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+        if (!targetDamageUnpreventable && gameQueryService.isPlaneswalker(gameData, target)) {
             rawDamage = damagePreventionService.applyComeuppancePrevention(
                     gameData, targetControllerId, rawDamage, sourceCardForBonus,
                     sourcePermanentForBonus, sourceControllerId, false);
@@ -482,9 +493,10 @@ public class DamageSupport {
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.
-        if (!targetDamageUnpreventable && target.getCard().hasType(CardType.PLANESWALKER)) {
+        if (!targetDamageUnpreventable && gameQueryService.isPlaneswalker(gameData, target)) {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
-            damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
+            damage -= damagePreventionService.applyAllButOneDamageToPlaneswalkerPrevention(
+                    gameData, targetControllerId, damage, false);
         }
         damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
@@ -543,7 +555,7 @@ public class DamageSupport {
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
 
-            if (target.getCard().hasType(CardType.PLANESWALKER)) {
+            if (gameQueryService.isPlaneswalker(gameData, target)) {
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                         gameData, reflectionSource, sourceControllerId, target.getId(), damage, false, null);
             }
@@ -586,8 +598,12 @@ public class DamageSupport {
 
         boolean sourceHasDeathtouch = damage > 0
                 && gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
-        int excessDamage = target.getCard().hasType(CardType.PLANESWALKER)
-                ? Math.max(0, damage - target.getCounterCount(CounterType.LOYALTY))
+        boolean planeswalker = gameQueryService.isPlaneswalker(gameData, target);
+        boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, target);
+        int excessDamage = planeswalker
+                ? Math.max(0, damage - (toughnessAsLoyalty
+                ? gameQueryService.getEffectiveToughness(gameData, target)
+                : target.getCounterCount(CounterType.LOYALTY)))
                 : computeExcessDamageToCreature(gameData, target, damage,
                         target.getMarkedDamage(), sourceHasDeathtouch);
         if (excessDamage > 0) {
@@ -600,18 +616,34 @@ public class DamageSupport {
         // CR 120.3c — damage dealt to a planeswalker removes that many loyalty counters
         // (the SBA check reaps it at 0 loyalty). A permanent that is also a creature
         // additionally gets the damage marked below (CR 120.3e).
-        if (target.getCard().hasType(CardType.PLANESWALKER)) {
+        if (planeswalker) {
             if (damage > 0) {
-                int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
-                        gameData, target, damage);
-                target.setCounterCount(CounterType.LOYALTY,
-                        target.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
+                if (toughnessAsLoyalty) {
+                    int toughness = gameQueryService.getToughnessAsLoyalty(target);
+                    target.setToughnessAsLoyalty(toughness - damage);
+                } else {
+                    int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                            gameData, target, damage);
+                    target.setCounterCount(CounterType.LOYALTY,
+                            target.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
+                }
                 queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
                 gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
                         " deals " + damage + " damage to ", target.getCard(),
-                        " (" + target.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+                        toughnessAsLoyalty
+                                ? " (" + gameQueryService.getEffectiveToughness(gameData, target)
+                                + " toughness remaining)."
+                                : " (" + target.getCounterCount(CounterType.LOYALTY)
+                                + " loyalty remaining)."));
             }
             if (!gameQueryService.isCreature(gameData, target)) {
+                if (damage > 0) {
+                    checkSpellLifelink(gameData, entry, damage);
+                }
+                processPendingRedirectDamage(gameData);
+                return damage;
+            }
+            if (toughnessAsLoyalty) {
                 if (damage > 0) {
                     checkSpellLifelink(gameData, entry, damage);
                 }
@@ -1015,6 +1047,13 @@ public class DamageSupport {
 
         if (!targetIsPlayer && targetPermanent == null) return 0;
 
+        // Planeswalkerificate is both a creature and a planeswalker, but its damage resource is
+        // toughness rather than loyalty counters. Use the creature pipeline so prevention and
+        // damage triggers remain consistent while the special resource is reduced by the helper.
+        if (!targetIsPlayer && gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPermanent)) {
+            return dealCreatureDamage(gameData, entry, targetPermanent, rawDamage, cantBeRedirected);
+        }
+
         if (targetIsPlayer) {
             UUID redirectedPlayerId = cantBeRedirected ? null
                     : damagePreventionService.applyNextInstantOrSorceryDamageRedirectShield(
@@ -1040,7 +1079,7 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                 return 0;
             }
-            if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)
+            if (gameQueryService.isPlaneswalker(gameData, targetPermanent)
                     && !(targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
                     && gameQueryService.isCreature(gameData, targetPermanent))) {
                 if (!cantBeRedirected) {
@@ -1126,7 +1165,8 @@ public class DamageSupport {
                     return 0;
                 }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
-                loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
+                loyaltyDamage -= damagePreventionService.applyAllButOneDamageToPlaneswalkerPrevention(
+                        gameData, pwControllerId, loyaltyDamage, false);
                 int damageDealt = loyaltyDamage;
                 int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                         gameData, targetPermanent, damageDealt);
@@ -1300,6 +1340,23 @@ public class DamageSupport {
     }
 
     public void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (gameQueryService.damageCantBePreventedFromSource(gameData, sourcePermanent)) {
+            boolean previous = gameData.damageCantBePreventedThisTurn;
+            gameData.damageCantBePreventedThisTurn = true;
+            try {
+                dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
+            } finally {
+                gameData.damageCantBePreventedThisTurn = previous;
+            }
+            return;
+        }
+        dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
+    }
+
+    private void dealDamageToPlayerFromSource(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
@@ -1361,7 +1418,8 @@ public class DamageSupport {
             rawDamage += gameQueryService.getPlayersAndBattlesDamageBonus(
                     gameData, true, null);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
-                    gameData, sourceControllerId, playerId);
+                    gameData, sourceControllerId, playerId, false,
+                    sourcePermanent == null ? entry.getSourcePermanentId() : sourcePermanent.getId());
             rawDamage += gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
                     gameData, entry, playerId);
             rawDamage += gameQueryService.getControllerNoncombatDamageBonus(
@@ -1639,7 +1697,7 @@ public class DamageSupport {
                             source != null ? source.getName() : entry.getCard().getName(),
                             entry.getControllerId());
                 }
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else if (effectiveDamage > 0 && gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)) {
@@ -1846,7 +1904,7 @@ public class DamageSupport {
                     gameData, targetId, redirectEffective);
 
             if (redirectEffective > 0) {
-                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                     int lifeLoss = redirectEffective
                             * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                     gameData.playerLifeTotals.put(targetId,
@@ -1931,7 +1989,7 @@ public class DamageSupport {
                         gameData, targetId, redirectEffective);
 
                 if (redirectEffective > 0) {
-                    if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
                         int lifeLoss = redirectEffective
                                 * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
                         gameData.playerLifeTotals.put(targetId,
@@ -1966,7 +2024,10 @@ public class DamageSupport {
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
                     // destination that many defense counters (CR 120.3h); a permanent that is also
                     // a creature additionally gets marked damage (CR 120.3e).
-                    if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+                    if (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm)) {
+                        targetPerm.setToughnessAsLoyalty(
+                                gameQueryService.getToughnessAsLoyalty(targetPerm) - effectiveDamage);
+                    } else if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
                         targetPerm.setCounterCount(CounterType.LOYALTY,
                                 targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
                     }
@@ -1981,8 +2042,9 @@ public class DamageSupport {
                     }
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
                     boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
-                    if (isCreature
-                            || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)
+                    boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm);
+                    if ((isCreature && !toughnessAsLoyalty)
+                            || (!toughnessAsLoyalty && !targetPerm.getCard().hasType(CardType.PLANESWALKER)
                             && !targetPerm.getCard().hasType(CardType.BATTLE))) {
                         // Record only — the state-based action check (CR 704.5g) performs any
                         // destruction once the current damage event finishes.

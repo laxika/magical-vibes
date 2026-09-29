@@ -74,6 +74,16 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameData.preventAllCombatDamageToPlayers = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage that would be dealt to players will be prevented this turn."));
             }
+            case ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS -> {
+                UUID controllerId = entry.getControllerId();
+                if (controllerId != null) {
+                    gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.add(controllerId);
+                }
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        "All combat damage that would be dealt to " + playerName
+                                + " and planeswalkers " + playerName + " controls this turn is prevented."));
+            }
             case ALL_TO_CREATURES -> {
                 gameData.preventAllDamageToAllCreatures = true;
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to creatures this turn is prevented."));

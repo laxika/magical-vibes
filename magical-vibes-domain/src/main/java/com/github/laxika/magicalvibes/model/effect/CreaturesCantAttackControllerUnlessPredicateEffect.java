@@ -20,17 +20,24 @@ import java.util.UUID;
  * @param exemptionPredicate    creatures matching this predicate ARE allowed to attack the controller
  * @param protectsPlaneswalkers whether the restriction also forbids attacking the controller's planeswalkers
  * @param restrictedAttackerId  optional attacking player to restrict, or {@code null} for all attackers
+ * @param protectsPermanents   whether the restriction also forbids attacking attackable permanents controlled by the protected player
  */
 public record CreaturesCantAttackControllerUnlessPredicateEffect(
         PermanentPredicate exemptionPredicate, boolean protectsPlaneswalkers,
-        UUID restrictedAttackerId) implements CardEffect {
+        UUID restrictedAttackerId, boolean protectsPermanents) implements CardEffect {
 
     public CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemptionPredicate) {
-        this(exemptionPredicate, false, null);
+        this(exemptionPredicate, false, null, false);
     }
 
     public CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemptionPredicate,
                                                                boolean protectsPlaneswalkers) {
-        this(exemptionPredicate, protectsPlaneswalkers, null);
+        this(exemptionPredicate, protectsPlaneswalkers, null, false);
+    }
+
+    public CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemptionPredicate,
+                                                               boolean protectsPlaneswalkers,
+                                                               UUID restrictedAttackerId) {
+        this(exemptionPredicate, protectsPlaneswalkers, restrictedAttackerId, false);
     }
 }

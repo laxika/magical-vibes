@@ -45,6 +45,7 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
         Integer counters = gameData.exiledCardTimeCounters.get(cardId);
         if (exiledEntry == null || counters == null || counters <= 0) {
             gameData.exiledCardTimeCounters.remove(cardId);
+            gameData.exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             return;
         }
 
@@ -59,6 +60,7 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
         }
 
         gameData.exiledCardTimeCounters.remove(cardId);
+        gameData.exiledCardsWithNonSuspendTimeCounters.remove(cardId);
         triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
                 gameData, exiledEntry.card(), exiledEntry.ownerId(), 0);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

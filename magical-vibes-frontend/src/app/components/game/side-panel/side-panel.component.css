@@ -505,6 +505,14 @@
   color: #ffe082;
 }
 
+.badge-rad {
+  color: #b8d77a;
+}
+
+.player-badge.active .badge-rad {
+  color: #d3ef94;
+}
+
 .badge-hand,
 .badge-deck {
   opacity: 0.8;

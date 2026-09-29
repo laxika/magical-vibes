@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
+@CardUsed({ChandrasPhoenix.class, Shock.class, ConsumeSpirit.class, GrizzlyBears.class, ChandraNalaar.class})
 class ChandrasPhoenixTest extends BaseCardTest {
 
     @Test

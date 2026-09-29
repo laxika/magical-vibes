@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.s.SeasClaim;
+import com.github.laxika.magicalvibes.cards.s.SpreadingSeas;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 
 @CardUsed({UrzasTower.class, UrzasMine.class, UrzasPowerPlant.class, SeasClaim.class})
 class UrzasTowerTest extends BaseCardTest {

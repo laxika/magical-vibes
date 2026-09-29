@@ -21,8 +21,7 @@ class PhyrexianGargantuaTest extends BaseCardTest {
 
         castGargantua(); // setHand leaves the hand empty after this spell is cast
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.passBothPriorities(); // resolve creature spell and queue the ETB ability
-        harness.passBothPriorities(); // resolve the ETB ability
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
@@ -37,8 +36,7 @@ class PhyrexianGargantuaTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         castGargantua();
-        harness.passBothPriorities(); // resolve creature spell and queue the ETB ability
-        harness.passBothPriorities(); // resolve the ETB ability
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
@@ -53,8 +51,7 @@ class PhyrexianGargantuaTest extends BaseCardTest {
         int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
 
         castGargantua();
-        harness.passBothPriorities(); // resolve creature spell and queue the ETB ability
-        harness.passBothPriorities(); // resolve the ETB ability
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(opponentHandBefore);

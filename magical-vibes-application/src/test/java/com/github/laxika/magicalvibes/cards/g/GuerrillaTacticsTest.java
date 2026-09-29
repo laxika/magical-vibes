@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.Megrim;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
+import com.github.laxika.magicalvibes.cards.z.ZuranEnchanter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -157,7 +158,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, player1.getId());
 
         // Triggered ability goes on the stack, pass priority to resolve it
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
     }
@@ -184,7 +185,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bearsId);
 
         // Triggered ability goes on the stack, pass priority to resolve it
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Grizzly Bears (2/2) should be destroyed by 4 damage
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -207,7 +208,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Player2 targets themselves with the 4 damage
         harness.handlePermanentChosen(player2, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -272,9 +273,41 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Player2 chooses player1 as target
         harness.handlePermanentChosen(player2, player1.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+    }
+
+    @CardUsed(ZuranEnchanter.class)
+    @Test
+    @DisplayName("Triggers when an opponent's activated ability causes the discard")
+    void triggersWhenDiscardedByOpponentViaActivatedAbility() {
+        Permanent enchanter = addCreatureReady(player1, new ZuranEnchanter());
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        int enchanterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(enchanter);
+        harness.activateAbility(player1, enchanterIndex, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 0);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player2, "Guerrilla Tactics");
     }
 
     // ===== No trigger on self-discard =====
@@ -320,7 +353,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
         harness.handlePermanentChosen(player2, player1.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Guerrilla Tactics should be in player2's graveyard
         harness.assertInGraveyard(player2, "Guerrilla Tactics");
@@ -380,7 +413,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Player2 targets player1 with the 4 damage
         harness.handlePermanentChosen(player2, player1.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Player1 took 4 damage from Guerrilla Tactics trigger
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);

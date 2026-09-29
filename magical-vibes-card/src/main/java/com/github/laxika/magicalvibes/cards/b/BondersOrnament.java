@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "370")
+@CardRegistration(set = "C20", collectorNumber = "67")
 public class BondersOrnament extends Card {
 
     public BondersOrnament() {

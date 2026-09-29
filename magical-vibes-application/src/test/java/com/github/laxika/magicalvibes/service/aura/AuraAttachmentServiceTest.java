@@ -66,6 +66,9 @@ class AuraAttachmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(gameQueryService.hasEffectiveSubtype(any(), any(), any()))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
+                        .getSubtypes().contains(invocation.getArgument(2)));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfKamigawa;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.r.RooftopSaboteurs;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnabaShaman.class, RagingGoblin.class, ChandraNalaar.class})
+@CardUsed({AnabaShaman.class, RagingGoblin.class, ChandraNalaar.class,
+        InvasionOfKamigawa.class, RooftopSaboteurs.class})
 class AnabaShamanTest extends BaseCardTest {
 
     @Test
@@ -72,17 +75,49 @@ class AnabaShamanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability deals 1 damage to a target planeswalker")
+    @DisplayName("Ability deals 1 damage to target planeswalker")
     void deals1DamageToPlaneswalker() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
-        target.setCounterCount(CounterType.LOYALTY, 2);
         addCreatureReady(player1, new AnabaShaman());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability deals 1 damage to target battle")
+    void deals1DamageToBattle() {
+        addCreatureReady(player1, new AnabaShaman());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InvasionOfKamigawa());
+        target.setProtectorPlayerId(player2.getId());
+        target.setCounterCount(CounterType.DEFENSE, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new AnabaShaman());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("fizzles"));
     }
 
     @Test

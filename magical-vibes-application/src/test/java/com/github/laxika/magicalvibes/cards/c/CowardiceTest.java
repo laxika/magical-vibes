@@ -100,6 +100,29 @@ class CowardiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving an ability trigger returns the creature and stops the ability")
+    void resolvingAbilityTriggerReturnsCreatureToOwnersHand() {
+        harness.addToBattlefield(player1, new Cowardice());
+        harness.addToBattlefield(player1, new DartingMerfolk());
+        UUID merfolkId = harness.getPermanentId(player1, "Darting Merfolk");
+
+        addCreatureReady(player2, new StingingBarrier());
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, merfolkId);
+
+        harness.passBothPriorities(); // resolve Cowardice trigger -> bounce merfolk
+
+        harness.assertNotOnBattlefield(player1, "Darting Merfolk");
+        harness.assertInHand(player1, "Darting Merfolk");
+
+        harness.passBothPriorities(); // Stinging Barrier's ability has no legal target
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Darting Merfolk");
+    }
+
+    @Test
     @DisplayName("Does NOT trigger when a spell targets a player")
     void doesNotTriggerOnPlayerTarget() {
         harness.addToBattlefield(player1, new Cowardice());

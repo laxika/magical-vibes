@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "51")
 @CardRegistration(set = "M3C", collectorNumber = "185")
+@CardRegistration(set = "MKC", collectorNumber = "106")
+@CardRegistration(set = "OTC", collectorNumber = "97")
 public class FinaleOfRevelation extends Card {
 
     public FinaleOfRevelation() {

@@ -58,7 +58,7 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
         permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
         graveyardReturnSupport.putCardOntoBattlefield(
-                gameData, battlefieldControllerId, card, null, null, returnEffect.enterTapped(), false,
+                gameData, battlefieldControllerId, card, null, returnEffect.grantSubtype(), returnEffect.enterTapped(), false,
                 returnEffect.counterType(), false, false, returnEffect.counterAmount());
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.c.CloudElemental;
-import com.github.laxika.magicalvibes.cards.p.Python;
+import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Quicksand.class, Python.class, CloudElemental.class})
+@CardUsed({Quicksand.class, GrizzlyBears.class, AzureDrake.class})
 class QuicksandTest extends BaseCardTest {
 
     // ===== Mana ability =====
@@ -37,14 +39,11 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Sacrifice ability targets attacking creature without flying and gives -1/-2")
     void sacrificeAbilityGivesMinusOneMinusTwo() {
         harness.addToBattlefield(player1, new Quicksand());
-        Python creature = new Python();
+        GrizzlyBears creature = new GrizzlyBears();
         creature.setPower(4);
         creature.setToughness(4);
         Permanent attacker = addCreatureReady(player2, creature);
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
@@ -64,11 +63,8 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Sacrifice ability puts ability on the stack (not a mana ability)")
     void sacrificeAbilityUsesStack() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent attacker = addCreatureReady(player2, new Python());
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
 
@@ -80,11 +76,8 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Quicksand is sacrificed immediately as a cost, before resolution")
     void sacrificedBeforeResolution() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent attacker = addCreatureReady(player2, new Python());
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
 
@@ -97,7 +90,7 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Sacrifice ability fizzles if the target stops attacking before resolution")
     void sacrificeAbilityFizzlesIfTargetStopsAttackingBeforeResolution() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent attacker = addCreatureReady(player2, new Python());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -111,16 +104,32 @@ class QuicksandTest extends BaseCardTest {
         assertThat(attacker.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Sacrifice ability can target an attacking creature you control")
+    void sacrificeAbilityCanTargetOwnAttackingCreature() {
+        harness.addToBattlefield(player1, new Quicksand());
+        GrizzlyBears creature = new GrizzlyBears();
+        creature.setPower(4);
+        creature.setToughness(4);
+        Permanent attacker = addCreatureReady(player1, creature);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Quicksand");
+        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
+    }
+
     // ===== Target restrictions =====
 
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent creature = addCreatureReady(player2, new Python());
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -130,11 +139,8 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Cannot target an attacking creature with flying")
     void cannotTargetAttackingCreatureWithFlying() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent flyer = addCreatureReady(player2, new CloudElemental());
-        flyer.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        Permanent flyer = addCreatureReady(player2, new AzureDrake());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, flyer.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -146,11 +152,8 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Cannot activate sacrifice ability when already tapped")
     void cannotActivateWhenTapped() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent attacker = addCreatureReady(player2, new Python());
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         // Tap for mana first
         harness.activateAbility(player1, 0, 0, null, null);
@@ -167,14 +170,11 @@ class QuicksandTest extends BaseCardTest {
     void debuffWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new Quicksand());
         // Use a 4/4 so it survives the -1/-2 debuff (becomes 3/2)
-        Python bigCreature = new Python();
+        GrizzlyBears bigCreature = new GrizzlyBears();
         bigCreature.setPower(4);
         bigCreature.setToughness(4);
         Permanent attacker = addCreatureReady(player2, bigCreature);
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();

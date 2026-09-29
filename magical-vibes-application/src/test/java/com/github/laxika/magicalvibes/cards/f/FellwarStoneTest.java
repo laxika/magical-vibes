@@ -15,7 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FellwarStone.class, AncientZiggurat.class, Forest.class, Island.class})
+@CardUsed({FellwarStone.class, AncientZiggurat.class, ChromaticLantern.class, Forest.class,
+        Island.class, ManaReflection.class, RealityTwist.class, UrzasMine.class})
 class FellwarStoneTest extends BaseCardTest {
 
     @Test
@@ -27,6 +28,18 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Ignores an opponent's nonland permanents")
+    void ignoresOpponentNonlandPermanents() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player2, new ChromaticLantern());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -42,7 +55,6 @@ class FellwarStoneTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(UrzasMine.class)
     @DisplayName("Ignores an opponent land that can produce only colorless mana")
     void ignoresColorlessOnlyOpponentLand() {
         harness.addToBattlefield(player1, new FellwarStone());
@@ -55,7 +67,6 @@ class FellwarStoneTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChromaticLantern.class)
     @DisplayName("Includes mana abilities granted to an opponent's land")
     void includesAbilitiesGrantedToOpponentLand() {
         harness.addToBattlefield(player1, new FellwarStone());
@@ -72,7 +83,6 @@ class FellwarStoneTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ManaReflection.class)
     @DisplayName("Mana Reflection doubles mana when one opponent land color is available")
     void manaReflectionDoublesAutomaticallyChosenColor() {
         harness.addToBattlefield(player1, new FellwarStone());
@@ -85,7 +95,6 @@ class FellwarStoneTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ManaReflection.class)
     @DisplayName("Mana Reflection doubles mana after choosing among opponent land colors")
     void manaReflectionDoublesChosenColor() {
         harness.addToBattlefield(player1, new FellwarStone());
@@ -128,7 +137,6 @@ class FellwarStoneTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(RealityTwist.class)
     @DisplayName("Uses an opponent land's current replacement color")
     void usesCurrentReplacementColorOfOpponentLand() {
         harness.addToBattlefield(player1, new FellwarStone());

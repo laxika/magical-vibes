@@ -10,6 +10,9 @@ public interface CardEffect {
     /** Whether paying for this effect is a special action that does not use the stack. */
     default boolean isSpecialAction() { return false; }
 
+    /** Optional prompt suffix for a pregame action offered while deciding whether to mulligan. */
+    default String mulliganActionDescription() { return null; }
+
     /** Whether this pending choice must finish before the next card of a draw instruction. */
     default boolean pausesDrawInstruction() { return false; }
 
@@ -78,6 +81,9 @@ public interface CardEffect {
      * provides specific P/T values, CDAs that define P/T are not copied.
      */
     default boolean isPowerToughnessDefining() { return false; }
+
+    /** Whether this effect notes the mana value of cards as they enter exile. */
+    default boolean notesManaValueOfExiledCards() { return false; }
 
     /**
      * Returns {@code true} if this ON_DEATH effect only triggers when the permanent was

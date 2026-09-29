@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GraceOrCondemnationEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "255")
+@CardRegistration(set = "C21", collectorNumber = "223")
 public class MagisterOfWorth extends Card {
 
     public MagisterOfWorth() {

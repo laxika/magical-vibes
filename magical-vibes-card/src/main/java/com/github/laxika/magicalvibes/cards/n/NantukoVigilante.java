@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "132")
+@CardRegistration(set = "MKC", collectorNumber = "177")
 public class NantukoVigilante extends Card {
 
     public NantukoVigilante() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "97")
+@CardRegistration(set = "LCC", collectorNumber = "157")
 public class GhostOfRamirezDePietro extends Card {
 
     public GhostOfRamirezDePietro() {

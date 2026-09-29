@@ -36,6 +36,8 @@ class IWillSavorYourAgonyTest extends BaseCardTest {
         harness.handleListChoice(player1, GAIN);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class)
+                .validIds()).contains(player1.getId());
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 

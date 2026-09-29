@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "144")
+@CardRegistration(set = "C20", collectorNumber = "163")
 public class TitanOfEternalFire extends Card {
 
     public TitanOfEternalFire() {

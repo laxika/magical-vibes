@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "274")
+@CardRegistration(set = "MKC", collectorNumber = "237")
 @CardRegistration(set = "2ED", collectorNumber = "270")
 @CardRegistration(set = "3ED", collectorNumber = "274")
 @CardRegistration(set = "V10", collectorNumber = "12")
@@ -58,10 +59,27 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "58")
 @CardRegistration(set = "CMM", collectorNumber = "410")
 @CardRegistration(set = "CMM", collectorNumber = "703")
+@CardRegistration(set = "WHO", collectorNumber = "245")
+@CardRegistration(set = "PIP", collectorNumber = "239")
+@CardRegistration(set = "PIP", collectorNumber = "359")
+@CardRegistration(set = "PIP", collectorNumber = "767")
+@CardRegistration(set = "PIP", collectorNumber = "887")
+@CardRegistration(set = "MB2", collectorNumber = "233")
+@CardRegistration(set = "MOC", collectorNumber = "381")
+@CardRegistration(set = "C21", collectorNumber = "263")
+@CardRegistration(set = "40K", collectorNumber = "249")
+@CardRegistration(set = "40K", collectorNumber = "250")
+@CardRegistration(set = "40K", collectorNumber = "251")
+@CardRegistration(set = "40K", collectorNumber = "252")
 @CardRegistration(set = "DSC", collectorNumber = "94")
 @CardRegistration(set = "LTC", collectorNumber = "284")
 @CardRegistration(set = "TDC", collectorNumber = "106")
 @CardRegistration(set = "M3C", collectorNumber = "305")
+@CardRegistration(set = "AFC", collectorNumber = "215")
+@CardRegistration(set = "OTC", collectorNumber = "267")
+@CardRegistration(set = "LCC", collectorNumber = "313")
+@CardRegistration(set = "DMC", collectorNumber = "190")
+@CardRegistration(set = "C20", collectorNumber = "252")
 public class SolRing extends Card {
 
     public SolRing() {

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThievingMagpie.class, HermeticStudy.class})
+@CardUsed({HermeticStudy.class, ThievingMagpie.class})
 class ThievingMagpieTest extends BaseCardTest {
 
     @Test
@@ -20,12 +20,12 @@ class ThievingMagpieTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         addCreatureReady(player1, new ThievingMagpie());
+
         declareAttackers(List.of(0));
-
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -36,15 +36,18 @@ class ThievingMagpieTest extends BaseCardTest {
         prepareDrawState();
         harness.setLife(player2, 20);
 
-        addCreatureReady(player1, new ThievingMagpie());
-        declareAttackersAndPrepareBlockers(List.of(0));
+        Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
+        Permanent blocker = addCreatureReady(player2, new ThievingMagpie());
 
-        addCreatureReady(player2, new ThievingMagpie());
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -60,10 +63,9 @@ class ThievingMagpieTest extends BaseCardTest {
         study.setAttachedTo(magpie.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -79,10 +81,9 @@ class ThievingMagpieTest extends BaseCardTest {
         study.setAttachedTo(magpie.getId());
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -103,7 +104,7 @@ class ThievingMagpieTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Thieving Magpie");
@@ -143,7 +144,7 @@ class ThievingMagpieTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

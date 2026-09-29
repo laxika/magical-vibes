@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "243")
+@CardRegistration(set = "MKC", collectorNumber = "272")
 public class LabyrinthOfSkophos extends Card {
 
     public LabyrinthOfSkophos() {

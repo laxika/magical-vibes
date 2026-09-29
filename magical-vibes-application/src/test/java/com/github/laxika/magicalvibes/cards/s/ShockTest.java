@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -22,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakenedSkyclave.class, ChandraNalaar.class, GrizzlyBears.class,
+@CardUsed({AwakenedSkyclave.class, ChandraHopesBeacon.class, GrizzlyBears.class,
         InvasionOfZendikar.class, Mountain.class, Shock.class})
 class ShockTest extends BaseCardTest {
 
@@ -59,10 +59,10 @@ class ShockTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
+    @CardUsed({Shock.class, ChandraHopesBeacon.class})
     @DisplayName("Shock deals 2 damage to target planeswalker")
     void deals2DamageToPlaneswalker() {
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
         chandra.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -73,7 +73,7 @@ class ShockTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({AwakenedSkyclave.class, InvasionOfZendikar.class})
+    @CardUsed({Shock.class, AwakenedSkyclave.class, InvasionOfZendikar.class})
     @DisplayName("Shock deals 2 damage to target battle")
     void deals2DamageToBattle() {
         Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
@@ -119,6 +119,18 @@ class ShockTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Shock can target its controller")
+    void deals2DamageToItsController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 
     @Test

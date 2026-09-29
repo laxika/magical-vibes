@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "SPG", collectorNumber = "89")
 @CardRegistration(set = "SPG", collectorNumber = "99")
 @CardRegistration(set = "M3C", collectorNumber = "209")
+@CardRegistration(set = "LCC", collectorNumber = "220")
 public class ChandrasIgnition extends Card {
 
     public ChandrasIgnition() {

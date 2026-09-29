@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "12")
 @CardRegistration(set = "FCA", collectorNumber = "24")
+@CardRegistration(set = "MKC", collectorNumber = "71")
 public class LoranOfTheThirdPath extends Card {
 
     public LoranOfTheThirdPath() {

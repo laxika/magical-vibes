@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "33")
 @CardRegistration(set = "GN3", collectorNumber = "26")
+@CardRegistration(set = "C21", collectorNumber = "120")
+@CardRegistration(set = "OTC", collectorNumber = "96")
 public class DiluvianPrimordial extends Card {
 
     public DiluvianPrimordial() {

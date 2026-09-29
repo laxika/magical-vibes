@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +13,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.GameData;
 
-@CardUsed({IvoryMask.class, Millstone.class, Shock.class, BeaconOfImmortality.class})
+@CardUsed({IvoryMask.class, LavaAxe.class, AnabaShaman.class, Millstone.class, Shock.class, BeaconOfImmortality.class})
 class IvoryMaskTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,6 @@ class IvoryMaskTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Ivory Mask");
     }
@@ -41,10 +42,10 @@ class IvoryMaskTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new LavaAxe()));
+        harness.addMana(player2, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
@@ -53,10 +54,25 @@ class IvoryMaskTest extends BaseCardTest {
     @DisplayName("Controller cannot target themselves either while Ivory Mask is out")
     void controllerCannotTargetSelf() {
         harness.addToBattlefield(player1, new IvoryMask());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Opponent cannot target the controller with an ability while Ivory Mask is out")
+    void opponentCannotTargetControllerWithAbility() {
+        harness.addToBattlefield(player1, new IvoryMask());
+        addCreatureReady(player2, new AnabaShaman());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
@@ -67,7 +83,6 @@ class IvoryMaskTest extends BaseCardTest {
         IvoryMask mask = new IvoryMask();
         harness.addToBattlefield(player1, mask);
 
-        GameData gd = harness.getGameData();
         Permanent perm = findPermanent(player1, "Ivory Mask");
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(mask);
@@ -77,13 +92,13 @@ class IvoryMaskTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new LavaAxe()));
+        harness.addMana(player2, ManaColor.RED, 5);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 15);
     }
 
     @Test

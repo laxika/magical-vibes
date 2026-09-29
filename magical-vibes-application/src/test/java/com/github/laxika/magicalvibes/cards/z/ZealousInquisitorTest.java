@@ -64,6 +64,22 @@ class ZealousInquisitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Inquisitor can be chosen as the redirect destination")
+    void canTargetItself() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, inquisitor.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Only the next 1 damage is redirected; the rest still lands on the Inquisitor")
     void redirectsOnlyOneDamage() {
         Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());

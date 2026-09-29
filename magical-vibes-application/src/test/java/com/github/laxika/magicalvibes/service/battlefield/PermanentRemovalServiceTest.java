@@ -167,6 +167,8 @@ class PermanentRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.delayedTriggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         lenient().when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(NO_ATTACHMENT_CHANGE);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

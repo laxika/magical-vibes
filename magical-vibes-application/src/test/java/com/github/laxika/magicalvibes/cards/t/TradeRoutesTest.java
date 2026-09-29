@@ -75,7 +75,7 @@ class TradeRoutesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
         harness.assertNotInHand(player1, "Island");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     // ===== Ability 1: {1}, Discard a land card: Draw a card =====
@@ -109,7 +109,7 @@ class TradeRoutesTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Island");
         harness.assertInHand(player1, "Forest");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gameLogContains("draws a card")).isTrue();
     }
 
     @Test

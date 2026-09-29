@@ -13,21 +13,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "C21", collectorNumber = "81")
 @CardRegistration(set = "DSC", collectorNumber = "325")
 public class WitchsClinic extends Card {
 
     public WitchsClinic() {
-        // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
-
-        // {2}, {T}: Target commander gains lifelink until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
                 List.of(new GrantKeywordEffect(
-                        Keyword.LIFELINK, GrantScope.TARGET, new PermanentIsCommanderPredicate())),
+                        Keyword.LIFELINK,
+                        GrantScope.TARGET,
+                        new PermanentIsCommanderPredicate())),
                 "{2}, {T}: Target commander gains lifelink until end of turn.",
                 new PermanentPredicateTargetFilter(
-                        new PermanentIsCommanderPredicate(), "Target must be a commander")));
+                        new PermanentIsCommanderPredicate(),
+                        "Target must be a commander")));
     }
 }

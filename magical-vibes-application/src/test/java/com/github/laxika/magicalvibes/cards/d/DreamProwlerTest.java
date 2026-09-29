@@ -21,11 +21,9 @@ class DreamProwlerTest extends BaseCardTest {
     void cantBeBlockedWhenAttackingAlone() {
         Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
         addCreatureReady(player1, new SkyshroudFalcon());
-
         Permanent prowler = addCreatureReady(player1, new DreamProwler());
-        prowler.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                         gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -40,12 +38,9 @@ class DreamProwlerTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
 
         Permanent prowler = addCreatureReady(player1, new DreamProwler());
-        prowler.setAttacking(true);
+        addCreatureReady(player1, new SkyshroudFalcon());
 
-        Permanent companion = addCreatureReady(player1, new SkyshroudFalcon());
-        companion.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -59,9 +54,10 @@ class DreamProwlerTest extends BaseCardTest {
     void dealsDamageWhenUnblockedAlone() {
         harness.setLife(player2, 20);
 
-        Permanent prowler = addCreatureReady(player1, new DreamProwler());
-        prowler.setAttacking(true);
+        addCreatureReady(player1, new DreamProwler());
 
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

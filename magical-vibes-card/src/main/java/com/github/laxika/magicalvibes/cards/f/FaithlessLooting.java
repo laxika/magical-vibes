@@ -21,9 +21,14 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "C15", collectorNumber = "153")
 @CardRegistration(set = "CMM", collectorNumber = "220")
 @CardRegistration(set = "CMM", collectorNumber = "642")
+@CardRegistration(set = "MB2", collectorNumber = "57")
+@CardRegistration(set = "C21", collectorNumber = "168")
 @CardRegistration(set = "LTC", collectorNumber = "215")
 @CardRegistration(set = "TDC", collectorNumber = "213")
 @CardRegistration(set = "M3C", collectorNumber = "211")
+@CardRegistration(set = "OTC", collectorNumber = "165")
+@CardRegistration(set = "LCC", collectorNumber = "225")
+@CardRegistration(set = "DMC", collectorNumber = "122")
 public class FaithlessLooting extends Card {
 
     public FaithlessLooting() {

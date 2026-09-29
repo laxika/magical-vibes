@@ -23,8 +23,6 @@ class VerdantForceTest extends BaseCardTest {
                 .toList();
     }
 
-    // ===== Triggering during controller's upkeep =====
-
     @Test
     @DisplayName("Creates a 1/1 green Saproling token during controller's upkeep")
     void createsTokenDuringControllersUpkeep() {
@@ -45,8 +43,6 @@ class VerdantForceTest extends BaseCardTest {
         assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
     }
 
-    // ===== Triggering during opponent's upkeep =====
-
     @Test
     @DisplayName("Creates a Saproling token during opponent's upkeep under controller's control")
     void createsTokenDuringOpponentsUpkeep() {
@@ -63,8 +59,6 @@ class VerdantForceTest extends BaseCardTest {
         assertThat(p1Tokens.getFirst().getCard().getName()).isEqualTo("Saproling");
         assertThat(p2Tokens).isEmpty();
     }
-
-    // ===== Multiple upkeeps =====
 
     @Test
     @DisplayName("Creates a token on each upkeep, accumulating over multiple turns")
@@ -84,8 +78,6 @@ class VerdantForceTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
     }
 
-    // ===== Multiple Verdant Forces =====
-
     @Test
     @DisplayName("Two Verdant Forces each create a token during upkeep")
     void twoVerdantForcesEachCreateToken() {
@@ -98,5 +90,17 @@ class VerdantForceTest extends BaseCardTest {
         List<Permanent> tokens = saprolingTokens(player1);
 
         assertThat(tokens).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger resolves even if Verdant Force leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new VerdantForce());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(force);
+        resolveAllTriggers();
+
+        assertThat(saprolingTokens(player1)).hasSize(1);
     }
 }

@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.StaunchDefenders;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,11 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         Polymorph.class,
+        AngelOfMercy.class,
         DrudgeSkeletons.class,
-        FountainOfYouth.class,
         GrizzlyBears.class,
         LlanowarElves.class,
-        StaunchDefenders.class
+        Millstone.class
 })
 class PolymorphTest extends BaseCardTest {
 
@@ -35,11 +35,11 @@ class PolymorphTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent with Polymorph")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new Millstone());
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        UUID artifactId = harness.getPermanentId(player1, "Fountain of Youth");
+        UUID artifactId = harness.getPermanentId(player1, "Millstone");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, artifactId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -54,7 +54,7 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up library: non-creature on top, creature underneath
-        harness.setLibrary(player1, List.of(new FountainOfYouth(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Millstone(), new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castAndResolveSorcery(player1, 0, targetId);
@@ -67,7 +67,7 @@ class PolymorphTest extends BaseCardTest {
 
         // Revealed non-creature card should be shuffled back into library
         assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+                .anyMatch(c -> c.getName().equals("Millstone"));
     }
 
     @Test
@@ -128,15 +128,15 @@ class PolymorphTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.setLibrary(player1, List.of(new StaunchDefenders()));
+        harness.setLibrary(player1, List.of(new AngelOfMercy()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
-        harness.assertOnBattlefield(player1, "Staunch Defenders");
-        harness.assertLife(player1, 14);
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        harness.assertLife(player1, 13);
     }
 
     @Test
@@ -147,7 +147,7 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up library with only non-creature cards
-        harness.setLibrary(player1, List.of(new FountainOfYouth(), new FountainOfYouth()));
+        harness.setLibrary(player1, List.of(new Millstone(), new Millstone()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castAndResolveSorcery(player1, 0, targetId);
@@ -189,7 +189,7 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up opponent's library with creature
-        harness.setLibrary(player2, List.of(new FountainOfYouth(), new LlanowarElves()));
+        harness.setLibrary(player2, List.of(new Millstone(), new LlanowarElves()));
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveSorcery(player1, 0, targetId);
@@ -202,7 +202,7 @@ class PolymorphTest extends BaseCardTest {
 
         // Opponent's non-creature cards are shuffled back into their library
         assertThat(gd.playerDecks.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+                .anyMatch(c -> c.getName().equals("Millstone"));
     }
 
     @Test

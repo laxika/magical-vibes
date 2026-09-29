@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "PIO", collectorNumber = "47")
 @CardRegistration(set = "C15", collectorNumber = "86")
 @CardRegistration(set = "M3C", collectorNumber = "177")
+@CardRegistration(set = "LCC", collectorNumber = "146")
 public class BidentOfThassa extends Card {
 
     public BidentOfThassa() {

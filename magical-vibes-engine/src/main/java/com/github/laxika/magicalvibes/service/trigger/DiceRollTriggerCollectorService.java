@@ -30,6 +30,12 @@ public class DiceRollTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT)
+    private boolean handleControllerRollsHighestNaturalResult(TriggerMatchContext match, CardEffect effect,
+                                                              TriggerContext context) {
+        return handleControllerRollsDice(match, effect, context);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
     private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext context) {
@@ -50,6 +56,8 @@ public class DiceRollTriggerCollectorService {
             TargetFilter targetFilter = targetGroupIndex >= 0
                     ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
                     : sourceCard.getTargetFilter();
+            boolean optionalTarget = effect.hasOptionalTarget()
+                    || isOptionalSingleTarget(sourceCard, targetGroupIndex);
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,
                     match.controllerId(),
@@ -57,7 +65,14 @@ public class DiceRollTriggerCollectorService {
                     !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter,
                     0,
-                    sourcePermanentId));
+                    sourcePermanentId,
+                    null,
+                    optionalTarget,
+                    null,
+                    null,
+                    match.controllerId(),
+                    null,
+                    match.sourcePlanarObject()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers on controller rolling dice and awaits a target",
                     match.gameData().id, sourceCard.getName());
@@ -83,5 +98,13 @@ public class DiceRollTriggerCollectorService {
         log.info("Game {} - {} triggers on controller rolling dice",
                 match.gameData().id, sourceCard.getName());
         return true;
+    }
+
+    private boolean isOptionalSingleTarget(Card sourceCard, int targetGroupIndex) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= sourceCard.getSpellTargets().size()) {
+            return false;
+        }
+        var target = sourceCard.getSpellTargets().get(targetGroupIndex);
+        return target.getMinTargets() == 0 && target.getMaxTargets() == 1;
     }
 }

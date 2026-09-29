@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "21")
 @CardRegistration(set = "NCC", collectorNumber = "122")
+@CardRegistration(set = "MKC", collectorNumber = "84")
 public class SmugglersShare extends Card {
 
     public SmugglersShare() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjurePowerNineIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
+@CardRegistration(set = "MB2", collectorNumber = "259")
 @CardRegistration(set = "YDMU", collectorNumber = "4")
 public class OracleOfTheAlpha extends Card {
 

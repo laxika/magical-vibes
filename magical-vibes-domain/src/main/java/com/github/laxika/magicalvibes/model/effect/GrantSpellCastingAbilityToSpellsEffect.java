@@ -48,7 +48,8 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
     }
 
     public GrantSpellCastingAbilityToSpellsEffect {
-        if (grantedAbility != Keyword.CONSPIRE
+        if (grantedAbility != Keyword.DEMONSTRATE
+                && grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE
                 && grantedAbility != Keyword.DEMONSTRATE
                 && grantedAbility != Keyword.IMPROVISE

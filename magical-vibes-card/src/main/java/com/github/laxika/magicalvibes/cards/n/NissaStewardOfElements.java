@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "AKH", collectorNumber = "204")
 @CardRegistration(set = "AKR", collectorNumber = "248")
 @CardRegistration(set = "M3C", collectorNumber = "270")
+@CardRegistration(set = "C20", collectorNumber = "224")
 public class NissaStewardOfElements extends Card {
 
     public NissaStewardOfElements() {

@@ -175,6 +175,11 @@ public class BlockLegalityService {
             });
         }
         List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
+        UUID defenderPlayerId = gameData.playerBattlefields.entrySet().stream()
+                .filter(entry -> entry.getValue() == defenderBattlefield)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
             if (gameQueryService.isLand(gameData, defender)) {
@@ -183,7 +188,7 @@ public class BlockLegalityService {
                 defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
             }
         }
-        return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
+        return new BlockLegalityContext(gameData, defenders, defenderPlayerId, globalBlockRestrictions,
                 globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,
                 defenderCardSubtypes, ignoredLandwalkKeywords, allLandwalkIgnored[0],
                 landwalkIgnoredPermanentIds);
@@ -323,6 +328,10 @@ public class BlockLegalityService {
         if (atk.intimidate() && !blk.artifact()
                 && Collections.disjoint(blk.colors(), atk.colors())) {
             return BlockDenial.INTIMIDATE;
+        }
+        if (atk.nimble()
+                && gameQueryService.getEffectivePower(gameData, blocker) >= 3) {
+            return BlockDenial.NIMBLE;
         }
         // Skulk: can't be blocked by creatures with greater power (CR 702.129a).
         if ((atk.skulk() || atk.ringBearerCantBeBlockedByGreaterPower())
@@ -517,7 +526,9 @@ public class BlockLegalityService {
         }
         UUID controllerId = null;
         if (!creature.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, creature)) {
-            for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            List<CardEffect> staticEffects = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
+            staticEffects.addAll(gameQueryService.getGrantedEffects(gameData, creature));
+            for (CardEffect effect : staticEffects) {
                 Condition unless = null;
                 if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
                     unless = restriction.cantAttackOrBlockUnless();
@@ -575,10 +586,12 @@ public class BlockLegalityService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
                             && (restriction.unblockableIfDefenderControls() != null
+                            || restriction.unblockableIfDefenderHasRadCounters()
                             || restriction.defenderControlsCreaturesSharingTypeMinimum() != null
                             || restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
                             || restriction.blockableOnlyBy() != null
                             || restriction.cantBeBlockedByCreaturesMatching() != null
+                            || restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
                             || restriction.requiresAllDefendingCreaturesToBlock())) {
                         restrictions.add(new AttackerRestriction(source, restriction));
                     }
@@ -611,6 +624,10 @@ public class BlockLegalityService {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
+            if (restriction.unblockableIfDefenderHasRadCounters() && defenderHasRadCounters(context)) {
+                unblockable = true;
+                unblockableForOtherReason = true;
+            }
             if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
                 if (controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId)) {
@@ -619,6 +636,11 @@ public class BlockLegalityService {
                 }
             }
             if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
+                unblockable = true;
+                unblockableForOtherReason = true;
+            }
+            if (restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
+                    && !attacksOwnerOrOwnerControlledPermanent(gameData, attacker)) {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
@@ -666,6 +688,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
+                gameQueryService.hasKeyword(attacker, bonus, Keyword.NIMBLE),
                 gameQueryService.isRingBearer(gameData, attacker),
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SHADOW),
                 cantBeBlockedByLessPower,
@@ -802,6 +825,22 @@ public class BlockLegalityService {
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
+    private boolean attacksOwnerOrOwnerControlledPermanent(GameData gameData, Permanent attacker) {
+        UUID ownerId = attacker.getOriginalCard().getOwnerId();
+        if (ownerId == null) {
+            ownerId = attacker.getCard().getOwnerId();
+        }
+        UUID attackTargetId = attacker.getAttackTarget();
+        if (ownerId == null || attackTargetId == null) {
+            return false;
+        }
+        if (ownerId.equals(attackTargetId)) {
+            return true;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, attackTargetId);
+        return target != null && ownerId.equals(gameQueryService.findPermanentController(gameData, target.getId()));
+    }
+
     private int countIslandsControlledBy(GameData gameData, Permanent attacker) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
         if (controllerId == null) {
@@ -834,6 +873,9 @@ public class BlockLegalityService {
     }
 
     private UUID defenderControllerId(BlockLegalityContext context) {
+        if (context.defenderPlayerId != null) {
+            return context.defenderPlayerId;
+        }
         for (Permanent permanent : context.defenderBattlefield) {
             UUID controllerId = context.gameData.findControllerOf(permanent);
             if (controllerId != null) {
@@ -841,6 +883,11 @@ public class BlockLegalityService {
             }
         }
         return null;
+    }
+
+    private boolean defenderHasRadCounters(BlockLegalityContext context) {
+        UUID defenderId = defenderControllerId(context);
+        return defenderId != null && context.gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
     }
 
 }

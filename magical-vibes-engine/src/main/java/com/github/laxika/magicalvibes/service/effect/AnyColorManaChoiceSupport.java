@@ -150,6 +150,19 @@ public final class AnyColorManaChoiceSupport {
                                            Card sourceCard, UUID sourcePermanentId,
                                            UUID recipientPlayerId, boolean fromSnowSource,
                                            boolean fromCaveSource, Set<CardColor> sourceColors, boolean fromTreasureSource) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
+                fromSnowSource, fromCaveSource, sourceColors, fromTreasureSource, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData, UUID playerId,
+                                           AwardAnyColorManaEffect effect, int amount,
+                                           boolean fromCreature, CardSubtype chosenSubtype,
+                                           Card sourceCard, UUID sourcePermanentId,
+                                           UUID recipientPlayerId, boolean fromSnowSource,
+                                           boolean fromCaveSource, Set<CardColor> sourceColors,
+                                           boolean fromTreasureSource, boolean fromDesertSource) {
         if (amount <= 0) {
             return false;
         }
@@ -213,6 +226,15 @@ public final class AnyColorManaChoiceSupport {
                     && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
         }
+        if (fromDesertSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withDesertSource(true);
+        } else if (fromDesertSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withDesertSource(true);
+        } else if (fromDesertSource
+                && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
+            choiceContext = multicoloredChoice.withDesertSource(true);
+        }
         if (effect.tracksProducingSourceForSpellCastTriggers()
                 && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSourceTracking();
@@ -262,6 +284,9 @@ public final class AnyColorManaChoiceSupport {
                 }
                 if (fromCaveSource) {
                     manaPool.addCaveManaTag(effectiveColor, amount);
+                }
+                if (fromDesertSource) {
+                    manaPool.addDesertManaTag(effectiveColor, amount);
                 }
                 if (fromCreature) {
                     manaPool.addCreatureMana(effectiveColor, amount);
@@ -321,6 +346,9 @@ public final class AnyColorManaChoiceSupport {
                                                Card sourceCard,
                                                UUID sourcePermanentId,
                                                Set<CardColor> sourceColors) {
+        if (effect.grantsAdditionalPlusOneCounterToCreature()) {
+            return new ChoiceContext.CreatureCounterManaColorChoice(playerId, fromCreature, amount);
+        }
         if (effect.grantsAdditionalPlusOneCounterToNonHuman()) {
             return new ChoiceContext.NonHumanCreatureCounterManaColorChoice(playerId, fromCreature, amount);
         }
@@ -342,8 +370,11 @@ public final class AnyColorManaChoiceSupport {
                         playerId, amount, effect.spellOnlySubtypes());
             }
             if (effect.restriction() == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY) {
-                return ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
-                        playerId, amount, effect.subtype());
+                return effect.spellOnlySubtypes().isEmpty()
+                        ? ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.subtype())
+                        : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.spellOnlySubtypes());
             }
             if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
                 return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
@@ -463,8 +494,11 @@ public final class AnyColorManaChoiceSupport {
                     ? null
                     : ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
-                    new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
-                            playerId, amount, effect.subtype(), fromCreature);
+                    effect.spellOnlySubtypes().isEmpty()
+                            ? new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
+                            playerId, amount, effect.subtype(), fromCreature)
+                            : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                            playerId, amount, effect.spellOnlySubtypes());
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->

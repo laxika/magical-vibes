@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStep
 @CardRegistration(set = "M21", collectorNumber = "76")
 @CardRegistration(set = "SLD", collectorNumber = "1721")
 @CardRegistration(set = "SLD", collectorNumber = "2214")
+@CardRegistration(set = "MKC", collectorNumber = "119")
 public class TeferisAgelessInsight extends Card {
 
     public TeferisAgelessInsight() {

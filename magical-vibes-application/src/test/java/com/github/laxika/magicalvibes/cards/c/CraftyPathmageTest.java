@@ -41,6 +41,19 @@ class CraftyPathmageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        Permanent pathmage = addCreatureReady(player1, new CraftyPathmage());
+        Permanent target = addCreatureReady(player1, new FleetingAven());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(pathmage.isTapped()).isTrue();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
     @DisplayName("A creature made unblockable cannot be declared as blocked")
     void preventsBlockingAnAffectedCreature() {
         addCreatureReady(player1, new CraftyPathmage());
@@ -50,8 +63,7 @@ class CraftyPathmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        target.setAttacking(true);
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(1, 0))))

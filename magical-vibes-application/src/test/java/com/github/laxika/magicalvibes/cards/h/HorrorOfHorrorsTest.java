@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,22 +14,24 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import java.util.List;
 
-@CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Forest.class})
+@CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Shock.class, Forest.class})
 class HorrorOfHorrorsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a Swamp puts the regeneration ability on the stack targeting the black creature")
     void activatingTargetsBlackCreature() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        Permanent zombie = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addToBattlefield(player1, new Swamp());
 
-        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.activateAbility(player1, 0, null, zombie.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(skeleton.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(zombie.getId());
         // Swamp is sacrificed as a cost.
         harness.assertInGraveyard(player1, "Swamp");
     }
@@ -37,13 +40,13 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Resolving the ability grants a regeneration shield to the target black creature")
     void resolvingGrantsShield() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        Permanent zombie = addCreatureReady(player1, new DrudgeSkeletons());
         harness.addToBattlefield(player1, new Swamp());
 
-        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.activateAbility(player1, 0, null, zombie.getId());
         harness.passBothPriorities();
 
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
@@ -62,11 +65,30 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Cannot activate the ability without a Swamp to sacrifice")
     void cannotActivateWithoutSwamp() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent zombie = addCreatureReady(player1, new DrudgeSkeletons());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skeleton.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, zombie.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A regeneration shield prevents lethal damage to the black creature")
+    void regenerationShieldPreventsLethalDamage() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent zombie = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, zombie.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, zombie.getId());
+
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player1, "Drudge Skeletons");
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getRegenerationShield()).isZero();
     }
 
     @Test

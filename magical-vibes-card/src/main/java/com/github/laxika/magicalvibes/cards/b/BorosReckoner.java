@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "206")
 @CardRegistration(set = "GK1", collectorNumber = "85")
 @CardRegistration(set = "PIO", collectorNumber = "208")
+@CardRegistration(set = "MKC", collectorNumber = "201")
 public class BorosReckoner extends Card {
 
     public BorosReckoner() {

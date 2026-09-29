@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "99")
+@CardRegistration(set = "MKC", collectorNumber = "147")
 public class AshcloudPhoenix extends Card {
 
     public AshcloudPhoenix() {

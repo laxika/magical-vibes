@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "61")
+@CardRegistration(set = "LCC", collectorNumber = "160")
 public class KopalaWardenOfWaves extends Card {
 
     public KopalaWardenOfWaves() {

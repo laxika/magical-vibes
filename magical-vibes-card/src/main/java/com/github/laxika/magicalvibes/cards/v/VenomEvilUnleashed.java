@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "71")
 @CardRegistration(set = "OM1", collectorNumber = "70")
+@CardRegistration(set = "MSC", collectorNumber = "800")
 public class VenomEvilUnleashed extends Card {
 
     public VenomEvilUnleashed() {

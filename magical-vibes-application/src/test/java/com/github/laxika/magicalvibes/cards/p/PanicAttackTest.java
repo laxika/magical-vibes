@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PanicAttack.class, GrizzlyBears.class, JayemdaeTome.class})
+@CardUsed({PanicAttack.class, GrizzlyBears.class, FellwarStone.class})
 class PanicAttackTest extends BaseCardTest {
 
     @Test
@@ -115,13 +116,13 @@ class PanicAttackTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new FellwarStone());
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID tomeId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID stoneId = harness.getPermanentId(player2, "Fellwar Stone");
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(tomeId)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(stoneId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -184,6 +185,24 @@ class PanicAttackTest extends BaseCardTest {
 
         // creature2 should still be affected
         assertThat(creature2.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The restriction ends during cleanup")
+    void cantBlockRestrictionEndsDuringCleanup() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(blocker.isCantBlockThisTurn()).isFalse();
     }
 
     @Test

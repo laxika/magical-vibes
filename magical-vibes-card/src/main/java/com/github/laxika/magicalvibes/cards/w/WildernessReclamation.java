@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "149")
 @CardRegistration(set = "DSC", collectorNumber = "205")
+@CardRegistration(set = "MKC", collectorNumber = "196")
+@CardRegistration(set = "C20", collectorNumber = "196")
 public class WildernessReclamation extends Card {
 
     public WildernessReclamation() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "140")
+@CardRegistration(set = "HBG", collectorNumber = "179")
 public class DuelingRapier extends Card {
 
     public DuelingRapier() {

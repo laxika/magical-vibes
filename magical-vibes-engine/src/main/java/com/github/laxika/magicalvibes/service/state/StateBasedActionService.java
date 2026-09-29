@@ -225,14 +225,15 @@ public class StateBasedActionService {
         List<Card> removedTokens = new ArrayList<>();
         Set<UUID> removedTokenIds = new HashSet<>();
 
-        gameData.playerDecks.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerHands.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerGraveyards.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
-        gameData.playerCommandZones.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        gameData.playerDecks.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerHands.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerGraveyards.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
+        gameData.playerCommandZones.values().forEach(zone -> removeTokensFromZone(gameData, zone, removedTokens, removedTokenIds));
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.removeIf(entry -> {
                 Card card = entry.card();
-                if (!card.isToken() || card.isTokenCard()) {
+                if ((!card.isToken() && !gameData.dynamicTokenCardIds.contains(card.getId()))
+                        || card.isTokenCard()) {
                     return false;
                 }
                 if (removedTokenIds.add(card.getId())) {
@@ -261,6 +262,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
+            gameData.exiledCardsWithBrainCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
@@ -278,6 +280,7 @@ public class StateBasedActionService {
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.graveyardCardsEnterTapped.remove(cardId);
         }
+        gameData.dynamicTokenCardIds.removeAll(removedTokenIds);
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
         gameData.clearDelayedActions(PendingExileReturn.class,
                 pending -> removedTokenIds.contains(pending.card().getId()));
@@ -293,9 +296,11 @@ public class StateBasedActionService {
         return true;
     }
 
-    private void removeTokensFromZone(List<Card> zone, List<Card> removedTokens, Set<UUID> removedTokenIds) {
+    private void removeTokensFromZone(GameData gameData, List<Card> zone,
+                                      List<Card> removedTokens, Set<UUID> removedTokenIds) {
         zone.removeIf(card -> {
-            if (!card.isToken() || card.isTokenCard()) {
+            if ((!card.isToken() && !gameData.dynamicTokenCardIds.contains(card.getId()))
+                    || card.isTokenCard()) {
                 return false;
             }
             if (removedTokenIds.add(card.getId())) {
@@ -366,7 +371,9 @@ public class StateBasedActionService {
                     // is destroyed (regeneration can replace either)
                     lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
                 } else if (gameQueryService.isPlaneswalker(gameData, p)
-                        && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+                        && (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, p)
+                        ? gameQueryService.getEffectiveToughness(gameData, p) <= 0
+                        : p.getCounterCount(CounterType.LOYALTY) <= 0)) {
                     toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
                 } else if (gameQueryService.isBattle(gameData, p)
                         && p.getCounterCount(CounterType.DEFENSE) <= 0

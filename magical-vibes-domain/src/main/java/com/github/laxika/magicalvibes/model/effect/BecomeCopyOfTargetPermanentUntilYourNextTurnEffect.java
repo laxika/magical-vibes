@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Set;
 
-/** Makes the source permanent a copy of a target artifact, non-Aura enchantment, or land. */
+/** Makes the source permanent a copy of a target permanent until its controller's next turn. */
 public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
         String nameOverride,
         Integer powerOverride,
@@ -24,7 +25,9 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
         Set<CardSubtype> additionalSubtypesOverride,
         Set<CardType> additionalTypesOverride,
         Set<CardSupertype> additionalSupertypesOverride,
-        Set<Keyword> additionalKeywordsOverride
+        Set<Keyword> additionalKeywordsOverride,
+        PermanentPredicate targetPredicate,
+        EffectSlot retainedAbilitySlot
 ) implements CardEffect {
 
     public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect {
@@ -36,9 +39,29 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
                 ? Set.of() : Set.copyOf(additionalSupertypesOverride);
         additionalKeywordsOverride = additionalKeywordsOverride == null
                 ? Set.of() : Set.copyOf(additionalKeywordsOverride);
+        targetPredicate = targetPredicate == null ? defaultTargetPredicate() : targetPredicate;
     }
 
-    private static PermanentPredicate targetPredicate() {
+    public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
+            String nameOverride,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Set<CardSubtype> additionalSubtypesOverride,
+            Set<CardType> additionalTypesOverride,
+            Set<CardSupertype> additionalSupertypesOverride,
+            Set<Keyword> additionalKeywordsOverride) {
+        this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
+                additionalTypesOverride, additionalSupertypesOverride, additionalKeywordsOverride,
+                null, null);
+    }
+
+    public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
+            PermanentPredicate targetPredicate, EffectSlot retainedAbilitySlot) {
+        this(null, null, null, Set.of(), Set.of(), Set.of(), Set.of(),
+                targetPredicate, retainedAbilitySlot);
+    }
+
+    private static PermanentPredicate defaultTargetPredicate() {
         return new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentAllOfPredicate(List.of(
@@ -51,6 +74,6 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate());
+        return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
     }
 }

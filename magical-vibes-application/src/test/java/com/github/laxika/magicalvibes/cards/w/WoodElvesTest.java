@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -24,8 +25,7 @@ class WoodElvesTest extends BaseCardTest {
         setupAndCast();
         Forest forest = setupLibrary();
 
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger → library search
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -40,8 +40,7 @@ class WoodElvesTest extends BaseCardTest {
         setupAndCast();
         Forest forest = setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         harness.handleCardChosen(player1, 0);
@@ -61,8 +60,7 @@ class WoodElvesTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         harness.handleCardChosen(player1, -1);
@@ -77,13 +75,31 @@ class WoodElvesTest extends BaseCardTest {
         setupAndCast();
         harness.setLibrary(player1, List.of(new Plains(), new Island(), new GrizzlyBears()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gameLogContains("finds no Forest cards")).isTrue();
         assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
+    @DisplayName("ETB search includes nonbasic cards with the Forest subtype")
+    void findsNonbasicForestCard() {
+        setupAndCast();
+        DryadArbor dryadArbor = new DryadArbor();
+        harness.setLibrary(player1, List.of(new Plains(), dryadArbor, new Island(), new GrizzlyBears()));
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(dryadArbor);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == dryadArbor && !p.isTapped());
     }
 
     private void setupAndCast() {

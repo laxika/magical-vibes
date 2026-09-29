@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "271")
+@CardRegistration(set = "C21", collectorNumber = "62")
 public class GuardianAugmenter extends Card {
 
     public GuardianAugmenter() {

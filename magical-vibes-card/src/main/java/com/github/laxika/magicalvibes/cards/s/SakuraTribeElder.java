@@ -16,11 +16,14 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "168")
 @CardRegistration(set = "CMD", collectorNumber = "169")
 @CardRegistration(set = "C15", collectorNumber = "200")
+@CardRegistration(set = "MB2", collectorNumber = "72")
 @CardRegistration(set = "NCC", collectorNumber = "307")
 @CardRegistration(set = "DSC", collectorNumber = "194")
 @CardRegistration(set = "SLD", collectorNumber = "2518")
 @CardRegistration(set = "TDC", collectorNumber = "266")
 @CardRegistration(set = "M3C", collectorNumber = "243")
+@CardRegistration(set = "MKC", collectorNumber = "183")
+@CardRegistration(set = "C20", collectorNumber = "187")
 public class SakuraTribeElder extends Card {
 
     public SakuraTribeElder() {

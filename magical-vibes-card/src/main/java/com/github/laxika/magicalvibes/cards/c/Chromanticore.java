@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "144")
 @CardRegistration(set = "PIO", collectorNumber = "212")
+@CardRegistration(set = "DMC", collectorNumber = "146")
 public class Chromanticore extends Card {
 
     public Chromanticore() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -22,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDra
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -50,22 +54,32 @@ public class PlayedCardNameTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    })
     private boolean handleControllerCastsExiledCard(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return sc.castZone() == Zone.EXILE
-                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.spellCard(), trigger.followUpEffect());
+                && collectFollowUp(match, sc.exiledSourcePermanentId(), sc.castingPlayerId(),
+                sc.spellCard(), trigger.followUpEffect());
     }
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
     private boolean handleControllerPlaysExiledCardLand(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return lp.fromExile()
-                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.landCard(), trigger.followUpEffect());
+                && collectFollowUp(match, lp.exiledSourcePermanentId(), lp.playingPlayerId(),
+                lp.landCard(), trigger.followUpEffect());
     }
 
     @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
@@ -174,6 +188,32 @@ public class PlayedCardNameTriggerCollectorService {
         return enqueueLandPlayTrigger(match, resolved, landPlayed.playingPlayerId());
     }
 
+    @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleFoodWhenPlayingLandFromLibraryTop(TriggerMatchContext match,
+            CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
+        if (landPlayed.playZone() != Zone.LIBRARY
+                || !predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), trigger.filter(),
+                match.permanent().getOriginalCard().getId(), match.gameData(), match.controllerId())
+                || !match.gameData().oncePerTurnLibraryPlayPermissionsUsedThisTurn
+                .contains(match.permanent().getId())) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(CreateTokenEffect.ofFoodToken(1))),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
     /**
      * Default for {@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
      * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). Name-match triggers above take precedence
@@ -238,6 +278,9 @@ public class PlayedCardNameTriggerCollectorService {
                 match.permanent().getId());
         entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
+        if (effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on playing a land",
@@ -246,7 +289,7 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     private boolean collectFollowUp(TriggerMatchContext match, UUID exiledSourcePermanentId,
-                                    Card playedCard, CardEffect followUpEffect) {
+                                    UUID playingPlayerId, Card playedCard, CardEffect followUpEffect) {
         if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
             return false;
         }
@@ -260,6 +303,7 @@ public class PlayedCardNameTriggerCollectorService {
                 new ArrayList<>(List.of(followUpEffect)),
                 null,
                 match.permanent().getId());
+        entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

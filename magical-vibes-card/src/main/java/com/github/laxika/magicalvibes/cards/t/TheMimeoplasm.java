@@ -11,6 +11,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1773")
 @CardRegistration(set = "2X2", collectorNumber = "254")
 @CardRegistration(set = "CMD", collectorNumber = "210")
+@CardRegistration(set = "OTC", collectorNumber = "234")
 public class TheMimeoplasm extends Card {
 
     public TheMimeoplasm() {

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1463")
 @CardRegistration(set = "MH1", collectorNumber = "13")
 @CardRegistration(set = "HA7", collectorNumber = "2")
+@CardRegistration(set = "MB2", collectorNumber = "147")
 public class GiverOfRunes extends Card {
 
     public GiverOfRunes() {

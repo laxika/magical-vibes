@@ -20,6 +20,8 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2436")
 @CardRegistration(set = "SLD", collectorNumber = "267")
+@CardRegistration(set = "PIP", collectorNumber = "74")
+@CardRegistration(set = "PIP", collectorNumber = "602")
 public class BreakDown extends Card {
 
     public BreakDown() {

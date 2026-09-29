@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "230")
+@CardRegistration(set = "LCC", collectorNumber = "291")
 public class TishanaVoiceOfThunder extends Card {
 
     public TishanaVoiceOfThunder() {

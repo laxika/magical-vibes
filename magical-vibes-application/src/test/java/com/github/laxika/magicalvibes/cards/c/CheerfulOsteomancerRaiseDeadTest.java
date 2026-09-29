@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CheerfulOsteomancerRaiseDead.class, RaiseDead.class, CanyonWildcat.class})
+@CardUsed({CheerfulOsteomancerRaiseDead.class, RaiseDead.class, GrizzlyBears.class})
 class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
 
     @Test
@@ -35,7 +36,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     @DisplayName("Casting the prepared Raise Dead copy unprepares Cheerful Osteomancer and returns a creature to hand")
     void castingPrepareCopyUnpreparesAndReturnsCreatureFromGraveyard() {
         Permanent osteomancer = castCheerfulOsteomancer();
-        Card creature = new CanyonWildcat();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         UUID copyId = osteomancer.getPreparedSpellCardId();
 
@@ -46,8 +47,8 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
 
         assertThat(osteomancer.isPrepared()).isFalse();
         assertThat(osteomancer.getPreparedSpellCardId()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(creature.getId()));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(copyId)).isNull();
         assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
     }
@@ -55,7 +56,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Raise Dead directly returns a target creature card from its controller's graveyard to hand")
     void directRaiseDeadReturnsCreatureCardToHand() {
-        Card creature = new CanyonWildcat();
+        Card creature = new GrizzlyBears();
         Card raiseDead = new RaiseDead();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(raiseDead));
@@ -63,11 +64,9 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()))
-                .anyMatch(card -> card.getId().equals(raiseDead.getId()));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Raise Dead");
     }
 
     @Test
@@ -88,7 +87,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Raise Dead fizzles if the target creature leaves the graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
-        Card creature = new CanyonWildcat();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new RaiseDead()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -97,9 +96,8 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -117,7 +115,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     @DisplayName("Prepared Raise Dead copy cannot target a creature in the opponent's graveyard")
     void preparedRaiseDeadCannotTargetOpponentGraveyard() {
         Permanent osteomancer = castCheerfulOsteomancer();
-        Card creature = new CanyonWildcat();
+        Card creature = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(creature));
         UUID copyId = osteomancer.getPreparedSpellCardId();
 

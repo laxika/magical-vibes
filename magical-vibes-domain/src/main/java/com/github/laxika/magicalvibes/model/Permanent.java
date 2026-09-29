@@ -32,6 +32,8 @@ public class Permanent {
     @Setter private Card fullTextCopySourceCard;
     /** Copiable characteristics before a layer-3 graveyard text change, including Clone effects. */
     @Setter private Card fullTextCopyBaseCard;
+    /** The creature card exiled by Werewhat and linked to its dynamic back face. */
+    @Setter private Card werewhatCompanionCard;
     private boolean tapped;
     /** Whether this permanent was untapped before its controller's most recent untap step. */
     @Setter private boolean untappedAtTurnStart;
@@ -40,6 +42,8 @@ public class Permanent {
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
     @Setter private boolean entryCostPaid;
+    /** True once an optional land-casualty entry choice has been completed, whether or not it was paid. */
+    @Setter private boolean entryCostResolved;
     /** Null until the controller has chosen the cards to reveal for Amplify. */
     @Setter private Integer amplifyRevealedCards;
     private boolean attacking;
@@ -144,6 +148,8 @@ public class Permanent {
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
     @Setter private int timesRegeneratedThisTurn;
     private UUID attachedTo;
+    /** Realms currently hosting this permanent. */
+    private final Set<UUID> hostedByRealmIds = new HashSet<>();
     /**
      * The last permanent this one was attached to, kept after {@link #attachedTo} is cleared.
      * Triggers that fire once the host has already left the battlefield (Kusari-Gama's "whenever
@@ -169,6 +175,8 @@ public class Permanent {
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
     @Setter private String secondChosenName;
     @Setter private CardSubtype chosenSubtype;
+    /** Whether this permanent has completed its custom buddy-list choice as it entered. */
+    @Setter private boolean buddyListChoiceMade;
     @Setter private CardType chosenCardType;
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
@@ -181,6 +189,12 @@ public class Permanent {
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
     @Setter private int chosenNumber;
+    /** Numbers already chosen for The Toymaker's Trap while this permanent remains on the battlefield. */
+    private final Set<Integer> toymakersTrapChosenNumbers = new HashSet<>();
+    /** The ten digits written down by Duelists' Convocation International. */
+    @Setter private List<Integer> chosenNumberDigits = List.of();
+    /** The positions of digits crossed out by Duelists' Convocation International. */
+    private final Set<Integer> crossedNumberDigitPositions = new HashSet<>();
     /**
      * Labels of the modes this permanent has already had chosen for a "choose one that hasn't been
      * chosen" modal trigger (Demonic Pact). Consumed modes are never offered again while this object
@@ -214,6 +228,8 @@ public class Permanent {
     @Setter private Card chosenCard;
     /** The creature card exiled with this permanent most recently chosen for ability copying. */
     @Setter private Card lastChosenExiledCard;
+    /** The card most recently exiled as an activated-ability cost when the resolving ability needs it. */
+    @Setter private Card chosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
@@ -265,6 +281,8 @@ public class Permanent {
     @Setter private boolean exileDamagedCreaturesInsteadOfDyingThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
+    /** Source permanent to associate with this turn's exile replacement, when applicable. */
+    @Setter private UUID exileInsteadOfDieSourcePermanentId;
     /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
      *  the Mirage flash clause ({@code FlashCastWithCleanupSacrificeEffect}) when the spell was cast
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
@@ -322,6 +340,8 @@ public class Permanent {
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
+    /** Current base toughness used as loyalty by an attached Planeswalkerificate-style Aura. */
+    @Setter private Integer toughnessAsLoyalty;
     private boolean faceDown;
     /** An automatic Illusionary Mask turn-up whose engine triggers still need to be collected. */
     @Setter private boolean pendingAutomaticTurnFaceUp;
@@ -350,6 +370,7 @@ public class Permanent {
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
+    private int timeCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
     private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
@@ -442,6 +463,8 @@ public class Permanent {
     @Setter private boolean protectionFromOpponentsPermanently;
     /** Players from whom this permanent has durable protection, captured when the effect resolved. */
     private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
+    /** Players from whom this permanent has protection until end of turn. */
+    private final Set<UUID> protectionFromPlayerIdsUntilEndOfTurn = new HashSet<>();
     /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
@@ -569,6 +592,8 @@ public class Permanent {
     @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
     @Setter private boolean alternateCost;
+    /** Effective toughness of the permanent sacrificed to pay this permanent's alternate cost. */
+    @Setter private int alternateCostSacrificedToughness;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this permanent was cast for its spectacle cost. */
@@ -727,10 +752,13 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.fullTextCopyBaseCard = source.fullTextCopyBaseCard;
+        this.werewhatCompanionCard = source.werewhatCompanionCard;
         this.tapped = source.tapped;
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
+        this.entryCostPaid = source.entryCostPaid;
+        this.entryCostResolved = source.entryCostResolved;
         this.amplifyRevealedCards = source.amplifyRevealedCards;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
@@ -774,18 +802,23 @@ public class Permanent {
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.lastAttachedTo = source.lastAttachedTo;
+        this.hostedByRealmIds.addAll(source.hostedByRealmIds);
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
         this.chosenName = source.chosenName;
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.buddyListChoiceMade = source.buddyListChoiceMade;
         this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenMode = source.chosenMode;
         this.chosenAttackDirection = source.chosenAttackDirection;
         this.chosenModeByPlayer.putAll(source.chosenModeByPlayer);
         this.chosenNumber = source.chosenNumber;
+        this.toymakersTrapChosenNumbers.addAll(source.toymakersTrapChosenNumbers);
+        this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
+        this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.unlockedRoomDoors.addAll(source.unlockedRoomDoors);
@@ -799,6 +832,7 @@ public class Permanent {
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
         this.lastChosenExiledCard = source.lastChosenExiledCard;
+        this.chosenExiledCard = source.chosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;
@@ -821,6 +855,7 @@ public class Permanent {
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
+        this.exileInsteadOfDieSourcePermanentId = source.exileInsteadOfDieSourcePermanentId;
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
@@ -845,6 +880,7 @@ public class Permanent {
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
+        this.toughnessAsLoyalty = source.toughnessAsLoyalty;
         this.faceDown = source.faceDown;
         this.pendingAutomaticTurnFaceUp = source.pendingAutomaticTurnFaceUp;
         this.cloaked = source.cloaked;
@@ -864,6 +900,7 @@ public class Permanent {
         this.counters.putAll(source.counters);
         this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
+        this.timeCountersRemovedSinceTriggerCheck = source.timeCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
@@ -891,6 +928,7 @@ public class Permanent {
         this.protectionFromColorlessUntilEndOfTurn = source.protectionFromColorlessUntilEndOfTurn;
         this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
+        this.protectionFromPlayerIdsUntilEndOfTurn.addAll(source.protectionFromPlayerIdsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
@@ -934,6 +972,7 @@ public class Permanent {
         this.castWithWarp = source.castWithWarp;
         this.madness = source.madness;
         this.alternateCost = source.alternateCost;
+        this.alternateCostSacrificedToughness = source.alternateCostSacrificedToughness;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
@@ -1161,6 +1200,12 @@ public class Permanent {
         this.attachedTo = attachedTo;
     }
 
+    public void addHostedByRealm(UUID realmId) {
+        if (realmId != null) {
+            hostedByRealmIds.add(realmId);
+        }
+    }
+
     public void setBlocking(boolean blocking) {
         this.blocking = blocking;
         if (blocking) {
@@ -1310,6 +1355,9 @@ public class Permanent {
         if (counterType == CounterType.LOYALTY && newCount < previousCount) {
             loyaltyCountersRemovedSinceTriggerCheck += previousCount - newCount;
         }
+        if (counterType == CounterType.TIME && newCount < previousCount) {
+            timeCountersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (count <= 0) {
             counters.remove(counterType);
         } else {
@@ -1326,6 +1374,12 @@ public class Permanent {
     public int drainLoyaltyCountersRemovedSinceTriggerCheck() {
         int removed = loyaltyCountersRemovedSinceTriggerCheck;
         loyaltyCountersRemovedSinceTriggerCheck = 0;
+        return removed;
+    }
+
+    public int drainTimeCountersRemovedSinceTriggerCheck() {
+        int removed = timeCountersRemovedSinceTriggerCheck;
+        timeCountersRemovedSinceTriggerCheck = 0;
         return removed;
     }
 
@@ -1704,6 +1758,7 @@ public class Permanent {
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
+        this.exileInsteadOfDieSourcePermanentId = null;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();
         this.saddled = false;
@@ -1723,6 +1778,7 @@ public class Permanent {
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
+        this.protectionFromPlayerIdsUntilEndOfTurn.clear();
         this.protectionFromColorlessUntilEndOfTurn = false;
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;

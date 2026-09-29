@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "226")
+@CardRegistration(set = "HBG", collectorNumber = "239")
 public class KrydleOfBaldursGate extends Card {
 
     public KrydleOfBaldursGate() {

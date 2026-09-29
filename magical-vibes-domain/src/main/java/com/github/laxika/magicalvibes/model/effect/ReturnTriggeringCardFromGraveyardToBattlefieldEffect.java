@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
@@ -14,21 +15,29 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public record ReturnTriggeringCardFromGraveyardToBattlefieldEffect(boolean enterTapped,
                                                                    boolean returnUnderController,
                                                                    CounterType counterType,
-                                                                   int counterAmount)
+                                                                   int counterAmount,
+                                                                   CardSubtype grantSubtype)
         implements CardEffect {
 
     /** Convenience for the untapped return (Graceful Reprieve). */
     public ReturnTriggeringCardFromGraveyardToBattlefieldEffect() {
-        this(false, false, null, 0);
+        this(false, false, null, 0, null);
     }
 
     /** Convenience for the owner's-control return with configurable tapped entry. */
     public ReturnTriggeringCardFromGraveyardToBattlefieldEffect(boolean enterTapped) {
-        this(enterTapped, false, null, 0);
+        this(enterTapped, false, null, 0, null);
     }
 
     public ReturnTriggeringCardFromGraveyardToBattlefieldEffect(boolean enterTapped,
                                                                  boolean returnUnderController) {
-        this(enterTapped, returnUnderController, null, 0);
+        this(enterTapped, returnUnderController, null, 0, null);
+    }
+
+    public ReturnTriggeringCardFromGraveyardToBattlefieldEffect(boolean enterTapped,
+                                                                 boolean returnUnderController,
+                                                                 CounterType counterType,
+                                                                 int counterAmount) {
+        this(enterTapped, returnUnderController, counterType, counterAmount, null);
     }
 }

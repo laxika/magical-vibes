@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -67,8 +68,11 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
             return;
         }
 
-        for (int i = exiled.size() - 1; i >= 0; i--) {
-            Card card = exiled.get(i);
+        List<Card> offeredCards = castEffect.random()
+                ? List.of(exiled.get(ThreadLocalRandom.current().nextInt(exiled.size())))
+                : exiled;
+        for (int i = offeredCards.size() - 1; i >= 0; i--) {
+            Card card = offeredCards.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card, controllerId,
                     List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(true)),
@@ -78,7 +82,7 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
         }
 
         log.info("Game {} - {} offers a free cast of {} card(s) exiled with it",
-                gameData.id, entry.getCard().getName(), exiled.size());
+                gameData.id, entry.getCard().getName(), offeredCards.size());
     }
 
     /**

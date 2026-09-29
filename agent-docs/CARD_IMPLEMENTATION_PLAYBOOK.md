@@ -174,6 +174,8 @@ public class ExampleCard extends Card {
 - Freerunning ("Freerunning {cost}" — an alternate hand cost gated on combat damage with an Assassin or commander): use `new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), new Freerunning(), false)`. The condition reads the existing combat-damage source history and designated commander identities; cast it through `GameService.playCardWithAlternateCost` / harness `castWithAlternateCost`.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 
+- Blitz ("Creature spells you cast from your hand have blitz {cost}"): use `GrantBlitzToSpellsEffect("{cost}", new CardTypePredicate(CardType.CREATURE))`; the granted alternate cast adds haste, a next-end-step sacrifice, and draw on death to the runtime card.
+
 - Overload ("Overload {cost}" — CR 702.96, RTR/GTC/GRN, e.g. Blustersquall, Vandalblast, Cyclonic Rift):
   - Two halves. The **cost** is a plain pure-mana alternate hand cast: `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"))))` — same shape as evoke/prowl, so it replaces the mana cost and is forced through a dedicated entry point (`GameService.playCardWithOverload` / harness `castWithOverload(player, cardIndex)`; no target argument).
   - The **text change** ("replace all instances of 'target' with 'each'", CR 702.96a) is a `ConditionalReplacementEffect(new Overloaded(), printedTargetedEffect, massEffect)` in `EffectSlot.SPELL`. Declare the printed targeting normally with `target(...)`; per CR 702.96b an overloaded spell chooses **no** targets, so the upgraded branch must be a non-targeting mass effect.

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "132")
+@CardRegistration(set = "HBG", collectorNumber = "175")
 public class BattleCryGoblin extends Card {
 
     public BattleCryGoblin() {

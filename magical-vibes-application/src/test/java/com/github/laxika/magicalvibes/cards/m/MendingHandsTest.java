@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({FirstVolley.class, GnarledMass.class, MendingHands.class})
+@CardUsed({MendingHands.class, GrizzlyBears.class, FirstVolley.class, GnarledMass.class})
 class MendingHandsTest extends BaseCardTest {
 
     @Test
@@ -68,21 +69,21 @@ class MendingHandsTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.getGameData().playerDamagePreventionShields.put(player2.getId(), 4);
 
-        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveCombat();
 
-        // 3 combat damage fully prevented (shield 4 >= 3) → life unchanged, 1 of shield remains
+        // Two combat damage is fully prevented; two shield points remain.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Prevention shields are cleared at end of turn")
     void preventionShieldsClearedAtEndOfTurn() {
-        Permanent perm = addCreatureReady(player1, new GnarledMass());
+        Permanent perm = addCreatureReady(player1, new GrizzlyBears());
         perm.setDamagePreventionShield(4);
-        gd.playerDamagePreventionShields.put(player1.getId(), 4);
+        harness.getGameData().playerDamagePreventionShields.put(player1.getId(), 4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

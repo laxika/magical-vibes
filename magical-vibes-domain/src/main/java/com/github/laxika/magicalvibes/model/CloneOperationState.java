@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ public class CloneOperationState {
     public boolean copyColor = true;
     // Cursed Mirror: the copy replacement expires during cleanup rather than persisting.
     public boolean copyUntilEndOfTurn;
+    // Flesh Duplicate: add vanishing 3 only when the copied permanent lacks vanishing.
+    public boolean addVanishingIfCopiedPermanentLacksIt;
     // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
     public boolean entersTapped;
     public boolean ninjutsuEntry;
@@ -49,6 +52,7 @@ public class CloneOperationState {
     public int xValue;
     public CardPredicate copyCardFilter;
     public boolean graveyardCopyChoicePending;
+    public CopyCreatureCardInGraveyardOnEnterEffect graveyardCopyEffect;
     public boolean exileCopiedGraveyardCardAfterEntry;
     public boolean mimeoplasmGraveyardChoicePending;
     public boolean mimeoplasmCopyChoicePending;

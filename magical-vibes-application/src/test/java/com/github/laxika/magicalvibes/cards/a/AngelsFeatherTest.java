@@ -25,10 +25,7 @@ class AngelsFeatherTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Angel's Feather puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new AngelsFeather()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AngelsFeather(), "{2}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -42,10 +39,7 @@ class AngelsFeatherTest extends BaseCardTest {
     @Test
     @DisplayName("Angel's Feather resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new AngelsFeather()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AngelsFeather(), "{2}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -59,12 +53,8 @@ class AngelsFeatherTest extends BaseCardTest {
     @DisplayName("Controller casts white spell, accepts may ability, gains 1 life")
     void controllerCastsWhiteSpellAndAccepts() {
         harness.addToBattlefield(player1, new AngelsFeather());
-        harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
 
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
@@ -86,12 +76,8 @@ class AngelsFeatherTest extends BaseCardTest {
     @DisplayName("Controller casts white spell, declines may ability, no life gain")
     void controllerCastsWhiteSpellAndDeclines() {
         harness.addToBattlefield(player1, new AngelsFeather());
-        harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -117,12 +103,9 @@ class AngelsFeatherTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player2, 0);
+        int opponentLifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
+        harness.castFromHand(player2, new SuntailHawk(), "{W}");
 
         // Player1 (controller of Angel's Feather) should be prompted
         GameData gd = harness.getGameData();
@@ -134,6 +117,7 @@ class AngelsFeatherTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
     // ===== Non-white spell does NOT trigger =====
@@ -142,10 +126,7 @@ class AngelsFeatherTest extends BaseCardTest {
     @DisplayName("Non-white spell does not trigger Angel's Feather")
     void nonWhiteSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new AngelsFeather());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         GameData gd = harness.getGameData();
         // Should not be awaiting may ability
@@ -162,12 +143,8 @@ class AngelsFeatherTest extends BaseCardTest {
     void multipleFeathersTriggerIndependently() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new AngelsFeather());
-        harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
 
         // First feather prompt
         harness.handleMayAbilityChosen(player1, true);
@@ -193,10 +170,10 @@ class AngelsFeatherTest extends BaseCardTest {
     @DisplayName("Angel's Feather does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
         // Angel's Feather is in the hand, not on the battlefield
-        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setHand(player1, List.of(new AngelsFeather(), new SuntailHawk()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 1);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

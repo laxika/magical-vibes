@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "160")
 @CardRegistration(set = "2X2", collectorNumber = "165")
+@CardRegistration(set = "C20", collectorNumber = "198")
 public class AbzanAscendancy extends Card {
 
     public AbzanAscendancy() {

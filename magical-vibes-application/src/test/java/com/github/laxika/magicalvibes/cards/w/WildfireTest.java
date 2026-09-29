@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
-import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,8 +15,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
+import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
 
-@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, ShivanHellkite.class, ThunderingGiant.class, Wildfire.class})
+@CardUsed({AncientSilverback.class, Forest.class, GrizzlyBears.class, Mountain.class, Wildfire.class, ShivanHellkite.class, ThunderingGiant.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -109,20 +109,37 @@ class WildfireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
-    void dealsFourDamageToEachCreatureUpstreamReview() {
-        addLands(4);
-        harness.addToBattlefield(player1, new ThunderingGiant());
-        harness.addToBattlefield(player2, new ThunderingGiant());
-        harness.addToBattlefield(player2, new ShivanHellkite());
+    @DisplayName("Both players choose four lands before Wildfire deals damage")
+    void bothPlayersChooseFourLandsBeforeDamage() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+            harness.addToBattlefield(player2, new Forest());
+        }
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientSilverback());
 
         castWildfire();
 
-        harness.assertLife(player1, 20);
-        harness.assertLife(player2, 20);
-        harness.assertNotOnBattlefield(player1, "Thundering Giant");
-        harness.assertNotOnBattlefield(player2, "Thundering Giant");
-        harness.assertOnBattlefield(player2, "Shivan Hellkite");
+        PendingInteraction.MultiPermanentChoice player1Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player1Choice).isNotNull();
+        assertThat(player1Choice.playerId()).isEqualTo(player1.getId());
+        assertThat(player1Choice.maxCount()).isEqualTo(4);
+        harness.handleMultiplePermanentsChosen(player1, player1Choice.validIds().subList(0, 4));
+
+        PendingInteraction.MultiPermanentChoice player2Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player2Choice).isNotNull();
+        assertThat(player2Choice.playerId()).isEqualTo(player2.getId());
+        assertThat(player2Choice.maxCount()).isEqualTo(4);
+        harness.handleMultiplePermanentsChosen(player2, player2Choice.validIds().subList(0, 4));
+
+        assertThat(landCount(player1)).isEqualTo(1);
+        assertThat(landCount(player2)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Ancient Silverback");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -152,12 +169,29 @@ class WildfireTest extends BaseCardTest {
     @Test
     @DisplayName("A player with no lands still has their creatures dealt damage")
     void playerWithNoLandsStillHasCreaturesDamaged() {
-        harness.addToBattlefield(player1, new ShivanHellkite());
-        harness.addToBattlefield(player2, new ThunderingGiant());
+        harness.addToBattlefield(player1, new AncientSilverback());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         castWildfire();
 
-        harness.assertOnBattlefield(player1, "Shivan Hellkite");
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
+    void dealsFourDamageToEachCreatureUpstreamReview() {
+        addLands(4);
+        harness.addToBattlefield(player1, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+        harness.addToBattlefield(player2, new ShivanHellkite());
+
+        castWildfire();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Thundering Giant");
         harness.assertNotOnBattlefield(player2, "Thundering Giant");
+        harness.assertOnBattlefield(player2, "Shivan Hellkite");
     }
 }

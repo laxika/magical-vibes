@@ -43,10 +43,10 @@ class AirElementalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Flying allows Air Elemental to be blocked by a creature with reach")
-    void canBeBlockedByCreatureWithReach() {
-        addCreatureReady(player1, new AirElemental());
-        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+    @DisplayName("Flying does not prevent Air Elemental from blocking a non-flying creature")
+    void flyingDoesNotPreventBlockingNonFlyingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -55,10 +55,10 @@ class AirElementalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Flying does not prevent Air Elemental from blocking a non-flying creature")
-    void flyingDoesNotPreventBlockingNonFlyingCreature() {
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new AirElemental());
+    @DisplayName("Flying allows Air Elemental to be blocked by a creature with reach")
+    void canBeBlockedByCreatureWithReach() {
+        addCreatureReady(player1, new AirElemental());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

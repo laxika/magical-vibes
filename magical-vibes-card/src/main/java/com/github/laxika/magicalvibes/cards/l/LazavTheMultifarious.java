@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "184")
 @CardRegistration(set = "RVR", collectorNumber = "196")
+@CardRegistration(set = "MKC", collectorNumber = "214")
 public class LazavTheMultifarious extends Card {
 
     public LazavTheMultifarious() {

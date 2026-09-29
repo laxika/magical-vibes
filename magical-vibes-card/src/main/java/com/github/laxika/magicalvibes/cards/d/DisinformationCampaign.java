@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "167")
+@CardRegistration(set = "MKC", collectorNumber = "208")
 public class DisinformationCampaign extends Card {
 
     public DisinformationCampaign() {

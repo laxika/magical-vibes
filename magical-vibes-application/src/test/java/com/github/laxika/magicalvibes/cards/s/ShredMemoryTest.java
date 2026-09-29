@@ -166,7 +166,7 @@ class ShredMemoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(shredMemory));
         harness.setLibrary(player1, List.of(drawnAndDiscardedCard, matchingCard));
         harness.setHand(player2, List.of(new BorosRecruit()));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new BorosRecruit()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
