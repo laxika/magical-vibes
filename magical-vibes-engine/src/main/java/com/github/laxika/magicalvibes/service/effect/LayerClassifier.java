@@ -149,6 +149,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurn
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.HasAllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
@@ -282,6 +283,7 @@ public final class LayerClassifier {
         // Layer 3 — text-changing effects (CR 613.2c / CR 612).
         map.put(ChangeColorTextEffect.class, fixed(Layer.L3_TEXT));
         map.put(SetNameEffect.class, fixed(Layer.L3_TEXT));
+        map.put(HasAllCardNamesEffect.class, fixedCharacteristicDefining(Layer.L3_TEXT));
         map.put(SetChosenNameAndCreatureTypeEffect.class, fixed(Layer.L3_TEXT, Layer.L4_TYPE));
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).

@@ -167,6 +167,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
                 );
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+                when(permanentRemovalService.removePermanentToExile(gd, target)).thenReturn(true);
 
                 exileTargetPermanentAndTrackWithSourceHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
@@ -193,6 +194,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
                 );
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+                when(permanentRemovalService.removePermanentToExile(gd, target)).thenReturn(true);
 
                 exileTargetPermanentAndTrackWithSourceHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 

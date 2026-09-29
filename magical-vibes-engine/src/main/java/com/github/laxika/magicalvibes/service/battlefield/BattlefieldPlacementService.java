@@ -281,6 +281,15 @@ public class BattlefieldPlacementService {
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
             applyAllPermanentsEnterUntapped(gameData, permanent);
+            // Lands bypass planeswalker spell resolution, which normally supplies starting loyalty.
+            if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.LAND)
+                    && permanent.getCard().hasType(CardType.PLANESWALKER)
+                    && permanent.getCard().getLoyalty() != null
+                    && permanent.getCounterCount(CounterType.LOYALTY) == 0) {
+                int loyalty = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                        CounterType.LOYALTY, permanent.getCard().getLoyalty(), controllerId);
+                permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+            }
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters(),
                     request.sourceStackEntry());
