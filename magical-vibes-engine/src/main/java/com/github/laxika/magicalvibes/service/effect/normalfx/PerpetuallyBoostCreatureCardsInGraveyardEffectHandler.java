@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,14 +28,30 @@ public class PerpetuallyBoostCreatureCardsInGraveyardEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (PerpetuallyBoostCreatureCardsInGraveyardEffect) effect;
-        for (Card card : gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of())) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
+        int permanentCount = boost.usePermanentCardCount()
+                ? (int) graveyard.stream().filter(this::isPermanentCard).count()
+                : 0;
+        for (Card card : graveyard) {
             if (card != null && gameQueryService.cardHasType(
-                    card, CardType.CREATURE, gameData, entry.getControllerId())) {
-                gameData.perpetualPowerToughnessModifiers.merge(
-                        card.getId(),
-                        new PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
-                        PerpetualPowerToughnessModifier::add);
+                    card, CardType.CREATURE, gameData, controllerId)) {
+                if (boost.usePermanentCardCount()) {
+                    PerpetualCardPowerToughnessSupport.remember(
+                            gameData, card, permanentCount, permanentCount);
+                } else {
+                    gameData.perpetualPowerToughnessModifiers.merge(
+                            card.getId(),
+                            new PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
+                            PerpetualPowerToughnessModifier::add);
+                }
             }
         }
+    }
+
+    private boolean isPermanentCard(Card card) {
+        return card != null && !card.isToken()
+                && ((card.getType() != null && card.getType().isPermanentType())
+                || card.getAdditionalTypes().stream().anyMatch(CardType::isPermanentType));
     }
 }

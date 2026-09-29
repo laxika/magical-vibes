@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "137")
+@CardRegistration(set = "HOC", collectorNumber = "137")
 public class ThroughTheForestGate extends Card {
 
     public ThroughTheForestGate() {
