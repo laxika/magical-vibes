@@ -14,7 +14,7 @@ import java.util.Objects;
  */
 public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                                 LibrarySearchDestination destination, ManaValueBound manaValueBound,
-                                boolean faceDown)
+                                boolean faceDown, boolean grantPlayUntilNextTurn)
         implements CardEffect {
 
     public SeekLibraryEffect {
@@ -23,28 +23,34 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter, LibrarySearchDestination destination) {
-        this(new Fixed(nonNegative(count)), filter, destination, null, false);
+        this(new Fixed(nonNegative(count)), filter, destination, null, false, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination) {
-        this(count, filter, destination, null, false);
+        this(count, filter, destination, null, false, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound) {
-        this(count, filter, destination, manaValueBound, false);
+        this(count, filter, destination, manaValueBound, false, false);
+    }
+
+    public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
+                             LibrarySearchDestination destination, ManaValueBound manaValueBound,
+                             boolean faceDown) {
+        this(count, filter, destination, manaValueBound, faceDown, false);
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter) {
-        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null, false);
+        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null, false, false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue, boolean entersTapped) {
         this(new Fixed(1), filter,
                 entersTapped ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                         : LibrarySearchDestination.BATTLEFIELD,
-                new ManaValueBound(new Fixed(maxManaValue), false, 0), false);
+                new ManaValueBound(new Fixed(maxManaValue), false, 0), false, false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue) {

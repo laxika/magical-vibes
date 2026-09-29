@@ -1274,7 +1274,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler.sacrificeAndConjure(
-                gameData, target, context.sacrificingPlayerId(), context.resolvingEntry());
+                gameData, target, context.sacrificingPlayerId(), context.resolvingEntry(), context.effect());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

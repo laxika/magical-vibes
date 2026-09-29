@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentC
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
@@ -740,6 +741,13 @@ public class PredicateEvaluationService {
                         : gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 yield sourcePermanent != null
                         && card.getManaValue() <= sourcePermanent.getCounterCount(p.counterType());
+            }
+            case CardManaValueGreaterThanSourceManaValuePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Integer sourceManaValue = baseManaValueOfCardInAnyZone(gameData, sourceCardId);
+                yield sourceManaValue != null && card.getManaValue() > sourceManaValue;
             }
             case CardManaValueLessThanSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -4439,6 +4447,45 @@ public class PredicateEvaluationService {
             Integer fromExile = basePowerOfCardInList(gameData.getPlayerExiledCards(playerId), cardId);
             if (fromExile != null) {
                 return fromExile;
+            }
+        }
+        return null;
+    }
+
+    private Integer baseManaValueOfCardInAnyZone(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Integer fromHand = baseManaValueOfCardInList(gameData.playerHands.get(playerId), cardId);
+            if (fromHand != null) {
+                return fromHand;
+            }
+            Integer fromGraveyard = baseManaValueOfCardInList(gameData.playerGraveyards.get(playerId), cardId);
+            if (fromGraveyard != null) {
+                return fromGraveyard;
+            }
+            Integer fromExile = baseManaValueOfCardInList(gameData.getPlayerExiledCards(playerId), cardId);
+            if (fromExile != null) {
+                return fromExile;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getOriginalCard() != null
+                            && permanent.getOriginalCard().getId().equals(cardId)) {
+                        return permanent.getOriginalCard().getManaValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private Integer baseManaValueOfCardInList(List<Card> cards, UUID cardId) {
+        if (cards == null) {
+            return null;
+        }
+        for (Card card : cards) {
+            if (card.getId().equals(cardId)) {
+                return card.getManaValue();
             }
         }
         return null;
