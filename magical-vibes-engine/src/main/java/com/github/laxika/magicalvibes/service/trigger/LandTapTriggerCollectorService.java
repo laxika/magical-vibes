@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubt
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -98,6 +99,28 @@ public class LandTapTriggerCollectorService {
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaAbilitySequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
+        if (sequence.steps().size() == 2
+                && sequence.steps().get(0) instanceof AddManaOnEnchantedLandTapEffect mana
+                && sequence.steps().get(1) instanceof PutCountersOnSelfEffect intensify) {
+            if (!handleAddManaOnEnchantedLandTap(match, mana, ctx)) {
+                return false;
+            }
+
+            var source = match.permanent();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    match.controllerId(),
+                    source.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(intensify)),
+                    null,
+                    source.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            match.gameData().enqueueTrigger(entry);
+            return true;
+        }
+
         if (sequence.steps().size() != 2
                 || !(sequence.steps().get(0) instanceof AddOneOfEachManaTypeProducedByLandEffect mana)
                 || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
@@ -249,7 +272,7 @@ public class LandTapTriggerCollectorService {
 
         if (mana instanceof AwardAnyColorManaEffect anyColor) {
             int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(),
-                    new AmountContext(tappingPlayerId, null, null, 0, 0));
+                    new AmountContext(tappingPlayerId, match.permanent(), null, 0, 0));
             if (!AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                     tappingPlayerId, anyColor, amount, false, null)) {
                 return false;
@@ -263,7 +286,7 @@ public class LandTapTriggerCollectorService {
 
         if (mana instanceof AwardManaEffect award) {
             int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                    new AmountContext(tappingPlayerId, null, null, 0, 0));
+                    new AmountContext(tappingPlayerId, match.permanent(), null, 0, 0));
             if (amount <= 0) {
                 return false;
             }
@@ -277,7 +300,7 @@ public class LandTapTriggerCollectorService {
 
         if (mana instanceof AwardManaOfColorsEffect ofColors) {
             int amount = amountEvaluationService.evaluate(gameData, ofColors.amount(),
-                    new AmountContext(tappingPlayerId, null, null, 0, 0));
+                    new AmountContext(tappingPlayerId, match.permanent(), null, 0, 0));
             if (amount <= 0 || ofColors.colors().isEmpty()) {
                 return false;
             }

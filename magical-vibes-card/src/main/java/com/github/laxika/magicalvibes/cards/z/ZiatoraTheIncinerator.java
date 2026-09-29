@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealP
 
 @CardRegistration(set = "SNC", collectorNumber = "231")
 @CardRegistration(set = "SLD", collectorNumber = "2238")
+@CardRegistration(set = "M3C", collectorNumber = "279")
 public class ZiatoraTheIncinerator extends Card {
 
     public ZiatoraTheIncinerator() {

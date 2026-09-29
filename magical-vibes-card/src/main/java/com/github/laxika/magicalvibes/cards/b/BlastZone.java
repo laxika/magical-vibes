@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "47")
 @CardRegistration(set = "EOS", collectorNumber = "92")
 @CardRegistration(set = "EOS", collectorNumber = "137")
+@CardRegistration(set = "M3C", collectorNumber = "322")
 public class BlastZone extends Card {
 
     public BlastZone() {

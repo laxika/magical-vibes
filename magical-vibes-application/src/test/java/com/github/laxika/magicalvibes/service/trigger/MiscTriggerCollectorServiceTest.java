@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -59,13 +60,15 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -98,7 +101,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -548,6 +550,37 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    void conditionalProliferateTriggerSkipsWhenInterveningIfIsFalse() {
+        Permanent perm = createPermanent("Contagion Dispenser");
+        var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
+                .thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                new TriggerContext.Proliferate(player1Id));
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void conditionalProliferateTriggerQueuesWhenInterveningIfIsTrue() {
+        Permanent perm = createPermanent("Contagion Dispenser");
+        var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                new TriggerContext.Proliferate(player1Id));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
     }
 
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====
@@ -1577,6 +1610,34 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("conditional non-battlefield creature trigger keeps the triggering card")
+    void conditionalNonBattlefieldCreatureTriggerKeepsTriggeringCard() {
+        Permanent perm = createPermanent("Disa the Restless");
+        Card triggeringCard = createCard("Lhurgoyf");
+        triggeringCard.setType(CardType.CREATURE);
+        triggeringCard.setSubtypes(List.of(CardSubtype.LHURGOYF));
+        var predicate = new CardSubtypePredicate(CardSubtype.LHURGOYF);
+        var effect = new TriggeringCardConditionalEffect(predicate,
+                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect());
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(triggeringCard, player1Id, Zone.LIBRARY);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(triggeringCard), eq(predicate), eq(perm.getCard().getId()), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve())
+                .containsExactly(effect.wrapped());
+        assertThat(gd.stack.getLast().getTriggeringCardId())
+                .isEqualTo(triggeringCard.getId());
     }
 
     @Test

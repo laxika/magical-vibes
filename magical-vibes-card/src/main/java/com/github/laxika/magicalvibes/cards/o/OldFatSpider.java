@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "132")
+@CardRegistration(set = "HOC", collectorNumber = "132")
 public class OldFatSpider extends Card {
 
     public OldFatSpider() {

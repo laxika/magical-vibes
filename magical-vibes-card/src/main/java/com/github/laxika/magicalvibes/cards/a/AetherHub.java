@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "KLD", collectorNumber = "242")
 @CardRegistration(set = "MB1", collectorNumber = "242")
 @CardRegistration(set = "KLR", collectorNumber = "279")
+@CardRegistration(set = "M3C", collectorNumber = "317")
 public class AetherHub extends Card {
 
     public AetherHub() {

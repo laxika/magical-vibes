@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "10")
+@CardRegistration(set = "M3C", collectorNumber = "159")
 public class SkitteringInvasion extends Card {
 
     public SkitteringInvasion() {

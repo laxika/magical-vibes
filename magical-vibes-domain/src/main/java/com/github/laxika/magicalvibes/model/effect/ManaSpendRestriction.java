@@ -103,6 +103,9 @@ public enum ManaSpendRestriction {
      */
     CHOSEN_SUBTYPE_CREATURE,
 
+    /** Spendable only to cast spells of the source permanent's chosen creature subtype. */
+    CHOSEN_SUBTYPE_SPELL,
+
     /**
      * Spendable only to cast spells of the source permanent's chosen creature subtype or activate
      * abilities of permanents of that subtype.

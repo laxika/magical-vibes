@@ -82,7 +82,6 @@ import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
-import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -653,6 +652,8 @@ public class LayerSystemService {
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
         h = mix(h, gameData.cardIntensities.hashCode());
         h = mix(h, gameData.cardIntensities.size());
+        h = mix(h, gameData.playersWhoLostGameThisMatch.hashCode());
+        h = mix(h, gameData.playersWhoLostGameThisMatch.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> commanders = gameData.playerCommanders.get(playerId);
@@ -1601,7 +1602,7 @@ public class LayerSystemService {
                         allCreatureTypes.add(subtype);
                     }
                 }
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null,
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(),
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     allCreatureTypes.forEach(state::addSubtype);

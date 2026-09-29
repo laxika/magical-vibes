@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
@@ -20,12 +22,18 @@ public class ReduceCastCostForNextMatchingSpellEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ReduceCastCostForNextMatchingSpellEffect reduction =
+                (ReduceCastCostForNextMatchingSpellEffect) effect;
+        CardEffect floatingEffect = reduction.amount() instanceof EventValue
+                ? new ReduceCastCostForNextMatchingSpellEffect(
+                        reduction.predicate(), new Fixed(entry.getEventValue()))
+                : reduction;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(),
                 entry.getCard().getName(),
                 null,
                 entry.getControllerId(),
-                effect,
+                floatingEffect,
                 null,
                 null,
                 null,
