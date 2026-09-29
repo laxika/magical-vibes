@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.g.GrindingStation;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,9 +25,10 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
 
         Permanent idris = findPermanent(player1, "Idris, Soul of the TARDIS");
         assertThat(findPermanents(player1, "Conjurer's Bauble")).isEmpty();
-        assertThat(idris.getEffectivePower()).isEqualTo(4);
-        assertThat(idris.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(4);
 
+        idris.setSummoningSick(false);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
@@ -46,11 +46,6 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
 
         harness.castFromHand(player1, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(idris.isTapped()).isFalse();

@@ -254,7 +254,7 @@ abstract class AbstractDamageHandlerTest {
         when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
                 eq(gd), eq(playerId), anyInt(), anyString(), anyBoolean(), nullable(UUID.class), nullable(Card.class)))
                 .thenAnswer(inv -> inv.getArgument(2));
-        when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
+        when(gameQueryService.canPlayerLoseLife(gd, playerId)).thenReturn(true);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }
 }

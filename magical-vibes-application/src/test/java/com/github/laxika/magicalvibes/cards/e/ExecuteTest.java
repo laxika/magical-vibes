@@ -30,8 +30,8 @@ class ExecuteTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Aven Flock");
-        harness.assertInGraveyard(player2, "Aven Flock");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
         harness.assertInHand(player1, "Air Elemental");
     }
 

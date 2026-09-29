@@ -34,7 +34,6 @@ class SulfurousSpringsTest extends BaseCardTest {
         Permanent springs = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "BLACK");
 
         assertThat(springs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -48,8 +47,7 @@ class SulfurousSpringsTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent springs = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
 
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "RED");
+        harness.activateAbility(player1, 0, 2, null, null);
 
         assertThat(springs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -75,7 +73,6 @@ class SulfurousSpringsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SulfurousSprings());
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "BLACK");
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -89,7 +86,6 @@ class SulfurousSpringsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SulfurousSprings());
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "BLACK");
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 17);
@@ -106,7 +102,6 @@ class SulfurousSpringsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 1, 1, null, null);
-        harness.handleListChoice(player1, "BLACK");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertLife(player1, 20);

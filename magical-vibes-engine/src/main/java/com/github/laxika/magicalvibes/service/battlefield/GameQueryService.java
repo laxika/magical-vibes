@@ -358,6 +358,7 @@ public class GameQueryService {
             CardSubtype.POWER_PLANT,
             CardSubtype.TOWER,
             CardSubtype.AURA,
+            CardSubtype.ARCANE,
             CardSubtype.PLAN,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
@@ -3490,13 +3491,19 @@ public class GameQueryService {
     /** Returns the current power of a non-battlefield card, including temporary graveyard changes. */
     public Integer getEffectiveCardPower(GameData gameData, Card card) {
         GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
-        return animation == null ? card.getPower() : animation.power();
+        if (animation == null) {
+            return card.getPower();
+        }
+        return animation.power();
     }
 
     /** Returns the current toughness of a non-battlefield card, including temporary graveyard changes. */
     public Integer getEffectiveCardToughness(GameData gameData, Card card) {
         GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
-        return animation == null ? card.getToughness() : animation.toughness();
+        if (animation == null) {
+            return card.getToughness();
+        }
+        return animation.toughness();
     }
 
     private UUID findNonBattlefieldCardOwner(GameData gameData, Card card) {

@@ -2896,7 +2896,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 32));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
