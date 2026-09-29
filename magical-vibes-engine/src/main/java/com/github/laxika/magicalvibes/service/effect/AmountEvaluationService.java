@@ -841,7 +841,11 @@ public class AmountEvaluationService {
                 if (source == null && ctx.stackEntry() != null) {
                     source = ctx.stackEntry().getSourcePermanentSnapshot();
                 }
-                yield source == null ? 0 : gameData.getCardIntensity(source.getCard().getId());
+                if (source != null) {
+                    yield gameData.getCardIntensity(source.getCard().getId());
+                }
+                yield ctx.stackEntry() == null || ctx.stackEntry().getCard() == null
+                        ? 0 : gameData.getCardIntensity(ctx.stackEntry().getCard().getId());
             }
             case SourceManaValueMinusOne ignored ->
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;

@@ -1225,6 +1225,13 @@ public class GraveyardChoiceHandlerService {
                 graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
                         gameData, Map.of(player.getId(), cardsToReturn), false, null);
             }
+            if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

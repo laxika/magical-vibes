@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
@@ -114,6 +115,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
+        PendingInteraction.ArtifactPermanentOrGraveyardCardChoice,
         PendingInteraction.BeholdChoice,
         PendingInteraction.AttachAurasChoice, PendingInteraction.ReturnAurasFromGraveyardChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
@@ -2399,6 +2401,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // Mandatory: exactly count, or everything when the player has fewer objects.
             int required = Math.min(count, validCardIds.size());
             return new InteractionOptions.MultiCardPick(validCardIds, required, required);
+        }
+    }
+
+    /** Resolution-time choice of an artifact permanent you control or an artifact card in your graveyard. */
+    record ArtifactPermanentOrGraveyardCardChoice(
+            UUID playerId, java.util.List<UUID> validCardIds, String prompt,
+            ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect effect)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

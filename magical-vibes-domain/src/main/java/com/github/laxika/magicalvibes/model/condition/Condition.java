@@ -138,6 +138,7 @@ public sealed interface Condition permits
         ControllerDrewAtLeastCardsThisTurn,
         ControllerDrewAtLeastCardsLastTurn,
         ControllerCreatedTokenThisTurn,
+        ControllerControlledPermanentExploredThisTurn,
         ControllerSacrificedArtifactThisTurn,
         ControllerEndStep,
         ControllerOwnsCardInExile,
