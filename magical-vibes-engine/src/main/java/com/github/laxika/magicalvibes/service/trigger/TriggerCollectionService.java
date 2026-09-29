@@ -10181,7 +10181,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 CardEffect resolved = unwrapTriggeringCardConditional(
-                        effect, dyingCard, gameData, dyingCreatureControllerId);
+                        effect, dyingCard, gameData, dyingCreatureControllerId, card.getId());
                 if (resolved == null) continue;
 
                 if (resolved instanceof MayEffect may) {
@@ -14145,7 +14145,10 @@ public class TriggerCollectionService {
         List<CardEffect> effects = equipment.getCard().getEffects(EffectSlot.ON_EQUIPMENT_ATTACHED);
         if (effects == null || effects.isEmpty()) return;
 
-        for (CardEffect effect : effects) {
+        for (CardEffect authoredEffect : effects) {
+            CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, equipment, authoredEffect);
+            if (effect == null) continue;
+
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
@@ -14163,6 +14166,7 @@ public class TriggerCollectionService {
                 entry.setTriggeringPermanentId(equipped.getId());
                 gameData.enqueueTrigger(entry);
             }
+            OncePerTurnTriggerSupport.markIfNeeded(gameData, equipment, authoredEffect);
             gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
             log.info("Game {} - {} triggers when attached to {}", gameData.id,
                     equipment.getCard().getName(), equipped.getCard().getName());

@@ -59,6 +59,7 @@ public sealed interface CardPredicate permits
         CardManaValueAtMostControlledTappedCreaturesPredicate,
         CardManaValueAtMostSourcePowerPredicate,
         CardManaValueAtMostSourceCountersPredicate,
+        CardManaValueGreaterThanSourceManaValuePredicate,
         CardManaValueLessThanSourcePowerPredicate,
         CardManaValueLessThanSourceCountersPredicate,
         CardManaValueLessThanSourceLoyaltyPredicate,

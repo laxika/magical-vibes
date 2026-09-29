@@ -2231,7 +2231,14 @@ public class GameQueryService {
 
     /** Returns a graveyard card's effects in the given slot, respecting global ability loss. */
     public List<CardEffect> getEffectiveGraveyardEffects(GameData gameData, Card card, EffectSlot slot) {
-        return graveyardCardsHaveLostAllAbilities(gameData) ? List.of() : card.getEffects(slot);
+        if (graveyardCardsHaveLostAllAbilities(gameData)) {
+            return List.of();
+        }
+        List<CardEffect> effects = new ArrayList<>(card.getEffects(slot));
+        effects.addAll(gameData.perpetualTriggeredAbilityGrants
+                .getOrDefault(card.getId(), Map.of())
+                .getOrDefault(slot, List.of()));
+        return List.copyOf(effects);
     }
 
     /**

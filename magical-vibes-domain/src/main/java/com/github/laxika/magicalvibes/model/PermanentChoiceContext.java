@@ -261,9 +261,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
-    /** Grave Choice: the targeted opponent chooses a nontoken creature to sacrifice. */
+    /** A targeted player chooses a nontoken creature to sacrifice for a duplicate follow-up. */
     record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
-            UUID sacrificingPlayerId, StackEntry resolvingEntry) implements PermanentChoiceContext {}
+            UUID sacrificingPlayerId, StackEntry resolvingEntry,
+            com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect effect)
+            implements PermanentChoiceContext {
+        public TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
+                UUID sacrificingPlayerId, StackEntry resolvingEntry) {
+            this(sacrificingPlayerId, resolvingEntry,
+                    new com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect());
+        }
+    }
 
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(

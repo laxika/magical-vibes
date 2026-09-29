@@ -39,6 +39,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
+    private final ExileSupport exileSupport;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -126,6 +127,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
                 } else {
                     exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
+                }
+                if (seek.grantPlayUntilNextTurn()) {
+                    exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosen.getId(), controllerId);
                 }
                 grantPersistentPermissions(gameData, chosen, persistentPermissions, controllerId);
             } else {

@@ -1,4 +1,5 @@
 # PREDICATES_REFERENCE
+| `CardManaValueGreaterThanSourceManaValuePredicate` | `()` | a card whose mana value is strictly greater than the source card's mana value; needs `GameData` and `sourceCardId` (Kami of Mourning) |
 
 `PermanentBlockingSourcePredicate` resolves an attached Equipment's equipped creature as the source, just as it resolves an attached Aura's enchanted creature.
 

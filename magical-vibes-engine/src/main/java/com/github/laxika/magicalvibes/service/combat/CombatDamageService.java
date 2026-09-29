@@ -2214,6 +2214,9 @@ public class CombatDamageService {
                                 triggerTargetId,
                                 sourcePermanentId
                         );
+                        if (creature.getId().equals(sourcePermanentId)) {
+                            se.setSourcePermanentSnapshot(new Permanent(creature));
+                        }
                         for (CardEffect effect : effects) {
                             setCombatDamageEventValue(se, effect, damageDealt);
                         }
@@ -2513,6 +2516,9 @@ public class CombatDamageService {
         // control deals combat damage to a player, if this card is in your graveyard, you may return
         // this card to your hand." The stack entry's source is the graveyard card itself.
         if (battleDamage) return;
+        checkGraveyardAllyCreatureCombatDamageTriggers(gameData, creature, attackerId,
+                EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                firedBatchedAllyTriggerSources);
         List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
         if (graveyard == null) return;
         for (Card card : new ArrayList<>(graveyard)) {
@@ -3173,12 +3179,50 @@ public class CombatDamageService {
         }
     }
 
+    private void checkGraveyardAllyCreatureCombatDamageTriggers(GameData gameData, Permanent creature,
+                                                                 UUID attackerId, EffectSlot slot,
+                                                                 Set<UUID> firedBatchedAllyTriggerSources) {
+        List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
+        if (graveyard == null) return;
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(gameData, card, slot)) {
+                if (!(effect instanceof AllyCombatDamageTriggerEffect trigger)) {
+                    continue;
+                }
+                if (trigger.dealerPredicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
+                        trigger.dealerPredicate())) {
+                    continue;
+                }
+                if (trigger.oncePerDamageStep() && !firedBatchedAllyTriggerSources.add(card.getId())) {
+                    continue;
+                }
+                StackEntry stackEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        attackerId,
+                        card.getName() + "'s graveyard trigger",
+                        List.of(trigger.effect()));
+                stackEntry.setNonTargeting(true);
+                gameData.stack.add(stackEntry);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        "'s graveyard trigger goes on the stack."));
+            }
+        }
+    }
+
     private void processAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, CombatDamageState state) {
+        Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
         for (var entry : state.combatDamageAmountsToPlaneswalkers.entrySet()) {
             Permanent source = entry.getKey();
             UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
             if (sourceControllerId == null) continue;
             for (var amountEntry : entry.getValue().entrySet()) {
+                if (amountEntry.getValue() > 0) {
+                    checkGraveyardAllyCreatureCombatDamageTriggers(gameData, source, sourceControllerId,
+                            EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                            firedBatchedAllyTriggerSources);
+                }
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                         gameData, source, sourceControllerId, amountEntry.getKey(), amountEntry.getValue(), true,
                         state.allyCreatureDealsDamageToPlaneswalkerTriggers);
