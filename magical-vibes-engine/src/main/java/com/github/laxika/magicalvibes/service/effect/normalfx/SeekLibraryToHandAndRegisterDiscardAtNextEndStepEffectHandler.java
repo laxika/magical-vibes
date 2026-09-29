@@ -8,16 +8,19 @@ import com.github.laxika.magicalvibes.model.action.DiscardSpecificCardAtNextEndS
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves Arius's seek and binds the selected card to its delayed discard trigger. */
+/** Resolves the seek and binds each selected card to its delayed discard trigger. */
 @Component
 @RequiredArgsConstructor
 public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
@@ -25,6 +28,7 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -37,29 +41,41 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
         var seek = (SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> library = gameData.playerDecks.get(controllerId);
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, seek.count(),
+                AmountContext.forStackEntry(entry, null)));
+        if (count == 0) {
+            return;
+        }
         if (library == null || library.isEmpty()) {
             logNoMatch(gameData, entry);
             return;
         }
 
-        List<Card> matchingCards = library.stream()
+        List<Card> matchingCards = new ArrayList<>(library.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, seek.filter(), null, gameData, controllerId))
-                .toList();
+                .toList());
         if (matchingCards.isEmpty()) {
             logNoMatch(gameData, entry);
             return;
         }
 
-        Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
-        library.remove(chosen);
-        gameData.addCardToHand(controllerId, chosen);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, controllerId, chosen);
-        gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
-                controllerId, chosen.getId(), entry.getCard()));
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                .text("seeks and puts " + chosen.getName() + " into hand.").build());
+        List<Card> soughtCards = new ArrayList<>();
+        int cardsToSeek = Math.min(count, matchingCards.size());
+        for (int i = 0; i < cardsToSeek; i++) {
+            Card chosen = matchingCards.remove(
+                    ThreadLocalRandom.current().nextInt(matchingCards.size()));
+            library.remove(chosen);
+            gameData.addCardToHand(controllerId, chosen);
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                    gameData, controllerId, chosen);
+            gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
+                    controllerId, chosen.getId(), entry.getCard()));
+            soughtCards.add(chosen);
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text("seeks and puts " + chosen.getName() + " into hand.").build());
+        }
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
     }
 
     private void logNoMatch(GameData gameData, StackEntry entry) {

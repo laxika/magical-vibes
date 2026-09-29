@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.NoCardsInLibraryMatching;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInLibraryThanTargetPlayer;
 import com.github.laxika.magicalvibes.model.condition.StartingDeckAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
@@ -983,6 +984,8 @@ public class ConditionEvaluationService {
                     matchesCardDirectlyAboveSelfInGraveyard(gameData, ctx, c);
             case CardsInLibraryAtLeast c ->
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
+            case NoCardsInLibraryMatching c ->
+                    countMatchingCardsInLibrary(gameData, ctx.controllerId(), c.filter()) == 0;
             case ControllerHasMoreCardsInLibraryThanTargetPlayer ignored ->
                     ctx.controllerId() != null
                             && ctx.targetId() != null
@@ -4005,6 +4008,11 @@ public class ConditionEvaluationService {
         if (controllerId == null) return 0;
         List<Card> deck = gameData.playerDecks.get(controllerId);
         return deck == null ? 0 : deck.size();
+    }
+
+    private int countMatchingCardsInLibrary(GameData gameData, UUID controllerId, CardPredicate filter) {
+        if (controllerId == null) return 0;
+        return countMatchingCards(gameData.playerDecks.get(controllerId), gameData, controllerId, filter);
     }
 
     private int startingDeckSize(GameData gameData, UUID controllerId) {

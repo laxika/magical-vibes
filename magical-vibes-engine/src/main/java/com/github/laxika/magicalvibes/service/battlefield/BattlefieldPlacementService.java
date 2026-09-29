@@ -1970,7 +1970,15 @@ public class BattlefieldPlacementService {
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId());
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
+                CardEffect activeEffect = effect;
+                if (effect instanceof ConditionalEffect conditional) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(source, controllerId))) {
+                        continue;
+                    }
+                    activeEffect = conditional.wrapped();
+                }
+                if (!(activeEffect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
                     DynamicAmount dynamicAmount = replacement.additionalCounterAmount();

@@ -241,6 +241,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler seizeTheSpotlightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler benthicAnomalyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentForTargetingRelayEffectHandler chooseOpponentForTargetingRelayEffectHandler;
@@ -1077,6 +1078,15 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEachOpponentChoosesCreatureToExileWithSource(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource context) {
         eachOpponentChoosesCreatureToExileWithSourceEffectHandler.completeChoice(gameData, permanentId, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleEachOpponentChoosesCreatureForTokenCopy(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy context) {
+        benthicAnomalyEffectHandler.completeCreatureChoice(gameData, permanentId, context);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }

@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "3")
 @CardRegistration(set = "KLR", collectorNumber = "4")
+@CardRegistration(set = "M3C", collectorNumber = "164")
 public class AetherstormRoc extends Card {
 
     private static final PermanentAllOfPredicate DEFENDING_PLAYER_CREATURE =

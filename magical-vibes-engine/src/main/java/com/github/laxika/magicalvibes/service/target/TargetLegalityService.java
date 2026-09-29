@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
@@ -673,7 +672,8 @@ public class TargetLegalityService {
                 }
                 if (exileCopy.filter() != null
                         && !predicateEvaluationService.matchesCardPredicate(
-                        card, exileCopy.filter(), sourceCardId, gameData, playerId)) {
+                        card, exileCopy.filter(), sourceCardId, gameData, playerId,
+                        null, null, xValue)) {
                     throw new IllegalStateException("Target card must be a "
                             + CardPredicateUtils.describeFilter(exileCopy.filter()));
                 }

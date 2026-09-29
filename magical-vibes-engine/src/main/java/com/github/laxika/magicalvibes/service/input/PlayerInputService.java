@@ -1381,6 +1381,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
     }
 
+    public void beginSpellNonbasicLandTypeChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellNonbasicLandTypeChoice choiceContext =
+                new ChoiceContext.SpellNonbasicLandTypeChoice(playerId);
+        List<String> landTypes = CardSubtype.landTypes().stream()
+                .filter(subtype -> !CardSubtype.basicLandTypes().contains(subtype))
+                .map(CardSubtype::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, landTypes, "Choose a nonbasic land type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a nonbasic land type", gameData.id, playerName);
+    }
+
     public void beginSpellCardTypeChoice(GameData gameData, UUID playerId) {
         beginSpellCardTypeChoice(gameData, playerId, List.of(CardType.values()));
     }

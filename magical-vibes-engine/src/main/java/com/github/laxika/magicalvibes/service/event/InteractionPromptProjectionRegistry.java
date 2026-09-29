@@ -239,6 +239,8 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualActivatedAbilityCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,

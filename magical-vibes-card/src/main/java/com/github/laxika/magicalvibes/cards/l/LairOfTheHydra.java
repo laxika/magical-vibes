@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "259")
+@CardRegistration(set = "M3C", collectorNumber = "353")
 public class LairOfTheHydra extends Card {
 
     public LairOfTheHydra() {
