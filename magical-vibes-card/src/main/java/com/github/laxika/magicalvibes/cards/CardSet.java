@@ -74,6 +74,7 @@ public enum CardSet {
     SET_MOM("MOM"),
     SET_MAT("MAT"),
     SET_ONE("ONE"),
+    SET_YONE("YONE"),
     SET_M15("M15"),
     SET_W16("W16"),
     SET_W17("W17"),

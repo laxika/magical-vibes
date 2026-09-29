@@ -525,6 +525,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromLibraryThisTurn = new ConcurrentHashMap<>();
     /** Tracks card IDs put into each player's graveyard by surveil this turn. */
     public final Map<UUID, Set<UUID>> cardsSurveilledThisTurn = new ConcurrentHashMap<>();
+    /** Tracks card IDs put into each player's hand this turn. */
+    public final Map<UUID, Set<UUID>> cardsPutIntoHandThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard from hand this turn. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromHandThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token creature card IDs put into graveyards from any zone this turn. */
@@ -4945,23 +4947,40 @@ public class GameData {
         if (isCommander(card.getId())) commanderReturnCandidates.add(card.getId());
     }
     private final class CommanderHandMap extends ConcurrentHashMap<UUID, List<Card>> {
-        private List<Card> wrap(List<Card> cards) {
-            return cards instanceof CommanderHandList ? cards : new CommanderHandList(cards);
+        private List<Card> wrap(UUID playerId, List<Card> cards) {
+            return cards instanceof CommanderHandList ? cards : new CommanderHandList(playerId, cards);
         }
-        @Override public List<Card> put(UUID key, List<Card> cards) { return super.put(key, wrap(cards)); }
-        @Override public List<Card> putIfAbsent(UUID key, List<Card> cards) { return super.putIfAbsent(key, wrap(cards)); }
+        @Override public List<Card> put(UUID key, List<Card> cards) { return super.put(key, wrap(key, cards)); }
+        @Override public List<Card> putIfAbsent(UUID key, List<Card> cards) { return super.putIfAbsent(key, wrap(key, cards)); }
         @Override public List<Card> computeIfAbsent(UUID key, Function<? super UUID, ? extends List<Card>> factory) {
-            return super.computeIfAbsent(key, id -> wrap(factory.apply(id)));
+            return super.computeIfAbsent(key, id -> wrap(id, factory.apply(id)));
         }
         @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
     }
     private final class CommanderHandList extends ArrayList<Card> {
-        CommanderHandList(List<Card> cards) { super(cards); }
+        private final UUID playerId;
+
+        CommanderHandList(UUID playerId, List<Card> cards) {
+            super(cards);
+            this.playerId = playerId;
+        }
+
+        private void recordCardPutIntoHand(Card card) {
+            cardsPutIntoHandThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
+
         @Override public boolean add(Card card) {
-            return !deferCommanderZoneMove(card, Zone.HAND, -1) && super.add(card);
+            if (deferCommanderZoneMove(card, Zone.HAND, -1)) return false;
+            boolean changed = super.add(card);
+            if (changed) recordCardPutIntoHand(card);
+            return changed;
         }
         @Override public void add(int index, Card card) {
-            if (!deferCommanderZoneMove(card, Zone.HAND, -1)) super.add(index, card);
+            if (!deferCommanderZoneMove(card, Zone.HAND, -1)) {
+                super.add(index, card);
+                recordCardPutIntoHand(card);
+            }
         }
         @Override public boolean addAll(Collection<? extends Card> cards) {
             boolean changed = false;
@@ -7126,6 +7145,8 @@ public class GameData {
                 copy.cardsPutIntoGraveyardFromLibraryThisTurn.put(k, new HashSet<>(v)));
         this.cardsSurveilledThisTurn.forEach((k, v) ->
                 copy.cardsSurveilledThisTurn.put(k, new HashSet<>(v)));
+        this.cardsPutIntoHandThisTurn.forEach((k, v) ->
+                copy.cardsPutIntoHandThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromHandThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromHandThisTurn.put(k, new HashSet<>(v)));
         this.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->

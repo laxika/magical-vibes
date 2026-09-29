@@ -550,6 +550,37 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
+    @Test
+    void conditionalProliferateTriggerSkipsWhenInterveningIfIsFalse() {
+        Permanent perm = createPermanent("Contagion Dispenser");
+        var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
+                .thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                new TriggerContext.Proliferate(player1Id));
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void conditionalProliferateTriggerQueuesWhenInterveningIfIsTrue() {
+        Permanent perm = createPermanent("Contagion Dispenser");
+        var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                new TriggerContext.Proliferate(player1Id));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====
 
     @Nested

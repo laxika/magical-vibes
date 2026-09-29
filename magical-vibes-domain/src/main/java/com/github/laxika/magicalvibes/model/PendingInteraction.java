@@ -130,6 +130,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
+        PendingInteraction.PerpetualActivatedAbilityCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.PerpetualEnterExileHandCardChoice,
@@ -3748,6 +3749,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public PerpetualCreatureCardChoice {
             validIndices = java.util.List.copyOf(validIndices);
             keywords = Set.copyOf(keywords);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Chooses a card in hand to receive a perpetual activated ability. */
+    record PerpetualActivatedAbilityCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                               String prompt,
+                                               com.github.laxika.magicalvibes.model.ActivatedAbility ability)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualActivatedAbilityCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
         }
 
         @Override
