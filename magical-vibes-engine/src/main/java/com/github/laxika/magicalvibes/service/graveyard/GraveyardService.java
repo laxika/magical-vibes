@@ -707,7 +707,8 @@ public class GraveyardService {
             }
         }
         if (!isToken(gameData, card)) {
-            triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(
+                    gameData, ownerId, card, sourceZone);
             if (sourceZone != Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
                 triggerCollectionService.checkAllyArtifactCardPutIntoGraveyardFromNonBattlefieldTriggers(
                         gameData, ownerId, card);

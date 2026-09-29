@@ -1,5 +1,14 @@
 # CARD_PATTERN_INDEX
 | ETB perpetually grants a death-triggered return ability to a controlled creature or a creature card in your graveyard | `k/KamiOfMourning.java` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect` + `CardManaValueGreaterThanSourceManaValuePredicate` |
+| land enters tapped, taps for blue, or pays {1}{U} plus seven graveyard cards for blue mana that copies the next spell or activated ability | `s/SunkenPalace.java` + `EntersTappedEffect` + `ExileNCardsFromGraveyardCost(7)` + `AwardManaEffect(ManaColor.BLUE)` + `RegisterNextSpellOrAbilityCopyEffect` (M3C 81) |
+| land with colorless mana, sacrifice-a-creature any-color mana, and sorcery-speed X Desert sacrifice/exile-copy ability | `l/LazotepQuarry.java` + `ManaAbilities.tapFor` + `SacrificeCreatureCost`/`AwardAnyColorManaEffect` + `SacrificePermanentCost`/`ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` filtered by `CardManaValueEqualsXPredicate` (M3C 79) |
+| life gain turns into energy, with a tap-and-mana ability that pays X energy to draw X | `s/SphinxOfTheRevelation.java` + `ON_CONTROLLER_GAINS_LIFE EnergyCountersEffect(new EventValue())` + `ActivatedAbility(... PayXEnergyCost(), DrawCardEffect(new XValue())).withXValue()` (M3C 75) |
+| energy-paid cost reduction plus optional paid attack trigger | `b/BlasterHulk.java` + `ReduceOwnCastCostEffect(new EnergyCountersPaidOrLostThisTurn())` + `ON_ATTACK EnergyCountersEffect(2)` + `target(0, 8)` with `ForcedCostOrElseEffect(PayEnergyCost(8), ..., true, DealDividedDamageEffect(...))` (M3C 55) |
+| Vehicle attack trigger optionally pays energy, then targets an instant or sorcery in the controller's graveyard for jump-start | `f/FiligreeRacer.java` + `ForcedCostOrElseEffect(PayEnergyCost(2), ..., true, QueueReflexiveAbilityEffect(GrantJumpStartToTargetGraveyardCardEffect()))` (M3C 56) |
+| tap ability gains energy, optionally pays one or more energy, and creates an X/X token sized by the payment while doubling energy gains | `a/AetherRefinery.java` + `STATIC DoubleEnergyCountersEffect` + `EnergyCountersEffect(1)` + `PayAnyAmountOfEnergyToCreateTokenEffect(CreateTokenEffect(... EventValue(), EventValue() ...))` |
+| cast trigger chooses one creature controlled by each opponent, then creates one aggregate-P/T colorless Eldrazi token copy | `b/BenthicAnomaly.java` + `EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffect` |
+| equipment attack trigger gains energy, then boosts itself or its equipped creature by current energy, with mana or energy reconfigure | `r/RazorfieldRipper.java` + `ON_ATTACK EnergyCountersEffect(1)` + `BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(ControllerEnergyCounters(), ControllerEnergyCounters())` + separate `{2}` and `PayEnergyCost(3)` reconfigure abilities |
+| attack trigger chooses odd/even and temporarily prevents creatures with that mana-value parity from blocking, while conditional bloodthirst grants extra counters to other colorless creatures | `t/TwinsOfDiscord.java` + `SequenceEffect.of(ChooseManaValueParityAtResolutionEffect, CreaturesOfChosenManaValueParityCantBlockThisTurnEffect)` + printed bloodthirst entry replacement + conditional `ControlledPermanentsEnterWithAdditionalCountersEffect` |
 | combat-damage discover equal to damage plus duplicate of every card played from exile | `s/ScalesoulGnome.java` + `DiscoverEffect(EventValue)` + exile-gated `SpellCastTriggerEffect`/`LandPlayFromExileTriggerEffect` + `ConjureDuplicateOfTriggeringCardIntoHandEffect` |
 | ETB exiles all matching cards from its controller's library, deals damage equal to that count, then returns the cards on death and conjures named cards | `c/CalderaBreaker.java` + `ExileAllMatchingCardsFromLibraryWithSourceThenEffect` + `ReturnAllCardsExiledWithSourceEffect` + `ConjureCardNamedIntoLibraryEffect` |
 | attack-triggered graveyard creature exile plus modified duplicate and death-triggered creature reanimation | `l/LegionReconsecrator.java` + `ExileTargetCreatureCardThenConjureSkeletonDuplicateEffect` + targeted `ReturnCardFromGraveyardEffect` |
@@ -43,6 +52,7 @@
 | once-per-turn optional spell-cast trigger that bottoms the triggering spell, then reveals until a nonland card for a free cast | `n/NeeraWildMage.java` + `PutTriggeringSpellOnBottomThenRevealEffect` |
 | d20 after revealing up to two basic lands from the library | `DruidOfTheEmeraldGrove.java` + `SearchLibraryForUpToTwoBasicLandsThenRollD20Effect` |
 | death-time last-known power captured into a source-independent one-time creature-spell perpetual boost boon | `d/DragonbornImmolator.java` + `ConditionalEffect(SourcePowerAtLeast(1), RegisterOneShotCreatureSpellPerpetualPowerBoostEffect)` + `PerpetuallyBoostTriggeringCardEffect` |
+| one-time boon that perpetually boosts the next creature spell by its power | `r/RothgaBondedEngulfer.java` + `RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed` + `PerpetuallyBoostTriggeringCardByPowerEffect` |
 | look at four cards, choose one name, take all matching looked-at cards and lose life per card, random-bottom the rest | `s/StrokeOfLuck.java` + `LookAtTopCardsChooseSameNameToHandEffect` |
 | target opponent creature perpetually gets -2/-2 and gains an upkeep trigger that perpetually gives it -1/-1 | `s/SewerPlague.java` + `PerpetuallyBoostTargetCreatureEffect` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` |
 | filtered public hand reveal, mandatory discard or fallback draw, and life loss | `m/MindSpike.java` + `MindSpikeEffect` |
@@ -59,7 +69,10 @@
 | attack trigger offers one artifact spell from hand or graveyard, cast by paying life equal to its mana value | `a/AnrakyrTheTraveller.java` + `MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffect` |
 | play lands and cast cards surveilled this turn from your graveyard, paying life equal to a spell's mana value | `e/EyeOfDuskmantle.java` + `CastSurveilledCardsFromGraveyardByPayingLifeEffect` |
 | spell costs less for each distinct graveyard mana value and discard trigger casts the exact discarded card | `o/OskarRubbishReclaimer.java` + `ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard())` + `CastDiscardedCardFromGraveyardEffect` |
+| ETB registers an end-of-turn ally nontoken-death trigger that creates one token per dying creature power | `i/InfestedThrinax.java` + `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect(new EventValue(), ...))` |
 | one-or-more ally creatures with base P/T 1/1 enter; attack boosts other base 1/1 creatures by source counters | `b/BessSoulNourisher.java` + `ON_ALLY_CREATURES_ENTERS_BATTLEFIELD TriggeringPermanentConditionalEffect` + filtered `BoostAllOwnCreaturesEffect` |
+| dynamic power from greatest creature-card power in all graveyards + attack mill + one land/one spell from cards milled this turn | `c/CoramTheUndertaker.java` + `DynamicStaticBoostEffect(GreatestPowerAmongCardsInGraveyard)` + `ON_ATTACK MillEffect` + `PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect` |
+| combat-damage mill that many with an optional any-number milled-land battlefield return + +10/+10 per recorded game loss | `r/RampantFrogantua.java` + `DynamicStaticBoostEffect(Scaled(PlayersWhoLostGame, 10))` + `MayEffect(MillControllerAndMayPutMilledLandsOntoBattlefieldEffect(EventValue))` |
 | cast-time copy for each distinct counter kind among controlled permanents | `s/StormOfForms.java` + `CopyThisSpellForEachCounterKindEffect` |
 | ETB optionally puts a chosen counter on itself for each distinct counter kind among controlled permanents | `b/BribeTaker.java` + `ChooseCounterForEachControlledCounterKindEffect` |
 | attack trigger chooses a counter on a controlled permanent and copies it to a targeted controlled permanent | `a/AvenCourier.java` + `ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffect` |
@@ -68,6 +81,7 @@
 | creature-entry trigger may move one chosen counter from this artifact onto that creature | `a/AgentsToolkit.java` + `MoveChosenCounterFromSourceToEnteringCreatureEffect` |
 | targeted ally-creature ETB opponent life loss equal to entering creature's absolute power/toughness difference | `j/JawsOfDefeat.java` + `TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect` |
 | instant/sorcery cast trigger that creates a typed token, then checks a controlled subtype count for a temporary mass base-P/T change | `l/LordOfTheNazgL.java` | `SpellCastTriggerEffect` + `CreateTokenEffect` + `ConditionalEffect(ControlsPermanentCount, SetAllOwnCreaturesBasePowerToughnessEffect)` |
+| single-copy trigger for a spell targeting one opponent's nonland permanent, choosing a legal nonland permanent controlled by another opponent | `e/ExterminatorMagmarch.java` + `CopySpellForAnotherOpponentPermanentEffect` |
 | artifact tracks resolving instant/sorcery spells in source-linked exile, then sacrifices to offer any number of those spells for free within an X-based total mana-value cap | `r/RodOfAbsorption.java` | `SpellCastTriggerEffect` + `ExileTriggeringSpellWithSourceEffect` + `CastSpellsExiledWithSourceWithinTotalManaValueEffect` |
 | controlled subtype creatures gain protection from the current Ring-bearer | `l/LordOfTheNazgL.java` | `GrantEffectEffect(new ProtectionFromRingBearersEffect(), GrantScope.ALL_OWN_CREATURES, filter)` |
 | ETB draft from a spellbook, then perpetually grant the card a Food artifact type and sacrifice-for-life ability | `h/HinterlandChef.java` + `PerpetuallyGrantCardCharacteristicsEffect` |
@@ -90,8 +104,11 @@
 | scheme temporarily steals opponents' nonland permanents, then untaps, hastes, and forces creatures to attack their owners | `m/MyCrushingMasterstroke.java` + `GainControlOfAllPermanentsMatchingEffect(..., END_OF_TURN, UntapPermanentsEffect(TARGET), GrantKeywordEffect(HASTE, TARGET), PermanentMustAttackItsOwnerThisTurnEffect)` |
 | perpetually grant a triggered ability to a card that later leaves the graveyard | `o/OglorDevotedAssistant.java` and EFFECTS_QUICK_REFERENCE.md |
 | ETB perpetually grants a death trigger to current creatures you control | `a/AntiqueCollector.java` and EFFECTS_QUICK_REFERENCE.md |
+| ETB perpetually grants a triggered ability to creatures you control and creature cards in hand | `s/SeethingSkitterPriest.java` + `PerpetuallyGrantTriggeredAbilityToMatchingCardsEffect` |
 | perpetually grant a graveyard-activated ability to a targeted creature card | `a/AssembleFromParts.java` and EFFECTS_QUICK_REFERENCE.md |
 | perpetually grant a keyword to matching permanents and cards in hand | `r/RimewallProtector.java` and EFFECTS_QUICK_REFERENCE.md |
+| combat-damage trigger that perpetually grants toxic to matching Insects you control and Insect cards in graveyard, hand, and library | `p/PhyresisRoach.java` + `PerpetuallyGrantKeywordToMatchingCardsEffect` with graveyard/library filters |
+| combat-damage trigger that perpetually gives a random nonland card in the damaged player's hand a poison-on-cast trigger | `s/SkullpiercerGnat.java` + `PerpetuallyGivePoisonCounterOnCastToRandomNonlandCardInDamagedHandEffect` |
 | perpetually grant a death-to-exile replacement to opposing creatures and planeswalkers | `b/BrittleBlast.java` and EFFECTS_QUICK_REFERENCE.md |
 | damage each creature, then choose an instant or sorcery in hand for a perpetual noncombat-damage bonus | `c/ConductiveCurrent.java` and EFFECTS_QUICK_REFERENCE.md |
 | becomes blocked by a creature and perpetually reduces that blocker's power | `w/WizenedGithzerai.java` + `PerpetuallyBoostCombatOpponentEffect` |
@@ -115,6 +132,8 @@
 | random creature with mana value X or less from a target opponent's library onto your battlefield with perpetual X/X and ward {1} | `b/BetterOffer.java` + `PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect(new XValue())` |
 | optionally exile a creature from hand, exile any number of same-named cards from hand and library, then conjure duplicates of a chosen outside-game creature | `g/GrizzledHuntmaster.java` + `GrizzledHuntmasterEffect` |
 | conjure named cards into your library, then shuffle | `t/ToralfsDisciple.java` + `ConjureCardNamedIntoLibraryEffect` |
+| oil-counter-scaled death trigger that conjures perpetually boosted duplicates into your library | `g/GyoxBrutalCarnivora.java` + `ConjureDuplicatesOfDyingCreatureIntoLibraryEffect` |
+| death trigger that conjures a named card into the graveyard, perpetually doubles both cards' P/T, then shuffles them into their owners' libraries | `m/MephidrossSlime.java` + `ConjureCardIntoGraveyardThenDoubleAndShuffleEffect` |
 | discard-triggered conjure at a fixed position from the top of your library | `c/CalimDjinnEmperor.java` + `ConjureCardIntoLibraryAtPositionEffect` |
 | conjure duplicates of up to two target nontoken creatures you control into your hand | `ConjureDuplicateOfTargetCreatureIntoHandEffect` + `target(new ControlledPermanentPredicateTargetFilter(...), 0, 2)` |
 | combat damage by this creature or its equipped creature conjures a duplicate of the nontoken damage source into hand | `s/SemblanceScanner.java` + `ConjureDuplicateOfCombatDamageSourceIntoHandEffect` |
@@ -128,6 +147,7 @@
 | conjure a duplicate of a card returned from your graveyard to your hand | `v/VeteranGhoulcaller.java` + `ConjureDuplicateOfCardReturnedFromGraveyardToHandEffect` |
 | seek nonland cards and apply a perpetual hand cost reduction | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | seek a basic land onto the battlefield, then seek an exact-mana-value permanent to hand | `s/SettleTheWilds.java` + `SeekCardToBattlefieldEffect` + `SeekCardsToHandEffect` |
+| sacrifice a creature, then Seek a creature with mana value one higher onto the battlefield and add a subtype | `s/SpawningPod.java` + `SacrificeCreatureCost(true)` + `SeekLibraryEffect(..., BATTLEFIELD, ManaValueBound(true, 1), CardSubtype.PHYREXIAN)` |
 | ETB seeks exact-mana-value spells into source-tracked exile, then upkeep copies one for free | `s/SignatureSpells.java` + `SeekLibraryEffect(..., EXILE_WITH_SOURCE, ManaValueBound)` + `CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, FREE)` |
 | council's dilemma vote with one basic-land search or graveyard return per vote | `t/TravelThroughCaradhras.java` + `TravelThroughCaradhrasEffect` |
 | council's dilemma vote with a majority graveyard return or tied/embark hand refresh | `s/SailIntoTheWest.java` + `SailIntoTheWestEffect` |
@@ -228,7 +248,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md; CARD_PATTERNS_PERMANENTS_STATIC.md for static draw replacements |
 | each player may discard and draw, then damage accepting opponents | `s/Snort.java` + `EachPlayerMayDiscardHandThenDrawEffect` + `DealDamageToPlayersEffect.selectedOpponents` |
 | spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + shared `LibraryRevealChoice` + `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (`y/SupportSkyforge.java`, YDFT 26) |
-| seek a card and discard that exact card later | `SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect` + `DiscardSpecificCardEffect` |
+| seek one or more cards and discard those exact cards later | `SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect` + `DiscardSpecificCardEffect` |
 | opponent searches library, control search choices, exile found cards | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | seek a random matching card from the top of a library, then shuffle | `SeekFromTopOfLibraryEffect` |
@@ -243,6 +263,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | random Dragon card from a fixed spellbook into face-down exile with egg counters | `ConjureDarigaazShivanChampionSpellbookEffect` |
 | draft three random cards from a fixed spellbook and exile the chosen card tracked to the source | `DraftProteanWarEngineSpellbookEffect` |
 | optional enlist trigger that conjures a perpetual duplicate into the top five | `ConjureDuplicateOfEnlistedNontokenCreatureEffect` + `ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect` |
+| optional ETB/attack graveyard exile followed by a duplicate conjured into the top five | `s/SheoldredsAssimilator.java` + `ExileTargetCardFromGraveyardThenEffect` + `ConjureDuplicateOfExiledCardIntoTopFiveEffect` |
 | next instant/sorcery cast conjures a duplicate into hand, with an un-kicked delayed discard | `RegisterDelayedControllerSpellCastTriggerEffect` + `ConjureDuplicateOfTriggeringSpellIntoHandEffect` + `DiscardSpecificCardEffect` |
 | one or more other nontoken creatures deal combat damage, then choose one and conjure its duplicate into hand | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` + `AllyCombatDamageTriggerEffect(..., oncePerDamageStep=true)` + `ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect` |
 | one or more creatures deal combat damage, create a Treasure, then manifest the damaged player's top card under your control | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` + `AllyCombatDamageTriggerEffect(null, SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1), ManifestTopCardOfDamagedPlayerLibraryEffect()), false, true)` |
@@ -264,6 +285,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | counter target spell; creature spells perpetually get -2/-0; counter unless pays | CARD_PATTERNS_LANDS_SPELLS.md |
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
 | proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` + `PhaseOutPermanentsThatReceivedCountersThisWayEffect` |
+| cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `SpellCastTriggerEffect(new CardPutIntoHandThisTurnPredicate(), List.of(new ProliferateEffect()))` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -278,6 +300,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | directional multiplayer creature-choice control spell | CARD_PATTERNS_LANDS_SPELLS.md and EFFECTS_QUICK_REFERENCE.md |
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | tempting offer, each opponent may accept an effect | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
+| tempting offer, copy target instant or sorcery and copy again for each accepting opponent | `t/TemptWithMayhem.java` + `TemptingOfferCopySpellEffect()` |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
 | creature becomes target of an opponent's spell or ability, targeted trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -335,11 +358,13 @@ This index has been split into smaller files for faster lookup. Each file is und
 | attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |
 | each opponent separates creatures into piles and controller chooses sacrifice pile | `MakeAnExampleEffect` + `MakeAnExampleEffectHandler` |
 | global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| each player chooses a color, then selectively exile colored permanents by controller | `EachPlayerChoosesColorThenExileOtherPermanentsEffect` |
 | first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | random player chooses a graveyard instant/sorcery, then a free copy cast | `w/WildfireDevils.java` + `RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect` |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | demonstrate a spell copy for you and one chosen opponent | `MayEffect(new DemonstrateEffect(), "Copy [spell name]?")` in `ON_SELF_CAST` + the spell's normal effects |
+| creature spells you cast have demonstrate | `STATIC GrantSpellCastingAbilityToSpellsEffect(Keyword.DEMONSTRATE, new CardTypePredicate(CardType.CREATURE))` | `ON_SELF_CAST` grant is materialized by the spell-cast trigger collector; Silverquill Lecturer (M3C 44) |
 | demonstrate + destroy an opposing artifact/creature + its controller's immediate free cast from an exile-until-nonland dig | `MayEffect(new DemonstrateEffect())` + `DestroyTargetPermanentThenEffect(..., ThenEffectRecipient.TARGET_CONTROLLER, requiresDestruction=true)` + `ExileTopUntilNonlandMayCastWithoutPayingManaCostEffect` |
 | each opponent digs to a nonland, then the controller may free-cast any number of those spells | `EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect(Integer.MAX_VALUE, false, LibraryScope.EACH_OPPONENT)` |
 | chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
@@ -431,11 +456,14 @@ Shahrazad (ARN 10): `StartSubgameEffect` followed by the existing fractional lif
 | fixed list of cards, choose one at random, create a copy, and offer it for a free cast | `CreateRandomCardCopyAndMayCastEffect(List<Supplier<? extends Card>>)` | Jund 'Em Out (MB2 357/596) |
 | combat-damage trigger that randomly conjures one of several named cards into hand and reveals it | `p/PinchyMcStingbutt.java` + `ConjureRandomCardFromSpellbookToHandEffect` |
 | Perpetual ETB ability granted to a card in hand | `PullOfTheMistMoonTest.java` | Covers the hand-card choice and the stored ability triggering when a later copy enters |
+| Modal ETB that perpetually grants an activated ability to an Equipment card in hand or a target Equipment permanent | `k/KembasOutfitter.java` + `KembasOutfitterTest.java` | Covers both modes, perpetual identity tracking, and Equipment targeting |
 | Kicked bounce that conjures a castable duplicate into hand | `VesuvanMistTest.java` | Covers nontoken/nonland targeting, last-known-information copying, persistent token-card handling, and card-local any-color mana permission |
 | Kicked ETB returns your graveyard card and conjures an opponent-graveyard duplicate | `NantukoSlicerTest.java` | Covers independently targeted graveyard groups, kicked-only opponent targeting, and perpetual any-color casting permission on the conjured card |
 | Multi-target independent may exile followed by survivor-count search | `d/DisorientingChoiceTest.java` | Covers per-controller keep/exile choices, no-search when all targets leave, tapped land search, and artifact/enchantment opponent targeting |
 | each creature you control explores, then explores again | `STATIC DoubleExploreReplacementEffect()`; `ExploreEffectHandler` expands each controlled creature's explore into two replacement-exempt explores |
 | Exile each player's top card and let the spell controller play them through their next turn | `l/LidlessGaze.java` + `ExileTopCardOfEachPlayersLibraryMayPlayUntilNextTurnEffect` |
+| chosen nonbasic land type, make matching lands you control hasty copies of a target creature you control | `EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect` + `FlashbackCast` |
+| return a land as an activated cost, then draw and conditionally discard by its nonbasic type | `CARD_PATTERNS_LANDS_SPELLS.md` |
 | Targeted creature exile and controller cast permission through their next turn | `h/HurlThroughHell.java` + `ExileTargetPermanentAndGrantControllerCastPermissionUntilNextTurnEffect(true)` | Covers creature targeting, controller-relative expiry, and any-color mana |
 - Mythweaver Poq (YLCI 19): land-count CDA plus once-per-turn nontoken landfall duplicate conjure — `cards/m/MythweaverPoq.java`
 - Reflection Net (YLCI 27): flash artifact exiles a creature until it leaves, then once-only sorcery-speed copy of the exiled creature onto a targeted creature you control — `cards/r/ReflectionNet.java` + `TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect`

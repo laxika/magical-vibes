@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "122")
 @CardRegistration(set = "2XM", collectorNumber = "175")
+@CardRegistration(set = "M3C", collectorNumber = "237")
 public class ManaReflection extends Card {
 
     public ManaReflection() {

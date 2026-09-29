@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "43")
+@CardRegistration(set = "M3C", collectorNumber = "180")
 public class DeepfathomSkulker extends Card {
 
     public DeepfathomSkulker() {

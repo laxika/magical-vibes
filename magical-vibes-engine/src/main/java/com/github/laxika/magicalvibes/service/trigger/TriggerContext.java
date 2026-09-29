@@ -732,7 +732,11 @@ public sealed interface TriggerContext {
                                  UUID causeControllerId) implements TriggerContext {}
 
     /** Context for controller-graveyard triggers that care about any non-token card. */
-    record CardPutIntoGraveyard(Card card, UUID graveyardOwnerId) implements TriggerContext {}
+    record CardPutIntoGraveyard(Card card, UUID graveyardOwnerId, Zone sourceZone) implements TriggerContext {
+        public CardPutIntoGraveyard(Card card, UUID graveyardOwnerId) {
+            this(card, graveyardOwnerId, null);
+        }
+    }
 
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}

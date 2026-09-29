@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1504,6 +1503,10 @@ public class TriggeredAbilityQueueService {
             } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                if (pending.optionalTarget() && !validPlayerTargets.contains(pending.controllerId())) {
+                    validPlayerTargets = new ArrayList<>(validPlayerTargets);
+                    validPlayerTargets.add(pending.controllerId());
+                }
             } else if (pending.targetFilter() != null) {
                 // Permanent-filtered path: players are not offered.
                 validPlayerTargets = pending.optionalTarget() ? List.of(pending.controllerId()) : List.of();
