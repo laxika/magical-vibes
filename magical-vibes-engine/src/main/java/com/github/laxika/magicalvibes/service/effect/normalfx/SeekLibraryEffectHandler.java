@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -51,6 +54,14 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         Permanent source = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Card sourceCard = source == null ? entry.getTargetingCard() : source.getCard();
+        List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard == null
+                ? List.of()
+                : sourceCard.getEffects(EffectSlot.STATIC).stream()
+                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
+                .toList();
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, seek.count(),
                 AmountContext.forStackEntry(entry, source)));
         Integer manaValueBound = seek.manaValueBound() == null ? null
@@ -65,7 +76,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
 
         UUID sourcePermanentId = seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE
                 ? resolveSourcePermanentId(gameData, entry, controllerId) : null;
-        if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE && sourcePermanentId == null) {
+        if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE
+                && sourcePermanentId == null && persistentPermissions.isEmpty()) {
             return;
         }
         boolean entersBattlefield = seek.destination() == LibrarySearchDestination.BATTLEFIELD
@@ -95,6 +107,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
                     || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                 Permanent permanent = new Permanent(chosen, Zone.LIBRARY);
+                if (seek.grantSubtype() != null) {
+                    permanent.getGrantedSubtypes().add(seek.grantSubtype());
+                }
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent,
                         battlefieldEntryService.snapshotEnterTappedTypes(gameData));
@@ -109,10 +124,14 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 } else {
                     exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
                 }
+                grantPersistentPermissions(gameData, chosen, persistentPermissions, controllerId);
             } else {
                 throw new IllegalStateException("Unsupported Seek destination: " + seek.destination());
             }
             soughtCards.add(chosen);
+        }
+        if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+            registerOneShotPermissionGroup(gameData, soughtCards, persistentPermissions);
         }
         if (!soughtCards.isEmpty()) {
             triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
@@ -137,5 +156,35 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             }
         }
         return null;
+    }
+
+    private void grantPersistentPermissions(GameData gameData, Card card,
+                                            List<AllowCastFromCardsExiledWithSourceEffect> permissions,
+                                            UUID exilerId) {
+        for (AllowCastFromCardsExiledWithSourceEffect permission : permissions) {
+            if (permission.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null,
+                    gameData, exilerId)) {
+                continue;
+            }
+            UUID permittedPlayer = permission.accessScope() == ExileAccessScope.ACTIVE_PLAYER
+                    ? gameData.activePlayerId : exilerId;
+            gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+            if (permission.anyManaType()) {
+                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+            }
+            break;
+        }
+    }
+
+    private void registerOneShotPermissionGroup(
+            GameData gameData, List<Card> soughtCards,
+            List<AllowCastFromCardsExiledWithSourceEffect> permissions) {
+        if (soughtCards.isEmpty() || permissions.stream().noneMatch(
+                AllowCastFromCardsExiledWithSourceEffect::oneShot)) {
+            return;
+        }
+        gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1,
+                soughtCards.stream().map(Card::getId).toList());
     }
 }

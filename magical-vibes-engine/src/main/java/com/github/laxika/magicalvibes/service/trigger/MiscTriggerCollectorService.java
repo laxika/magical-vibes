@@ -1608,6 +1608,17 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_PROLIFERATES)
+    private boolean handleConditionalProliferate(TriggerMatchContext match,
+            ConditionalEffect effect, TriggerContext ctx) {
+        if (effect.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), effect.condition(),
+                        ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        return handleProliferateDefault(match, effect, ctx);
+    }
+
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapSequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
