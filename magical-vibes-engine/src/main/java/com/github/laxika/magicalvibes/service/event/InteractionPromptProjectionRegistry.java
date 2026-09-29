@@ -1588,7 +1588,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectSpellbookCardChoice(
             GameData gameData, PendingInteraction.SpellbookCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()),
+                interaction.minCount(), interaction.maxCount(),
                 interaction.prompt());
     }
 

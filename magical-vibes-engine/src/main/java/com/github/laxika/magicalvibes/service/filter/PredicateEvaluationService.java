@@ -80,6 +80,8 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsControllerHandSizePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
@@ -695,6 +697,14 @@ public class PredicateEvaluationService {
                             || card.getSubtypes().contains(CardSubtype.SAGA);
             case CardSupertypePredicate p ->
                     card.getSupertypes().contains(p.supertype());
+            case CardManaValueGreaterThanControllerHandSizePredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && card.getManaValue() > gameData.playerHands
+                            .getOrDefault(cardOwnerId, List.of()).size();
+            case CardManaValueEqualsControllerHandSizePredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && card.getManaValue() == gameData.playerHands
+                            .getOrDefault(cardOwnerId, List.of()).size();
             case CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && card.getManaValue() <= gameData.playerGraveyards

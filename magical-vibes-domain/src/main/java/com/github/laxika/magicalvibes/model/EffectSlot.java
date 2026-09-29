@@ -794,6 +794,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller casts a spell while this card is in exile. */
+    EXILE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
@@ -895,6 +897,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
     /** Triggers once per unblocked creature the controller controls while this card is in exile. */
     EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
+    /** Triggers when one or more creatures the controller controls attack while this card is in exile. */
+    EXILE_ON_ALLY_CREATURES_ATTACK,
     /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
      *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in

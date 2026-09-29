@@ -123,6 +123,12 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
+        if (predicate instanceof CardManaValueGreaterThanControllerHandSizePredicate) {
+            return "card with mana value greater than the number of cards in your hand";
+        }
+        if (predicate instanceof CardManaValueEqualsControllerHandSizePredicate) {
+            return "card with mana value equal to the number of cards in your hand";
+        }
         if (predicate instanceof CardManaValueAtMostSourceCountersPredicate) {
             return "card with mana value at most this permanent's counters";
         }

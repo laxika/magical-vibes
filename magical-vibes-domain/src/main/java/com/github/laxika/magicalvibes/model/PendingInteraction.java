@@ -5162,15 +5162,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Chooses exactly one card from the cards currently offered by a spellbook. */
     record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
-                               DraftFromSpellbookEffect.DraftMode draftMode)
+                               DraftFromSpellbookEffect.DraftMode draftMode,
+                               int minCount, int maxCount, CardEffect chosenCardThenEffect)
             implements PendingInteraction {
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt) {
-            this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND);
+            this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND,
+                    1, 1, null);
+        }
+
+        public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
+                                   DraftFromSpellbookEffect.DraftMode draftMode) {
+            this(playerId, cards, prompt, draftMode, 1, 1, null);
         }
 
         public SpellbookCardChoice {
             cards = java.util.List.copyOf(cards);
+            if (minCount < 1 || maxCount < minCount || maxCount > cards.size()) {
+                throw new IllegalArgumentException("Invalid spellbook choice bounds");
+            }
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -5184,7 +5194,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
         }
     }
 

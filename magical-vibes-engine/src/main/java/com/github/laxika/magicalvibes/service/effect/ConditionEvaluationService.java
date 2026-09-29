@@ -213,6 +213,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThi
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasBoon;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEmblem;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatch;
@@ -379,6 +380,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAnd
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithFetchCounter;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
@@ -916,6 +919,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && gameData.playersWithEnduringStory.contains(ctx.controllerId());
             case ControllerHasCompletedDungeon ignored ->
                     ctx.controllerId() != null && gameData.playersWhoCompletedDungeon.contains(ctx.controllerId());
+            case ControllerHasBoon ignored ->
+                    ctx.controllerId() != null
+                            && gameData.boons.stream()
+                            .anyMatch(boon -> ctx.controllerId().equals(boon.controllerId()));
             case ControllerHasEmblem ignored ->
                     ctx.controllerId() != null
                             && gameData.emblems.stream()
@@ -1593,6 +1600,10 @@ public class ConditionEvaluationService {
                     isSourceCardOnBattlefield(gameData, ctx);
             case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx);
+            case SourceCardInExile ignored ->
+                    isSourceCardInExile(gameData, ctx);
+            case SourceCardInExileWithFetchCounter ignored ->
+                    isSourceCardInExileWithFetchCounter(gameData, ctx);
             case SourceCardToughnessAtLeast c ->
                     sourceCardToughnessAtLeast(gameData, ctx, c.threshold());
             case SourceCardSuspended ignored ->
@@ -2479,6 +2490,18 @@ public class ConditionEvaluationService {
         return gameData.playerGraveyards.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(card -> card.getId().equals(ctx.sourceCard().getId()));
+    }
+
+    /** True when the source card is currently in exile. */
+    private boolean isSourceCardInExile(GameData gameData, ConditionContext ctx) {
+        return ctx.sourceCard() != null && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
+    }
+
+    /** True when the source card is currently exiled with a fetch counter. */
+    private boolean isSourceCardInExileWithFetchCounter(GameData gameData, ConditionContext ctx) {
+        return ctx.sourceCard() != null
+                && gameData.exiledCardsWithFetchCounters.contains(ctx.sourceCard().getId())
+                && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
     }
 
     /** True when the source card's printed toughness plus its perpetual modifiers meets the threshold. */

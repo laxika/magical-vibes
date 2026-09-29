@@ -251,9 +251,11 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
+            List<CardEffect> activeStaticEffects = gameQueryService.getActiveStaticEffects(gameData, p);
+            activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
+            activeStaticEffects.addAll(p.getPersistentTriggeredEffects(EffectSlot.STATIC));
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
-                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(DamagePersistenceEffect.class::isInstance);
+                    && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
             if (!damagePersists && !controllersWithOpponentDamagePersistence.isEmpty()
                     && isCreatureForCleanup(gameData, p)) {
                 damagePersists = controllersWithOpponentDamagePersistence.stream()

@@ -1253,6 +1253,18 @@ public class TriggerCollectionService {
             }
         }
 
+        // EXILE_ON_CONTROLLER_CASTS_SPELL — face-up exile-resident spell-cast triggers.
+        for (ExiledCardEntry exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            if (exiledEntry.faceDown() || !castingPlayerId.equals(exiledEntry.ownerId())) {
+                continue;
+            }
+            Card card = exiledEntry.card();
+            for (CardEffect effect : card.getEffects(EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL)) {
+                registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect, card),
+                        EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            }
+        }
+
         // Abaddon the Despoiler: during your turn, hand-cast spells with mana value at most the
         // total life lost by opponents this turn have cascade. The spell's effective mana value is
         // snapshotted so X spells use their announced value when the cascade trigger resolves.
@@ -12873,14 +12885,15 @@ public class TriggerCollectionService {
         }
 
         for (Boon boon : List.copyOf(gameData.boons)) {
-            if (!boon.controllerId().equals(controllerId) || enteringPermanent == null) {
+            if (boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.CREATURE_ENTERS
+                    || !boon.controllerId().equals(controllerId) || enteringPermanent == null) {
                 continue;
             }
 
             gameData.boons.remove(boon);
             if (boon.remainingUses() > 1) {
                 gameData.boons.add(new Boon(boon.controllerId(), boon.sourceCard(), boon.effect(),
-                        boon.remainingUses() - 1));
+                        boon.remainingUses() - 1, boon.trigger()));
             }
 
             StackEntry entry = new StackEntry(

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
@@ -913,6 +914,8 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case MayPayTapAndSacrificePermanentEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.

@@ -464,6 +464,8 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueLessThanSourceCountersPredicate` | `(CounterType)` | a card whose mana value is strictly less than the number of the specified counters on the source permanent; needs `GameData`, `sourceCardId`, and the source permanent's identity when available |
 | `CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate` | `()` | a card whose mana value is <= the number of permanent cards in the perspective player's graveyard; used by Squirming Emergence |
 | `CardManaValueAtMostControlledLandsPredicate` | `()` | a card whose mana value is <= the number of lands controlled by the perspective player; used by Nissa of Shadowed Boughs |
+| `CardManaValueGreaterThanControllerHandSizePredicate` | `()` | a card whose mana value is strictly greater than the perspective player's current hand size; needs `GameData` + perspective player |
+| `CardManaValueEqualsControllerHandSizePredicate` | `()` | a card whose mana value equals the perspective player's current hand size; needs `GameData` + perspective player |
 | `CardManaValueLessThanSourceLoyaltyPredicate` | `()` | a card whose mana value is less than the source planeswalker's loyalty; needs `GameData` and `sourceCardId` (Nahiri, the Unforgiving) |
 | `CardManaValueParityPredicate` | `(ManaValueParity parity)` | a card whose mana value is odd or even; when evaluating an X spell at cast time, the chosen X is included, while an unannounced X remains potentially playable |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |

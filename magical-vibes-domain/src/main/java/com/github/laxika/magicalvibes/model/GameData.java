@@ -5467,6 +5467,23 @@ public class GameData {
         return false;
     }
 
+    /** Marks an existing exile entry with a fetch counter and records the player who exiled it. */
+    public boolean markExiledCardWithFetchCounter(UUID cardId, UUID exilerId) {
+        synchronized (exiledCards) {
+            for (int i = 0; i < exiledCards.size(); i++) {
+                ExiledCardEntry exiled = exiledCards.get(i);
+                if (exiled.card().getId().equals(cardId)) {
+                    exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
+                            exiled.sourcePermanentId(), exiled.faceDown(), exilerId,
+                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
+                    exiledCardsWithFetchCounters.add(cardId);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Adds a card to exile with a stash counter. Stash counters are independent of any source permanent. */
     public void addToExileWithStashCounter(UUID ownerId, Card card) {
         spellsWithDreamCounterOnResolution.remove(card.getId());

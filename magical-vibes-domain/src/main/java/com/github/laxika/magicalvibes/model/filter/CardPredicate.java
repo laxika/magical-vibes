@@ -50,6 +50,8 @@ public sealed interface CardPredicate permits
         CardIsSelfPredicate,
         CardHasAwakenPredicate,
         CardKeywordPredicate,
+        CardManaValueGreaterThanControllerHandSizePredicate,
+        CardManaValueEqualsControllerHandSizePredicate,
         CardManaValueParityPredicate,
         CardNameInControllerGraveyardPredicate,
         CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate,

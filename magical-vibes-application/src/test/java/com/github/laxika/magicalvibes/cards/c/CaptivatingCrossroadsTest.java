@@ -1,0 +1,74 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed(CaptivatingCrossroads.class)
+class CaptivatingCrossroadsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Enters tapped during the starting player's first three turns")
+    void entersTappedDuringStartingPlayersFirstThreeTurns() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 3);
+        playCrossroads(player1);
+
+        Permanent crossroads = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(crossroads.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped for a player who was not the starting player")
+    void entersUntappedForNonStartingPlayer() {
+        harness.forceActivePlayer(player2);
+        gd.startingPlayerId = player1.getId();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.turnsTakenByPlayer.put(player2.getId(), 3);
+        playCrossroads(player2);
+
+        Permanent crossroads = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(crossroads.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped after the starting player's third turn")
+    void entersUntappedAfterStartingPlayersThirdTurn() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 4);
+        playCrossroads(player1);
+
+        Permanent crossroads = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(crossroads.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chooses a color and taps for one mana of that color")
+    void tapsForChosenColor() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 4);
+        playCrossroads(player1);
+        Permanent crossroads = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(crossroads.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isOne();
+    }
+
+    private void playCrossroads(com.github.laxika.magicalvibes.model.Player player) {
+        harness.setHand(player, List.of(new CaptivatingCrossroads()));
+        harness.playLand(player, 0);
+        harness.handleListChoice(player, ManaColor.GREEN.name());
+    }
+}

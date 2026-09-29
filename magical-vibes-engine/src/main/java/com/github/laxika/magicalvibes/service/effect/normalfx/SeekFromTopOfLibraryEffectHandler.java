@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 /** Resolves a hidden random selection from the top of a library. */
 @Component
@@ -40,16 +40,16 @@ public class SeekFromTopOfLibraryEffectHandler implements NormalEffectHandlerBea
         }
 
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
-        List<Card> matchingCards = result.topCards().stream()
+        List<Card> matchingCards = new ArrayList<>(result.topCards().stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, seek.predicate(), sourceCardId, gameData, controllerId))
-                .toList();
+                .toList());
 
-        Card chosenCard = matchingCards.isEmpty()
-                ? null
-                : matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+        Collections.shuffle(matchingCards);
+        List<Card> chosenCards = matchingCards.subList(
+                0, Math.min(Math.max(0, seek.maxMatches()), matchingCards.size()));
         List<Card> cardsToReturn = new ArrayList<>(result.topCards());
-        if (chosenCard != null) {
+        for (Card chosenCard : chosenCards) {
             cardsToReturn.remove(chosenCard);
             gameData.playerHands.get(controllerId).add(chosenCard);
         }

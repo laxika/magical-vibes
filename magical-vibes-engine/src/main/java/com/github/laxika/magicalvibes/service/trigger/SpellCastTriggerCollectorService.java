@@ -1126,6 +1126,15 @@ public class SpellCastTriggerCollectorService {
                 sc.exiledSourcePermanentId());
     }
 
+    @CollectsTrigger(value = SpellCastTriggerEffect.class,
+            slot = EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleExileResidentSpellCastTrigger(TriggerMatchContext match,
+            SpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
+                sc.exiledSourcePermanentId());
+    }
+
     @CollectsTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleGainControlOfSingleTargetCreatureSpell(TriggerMatchContext match,
