@@ -1022,6 +1022,7 @@ public class TurnProgressionService {
         gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.permanentsSacrificedThisTurn.clear();
         gameData.playersWhoSurveilledThisTurn.clear();
+        gameData.playersWhoControlledPermanentThatExploredThisTurn.clear();
         gameData.playersWhoFlippedCoinsThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();

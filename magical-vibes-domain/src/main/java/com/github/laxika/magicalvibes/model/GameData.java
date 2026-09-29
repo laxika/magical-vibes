@@ -199,6 +199,8 @@ public class GameData {
     public final Map<UUID, Integer> sacrificedPermanentCountThisTurn = new ConcurrentHashMap<>();
     /** Players who surveilled at least once this turn. */
     public final Set<UUID> playersWhoSurveilledThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who controlled a permanent that explored at least once this turn. */
+    public final Set<UUID> playersWhoControlledPermanentThatExploredThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -6118,6 +6120,12 @@ public class GameData {
         }
     }
 
+    public void initializeCardIntensity(Card card, int amount) {
+        if (card != null && amount > 0) {
+            cardIntensities.putIfAbsent(card.getId(), amount);
+        }
+    }
+
     private static CombatDamageState copyCombatDamageState(CombatDamageState source,
             java.util.function.Function<Permanent, Permanent> permanentCopy) {
         if (source == null) return null;
@@ -6831,6 +6839,8 @@ public class GameData {
         copy.playerDungeonProgress.putAll(this.playerDungeonProgress);
         copy.playersWhoVenturedIntoDungeonThisTurn.addAll(this.playersWhoVenturedIntoDungeonThisTurn);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
+        copy.playersWhoControlledPermanentThatExploredThisTurn
+                .addAll(this.playersWhoControlledPermanentThatExploredThisTurn);
         copy.playersWhoWereWayBehindThisTurn.addAll(this.playersWhoWereWayBehindThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoAttackedWithCommanderThisTurn.addAll(this.playersWhoAttackedWithCommanderThisTurn);

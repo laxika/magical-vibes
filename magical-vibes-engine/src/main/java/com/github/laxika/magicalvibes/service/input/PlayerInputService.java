@@ -2737,6 +2737,11 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, interaction);
     }
 
+    public void beginArtifactPermanentOrGraveyardChoice(GameData gameData,
+            PendingInteraction.ArtifactPermanentOrGraveyardCardChoice interaction) {
+        interactionHandlerRegistry.begin(gameData, interaction);
+    }
+
     /**
      * Begin the mixed battlefield + graveyard + hand Aura selection of Bruna, Light of Alabaster.
      * The candidate list is built by the effect handler, so the interaction arrives whole.

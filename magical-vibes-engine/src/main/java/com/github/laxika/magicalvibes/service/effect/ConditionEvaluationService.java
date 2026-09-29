@@ -138,6 +138,7 @@ import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatedTokenThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlledPermanentExploredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
@@ -765,6 +766,10 @@ public class ConditionEvaluationService {
             case ControllerCreatedTokenThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoCreatedTokensThisTurn.contains(ctx.controllerId());
+            case ControllerControlledPermanentExploredThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoControlledPermanentThatExploredThisTurn
+                                    .contains(ctx.controllerId());
             case ControllerSacrificedPermanentsAtLeastThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.sacrificedPermanentCountThisTurn
