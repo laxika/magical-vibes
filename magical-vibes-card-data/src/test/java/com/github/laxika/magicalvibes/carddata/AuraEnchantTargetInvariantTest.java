@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * matching restriction:
  * <ul>
  * <li>"Enchant permanent" — no filter required (any permanent is a legal target).</li>
+ * <li>"Enchant zone" — {@code isEnchantZone()} marks an Aura with no permanent target.</li>
  * <li>"Enchant player" / "Enchant opponent" — the card must report {@link Card#isEnchantPlayer()}
  * (automatic for Curses; others must call {@code setEnchantPlayer(true)}).</li>
  * <li>Anything else ("Enchant creature", "Enchant land", "Enchant creature you control", …) —
@@ -77,6 +78,9 @@ class AuraEnchantTargetInvariantTest {
 
                 String enchantType = enchant.group(1).strip();
                 if (enchantType.equalsIgnoreCase("permanent")) {
+                    continue;
+                }
+                if (enchantType.equalsIgnoreCase("zone") && card.isEnchantZone()) {
                     continue;
                 }
                 if (enchantType.equalsIgnoreCase("player") || enchantType.equalsIgnoreCase("opponent")) {

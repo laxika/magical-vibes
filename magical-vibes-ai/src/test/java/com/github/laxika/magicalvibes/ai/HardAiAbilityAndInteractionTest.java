@@ -340,7 +340,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates Thrun regenerate ability during combat")
     void activatesThrunRegenerateDuringCombat() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 32);
 
         // Declare blockers A?€�t good timing for regenerate
         harness.forceActivePlayer(player1);

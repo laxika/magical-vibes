@@ -28,6 +28,7 @@ class TheValeyardTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         chooseSycoraxDamage();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         chooseSycoraxDamage();

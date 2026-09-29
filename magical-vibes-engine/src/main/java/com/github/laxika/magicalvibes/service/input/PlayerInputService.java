@@ -1388,6 +1388,7 @@ public class PlayerInputService {
     public void beginSpellCardTypeChoice(GameData gameData, UUID playerId, List<CardType> allowedTypes) {
         ChoiceContext.SpellCardTypeChoice choiceContext = new ChoiceContext.SpellCardTypeChoice(playerId);
         List<String> cardTypes = allowedTypes.stream()
+                .filter(type -> type != CardType.EMBLEM)
                 .map(CardType::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1413,7 +1414,7 @@ public class PlayerInputService {
         ChoiceContext.CardTypeOnEnterChoice choiceContext =
                 new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes);
         List<String> cardTypes = Arrays.stream(CardType.values())
-                .filter(type -> !excludedTypes.contains(type))
+                .filter(type -> type != CardType.EMBLEM && !excludedTypes.contains(type))
                 .map(CardType::name)
                 .toList();
         String excludedLabel = excludedTypes.stream()
@@ -1837,7 +1838,8 @@ public class PlayerInputService {
     public void beginRemoveCountersFromForcedCostOrElseChoice(GameData gameData,
             PendingMayAbility ability,
             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
-            UUID payerId, int remaining, Map<String, UUID> permanentOptions) {
+            UUID payerId, int remaining,
+            Map<String, ChoiceContext.CounterSelection> permanentOptions) {
         ChoiceContext.RemoveCountersFromForcedCostOrElse context =
                 new ChoiceContext.RemoveCountersFromForcedCostOrElse(
                         ability, effect, payerId, remaining, permanentOptions);
