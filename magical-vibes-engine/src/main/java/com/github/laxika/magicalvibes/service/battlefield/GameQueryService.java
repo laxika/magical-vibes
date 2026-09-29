@@ -358,6 +358,7 @@ public class GameQueryService {
             CardSubtype.POWER_PLANT,
             CardSubtype.TOWER,
             CardSubtype.AURA,
+            CardSubtype.ARCANE,
             CardSubtype.PLAN,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,

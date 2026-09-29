@@ -24,4 +24,10 @@ class TypeLineParserTest {
         assertThat(creature.additionalTypes()).containsExactly(CardType.CREATURE);
         assertThat(creature.subtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.WIZARD);
     }
+
+    @Test
+    void parsesTimeLordAlongsideDoctor() {
+        var doctor = TypeLineParser.parse("Legendary Creature \u2014 Time Lord Doctor");
+        assertThat(doctor.subtypes()).containsExactly(CardSubtype.TIME_LORD, CardSubtype.DOCTOR);
+    }
 }

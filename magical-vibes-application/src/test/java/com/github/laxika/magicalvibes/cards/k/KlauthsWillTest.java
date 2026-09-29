@@ -26,7 +26,7 @@ class KlauthsWillTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Ornithopter());
 
-        cast(0, 2, List.of());
+        cast(ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0}), 2, List.of());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Ornithopter");
@@ -37,7 +37,7 @@ class KlauthsWillTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         harness.addToBattlefield(player2, new GloriousAnthem());
 
-        cast(1, 2, List.of(artifact.getId()));
+        cast(ChooseOneEffect.encodeModeSelection(1, 2, new int[]{1}), 2, List.of(artifact.getId()));
 
         harness.assertInGraveyard(player2, "Ornithopter");
         harness.assertOnBattlefield(player2, "Glorious Anthem");
@@ -50,7 +50,8 @@ class KlauthsWillTest extends BaseCardTest {
         addMana(1);
 
         assertThatThrownBy(() -> gs.playModalXCard(
-                gd, player1, 0, 1, 1, null, List.of(creature.getId())))
+                gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 2, new int[]{1}),
+                1, null, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -61,7 +62,7 @@ class KlauthsWillTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
 
-        cast(ChooseOneEffect.encodeModeSelection(1, 0, 1), 2, List.of(artifact.getId()));
+        cast(ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), 2, List.of(artifact.getId()));
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Ornithopter");
@@ -73,7 +74,7 @@ class KlauthsWillTest extends BaseCardTest {
         addMana(2);
 
         assertThatThrownBy(() -> gs.playModalXCard(
-                gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 0, 1), 2,
+                gd, player1, 0, ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), 2,
                 null, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }

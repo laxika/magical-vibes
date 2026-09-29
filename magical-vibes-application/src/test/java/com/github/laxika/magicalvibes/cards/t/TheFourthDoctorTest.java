@@ -27,6 +27,7 @@ class TheFourthDoctorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveFromLibraryTop(player1);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Mind Stone");
         assertThat(countPermanents(player1, "Food")).isOne();
@@ -40,6 +41,7 @@ class TheFourthDoctorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(ancientDen));
 
         harness.castFromLibraryTop(player1);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ancient Den");
         assertThat(countPermanents(player1, "Food")).isOne();
@@ -54,6 +56,7 @@ class TheFourthDoctorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(ancientDen, mindStone));
 
         harness.castFromLibraryTop(player1);
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
                 .isInstanceOf(IllegalStateException.class);

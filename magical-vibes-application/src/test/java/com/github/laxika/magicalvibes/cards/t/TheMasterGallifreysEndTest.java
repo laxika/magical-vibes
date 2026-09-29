@@ -98,5 +98,6 @@ class TheMasterGallifreysEndTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
         harness.castInstant(caster, 0, target.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
