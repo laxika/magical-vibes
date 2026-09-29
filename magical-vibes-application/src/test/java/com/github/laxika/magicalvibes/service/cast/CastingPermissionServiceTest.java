@@ -209,7 +209,7 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(false);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
@@ -243,7 +243,7 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
 
         gd.activePlayerId = player2Id;

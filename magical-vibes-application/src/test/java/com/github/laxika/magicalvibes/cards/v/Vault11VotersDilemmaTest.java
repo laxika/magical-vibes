@@ -74,6 +74,7 @@ class Vault11VotersDilemmaTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private PendingInteraction.MultiPermanentChoice activeVote() {

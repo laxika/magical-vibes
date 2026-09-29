@@ -932,7 +932,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return false;
         }
 
-        if (candidates.size() == 1) {
+        if (candidates.size() == 1 && availableCounterTypes(candidates.getFirst(), cost).size() == 1) {
             removeAllowedCounters(gameData, candidates.getFirst(), cost, cost.count());
             resolvePaidEffects(gameData, ability, effect, 0);
             return true;
@@ -945,22 +945,25 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     /** Completes one selection in an exact counter payment for an optional forced cost. */
     public boolean completeControlledCounterChoice(GameData gameData, String choice,
             ChoiceContext.RemoveCountersFromForcedCostOrElse context) {
-        UUID permanentId = context.permanentOptions().get(choice);
-        if (permanentId == null) {
+        ChoiceContext.CounterSelection selection = context.permanentOptions().get(choice);
+        if (selection == null) {
             throw new IllegalArgumentException("Invalid permanent choice: " + choice);
         }
+        UUID permanentId = selection.permanentId();
         RemoveCounterFromControlledPermanentCost cost =
                 (RemoveCounterFromControlledPermanentCost) context.effect().forcedCost();
         Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (permanent == null
                 || !context.payerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
                 || !matchesCounterPayment(gameData, permanent, context.ability(), cost)
-                || counterCount(permanent, cost) < 1) {
+                || permanent.getCounterCount(selection.counterType()) < 1
+                || !cost.allows(selection.counterType())) {
             throw new IllegalArgumentException("Permanent is no longer eligible for this counter payment");
         }
 
         gameData.interaction.clearAwaitingInput();
-        removeAllowedCounter(gameData, permanent, cost);
+        permanentCounterSupport.removeCounterFromPermanent(
+                gameData, permanent, selection.counterType(), 1);
         int remaining = context.remaining() - 1;
         if (remaining == 0) {
             resolvePaidEffects(gameData, context.ability(), context.effect(), 0);
@@ -987,7 +990,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             ForcedCostOrElseEffect effect, RemoveCounterFromControlledPermanentCost cost,
             List<Permanent> candidates, int remaining) {
         playerInputService.beginRemoveCountersFromForcedCostOrElseChoice(
-                gameData, ability, effect, payerId, remaining, counterPaymentOptions(candidates));
+                gameData, ability, effect, payerId, remaining, counterPaymentOptions(candidates, cost));
     }
 
     private List<Permanent> matchingCounterPermanents(GameData gameData, UUID payerId,
@@ -1059,18 +1062,36 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         throw new IllegalStateException("Permanent has no counter matching this cost");
     }
 
-    private Map<String, UUID> counterPaymentOptions(List<Permanent> candidates) {
+    private List<CounterType> availableCounterTypes(Permanent permanent,
+            RemoveCounterFromControlledPermanentCost cost) {
+        return permanent.getCounters().entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .map(Map.Entry::getKey)
+                .filter(type -> type != CounterType.ANY && type != CounterType.SILVER && cost.allows(type))
+                .sorted()
+                .toList();
+    }
+
+    private Map<String, ChoiceContext.CounterSelection> counterPaymentOptions(
+            List<Permanent> candidates, RemoveCounterFromControlledPermanentCost cost) {
         Map<String, Integer> totalsByName = new HashMap<>();
         for (Permanent candidate : candidates) {
             totalsByName.merge(candidate.getCard().getName(), 1, Integer::sum);
         }
         Map<String, Integer> occurrencesByName = new HashMap<>();
-        Map<String, UUID> options = new LinkedHashMap<>();
+        Map<String, ChoiceContext.CounterSelection> options = new LinkedHashMap<>();
         for (Permanent candidate : candidates) {
             String name = candidate.getCard().getName();
             int occurrence = occurrencesByName.merge(name, 1, Integer::sum);
             String label = totalsByName.get(name) == 1 ? name : name + " (" + occurrence + ")";
-            options.put(label, candidate.getId());
+            List<CounterType> types = availableCounterTypes(candidate, cost);
+            for (CounterType type : types) {
+                String option = types.size() == 1 ? label
+                        : candidates.size() == 1
+                        ? ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(type)
+                        : label + " - " + ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(type);
+                options.put(option, new ChoiceContext.CounterSelection(candidate.getId(), type));
+            }
         }
         return options;
     }
