@@ -38,7 +38,7 @@ class KembasOutfitterTest extends BaseCardTest {
 
         Permanent hammerPermanent = findPermanent(player1, "Colossus Hammer");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, battlefieldIndex(player1, hammerPermanent), 1,
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hammerPermanent), 1,
                 null, creature.getId());
         harness.passBothPriorities();
 
