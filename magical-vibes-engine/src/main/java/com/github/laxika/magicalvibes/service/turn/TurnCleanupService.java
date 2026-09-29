@@ -76,6 +76,7 @@ public class TurnCleanupService {
 
     private final CreatureControlService creatureControlService;
     private final PermanentRemovalService permanentRemovalService;
+    private final ThreadLocal<Boolean> checkingGrantedHandSizeEffects = ThreadLocal.withInitial(() -> false);
 
     @Autowired
     @Lazy
@@ -799,13 +800,22 @@ public class TurnCleanupService {
                         .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }
-                if (gameQueryService != null) {
+            }
+        }
+        // Computing a static bonus can evaluate a condition that asks about maximum hand size.
+        // The nested query still sees printed effects, but must not recursively compute bonuses.
+        if (bf != null && gameQueryService != null && !checkingGrantedHandSizeEffects.get()) {
+            checkingGrantedHandSizeEffects.set(true);
+            try {
+                for (Permanent perm : bf) {
                     GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
                     if (staticBonus != null && staticBonus.grantedEffects().stream()
                             .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                         return true;
                     }
                 }
+            } finally {
+                checkingGrantedHandSizeEffects.remove();
             }
         }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {

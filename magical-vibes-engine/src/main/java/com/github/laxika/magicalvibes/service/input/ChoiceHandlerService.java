@@ -3587,22 +3587,30 @@ public class ChoiceHandlerService {
 
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     ChooseOneEffect.ChooseOneOption chosen) {
+        return beginResolvingModalTargetChoice(gameData, ctx, chosen.effects(), chosen.targetFilter());
+    }
+
+    private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
+                                                    List<CardEffect> effects, TargetFilter targetFilter) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         boolean combatContextPlayerTarget = pendingEntry != null
                 && pendingEntry.isNonTargeting()
                 && pendingEntry.getTargetId() != null
                 && gameData.playerIds.contains(pendingEntry.getTargetId())
-                && chosen.effects().stream().anyMatch(effect ->
+                && effects.stream().anyMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))
-                && chosen.effects().stream().noneMatch(effect ->
+                && effects.stream().noneMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
+        boolean nonTargetingCombatEntry = pendingEntry != null && pendingEntry.isNonTargeting()
+                && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId());
         if (pendingEntry == null
-                || (pendingEntry.getTargetId() != null && !combatContextPlayerTarget)
+                || (pendingEntry.getTargetId() != null && !nonTargetingCombatEntry)
                 || !pendingEntry.getTargetIds().isEmpty()) {
             return false;
         }
 
-        boolean needsTarget = chosen.effects().stream().anyMatch(effect ->
+        boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
         if (!needsTarget) {
@@ -3612,10 +3620,9 @@ public class ChoiceHandlerService {
         Permanent source = ctx.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        TargetFilter targetFilter = chosen.targetFilter();
         UUID defendingPlayerId = combatContextPlayerTarget ? pendingEntry.getTargetId() : null;
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                gameData, chosen.effects(), targetFilter, ctx.controllerId(), ctx.sourceCard(),
+                gameData, effects, targetFilter, ctx.controllerId(), ctx.sourceCard(),
                 TriggerTargetCollector.Options.ATTACK, source, defendingPlayerId);
         if (result.validTargets().isEmpty()) {
             return false;
@@ -3717,6 +3724,16 @@ public class ChoiceHandlerService {
         boolean hasTargets = selectedEffects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
+        if (hasTargets && ctx.sourceCard().getSpellTargets().isEmpty()) {
+            TargetFilter targetFilter = ctx.effect().options().stream()
+                    .filter(option -> chosenLabels.contains(option.label()))
+                    .map(ChooseOneEffect.ChooseOneOption::targetFilter)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse(null);
+            if (beginResolvingModalTargetChoice(gameData, ctx, selectedEffects, targetFilter)) {
+                return;
+            }
+        }
         if (hasTargets && !ctx.sourceCard().getSpellTargets().isEmpty()) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),

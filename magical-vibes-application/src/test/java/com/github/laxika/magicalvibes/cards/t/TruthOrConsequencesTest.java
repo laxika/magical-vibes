@@ -27,6 +27,7 @@ class TruthOrConsequencesTest extends BaseCardTest {
 
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
         harness.assertLife(player2, 20);
@@ -39,6 +40,7 @@ class TruthOrConsequencesTest extends BaseCardTest {
 
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player2, 1);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertLife(player2, 14);
@@ -54,6 +56,7 @@ class TruthOrConsequencesTest extends BaseCardTest {
 
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 1);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         harness.assertLife(player2, 17);

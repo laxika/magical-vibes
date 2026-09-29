@@ -137,7 +137,7 @@ class WurmsToothTest extends BaseCardTest {
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        harness.assertOnBattlefield(player1, "Myr Moonvessel");
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
         harness.assertLife(player1, 20);
     }
 

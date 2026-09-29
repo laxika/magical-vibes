@@ -24,8 +24,12 @@ class WastelandRaiderTest extends BaseCardTest {
         castRaider(List.of("{2}", "{2}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Wasteland Raider")).hasSize(3);
+        // The original Raider is the only creature available for its own sacrifice trigger.
+        harness.assertInGraveyard(player1, "Wasteland Raider");
+        assertThat(findPermanents(player1, "Wasteland Raider")).hasSize(2)
+                .allSatisfy(token -> assertThat(token.getCard().isToken()).isTrue());
         resolveSacrificeChoices();
     }
 
@@ -35,8 +39,10 @@ class WastelandRaiderTest extends BaseCardTest {
         Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
         Permanent ownGiant = addCreatureReady(player1, new HillGiant());
         Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
         castRaider(List.of());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -59,9 +65,7 @@ class WastelandRaiderTest extends BaseCardTest {
     void playerWithoutCreatureIsSkipped() {
         castRaider(List.of());
         harness.passBothPriorities();
-
-        Permanent source = findPermanent(player1, "Wasteland Raider");
-        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId()));
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Wasteland Raider");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

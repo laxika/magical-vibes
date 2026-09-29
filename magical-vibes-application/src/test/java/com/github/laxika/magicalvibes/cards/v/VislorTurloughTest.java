@@ -63,6 +63,7 @@ class VislorTurloughTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castCreature(player1, 0);
+        resolveAllTriggers();
     }
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {

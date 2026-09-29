@@ -6398,7 +6398,18 @@ public class StepTriggerService {
                 ? trigger.sourceCard().getName() + "'s ability — Choose up to one " + targetDescription
                         + " (choose yourself to decline)."
                 : trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".";
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets, prompt);
+        if (canTargetPlayers) {
+            List<UUID> validPlayerIds = validTargets.stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            List<UUID> validPermanentIds = validTargets.stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
+            playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+                    validPermanentIds, validPlayerIds, prompt);
+        } else {
+            playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets, prompt);
+        }
 
         gameLogService.append(gameData,
                 GameLog.cardThen(trigger.sourceCard(), "'s end step trigger — choose " + targetDescription + "."));

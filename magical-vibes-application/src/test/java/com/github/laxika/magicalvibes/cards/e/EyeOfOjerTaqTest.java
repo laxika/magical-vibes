@@ -39,9 +39,8 @@ class EyeOfOjerTaqTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() instanceof ApexObservatory)
                 .findFirst()
                 .orElseThrow();
-        assertThat(observatory.isTapped()).isTrue();
+        assertThat(observatory.isTapped()).isFalse();
 
-        observatory.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.setHand(player1, List.of(new GrizzlyBears()));

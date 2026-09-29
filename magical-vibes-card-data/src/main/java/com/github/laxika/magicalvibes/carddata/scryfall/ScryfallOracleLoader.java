@@ -86,6 +86,7 @@ public class ScryfallOracleLoader implements OracleLoader {
         try {
             String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
             Map<String, JsonNode> cardsByCollectorNumber = parseSetJson(cache.get(sourceSetCode));
+            int cardTotal = cardsByCollectorNumber.size();
 
             String setName = null;
             if (!cardsByCollectorNumber.isEmpty()) {
@@ -103,6 +104,7 @@ public class ScryfallOracleLoader implements OracleLoader {
                     rarities.put(entry.getKey(), cardNode.get("rarity").asText());
                 }
             }
+            CardDataSupport.applyMissingMb2Printings(setCode, cardsByCollectorNumber, rarities);
 
             // Oracle text is parsed only for printings the game implements.
             Map<String, OracleData> frontFaces = new HashMap<>();
@@ -122,7 +124,7 @@ public class ScryfallOracleLoader implements OracleLoader {
                 }
             }
 
-            return new SetOracleData(setName, cardsByCollectorNumber.size(), rarities,
+            return new SetOracleData(setName, cardTotal, rarities,
                     frontFaces, backFaces, faceNames, loadTokens(sourceSetCode));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load Scryfall oracle data for set " + setCode, e);
