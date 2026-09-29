@@ -338,6 +338,7 @@ public enum CardSubtype {
     GLIMMER("Glimmer"),
     NEPHILIM("Nephilim"),
     SAND("Sand"),
+    CHORUS("Chorus"),
     RIGGER("Rigger"),
     MIRRODIN("Mirrodin"),
     SERRAS_REALM("Serra's Realm"),

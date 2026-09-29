@@ -58,8 +58,8 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         if (chosenCard == null) {
             chosenCard = findCard(graveyard, chosenCardId);
         }
-        if (chosenCard == null || chosenCard.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {
-            throw new IllegalStateException("Chosen card is no longer a valid nonland card");
+        if (chosenCard == null) {
+            throw new IllegalStateException("Chosen card is no longer a valid card");
         }
 
         if (fromHand) {
