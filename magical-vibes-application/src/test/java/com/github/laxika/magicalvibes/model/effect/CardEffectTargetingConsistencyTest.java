@@ -61,6 +61,8 @@ class CardEffectTargetingConsistencyTest {
             // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
             // by the target-legality services; it never resolves or targets anything itself.
             "TargetingRestrictionEffect",
+            // Static marker: a temporary trigger binds its player during resolution.
+            "TargetPlayerSpellCastTriggerEffect",
             // Marker: declares a target-group position consumed by a sibling effect and never
             // resolves or chooses a target itself.
             "TargetGroupMarkerEffect",

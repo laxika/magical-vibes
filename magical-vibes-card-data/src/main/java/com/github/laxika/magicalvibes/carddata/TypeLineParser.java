@@ -48,6 +48,11 @@ public class TypeLineParser {
             typeLine = typeLine.substring(0, typeLine.indexOf(" // "));
         }
 
+        // Some playtest cards retain the legacy creature type line.
+        if (typeLine.startsWith("Summon ")) {
+            typeLine = "Creature \u2014 " + typeLine.substring("Summon ".length());
+        }
+
         Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         CardType type = null;
         Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
@@ -91,15 +96,30 @@ public class TypeLineParser {
 
         // Parse subtypes
         if (subtypesPart != null && !subtypesPart.isBlank()) {
-            String[] subtypeWords = type != null && type.isPlanar()
-                    ? new String[] {subtypesPart} : subtypesPart.split("\\s+");
-            for (String word : subtypeWords) {
-                if (word.isEmpty()) continue;
-                CardSubtype subtype = SUBTYPE_MAP.get(word);
+            if (type != null && type.isPlanar()) {
+                CardSubtype subtype = SUBTYPE_MAP.get(subtypesPart);
                 if (subtype != null) {
                     subtypes.add(subtype);
-                } else {
-                    LOG.fine("Unknown subtype from Scryfall: " + word);
+                }
+            } else {
+                String[] words = subtypesPart.split("\\s+");
+                for (int index = 0; index < words.length;) {
+                    CardSubtype match = null;
+                    int nextIndex = index + 1;
+                    for (int end = words.length; end > index; end--) {
+                        String candidate = String.join(" ", java.util.Arrays.copyOfRange(words, index, end));
+                        match = SUBTYPE_MAP.get(candidate);
+                        if (match != null) {
+                            nextIndex = end;
+                            break;
+                        }
+                    }
+                    if (match != null) {
+                        subtypes.add(match);
+                    } else {
+                        LOG.fine("Unknown subtype from Scryfall: " + words[index]);
+                    }
+                    index = nextIndex;
                 }
             }
         }

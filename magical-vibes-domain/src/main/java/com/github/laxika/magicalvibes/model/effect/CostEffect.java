@@ -138,6 +138,11 @@ public interface CostEffect extends CardEffect {
         return false;
     }
 
+    /** True when the permanent returned to its owner's hand to pay this cost is retained as a card snapshot. */
+    default boolean tracksReturnedPermanentCard() {
+        return false;
+    }
+
     /** True when the exact permanent exiled to pay this cost is retained for a later effect. */
     default boolean tracksExiledCard() {
         return false;

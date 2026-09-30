@@ -32,6 +32,7 @@ class SanctuaryBladeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "RED");

@@ -96,6 +96,8 @@ import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNe
 import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Boon;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
@@ -4382,7 +4384,7 @@ public class StepTriggerService {
                     continue;
                 }
                 ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(action.manaCost()),
+                        action.cost(),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 StackEntry entry = new StackEntry(
@@ -5777,6 +5779,31 @@ public class StepTriggerService {
             }
         }
 
+        // End-step boons trigger before the active player's permanent abilities. This preserves
+        // the normal stack ordering for a boon and a permanent ability that both trigger here:
+        // the permanent ability resolves first while the boon still exists.
+        for (Boon boon : List.copyOf(gameData.boons)) {
+            if (boon.trigger() != BoonTrigger.CONTROLLER_END_STEP
+                    || !boon.controllerId().equals(activePlayerId)) {
+                continue;
+            }
+            if (boon.effect() instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forCard(boon.sourceCard(), activePlayerId))) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    boon.sourceCard(),
+                    boon.controllerId(),
+                    boon.sourceCard().getName() + "'s boon",
+                    new ArrayList<>(List.of(boon.effect())));
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
+        }
+
         // CONTROLLER_END_STEP_TRIGGERED: only fires for the active player's permanents
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
@@ -6459,7 +6486,18 @@ public class StepTriggerService {
                 ? trigger.sourceCard().getName() + "'s ability — Choose up to one " + targetDescription
                         + " (choose yourself to decline)."
                 : trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".";
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets, prompt);
+        if (canTargetPlayers) {
+            List<UUID> validPlayerIds = validTargets.stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            List<UUID> validPermanentIds = validTargets.stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
+            playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+                    validPermanentIds, validPlayerIds, prompt);
+        } else {
+            playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets, prompt);
+        }
 
         gameLogService.append(gameData,
                 GameLog.cardThen(trigger.sourceCard(), "'s end step trigger — choose " + targetDescription + "."));

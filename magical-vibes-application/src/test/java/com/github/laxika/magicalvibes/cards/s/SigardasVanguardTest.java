@@ -92,7 +92,7 @@ class SigardasVanguardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        return find(player1, "Sigarda's Vanguard");
+        return findPermanent(player1, "Sigarda's Vanguard");
     }
 
     private Permanent addReadyCreature(Card card) {

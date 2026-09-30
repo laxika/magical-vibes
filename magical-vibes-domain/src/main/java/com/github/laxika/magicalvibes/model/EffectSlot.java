@@ -215,6 +215,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_SCRIES,
     /** Triggers whenever this permanent's controller searches their own library. */
     ON_CONTROLLER_SEARCHES_LIBRARY,
+    /** Triggers whenever a card is put from the controller's library into their hand. */
+    ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY,
     /** Triggers after all players finish a voting event. */
     ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
@@ -805,6 +807,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller casts a spell while this card is in exile. */
+    EXILE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
@@ -906,11 +910,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
     /** Triggers once per unblocked creature the controller controls while this card is in exile. */
     EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
+    /** Triggers when one or more creatures the controller controls attack while this card is in exile. */
+    EXILE_ON_ALLY_CREATURES_ATTACK,
     /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
      *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
      *  {@code CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers}. Used by Auntie's Snitch. */
     GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+    /** Triggers from a graveyard whenever an equipped creature the card's owner controls deals
+     *  combat damage to a player or planeswalker. */
+    GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
     /** Triggers from a graveyard when a creature is put into that card's owner's graveyard from the
      *  battlefield. Used by Recover cards such as Sun's Bounty. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,

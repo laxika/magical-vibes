@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "169")
+@CardRegistration(set = "M3C", collectorNumber = "332")
 public class CorruptedCrossroads extends Card {
 
     public CorruptedCrossroads() {

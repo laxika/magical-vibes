@@ -2,9 +2,14 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
-/** Target opponent sacrifices a nontoken creature, then a small creature is copied into hand. */
-public record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect()
+/** Target player sacrifices a nontoken creature, then a duplicate may be conjured into hand. */
+public record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect(
+        PlayerRelation targetPlayerRelation, int maxManaValue, boolean mayDiscard)
         implements CardEffect {
+
+    public TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect() {
+        this(PlayerRelation.OPPONENT, 2, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {
@@ -13,6 +18,6 @@ public record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect(
 
     @Override
     public PlayerRelation targetPlayerRelation() {
-        return PlayerRelation.OPPONENT;
+        return targetPlayerRelation;
     }
 }

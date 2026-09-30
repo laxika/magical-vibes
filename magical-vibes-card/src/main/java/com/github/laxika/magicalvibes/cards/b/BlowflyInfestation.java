@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 @CardRegistration(set = "SHM", collectorNumber = "58")
 @CardRegistration(set = "ECC", collectorNumber = "46")
+@CardRegistration(set = "YECL", collectorNumber = "32")
 public class BlowflyInfestation extends Card {
 
     public BlowflyInfestation() {

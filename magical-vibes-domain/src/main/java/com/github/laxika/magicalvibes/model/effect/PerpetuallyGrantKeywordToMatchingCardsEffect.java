@@ -7,18 +7,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Set;
 
-/** Perpetually grants keywords to matching cards in hand and matching permanents on the battlefield. */
+/** Perpetually grants keywords to matching cards in configured zones and matching permanents on the battlefield. */
 public record PerpetuallyGrantKeywordToMatchingCardsEffect(
         CardPredicate handFilter,
         PermanentPredicate permanentFilter,
         Set<Keyword> keywords,
         EffectSlot triggeredAbilitySlot,
-        CardEffect triggeredAbility) implements KeywordGrantingEffect {
+        CardEffect triggeredAbility,
+        CardPredicate graveyardFilter,
+        CardPredicate libraryFilter) implements KeywordGrantingEffect {
 
     public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
                                                          PermanentPredicate permanentFilter,
                                                          Set<Keyword> keywords) {
-        this(handFilter, permanentFilter, keywords, null, null);
+        this(handFilter, permanentFilter, keywords, null, null, null, null);
+    }
+
+    public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
+                                                         PermanentPredicate permanentFilter,
+                                                         Set<Keyword> keywords,
+                                                         EffectSlot triggeredAbilitySlot,
+                                                         CardEffect triggeredAbility) {
+        this(handFilter, permanentFilter, keywords, triggeredAbilitySlot, triggeredAbility, null, null);
     }
 
     public PerpetuallyGrantKeywordToMatchingCardsEffect {

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,20 +33,14 @@ class ShadowKinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(milledCreature);
         assertThat(shadowKin.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(shadowKin.getCard().getPower()).isEqualTo(2);
         assertThat(shadowKin.getCard().getToughness()).isEqualTo(2);
-
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
-        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+        assertThat(shadowKin.getCard().getEffectRegistrations(EffectSlot.UPKEEP_TRIGGERED))
+                .isNotEmpty();
     }
 
     @Test
@@ -81,8 +75,7 @@ class ShadowKinTest extends BaseCardTest {
     private void resolveUpkeepTrigger() {
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -269,9 +270,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
-    /** Grave Choice: the targeted opponent chooses a nontoken creature to sacrifice. */
+    /** A targeted player chooses a nontoken creature to sacrifice for a duplicate follow-up. */
     record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
-            UUID sacrificingPlayerId, StackEntry resolvingEntry) implements PermanentChoiceContext {}
+            UUID sacrificingPlayerId, StackEntry resolvingEntry,
+            com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect effect)
+            implements PermanentChoiceContext {
+        public TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
+                UUID sacrificingPlayerId, StackEntry resolvingEntry) {
+            this(sacrificingPlayerId, resolvingEntry,
+                    new com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect());
+        }
+    }
 
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
@@ -524,6 +533,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesCreatureToExileWithSource {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
+    /** Benthic Anomaly: the controller chooses one creature controlled by each opponent. */
+    record EachOpponentChoosesCreatureForTokenCopy(
+            StackEntry resolvingEntry,
+            UUID controllerId,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds,
+            int totalPower,
+            int totalToughness
+    ) implements PermanentChoiceContext {
+        public EachOpponentChoosesCreatureForTokenCopy {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
+        }
+    }
+
+    /** Benthic Anomaly: the controller chooses which selected creature supplies the token copy. */
+    record ChooseBenthicAnomalyCopy(
+            StackEntry resolvingEntry,
+            UUID controllerId,
+            List<UUID> chosenPermanentIds,
+            int totalPower,
+            int totalToughness
+    ) implements PermanentChoiceContext {
+        public ChooseBenthicAnomalyCopy {
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
         }
     }
 
@@ -1553,6 +1591,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
+    record CopySpellForAnotherOpponentPermanentChoice(CopySpellForAnotherOpponentPermanentEffect effect)
             implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 @CardRegistration(set = "MM3", collectorNumber = "198")
 @CardRegistration(set = "GK2", collectorNumber = "126")
 @CardRegistration(set = "PIO", collectorNumber = "251")
+@CardRegistration(set = "M3C", collectorNumber = "276")
 public class UrbanEvolution extends Card {
 
     public UrbanEvolution() {

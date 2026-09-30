@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "245")
 @CardRegistration(set = "SLD", collectorNumber = "935")
 @CardRegistration(set = "SLD", collectorNumber = "1780")
+@CardRegistration(set = "M3C", collectorNumber = "212")
 public class GoldspanDragon extends Card {
 
     public GoldspanDragon() {

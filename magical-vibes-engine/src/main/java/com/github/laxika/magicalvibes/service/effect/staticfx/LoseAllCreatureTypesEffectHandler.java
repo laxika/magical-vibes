@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Applies the continuous layer-4 form of losing all creature types. */
-@Component
+@Component("staticLoseAllCreatureTypesEffectHandler")
 @RequiredArgsConstructor
 public class LoseAllCreatureTypesEffectHandler implements StaticEffectHandlerBean {
 

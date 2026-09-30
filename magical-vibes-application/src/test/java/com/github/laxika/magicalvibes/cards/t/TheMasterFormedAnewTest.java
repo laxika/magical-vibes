@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,10 +19,12 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         addCreatureReady(player1, creature);
         harness.setHand(player1, List.of(new TheMasterFormedAnew()));
+        addCastingMana();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
@@ -35,6 +38,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         harness.setExile(player1, List.of(exiledCreature));
         gd.exiledCardsWithTakeoverCounters.add(exiledCreature.getId());
         harness.setHand(player1, List.of(new TheMasterFormedAnew()));
+        addCastingMana();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -46,5 +50,12 @@ class TheMasterFormedAnewTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals(exiledCreature.getName()));
+    }
+
+    private void addCastingMana() {
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
     }
 }

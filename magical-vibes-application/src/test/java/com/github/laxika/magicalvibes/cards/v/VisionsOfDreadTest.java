@@ -65,7 +65,6 @@ class VisionsOfDreadTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

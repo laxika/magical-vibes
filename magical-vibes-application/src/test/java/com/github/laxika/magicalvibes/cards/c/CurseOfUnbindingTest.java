@@ -36,8 +36,8 @@ class CurseOfUnbindingTest extends BaseCardTest {
                 .extracting(p -> p.getCard())
                 .doesNotContain(creature);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .containsExactlyInAnyOrder(nonCreatureBefore, nonCreatureAfter);
-        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+                .containsExactly(nonCreatureBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nonCreatureAfter);
     }
 
     @Test

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
-@CardRegistration(set = "HBG", collectorNumber = "282")
+@CardRegistration(set = "CLB", collectorNumber = "282")
 public class MahadiEmporiumMaster extends Card {
 
     public MahadiEmporiumMaster() {

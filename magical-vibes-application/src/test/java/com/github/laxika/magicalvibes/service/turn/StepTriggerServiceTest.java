@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -187,6 +188,9 @@ class StepTriggerServiceTest {
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private AuraAttachmentService auraAttachmentService;
 
     @Mock
     private LifeSupport lifeSupport;
@@ -271,6 +275,7 @@ class StepTriggerServiceTest {
                 gameLogService,
                 playerInputService,
                 permanentRemovalService,
+                auraAttachmentService,
                 lifeSupport,
                 battlefieldEntryService,
                 graveyardTransformedReturnService,
@@ -2197,7 +2202,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse(); // processed immediately
             // processNextEndStepTriggerTarget fires and presents choice
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), eq(List.of()), eq(List.of(player2Id)), any());
         }
 
         @Test
@@ -2233,8 +2238,8 @@ class StepTriggerServiceTest {
             sut.processNextEndStepTriggerTarget(gd);
 
             // Should present choice with only opponent (player2), not controller (player1)
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
-                    eq(List.of(player2Id)), any());
+            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id),
+                    eq(List.of()), eq(List.of(player2Id)), any());
         }
 
         @Test
@@ -2387,8 +2392,10 @@ class StepTriggerServiceTest {
         @Test
         @DisplayName("Pending exile returns can tap lands without tapping other permanents")
         void pendingExileReturnsLandsTappedOnly() {
-            Card land = new Forest();
-            Card creature = new GrizzlyBears();
+            Card land = createCardWithName("Forest");
+            land.setType(CardType.LAND);
+            Card creature = createCardWithName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
             gd.addToExile(player1Id, land);
             gd.addToExile(player1Id, creature);
             gd.queueDelayedAction(new PendingExileReturn(land, player1Id, false, false,

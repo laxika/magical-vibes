@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "98")
 @CardRegistration(set = "PIO", collectorNumber = "142")
+@CardRegistration(set = "M3C", collectorNumber = "214")
 public class KozileksReturn extends Card {
 
     public KozileksReturn() {

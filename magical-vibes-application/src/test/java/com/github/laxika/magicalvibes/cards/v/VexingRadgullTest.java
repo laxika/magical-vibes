@@ -32,6 +32,7 @@ class VexingRadgullTest extends BaseCardTest {
         radgull.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
 
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);

@@ -32,8 +32,8 @@ class GhoulsNightOutTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        chooseOnlyCreatureFromGraveyard(player1);
-        chooseOnlyCreatureFromGraveyard(player1);
+        chooseOnlyCreatureFromGraveyard(player1.getId());
+        chooseOnlyCreatureFromGraveyard(player1.getId());
 
         Permanent ownPermanent = findPermanent(ownCreature);
         Permanent opposingPermanent = findPermanent(opposingCreature);
@@ -59,7 +59,7 @@ class GhoulsNightOutTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 

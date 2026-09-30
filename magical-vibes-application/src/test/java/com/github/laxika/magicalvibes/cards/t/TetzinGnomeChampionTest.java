@@ -78,7 +78,8 @@ class TetzinGnomeChampionTest extends BaseCardTest {
 
         assertThat(doubleFacedArtifact.isTransformed()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(p ->
-                p.getCard().hasType(CardType.ARTIFACT) && p.getCard().getSubtypes().contains(CardSubtype.GNOME))
+                p.getCard().isToken() && p.getCard().hasType(CardType.ARTIFACT)
+                        && p.getCard().getSubtypes().contains(CardSubtype.GNOME))
                 .hasSize(2);
         assertThat(colossus.isTransformed()).isTrue();
     }

@@ -35,13 +35,14 @@ class EloiseNephaliaSleuthTest extends BaseCardTest {
     @Test
     void sacrificingTokenTriggersSurveil() {
         addCreatureReady(player1, new EloiseNephaliaSleuth());
-        Permanent clue = harness.addToBattlefieldAndReturn(player1, new Clue());
+        Clue clueCard = new Clue();
+        clueCard.setToken(true);
+        Permanent clue = harness.addToBattlefieldAndReturn(player1, clueCard);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(clue), null, null);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

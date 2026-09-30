@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MH2", collectorNumber = "288")
 @CardRegistration(set = "DSC", collectorNumber = "208")
 @CardRegistration(set = "MIC", collectorNumber = "147")
+@CardRegistration(set = "M3C", collectorNumber = "254")
 public class YavimayaElder extends Card {
 
     public YavimayaElder() {

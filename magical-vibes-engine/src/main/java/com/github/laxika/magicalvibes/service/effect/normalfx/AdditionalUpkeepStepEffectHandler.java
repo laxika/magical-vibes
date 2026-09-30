@@ -29,7 +29,8 @@ public class AdditionalUpkeepStepEffectHandler implements NormalEffectHandlerBea
         }
 
         gameData.additionalUpkeepsRemaining++;
-        String playerName = gameData.playerIdToName.get(entry.getTargetId());
+        String playerName = gameData.playerIdToName.get(entry.getTargetId() != null
+                ? entry.getTargetId() : entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(playerName + " gets an additional upkeep step."));
         log.info("Game {} - {} gets an additional upkeep step", gameData.id, playerName);
     }

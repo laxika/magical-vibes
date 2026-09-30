@@ -61,6 +61,8 @@ class MoorlandRescuerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rescuer.getCard());
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears, hillGiant);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(3)
+                .contains(bears, hillGiant);
     }
 }
