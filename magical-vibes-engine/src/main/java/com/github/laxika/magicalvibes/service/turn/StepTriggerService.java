@@ -1643,11 +1643,15 @@ public class StepTriggerService {
                     continue;
                 }
 
-                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                // Each-upkeep payments already identify the active player; their fallback
+                // uses targetId as that context and does not choose a new player target.
+                boolean activePlayerPayment = effect instanceof ForcedCostOrElseEffect payment
+                        && payment.payerIsEnchantedController();
+                if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
-                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
@@ -1660,7 +1664,7 @@ public class StepTriggerService {
                     } else {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                     }
-                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     TargetFilter targetFilter = perm.getCard().getTargetFilter();
                     UUID choosingPlayerId = effect.targetChosenByActivePlayer()
                             || targetFilter != null && targetFilter.activePlayerChoosesTarget()
@@ -1679,6 +1683,7 @@ public class StepTriggerService {
                             perm.getId()
                     );
                     entry.setActivePlayerId(activePlayerId);
+                    entry.setNonTargeting(activePlayerPayment);
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.stack.add(entry);
                 }

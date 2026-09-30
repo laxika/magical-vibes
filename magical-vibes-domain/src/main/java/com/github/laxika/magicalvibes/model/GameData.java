@@ -3601,11 +3601,7 @@ public class GameData {
         if (updated < current) {
             energyCountersPaidOrLostThisTurn.merge(playerId, current - updated, Integer::sum);
         }
-        if (updated == 0) {
-            playerEnergyCounters.remove(playerId);
-        } else {
-            playerEnergyCounters.put(playerId, updated);
-        }
+        playerEnergyCounters.put(playerId, updated);
     }
 
     /** Removes up to {@code amount} energy counters, recording the counters that were lost. */

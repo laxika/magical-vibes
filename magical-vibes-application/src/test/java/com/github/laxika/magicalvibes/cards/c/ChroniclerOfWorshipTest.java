@@ -59,7 +59,7 @@ class ChroniclerOfWorshipTest extends BaseCardTest {
 
     @Test
     void tapsForManaOfAnyColor() {
-        harness.addToBattlefield(player1, new ChroniclerOfWorship());
+        addCreatureReady(player1, new ChroniclerOfWorship());
 
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);

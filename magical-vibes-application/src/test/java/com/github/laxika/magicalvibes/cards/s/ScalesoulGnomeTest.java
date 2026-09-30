@@ -23,10 +23,12 @@ class ScalesoulGnomeTest extends BaseCardTest {
         Forest land = new Forest();
         GrizzlyBears discovered = new GrizzlyBears();
         harness.setLibrary(player1, List.of(land, discovered));
+        harness.setHand(player1, List.of());
         addReadyGnome(player1);
 
         declareAttackers(List.of(0));
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveCombat();
+        resolveAllTriggers();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -41,6 +43,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
 
     @Test
     void conjuresDuplicateWhenSpellIsCastFromExile() {
+        harness.setHand(player1, List.of());
         addReadyGnome(player1);
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
@@ -61,6 +64,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
 
     @Test
     void conjuresDuplicateWhenLandIsPlayedFromExile() {
+        harness.setHand(player1, List.of());
         addReadyGnome(player1);
         Forest land = new Forest();
         gd.addToExile(player1.getId(), land);

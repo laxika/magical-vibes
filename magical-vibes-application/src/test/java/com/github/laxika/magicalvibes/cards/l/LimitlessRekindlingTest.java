@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AquaticSubtlety;
 import com.github.laxika.magicalvibes.cards.c.CraterousStomp;
+import com.github.laxika.magicalvibes.cards.c.CircadianStruggle;
+import com.github.laxika.magicalvibes.cards.e.ElvishElegy;
+import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
+import com.github.laxika.magicalvibes.cards.y.ThoughtweftsCall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -12,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LimitlessRekindling.class, AquaticSubtlety.class, CraterousStomp.class})
+@CardUsed({LimitlessRekindling.class, AquaticSubtlety.class, CraterousStomp.class,
+        CircadianStruggle.class, ElvishElegy.class, RiteOfFlame.class, ThoughtweftsCall.class})
 class LimitlessRekindlingTest extends BaseCardTest {
 
     @Test
@@ -23,10 +28,12 @@ class LimitlessRekindlingTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
-        assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling");
+        assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
+                "Circadian Struggle", "Elvish Elegy", "Rite of Flame", "Thoughtweft's Call");
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
         assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());

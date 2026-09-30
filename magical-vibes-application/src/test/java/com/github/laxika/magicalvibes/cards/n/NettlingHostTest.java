@@ -17,6 +17,7 @@ class NettlingHostTest extends BaseCardTest {
     @Test
     @DisplayName("Corrupted exiles Nettling Host and conjures Nettlecyst into hand")
     void corruptedExilesHostAndConjuresNettlecyst() {
+        harness.setHand(player1, List.of());
         NettlingHost host = new NettlingHost();
         harness.setGraveyard(player1, List.of(host));
         gd.playerPoisonCounters.put(player2.getId(), 3);
@@ -35,6 +36,7 @@ class NettlingHostTest extends BaseCardTest {
     @Test
     @DisplayName("Corrupted cannot be activated without an opponent having three poison counters")
     void corruptedRequiresOpponentWithThreePoisonCounters() {
+        harness.setHand(player1, List.of());
         NettlingHost host = new NettlingHost();
         harness.setGraveyard(player1, List.of(host));
         gd.playerPoisonCounters.put(player1.getId(), 3);

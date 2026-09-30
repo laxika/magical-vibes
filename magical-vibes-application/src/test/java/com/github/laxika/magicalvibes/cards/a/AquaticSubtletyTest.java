@@ -66,13 +66,14 @@ class AquaticSubtletyTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstBottom.getId(), secondBottom.getId()));
 
         SpellCastingService spellCastingService = GameTestEngineContext.get().getBean(SpellCastingService.class);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.inMutationScope(() -> spellCastingService.playCardWithAlternateCost(
                 gd, player1, 1, 0, null, null, List.of(), 2));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Zephyr Sprite");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(payment);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

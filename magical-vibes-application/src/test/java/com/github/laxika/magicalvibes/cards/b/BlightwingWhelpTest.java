@@ -36,10 +36,11 @@ class BlightwingWhelpTest extends BaseCardTest {
         GrayOgre matchingCard = new GrayOgre();
         GrizzlyBears nonmatchingCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(nonmatchingCard, matchingCard));
+        harness.setHand(player1, List.of());
         gd.playerPoisonCounters.put(player2.getId(), 2);
 
         Permanent whelp = addCreatureReady(player1, new BlightwingWhelp());
-        whelp.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(whelp)));
 
         resolveCombat();
         resolveAllTriggers();
@@ -54,10 +55,11 @@ class BlightwingWhelpTest extends BaseCardTest {
     void combatDamageSkipsWithoutMatchingCard() {
         GrizzlyBears libraryCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
         gd.playerPoisonCounters.put(player2.getId(), 2);
 
         Permanent whelp = addCreatureReady(player1, new BlightwingWhelp());
-        whelp.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(whelp)));
 
         resolveCombat();
         resolveAllTriggers();

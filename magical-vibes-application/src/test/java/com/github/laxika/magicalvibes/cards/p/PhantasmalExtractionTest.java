@@ -29,14 +29,14 @@ class PhantasmalExtractionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class);
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(land.getId())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(land.getId())))
                 .hasMessageContaining("valid nonland card");
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(tooExpensiveCard.getId())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(tooExpensiveCard.getId())))
                 .hasMessageContaining("valid nonland card");
 
-        harness.handleMultipleCardsChosen(player1, List.of(eligibleCard.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(eligibleCard.getId()));
 
-        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(eligibleCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(eligibleCard);
     }
 
     @Test
@@ -46,7 +46,7 @@ class PhantasmalExtractionTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(graveyardLand));
 
         castAsNonStartingPlayer();
-        harness.handleMultipleCardsChosen(player1, List.of(graveyardLand.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(graveyardLand.getId()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(graveyardLand);
     }

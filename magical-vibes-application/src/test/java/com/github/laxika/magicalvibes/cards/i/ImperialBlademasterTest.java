@@ -44,8 +44,8 @@ class ImperialBlademasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice.cards()).hasSize(3);
         assertThat(choice.cards()).extracting(Card::getName).allMatch(Set.of(
                 "Adamant Will", "Akki Ronin", "Ancestral Katana", "Asari Captain", "Eater of Virtue",
@@ -62,8 +62,8 @@ class ImperialBlademasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice.cards()).hasSize(3);
     }
 
@@ -75,7 +75,7 @@ class ImperialBlademasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
     }
 
     @Test
@@ -87,6 +87,6 @@ class ImperialBlademasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
     }
 }

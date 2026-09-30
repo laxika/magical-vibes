@@ -24,9 +24,9 @@ class ThoughtweftsCallTest extends BaseCardTest {
         castWithMode(0);
 
         harness.assertInHand(player1, "Kithkin Billyrider");
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotInHand(player1, "Kithkin Billyrider");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(kithkin);
@@ -41,9 +41,9 @@ class ThoughtweftsCallTest extends BaseCardTest {
 
         gd.playerHands.get(player1.getId()).remove(kithkin);
         harness.setGraveyard(player1, List.of(kithkin));
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(kithkin);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(kithkin);

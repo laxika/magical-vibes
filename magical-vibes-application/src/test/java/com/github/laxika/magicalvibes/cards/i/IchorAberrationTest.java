@@ -63,7 +63,8 @@ class IchorAberrationTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
 
         aberration.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(aberration.isAttacking()).isTrue();
     }

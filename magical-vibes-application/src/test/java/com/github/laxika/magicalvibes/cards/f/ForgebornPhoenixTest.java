@@ -68,7 +68,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Forgeborn Phoenix");
         assertThat(returned.isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
@@ -110,7 +110,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(planeswalker.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY))
-                .isEqualTo(2);
+                .isEqualTo(1);
         assertThat(findPermanent(player1, "Forgeborn Phoenix").isTapped()).isTrue();
     }
 

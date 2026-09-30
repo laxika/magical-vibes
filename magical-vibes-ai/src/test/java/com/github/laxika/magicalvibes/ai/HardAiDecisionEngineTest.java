@@ -2902,7 +2902,9 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 32));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // With one sorcery-speed option after combat, the evaluator chooses the spell
+        // directly instead of a rollout deciding whether to wait until after combat.
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
         gd.interaction.clearAwaitingInput();

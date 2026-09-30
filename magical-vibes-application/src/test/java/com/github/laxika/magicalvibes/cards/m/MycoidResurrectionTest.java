@@ -31,14 +31,15 @@ class MycoidResurrectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.GraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.cardPool()).extracting(Card::getId)
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        assertThat(choice.validIndices()).map(graveyard::get).extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstBear.getId(), secondBear.getId());
-        harness.handleGraveyardCardChosen(player1, choice.cardPool().indexOf(firstBear));
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(firstBear));
 
         Permanent returnedFirst = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, returnedFirst)).isEqualTo(5);
@@ -46,7 +47,7 @@ class MycoidResurrectionTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castSorcery(player1, 0, secondBear.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent returnedSecond = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(secondBear.getId()))
@@ -60,10 +61,11 @@ class MycoidResurrectionTest extends BaseCardTest {
     void doesNotPromptWhenNoCreatureCardIsInTheGraveyard() {
         harness.setGraveyard(player1, List.of(new Forest(), new Shock()));
         harness.setHand(player1, List.of(new MycoidResurrection()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Mycoid Resurrection");

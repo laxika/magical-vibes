@@ -71,6 +71,7 @@ class EchoingCavernTest extends BaseCardTest {
     @Test
     @DisplayName("Exhaust seeks a card of the chosen creature type")
     void exhaustSeeksChosenTypeCard() {
+        harness.setHand(player1, List.of());
         Permanent cavern = addCavern(CardSubtype.ELF);
         ElvishElegy elegy = new ElvishElegy();
         harness.setLibrary(player1, List.of(elegy));

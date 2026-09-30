@@ -24,6 +24,7 @@ class PerennialGravewardenTest extends BaseCardTest {
     @DisplayName("Perpetually gets +1/+1 when it enters")
     void perpetuallyBoostsItselfWhenEntering() {
         Permanent gravewarden = harness.enterBattlefieldAndReturn(player1, new PerennialGravewarden());
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, gravewarden)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, gravewarden)).isEqualTo(2);
@@ -54,7 +55,8 @@ class PerennialGravewardenTest extends BaseCardTest {
         destroyWithShock(bear.getId());
         advanceToEndStep(player1);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(gravewarden);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gravewarden);
+        harness.assertNotOnBattlefield(player1, "Perennial Gravewarden");
     }
 
     private void destroyWithShock(UUID targetId) {

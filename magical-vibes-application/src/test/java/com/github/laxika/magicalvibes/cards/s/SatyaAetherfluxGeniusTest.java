@@ -20,9 +20,11 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
         Permanent satya = addCreatureReady(player1, new SatyaAetherfluxGenius());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -42,9 +44,11 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
         addCreatureReady(player1, new SatyaAetherfluxGenius());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
         Permanent token = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
@@ -74,22 +78,26 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
         addCreatureReady(player1, new SatyaAetherfluxGenius());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
 
         advanceToEndStep();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

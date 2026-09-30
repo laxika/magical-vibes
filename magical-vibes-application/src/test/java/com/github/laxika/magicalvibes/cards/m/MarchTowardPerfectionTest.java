@@ -97,6 +97,7 @@ class MarchTowardPerfectionTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         MyrConvert myr = new MyrConvert();
         harness.setHand(player1, List.of(march, bears, myr));
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0);

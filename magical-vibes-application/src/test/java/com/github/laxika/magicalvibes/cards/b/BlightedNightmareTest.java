@@ -30,6 +30,7 @@ class BlightedNightmareTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.perpetualPowerToughnessModifiers)
                 .containsEntry(bears.getId(), new PerpetualPowerToughnessModifier(1, 1));
