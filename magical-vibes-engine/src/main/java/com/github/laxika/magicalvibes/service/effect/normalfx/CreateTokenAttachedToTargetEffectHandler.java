@@ -37,7 +37,13 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenAttachedToTargetEffect) effect;
-        for (UUID targetId : entry.targetsForEffect(e)) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        // Unbound effects may store their single target separately from the flat target list.
+        // An empty bound group must stay empty even if another group still has a target.
+        if (targetIds.isEmpty() && entry.targetsForBoundEffectGroup(e) == null && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        for (UUID targetId : targetIds) {
             createAttachedToken(gameData, entry, e, targetId);
         }
     }
