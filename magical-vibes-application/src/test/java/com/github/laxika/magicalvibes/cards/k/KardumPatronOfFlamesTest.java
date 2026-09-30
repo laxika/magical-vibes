@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KardumPatronOfFlames.class, GrizzlyBears.class, Murder.class})
+@CardUsed({KardumPatronOfFlames.class, GrizzlyBears.class, LlanowarElves.class, Murder.class})
 class KardumPatronOfFlamesTest extends BaseCardTest {
 
     @Test
     void attackAddsFlameCounterAndSeeksExactManaValueFaceDownWithSource() {
         Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
-        Card sought = new GrizzlyBears();
+        Card sought = new LlanowarElves();
         Card wrongManaValue = new Murder();
         harness.setLibrary(player1, List.of(sought, wrongManaValue));
 
@@ -40,7 +41,7 @@ class KardumPatronOfFlamesTest extends BaseCardTest {
     @Test
     void deathReturnsOwnedCardsAndDiscardsThoseCardsAtNextTurnEndStep() {
         Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
-        Card sought = new GrizzlyBears();
+        Card sought = new LlanowarElves();
         Card unrelated = new GrizzlyBears();
         Card murder = new Murder();
         harness.setLibrary(player1, List.of(sought));
@@ -60,7 +61,8 @@ class KardumPatronOfFlamesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(unrelated);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sought);

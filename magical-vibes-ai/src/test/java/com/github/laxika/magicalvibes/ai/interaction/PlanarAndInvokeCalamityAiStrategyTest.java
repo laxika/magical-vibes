@@ -34,6 +34,16 @@ class PlanarAndInvokeCalamityAiStrategyTest {
     }
 
     @Test
+    void spellbookDraftToExileSelectsExactlyOneOfferedCard() throws Exception {
+        Card first = new Card();
+        Card second = new Card();
+        answer(new PendingInteraction.SpellbookDraftToExileChoice(playerId, UUID.randomUUID(),
+                List.of(first, second), "The Mystical Archive"));
+
+        verify(actions).answerInteraction(new InteractionAnswer.CardsChosen(List.of(first.getId())));
+    }
+
+    @Test
     void spatialMergingOrdersEveryBottomedCard() throws Exception {
         answer(new PendingInteraction.SpatialMergingCardOrder(playerId, List.of(new Card()),
                 List.of(new Card(), new Card(), new Card()), "Order cards"));

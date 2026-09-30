@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,14 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrawGiant.class, GrizzlyBears.class})
+@CardUsed({CrawGiant.class, Squire.class})
 class CrawGiantTest extends BaseCardTest {
 
     @Test
     @DisplayName("With one blocker Rampage 2 grants no bonus")
     void oneBlockerGivesNothing() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new Squire());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -34,8 +34,8 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("With two blockers Rampage 2 grants +2/+2 until end of turn")
     void twoBlockersGivesPlusTwo() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
@@ -52,9 +52,9 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("With three blockers Rampage 2 grants +4/+4 until end of turn")
     void threeBlockersGivesPlusFour() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
@@ -72,9 +72,9 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("Counts the blockers still blocking when Rampage resolves")
     void countsBlockersAtResolution() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        Permanent removedBlocker = addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent removedBlocker = addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
@@ -107,8 +107,8 @@ class CrawGiantTest extends BaseCardTest {
     @DisplayName("The rampage bonus wears off at end of turn")
     void rampageBonusWearsOffAtEndOfTurn() {
         Permanent giant = addCreatureReady(player1, new CrawGiant());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new Squire());
+        addCreatureReady(player2, new Squire());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(

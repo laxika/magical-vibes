@@ -229,6 +229,17 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
 
+        // Each player's optional search begins with their first pick. Declining before
+        // finding any cards does not search or shuffle that player's library.
+        if (followUp.eachPlayerToHandCount() > 0
+                && remainingCount == followUp.eachPlayerToHandCount()) {
+            if (cardIndex == -1) {
+                shuffleAfterSelection = false;
+            } else {
+                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            }
+        }
+
         if (cardIndex >= 0
                 && librarySearch.allowCastFromLibraryWhileSearching()
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))
@@ -454,7 +465,7 @@ public class LibraryChoiceHandlerService {
                     // (Cream of the Crop). No shuffle — unlike the non-reorder TOP_OF_LIBRARY path.
                     addCardAtLibraryPosition(deck, chosenCard, topLibraryPosition);
                 } else if (!toBattlefield) {
-                    gameData.addCardToHand(handOwnerId, chosenCard);
+                    addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
                 }
                 for (int i = 0; i < sourceCards.size(); i++) {
                     if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
@@ -1467,7 +1478,7 @@ public class LibraryChoiceHandlerService {
                 placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
                         toBattlefieldTapped, false, false, false, null, battlefieldCounter, enterWithCounters);
             } else {
-                gameData.addCardToHand(handOwnerId, chosenCard);
+                addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
             }
         } else if (destination == LibrarySearchDestination.EXILE) {
             exileService.exileCard(gameData, deckOwnerId, chosenCard);
@@ -1507,10 +1518,10 @@ public class LibraryChoiceHandlerService {
             if (finalCardToHand) {
                 if (!accumulatedCards.isEmpty()) {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, battlefieldControllerId,
-                            toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
-                            animateFound, battlefieldCounter, enterWithCounters, false, playerId);
+                        toBattlefieldTapped, grantHaste, exileAtEndStep, returnToHandAtEndStep,
+                        animateFound, battlefieldCounter, enterWithCounters, false, playerId);
                 }
-                gameData.addCardToHand(handOwnerId, chosenCard);
+                addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
             } else if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
                 accumulatedCards.add(chosenCard);
@@ -1536,6 +1547,12 @@ public class LibraryChoiceHandlerService {
                 newSearchCards = deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList();
             } else {
                 newSearchCards = new ArrayList<>(deck);
+            }
+
+            if (followUp.eachPlayerToHandCount() > 0) {
+                // Keep later picks within the cards offered at the start of this search,
+                // including an opponent's restriction to the top four cards.
+                newSearchCards = newSearchCards.stream().filter(searchCards::contains).toList();
             }
 
             if (manaValueBoundValue != null) {
@@ -1590,6 +1607,7 @@ public class LibraryChoiceHandlerService {
                 }
                 // The multi-pick ran dry, but any queued follow-up work still has to happen.
                 if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
+                if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
                 finishSearchAndResume(gameData);
                 return;
             }
@@ -1780,6 +1798,7 @@ public class LibraryChoiceHandlerService {
         // Basic-land queues have their own end-of-queue shuffle; the generic descriptor helper
         // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
         return followUp.basicLandSearchQueue() == null
+                && followUp.eachPlayerToHandCount() == 0
                 && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
     }
 
@@ -4616,6 +4635,15 @@ public class LibraryChoiceHandlerService {
 
     private static void addCardAtLibraryPosition(List<Card> deck, Card card, int position) {
         deck.add(Math.min(position, deck.size()), card);
+    }
+
+    private void addCardFromLibraryToHand(GameData gameData, UUID handOwnerId, Card card,
+                                          UUID deckOwnerId, boolean fromLibrary) {
+        gameData.addCardToHand(handOwnerId, card);
+        if (fromLibrary && handOwnerId.equals(deckOwnerId)) {
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                    gameData, handOwnerId, card);
+        }
     }
 
     private static String topLibraryPositionText(int position) {

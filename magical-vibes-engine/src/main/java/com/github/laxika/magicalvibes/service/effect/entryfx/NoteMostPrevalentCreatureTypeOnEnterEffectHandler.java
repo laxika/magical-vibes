@@ -34,15 +34,19 @@ public class NoteMostPrevalentCreatureTypeOnEnterEffectHandler implements EntryR
     @Override
     public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
                       CardEffect effect) {
-        UUID opponentId = gameData.orderedPlayerIds.stream()
+        NoteMostPrevalentCreatureTypeOnEnterEffect noteEffect =
+                (NoteMostPrevalentCreatureTypeOnEnterEffect) effect;
+        UUID libraryOwnerId = noteEffect.opponentLibrary()
+                ? gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(controllerId))
                 .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+                .orElse(null)
+                : controllerId;
+        if (libraryOwnerId == null) {
             return;
         }
 
-        List<Card> library = gameData.playerDecks.get(opponentId);
+        List<Card> library = gameData.playerDecks.get(libraryOwnerId);
         if (library == null || library.isEmpty()) {
             return;
         }

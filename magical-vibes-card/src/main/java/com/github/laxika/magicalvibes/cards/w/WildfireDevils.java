@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "183")
+@CardRegistration(set = "C19", collectorNumber = "30")
 public class WildfireDevils extends Card {
 
     public WildfireDevils() {

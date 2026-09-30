@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
 public class MantleOfTheAncients extends Card {
 
     public MantleOfTheAncients() {
+        target(TargetFilters.creatureYouControl());
         CardAnyOfPredicate auraOrEquipment = new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.AURA),
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT)));

@@ -79,6 +79,29 @@ class DisintegrateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creature remains marked for exile if Disintegrate damage is prevented")
+    void creatureWithPreventedDisintegrateDamageIsExiledIfItDiesLaterThatTurn() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setDamagePreventionShield(1);
+
+        harness.setHand(player1, List.of(new Disintegrate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1, bears.getId());
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
     @DisplayName("Creature cannot regenerate even when Disintegrate damage is prevented")
     void creatureCannotRegenerateWhenDamageIsPrevented() {
         Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());

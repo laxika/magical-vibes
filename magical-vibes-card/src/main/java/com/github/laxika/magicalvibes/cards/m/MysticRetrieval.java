@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "363")
 @CardRegistration(set = "UMA", collectorNumber = "66")
 @CardRegistration(set = "C15", collectorNumber = "98")
+@CardRegistration(set = "C19", collectorNumber = "90")
 public class MysticRetrieval extends Card {
 
     public MysticRetrieval() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "FIC", collectorNumber = "314")
+@CardRegistration(set = "NEC", collectorNumber = "28")
+@CardRegistration(set = "NEC", collectorNumber = "70")
 public class RampantRejuvenator extends Card {
 
     public RampantRejuvenator() {

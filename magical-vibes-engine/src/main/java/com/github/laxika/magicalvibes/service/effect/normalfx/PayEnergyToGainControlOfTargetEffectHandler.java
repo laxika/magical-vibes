@@ -47,7 +47,7 @@ public class PayEnergyToGainControlOfTargetEffectHandler implements NormalEffect
         }
 
         if (energyAmount > 0) {
-            gameData.playerEnergyCounters.put(entry.getControllerId(), currentEnergy - energyAmount);
+            gameData.setPlayerEnergyCounters(entry.getControllerId(), currentEnergy - energyAmount);
             String playerName = gameData.playerIdToName.getOrDefault(entry.getControllerId(), "Player");
             gameLogService.append(gameData,
                     GameLog.text(playerName + " pays " + energyAmount + " energy counter(s)."));

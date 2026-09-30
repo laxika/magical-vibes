@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(WallOfRoots.class)
+@CardUsed({WallOfRoots.class, Solemnity.class})
 class WallOfRootsTest extends BaseCardTest {
 
     @Test
@@ -97,7 +97,6 @@ class WallOfRootsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Solemnity.class)
     @DisplayName("The counter cost cannot be paid while Solemnity prevents counters")
     void cannotActivateWhenCountersCannotBePlaced() {
         Permanent wall = addCreatureReady(player1, new WallOfRoots());

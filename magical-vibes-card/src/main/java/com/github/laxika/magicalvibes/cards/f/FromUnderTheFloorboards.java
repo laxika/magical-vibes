@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "111")
+@CardRegistration(set = "C19", collectorNumber = "113")
 public class FromUnderTheFloorboards extends Card {
 
     public FromUnderTheFloorboards() {

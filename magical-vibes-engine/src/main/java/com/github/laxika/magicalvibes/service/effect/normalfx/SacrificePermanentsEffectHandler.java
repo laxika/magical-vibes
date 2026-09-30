@@ -112,6 +112,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             }
             case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false, creatureSingleSac);
             case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true, creatureSingleSac);
+            case PLAYERS_WITH_MOST_LANDS -> resolveSelectedPlayers(gameData, entry, e,
+                    apnapPlayers(gameData).stream()
+                            .filter(playerId -> controlsMostLandsOrTied(gameData, playerId))
+                            .toList(), creatureSingleSac);
             case DEFENDING_PLAYER -> {
                 // Non-targeting ON_ATTACK edict: the attacked player, or the controller of the
                 // attacked planeswalker, sacrifices (reads the trigger's attackedTargetId).
@@ -128,6 +132,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 resolveSinglePlayer(gameData, entry, e, defendingPlayerId, creatureSingleSac);
             }
         }
+    }
+
+    private boolean controlsMostLandsOrTied(GameData gameData, UUID playerId) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(candidateId -> !candidateId.equals(playerId))
+                .noneMatch(candidateId -> gameQueryService.controlsMoreLandsThan(
+                        gameData, candidateId, playerId));
     }
 
     void resolveForPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
@@ -266,6 +277,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.recordSacrificedCount()) {
+            entry.setEventValue(0);
+        }
+
         // Per CR 101.4 and the Destructive Force ruling (2010-08-15): active player chooses first,
         // then each other player in turn order, then all chosen permanents are sacrificed at the
         // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
@@ -320,10 +335,14 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (choosers.isEmpty()) {
             // All players auto-resolved — sacrifice everything now
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(autoSacrificeIds.size());
+            }
         } else {
             // Some players need to choose — begin the first prompt
             destructionSupport.beginNextForcedSacrificeFromQueue(
-                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices());
+                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices(), null,
+                    e.recordSacrificedCount());
         }
     }
 

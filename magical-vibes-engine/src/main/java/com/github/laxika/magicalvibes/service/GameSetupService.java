@@ -210,6 +210,12 @@ public class GameSetupService {
                     .toList();
             deck.removeAll(commandZoneCards);
 
+            Set<UUID> startingDeckCardIds = ConcurrentHashMap.newKeySet();
+            deck.forEach(card -> startingDeckCardIds.add(card.getId()));
+            commandZoneCards.forEach(card -> startingDeckCardIds.add(card.getId()));
+            if (commander != null) startingDeckCardIds.add(commander.getId());
+            gameData.startingDeckCardIds.put(playerId, startingDeckCardIds);
+
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".
             // Then freeze: from here on the Card objects are shared with AI simulation copies
@@ -306,6 +312,9 @@ public class GameSetupService {
         for (UUID player : game.orderedPlayerIds) {
             List<Card> deck = new ArrayList<>(decks.get(player));
             deck.forEach(card -> game.subgameCards.put(card.getId(), card));
+            Set<UUID> startingDeckCardIds = ConcurrentHashMap.newKeySet();
+            deck.forEach(card -> startingDeckCardIds.add(card.getId()));
+            game.startingDeckCardIds.put(player, startingDeckCardIds);
             Collections.shuffle(deck, random);
             game.startingDeckSizes.put(player, deck.size());
             game.playerBattlefields.put(player, game.newBattlefieldList());

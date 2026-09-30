@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SoltariPriest.class, LightningBlast.class, Pacifism.class, CrownOfFlames.class,
-        Fireslinger.class, SoltariFootSoldier.class, KnightOfDawn.class})
+        Fireslinger.class, SoltariFootSoldier.class, KnightOfDawn.class, SpontaneousCombustion.class})
 class SoltariPriestTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color,
@@ -83,6 +83,27 @@ class SoltariPriestTest extends BaseCardTest {
 
         assertThat(priest.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(priest);
+    }
+
+    @Test
+    @DisplayName("Survives noncombat damage from a red source")
+    void survivesNoncombatDamageFromRedSource() {
+        Permanent priest = addCreatureReady(player2, new SoltariPriest());
+        addCreatureReady(player2, new KnightOfDawn());
+        Permanent sacrifice = addCreatureReady(player1, new Fireslinger());
+
+        harness.setHand(player1, List.of(new SpontaneousCombustion()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(priest.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Soltari Priest");
+        harness.assertNotOnBattlefield(player2, "Knight of Dawn");
+        harness.assertInGraveyard(player2, "Knight of Dawn");
     }
 
     @Test

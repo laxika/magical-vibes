@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "1")
+@CardRegistration(set = "MIC", collectorNumber = "79")
 public class AngelOfGlorysRise extends Card {
 
     public AngelOfGlorysRise() {

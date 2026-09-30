@@ -20,11 +20,7 @@ class CallOfTheHerdTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Call of the Herd creates a 3/3 green Elephant token")
     void createsElephantToken() {
-        harness.setHand(player1, List.of(new CallOfTheHerd()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new CallOfTheHerd(), "{2}{G}");
         harness.passBothPriorities();
 
         List<Permanent> elephants = elephantTokens();

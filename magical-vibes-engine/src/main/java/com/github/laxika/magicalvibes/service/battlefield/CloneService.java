@@ -170,6 +170,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.copyPowerToughnessFromSource = copyEffect.copyPowerToughnessFromSource();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
+        gameData.cloneOperation.cardTypesOverride = copyEffect.cardTypesOverride();
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
@@ -185,6 +186,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.reflexiveEffects = copyEffect.reflexiveEffects();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
@@ -231,6 +233,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -292,6 +295,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -376,6 +380,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = 4;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -507,6 +512,7 @@ public class CloneService {
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
         boolean copyPowerToughnessFromSource = gameData.cloneOperation.copyPowerToughnessFromSource;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
+        Set<CardType> cardTypesOverride = gameData.cloneOperation.cardTypesOverride;
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
         String nameOverride = gameData.cloneOperation.nameOverride;
         Set<CardSupertype> additionalSupertypesOverride = gameData.cloneOperation.additionalSupertypesOverride;
@@ -521,6 +527,7 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        List<CardEffect> reflexiveEffects = gameData.cloneOperation.reflexiveEffects;
         boolean shieldCounterIfControllerControlsCopiedPermanent =
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
@@ -542,6 +549,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -557,6 +565,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.reflexiveEffects = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
@@ -591,6 +600,7 @@ public class CloneService {
             permanentCopierService.applyCloneCopy(
                     perm, copiedCard, effectivePowerOverride, effectiveToughnessOverride,
                     additionalTypesOverride, List.of(), copyColor);
+            permanentCopierService.applyCardTypesOverride(perm, cardTypesOverride);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,
@@ -701,6 +711,15 @@ public class CloneService {
                     perm.getId());
             exileTrigger.setTriggeringCardId(targetCard.getId());
             gameData.stack.add(exileTrigger);
+        }
+
+        if (targetPerm != null && !reflexiveEffects.isEmpty()) {
+            StackEntry reflexiveTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, enteredCard, controllerId,
+                    card.getName() + "'s reflexive ability", reflexiveEffects,
+                    targetPerm.getId(), perm.getId());
+            reflexiveTrigger.setNonTargeting(true);
+            gameData.stack.add(reflexiveTrigger);
         }
 
         if (!gameData.interaction.isAwaitingInput()) {

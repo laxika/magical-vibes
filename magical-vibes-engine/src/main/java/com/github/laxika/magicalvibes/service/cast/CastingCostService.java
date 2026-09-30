@@ -135,6 +135,9 @@ public class CastingCostService {
      * player, pre-collected in a single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
+        public boolean containsEffect(Class<? extends CardEffect> effectType) {
+            return modifiers.stream().anyMatch(modifier -> effectType.isInstance(modifier.effect()));
+        }
     }
 
     public record AlternativeCostSelection(String manaCost, boolean castsWithWarp,
@@ -665,8 +668,23 @@ public class CastingCostService {
     public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
                                                    ManaCost cost, CostModifierSnapshot snapshot,
                                                    boolean flashbackCost) {
-        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
-        ManaCost effectiveCost = cost;
+        return applyColoredManaCostReductions(gameData, playerId, card, cost, snapshot,
+                flashbackCost, List.of());
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, List<UUID> targetIds) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), false, targetIds);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, CostModifierSnapshot snapshot,
+                                                   boolean flashbackCost, List<UUID> targetIds) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, flashbackCost, targetIds);
+        ManaCost effectiveCost = cost.increasedBy(
+                gameData.perpetualManaCostIncreases.get(card.getId()));
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {

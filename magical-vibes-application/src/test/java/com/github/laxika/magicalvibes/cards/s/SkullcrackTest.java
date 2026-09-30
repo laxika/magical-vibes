@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.r.RenewedFaith;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -55,7 +56,7 @@ class SkullcrackTest extends BaseCardTest {
     void lockClearedAtEndOfTurn() {
         gd.playersCantGainLifeThisTurn = true;
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersCantGainLifeThisTurn).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isTrue();

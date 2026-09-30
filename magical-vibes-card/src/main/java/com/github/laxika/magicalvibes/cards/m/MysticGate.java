@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "SHM", collectorNumber = "277")
 @CardRegistration(set = "EXP", collectorNumber = "26")
 @CardRegistration(set = "2XM", collectorNumber = "324")
+@CardRegistration(set = "M3C", collectorNumber = "359")
 public class MysticGate extends Card {
 
     public MysticGate() {

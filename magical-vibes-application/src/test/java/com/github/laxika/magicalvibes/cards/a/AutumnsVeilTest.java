@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -404,7 +405,7 @@ class AutumnsVeilTest extends BaseCardTest {
             colors2.addAll(Set.of(CardColor.BLUE, CardColor.BLACK));
             gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1.getId(), colors2);
 
-            TurnCleanupService svc = new TurnCleanupService(null, null);
+            TurnCleanupService svc = GameTestEngineContext.get().getBean(TurnCleanupService.class);
             svc.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).isEmpty();

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LGN", collectorNumber = "80")
+@CardRegistration(set = "C19", collectorNumber = "129")
 public class Skinthinner extends Card {
 
     public Skinthinner() {

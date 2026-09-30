@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "32")
 @CardRegistration(set = "C20", collectorNumber = "108")
+@CardRegistration(set = "C19", collectorNumber = "80")
 public class ChemistersInsight extends Card {
 
     public ChemistersInsight() {

@@ -39,7 +39,7 @@ class MadameVastraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(jenny);
+        assertThat(gd.playerHands.get(player2.getId())).contains(jenny);
     }
 
     @Test

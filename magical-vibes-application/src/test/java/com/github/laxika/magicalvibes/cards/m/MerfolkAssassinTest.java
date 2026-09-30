@@ -45,4 +45,28 @@ class MerfolkAssassinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature with islandwalk");
     }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent assassin = addCreatureReady(player1, new MerfolkAssassin());
+        Permanent barge = harness.addToBattlefieldAndReturn(player1, new WarBarge());
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(barge), 0, null,
+                target.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(assassin), null,
+                target.getId());
+        assertThat(assassin.isTapped()).isTrue();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(assassin), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Squire");
+    }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "68")
+@CardRegistration(set = "C19", collectorNumber = "191")
 public class EmmaraTandris extends Card {
 
     public EmmaraTandris() {

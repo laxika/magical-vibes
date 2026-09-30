@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "215")
 @CardRegistration(set = "AVR", collectorNumber = "194")
 @CardRegistration(set = "SIS", collectorNumber = "55")
+@CardRegistration(set = "MIC", collectorNumber = "144")
 public class SomberwaldSage extends Card {
 
     public SomberwaldSage() {

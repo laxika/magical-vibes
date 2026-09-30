@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "48")
+@CardRegistration(set = "C19", collectorNumber = "95")
 public class SecretsOfTheDead extends Card {
 
     public SecretsOfTheDead() {

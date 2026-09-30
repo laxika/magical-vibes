@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "MH1", collectorNumber = "112")
+@CardRegistration(set = "MIC", collectorNumber = "130")
 public class UndeadAugur extends Card {
 
     public UndeadAugur() {

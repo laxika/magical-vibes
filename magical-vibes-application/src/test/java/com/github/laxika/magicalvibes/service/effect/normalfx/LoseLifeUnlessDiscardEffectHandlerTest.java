@@ -23,7 +23,7 @@ class LoseLifeUnlessDiscardEffectHandlerTest extends AbstractPlayerInteractionHa
                 LoseLifeUnlessDiscardEffect effect = new LoseLifeUnlessDiscardEffect(3);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -39,7 +39,7 @@ class LoseLifeUnlessDiscardEffectHandlerTest extends AbstractPlayerInteractionHa
                 LoseLifeUnlessDiscardEffect effect = new LoseLifeUnlessDiscardEffect(3);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
+                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 

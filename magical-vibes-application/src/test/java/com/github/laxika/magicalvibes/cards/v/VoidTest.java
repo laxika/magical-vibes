@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NomadicElf;
+import com.github.laxika.magicalvibes.cards.r.RielleTheEverwise;
 import com.github.laxika.magicalvibes.cards.s.SterlingGrove;
 import com.github.laxika.magicalvibes.cards.t.TsabosWeb;
 import com.github.laxika.magicalvibes.model.Card;
@@ -54,14 +55,48 @@ class VoidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Allows choosing zero without discarding cards with another mana value")
+    void allowsChoosingZeroWithoutMatchingCards() {
+        harness.setHand(player2, List.of(new TsabosWeb(), new Forest()));
+
+        castVoid(player2.getId());
+
+        harness.handleListChoice(player1, "0");
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Tsabo's Web", "Forest");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Tsabo's Web", "Forest");
+    }
+
+    @Test
+    @CardUsed(RielleTheEverwise.class)
+    @DisplayName("Counts all cards discarded by one resolution as one discard event")
+    void countsAllCardsDiscardedInOneEvent() {
+        harness.addToBattlefield(player2, new RielleTheEverwise());
+        harness.setHand(player2, List.of(new NomadicElf(), new SterlingGrove(), new Forest()));
+        harness.setLibrary(player2, List.of(new AncientKavu(), new AncientKavu()));
+
+        castVoid(player2.getId());
+
+        harness.handleListChoice(player1, "2");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Ancient Kavu", "Ancient Kavu");
+    }
+
+    @Test
     @DisplayName("Discards matching cards only from the targeted player's hand")
     void discardsOnlyFromTargetPlayersHand() {
         harness.setHand(player1, List.of(new Void(), new NomadicElf()));
         harness.setHand(player2, List.of(new NomadicElf(), new Forest()));
         addVoidMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "2");
 
         harness.assertInHand(player1, "Nomadic Elf");
@@ -83,8 +118,7 @@ class VoidTest extends BaseCardTest {
     private void castVoid(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Void()));
         addVoidMana();
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     private void addVoidMana() {
