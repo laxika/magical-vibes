@@ -209,8 +209,8 @@ class MeriekeRiBeritTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Losing control of Merieke prevents its untap destruction trigger")
-    void losingControlPreventsUntapDestruction() {
+    @DisplayName("Losing control of Merieke does not cancel the later untap destruction trigger")
+    void losingControlDoesNotCancelUntapDestruction() {
         Permanent merieke = addReadyMerieke(player1);
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
         activateSteal(merieke, bears);
@@ -228,13 +228,13 @@ class MeriekeRiBeritTest extends BaseCardTest {
         addBrownieMana(player2);
         int brownieIndex = gd.playerBattlefields.get(player2.getId()).indexOf(brownie);
         harness.activateAbility(player2, brownieIndex, null, merieke.getId());
-        harness.passBothPriorities(); // Brownie untaps Merieke; any resulting trigger is now on the stack.
-        harness.passBothPriorities(); // Resolve the trigger if one was incorrectly created.
+        harness.passBothPriorities(); // Brownie untaps Merieke and triggers the delayed destruction.
+        harness.passBothPriorities(); // Resolve the delayed trigger from the original activation.
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(bears.getId()));
+                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(bears.getCard().getId()));
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
     }
 
     private Permanent addReadyMerieke(Player player) {

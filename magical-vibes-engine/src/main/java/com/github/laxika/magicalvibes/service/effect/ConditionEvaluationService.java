@@ -3891,16 +3891,14 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * True if the source permanent dealt combat damage to an opponent of its current controller this
-     * turn (Whirling Dervish). Reads the per-source combat-damage-to-players tracking and treats any
+     * True if the source permanent dealt damage to an opponent of its current controller this
+     * turn (Whirling Dervish). Reads the per-source damage-to-players tracking and treats any
      * damaged player other than the source's current controller as an opponent.
      */
     private boolean sourceDealtDamageToOpponentThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() == null || ctx.controllerId() == null) return false;
-        Set<UUID> damagedPlayers = gameData.damageRecipientsBySource.get(ctx.sourcePermanentId());
-        if (damagedPlayers == null) return false;
-        return damagedPlayers.stream().anyMatch(playerId -> gameData.playerIds.contains(playerId)
-                && !playerId.equals(ctx.controllerId()));
+        return gameData.orderedPlayerIds.stream().anyMatch(playerId -> !playerId.equals(ctx.controllerId())
+                && gameData.damageDealtBySourceToPlayerThisTurn(ctx.sourcePermanentId(), playerId) > 0);
     }
 
     private boolean didAnyOpponentLoseLifeThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {

@@ -1781,9 +1781,13 @@ public class LayerSystemService {
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).addSubtype(chosen);
+                    if (grant.overriding()) {
+                        setCreatureType(states.get(target.permanent().getId()), chosen);
+                    } else {
+                        states.get(target.permanent().getId()).addSubtype(chosen);
+                    }
                     record(board, instance, target, new L4Contribution(
-                            chosen, false, false, null, null));
+                            chosen, grant.overriding(), false, null, null));
                 }
             }
             case SetChosenNameAndCreatureTypeEffect set -> {

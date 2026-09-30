@@ -104,5 +104,7 @@ class ConspiracyTest extends BaseCardTest {
         assertThat(gqs.getCardSubtypes(handCreature, gd, player1.getId()))
                 .contains(CardSubtype.GOBLIN)
                 .doesNotContain(CardSubtype.HORROR, CardSubtype.MERCENARY);
+        assertThat(gqs.cardHasSubtype(handCreature, CardSubtype.HORROR, gd, player1.getId())).isFalse();
+        assertThat(gqs.cardHasSubtype(handCreature, CardSubtype.MERCENARY, gd, player1.getId())).isFalse();
     }
 }

@@ -73,6 +73,20 @@ class SyrVondamSunstarExemplarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At four power, Syr Vondam's death trigger may choose no target")
+    void highPowerDeathMayDeclineTarget() {
+        Permanent vondam = harness.addToBattlefieldAndReturn(player1, new SyrVondamSunstarExemplar());
+        addTwoCounters(vondam);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        removeToGraveyard(vondam);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
     @DisplayName("Syr Vondam's removal trigger does not fire below four power")
     void lowPowerRemovalTriggerDoesNotFire() {
         Permanent vondam = harness.addToBattlefieldAndReturn(player1, new SyrVondamSunstarExemplar());

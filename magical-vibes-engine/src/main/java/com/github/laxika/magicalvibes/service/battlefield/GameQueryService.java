@@ -1060,6 +1060,11 @@ public class GameQueryService {
      * only the card's natural subtypes.
      */
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
+        if (gameData != null && cardOwnerId != null && isCreatureSubtype(subtype)
+                && hasAllZoneCreatureTypeOverride(gameData, cardOwnerId)
+                && cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) {
+            return getCardSubtypes(card, gameData, cardOwnerId).contains(subtype);
+        }
         if (card.getSubtypes().contains(subtype)) return true;
         if (gameData != null && gameData.perpetualCardSubtypes
                 .getOrDefault(card.getId(), Set.of()).contains(subtype)) {
@@ -1200,7 +1205,7 @@ public class GameQueryService {
             }
         }
         boolean creature = cardHasType(card, CardType.CREATURE, gameData, cardOwnerId);
-        if (creature && hasSelfAllCreatureTypesEffect(card)) {
+        if (creature && (card.hasKeyword(Keyword.CHANGELING) || hasSelfAllCreatureTypesEffect(card))) {
             for (CardSubtype subtype : CardSubtype.values()) {
                 if (isCreatureSubtype(subtype)) subtypes.add(subtype);
             }
@@ -1210,12 +1215,26 @@ public class GameQueryService {
             subtypes.addAll(selfOutsideBattlefieldGrantedSubtypes(card, gameData));
         }
         if (gameData != null && cardOwnerId != null && creature) {
+            if (hasAllZoneCreatureTypeOverride(gameData, cardOwnerId)) {
+                subtypes.removeIf(this::isCreatureSubtype);
+            }
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
             if (isCardInGraveyard(gameData, cardOwnerId, card)) {
                 subtypes.addAll(computeGrantedGraveyardSubtypesForOwnedCreatureCard(gameData, cardOwnerId, card));
             }
         }
         return subtypes;
+    }
+
+    private boolean hasAllZoneCreatureTypeOverride(GameData gameData, UUID ownerId) {
+        for (Permanent source : gameData.playerBattlefields.getOrDefault(ownerId, List.of())) {
+            if (source.getChosenSubtype() == null || source.isFaceDown()) continue;
+            boolean overrides = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof GrantChosenSubtypeToOwnCreaturesEffect grant
+                            && grant.affectsAllZones() && grant.overriding());
+            if (overrides && !hasLostPrintedAbilities(gameData, source)) return true;
+        }
+        return false;
     }
 
     private boolean hasSelfAllCreatureTypesEffect(Card card) {
@@ -1307,10 +1326,19 @@ public class GameQueryService {
         List<CardSubtype> result = new ArrayList<>();
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) return result;
-        for (Permanent perm : bf) {
+        for (Permanent perm : bf.stream().sorted(java.util.Comparator.comparingLong(Permanent::getTimestamp)).toList()) {
+            List<CardEffect> staticEffects = perm.getCard().getEffects(EffectSlot.STATIC);
+            if (staticEffects.stream().noneMatch(effect ->
+                    effect instanceof GrantChosenSubtypeToOwnCreaturesEffect grant && grant.affectsAllZones()
+                            || effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect
+                            || effect instanceof OwnCreatureSubtypeGrantingEffect)) continue;
+            if (perm.isFaceDown() || hasLostPrintedAbilities(gameData, perm)) continue;
             CardSubtype chosen = perm.getChosenSubtype();
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : staticEffects) {
                 if (effect instanceof GrantChosenSubtypeToOwnCreaturesEffect g && g.affectsAllZones()) {
+                    if (chosen != null && g.overriding()) {
+                        result.removeIf(this::isCreatureSubtype);
+                    }
                     if (chosen != null && !result.contains(chosen)) {
                         result.add(chosen);
                     }
@@ -6909,13 +6937,21 @@ public class GameQueryService {
                                                          Permanent explicitSource, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
         boolean preventsAllCreatureDamage = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance);
+                .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
+                && hasActiveStaticEffect(gameData, target, PreventDamageToSelfFromCreaturesEffect.class);
         boolean preventsDamageFromBlockedCreature = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance);
+                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance)
+                && hasActiveStaticEffect(gameData, target, PreventAllDamageToSelfFromCreaturesItBlocksEffect.class);
         if (!preventsAllCreatureDamage && !preventsDamageFromBlockedCreature) return false;
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) {
+                source = entry.getSourcePermanentSnapshot();
+                if (source == null && entry.getEffectiveDamageSourceCard() != null) {
+                    source = new Permanent(entry.getEffectiveDamageSourceCard());
+                }
+            }
         }
         Permanent sourcePermanent = source;
         if (preventsAllCreatureDamage && sourcePermanent == null && isCombatDamage
