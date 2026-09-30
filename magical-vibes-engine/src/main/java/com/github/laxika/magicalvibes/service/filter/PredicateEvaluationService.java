@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -643,7 +644,9 @@ public class PredicateEvaluationService {
                             && (card.isModalDoubleFaced()
                             || card.hasType(CardType.BATTLE)
                             || card.getKeywords().contains(Keyword.TRANSFORM)
-                            || card.getKeywords().contains(Keyword.DISTURB));
+                            || card.getKeywords().contains(Keyword.DISTURB)
+                            || card.getActivatedAbilities().stream().flatMap(ability -> ability.getEffects().stream())
+                                    .anyMatch(CraftMaterialCost.class::isInstance));
             case PhyrexianManaPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
             case CardIsAuraPredicate ignored ->
@@ -805,10 +808,10 @@ public class PredicateEvaluationService {
                     card.getManaValue() <= p.maxManaValue();
             case CardMaxManaValueXPredicate ignored ->
                     xValue == null || card.getManaValue() <= xValue;
-            case CardManaValueEqualsXPredicate ignored ->
-                    xValue == null || card.getManaValue() == xValue;
             case CardManaValueLessThanXPredicate ignored ->
                     xValue != null && card.getManaValue() < xValue;
+            case CardManaValueEqualsXPredicate ignored ->
+                    xValue == null || card.getManaValue() == xValue;
             case CardMinManaValuePredicate p ->
                     card.getManaValue() + (p.includeXValue() && xValue != null
                             && card.getParsedManaCost() != null
@@ -1240,7 +1243,10 @@ public class PredicateEvaluationService {
                             && (permanent.getOriginalCard().isModalDoubleFaced()
                             || permanent.getOriginalCard().hasType(CardType.BATTLE)
                             || permanent.getOriginalCard().getKeywords().contains(Keyword.TRANSFORM)
-                            || permanent.getOriginalCard().getKeywords().contains(Keyword.DISTURB));
+                            || permanent.getOriginalCard().getKeywords().contains(Keyword.DISTURB)
+                            || permanent.getOriginalCard().getActivatedAbilities().stream()
+                                    .flatMap(ability -> ability.getEffects().stream())
+                                    .anyMatch(CraftMaterialCost.class::isInstance));
             case PermanentIsHistoricPredicate ignored -> {
                 boolean artifact = gameData == null
                         ? gameQueryService.isArtifact(permanent)

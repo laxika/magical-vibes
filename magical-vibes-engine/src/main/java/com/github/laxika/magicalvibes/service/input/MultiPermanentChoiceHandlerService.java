@@ -2570,8 +2570,12 @@ public class MultiPermanentChoiceHandlerService {
                                 playerId, perm, loyaltyCountersPlacedByController);
                     }
                     proliferatedCards.add(perm.getCard());
-                } else if (gameData.playerIds.contains(permId)
-                        && gameData.playerPoisonCounters.getOrDefault(permId, 0) > 0) {
+                } else if (gameData.playerIds.contains(permId)) {
+                    if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
+                        lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
+                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                    }
+                    if (gameData.playerPoisonCounters.getOrDefault(permId, 0) <= 0) continue;
                     int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
                     placed = gameQueryService.replacePoisonCounters(gameData, permId, placed);
                     if (placed > 0) {
@@ -2590,7 +2594,7 @@ public class MultiPermanentChoiceHandlerService {
                 log.info("Game {} - Proliferated {} permanents", gameData.id, proliferatedCards.size());
             }
             if (!proliferatedPlayers.isEmpty()) {
-                gameLogService.append(gameData, GameLog.text("Proliferate adds poison counters to "
+                gameLogService.append(gameData, GameLog.text("Proliferate adds counters to "
                         + String.join(", ", proliferatedPlayers) + "."));
                 log.info("Game {} - Proliferated {} players", gameData.id, proliferatedPlayers.size());
             }
@@ -2611,7 +2615,8 @@ public class MultiPermanentChoiceHandlerService {
             });
             List<UUID> eligiblePlayerIds = new ArrayList<>();
             for (UUID candidatePlayerId : gameData.playerIds) {
-                if (gameData.playerPoisonCounters.getOrDefault(candidatePlayerId, 0) > 0) {
+                if (gameData.playerPoisonCounters.getOrDefault(candidatePlayerId, 0) > 0
+                        || gameData.playerRadCounters.getOrDefault(candidatePlayerId, 0) > 0) {
                     eligiblePlayerIds.add(candidatePlayerId);
                 }
             }

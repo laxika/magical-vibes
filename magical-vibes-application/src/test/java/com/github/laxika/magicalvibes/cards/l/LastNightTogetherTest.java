@@ -50,10 +50,7 @@ class LastNightTogetherTest extends BaseCardTest {
         castLastNightTogether(bears, giant);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
-        resolveAllTriggers();
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
 
         PendingInteraction.AttackerDeclaration prompt = gd.interaction.activeInteraction(
                 PendingInteraction.AttackerDeclaration.class);

@@ -21,6 +21,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HypnoticSpecter extends Card {
 
     public HypnoticSpecter() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true));
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true));
     }
 }

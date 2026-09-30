@@ -48,6 +48,11 @@ public class TypeLineParser {
             typeLine = typeLine.substring(0, typeLine.indexOf(" // "));
         }
 
+        // Some playtest cards retain the legacy creature type line.
+        if (typeLine.startsWith("Summon ")) {
+            typeLine = "Creature \u2014 " + typeLine.substring("Summon ".length());
+        }
+
         Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         CardType type = null;
         Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);

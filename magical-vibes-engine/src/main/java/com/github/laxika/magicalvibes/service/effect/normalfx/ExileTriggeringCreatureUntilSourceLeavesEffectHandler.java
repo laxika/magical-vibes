@@ -43,7 +43,7 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
         if (enteringPermanent == null || !enteringPermanent.isCast()) {
             return;
         }
-        resolve(gameData, entry, new ExileTriggeringCreatureUntilSourceLeavesEffect(), true);
+        resolve(gameData, entry, new ExileTriggeringCreatureUntilSourceLeavesEffect(0), true);
     }
 
     private void resolve(GameData gameData, StackEntry entry,

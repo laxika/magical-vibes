@@ -1308,7 +1308,8 @@ public class AmountEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
+                if (amount.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
                     total += permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
                 }
             }
@@ -1333,7 +1334,8 @@ public class AmountEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
+                if (amount.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
                     total += amount.counterType() == null
                             ? permanent.getTotalCounterCount()
                             : permanent.getCounterCount(amount.counterType());

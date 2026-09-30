@@ -1111,6 +1111,10 @@ public class LayerSystemService {
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
+        // Most triggered and activated effects do not participate in continuous-effect layers.
+        if (LayerClassifier.possibleLayers(effect.getClass()).isEmpty()) {
+            return null;
+        }
         try {
             return LayerClassifier.classify(effect, false);
         } catch (IllegalArgumentException unclassified) {

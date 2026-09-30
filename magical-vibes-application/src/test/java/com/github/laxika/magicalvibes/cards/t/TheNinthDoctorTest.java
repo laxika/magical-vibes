@@ -44,7 +44,7 @@ class TheNinthDoctorTest extends BaseCardTest {
     private void advanceUntilDoomCounters(Player activePlayer, Permanent clock, int expectedCount) {
         gd.turnNumber = 2;
         harness.setLibrary(activePlayer, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.forceActivePlayer(activePlayer);
+        harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
 

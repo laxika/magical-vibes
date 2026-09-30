@@ -65,7 +65,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> eligiblePlayerIds = new ArrayList<>();
         for (UUID playerId : gameData.playerIds) {
-            if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0) {
+            if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0
+                    || gameData.playerRadCounters.getOrDefault(playerId, 0) > 0) {
                 eligiblePlayerIds.add(playerId);
             }
         }

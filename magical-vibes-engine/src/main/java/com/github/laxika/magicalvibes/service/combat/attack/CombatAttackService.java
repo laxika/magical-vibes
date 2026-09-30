@@ -2537,6 +2537,7 @@ public class CombatAttackService {
                                     attackerIndices.size(),
                                     perm.getId());
                             playerAttackTrigger.setTargetId(playerId);
+                            playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
                             playerAttackTrigger.setNonTargeting(true);
                             gameData.stack.add(playerAttackTrigger);
                             gameLogService.append(gameData,

@@ -29,7 +29,9 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(4);
 
         idris.setSummoningSick(false);
-        harness.activateAbility(player1, 0, 0, null, null);
+        var graveyardCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(graveyardCard.getId()));
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Idris, Soul of the TARDIS")).isEmpty();
@@ -47,6 +49,9 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
         harness.castFromHand(player1, new ConjurersBauble(), "{1}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(idris.isTapped()).isFalse();
     }

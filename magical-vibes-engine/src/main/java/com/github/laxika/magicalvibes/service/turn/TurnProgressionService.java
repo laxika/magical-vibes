@@ -332,23 +332,6 @@ public class TurnProgressionService {
             }
         }
 
-        // Blinding Angel: the active player skips their next combat phase — jump straight from the
-        // precombat main phase to the postcombat main phase.
-        if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
-                && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
-            next = TurnStep.POSTCOMBAT_MAIN;
-            gameData.skipCombatPhaseExpirationsThisTurn.computeIfPresent(gameData.activePlayerId,
-                    (playerId, count) -> count > 1 ? count - 1 : null);
-            int remaining = gameData.skipNextCombatPhaseCount.get(gameData.activePlayerId) - 1;
-            if (remaining > 0) {
-                gameData.skipNextCombatPhaseCount.put(gameData.activePlayerId, remaining);
-            } else {
-                gameData.skipNextCombatPhaseCount.remove(gameData.activePlayerId);
-            }
-            String skipLog = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their combat phase.";
-            gameLogService.append(gameData, GameLog.text(skipLog));
-        }
-
         next = skipChosenPhases(gameData, next);
 
         // An additional combat created by a Throat Wolf is controlled by that Wolf's controller,
@@ -754,6 +737,18 @@ public class TurnProgressionService {
         Set<SkipStepOrPhaseKind> skipped = gameData.skippedStepOrPhasesThisTurn
                 .getOrDefault(gameData.activePlayerId, Set.of());
         while (next != null) {
+            // Apply the queued skip at the combat boundary, including when a skipped main
+            // phase brought us here without ever entering PRECOMBAT_MAIN.
+            if (next == TurnStep.BEGINNING_OF_COMBAT
+                    && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
+                gameData.skipCombatPhaseExpirationsThisTurn.computeIfPresent(gameData.activePlayerId,
+                        (playerId, count) -> count > 1 ? count - 1 : null);
+                gameData.skipNextCombatPhaseCount.computeIfPresent(gameData.activePlayerId,
+                        (playerId, count) -> count > 1 ? count - 1 : null);
+                logSkippedPhase(gameData, "combat phase");
+                next = TurnStep.POSTCOMBAT_MAIN;
+                continue;
+            }
             if (next == TurnStep.PRECOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
                 logSkippedPhase(gameData, "main phase");
                 next = TurnStep.BEGINNING_OF_COMBAT;
@@ -1392,6 +1387,22 @@ public class TurnProgressionService {
      */
     public void resumeStorageMatrixUntap(GameData gameData, UUID activePlayerId,
                                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrictPredicate) {
+        var restriction = untapStepService.bindingUntapRestriction(gameData, activePlayerId);
+        if (restriction.isPresent()) {
+            var effect = restriction.get();
+            var candidates = untapStepService.staticOrbUntapCandidates(
+                    gameData, activePlayerId, effect, restrictPredicate);
+            if (candidates.size() > effect.maxUntap()) {
+                // Permanents outside Storage Matrix's chosen type must stay tapped as well.
+                var combinedFilter = effect.filter() == null ? null
+                        : new com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate(List.of(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(restrictPredicate),
+                                effect.filter()));
+                playerInputService.beginStaticOrbUntapChoice(gameData, activePlayerId,
+                        candidates, effect.maxUntap(), combinedFilter);
+                return;
+            }
+        }
         untapStepService.untapPermanents(gameData, activePlayerId, restrictPredicate);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
