@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(StompingGround.class)
 class StompingGroundTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class StompingGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Stomping Ground enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playStompingGround(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findStompingGround(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Stomping Ground produces red mana")
     void producesRedMana() {
         Permanent stompingGround = addStompingGroundReady(player1);
@@ -78,9 +92,8 @@ class StompingGroundTest extends BaseCardTest {
     }
 
     private Permanent addStompingGroundReady(Player player) {
-        Permanent stompingGround = new Permanent(new StompingGround());
+        Permanent stompingGround = harness.addToBattlefieldAndReturn(player, new StompingGround());
         stompingGround.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(stompingGround);
         return stompingGround;
     }
 

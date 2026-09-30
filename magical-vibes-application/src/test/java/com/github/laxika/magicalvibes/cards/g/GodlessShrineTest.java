@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(GodlessShrine.class)
 class GodlessShrineTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class GodlessShrineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Godless Shrine enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playShrine(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findShrine(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Godless Shrine produces white mana")
     void producesWhiteMana() {
         Permanent shrine = addShrineReady(player1);
@@ -78,10 +92,7 @@ class GodlessShrineTest extends BaseCardTest {
     }
 
     private Permanent addShrineReady(Player player) {
-        Permanent shrine = new Permanent(new GodlessShrine());
-        shrine.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(shrine);
-        return shrine;
+        return harness.addToBattlefieldAndReturn(player, new GodlessShrine());
     }
 
     private Permanent findShrine(Player player) {

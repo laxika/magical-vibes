@@ -23,8 +23,7 @@ class StormHerdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -32,10 +31,27 @@ class StormHerdTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(7);
         assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getCard().getName()).isEqualTo("Pegasus");
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);
             assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         });
+    }
+
+    @Test
+    void usesControllerLifeTotalWhenItResolves() {
+        harness.setLife(player1, 7);
+        harness.setHand(player1, List.of(new StormHerd()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setLife(player1, 11);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(11);
     }
 }

@@ -1,63 +1,77 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.e.Electrolyze;
+import com.github.laxika.magicalvibes.cards.g.GruulNodorog;
+import com.github.laxika.magicalvibes.cards.g.GruulScrapper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulsOfTheFaultless.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SoulsOfTheFaultless.class, GruulScrapper.class, GruulNodorog.class, Electrolyze.class})
 class SoulsOfTheFaultlessTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage causes its controller to gain life and the attacker to lose life")
     void gainsLifeAndAttackerLosesLifeFromCombatDamage() {
-        harness.addToBattlefield(player2, new SoulsOfTheFaultless());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GruulScrapper());
         attacker.setAttacking(true);
 
-        Permanent souls = gd.playerBattlefields.get(player2.getId()).getFirst();
-        souls.setSummoningSick(false);
+        Permanent souls = addCreatureReady(player2, new SoulsOfTheFaultless());
         souls.setBlocking(true);
         souls.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat(player1);
+        resolveAllTriggers();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 23);
         harness.assertOnBattlefield(player2, "Souls of the Faultless");
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even when combat damage is lethal")
+    void resolvesAfterSoulsDiesToCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new GruulNodorog());
+        attacker.setAttacking(true);
+
+        Permanent souls = addCreatureReady(player2, new SoulsOfTheFaultless());
+        souls.setBlocking(true);
+        souls.addBlockingTarget(0);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 24);
+        harness.assertInGraveyard(player2, "Souls of the Faultless");
+        harness.assertNotOnBattlefield(player2, "Souls of the Faultless");
     }
 
     @Test
     @DisplayName("Noncombat damage does not trigger Souls of the Faultless")
     void ignoresNoncombatDamage() {
-        harness.addToBattlefield(player2, new SoulsOfTheFaultless());
-        harness.setHand(player1, List.of(new Shock()));
+        Permanent souls = addCreatureReady(player2, new SoulsOfTheFaultless());
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.setLibrary(player1, List.of(new SoulsOfTheFaultless()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        harness.castInstant(player1, 0,
-                harness.getPermanentId(player2, "Souls of the Faultless"));
+        harness.castInstant(player1, 0, Map.of(souls.getId(), 2));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        assertThat(souls.getMarkedDamage()).isEqualTo(2);
+        harness.assertInHand(player1, "Souls of the Faultless");
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.SkarrganPitSkulk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,18 +14,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DroningBureaucrats.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({DroningBureaucrats.class, DryadSophisticate.class, SkarrganPitSkulk.class})
 class DroningBureaucratsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures with mana value X can't attack")
     void matchingCreaturesCannotAttack() {
         Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
-        Permanent attackingBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attackingCreature = addCreatureReady(player1, new DryadSophisticate());
 
         activate(bureaucrats, 2);
 
-        assertThatThrownBy(() -> declareAttack(attackingBears))
+        assertThatThrownBy(() -> declareAttack(attackingCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -36,12 +34,12 @@ class DroningBureaucratsTest extends BaseCardTest {
     @DisplayName("Creatures with mana value X can't block")
     void matchingCreaturesCannotBlock() {
         Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
-        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
-        Permanent blockingBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new SkarrganPitSkulk());
+        Permanent blockingCreature = addCreatureReady(player2, new DryadSophisticate());
 
         activate(bureaucrats, 2);
 
-        assertThatThrownBy(() -> declareBlock(attacker, blockingBears))
+        assertThatThrownBy(() -> declareBlock(attacker, blockingCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't block");
     }
@@ -50,23 +48,38 @@ class DroningBureaucratsTest extends BaseCardTest {
     @DisplayName("Creatures with a different mana value are unaffected")
     void differentManaValueIsUnaffected() {
         Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
-        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        Permanent unaffectedCreature = addCreatureReady(player1, new SkarrganPitSkulk());
 
         activate(bureaucrats, 2);
 
-        assertThatCode(() -> declareAttack(elf)).doesNotThrowAnyException();
+        assertThatCode(() -> declareAttack(unaffectedCreature)).doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("The restriction expires at end of turn")
     void restrictionExpiresAtEndOfTurn() {
         Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
 
         activate(bureaucrats, 2);
         gd.expireEndOfTurnFloatingEffects();
 
-        assertThatCode(() -> declareAttack(bears)).doesNotThrowAnyException();
+        assertThatCode(() -> declareAttack(creature)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Matching creatures that enter after resolution are also restricted")
+    void matchingCreatureEnteringAfterResolutionCannotAttack() {
+        Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
+
+        activate(bureaucrats, 2);
+
+        Permanent lateCreature = addCreatureReady(player2, new DryadSophisticate());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(
+                gd.playerBattlefields.get(player2.getId()).indexOf(lateCreature))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 
     private void activate(Permanent bureaucrats, int xValue) {
@@ -76,20 +89,12 @@ class DroningBureaucratsTest extends BaseCardTest {
     }
 
     private void declareAttack(Permanent creature) {
-        creature.setSummoningSick(false);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));

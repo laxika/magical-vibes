@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.NaturesRevolt;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.r.RumblingSlum;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EarthSurge.class, Forest.class, Mountain.class, NaturesRevolt.class})
+@CardUsed({EarthSurge.class, Forest.class, Mountain.class, NaturesRevolt.class, RumblingSlum.class})
 class EarthSurgeTest extends BaseCardTest {
 
     @Test
@@ -29,7 +29,7 @@ class EarthSurgeTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
 
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(4);
@@ -65,5 +65,15 @@ class EarthSurgeTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Does not boost nonland creatures")
+    void doesNotBoostNonlandCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RumblingSlum());
+        harness.addToBattlefield(player1, new EarthSurge());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 }
