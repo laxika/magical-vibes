@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,15 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Tombstalker.class, GrizzlyBears.class})
+@CardUsed({Tombstalker.class, NessianCourser.class})
 class TombstalkerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Delve exiles graveyard cards to pay the generic creature cost")
     void delvePaysGenericCost() {
         List<Card> graveyard = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new NessianCourser(), new NessianCourser(), new NessianCourser(),
+                new NessianCourser(), new NessianCourser(), new NessianCourser());
         harness.setGraveyard(player1, graveyard);
         harness.setHand(player1, List.of(new Tombstalker()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -47,7 +47,7 @@ class TombstalkerTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = new Permanent(new NessianCourser());
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -58,5 +58,27 @@ class TombstalkerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Delve reduces only generic mana and leaves unexiled graveyard cards behind")
+    void partialDelvePaysOnlyGenericMana() {
+        Card exiled = new Tombstalker();
+        Card remaining = new Tombstalker();
+        harness.setGraveyard(player1, List.of(exiled, remaining));
+        harness.setHand(player1, List.of(new Tombstalker()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Tombstalker);
     }
 }

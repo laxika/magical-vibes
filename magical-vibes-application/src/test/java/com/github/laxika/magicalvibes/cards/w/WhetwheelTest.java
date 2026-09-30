@@ -27,6 +27,34 @@ class WhetwheelTest extends BaseCardTest {
     }
 
     @Test
+    void millsOnlyCardsRemainingInLibrary() {
+        harness.addToBattlefield(player1, new Whetwheel());
+        trimDeck(player2, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, 5, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(findPermanent(player1, "Whetwheel").isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetItsController() {
+        harness.addToBattlefield(player1, new Whetwheel());
+        trimDeck(player1, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     void canBeCastFaceDownAndTurnedFaceUpForMorphCost() {
         harness.setHand(player1, List.of(new Whetwheel()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

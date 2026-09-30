@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Ghostfire;
+import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
+import com.github.laxika.magicalvibes.cards.n.NimbusMaze;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,35 +10,69 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WitchsMist.class, GrizzlyBears.class})
+@CardUsed({WitchsMist.class, Imperiosaur.class, Ghostfire.class, NimbusMaze.class})
 class WitchsMistTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target creature that was dealt damage this turn")
     void destroysDamagedCreature() {
         harness.addToBattlefield(player1, new WitchsMist());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.permanentsDealtDamageThisTurn.add(bears.getId());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
         addActivationMana();
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Imperiosaur");
+        harness.assertInGraveyard(player2, "Imperiosaur");
+    }
+
+    @Test
+    @DisplayName("Destroys a creature dealt damage by a spell this turn")
+    void destroysCreatureDealtDamageBySpell() {
+        harness.addToBattlefield(player1, new WitchsMist());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+
+        harness.setHand(player1, List.of(new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, imperiosaur.getId());
+
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Imperiosaur");
+        harness.assertInGraveyard(player2, "Imperiosaur");
     }
 
     @Test
     @DisplayName("Cannot target a creature that was not dealt damage this turn")
     void cannotTargetUndamagedCreature() {
         harness.addToBattlefield(player1, new WitchsMist());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
         addActivationMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, imperiosaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature that was dealt damage this turn");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent even if it was dealt damage this turn")
+    void cannotTargetDamagedNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new WitchsMist());
+        Permanent maze = harness.addToBattlefieldAndReturn(player2, new NimbusMaze());
+        gd.permanentsDealtDamageThisTurn.add(maze.getId());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, maze.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature that was dealt damage this turn");
     }
@@ -45,15 +81,15 @@ class WitchsMistTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the creature")
     void regenerationShieldSavesTheCreature() {
         harness.addToBattlefield(player1, new WitchsMist());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
-        gd.permanentsDealtDamageThisTurn.add(bears.getId());
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        imperiosaur.setRegenerationShield(1);
+        gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
         addActivationMana();
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, imperiosaur.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(imperiosaur);
     }
 
     private void addActivationMana() {

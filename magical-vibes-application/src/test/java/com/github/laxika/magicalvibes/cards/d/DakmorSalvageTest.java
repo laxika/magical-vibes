@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DakmorSalvage.class, Forest.class})
+@CardUsed({DakmorSalvage.class})
 class DakmorSalvageTest extends BaseCardTest {
 
     @Test
@@ -35,9 +34,7 @@ class DakmorSalvageTest extends BaseCardTest {
     @Test
     @DisplayName("Dakmor Salvage produces black mana")
     void producesBlackMana() {
-        Permanent salvage = new Permanent(new DakmorSalvage());
-        salvage.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(salvage);
+        Permanent salvage = harness.addToBattlefieldAndReturn(player1, new DakmorSalvage());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -49,7 +46,7 @@ class DakmorSalvageTest extends BaseCardTest {
     @DisplayName("Dakmor Salvage may dredge two cards instead of drawing")
     void dredgesInsteadOfDrawing() {
         DakmorSalvage salvage = new DakmorSalvage();
-        List<Card> milled = List.of(new Forest(), new Forest());
+        List<Card> milled = List.of(new DakmorSalvage(), new DakmorSalvage());
         harness.setGraveyard(player1, List.of(salvage));
         harness.setLibrary(player1, milled);
         harness.setHand(player1, List.of());
@@ -63,5 +60,43 @@ class DakmorSalvageTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dakmor Salvage may be declined and draw normally")
+    void declinesDredgeAndDrawsNormally() {
+        DakmorSalvage salvage = new DakmorSalvage();
+        DakmorSalvage topCard = new DakmorSalvage();
+        DakmorSalvage nextCard = new DakmorSalvage();
+        harness.setGraveyard(player1, List.of(salvage));
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(salvage);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dakmor Salvage is not offered when the library has fewer than two cards")
+    void cannotDredgeWithTooFewLibraryCards() {
+        DakmorSalvage salvage = new DakmorSalvage();
+        DakmorSalvage topCard = new DakmorSalvage();
+        harness.setGraveyard(player1, List.of(salvage));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(salvage);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 }

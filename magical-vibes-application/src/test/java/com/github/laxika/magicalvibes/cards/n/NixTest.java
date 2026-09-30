@@ -24,8 +24,7 @@ class NixTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Nix()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(harness.getGameData().stack).isEmpty();
@@ -41,8 +40,7 @@ class NixTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Nix()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
