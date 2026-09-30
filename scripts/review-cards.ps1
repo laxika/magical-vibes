@@ -1,11 +1,13 @@
 # Examples:
-#   .\scripts\review-cards.ps1 sos 1 5
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner claude
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner grok
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Effort xhigh
-#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Fast
+#   .\scripts\review-cards.ps1 LRW
+#   .\scripts\review-cards.ps1 MOR -Runner claude
+#   .\scripts\review-cards.ps1 LRW -Runner grok
+#   .\scripts\review-cards.ps1 LRW -Runner codex
+#   .\scripts\review-cards.ps1 LRW -Runner muse
+#   .\scripts\review-cards.ps1 LRW -Runner codex -Effort xhigh
+#   .\scripts\review-cards.ps1 LRW -Runner codex -Fast
+#   .\scripts\review-cards.ps1 LRW -ListOnly
+#   .\scripts\review-cards.ps1 sos 1 5  # Optional range; skips unimplemented cards.
 #
 # The muse runner drives the claude CLI against Meta's Muse endpoint and needs
 # $env:MODEL_API_KEY to be set first:
@@ -14,14 +16,18 @@
 param(
     # The set code to review cards from, e.g. "sos".
     [Parameter(Mandatory = $true, Position = 0)]
+    [Alias("SetId")]
+    [ValidatePattern('^[a-zA-Z0-9]+$')]
     [string] $SetCode,
 
-    # First collector number to review (inclusive).
-    [Parameter(Mandatory = $true, Position = 1)]
+    # Optional lower bound (inclusive, using the numeric part of collector numbers).
+    [Parameter(Position = 1)]
+    [ValidateRange(0, [int]::MaxValue)]
     [int] $From,
 
-    # Last collector number to review (inclusive).
-    [Parameter(Mandatory = $true, Position = 2)]
+    # Optional upper bound (inclusive, using the numeric part of collector numbers).
+    [Parameter(Position = 2)]
+    [ValidateRange(0, [int]::MaxValue)]
     [int] $To,
 
     # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok),
@@ -42,14 +48,57 @@ param(
     [string] $Effort,
 
     # Enable fast mode for the codex runner. Ignored by the other runners.
-    [switch] $Fast
+    [switch] $Fast,
+
+    # Print the discovered collector numbers without warming the cache or running reviews.
+    [switch] $ListOnly
 )
 
 $ErrorActionPreference = "Stop"
 
-if ($From -gt $To) {
+if ($PSBoundParameters.ContainsKey("From") -and $PSBoundParameters.ContainsKey("To") -and $From -gt $To) {
     Write-Error "From ($From) must be less than or equal to To ($To)."
     exit 1
+}
+
+$SetCode = $SetCode.ToUpperInvariant()
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$cardRoot = Join-Path $repositoryRoot "magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards"
+if (-not (Test-Path -LiteralPath $cardRoot -PathType Container)) {
+    throw "Card source directory not found: $cardRoot"
+}
+
+# Read every registration, including reprints declared on cards first implemented in other sets.
+# Use the same annotation format as generate-set-progress.ps1.
+$registrationPattern = [regex] '@CardRegistration\(\s*set\s*=\s*"([^"]+)"\s*,\s*collectorNumber\s*=\s*"([^"]+)"\s*\)'
+$collectorNumbers = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+foreach ($file in Get-ChildItem -LiteralPath $cardRoot -Recurse -Filter *.java -File) {
+    $source = [System.IO.File]::ReadAllText($file.FullName)
+    foreach ($registration in $registrationPattern.Matches($source)) {
+        if ($registration.Groups[1].Value -ieq $SetCode) {
+            [void] $collectorNumbers.Add($registration.Groups[2].Value)
+        }
+    }
+}
+
+# Keep collector numbers as strings (e.g. "14b"), but sort/filter by their leading number.
+$hasFrom = $PSBoundParameters.ContainsKey("From")
+$hasTo = $PSBoundParameters.ContainsKey("To")
+$cardIds = @($collectorNumbers | ForEach-Object {
+    $leadingNumber = [regex]::Match($_, '^\d+')
+    $numericPart = if ($leadingNumber.Success) { [long] $leadingNumber.Value } else { 0 }
+    if ((-not $hasFrom -or $numericPart -ge $From) -and (-not $hasTo -or $numericPart -le $To)) {
+        [pscustomobject] @{ CardId = $_; NumericPart = $numericPart }
+    }
+} | Sort-Object NumericPart, CardId | Select-Object -ExpandProperty CardId)
+
+if ($cardIds.Count -eq 0) {
+    throw "No implemented cards found for $SetCode with the requested collector number bounds."
+}
+
+if ($ListOnly) {
+    $cardIds
+    return
 }
 
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
@@ -101,8 +150,8 @@ if ($Runner -eq "muse") {
 
 $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. Be thorough in the review. Implementation is read-only: do not edit card classes, effects, predicates, or docs - only delete a stale pass result file when required. Review every existing test for the card under review for rules accuracy and correctness. Ensure every test class for the card under review has @CardUsed({...}) listing every concrete card class it constructs, including support cards; add or correct class- and method-level annotations as needed. This annotation maintenance is required and is an exception to the read-only and test-modification restrictions. Make sure that only one set's cards are used in the test (preferably the set where the tested card is from). If it is not possible, then the test could use other ones as well, but we should try to stick to a limited number of sets if possible. Fix or otherwise modify an existing test only when it is wrong. Also inspect the current test harness for higher-level helpers. When an existing helper can replace multiple lines in the card's tests without changing their behavior or coverage, refactor those tests to use it instead of duplicating lower-level steps; this cleanup is an exception to the preceding restriction. Tests are encouraged: when oracle coverage is below 100% or you spot realistic edge cases, ADD focused harness tests. Always look up cards used for testing. Verify their real mana costs and other parameters using the MCP. Whenever possible, use real cards for testing. New failing tests that confirm a bug are good - leave them and report FAIL. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
 
-$total = $To - $From + 1
-$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$total = $cardIds.Count
+Write-Host "Found $total implemented card(s) for $SetCode."
 
 if ($Runner -eq "codex") {
     Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
@@ -129,7 +178,7 @@ $reviewJob = {
         [string] $JobEffort,
         [string] $JobRepositoryRoot,
         [string] $JobSetCode,
-        [int] $JobCardId,
+        [string] $JobCardId,
         [string] $JobSystemPrompt,
         [bool] $JobFast
     )
@@ -177,7 +226,7 @@ $reviewJob = {
 
 $index = 0
 
-foreach ($cardId in $From..$To) {
+foreach ($cardId in $cardIds) {
     $index++
     $startedAt = Get-Date -Format "yyyy-MM-dd HH:mm"
     Write-Host ""
@@ -198,5 +247,5 @@ foreach ($cardId in $From..$To) {
 }
 
 Write-Host ""
-Write-Host "Done. Reviewed $total card(s) from $SetCode $From to $To."
+Write-Host "Done. Reviewed $total implemented card(s) from $SetCode."
 Write-Host "Findings (if any) are under scripts/result/<SET>/<collectorNumber>.txt"
