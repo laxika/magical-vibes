@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "46")
 @CardRegistration(set = "WHO", collectorNumber = "361")
+@CardRegistration(set = "WHO", collectorNumber = "651")
 public class HuntedByTheFamily extends Card {
 
     public HuntedByTheFamily() {

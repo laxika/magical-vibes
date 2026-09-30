@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "118")
+@CardRegistration(set = "WHO", collectorNumber = "723")
 public class TheCurseOfFenric extends Card {
 
     private static final PermanentPredicate NONTOKEN_CREATURE = new PermanentAllOfPredicate(List.of(

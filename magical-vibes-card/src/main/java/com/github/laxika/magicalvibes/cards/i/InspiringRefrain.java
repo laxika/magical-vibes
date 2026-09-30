@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "216")
+@CardRegistration(set = "WHO", collectorNumber = "470")
+@CardRegistration(set = "WHO", collectorNumber = "807")
+@CardRegistration(set = "WHO", collectorNumber = "1061")
 @CardRegistration(set = "C21", collectorNumber = "27")
 public class InspiringRefrain extends Card {
 

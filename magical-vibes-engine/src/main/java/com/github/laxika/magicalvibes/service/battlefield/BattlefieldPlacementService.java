@@ -1027,6 +1027,13 @@ public class BattlefieldPlacementService {
                 enterTappedTypes.addAll(enterTapped.cardTypes());
             }
         });
+        if (gameData.planechase != null) {
+            gameData.planechase.faceUp.forEach(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
+                    .map(EnterPermanentsOfTypesTappedEffect.class::cast)
+                    .filter(enterTapped -> !enterTapped.opponentsOnly() && !enterTapped.castOnly())
+                    .forEach(enterTapped -> enterTappedTypes.addAll(enterTapped.cardTypes())));
+        }
         return enterTappedTypes;
     }
 

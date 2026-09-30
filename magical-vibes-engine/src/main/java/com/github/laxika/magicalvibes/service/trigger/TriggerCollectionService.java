@@ -914,6 +914,16 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
 
+        if (gameData.planechase != null && castingPlayerId.equals(gameData.planechase.controllerId)) {
+            for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+                    registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect,
+                                    object.getCard(), object.copy()),
+                            EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+                }
+            }
+        }
+
         collectTemporaryControllerSpellCastTriggers(gameData, spellCard, castingPlayerId,
                 castZone, exiledSourcePermanentId);
 
@@ -2555,16 +2565,22 @@ public class TriggerCollectionService {
 
     /** Fires triggers whenever the given player rolls one or more dice. */
     public void checkControllerRollsPlanarDieTriggers(GameData gameData, UUID rollingPlayerId) {
+        checkControllerRollsPlanarDieTriggers(gameData, rollingPlayerId, 0);
+    }
+
+    /** Fires triggers whenever the given player rolls the planar die, preserving blank/nonblank. */
+    public void checkControllerRollsPlanarDieTriggers(GameData gameData, UUID rollingPlayerId,
+                                                       int result) {
         for (Permanent perm : List.copyOf(gameData.playerBattlefields.getOrDefault(rollingPlayerId, List.of()))) {
             dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
-                    new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true));
+                    new TriggerContext.DiceRoll(rollingPlayerId, 1, result, true));
         }
         if (gameData.planechase == null || gameData.planechase.controllerId == null
                 || !gameData.planechase.controllerId.equals(rollingPlayerId)) {
             return;
         }
         UUID planarControllerId = gameData.planechase.controllerId;
-        TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true);
+        TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, result, true);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             for (CardEffect effect : object.getCard().getEffects(
                     EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)) {
@@ -14434,6 +14450,18 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PLAYS_LAND, ctx);
             }
         });
+        if (gameData.planechase != null && gameData.planechase.controllerId != null) {
+            EffectSlot slot = gameData.planechase.controllerId.equals(playingPlayerId)
+                    ? EffectSlot.ON_CONTROLLER_PLAYS_LAND : EffectSlot.ON_OPPONENT_PLAYS_LAND;
+            for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+                for (CardEffect effect : object.getCard().getEffects(slot)) {
+                    registry.dispatch(new TriggerMatchContext(gameData, null,
+                                    gameData.planechase.controllerId, effect,
+                                    object.getCard(), object.copy()),
+                            slot, effect, ctx);
+                }
+            }
+        }
         collectTemporaryControllerLandPlayTriggers(gameData, playingPlayerId, playZone, exiledSourcePermanentId);
     }
 

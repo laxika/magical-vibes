@@ -12,6 +12,9 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "265")
 @CardRegistration(set = "WHO", collectorNumber = "282")
+@CardRegistration(set = "WHO", collectorNumber = "498")
+@CardRegistration(set = "WHO", collectorNumber = "873")
+@CardRegistration(set = "WHO", collectorNumber = "1089")
 @CardRegistration(set = "LTC", collectorNumber = "312")
 @CardRegistration(set = "SOC", collectorNumber = "374")
 @CardRegistration(set = "MSC", collectorNumber = "246")

@@ -19,6 +19,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "10")
 @CardRegistration(set = "WHO", collectorNumber = "333")
+@CardRegistration(set = "WHO", collectorNumber = "615")
+@CardRegistration(set = "WHO", collectorNumber = "924")
 public class AdiposeOffspring extends Card {
 
     public AdiposeOffspring() {

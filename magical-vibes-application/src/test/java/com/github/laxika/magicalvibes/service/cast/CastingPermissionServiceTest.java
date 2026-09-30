@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -231,6 +233,27 @@ class CastingPermissionServiceTest {
         assertThat(permission.sourcePermanentId()).isNull();
         assertThat(permission.permission().alternateManaCost()).isEqualTo("{3}{B}");
         assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(4);
+    }
+
+    @Test
+    void planarControllerGetsFilteredGraveyardSpellPermission() {
+        Card plane = new Card();
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        plane.addEffect(EffectSlot.STATIC, new GrantEscapeToGraveyardCardsEffect(filter));
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1Id;
+        PlanarObject planar = new PlanarObject(plane, gd.nextTimestamp());
+        gd.planechase.faceUp.add(planar);
+
+        Card spell = new Card();
+        spell.setType(CardType.CREATURE);
+        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null, gd, player1Id))
+                .thenReturn(true);
+
+        var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
+
+        assertThat(permission.sourcePermanentId()).isEqualTo(planar.getId());
+        assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(3);
     }
 
     @Test

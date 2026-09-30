@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "80")
+@CardRegistration(set = "WHO", collectorNumber = "685")
 public class DecayingTimeLoop extends Card {
 
     public DecayingTimeLoop() {

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -160,6 +161,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerDirectionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
@@ -2112,6 +2114,19 @@ public class PredicateEvaluationService {
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
                             && p.playerId().equals(gameData.findControllerOf(permanent));
+            case PermanentControlledByPlayerDirectionPredicate p -> {
+                if (gameData == null || sourceControllerId == null || p.direction() == null
+                        || gameData.orderedPlayerIds.size() < 2) {
+                    yield false;
+                }
+                int sourceControllerIndex = gameData.orderedPlayerIds.indexOf(sourceControllerId);
+                int permanentControllerIndex = gameData.orderedPlayerIds.indexOf(
+                        gameData.findControllerOf(permanent));
+                yield sourceControllerIndex >= 0 && permanentControllerIndex >= 0
+                        && permanentControllerIndex == Math.floorMod(
+                        sourceControllerIndex + p.direction().turnOrderOffset(),
+                        gameData.orderedPlayerIds.size());
+            }
             case PermanentControlledBySourceChosenPlayerPredicate ignored -> {
                 UUID chosenPlayerId = sourceChosenPlayerId(filterContext);
                 yield gameData != null && chosenPlayerId != null

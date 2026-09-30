@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "166")
+@CardRegistration(set = "WHO", collectorNumber = "451")
+@CardRegistration(set = "WHO", collectorNumber = "771")
+@CardRegistration(set = "WHO", collectorNumber = "1042")
 public class VrestinMenoptraLeader extends Card {
 
     public VrestinMenoptraLeader() {

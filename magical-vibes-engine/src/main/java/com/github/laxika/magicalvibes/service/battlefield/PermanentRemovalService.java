@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandRepl
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingWithLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -1470,6 +1471,27 @@ public class PermanentRemovalService {
         return null;
     }
 
+    private PlanarCreatureExileReplacement planarCreatureExileReplacement(GameData gameData) {
+        if (gameData.planechase == null) {
+            return null;
+        }
+        for (var planar : gameData.planechase.faceUp) {
+            ExileCreaturesInsteadOfDyingWithLifeLossEffect effect = planar.getCard()
+                    .getEffects(EffectSlot.STATIC).stream()
+                    .filter(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::isInstance)
+                    .map(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (effect != null) {
+                return new PlanarCreatureExileReplacement(effect, planar.getCard());
+            }
+        }
+        return null;
+    }
+
+    private record PlanarCreatureExileReplacement(
+            ExileCreaturesInsteadOfDyingWithLifeLossEffect effect,
+            Card sourceCard) {}
+
     /**
      * Checks if the target has an exile replacement effect and applies it if so.
      * Returns true if a replacement was applied (caller should return early), false otherwise.
@@ -1876,6 +1898,8 @@ public class PermanentRemovalService {
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
         List<Card> exiledCreatureCards = new ArrayList<>();
+        PlanarCreatureExileReplacement planarExileReplacement = wasCreature
+                ? planarCreatureExileReplacement(gameData) : null;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
         OpponentDyingCreatureExileReplacement opponentExileReplacement = wasCreature
@@ -1888,6 +1912,7 @@ public class PermanentRemovalService {
                 || ownSubtypeExileReplacement
                 || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
                 || (wasCreature && damagerExilesDyingCreature(gameData, target))
+                || planarExileReplacement != null
                 || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty())
                 || (wasCreature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
                         .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId)));
@@ -1941,6 +1966,11 @@ public class PermanentRemovalService {
             lifeSupport.applyGainLife(gameData, opponentExileReplacement.controllerId(),
                     opponentExileReplacement.effect().lifeGainOnExile(),
                     opponentExileReplacement.sourceCard().getName());
+        }
+        if (planarExileReplacement != null && exiledFromBattlefield > 0) {
+            lifeSupport.applyLifeLoss(gameData, controllerId,
+                    planarExileReplacement.effect().lifeLoss(),
+                    planarExileReplacement.sourceCard().getName());
         }
         if (opponentExileReplacement != null && exiledFromBattlefield > 0) {
             CardEffect whenExiledEffect = opponentExileReplacement.effect().whenExiledEffect();

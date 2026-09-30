@@ -23,6 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "SLD", collectorNumber = "279")
 @CardRegistration(set = "FCA", collectorNumber = "44")
 @CardRegistration(set = "WHO", collectorNumber = "229")
+@CardRegistration(set = "WHO", collectorNumber = "475")
+@CardRegistration(set = "WHO", collectorNumber = "820")
+@CardRegistration(set = "WHO", collectorNumber = "1066")
 public class CarpetOfFlowers extends Card {
 
     public CarpetOfFlowers() {

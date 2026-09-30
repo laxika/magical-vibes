@@ -561,6 +561,7 @@ public class TurnCleanupService {
         gameData.exilePlayAnyManaType.removeIf(cardId ->
                 !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
         gameData.exileCastPermissionsUntilEndOfTurn.clear();
+        gameData.foretoldCardCastPermissionsThisTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;

@@ -4153,6 +4153,7 @@ public class ConditionEvaluationService {
             case CONTROLLER -> ctx.controllerId();
             case OPPONENT -> gameQueryService.getOpponentId(gameData, ctx.controllerId());
             case TARGET_PLAYER, ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
+            case DYING_CREATURE_CONTROLLER -> ctx.targetId() != null ? ctx.targetId() : ctx.controllerId();
         };
     }
 

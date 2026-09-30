@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "180")
+@CardRegistration(set = "WHO", collectorNumber = "459")
+@CardRegistration(set = "WHO", collectorNumber = "1050")
 public class TheMoment extends Card {
 
     public TheMoment() {

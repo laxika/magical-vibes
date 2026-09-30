@@ -155,7 +155,8 @@ public class PlanechaseService {
         state.rollSequence++;
         logs.append(game, GameLogEntry.text(game.playerIdToName.get(playerId)
                 + " rolls the planar die: " + state.lastRoll.name().toLowerCase(Locale.ROOT) + "."));
-        triggers.checkControllerRollsPlanarDieTriggers(game, playerId);
+        triggers.checkControllerRollsPlanarDieTriggers(game, playerId,
+                state.lastRoll == PlanarDieResult.BLANK ? 0 : 1);
         switch (state.lastRoll) {
             case BLANK -> {
                 if (state.faceUp.stream().anyMatch(object -> state.blankRollChaosSources.contains(object.getId()))) {
@@ -163,8 +164,22 @@ public class PlanechaseService {
                 }
             }
             case CHAOS -> chaos(game);
-            case PLANESWALKER -> game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
+            case PLANESWALKER -> {
+                if (planarDiePlaneswalkIsReplaced(game)) {
+                    chaos(game);
+                } else {
+                    game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
+                }
+            }
+        }
+    }
+
+    private boolean planarDiePlaneswalkIsReplaced(GameData game) {
+        synchronized (game.floatingEffects) {
+            return game.floatingEffects.stream()
+                    .filter(effect -> effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN)
+                    .anyMatch(effect -> effect.effect() instanceof PlanarDiePlaneswalkToChaosReplacementEffect);
         }
     }
 

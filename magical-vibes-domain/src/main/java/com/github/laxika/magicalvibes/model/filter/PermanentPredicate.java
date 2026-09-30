@@ -31,6 +31,7 @@ public sealed interface PermanentPredicate permits
         PermanentColorInPredicate,
         PermanentControlledByActivePlayerPredicate,
         PermanentControlledByPlayerPredicate,
+        PermanentControlledByPlayerDirectionPredicate,
         PermanentControlledByMonarchPredicate,
         PermanentControlledByDefendingPlayerPredicate,
         PermanentControlledBySourceControllerPredicate,

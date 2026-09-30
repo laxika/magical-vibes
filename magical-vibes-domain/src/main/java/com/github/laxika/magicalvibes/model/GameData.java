@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
@@ -1861,6 +1862,10 @@ public class GameData {
         }
     }
 
+    /** A turn-scoped single-use grant to cast one foretold card owned by the player. */
+    public record ForetoldCardCastPermission(UUID playerId, boolean singleUse) {
+    }
+
     /** Targeted cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
@@ -2095,6 +2100,9 @@ public class GameData {
             new CopyOnWriteArrayList<>();
     /** Source-linked exile cast grants that expire at end of turn. */
     public final List<ExileCastPermission> exileCastPermissionsUntilEndOfTurn =
+            new CopyOnWriteArrayList<>();
+    /** Turn-scoped grants to cast one foretold card owned by the granting player for free. */
+    public final List<ForetoldCardCastPermission> foretoldCardCastPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
     /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
     public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
@@ -4856,6 +4864,9 @@ public class GameData {
             for (var planar : planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
+                    } else if (effect instanceof PlayersWithChosenPlanarModePlayAdditionalLandEffect mode
+                            && mode.mode().equals(planar.getChosenModeByPlayer().get(playerId))) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
                             && playerId.equals(planechase.controllerId)) {
@@ -7644,6 +7655,7 @@ public class GameData {
         copy.playersCantPlayFromGraveyardsThisTurn.addAll(this.playersCantPlayFromGraveyardsThisTurn);
         copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
+        copy.foretoldCardCastPermissionsThisTurn.addAll(this.foretoldCardCastPermissionsThisTurn);
         copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.playersMayPlayFaceUpCardsFromExileThisTurn.addAll(this.playersMayPlayFaceUpCardsFromExileThisTurn);
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn

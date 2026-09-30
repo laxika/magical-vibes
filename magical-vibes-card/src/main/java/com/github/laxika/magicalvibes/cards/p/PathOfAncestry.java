@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ECC", collectorNumber = "158")
 @CardRegistration(set = "TMC", collectorNumber = "70")
 @CardRegistration(set = "WHO", collectorNumber = "293")
+@CardRegistration(set = "WHO", collectorNumber = "884")
 @CardRegistration(set = "PIP", collectorNumber = "279")
 @CardRegistration(set = "PIP", collectorNumber = "807")
 @CardRegistration(set = "40K", collectorNumber = "287")

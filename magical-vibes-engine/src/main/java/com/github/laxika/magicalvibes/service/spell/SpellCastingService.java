@@ -4407,6 +4407,10 @@ public class SpellCastingService {
                 if (creature.isTapped()) {
                     throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
                 }
+                if (creature.isTapRestrictedUnlessAttacking()) {
+                    throw new IllegalStateException(creature.getCard().getName()
+                            + " can't become tapped unless it is attacking");
+                }
                 if (spellColors != null && !spellColors.isEmpty()) {
                     Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
                     if (spellColors.stream().noneMatch(creatureColors::contains)) {
@@ -11333,6 +11337,10 @@ public class SpellCastingService {
             if (creature.isTapped()) {
                 throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
             }
+            if (creature.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException(creature.getCard().getName()
+                        + " can't become tapped unless it is attacking");
+            }
             if (hasImprovise && isArtifact && (!hasConvoke || !isCreature)) {
                 contributions.add(null);
                 continue;
@@ -14413,6 +14421,10 @@ public class SpellCastingService {
             }
         }
         if (castEntry != null && gameQueryService.hasArtifactManaSplitSecond(gameData, playerId, card.getId())) {
+            castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
+        }
+        if (castEntry != null && gameQueryService.hasSpellCastingAbilityGrant(
+                gameData, playerId, card, Keyword.SPLIT_SECOND, castEntry.getSourceZone())) {
             castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
         }
 

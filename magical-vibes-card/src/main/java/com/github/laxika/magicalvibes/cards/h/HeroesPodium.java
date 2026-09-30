@@ -20,6 +20,9 @@ import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "159")
 @CardRegistration(set = "WHO", collectorNumber = "242")
+@CardRegistration(set = "WHO", collectorNumber = "479")
+@CardRegistration(set = "WHO", collectorNumber = "833")
+@CardRegistration(set = "WHO", collectorNumber = "1070")
 @CardRegistration(set = "DMC", collectorNumber = "185")
 public class HeroesPodium extends Card {
 

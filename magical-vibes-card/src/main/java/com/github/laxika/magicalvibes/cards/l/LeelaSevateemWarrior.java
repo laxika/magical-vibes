@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEff
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "107")
+@CardRegistration(set = "WHO", collectorNumber = "398")
+@CardRegistration(set = "WHO", collectorNumber = "989")
 public class LeelaSevateemWarrior extends Card {
 
     public LeelaSevateemWarrior() {

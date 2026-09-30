@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "134")
 @CardRegistration(set = "EOS", collectorNumber = "179")
 @CardRegistration(set = "WHO", collectorNumber = "323")
+@CardRegistration(set = "WHO", collectorNumber = "531")
+@CardRegistration(set = "WHO", collectorNumber = "914")
+@CardRegistration(set = "WHO", collectorNumber = "1122")
 @CardRegistration(set = "MB2", collectorNumber = "113")
 public class ThespiansStage extends Card {
 

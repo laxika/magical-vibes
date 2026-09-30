@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "14")
 @CardRegistration(set = "WHO", collectorNumber = "335")
+@CardRegistration(set = "WHO", collectorNumber = "619")
+@CardRegistration(set = "WHO", collectorNumber = "926")
 public class BarbaraWright extends Card {
 
     public BarbaraWright() {

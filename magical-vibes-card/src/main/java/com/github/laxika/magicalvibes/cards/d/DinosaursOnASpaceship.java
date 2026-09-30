@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "122")
+@CardRegistration(set = "WHO", collectorNumber = "727")
+@CardRegistration(set = "WHO", collectorNumber = "408")
+@CardRegistration(set = "WHO", collectorNumber = "999")
 public class DinosaursOnASpaceship extends Card {
 
     public DinosaursOnASpaceship() {

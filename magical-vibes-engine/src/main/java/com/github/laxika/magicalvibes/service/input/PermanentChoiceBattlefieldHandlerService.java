@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPer
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlThenCreateTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileControlledCreatureWithTakeoverCounterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentThenExileMatchingPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTwoPermanentsThenSearchLibraryEffectHandler;
@@ -240,6 +241,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final GainControlOfDefendingPlayerCreatureAndAttackEffectHandler gainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler seizeTheSpotlightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler eachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
@@ -252,6 +254,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
     private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
+    private final ExilePermanentYouControlThenCreateTokenEffectHandler exilePermanentYouControlThenCreateTokenHandler;
     private final ExileControlledCreatureWithTakeoverCounterEffectHandler exileControlledCreatureWithTakeoverCounterHandler;
     private final ExilePermanentThenExileMatchingPermanentsEffectHandler
             exilePermanentThenExileMatchingPermanentsHandler;
@@ -1074,6 +1077,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCaughtInAParallelUniverseCreatureChoice(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.CaughtInAParallelUniverseCreatureChoice context) {
+        eachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler.completeChoice(
+                gameData, permanentId, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleEachOpponentChoosesCreatureToExileWithSource(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource context) {
         eachOpponentChoosesCreatureToExileWithSourceEffectHandler.completeChoice(gameData, permanentId, context);
@@ -1179,6 +1194,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handlePermanentYouControlToExile(GameData gameData, UUID permanentId,
             PermanentChoiceContext.PermanentYouControlToExile context) {
         exilePermanentYouControlHandler.completePermanentChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExilePermanentYouControlThenCreateToken(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ExilePermanentYouControlThenCreateToken context) {
+        exilePermanentYouControlThenCreateTokenHandler.completePermanentChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

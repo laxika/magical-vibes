@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPlanarModeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
@@ -195,6 +196,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
             willOfThePlaneswalkersEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
+    private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
             galadrielElvenQueenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
@@ -1094,6 +1096,17 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             eachPlayerChoosesTokenEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesPlanarModeChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid planar mode choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerChoosesPlanarModeEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
 import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
@@ -183,6 +185,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithLessLifeThanCont
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
+import com.github.laxika.magicalvibes.model.amount.OtherControlledCreaturesSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostLifeThisTurn;
@@ -532,6 +535,10 @@ public class AmountEvaluationService {
                     countLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
+            case DevotionToChosenColor ignored ->
+                    gameData.chosenSpellColor == null ? 0 : gameQueryService.getDevotionToColor(
+                            gameData, ctx.controllerId(),
+                            ManaColor.valueOf(gameData.chosenSpellColor.name()));
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
             case ColorsSpentToCast ignored ->
@@ -693,6 +700,8 @@ public class AmountEvaluationService {
                     countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
+            case OtherControlledCreaturesSharingCreatureTypeWithTarget ignored ->
+                    countOtherControlledCreaturesSharingCreatureTypeWithTarget(gameData, ctx);
             case PartySize ignored ->
                     partySize(gameData, ctx);
             case CreatureDeathsThisTurn c ->
@@ -1025,6 +1034,21 @@ public class AmountEvaluationService {
             }
         });
         return count[0];
+    }
+
+    private int countOtherControlledCreaturesSharingCreatureTypeWithTarget(
+            GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target == null) return 0;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) return 0;
+
+        return (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> !permanent.getId().equals(target.getId()))
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> gameQueryService.shareCreatureType(gameData, target, permanent))
+                .count();
     }
 
     private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {

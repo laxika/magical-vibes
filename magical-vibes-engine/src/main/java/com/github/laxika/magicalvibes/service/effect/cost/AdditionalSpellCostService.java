@@ -2351,6 +2351,7 @@ public class AdditionalSpellCostService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
             }
+            validateCanBecomeTapped(permanent, card);
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter())) {
                 throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
             }
@@ -2397,6 +2398,7 @@ public class AdditionalSpellCostService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
             }
+            validateCanBecomeTapped(permanent, card);
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter())) {
                 throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
             }
@@ -2430,6 +2432,7 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Cannot tap an already tapped creature for teamwork on "
                         + card.getName());
             }
+            validateCanBecomeTapped(permanent, card);
             if (!gameQueryService.isCreature(gameData, permanent)) {
                 throw new IllegalStateException("Teamwork can tap only creatures");
             }
@@ -2476,6 +2479,7 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Cannot tap an already tapped permanent for the waterbend cost of "
                         + card.getName());
             }
+            validateCanBecomeTapped(permanent, card);
             if (!gameQueryService.isArtifact(gameData, permanent)
                     && !gameQueryService.isCreature(gameData, permanent)) {
                 throw new IllegalStateException("Waterbend can tap only artifacts or creatures");
@@ -2521,10 +2525,18 @@ public class AdditionalSpellCostService {
         if (permanent.isTapped()) {
             throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
         }
+        validateCanBecomeTapped(permanent, card);
         if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
             throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
         }
         return permanent;
+    }
+
+    private void validateCanBecomeTapped(Permanent permanent, Card card) {
+        if (permanent.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Cannot tap " + permanent.getCard().getName()
+                    + " for " + card.getName() + " unless it is attacking");
+        }
     }
 
     /**

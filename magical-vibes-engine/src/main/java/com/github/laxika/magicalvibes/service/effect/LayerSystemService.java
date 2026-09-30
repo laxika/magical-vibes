@@ -669,6 +669,7 @@ public class LayerSystemService {
             for (var planar : gameData.planechase.faceUp) {
                 h = mix(h, planar.getId().hashCode());
                 h = mix(h, planar.getCounters().hashCode());
+                h = mix(h, planar.getChosenModeByPlayer().hashCode());
             }
         }
         h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());

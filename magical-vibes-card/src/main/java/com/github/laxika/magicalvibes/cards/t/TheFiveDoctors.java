@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardFo
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "101")
+@CardRegistration(set = "WHO", collectorNumber = "394")
+@CardRegistration(set = "WHO", collectorNumber = "706")
+@CardRegistration(set = "WHO", collectorNumber = "985")
 public class TheFiveDoctors extends Card {
 
     public TheFiveDoctors() {

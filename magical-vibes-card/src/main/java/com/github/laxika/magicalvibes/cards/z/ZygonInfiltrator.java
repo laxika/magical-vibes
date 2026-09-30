@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "63")
+@CardRegistration(set = "WHO", collectorNumber = "668")
 public class ZygonInfiltrator extends Card {
 
     public ZygonInfiltrator() {
