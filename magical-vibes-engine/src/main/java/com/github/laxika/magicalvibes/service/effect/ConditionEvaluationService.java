@@ -243,6 +243,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureWithDifferentNameD
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
@@ -1215,6 +1216,8 @@ public class ConditionEvaluationService {
                             .sum() >= 2;
             case DefendingPlayerControlsPermanent c ->
                     defendingPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
+            case DefendingPlayerControlsMoreLandsThanController ignored ->
+                    defendingPlayerControlsMoreLandsThanController(gameData, ctx);
             case DefendingPlayerHasMoreCardsInHandThanController ignored ->
                     defendingPlayerHasMoreCardsInHandThanController(gameData, ctx);
             case DefendingPlayerHandAtMost c ->
@@ -3091,6 +3094,18 @@ public class ConditionEvaluationService {
         if (ctx.controllerId() == null) return false;
         UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, ctx.controllerId());
         return countCardsInHand(gameData, defendingPlayerId) > countCardsInHand(gameData, ctx.controllerId());
+    }
+
+    private boolean defendingPlayerControlsMoreLandsThanController(GameData gameData,
+                                                                    ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.sourcePermanent() == null) return false;
+        UUID attackedTargetId = ctx.sourcePermanent().getAttackTarget();
+        if (attackedTargetId == null) return false;
+        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        return defendingPlayerId != null
+                && gameQueryService.controlsMoreLandsThan(gameData, defendingPlayerId, ctx.controllerId());
     }
 
     private long countControlledMatchingPermanents(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {

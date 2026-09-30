@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DSC", collectorNumber = "125")
 @CardRegistration(set = "TDC", collectorNumber = "163")
 @CardRegistration(set = "C19", collectorNumber = "92")
+@CardRegistration(set = "NEC", collectorNumber = "95")
 public class RealityShift extends Card {
 
     public RealityShift() {

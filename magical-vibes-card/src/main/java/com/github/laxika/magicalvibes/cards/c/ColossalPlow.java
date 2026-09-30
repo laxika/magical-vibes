@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "236")
+@CardRegistration(set = "NEC", collectorNumber = "148")
 public class ColossalPlow extends Card {
 
     public ColossalPlow() {

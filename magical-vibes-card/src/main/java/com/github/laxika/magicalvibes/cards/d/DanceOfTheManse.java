@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "186")
 @CardRegistration(set = "SLD", collectorNumber = "2104")
+@CardRegistration(set = "NEC", collectorNumber = "136")
 public class DanceOfTheManse extends Card {
 
     public DanceOfTheManse() {

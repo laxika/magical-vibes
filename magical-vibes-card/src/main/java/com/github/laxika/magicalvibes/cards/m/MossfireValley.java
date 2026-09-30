@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "501")
 @CardRegistration(set = "PIP", collectorNumber = "801")
 @CardRegistration(set = "PIP", collectorNumber = "1029")
+@CardRegistration(set = "NEC", collectorNumber = "171")
 public class MossfireValley extends Card {
 
     public MossfireValley() {

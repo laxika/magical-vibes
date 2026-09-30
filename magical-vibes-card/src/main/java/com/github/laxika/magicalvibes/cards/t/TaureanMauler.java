@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "C15", collectorNumber = "167")
 @CardRegistration(set = "TDC", collectorNumber = "238")
 @CardRegistration(set = "AFC", collectorNumber = "143")
+@CardRegistration(set = "NEC", collectorNumber = "111")
 public class TaureanMauler extends Card {
 
     public TaureanMauler() {
