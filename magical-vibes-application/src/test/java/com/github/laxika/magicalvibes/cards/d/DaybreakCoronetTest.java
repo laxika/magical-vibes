@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BoundInSilence;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.Lifelink;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DaybreakCoronet.class, Lifelink.class, GrizzlyBears.class})
+@CardUsed({DaybreakCoronet.class, Lifelink.class, GrizzlyBears.class,
+        BoundInSilence.class, BlindPhantasm.class})
 class DaybreakCoronetTest extends BaseCardTest {
 
     @Test
     void grantsBoostAndKeywordsToCreatureWithAnotherAura() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Lifelink(), new DaybreakCoronet()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -38,8 +40,7 @@ class DaybreakCoronetTest extends BaseCardTest {
 
     @Test
     void cannotEnchantCreatureWithoutAnotherAura() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new DaybreakCoronet()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -51,16 +52,13 @@ class DaybreakCoronetTest extends BaseCardTest {
 
     @Test
     void bonusesDisappearWhenCoronetLeavesBattlefield() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Lifelink());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Lifelink());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent coronet = new Permanent(new DaybreakCoronet());
+        Permanent coronet = harness.addToBattlefieldAndReturn(player1, new DaybreakCoronet());
         coronet.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(coronet);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
@@ -73,5 +71,56 @@ class DaybreakCoronetTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void anotherAuraControlledByOpponentAllowsCoronetToEnchant() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent opponentAura = harness.addToBattlefieldAndReturn(player2, new BoundInSilence());
+        opponentAura.setAttachedTo(creature.getId());
+
+        harness.setHand(player1, List.of(new DaybreakCoronet()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void grantsLifelinkWhenAnotherAuraDoesNot() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+
+        harness.setHand(player1, List.of(new BoundInSilence(), new DaybreakCoronet()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void coronetBecomesIllegalWhenTheOtherAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BoundInSilence());
+        aura.setAttachedTo(creature.getId());
+        Permanent coronet = harness.addToBattlefieldAndReturn(player1, new DaybreakCoronet());
+        coronet.setAttachedTo(creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(coronet);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(coronet.getOriginalCard());
     }
 }

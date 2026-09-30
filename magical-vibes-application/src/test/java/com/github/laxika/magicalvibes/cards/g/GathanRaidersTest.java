@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +11,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GathanRaiders.class, Forest.class})
+@CardUsed(GathanRaiders.class)
 class GathanRaidersTest extends BaseCardTest {
 
     @Test
@@ -29,15 +28,31 @@ class GathanRaidersTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         Permanent raiders = harness.addToBattlefieldAndReturn(player1, new GathanRaiders());
 
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GathanRaiders()));
 
         assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(3);
     }
 
     @Test
+    void remainsTwoTwoWhileFaceDown() {
+        harness.setHand(player1, List.of(new GathanRaiders()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent raiders = findPermanent(player1, "Gathan Raiders");
+        assertThat(raiders.isFaceDown()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
+    }
+
+    @Test
     void morphsForThreeAndTurnsFaceUpByDiscardingACard() {
-        Forest discarded = new Forest();
+        GathanRaiders discarded = new GathanRaiders();
         harness.setHand(player1, List.of(new GathanRaiders(), discarded));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

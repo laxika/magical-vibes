@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.c.CoalitionRelic;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,25 +14,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenAugur.class, GrizzlyBears.class})
+@CardUsed({AvenAugur.class, BlindPhantasm.class, CoalitionRelic.class})
 class AvenAugurTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing it during upkeep returns two target creatures")
     void sacrificeDuringUpkeepReturnsTwoCreatures() {
         addCreatureReady(player1, new AvenAugur());
-        Permanent firstTarget = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
-        prepareForUpkeep(player1);
+        Permanent firstTarget = addCreatureReady(player2, new BlindPhantasm());
+        Permanent secondTarget = addCreatureReady(player2, new BlindPhantasm());
+        advanceToUpkeep(player1);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Aven Augur");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Blind Phantasm");
         assertThat(gd.playerHands.get(player2.getId()))
-                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .filteredOn(card -> card.getName().equals("Blind Phantasm"))
                 .hasSize(2);
     }
 
@@ -41,13 +40,13 @@ class AvenAugurTest extends BaseCardTest {
     @DisplayName("The ability can return one or no target creatures")
     void abilityCanReturnFewerThanTwoCreatures() {
         addCreatureReady(player1, new AvenAugur());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        prepareForUpkeep(player1);
+        Permanent target = addCreatureReady(player2, new BlindPhantasm());
+        advanceToUpkeep(player1);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Blind Phantasm");
         harness.assertInGraveyard(player1, "Aven Augur");
     }
 
@@ -55,7 +54,7 @@ class AvenAugurTest extends BaseCardTest {
     @DisplayName("The ability may sacrifice Aven Augur without choosing targets")
     void abilityMayChooseNoTargets() {
         addCreatureReady(player1, new AvenAugur());
-        prepareForUpkeep(player1);
+        advanceToUpkeep(player1);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
         harness.passBothPriorities();
@@ -74,23 +73,61 @@ class AvenAugurTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+
+        harness.assertOnBattlefield(player1, "Aven Augur");
+    }
+
+    @Test
+    @DisplayName("The ability returns a controlled creature to its owner's hand")
+    void abilityReturnsCreatureToItsOwnerHand() {
+        addCreatureReady(player1, new AvenAugur());
+        BlindPhantasm ownedByPlayer1 = new BlindPhantasm();
+        ownedByPlayer1.setOwnerId(player1.getId());
+        Permanent target = addCreatureReady(player2, ownedByPlayer1);
+        advanceToUpkeep(player1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Blind Phantasm");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Blind Phantasm"));
+    }
+
+    @Test
+    @DisplayName("The ability cannot choose the same creature twice")
+    void abilityRequiresDistinctTargets() {
+        addCreatureReady(player1, new AvenAugur());
+        Permanent target = addCreatureReady(player2, new BlindPhantasm());
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("different");
+
+        harness.assertOnBattlefield(player1, "Aven Augur");
+        harness.assertOnBattlefield(player2, "Blind Phantasm");
     }
 
     @Test
     @DisplayName("The ability cannot target a noncreature permanent")
     void abilityCannotTargetNoncreature() {
         addCreatureReady(player1, new AvenAugur());
-        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new Island());
-        prepareForUpkeep(player1);
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new CoalitionRelic());
+        advanceToUpkeep(player1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 0, List.of(noncreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private void prepareForUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        harness.assertOnBattlefield(player1, "Aven Augur");
     }
 }

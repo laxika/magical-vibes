@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SporolothAncient.class, GrizzlyBears.class})
+@CardUsed({SporolothAncient.class, FomoriNomad.class})
 class SporolothAncientTest extends BaseCardTest {
 
     @Test
@@ -31,17 +34,23 @@ class SporolothAncientTest extends BaseCardTest {
     @DisplayName("Creatures you control can remove two spore counters to create a Saproling")
     void controlledCreatureUsesGrantedAbility() {
         harness.addToBattlefield(player1, new SporolothAncient());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.FUNGUS, 2);
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
+        creature.setCounterCount(CounterType.FUNGUS, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, battlefieldIndex(bears), 0, null, null);
+        harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(countSaprolings()).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.FUNGUS)).isZero();
+        List<Permanent> saprolings = controlledSaprolings();
+        assertThat(saprolings).hasSize(1);
+
+        Permanent saproling = saprolings.getFirst();
+        assertThat(saproling.getCard().getPower()).isEqualTo(1);
+        assertThat(saproling.getCard().getToughness()).isEqualTo(1);
+        assertThat(saproling.getCard().getColor()).isEqualTo(CardColor.GREEN);
     }
 
     @Test
@@ -54,7 +63,7 @@ class SporolothAncientTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ancient.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(countSaprolings()).isEqualTo(1);
+        assertThat(controlledSaprolings()).hasSize(1);
     }
 
     @Test
@@ -76,8 +85,8 @@ class SporolothAncientTest extends BaseCardTest {
     @DisplayName("Creatures controlled by an opponent do not gain the ability")
     void doesNotGrantAbilityToOpponentCreatures() {
         harness.addToBattlefield(player1, new SporolothAncient());
-        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
-        opponentBears.setCounterCount(CounterType.FUNGUS, 2);
+        Permanent opponentCreature = addCreatureReady(player2, new FomoriNomad());
+        opponentCreature.setCounterCount(CounterType.FUNGUS, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -92,10 +101,10 @@ class SporolothAncientTest extends BaseCardTest {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 
-    private long countSaprolings() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
+    private List<Permanent> controlledSaprolings() {
+        return findPermanents(player1, "Saproling").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SAPROLING))
-                .count();
+                .toList();
     }
 }

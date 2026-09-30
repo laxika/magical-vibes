@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
+import com.github.laxika.magicalvibes.cards.f.Foresee;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,16 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScoutsWarning.class, GrizzlyBears.class, Divination.class})
+@CardUsed({ScoutsWarning.class, BladeOfTheSixthPride.class, Foresee.class, SproutSwarm.class})
 class ScoutsWarningTest extends BaseCardTest {
 
     private Card resolveScoutsWarning() {
-        Card drawnCard = new GrizzlyBears();
+        Card drawnCard = new BladeOfTheSixthPride();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new ScoutsWarning()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         return drawnCard;
     }
 
@@ -43,13 +42,13 @@ class ScoutsWarningTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blade of the Sixth Pride");
     }
 
     @Test
@@ -59,8 +58,8 @@ class ScoutsWarningTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride(), new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -79,10 +78,47 @@ class ScoutsWarningTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player1, List.of(new Foresee()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Casting a noncreature spell does not consume the creature permission")
+    void noncreatureSpellDoesNotConsumeGrant() {
+        resolveScoutsWarning();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SproutSwarm()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blade of the Sixth Pride");
+    }
+
+    @Test
+    @DisplayName("The flash permission applies only to the warning's controller")
+    void grantDoesNotApplyToOpponent() {
+        resolveScoutsWarning();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -99,8 +135,8 @@ class ScoutsWarningTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)

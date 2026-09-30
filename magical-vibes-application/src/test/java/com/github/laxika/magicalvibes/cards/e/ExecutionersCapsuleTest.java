@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ExecutionersCapsule.class, GrizzlyBears.class, Island.class, MassOfGhouls.class})
 class ExecutionersCapsuleTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -100,8 +102,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
         addReadyCapsule(player1);
         // Valid target so the ability is activatable at all
         addCreatureReady(player1, new GrizzlyBears());
-        Permanent blackCreature = new Permanent(new MassOfGhouls());
-        gd.playerBattlefields.get(player2.getId()).add(blackCreature);
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
         addCapsuleMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blackCreature.getId()))
@@ -113,8 +114,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     void cannotTargetLand() {
         addReadyCapsule(player1);
         addCreatureReady(player1, new GrizzlyBears());
-        Permanent land = new Permanent(new Island());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
         addCapsuleMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
@@ -149,10 +149,6 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     }
 
     private Permanent addReadyCapsule(Player player) {
-        ExecutionersCapsule card = new ExecutionersCapsule();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new ExecutionersCapsule());
     }
 }

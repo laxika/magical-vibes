@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({RitesOfFlourishing.class, ZoeticCavern.class})
 class RitesOfFlourishingTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -15,7 +21,7 @@ class RitesOfFlourishingTest extends BaseCardTest {
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -53,6 +59,24 @@ class RitesOfFlourishingTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
         assertThat(gd.getMaxLandsThisTurn(player2.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each player can use the additional land-play permission")
+    void allowsTwoLandPlays() {
+        harness.addToBattlefield(player1, new RitesOfFlourishing());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ZoeticCavern(), new ZoeticCavern(), new ZoeticCavern()));
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(2);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test

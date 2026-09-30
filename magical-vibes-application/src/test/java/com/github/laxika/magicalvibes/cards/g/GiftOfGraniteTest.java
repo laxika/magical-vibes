@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.n.NewBenalia;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,13 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiftOfGranite.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({GiftOfGranite.class, NessianCourser.class, NewBenalia.class})
 class GiftOfGraniteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gift of Granite can be cast during the opponent's declare attackers step")
     void canBeCastAtInstantSpeed() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new NessianCourser());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -31,56 +32,70 @@ class GiftOfGraniteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, bears.getId(), null);
+        gs.playCard(gd, player2, 0, 0, creature.getId(), null);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     @Test
     @DisplayName("Gift of Granite gives the enchanted creature +0/+2")
     void givesEnchantedCreatureToughnessBoost() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new NessianCourser());
 
         harness.setHand(player1, List.of(new GiftOfGranite()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getAttachedTo() != null
-                        && permanent.getAttachedTo().equals(bears.getId()));
+                        && permanent.getAttachedTo().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Gift of Granite can enchant and boost an opponent's creature")
+    void boostsOpponentCreature() {
+        Permanent creature = addCreatureReady(player2, new NessianCourser());
+
+        harness.setHand(player1, List.of(new GiftOfGranite()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Gift of Granite stops boosting the creature when it leaves the battlefield")
     void effectStopsWhenRemoved() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new NessianCourser());
         Permanent aura = new Permanent(new GiftOfGranite());
-        aura.setAttachedTo(bears.getId());
+        aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Gift of Granite fizzles if its target leaves before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new NessianCourser());
 
         harness.setHand(player1, List.of(new GiftOfGranite()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castEnchantment(player1, 0, bears.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -91,16 +106,12 @@ class GiftOfGraniteTest extends BaseCardTest {
     @Test
     @DisplayName("Gift of Granite cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NewBenalia());
         harness.setHand(player1, List.of(new GiftOfGranite()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-    }
-
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
     }
 }

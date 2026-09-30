@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,29 +15,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PactOfNegation.class, NessianCourser.class})
 class PactOfNegationTest extends BaseCardTest {
 
     private void castPact() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        NessianCourser courser = new NessianCourser();
+        harness.castFromHand(player1, courser, "{2}{G}");
 
         harness.setHand(player2, List.of(new PactOfNegation()));
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, courser.getId());
         harness.passBothPriorities();
     }
 
     private void reachPactUpkeepPrompt() {
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.turnNumber = 3;
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
     }
 
@@ -48,13 +41,24 @@ class PactOfNegationTest extends BaseCardTest {
     void countersAndSchedulesPayment() {
         castPact();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Nessian Courser");
+        harness.assertInGraveyard(player1, "Nessian Courser");
 
         List<PayManaOrLoseGameAtNextUpkeep> scheduled = gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().playerId()).isEqualTo(player2.getId());
         assertThat(scheduled.getFirst().manaCost()).isEqualTo("{3}{U}{U}");
+    }
+
+    @Test
+    @DisplayName("Waits for the Pact controller's next upkeep")
+    void waitsForControllerNextUpkeep() {
+        castPact();
+        advanceToUpkeep(player1);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
     }
 
     @Test

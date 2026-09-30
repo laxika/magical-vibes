@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sliversmith.class, GrizzlyBears.class})
+@CardUsed({Sliversmith.class, Imperiosaur.class})
 class SliversmithTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {1}, tapping, and discarding creates a Metallic Sliver token")
     void createsMetallicSliverToken() {
         Permanent sliversmith = addReadySliversmith();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Imperiosaur()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -33,30 +33,50 @@ class SliversmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sliversmith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Imperiosaur");
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+                .toList();
+        assertThat(tokens).hasSize(1);
+        Permanent token = tokens.getFirst();
         assertThat(token.getCard().getName()).isEqualTo("Metallic Sliver");
         assertThat(token.getEffectivePower()).isEqualTo(1);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColors()).isEmpty();
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SLIVER);
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+        assertThat(token.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Cannot activate without a card to discard")
     void cannotActivateWithoutCardToDiscard() {
-        addReadySliversmith();
+        Permanent sliversmith = addReadySliversmith();
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(sliversmith.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Sliversmith is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent sliversmith = addReadySliversmith();
+        sliversmith.tap();
+        harness.setHand(player1, List.of(new Imperiosaur()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     private Permanent addReadySliversmith() {
