@@ -28,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "100")
 @CardRegistration(set = "DSC", collectorNumber = "102")
 @CardRegistration(set = "LCC", collectorNumber = "136")
+@CardRegistration(set = "MIC", collectorNumber = "92")
 public class ReturnToDust extends Card {
 
     public ReturnToDust() {

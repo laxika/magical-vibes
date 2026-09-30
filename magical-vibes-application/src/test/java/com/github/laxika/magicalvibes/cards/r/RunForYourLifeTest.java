@@ -85,7 +85,7 @@ class RunForYourLifeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(
                 graveyard.get(1), graveyard.get(2), graveyard.get(3), graveyard.get(4));
 
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 

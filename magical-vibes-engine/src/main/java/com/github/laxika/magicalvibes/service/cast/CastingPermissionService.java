@@ -374,6 +374,13 @@ public class CastingPermissionService {
             spellTypes.removeIf(CardType::isPlanar);
             restricted.addAll(spellTypes);
         }
+        // Marisi, Breaker of the Coil: during combat, only opponents of its controller are locked.
+        if (gameQueryService.isOpponentSpellCastingCombatLockActive(gameData, playerId)) {
+            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
+            spellTypes.remove(CardType.LAND);
+            spellTypes.removeIf(CardType::isPlanar);
+            restricted.addAll(spellTypes);
+        }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -1482,8 +1489,20 @@ public class CastingPermissionService {
                         || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     continue;
                 }
+                if (permission.oncePerControllerTurnForLand()
+                        && (!playerId.equals(gameData.activePlayerId)
+                        || gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.contains(perm.getId()))) {
+                    continue;
+                }
+                if (permission.onlyDuringControllerTurn()
+                        && !playerId.equals(gameData.activePlayerId)) {
+                    continue;
+                }
                 if (card != null && !matchesLandFilter(gameData, playerId, card, permission,
                         perm.getOriginalCard().getId())) {
+                    continue;
+                }
+                if (card != null && !matchesGraveyardPermission(gameData, playerId, card, permission)) {
                     continue;
                 }
                 return Optional.of(new GraveyardLandPermission(perm.getId(), permission));
@@ -1709,12 +1728,8 @@ public class CastingPermissionService {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                     if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                             || !predicateEvaluationService.matchesCardPredicate(
-                            card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)) {
-                        continue;
-                    }
-                    if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
-                            && !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                            .getOrDefault(playerId, Set.of()).contains(card.getId())) {
+                            card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)
+                            || !matchesGraveyardPermission(gameData, playerId, card, permission)) {
                         continue;
                     }
                     if (!isGraveyardPermissionAvailable(gameData, playerId, perm.getId(), permission)) {
@@ -1739,9 +1754,7 @@ public class CastingPermissionService {
                     if (effect instanceof CastSpellsFromGraveyardPermission permission
                             && predicateEvaluationService.matchesCardPredicate(
                             card, permission.filter(), null, gameData, playerId)
-                            && (!permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
-                            || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                            .getOrDefault(playerId, Set.of()).contains(card.getId()))
+                            && matchesGraveyardPermission(gameData, playerId, card, permission)
                             && isGraveyardPermissionAvailable(gameData, playerId, planar.getId(), permission)) {
                         return Optional.of(new FilteredGraveyardPermission(planar.getId(), permission));
                     }
@@ -1762,7 +1775,23 @@ public class CastingPermissionService {
                 || playerId.equals(gameData.activePlayerId))
                 && (!permission.oncePerControllerTurn()
                 || (playerId.equals(gameData.activePlayerId)
-                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(sourceId)));
+                && !gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(sourceId)))
+                && (!permission.oncePerControllerTurnForSpell()
+                || (playerId.equals(gameData.activePlayerId)
+                && !gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.contains(sourceId)));
+    }
+
+    private boolean matchesGraveyardPermission(GameData gameData, UUID playerId, Card card,
+                                               GraveyardPlayPermission permission) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (graveyardOwnerId == null
+                || !permission.graveyardScope().graveyardOwners(gameData.orderedPlayerIds, playerId)
+                .contains(graveyardOwnerId)) {
+            return false;
+        }
+        return !permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+                || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId());
     }
 
     /**
@@ -1770,42 +1799,53 @@ public class CastingPermissionService {
      * unlimited permissions (Abandoned Sarcophagus), which are not tracked.
      */
     public void markFilteredGraveyardPermissionUsed(GameData gameData, UUID playerId, UUID permanentId) {
-        markOncePerTurnGraveyardPermissionUsed(gameData, playerId, permanentId);
+        markOncePerTurnGraveyardPermissionUsed(gameData, playerId, permanentId, false);
     }
 
     /** Marks a once-per-turn land-from-graveyard permission as spent for this turn. */
     public void markGraveyardLandPermissionUsed(GameData gameData, UUID playerId, UUID permanentId) {
-        markOncePerTurnGraveyardPermissionUsed(gameData, playerId, permanentId);
+        markOncePerTurnGraveyardPermissionUsed(gameData, playerId, permanentId, true);
     }
 
-    private void markOncePerTurnGraveyardPermissionUsed(GameData gameData, UUID playerId, UUID permanentId) {
+    private void markOncePerTurnGraveyardPermissionUsed(GameData gameData, UUID playerId, UUID permanentId,
+                                                        boolean land) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield != null) {
-            boolean marked = battlefield.stream()
+            Optional<Permanent> source = battlefield.stream()
                     .filter(perm -> perm.getId().equals(permanentId))
-                    .findFirst()
-                    .map(perm -> {
-                        boolean oncePerTurn = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                                .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
-                                .anyMatch(effect -> effect instanceof GraveyardPlayPermission permission
-                                        && permission.oncePerControllerTurn());
-                        if (oncePerTurn) {
-                            gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.add(permanentId);
-                        }
-                        return oncePerTurn;
-                    })
-                    .orElse(false);
-            if (marked) return;
+                    .findFirst();
+            if (source.isPresent()) {
+                Permanent perm = source.get();
+                List<GraveyardPlayPermission> permissions = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
+                        .filter(GraveyardPlayPermission.class::isInstance)
+                        .map(GraveyardPlayPermission.class::cast)
+                        .toList();
+                markGraveyardPermissionsUsed(gameData, permanentId, land, permissions);
+                return;
+            }
         }
         if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, playerId)) {
-            boolean oncePerTurn = gameData.planechase.faceUp.stream()
+            List<GraveyardPlayPermission> permissions = gameData.planechase.faceUp.stream()
                     .filter(planar -> planar.getId().equals(permanentId))
                     .flatMap(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream())
-                    .anyMatch(effect -> effect instanceof GraveyardPlayPermission permission
-                            && permission.oncePerControllerTurn());
-            if (oncePerTurn) {
-                gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.add(permanentId);
-            }
+                    .filter(GraveyardPlayPermission.class::isInstance)
+                    .map(GraveyardPlayPermission.class::cast)
+                    .toList();
+            markGraveyardPermissionsUsed(gameData, permanentId, land, permissions);
+        }
+    }
+
+    private void markGraveyardPermissionsUsed(GameData gameData, UUID sourceId, boolean land,
+                                             List<GraveyardPlayPermission> permissions) {
+        if (permissions.stream().anyMatch(GraveyardPlayPermission::oncePerControllerTurn)) {
+            gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.add(sourceId);
+        }
+        if (land && permissions.stream().anyMatch(GraveyardPlayPermission::oncePerControllerTurnForLand)) {
+            gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.add(sourceId);
+        }
+        if (!land && permissions.stream().anyMatch(GraveyardPlayPermission::oncePerControllerTurnForSpell)) {
+            gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.add(sourceId);
         }
     }
 

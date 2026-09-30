@@ -55,6 +55,7 @@ public enum CounterType {
     ENLIGHTENED,
     EON,
     ERUPTION,
+    EVERYTHING,
     EXPOSURE,
     EYEBALL,
     FADE,

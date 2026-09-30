@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "36")
+@CardRegistration(set = "MIC", collectorNumber = "102")
 public class HourOfEternity extends Card {
 
     public HourOfEternity() {

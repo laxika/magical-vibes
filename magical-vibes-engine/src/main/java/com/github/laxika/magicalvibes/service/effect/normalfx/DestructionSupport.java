@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -318,7 +317,15 @@ public class DestructionSupport {
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName, boolean cannotBeRegenerated) {
-        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)) {
+        return tryDestroyAndLog(gameData, target, sourceName, cannotBeRegenerated, true);
+    }
+
+    public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName,
+                                    boolean cannotBeRegenerated, boolean cleanUpAttachments) {
+        boolean destroyed = cleanUpAttachments
+                ? permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)
+                : permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated, false);
+        if (!destroyed) {
             return false;
         }
         gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
@@ -599,6 +606,14 @@ public class DestructionSupport {
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
                                                   com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices) {
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, simultaneousFlow,
+                afterSacrifices, false);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
+                                                  com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices,
+                                                  boolean recordSacrificedCount) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -608,7 +623,8 @@ public class DestructionSupport {
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
-                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow, false, afterSacrifices),
+                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow, recordSacrificedCount,
+                        afterSacrifices),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }

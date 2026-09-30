@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(PillarOfTheParuns.class)
+@CardUsed({PillarOfTheParuns.class, AzoriusFirstWing.class, SimicInitiate.class})
 class PillarOfTheParunsTest extends BaseCardTest {
 
     @Test
@@ -38,9 +36,9 @@ class PillarOfTheParunsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PillarOfTheParuns());
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Card spell = creature("Multicolored Creature", "{U}", CardColor.BLUE, CardColor.RED);
-        harness.setHand(player1, List.of(spell));
+        harness.setHand(player1, List.of(new AzoriusFirstWing()));
 
         harness.castCreature(player1, 0);
 
@@ -53,22 +51,9 @@ class PillarOfTheParunsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
 
-        Card spell = creature("Monocolored Creature", "{U}", CardColor.BLUE);
-        harness.setHand(player1, List.of(spell));
+        harness.setHand(player1, List.of(new SimicInitiate()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private static Card creature(String name, String manaCost, CardColor... colors) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost(manaCost);
-        card.setColors(List.of(colors));
-        card.setSubtypes(List.of(CardSubtype.HUMAN));
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "179")
+@CardRegistration(set = "C19", collectorNumber = "269")
 public class RixMaadiDungeonPalace extends Card {
 
     public RixMaadiDungeonPalace() {

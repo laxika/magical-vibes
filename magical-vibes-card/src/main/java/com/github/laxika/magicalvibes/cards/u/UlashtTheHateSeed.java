@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "GPT", collectorNumber = "136")
 @CardRegistration(set = "GK2", collectorNumber = "100")
 @CardRegistration(set = "2X2", collectorNumber = "289")
+@CardRegistration(set = "NEC", collectorNumber = "143")
 public class UlashtTheHateSeed extends Card {
 
     private static final String ACTIVATION_COST = "{1}";

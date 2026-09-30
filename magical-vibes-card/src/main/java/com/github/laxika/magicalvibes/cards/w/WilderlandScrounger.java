@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "141")
+@CardRegistration(set = "HOC", collectorNumber = "141")
 public class WilderlandScrounger extends Card {
 
     public WilderlandScrounger() {

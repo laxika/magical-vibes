@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "226")
+@CardRegistration(set = "C19", collectorNumber = "213")
 public class GrimoireOfTheDead extends Card {
 
     public GrimoireOfTheDead() {

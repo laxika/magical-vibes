@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "32")
 @CardRegistration(set = "CMD", collectorNumber = "41")
+@CardRegistration(set = "C19", collectorNumber = "81")
 public class ChromeshellCrab extends Card {
 
     public ChromeshellCrab() {

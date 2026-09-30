@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "227")
+@CardRegistration(set = "M3C", collectorNumber = "346")
 public class Glimmerpost extends Card {
 
     public Glimmerpost() {

@@ -35,6 +35,22 @@ class SecondWindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second Wind can enchant a creature controlled by an opponent")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SecondWind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Second Wind");
+        assertThat(aura.isAttached()).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
     @DisplayName("The tap ability taps both the enchanted creature and Second Wind")
     void tapAbilityTapsEnchantedCreatureAndAura() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
@@ -77,9 +93,8 @@ class SecondWindTest extends BaseCardTest {
     }
 
     private Permanent addAttachedAura(Permanent creature) {
-        Permanent aura = new Permanent(new SecondWind());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SecondWind());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }

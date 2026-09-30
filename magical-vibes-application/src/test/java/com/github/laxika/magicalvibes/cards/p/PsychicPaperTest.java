@@ -41,7 +41,7 @@ class PsychicPaperTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(1));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(0, 0))))
+                List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
 

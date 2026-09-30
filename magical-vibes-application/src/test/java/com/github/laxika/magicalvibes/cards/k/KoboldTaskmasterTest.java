@@ -68,4 +68,19 @@ class KoboldTaskmasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Multiple Taskmasters stack on other Kobolds but not on themselves")
+    void multipleTaskmastersStackOnOtherKobolds() {
+        Permanent firstTaskmaster = harness.addToBattlefieldAndReturn(player1, new KoboldTaskmaster());
+        Permanent secondTaskmaster = harness.addToBattlefieldAndReturn(player1, new KoboldTaskmaster());
+        Permanent kobold = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
+
+        assertThat(gqs.getEffectivePower(gd, firstTaskmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstTaskmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondTaskmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondTaskmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(1);
+    }
 }

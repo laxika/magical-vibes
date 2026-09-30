@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -27,6 +28,15 @@ import java.util.Set;
 import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
+
+    /** Celestial Judgment: the controller chooses one creature for each distinct battlefield power. */
+    record CelestialJudgmentChoice(List<Integer> powers, int powerIndex, List<UUID> chosenIds,
+                                   String sourceName) implements PermanentChoiceContext {
+        public CelestialJudgmentChoice {
+            powers = List.copyOf(powers);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
 
     /** Panglacial Shinobi: choose the unblocked attacker returned for library ninjutsu. */
     record LibraryNinjutsu(PendingInteraction.LibrarySearch search, Card card, String manaCost)
@@ -78,6 +88,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
         }
     }
+
+    record ChooseDwarfAndAttachAnyNumberOfControlledEquipment(String sourceCardName)
+            implements PermanentChoiceContext {}
 
     record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
@@ -260,9 +273,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sacrificingPlayerId, StackEntry resolvingEntry, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
-    /** Grave Choice: the targeted opponent chooses a nontoken creature to sacrifice. */
+    /** A targeted player chooses a nontoken creature to sacrifice for a duplicate follow-up. */
     record TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
-            UUID sacrificingPlayerId, StackEntry resolvingEntry) implements PermanentChoiceContext {}
+            UUID sacrificingPlayerId, StackEntry resolvingEntry,
+            com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect effect)
+            implements PermanentChoiceContext {
+        public TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
+                UUID sacrificingPlayerId, StackEntry resolvingEntry) {
+            this(sacrificingPlayerId, resolvingEntry,
+                    new com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect());
+        }
+    }
 
     /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
     record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
@@ -543,6 +564,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesCreatureToExileWithSource {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
+    /** Benthic Anomaly: the controller chooses one creature controlled by each opponent. */
+    record EachOpponentChoosesCreatureForTokenCopy(
+            StackEntry resolvingEntry,
+            UUID controllerId,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds,
+            int totalPower,
+            int totalToughness
+    ) implements PermanentChoiceContext {
+        public EachOpponentChoosesCreatureForTokenCopy {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
+        }
+    }
+
+    /** Benthic Anomaly: the controller chooses which selected creature supplies the token copy. */
+    record ChooseBenthicAnomalyCopy(
+            StackEntry resolvingEntry,
+            UUID controllerId,
+            List<UUID> chosenPermanentIds,
+            int totalPower,
+            int totalToughness
+    ) implements PermanentChoiceContext {
+        public ChooseBenthicAnomalyCopy {
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
         }
     }
 
@@ -1231,7 +1281,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
     /** Winota: choose the player or planeswalker for the selected Human to attack. */
-    record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+    record ChosenPermanentAttackTarget(UUID permanentId, UUID requiredAttackingPlayerId)
+            implements PermanentChoiceContext {
+
+        public ChosenPermanentAttackTarget(UUID permanentId) {
+            this(permanentId, null);
+        }
+    }
 
     /** Misleading Signpost: choose a new player or permanent for the attacking creature to attack. */
     record ReselectAttackingCreatureTarget(UUID permanentId) implements PermanentChoiceContext {}
@@ -1572,6 +1628,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
+    record CopySpellForAnotherOpponentPermanentChoice(CopySpellForAnotherOpponentPermanentEffect effect)
             implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
@@ -2740,5 +2799,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record EarthbendThenFightTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
                                     UUID firstTargetId, boolean choosingOpponentTarget)
             implements PermanentChoiceContext {}
+
+    /** Lynde: choose one Curse attached to the controller before choosing its opponent host. */
+    record LyndeCurseChoice(UUID controllerId, UUID fixedOpponentId) implements PermanentChoiceContext {}
+
+    /** Lynde: choose the opponent to which the selected Curse will be attached. */
+    record LyndeOpponentChoice(UUID controllerId, UUID curseId) implements PermanentChoiceContext {}
 
 }

@@ -94,4 +94,16 @@ public class PermanentCopierService {
 
         clonePerm.setCard(copy);
     }
+
+    public void applyCardTypesOverride(Permanent permanent, Set<CardType> cardTypesOverride) {
+        if (cardTypesOverride == null || cardTypesOverride.isEmpty()) {
+            return;
+        }
+
+        EnumSet<CardType> exactTypes = EnumSet.copyOf(cardTypesOverride);
+        CardType primaryType = exactTypes.iterator().next();
+        exactTypes.remove(primaryType);
+        permanent.getCard().setType(primaryType);
+        permanent.getCard().setAdditionalTypes(exactTypes);
+    }
 }

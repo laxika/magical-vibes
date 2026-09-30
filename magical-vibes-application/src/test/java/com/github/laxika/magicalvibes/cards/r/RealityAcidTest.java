@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.Disenchant;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.s.Saltblast;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,32 +15,32 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RealityAcid.class, Disenchant.class, Spellbook.class})
+@CardUsed({RealityAcid.class, Saltblast.class, UrborgTombOfYawgmoth.class})
 class RealityAcidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with three time counters")
     void entersWithTimeCounters() {
-        Permanent spellbook = addSpellbook(player2);
+        Permanent urborg = addTargetPermanent(player2);
 
         harness.setHand(player1, List.of(new RealityAcid()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castEnchantment(player1, 0, spellbook.getId());
+        harness.castEnchantment(player1, 0, urborg.getId());
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Reality Acid");
         assertThat(aura.getCounterCount(CounterType.TIME)).isEqualTo(3);
-        assertThat(aura.getAttachedTo()).isEqualTo(spellbook.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(urborg.getId());
     }
 
     @Test
     @DisplayName("Removes one time counter during its controller's upkeep")
     void upkeepRemovesTimeCounter() {
-        Permanent spellbook = addSpellbook(player2);
-        Permanent aura = addAuraAttachedTo(player1, spellbook);
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
         aura.setCounterCount(CounterType.TIME, 3);
 
         advanceToUpkeep(player1);
@@ -51,10 +51,23 @@ class RealityAcidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not remove a time counter during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
+        aura.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Sacrifices itself when its last time counter is removed")
     void lastTimeCounterCausesSacrifice() {
-        Permanent spellbook = addSpellbook(player2);
-        Permanent aura = addAuraAttachedTo(player1, spellbook);
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
         aura.setCounterCount(CounterType.TIME, 1);
 
         advanceToUpkeep(player1);
@@ -65,31 +78,42 @@ class RealityAcidTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When it leaves the battlefield, the enchanted permanent is sacrificed")
-    void sacrificesEnchantedPermanentWhenAuraLeaves() {
-        Permanent spellbook = addSpellbook(player2);
-        Permanent aura = addAuraAttachedTo(player1, spellbook);
+    @DisplayName("Does not sacrifice itself when it has no time counters")
+    void noTimeCountersDoesNotTriggerSacrifice() {
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
 
-        harness.setHand(player1, List.of(new Disenchant()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, aura.getId());
+        advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, "Spellbook");
-        harness.assertInGraveyard(player2, "Spellbook");
+        assertThat(aura.getCounterCount(CounterType.TIME)).isZero();
+        harness.assertOnBattlefield(player1, "Reality Acid");
     }
 
-    private Permanent addSpellbook(com.github.laxika.magicalvibes.model.Player controller) {
-        Permanent spellbook = new Permanent(new Spellbook());
-        gd.playerBattlefields.get(controller.getId()).add(spellbook);
-        return spellbook;
+    @Test
+    @DisplayName("When it leaves the battlefield, the enchanted permanent is sacrificed")
+    void sacrificesEnchantedPermanentWhenAuraLeaves() {
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
+
+        harness.setHand(player1, List.of(new Saltblast()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
+        harness.assertInGraveyard(player2, "Urborg, Tomb of Yawgmoth");
+    }
+
+    private Permanent addTargetPermanent(com.github.laxika.magicalvibes.model.Player controller) {
+        return harness.addToBattlefieldAndReturn(controller, new UrborgTombOfYawgmoth());
     }
 
     private Permanent addAuraAttachedTo(com.github.laxika.magicalvibes.model.Player controller,
             Permanent enchanted) {
-        Permanent aura = new Permanent(new RealityAcid());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new RealityAcid());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }

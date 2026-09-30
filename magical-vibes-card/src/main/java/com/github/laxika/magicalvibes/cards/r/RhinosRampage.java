@@ -34,7 +34,7 @@ public class RhinosRampage extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 new PermanentMaxManaValuePredicate(3)));
-        fightTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new EventValueAtLeast(1),
                 new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(artifact), true)));
     }

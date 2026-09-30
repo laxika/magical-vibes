@@ -157,7 +157,7 @@ public class PlayedCardNameTriggerCollectorService {
         if (!lp.fromExile()) {
             return false;
         }
-        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
+        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId(), lp.landCard().getId());
     }
 
     @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
@@ -278,6 +278,12 @@ public class PlayedCardNameTriggerCollectorService {
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
                                            LandPlayFromExileTriggerEffect trigger, UUID playingPlayerId) {
+        return enqueueLandPlayTrigger(match, trigger, playingPlayerId, null);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
+                                           LandPlayFromExileTriggerEffect trigger,
+                                           UUID playingPlayerId, UUID triggeringCardId) {
         boolean needsPlayerTarget = trigger.resolvedEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = trigger.resolvedEffects().stream()
@@ -292,10 +298,15 @@ public class PlayedCardNameTriggerCollectorService {
                     "'s triggered ability triggers — choose a target."));
             return true;
         }
-        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId);
+        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId, triggeringCardId);
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects, UUID playingPlayerId) {
+        return enqueueLandPlayTrigger(match, effects, playingPlayerId, null);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects,
+                                           UUID playingPlayerId, UUID triggeringCardId) {
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -306,6 +317,9 @@ public class PlayedCardNameTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setTargetId(playingPlayerId);
+        if (triggeringCardId != null) {
+            entry.setTriggeringCardId(triggeringCardId);
+        }
         entry.setNonTargeting(true);
         if (effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));

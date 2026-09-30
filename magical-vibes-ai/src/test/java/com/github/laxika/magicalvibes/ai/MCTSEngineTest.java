@@ -228,6 +228,10 @@ class MCTSEngineTest {
     @Test
     @DisplayName("MCTS prefers casting removal over passing when it clears a blocker for an attack")
     void mctsPrefersCastingRemovalOverPassingWhenItClearsBlocker() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
+        engine = new MCTSEngine(simulator, 42L, 100);
         // Scenario: AI has a 3/3 attacker, opponent has a 3/3 blocker.
         // AI has removal (Eviscerate, {3}{B} sorcery, destroy target creature) but only black mana
         // (so Grizzly Bears is NOT castable — no green mana).
@@ -271,6 +275,10 @@ class MCTSEngineTest {
     @Test
     @DisplayName("MCTS prefers stronger creature when both are castable")
     void mctsPrefsStrongerCreatureWhenBothCastable() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
+        engine = new MCTSEngine(simulator, 42L, 100);
         // Both Serra Angel (4/4 flying vigilance) and Grizzly Bears (2/2) are castable.
         // Rollouts where Serra Angel is played deal 4 flying damage per turn;
         // rollouts where Bears is played deal only 2 (and can be blocked).

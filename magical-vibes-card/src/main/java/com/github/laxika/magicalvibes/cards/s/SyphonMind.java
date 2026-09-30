@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsThenContr
 @CardRegistration(set = "MSC", collectorNumber = "159")
 @CardRegistration(set = "CMD", collectorNumber = "104")
 @CardRegistration(set = "C14", collectorNumber = "165")
+@CardRegistration(set = "M3C", collectorNumber = "206")
 @CardRegistration(set = "FIC", collectorNumber = "288")
 public class SyphonMind extends Card {
 

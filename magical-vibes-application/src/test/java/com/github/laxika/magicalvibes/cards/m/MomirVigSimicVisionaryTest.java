@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EnigmaEidolon;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
+import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -17,15 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MomirVigSimicVisionary.class, Forest.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({MomirVigSimicVisionary.class, EnigmaEidolon.class, SimicInitiate.class, SimicSignet.class})
 class MomirVigSimicVisionaryTest extends BaseCardTest {
 
     @Test
     @DisplayName("A green creature spell offers a creature search to the top of the library")
     void greenCreatureSpellOffersCreatureSearch() {
         addMomir();
-        Card searchedCreature = new FugitiveWizard();
-        Card noncreature = new Forest();
+        Card searchedCreature = new EnigmaEidolon();
+        Card noncreature = new SimicSignet();
         harness.setLibrary(player1, List.of(noncreature, searchedCreature));
         castGreenCreature();
 
@@ -45,8 +44,8 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
     @DisplayName("The green creature trigger may be declined")
     void greenCreatureTriggerMayBeDeclined() {
         addMomir();
-        Card top = new Forest();
-        Card creature = new FugitiveWizard();
+        Card top = new SimicSignet();
+        Card creature = new EnigmaEidolon();
         harness.setLibrary(player1, List.of(top, creature));
         castGreenCreature();
 
@@ -60,12 +59,10 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
     @DisplayName("A blue creature spell puts a revealed creature card into its controller's hand")
     void blueCreatureSpellPutsRevealedCreatureIntoHand() {
         addMomir();
-        Card top = new GrizzlyBears();
-        Card below = new Forest();
+        Card top = new SimicInitiate();
+        Card below = new SimicSignet();
         harness.setLibrary(player1, List.of(top, below));
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        castBlueCreature();
 
         harness.passBothPriorities();
 
@@ -77,17 +74,46 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
     @DisplayName("A revealed noncreature card stays on top for the blue creature trigger")
     void blueCreatureTriggerLeavesNoncreatureOnTop() {
         addMomir();
-        Card top = new Forest();
-        Card below = new GrizzlyBears();
+        Card top = new SimicSignet();
+        Card below = new SimicInitiate();
         harness.setLibrary(player1, List.of(top, below));
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        castBlueCreature();
 
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(top);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, below);
+    }
+
+    @Test
+    @DisplayName("A noncreature spell does not trigger either ability")
+    void noncreatureSpellDoesNotTriggerEitherAbility() {
+        addMomir();
+        Card top = new SimicInitiate();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.castFromHand(player1, new SimicSignet(), "{2}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature spell does not trigger Momir Vig")
+    void opponentsCreatureSpellDoesNotTriggerMomirVig() {
+        addMomir();
+        Card top = new SimicSignet();
+        harness.setLibrary(player1, List.of(top));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new SimicInitiate(), "{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
     }
 
     private void addMomir() {
@@ -98,9 +124,10 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
     }
 
     private void castGreenCreature() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SimicInitiate(), "{G}");
+    }
+
+    private void castBlueCreature() {
+        harness.castFromHand(player1, new EnigmaEidolon(), "{3}{U}");
     }
 }

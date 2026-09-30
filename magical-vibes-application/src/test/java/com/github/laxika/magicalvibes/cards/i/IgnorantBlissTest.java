@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,46 +10,50 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IgnorantBliss.class, Forest.class, GrizzlyBears.class})
+@CardUsed({IgnorantBliss.class, GuardianOfTheGuildpact.class})
 class IgnorantBlissTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles the hand face down, then returns and draws at the next end step")
     void exilesHandDrawsAndReturnsCardsAtNextEndStep() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card drawn = new Forest();
-        harness.setHand(player1, new ArrayList<>(List.of(new IgnorantBliss(), first, second)));
+        Card first = new GuardianOfTheGuildpact();
+        Card second = new GuardianOfTheGuildpact();
+        Card drawn = new GuardianOfTheGuildpact();
+        Card opponentCard = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss(), first, second));
+        harness.setHand(player2, List.of(opponentCard));
         harness.setLibrary(player1, List.of(drawn));
         castIgnorantBliss();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.exiledCards)
                 .extracting(ExiledCardEntry::card)
                 .containsExactlyInAnyOrder(first, second);
         assertThat(gd.exiledCards).allMatch(ExiledCardEntry::faceDown);
 
-        Card replacement = new GrizzlyBears();
-        harness.setHand(player1, new ArrayList<>(List.of(replacement)));
+        Card replacement = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(replacement));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(replacement, drawn, first, second);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
         assertThat(gd.exiledCards).isEmpty();
     }
 
     @Test
     @DisplayName("Still draws a card when there are no other cards in hand")
     void drawsWithNoOtherCardsInHand() {
-        Card drawn = new Forest();
-        harness.setHand(player1, new ArrayList<>(List.of(new IgnorantBliss())));
+        Card drawn = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss()));
         harness.setLibrary(player1, List.of(drawn));
         castIgnorantBliss();
 

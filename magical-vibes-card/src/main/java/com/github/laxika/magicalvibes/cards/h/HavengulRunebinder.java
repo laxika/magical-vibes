@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "DKA", collectorNumber = "39")
 @CardRegistration(set = "DDQ", collectorNumber = "44")
 @CardRegistration(set = "SIS", collectorNumber = "16")
+@CardRegistration(set = "MIC", collectorNumber = "101")
 public class HavengulRunebinder extends Card {
 
     public HavengulRunebinder() {

@@ -24,8 +24,10 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "260")
 @CardRegistration(set = "LTC", collectorNumber = "295")
 @CardRegistration(set = "TDC", collectorNumber = "339")
+@CardRegistration(set = "M3C", collectorNumber = "318")
 @CardRegistration(set = "MKC", collectorNumber = "248")
 @CardRegistration(set = "C20", collectorNumber = "255")
+@CardRegistration(set = "C19", collectorNumber = "227")
 public class AshBarrens extends Card {
 
     public AshBarrens() {

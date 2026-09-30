@@ -30,6 +30,7 @@ class StolenStrategyTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(opponentTop));
 
         advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
 
         assertThat(gd.getCardsExiledByPermanent(strategy.getId())).containsExactly(opponentTop);
         assertThat(gd.findExiledCard(opponentTop.getId())).extracting(ExiledCardEntry::faceDown)
@@ -45,6 +46,7 @@ class StolenStrategyTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(exiled));
 
         advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -63,6 +65,7 @@ class StolenStrategyTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(exiledLand));
 
         advanceToUpkeep(player1);
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 1);

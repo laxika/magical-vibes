@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "86")
+@CardRegistration(set = "C19", collectorNumber = "86")
 public class FerventDenial extends Card {
 
     public FerventDenial() {

@@ -288,4 +288,42 @@ class MtgjsonOracleLoaderTest {
         assertThat(faces.get("513")).isSameAs(original);
         assertThat(rarities.get("513")).isEqualTo("rare");
     }
+
+    @Test
+    void usesMb2AlternatePrintingsOnlyWhenBaseNumbersAreMissing() {
+        JsonNode magus = MAPPER.readTree("""
+                { "name": "Magus of the Chains", "number": "549", "rarity": "rare" }
+                """);
+        JsonNode oddric = MAPPER.readTree("""
+                { "name": "Oddric, Lunar Marquis", "number": "551", "rarity": "rare" }
+                """);
+        JsonNode spuzzem = MAPPER.readTree("""
+                { "name": "Spuzzem Strategist", "number": "584", "rarity": "common" }
+                """);
+        JsonNode npc = MAPPER.readTree("""
+                { "name": "Starting Town NPC", "number": "585", "rarity": "common" }
+                """);
+        JsonNode dontWorry = MAPPER.readTree("""
+                { "name": "Don't Worry About It", "number": "592", "rarity": "common" }
+                """);
+        Map<String, JsonNode> faces = new HashMap<>(Map.of(
+                "549", magus, "551", oddric, "584", spuzzem, "585", npc, "592", dontWorry));
+        Map<String, String> rarities = new HashMap<>(Map.of(
+                "549", "rare", "551", "rare", "584", "common", "585", "common", "592", "common"));
+
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MB2", faces, rarities);
+
+        assertThat(faces.get("313")).isSameAs(magus);
+        assertThat(faces.get("315")).isSameAs(oddric);
+        assertThat(faces.get("346")).isSameAs(spuzzem);
+        assertThat(faces.get("347")).isSameAs(npc);
+        assertThat(faces.get("353")).isSameAs(dontWorry);
+        assertThat(rarities).containsEntry("313", "rare").containsEntry("315", "rare");
+        assertThat(rarities).containsEntry("346", "common")
+                .containsEntry("347", "common").containsEntry("353", "common");
+
+        faces.put("313", oddric);
+        MtgjsonOracleLoader.applyMissingPrintingAliases("MB2", faces, rarities);
+        assertThat(faces.get("313")).isSameAs(oddric);
+    }
 }

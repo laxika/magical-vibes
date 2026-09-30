@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HarrierGriffin;
+import com.github.laxika.magicalvibes.cards.o.OrzhovSignet;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,53 +16,53 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShadowLance.class, GrizzlyBears.class, Forest.class})
+@CardUsed({ShadowLance.class, HarrierGriffin.class, OrzhovSignet.class})
 class ShadowLanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Shadow Lance attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
         harness.setHand(player1, List.of(new ShadowLance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, griffin.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof ShadowLance
-                        && bears.getId().equals(permanent.getAttachedTo()));
+                        && griffin.getId().equals(permanent.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Enchanted creature has first strike")
     void enchantedCreatureHasFirstStrike() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        addAttachedAura(bears);
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        addAttachedAura(griffin);
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("Enchanted creature can activate the pump ability")
     void enchantedCreatureCanActivatePumpAbility() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        addAttachedAura(bears);
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        addAttachedAura(griffin);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("The pump bonus wears off at cleanup")
     void pumpBonusWearsOffAtCleanup() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        addAttachedAura(bears);
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        addAttachedAura(griffin);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -73,22 +73,72 @@ class ShadowLanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Shadow Lance cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new OrzhovSignet());
         harness.setHand(player1, List.of(new ShadowLance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent signet = gd.playerBattlefields.get(player1.getId()).getFirst();
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller can activate the pump ability")
+    void enchantedCreatureControllerCanActivatePumpAbility() {
+        Permanent griffin = addCreatureReady(player2, new HarrierGriffin());
+        harness.setHand(player1, List.of(new ShadowLance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, griffin.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The pump ability requires black mana")
+    void pumpAbilityRequiresBlackMana() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        addAttachedAura(griffin);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Shadow Lance's effects end when it leaves the battlefield")
+    void effectsEndWhenAuraLeavesBattlefield() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        Permanent aura = addAttachedAura(griffin);
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
     }
 
     private Permanent addAttachedAura(Permanent enchantedCreature) {

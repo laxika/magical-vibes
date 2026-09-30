@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "SOI", collectorNumber = "279")
 @CardRegistration(set = "RIX", collectorNumber = "190")
 @CardRegistration(set = "SIR", collectorNumber = "274")
+@CardRegistration(set = "C19", collectorNumber = "276")
 public class StoneQuarry extends Card {
 
     public StoneQuarry() {

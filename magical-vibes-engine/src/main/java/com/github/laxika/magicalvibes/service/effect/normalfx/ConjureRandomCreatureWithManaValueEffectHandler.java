@@ -68,19 +68,25 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
         Card card = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCard();
         card.setOwnerId(entry.getControllerId());
         Permanent permanent = new Permanent(card);
-        permanent.getGrantedKeywords().add(Keyword.HASTE);
+        if (typed.temporary()) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, entry.getControllerId(), card, null, false);
         entry.getCreatedPermanentIds().add(permanent.getId());
-        gameData.queueDelayedAction(new DelayedPermanentAction(
-                permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+        if (typed.temporary()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+        }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " conjures ")
                 .card(card)
-                .text(" onto the battlefield with haste.")
+                .text(typed.temporary()
+                        ? " onto the battlefield with haste."
+                        : " onto the battlefield.")
                 .build());
     }
 

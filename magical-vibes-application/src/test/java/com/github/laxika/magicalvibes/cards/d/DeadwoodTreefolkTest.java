@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.r.ReveredDead;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,25 +16,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeadwoodTreefolk.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({DeadwoodTreefolk.class, ReveredDead.class, Damnation.class})
 class DeadwoodTreefolkTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with three time counters and returns another creature card to hand")
     void entersWithCountersAndReturnsCreature() {
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Card creature = new ReveredDead();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(creature)));
         castDeadwoodTreefolk();
 
         Permanent treefolk = findPermanent(player1, "Deadwood Treefolk");
         assertThat(treefolk.getCounterCount(CounterType.TIME)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Revered Dead");
+        harness.assertNotInGraveyard(player1, "Revered Dead");
     }
 
     @Test
@@ -44,20 +42,33 @@ class DeadwoodTreefolkTest extends BaseCardTest {
     void leavesBattlefieldReturnsCreature() {
         DeadwoodTreefolk treefolkCard = new DeadwoodTreefolk();
         harness.addToBattlefield(player1, treefolkCard);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Card creature = new ReveredDead();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(creature)));
 
-        destroyWithWrath();
+        destroyWithDamnation();
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).contains(bears.getId());
+        assertThat(choice.validCardIds()).contains(creature.getId());
         assertThat(choice.validCardIds()).doesNotContain(treefolkCard.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Revered Dead");
         harness.assertInGraveyard(player1, "Deadwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("Removes one time counter at upkeep while counters remain")
+    void removesTimeCounterAtUpkeepBeforeLast() {
+        Permanent treefolk = harness.enterBattlefieldAndReturn(player1, new DeadwoodTreefolk());
+        assertThat(treefolk.getCounterCount(CounterType.TIME)).isEqualTo(3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(treefolk.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Deadwood Treefolk");
     }
 
     @Test
@@ -78,27 +89,32 @@ class DeadwoodTreefolkTest extends BaseCardTest {
     void noOtherCreatureCardSkipsLeavesTrigger() {
         harness.addToBattlefield(player1, new DeadwoodTreefolk());
 
-        destroyWithWrath();
+        destroyWithDamnation();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Deadwood Treefolk");
     }
 
+    @Test
+    @DisplayName("Ignores noncreature cards in the graveyard")
+    void noncreatureCardCannotBeReturned() {
+        harness.setGraveyard(player1, new ArrayList<>(List.of(new Damnation())));
+
+        harness.enterBattlefieldAndReturn(player1, new DeadwoodTreefolk());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Damnation");
+    }
+
     private void castDeadwoodTreefolk() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new DeadwoodTreefolk()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DeadwoodTreefolk(), "{5}{G}");
         harness.passBothPriorities();
     }
 
-    private void destroyWithWrath() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+    private void destroyWithDamnation() {
+        harness.castFromHand(player1, new Damnation(), "{2}{B}{B}");
         harness.passBothPriorities();
     }
 }

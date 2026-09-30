@@ -76,6 +76,7 @@ public class TurnCleanupService {
 
     private final CreatureControlService creatureControlService;
     private final PermanentRemovalService permanentRemovalService;
+    private final ThreadLocal<Boolean> checkingGrantedHandSizeEffects = ThreadLocal.withInitial(() -> false);
 
     @Autowired
     @Lazy
@@ -251,9 +252,11 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
+            List<CardEffect> activeStaticEffects = gameQueryService.getActiveStaticEffects(gameData, p);
+            activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
+            activeStaticEffects.addAll(p.getPersistentTriggeredEffects(EffectSlot.STATIC));
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
-                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(DamagePersistenceEffect.class::isInstance);
+                    && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
             if (!damagePersists && !controllersWithOpponentDamagePersistence.isEmpty()
                     && isCreatureForCleanup(gameData, p)) {
                 damagePersists = controllersWithOpponentDamagePersistence.stream()
@@ -462,6 +465,7 @@ public class TurnCleanupService {
         gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
+        gameData.cardsGrantedJumpStartUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
@@ -664,6 +668,7 @@ public class TurnCleanupService {
                 if (!copyGrantManaPersists) {
                     gameData.pendingNextInstantSorceryCopyCount.remove(playerId);
                     gameData.pendingNextRedInstantSorceryCopyCount.remove(playerId);
+                    gameData.pendingNextSpellOrAbilityCopyCount.remove(playerId);
                 }
             }
         }
@@ -800,13 +805,22 @@ public class TurnCleanupService {
                         .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }
-                if (gameQueryService != null) {
+            }
+        }
+        // Computing a static bonus can evaluate a condition that asks about maximum hand size.
+        // The nested query still sees printed effects, but must not recursively compute bonuses.
+        if (bf != null && gameQueryService != null && !checkingGrantedHandSizeEffects.get()) {
+            checkingGrantedHandSizeEffects.set(true);
+            try {
+                for (Permanent perm : bf) {
                     GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
                     if (staticBonus != null && staticBonus.grantedEffects().stream()
                             .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                         return true;
                     }
                 }
+            } finally {
+                checkingGrantedHandSizeEffects.remove();
             }
         }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {

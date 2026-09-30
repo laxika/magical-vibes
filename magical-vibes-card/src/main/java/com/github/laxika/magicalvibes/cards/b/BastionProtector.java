@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "FIC", collectorNumber = "233")
 @CardRegistration(set = "40K", collectorNumber = "182")
 @CardRegistration(set = "LTC", collectorNumber = "162")
+@CardRegistration(set = "MIC", collectorNumber = "80")
 public class BastionProtector extends Card {
 
     public BastionProtector() {

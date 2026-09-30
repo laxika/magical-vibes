@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenType
 
 @CardRegistration(set = "AVR", collectorNumber = "33")
 @CardRegistration(set = "C20", collectorNumber = "98")
+@CardRegistration(set = "MIC", collectorNumber = "93")
 public class RidersOfGavony extends Card {
 
     public RidersOfGavony() {

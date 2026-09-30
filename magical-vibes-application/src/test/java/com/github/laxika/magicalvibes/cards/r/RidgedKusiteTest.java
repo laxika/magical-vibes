@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PouncingWurm;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RidgedKusite.class, GrizzlyBears.class})
+@CardUsed({RidgedKusite.class, PouncingWurm.class, UrborgTombOfYawgmoth.class})
 class RidgedKusiteTest extends BaseCardTest {
 
     @Test
     void activationRequiresDiscardingACard() {
-        addReadyKusite(player1);
-        Permanent target = addReadyCreature(player2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new RidgedKusite());
+        Permanent target = addCreatureReady(player2, new PouncingWurm());
+        harness.setHand(player1, List.of(new PouncingWurm()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -36,9 +36,9 @@ class RidgedKusiteTest extends BaseCardTest {
 
     @Test
     void resolvingAbilityBoostsAndGrantsFirstStrikeUntilEndOfTurn() {
-        addReadyKusite(player1);
-        Permanent target = addReadyCreature(player2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent kusite = addCreatureReady(player1, new RidgedKusite());
+        Permanent target = addCreatureReady(player2, new PouncingWurm());
+        harness.setHand(player1, List.of(new PouncingWurm()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -49,7 +49,8 @@ class RidgedKusiteTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(kusite.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Pouncing Wurm");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -61,28 +62,28 @@ class RidgedKusiteTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutCardToDiscard() {
-        addReadyKusite(player1);
+        addCreatureReady(player1, new RidgedKusite());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new PouncingWurm());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must discard a card");
     }
 
-    private Permanent addReadyKusite(Player player) {
-        Permanent permanent = new Permanent(new RidgedKusite());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    void cannotTargetNonCreaturePermanent() {
+        Permanent kusite = addCreatureReady(player1, new RidgedKusite());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UrborgTombOfYawgmoth());
+        harness.setHand(player1, List.of(new PouncingWurm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+        assertThat(kusite.isTapped()).isFalse();
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -163,7 +164,11 @@ public class EffectResolutionService {
                 boolean evaluatedWhenEtbTriggered = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && (conditional.condition() instanceof ColorSpentToCast
                         || conditional.condition() instanceof SnowManaSpentToCast);
-                if (!evaluatedWhenEtbTriggered
+                // "Whenever this attacks alone" describes the event that created the trigger.
+                // Another creature entering attacking later cannot undo that event.
+                boolean attackEventAlreadyMatched = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && conditional.condition() instanceof AttacksAlone;
+                if (!evaluatedWhenEtbTriggered && !attackEventAlreadyMatched
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
                         entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

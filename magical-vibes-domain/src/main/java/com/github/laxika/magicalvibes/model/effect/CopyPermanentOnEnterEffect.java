@@ -46,6 +46,9 @@ import java.util.Set;
  * <p>{@code nameOverride} and {@code additionalSupertypesOverride} cover copy exceptions that
  * retain the entering card's name or add a supertype to the final copy (Sakashima the Impostor).
  *
+ * <p>{@code cardTypesOverride} replaces the copied card types rather than adding to them, for
+ * copy exceptions such as Imposter Mech's "it loses all other card types".
+ *
  * <p>{@code cardFilter} changes the source from a battlefield permanent to a matching card in any
  * graveyard. The entering object still uses the same copy-exception and battlefield-entry pipeline.
  */
@@ -70,7 +73,74 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                          boolean shieldCounterIfControllerControlsCopiedPermanent,
                                          CardPredicate cardFilter,
                                          boolean copyUntilEndOfTurn,
-                                         boolean addVanishingIfCopiedPermanentLacksIt) implements ReplacementEffect {
+                                         boolean addVanishingIfCopiedPermanentLacksIt,
+                                         Set<CardType> cardTypesOverride,
+                                         List<CardEffect> reflexiveEffects) implements ReplacementEffect {
+
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
+                                      Integer toughnessOverride, Set<CardType> additionalTypesOverride,
+                                      List<ActivatedAbility> additionalActivatedAbilities,
+                                      CardColor embalmColorOverride, CardSubtype embalmAddedSubtype,
+                                      boolean embalmRemoveManaCost, DynamicAmount additionalPlusOnePlusOneCounters,
+                                      Set<CardSubtype> additionalSubtypesOverride,
+                                      Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                      boolean copyPowerToughnessFromSource, boolean entersTapped,
+                                      String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
+                                      Set<Keyword> additionalKeywordsOverride,
+                                      boolean additionalCreatureOnlyCharacteristics, boolean copyColor,
+                                      Set<CardSupertype> removedSupertypesOverride,
+                                      boolean addTypeAppropriateCounters,
+                                      boolean shieldCounterIfControllerControlsCopiedPermanent,
+                                      CardPredicate cardFilter, boolean copyUntilEndOfTurn,
+                                      boolean addVanishingIfCopiedPermanentLacksIt,
+                                      Set<CardType> cardTypesOverride) {
+        this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride,
+                additionalActivatedAbilities, embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost,
+                additionalPlusOnePlusOneCounters, additionalSubtypesOverride, additionalSlotEffects,
+                copyPowerToughnessFromSource, entersTapped, nameOverride, additionalSupertypesOverride,
+                additionalKeywordsOverride, additionalCreatureOnlyCharacteristics, copyColor,
+                removedSupertypesOverride, addTypeAppropriateCounters,
+                shieldCounterIfControllerControlsCopiedPermanent, cardFilter, copyUntilEndOfTurn,
+                addVanishingIfCopiedPermanentLacksIt, cardTypesOverride, List.of());
+    }
+
+    /** A non-targeting "when you do" ability referring to the permanent chosen for the copy. */
+    public CopyPermanentOnEnterEffect withReflexiveEffects(List<CardEffect> effects) {
+        return new CopyPermanentOnEnterEffect(filter, typeLabel, powerOverride, toughnessOverride,
+                additionalTypesOverride, additionalActivatedAbilities, embalmColorOverride, embalmAddedSubtype,
+                embalmRemoveManaCost, additionalPlusOnePlusOneCounters, additionalSubtypesOverride,
+                additionalSlotEffects, copyPowerToughnessFromSource, entersTapped, nameOverride,
+                additionalSupertypesOverride, additionalKeywordsOverride, additionalCreatureOnlyCharacteristics,
+                copyColor, removedSupertypesOverride, addTypeAppropriateCounters,
+                shieldCounterIfControllerControlsCopiedPermanent, cardFilter, copyUntilEndOfTurn,
+                addVanishingIfCopiedPermanentLacksIt, cardTypesOverride, List.copyOf(effects));
+    }
+
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
+                                       Integer toughnessOverride, Set<CardType> additionalTypesOverride,
+                                       List<ActivatedAbility> additionalActivatedAbilities,
+                                       CardColor embalmColorOverride, CardSubtype embalmAddedSubtype,
+                                       boolean embalmRemoveManaCost, DynamicAmount additionalPlusOnePlusOneCounters,
+                                       Set<CardSubtype> additionalSubtypesOverride,
+                                       Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                       boolean copyPowerToughnessFromSource, boolean entersTapped,
+                                       String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
+                                       Set<Keyword> additionalKeywordsOverride,
+                                       boolean additionalCreatureOnlyCharacteristics, boolean copyColor,
+                                       Set<CardSupertype> removedSupertypesOverride,
+                                       boolean addTypeAppropriateCounters,
+                                       boolean shieldCounterIfControllerControlsCopiedPermanent,
+                                       CardPredicate cardFilter, boolean copyUntilEndOfTurn,
+                                       boolean addVanishingIfCopiedPermanentLacksIt) {
+        this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride,
+                additionalActivatedAbilities, embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost,
+                additionalPlusOnePlusOneCounters, additionalSubtypesOverride, additionalSlotEffects,
+                copyPowerToughnessFromSource, entersTapped, nameOverride, additionalSupertypesOverride,
+                additionalKeywordsOverride, additionalCreatureOnlyCharacteristics, copyColor,
+                removedSupertypesOverride, addTypeAppropriateCounters,
+                shieldCounterIfControllerControlsCopiedPermanent, cardFilter, copyUntilEndOfTurn,
+                addVanishingIfCopiedPermanentLacksIt, Set.of());
+    }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null, Set.of(), Map.of(), false,
@@ -229,5 +299,15 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
         return new CopyPermanentOnEnterEffect(filter, typeLabel, null, null, Set.of(), List.of(), null, null,
                 false, null, Set.of(), Map.of(), false, false, null, Set.of(), Set.of(), false, true, Set.of(),
                 false, false, null, false, true);
+    }
+
+    /** Clone with an exact card-type replacement and additional copied characteristics. */
+    public static CopyPermanentOnEnterEffect withCardTypesOverride(
+            PermanentPredicate filter, String typeLabel, Set<CardType> cardTypesOverride,
+            Set<CardSubtype> additionalSubtypesOverride, List<ActivatedAbility> additionalActivatedAbilities) {
+        return new CopyPermanentOnEnterEffect(filter, typeLabel, null, null, Set.of(),
+                additionalActivatedAbilities, null, null, false, null, additionalSubtypesOverride, Map.of(),
+                false, false, null, Set.of(), Set.of(), false, true, Set.of(), false, false, null, false,
+                false, cardTypesOverride);
     }
 }

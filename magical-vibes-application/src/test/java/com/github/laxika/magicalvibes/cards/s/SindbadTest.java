@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({Sindbad.class, Island.class, GrizzlyBears.class, Abundance.class})
 class SindbadTest extends BaseCardTest {
 
@@ -38,6 +39,7 @@ class SindbadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        assertThat(gameLogContains("reveals Grizzly Bears")).isTrue();
         harness.assertNotInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -53,7 +55,24 @@ class SindbadTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof GrizzlyBears);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Accepted draw replacement skips Sindbad's reveal and discard")
+    void acceptedDrawReplacementSkipsRevealAndDiscard() {
+        addCreatureReady(player1, new Sindbad());
+        harness.addToBattlefield(player1, new Abundance());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "NONLAND");
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

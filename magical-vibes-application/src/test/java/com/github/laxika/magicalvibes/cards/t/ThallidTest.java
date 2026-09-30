@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -36,6 +39,24 @@ class ThallidTest extends BaseCardTest {
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Created token is a 1/1 green Saproling creature")
+    void createdTokenHasRequiredCharacteristics() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Saproling");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getPower()).isEqualTo(1);
+        assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
     }
 
     @Test

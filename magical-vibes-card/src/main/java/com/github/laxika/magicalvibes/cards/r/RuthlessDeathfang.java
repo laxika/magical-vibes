@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "229")
+@CardRegistration(set = "MIC", collectorNumber = "154")
 public class RuthlessDeathfang extends Card {
 
     public RuthlessDeathfang() {

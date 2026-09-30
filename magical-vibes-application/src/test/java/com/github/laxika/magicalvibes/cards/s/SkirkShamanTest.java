@@ -63,10 +63,8 @@ class SkirkShamanTest extends BaseCardTest {
     }
 
     private Permanent addReadyPermanent(Player player, Card card, boolean attacking) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(attacking);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

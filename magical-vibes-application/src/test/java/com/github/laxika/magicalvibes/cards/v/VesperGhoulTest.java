@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(VesperGhoul.class)
 class VesperGhoulTest extends BaseCardTest {
@@ -29,5 +30,15 @@ class VesperGhoulTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.RED.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough life to pay")
+    void cannotActivateWithoutEnoughLife() {
+        addCreatureReady(player1, new VesperGhoul());
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

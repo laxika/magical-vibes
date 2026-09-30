@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class ResolveRadCountersEffectHandler implements NormalEffectHandlerBean 
 
     private final GraveyardService graveyardService;
     private final LifeSupport lifeSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +34,7 @@ public class ResolveRadCountersEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        List<Card> milledCards = graveyardService.resolveMillPlayer(gameData, playerId, radCounters);
+        List<Card> milledCards = graveyardService.resolveMillPlayerIncludingExiled(gameData, playerId, radCounters);
         int nonlandCards = (int) milledCards.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
                 .count();
@@ -40,7 +42,11 @@ public class ResolveRadCountersEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        lifeSupport.applyLifeLoss(gameData, playerId, nonlandCards, "rad counters");
+        if (gameQueryService.radiationLifeLossBecomesLifeGain(gameData, playerId)) {
+            lifeSupport.applyGainLife(gameData, playerId, nonlandCards, "rad counters");
+        } else {
+            lifeSupport.applyLifeLoss(gameData, playerId, nonlandCards, "rad counters");
+        }
         int remainingRadCounters = Math.max(0,
                 gameData.playerRadCounters.getOrDefault(playerId, 0) - nonlandCards);
         gameData.playerRadCounters.put(playerId, remainingRadCounters);

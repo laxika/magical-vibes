@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "3")
+@CardRegistration(set = "M3C", collectorNumber = "156")
 public class Endbringer extends Card {
 
     public Endbringer() {

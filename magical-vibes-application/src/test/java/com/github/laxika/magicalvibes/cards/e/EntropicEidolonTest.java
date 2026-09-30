@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.g.GnatAlleyCreeper;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EntropicEidolon.class, AdelizTheCinderWind.class, GrizzlyBears.class})
+@CardUsed({EntropicEidolon.class, AzoriusFirstWing.class, GnatAlleyCreeper.class, AzoriusSignet.class,
+        WreckingBall.class})
 class EntropicEidolonTest extends BaseCardTest {
 
     @Test
@@ -37,12 +40,7 @@ class EntropicEidolonTest extends BaseCardTest {
     void multicoloredSpellReturnsEidolonToHand() {
         EntropicEidolon eidolon = new EntropicEidolon();
         harness.setGraveyard(player1, List.of(eidolon));
-        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -57,12 +55,7 @@ class EntropicEidolonTest extends BaseCardTest {
     void decliningReturnKeepsEidolonInGraveyard() {
         EntropicEidolon eidolon = new EntropicEidolon();
         harness.setGraveyard(player1, List.of(eidolon));
-        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -74,10 +67,37 @@ class EntropicEidolonTest extends BaseCardTest {
     void monocoloredSpellDoesNotTriggerReturn() {
         EntropicEidolon eidolon = new EntropicEidolon();
         harness.setGraveyard(player1, List.of(eidolon));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new GnatAlleyCreeper(), "{2}{R}");
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
+    @DisplayName("An opponent's multicolored instant does not trigger Entropic Eidolon's graveyard ability")
+    void opponentMulticoloredSpellDoesNotTriggerReturn() {
+        EntropicEidolon eidolon = new EntropicEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        var target = harness.addToBattlefieldAndReturn(player1, new AzoriusFirstWing());
+
+        harness.castFromHand(player1, new GnatAlleyCreeper(), "{2}{R}");
+        harness.setHand(player2, List.of(new WreckingBall()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
+    @DisplayName("A colorless spell does not trigger Entropic Eidolon's graveyard ability")
+    void colorlessSpellDoesNotTriggerReturn() {
+        EntropicEidolon eidolon = new EntropicEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+
+        harness.castFromHand(player1, new AzoriusSignet(), "{2}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);

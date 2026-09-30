@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.b.BreedingPool;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,35 +14,46 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WreckingBall.class, GrizzlyBears.class, Mountain.class, FountainOfYouth.class})
+@CardUsed({WreckingBall.class, AssaultZeppelid.class, BreedingPool.class, AzoriusSignet.class})
 class WreckingBallTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a target creature")
     void destroysTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
 
         castWreckingBall(target);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Assault Zeppelid");
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
+    }
+
+    @Test
+    @DisplayName("Destroys a creature you control")
+    void destroysYourOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+
+        castWreckingBall(target);
+
+        harness.assertNotOnBattlefield(player1, "Assault Zeppelid");
+        harness.assertInGraveyard(player1, "Assault Zeppelid");
     }
 
     @Test
     @DisplayName("Destroys a target land")
     void destroysTargetLand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BreedingPool());
 
         castWreckingBall(target);
 
-        harness.assertNotOnBattlefield(player2, "Mountain");
-        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Breeding Pool");
+        harness.assertInGraveyard(player2, "Breeding Pool");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature, nonland permanent")
     void cannotTargetNoncreatureNonlandPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
         harness.setHand(player1, List.of(new WreckingBall()));
         addMana();
 

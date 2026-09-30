@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "80")
+@CardRegistration(set = "C19", collectorNumber = "96")
 public class StratusDancer extends Card {
 
     public StratusDancer() {

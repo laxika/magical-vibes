@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BreedingPool.class)
 class BreedingPoolTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class BreedingPoolTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Breeding Pool enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playBreedingPool(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findPool(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Breeding Pool produces green mana")
     void producesGreenMana() {
         Permanent pool = addPoolReady(player1);
@@ -78,9 +92,8 @@ class BreedingPoolTest extends BaseCardTest {
     }
 
     private Permanent addPoolReady(Player player) {
-        Permanent pool = new Permanent(new BreedingPool());
+        Permanent pool = harness.addToBattlefieldAndReturn(player, new BreedingPool());
         pool.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(pool);
         return pool;
     }
 

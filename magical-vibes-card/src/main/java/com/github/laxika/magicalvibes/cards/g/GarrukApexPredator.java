@@ -28,6 +28,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "210")
 @CardRegistration(set = "PIO", collectorNumber = "225")
+@CardRegistration(set = "M3C", collectorNumber = "262")
 public class GarrukApexPredator extends Card {
 
     public GarrukApexPredator() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.c.ChieftainEnDal;
 import com.github.laxika.magicalvibes.cards.r.RamosianSkyMarshal;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DefiantVanguard.class, DefiantFalcon.class, RamosianSkyMarshal.class,
-        ChieftainEnDal.class, Daze.class})
+        BallistaSquad.class, ChieftainEnDal.class, Daze.class})
 class DefiantVanguardTest extends BaseCardTest {
 
     @Test
@@ -52,8 +53,7 @@ class DefiantVanguardTest extends BaseCardTest {
     @DisplayName("The activated ability offers only Rebel permanents with mana value 4 or less")
     void searchOffersOnlyMatchingRebelPermanents() {
         Permanent vanguard = addCreatureReady(player1, new DefiantVanguard());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new DefiantVanguard(),
                 new DefiantFalcon(),
                 new RamosianSkyMarshal(),
@@ -73,11 +73,26 @@ class DefiantVanguardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The activated ability includes a Rebel permanent with mana value exactly 4")
+    void searchIncludesRebelPermanentAtManaValueFour() {
+        addCreatureReady(player1, new DefiantVanguard());
+        harness.setLibrary(player1, List.of(new BallistaSquad(), new RamosianSkyMarshal()));
+
+        activateVanguard();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards())
+                .extracting(card -> card.getName())
+                .containsExactly("Ballista Squad");
+    }
+
+    @Test
     @DisplayName("The activated ability puts the chosen Rebel permanent onto the battlefield")
     void putsChosenRebelOntoBattlefield() {
         addCreatureReady(player1, new DefiantVanguard());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new DefiantFalcon());
+        harness.setLibrary(player1, List.of(new DefiantFalcon()));
 
         activateVanguard();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
@@ -93,8 +108,7 @@ class DefiantVanguardTest extends BaseCardTest {
     void mayFailToFindMatchingRebel() {
         addCreatureReady(player1, new DefiantVanguard());
         DefiantFalcon falcon = new DefiantFalcon();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(falcon);
+        harness.setLibrary(player1, List.of(falcon));
 
         activateVanguard();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
@@ -108,8 +122,7 @@ class DefiantVanguardTest extends BaseCardTest {
     @DisplayName("The activated ability does nothing when no matching Rebel is in the library")
     void noMatchingRebelFound() {
         addCreatureReady(player1, new DefiantVanguard());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new ChieftainEnDal(), new Daze()));
+        harness.setLibrary(player1, List.of(new ChieftainEnDal(), new Daze()));
 
         activateVanguard();
 

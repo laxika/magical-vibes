@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -77,6 +78,30 @@ class SpittingSlugTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("First strike granted by the trigger expires at end of turn")
+    void grantedFirstStrikeExpiresAtEndOfTurn() {
+        Permanent slug = addReadySlug(player1);
+        slug.setAttacking(true);
+        Permanent blocker = addReadyBear(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
     void acceptingWithoutEnoughManaGivesFirstStrikeToEveryBlocker() {
         Permanent slug = addReadySlug(player1);
         slug.setAttacking(true);
@@ -104,6 +129,22 @@ class SpittingSlugTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining after a blocking Spitting Slug leaves the battlefield still affects its attacker")
+    void decliningAfterBlockingSpittingSlugLeavesBattlefieldStillAffectsItsAttacker() {
+        Permanent slug = addReadySlug(player2);
+        Permanent attacker = addReadyBear(player1);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player2.getId()).remove(slug);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

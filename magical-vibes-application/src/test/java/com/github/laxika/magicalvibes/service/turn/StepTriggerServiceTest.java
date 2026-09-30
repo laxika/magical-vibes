@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -121,6 +120,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -187,6 +187,9 @@ class StepTriggerServiceTest {
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private AuraAttachmentService auraAttachmentService;
 
     @Mock
     private LifeSupport lifeSupport;
@@ -271,6 +274,7 @@ class StepTriggerServiceTest {
                 gameLogService,
                 playerInputService,
                 permanentRemovalService,
+                auraAttachmentService,
                 lifeSupport,
                 battlefieldEntryService,
                 graveyardTransformedReturnService,
@@ -505,6 +509,26 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        void optionalMultipleUpkeepTargetsUseGroupSelection() {
+            Card card = createCardWithName("Artifact animator");
+            CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+            card.target(0, 3).addEffect(EffectSlot.UPKEEP_TRIGGERED, effect);
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class))
+                    .isNotNull()
+                    .satisfies(trigger -> {
+                        assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
+                        assertThat(trigger.effects()).containsExactly(effect);
+                    });
+            verify(etbTokenTargetService).processNextETBTokenMultiTargetTrigger(gd);
         }
 
         @Test
@@ -2197,7 +2221,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse(); // processed immediately
             // processNextEndStepTriggerTarget fires and presents choice
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), eq(List.of()), eq(List.of(player2Id)), any());
         }
 
         @Test
@@ -2233,8 +2257,8 @@ class StepTriggerServiceTest {
             sut.processNextEndStepTriggerTarget(gd);
 
             // Should present choice with only opponent (player2), not controller (player1)
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
-                    eq(List.of(player2Id)), any());
+            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id),
+                    eq(List.of()), eq(List.of(player2Id)), any());
         }
 
         @Test
@@ -2387,8 +2411,10 @@ class StepTriggerServiceTest {
         @Test
         @DisplayName("Pending exile returns can tap lands without tapping other permanents")
         void pendingExileReturnsLandsTappedOnly() {
-            Card land = new Forest();
-            Card creature = new GrizzlyBears();
+            Card land = createCardWithName("Forest");
+            land.setType(CardType.LAND);
+            Card creature = createCardWithName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
             gd.addToExile(player1Id, land);
             gd.addToExile(player1Id, creature);
             gd.queueDelayedAction(new PendingExileReturn(land, player1Id, false, false,

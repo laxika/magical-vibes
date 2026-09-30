@@ -52,7 +52,7 @@ public class PayAnyAmountOfEnergyToDealDamageToTargetCreatureEffectHandler imple
             return;
         }
 
-        gameData.playerEnergyCounters.put(entry.getControllerId(), currentEnergy - amount);
+        gameData.setPlayerEnergyCounters(entry.getControllerId(), currentEnergy - amount);
         String playerName = gameData.playerIdToName.getOrDefault(entry.getControllerId(), "Player");
         if (amount == 0) {
             gameLogService.append(gameData, GameLog.text(playerName + " pays no energy for "

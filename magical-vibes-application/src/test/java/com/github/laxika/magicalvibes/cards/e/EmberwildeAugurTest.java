@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmberwildeAugur.class, GarrukWildspeaker.class, GrizzlyBears.class})
+@CardUsed({EmberwildeAugur.class, GarrukWildspeaker.class, FurnaceWhelp.class})
 class EmberwildeAugurTest extends BaseCardTest {
 
     @Test
@@ -27,6 +27,21 @@ class EmberwildeAugurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(augur);
+        harness.assertInGraveyard(player1, "Emberwilde Augur");
+    }
+
+    @Test
+    @DisplayName("Can target its controller as the player to damage")
+    void canTargetItsController() {
+        Permanent augur = addCreatureReady(player1, new EmberwildeAugur());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(augur);
         harness.assertInGraveyard(player1, "Emberwilde Augur");
     }
@@ -60,10 +75,24 @@ class EmberwildeAugurTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        Permanent augur = addCreatureReady(player1, new EmberwildeAugur());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(augur);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addCreatureReady(player1, new EmberwildeAugur());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FurnaceWhelp());
 
         advanceToUpkeep(player1);
 

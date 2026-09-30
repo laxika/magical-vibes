@@ -51,7 +51,7 @@ class SwordOfHoursTest extends BaseCardTest {
 
     @Test
     void rollGreaterThanDamageDoublesCounters() {
-        Permanent creature = prepareCombat(3);
+        Permanent creature = prepareCombat(5);
 
         resolveCombat();
         harness.passBothPriorities();
@@ -62,6 +62,7 @@ class SwordOfHoursTest extends BaseCardTest {
     @Test
     void naturalTwelveDoublesCountersEvenWhenNotGreaterThanDamage() {
         Permanent creature = prepareCombat(12);
+        creature.setPowerModifier(8);
 
         resolveCombat();
         harness.passBothPriorities();
@@ -71,7 +72,7 @@ class SwordOfHoursTest extends BaseCardTest {
 
     @Test
     void rollEqualToDamageDoesNotDoubleCounters() {
-        Permanent creature = prepareCombat(2);
+        Permanent creature = prepareCombat(4);
 
         resolveCombat();
         harness.passBothPriorities();

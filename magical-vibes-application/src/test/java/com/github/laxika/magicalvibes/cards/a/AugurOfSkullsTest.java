@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AugurOfSkulls.class, GrizzlyBears.class})
+@CardUsed(AugurOfSkulls.class)
 class AugurOfSkullsTest extends BaseCardTest {
 
     @Test
@@ -32,11 +31,30 @@ class AugurOfSkullsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The regeneration shield prevents lethal damage from destroying Augur of Skulls")
+    void regenerationShieldPreventsLethalDamage() {
+        Permanent augur = harness.addToBattlefieldAndReturn(player1, new AugurOfSkulls());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        augur.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(augur);
+        assertThat(augur.getRegenerationShield()).isZero();
+        assertThat(augur.getMarkedDamage()).isZero();
+        assertThat(augur.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The sacrifice ability makes the target player discard two cards")
     void sacrificeAbilityDiscardsTwoCards() {
         harness.addToBattlefield(player1, new AugurOfSkulls());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        beginUpkeep();
+        harness.setHand(player2, List.of(new AugurOfSkulls(), new AugurOfSkulls(), new AugurOfSkulls()));
+        advanceToUpkeep(player1);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -52,6 +70,25 @@ class AugurOfSkullsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice ability can target its controller")
+    void sacrificeAbilityCanTargetItsController() {
+        harness.addToBattlefield(player1, new AugurOfSkulls());
+        harness.setHand(player1, List.of(new AugurOfSkulls(), new AugurOfSkulls(), new AugurOfSkulls()));
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertNotOnBattlefield(player1, "Augur of Skulls");
+    }
+
+    @Test
     @DisplayName("The sacrifice ability can only be activated during its controller's upkeep")
     void sacrificeAbilityOnlyWorksDuringUpkeep() {
         harness.addToBattlefield(player1, new AugurOfSkulls());
@@ -64,9 +101,26 @@ class AugurOfSkullsTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
-    private void beginUpkeep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("The sacrifice ability cannot be activated during an opponent's upkeep")
+    void sacrificeAbilityCannotBeActivatedDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new AugurOfSkulls());
+        advanceToUpkeep(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
     }
+
+    @Test
+    @DisplayName("The sacrifice ability only accepts a player target")
+    void sacrificeAbilityRejectsPermanentTarget() {
+        Permanent augur = harness.addToBattlefieldAndReturn(player1, new AugurOfSkulls());
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, augur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("player");
+    }
+
 }

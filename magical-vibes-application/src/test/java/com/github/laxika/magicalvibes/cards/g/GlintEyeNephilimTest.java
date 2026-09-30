@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GlintEyeNephilim.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed(GlintEyeNephilim.class)
 class GlintEyeNephilimTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage draws that many cards")
     void combatDamageDrawsEqualToDamageDealt() {
-        Card firstDraw = new Forest();
-        Card secondDraw = new Island();
+        Card firstDraw = new GlintEyeNephilim();
+        Card secondDraw = new GlintEyeNephilim();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
         addReadyNephilim();
@@ -37,17 +35,34 @@ class GlintEyeNephilimTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage draws the boosted damage amount")
+    void combatDamageDrawsBoostedDamageAmount() {
+        Permanent nephilim = addReadyNephilim();
+        Card discarded = new GlintEyeNephilim();
+        activatePump(discarded);
+
+        Card firstDraw = new GlintEyeNephilim();
+        Card secondDraw = new GlintEyeNephilim();
+        Card thirdDraw = new GlintEyeNephilim();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+
+        assertThat(gqs.getEffectivePower(gd, nephilim)).isEqualTo(3);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Discarding a card gives Glint-Eye Nephilim +1/+1 until end of turn")
     void discardAbilityBoostsUntilEndOfTurn() {
         Permanent nephilim = addReadyNephilim();
-        Card discarded = new GrizzlyBears();
-        harness.setHand(player1, List.of(discarded));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
-        harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
+        Card discarded = new GlintEyeNephilim();
+        activatePump(discarded);
 
         assertThat(gqs.getEffectivePower(gd, nephilim)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, nephilim)).isEqualTo(3);
@@ -63,5 +78,16 @@ class GlintEyeNephilimTest extends BaseCardTest {
 
     private Permanent addReadyNephilim() {
         return addCreatureReady(player1, new GlintEyeNephilim());
+    }
+
+    private void activatePump(Card discarded) {
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
     }
 }

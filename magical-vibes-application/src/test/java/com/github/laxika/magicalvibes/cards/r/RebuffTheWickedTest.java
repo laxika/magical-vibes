@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BloodKnight;
+import com.github.laxika.magicalvibes.cards.d.Damnation;
+import com.github.laxika.magicalvibes.cards.p.Pongify;
+import com.github.laxika.magicalvibes.cards.s.Saltblast;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,41 +15,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RebuffTheWicked.class, GiantGrowth.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
+@CardUsed({RebuffTheWicked.class, BloodKnight.class, Damnation.class, Pongify.class, Saltblast.class,
+        UrborgTombOfYawgmoth.class})
 class RebuffTheWickedTest extends BaseCardTest {
 
     @Test
     @DisplayName("Counters a spell that targets a permanent you control")
     void countersSpellTargetingYourPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        var targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        var targetId = harness.addToBattlefieldAndReturn(player2, new BloodKnight()).getId();
 
-        Shock shock = new Shock();
-        harness.setHand(player1, List.of(shock));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Pongify pongify = new Pongify();
+        harness.setHand(player1, List.of(pongify));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.setHand(player2, List.of(new RebuffTheWicked()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, targetId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
+        harness.castInstant(player2, 0, pongify.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Shock");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pongify");
+        harness.assertOnBattlefield(player2, "Blood Knight");
         harness.assertInGraveyard(player2, "Rebuff the Wicked");
     }
 
     @Test
     @DisplayName("Cannot target a spell that targets an opponent's permanent")
     void cannotTargetSpellTargetingOpponentsPermanent() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        var targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        var targetId = harness.addToBattlefieldAndReturn(player1, new BloodKnight()).getId();
 
-        GiantGrowth growth = new GiantGrowth();
-        harness.setHand(player1, List.of(growth));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        Pongify pongify = new Pongify();
+        harness.setHand(player1, List.of(pongify));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.setHand(player2, List.of(new RebuffTheWicked()));
         harness.addMana(player2, ManaColor.WHITE, 1);
@@ -56,24 +56,48 @@ class RebuffTheWickedTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, growth.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, pongify.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Cannot target a spell that does not target a permanent")
     void cannotTargetNonTargetingSpell() {
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        Damnation damnation = new Damnation();
+        harness.setHand(player1, List.of(damnation));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.setHand(player2, List.of(new RebuffTheWicked()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castSorcery(player1, 0);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, elves.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, damnation.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a spell that targets a noncreature permanent you control")
+    void countersSpellTargetingNoncreaturePermanentYouControl() {
+        var targetId = harness.addToBattlefieldAndReturn(player2, new UrborgTombOfYawgmoth()).getId();
+
+        Saltblast saltblast = new Saltblast();
+        harness.setHand(player1, List.of(saltblast));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.setHand(player2, List.of(new RebuffTheWicked()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, targetId);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, saltblast.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Saltblast");
+        harness.assertOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
+        harness.assertInGraveyard(player2, "Rebuff the Wicked");
     }
 }

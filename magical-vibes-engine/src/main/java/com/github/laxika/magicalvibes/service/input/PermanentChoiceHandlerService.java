@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
@@ -15,9 +17,11 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimer
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
@@ -38,7 +42,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffec
 import com.github.laxika.magicalvibes.service.effect.normalfx.TemptTheRingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCardFromGraveyardToHandEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TemptTheRingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import java.util.Set;
@@ -108,6 +111,12 @@ public class PermanentChoiceHandlerService {
     private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
     private final TargetOpponentChoosesPlayerForRestrictionEffectHandler
             targetOpponentChoosesPlayerForRestrictionEffectHandler;
+    private final CelestialJudgmentEffectHandler celestialJudgmentEffectHandler;
+    private final AttachCurseToOpponentAndDrawEffectHandler attachCurseToOpponentAndDrawEffectHandler;
+    private final ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler
+            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler;
+    private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
+            benthicAnomalyEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -132,7 +141,12 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
+        if (context instanceof PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice) {
+            celestialJudgmentEffectHandler.completeChoice(gameData, permanentId, celestialJudgmentChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
             libraryChoiceHandlerService.completeLibraryNinjutsuChoice(gameData, player, permanentId, libraryNinjutsu);
         } else if (context instanceof PermanentChoiceContext.GutmornDiscardedCardPlayerChoice gutmornChoice) {
             gutmornEffectHandler.completeChoice(gameData, permanentId, gutmornChoice);
@@ -154,6 +168,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachSacrificedEquipmentToTarget(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachControlledEquipmentToTargetCreature attachEquip) {
             battlefieldHandler.handleAttachControlledEquipmentToTargetCreature(gameData, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.ChooseDwarfAndAttachAnyNumberOfControlledEquipment chooseDwarf) {
+            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler.completeChoice(
+                    gameData, playerId, permanentId, chooseDwarf);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
@@ -169,6 +186,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
+        } else if (context instanceof PermanentChoiceContext.LyndeCurseChoice lyndeCurseChoice) {
+            attachCurseToOpponentAndDrawEffectHandler.completeCurseChoice(
+                    gameData, permanentId, lyndeCurseChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.InventoryManagementAttachment attachmentChoice) {
             inventoryManagementEffectHandler.completeCreatureChoice(gameData, permanentId, attachmentChoice);
         } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
@@ -257,6 +280,11 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCaughtInAParallelUniverseCreatureChoice(gameData, permanentId, parallelChoice);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureToExileWithSource(gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy benthicChoice) {
+            battlefieldHandler.handleEachOpponentChoosesCreatureForTokenCopy(gameData, permanentId, benthicChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseBenthicAnomalyCopy benthicCopyChoice) {
+            benthicAnomalyEffectHandler.completeCopyChoice(gameData, permanentId, benthicCopyChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentDrawAndUntap chooseOpponent) {
@@ -364,6 +392,10 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
             gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.LyndeOpponentChoice lyndeOpponentChoice) {
+            attachCurseToOpponentAndDrawEffectHandler.completeOpponentChoice(
+                    gameData, permanentId, lyndeOpponentChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
             battlefieldHandler.handleChoosePlayerThenReturnCreatureToHand(gameData, permanentId, choosePlayer);
         } else if (context instanceof PermanentChoiceContext.ZndrsplatsJudgmentCreatureChoice judgmentChoice) {
@@ -421,6 +453,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
             triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice copyChoice) {
+            triggerHandler.handleCopySpellForAnotherOpponentPermanent(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.DemonstrateOpponentChoice demonstrate) {
             triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {

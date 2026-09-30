@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MassacreWurm.class, GrizzlyBears.class, MassOfGhouls.class, Shock.class})
 class MassacreWurmTest extends BaseCardTest {
 
     // ===== ETB: opponents' creatures get -2/-2 =====
@@ -20,7 +22,7 @@ class MassacreWurmTest extends BaseCardTest {
     @Test
     @DisplayName("ETB gives -2/-2 to opponent's creatures")
     void etbDebuffsOpponentCreatures() {
-        // Opponent has a 5/5 creature that should survive the -2/-2
+        // Opponent has a 5/3 creature that should survive the -2/-2
         harness.addToBattlefield(player2, new MassOfGhouls()); // 5/3
 
         harness.setHand(player1, List.of(new MassacreWurm()));
@@ -31,10 +33,7 @@ class MassacreWurmTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         // Mass of Ghouls should be 3/1 (5-2 / 3-2)
-        var opponent2Battlefield = gd.playerBattlefields.get(player2.getId());
-        var ghouls = opponent2Battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Mass of Ghouls"))
-                .findFirst().orElseThrow();
+        var ghouls = findPermanent(player2, "Mass of Ghouls");
         assertThat(ghouls.getPowerModifier()).isEqualTo(-2);
         assertThat(ghouls.getToughnessModifier()).isEqualTo(-2);
     }
@@ -52,10 +51,7 @@ class MassacreWurmTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         // Grizzly Bears should still be unmodified
-        var player1Battlefield = gd.playerBattlefields.get(player1.getId());
-        var bears = player1Battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        var bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
     }

@@ -388,6 +388,8 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
     void doesNotCastPacifismWhenTargetingTaxMakesUnaffordable() {
         HardAiDecisionEngine ai = createHardAi(player1);
         giveAiPriority(player1);
+        // Exercise the affordability gate without simulating unrelated future turns.
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         givePlayerPlains(player1, 2); // Only 2 mana A?€�t Pacifism costs {1}{W} but Kopala adds {2}
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());

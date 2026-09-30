@@ -59,10 +59,27 @@ class FrozenAetherTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        gs.playCard(gd, player2, 0, 0, null, null);
+        harness.playLand(player2, 0);
 
         Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's enchantments enter untapped")
+    void opponentsEnchantmentsEnterUntapped() {
+        harness.addToBattlefield(player1, new FrozenAether());
+        harness.setHand(player2, List.of(new FrozenAether()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castEnchantment(player2, 0);
+        harness.passBothPriorities();
+
+        Permanent enchantment = findPermanent(player2, "Frozen Aether");
+        assertThat(enchantment.isTapped()).isFalse();
     }
 
     @Test
@@ -71,7 +88,7 @@ class FrozenAetherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FrozenAether());
         harness.setHand(player1, List.of(new Forest()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isFalse();

@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "18")
 @CardRegistration(set = "2XM", collectorNumber = "77")
 @CardRegistration(set = "40K", collectorNumber = "194")
+@CardRegistration(set = "C19", collectorNumber = "105")
 public class BeaconOfUnrest extends Card {
 
     public BeaconOfUnrest() {

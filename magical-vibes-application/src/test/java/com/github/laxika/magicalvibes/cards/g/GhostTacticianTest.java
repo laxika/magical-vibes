@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,16 +14,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhostTactician.class, GrizzlyBears.class})
+@CardUsed({GhostTactician.class, SerraSphinx.class})
 class GhostTacticianTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card boosts all creatures you control")
     void boostsOwnCreatures() {
         Permanent tactician = addCreatureReady(player1, new GhostTactician());
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent ownSphinx = addCreatureReady(player1, new SerraSphinx());
+        Permanent opponentSphinx = addCreatureReady(player2, new SerraSphinx());
+        harness.setHand(player1, List.of(new SerraSphinx()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,9 +31,12 @@ class GhostTacticianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tactician.getPowerModifier()).isEqualTo(1);
-        assertThat(ownBears.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentBears.getPowerModifier()).isZero();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(tactician.getToughnessModifier()).isZero();
+        assertThat(tactician.isTapped()).isTrue();
+        assertThat(ownSphinx.getPowerModifier()).isEqualTo(1);
+        assertThat(ownSphinx.getToughnessModifier()).isZero();
+        assertThat(opponentSphinx.getPowerModifier()).isZero();
+        harness.assertInGraveyard(player1, "Serra Sphinx");
     }
 
     @Test
@@ -52,7 +55,7 @@ class GhostTacticianTest extends BaseCardTest {
     @DisplayName("The boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
         Permanent tactician = addCreatureReady(player1, new GhostTactician());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SerraSphinx()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,5 +68,21 @@ class GhostTacticianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tactician.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature entering after resolution is not boosted")
+    void creaturesEnteringAfterResolutionAreNotBoosted() {
+        addCreatureReady(player1, new GhostTactician());
+        harness.setHand(player1, List.of(new SerraSphinx()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent lateCreature = addCreatureReady(player1, new SerraSphinx());
+
+        assertThat(lateCreature.getPowerModifier()).isZero();
     }
 }

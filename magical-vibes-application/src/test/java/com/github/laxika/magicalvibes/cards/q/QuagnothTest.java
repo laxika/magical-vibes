@@ -1,56 +1,50 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.d.Distress;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Sift;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AugurOfSkulls;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Quagnoth.class, Distress.class, Sift.class, GrizzlyBears.class})
+@CardUsed({Quagnoth.class, AugurOfSkulls.class})
 class QuagnothTest extends BaseCardTest {
 
     @Test
     void returnsToHandWhenDiscardedByOpponent() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Quagnoth())));
-        harness.setHand(player1, List.of(new Distress()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addToBattlefield(player1, new AugurOfSkulls());
+        harness.setHand(player2, List.of(new Quagnoth(), new AugurOfSkulls()));
+        advanceToUpkeep(player1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
 
-        harness.assertInGraveyard(player2, "Quagnoth");
         harness.passBothPriorities();
 
+        harness.assertInHand(player2, "Quagnoth");
         harness.assertNotInGraveyard(player2, "Quagnoth");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Quagnoth");
     }
 
     @Test
     void doesNotTriggerWhenControllerDiscardsIt() {
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        harness.setHand(player1, List.of(new Sift(), new Quagnoth()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addToBattlefield(player1, new AugurOfSkulls());
+        harness.setHand(player1, List.of(new Quagnoth(), new AugurOfSkulls()));
+        advanceToUpkeep(player1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
 
+        harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Quagnoth");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .doesNotContain("Quagnoth");
+        harness.assertNotInHand(player1, "Quagnoth");
     }
 }

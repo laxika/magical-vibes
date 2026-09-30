@@ -535,6 +535,13 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteManaValueAtLeastFiveOrXOnlyMana();
         }
+        if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                && pool.getXSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteXSpellOnlyMana();
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && ctx.stackEmpty()
@@ -990,13 +997,31 @@ public class GameActionAvailabilityService {
             }
             paymentPool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES);
         }
+        if (!gameData.startingDeckCardIds.getOrDefault(playerId, Set.of()).contains(card.getId())
+                && paymentPool.getOutsideStartingDeckSpellOnlyManaTotal() > 0) {
+            if (paymentPool == pool) {
+                paymentPool = pool instanceof VirtualManaPool virtual
+                        ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            }
+            paymentPool.promoteOutsideStartingDeckSpellOnlyMana();
+        }
         ManaPool initialPaymentPool = paymentPool;
+        List<UUID> coloredReductionTargets = List.of();
+        if (ctx.costSnapshot().containsEffect(
+                ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect.class)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            if (validTargets != null) {
+                coloredReductionTargets = validTargets.validPermanentIds();
+            }
+        }
+        final List<UUID> possibleColoredReductionTargets = coloredReductionTargets;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (!card.isRequiresNoMana()
                 && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
                 && candidateCosts.stream()
                 .map(c -> castingCostService.applyColoredManaCostReductions(
-                        gameData, playerId, card, c, ctx.costSnapshot(), false))
+                        gameData, playerId, card, c, ctx.costSnapshot(), false, possibleColoredReductionTargets))
                 .anyMatch(c -> c.canPayAsGeneric(initialPaymentPool, 0, effectiveAdditionalCost)
                         && canPayWaterbendCost(gameData, playerId, card, initialPaymentPool, c, effectiveAdditionalCost))) {
             return true;
@@ -1085,7 +1110,7 @@ public class GameActionAvailabilityService {
                 || colorlessSpellOrPermanentAbilityContext;
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, cost, ctx.costSnapshot(), false);
+                    gameData, playerId, card, cost, ctx.costSnapshot(), false, possibleColoredReductionTargets);
             if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
                 cost = cost.withBlackManaAsPhyrexian();
             }
@@ -1474,9 +1499,7 @@ public class GameActionAvailabilityService {
                 || castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
             return false;
         }
-        boolean hasPermission = playerId.equals(graveyardOwnerId)
-                ? castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
-                : false;
+        boolean hasPermission = castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card);
         return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
     }
 
@@ -1625,7 +1648,8 @@ public class GameActionAvailabilityService {
 
             boolean isJumpStart = !graveyardAbilitiesSuppressed
                     && (card.getCastingOption(JumpStartCast.class).isPresent()
-                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
+                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD)
+                    || gameData.cardsGrantedJumpStartUntilEndOfTurn.contains(card.getId()))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

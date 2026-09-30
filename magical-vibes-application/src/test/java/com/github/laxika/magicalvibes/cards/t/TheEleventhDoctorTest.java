@@ -28,12 +28,12 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class);
+                .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(land.getId(), 0);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(creature.getId(), 2);
     }
 
     @Test

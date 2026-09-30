@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhostWarden;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,25 +11,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HissingMiasma.class, GrizzlyBears.class})
+@CardUsed({HissingMiasma.class, GhostWarden.class, JaceBeleren.class})
 class HissingMiasmaTest extends BaseCardTest {
 
     private void setUpAttack(int count) {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new HissingMiasma()));
+        harness.addToBattlefield(player1, new HissingMiasma());
 
         for (int i = 0; i < count; i++) {
-            Permanent attacker = new Permanent(new GrizzlyBears());
-            attacker.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(attacker);
+            addCreatureReady(player2, new GhostWarden());
         }
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
     }
 
     @Test
@@ -36,7 +32,7 @@ class HissingMiasmaTest extends BaseCardTest {
         setUpAttack(2);
         int startingLife = gd.getLife(player2.getId());
 
-        gs.declareAttackers(gd, player2, List.of(0, 1));
+        declareAttackers(player2, List.of(0, 1));
 
         assertThat(gd.stack).hasSize(2);
         harness.inMutationScope(() -> {
@@ -53,7 +49,24 @@ class HissingMiasmaTest extends BaseCardTest {
     void noAttackersNoTrigger() {
         setUpAttack(1);
 
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Attacking a planeswalker you control does not trigger Hissing Miasma")
+    void attackingPlaneswalkerDoesNotTrigger() {
+        setUpAttack(1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(0), Map.of(0, planeswalker.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);

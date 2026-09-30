@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.CloudkinSeer;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.r.RedElementalBlast;
+import com.github.laxika.magicalvibes.cards.c.Cytoshape;
 import com.github.laxika.magicalvibes.cards.s.SimicSkySwallower;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
+import com.github.laxika.magicalvibes.cards.v.Voidslime;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,17 +17,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoundDetermined.class, SimicSkySwallower.class, Forest.class, Island.class,
-        GrizzlyBears.class, CloudkinSeer.class, RedElementalBlast.class})
+@CardUsed({BoundDetermined.class, Cytoshape.class, SimicSkySwallower.class, SimicInitiate.class,
+        Voidslime.class, WreckingBall.class})
 class BoundDeterminedTest extends BaseCardTest {
 
     @Test
     void boundReturnsUpToTheSacrificedCreaturesColorCountAndExilesItself() {
         Permanent swallower = harness.addToBattlefieldAndReturn(player1, new SimicSkySwallower());
-        Card forest = new Forest();
-        Card island = new Island();
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(forest, island, bears));
+        Card cytoshape = new Cytoshape();
+        Card wreckingBall = new WreckingBall();
+        Card voidslime = new Voidslime();
+        harness.setGraveyard(player1, List.of(cytoshape, wreckingBall, voidslime));
 
         BoundDetermined bound = new BoundDetermined();
         harness.setHand(player1, List.of(bound));
@@ -46,13 +45,59 @@ class BoundDeterminedTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(bound.getId()));
-        assertThat(gd.playerHands.get(player1.getId())).contains(forest, island).doesNotContain(bears);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(cytoshape, wreckingBall)
+                .doesNotContain(voidslime);
         harness.assertInGraveyard(player1, "Simic Sky Swallower");
     }
 
     @Test
+    void boundCanReturnFewerCardsThanTheSacrificedCreaturesColorCount() {
+        Permanent swallower = harness.addToBattlefieldAndReturn(player1, new SimicSkySwallower());
+        Card cytoshape = new Cytoshape();
+        Card wreckingBall = new WreckingBall();
+        harness.setGraveyard(player1, List.of(cytoshape, wreckingBall));
+
+        BoundDetermined bound = new BoundDetermined();
+        harness.setHand(player1, List.of(bound));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, swallower.getId());
+
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(cytoshape)
+                .doesNotContain(wreckingBall);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(wreckingBall);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(bound.getId()));
+    }
+
+    @Test
+    void boundExilesItselfWhenThereIsNoCreatureToSacrifice() {
+        BoundDetermined bound = new BoundDetermined();
+        harness.setHand(player1, List.of(bound));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(bound.getId()));
+        harness.assertNotInGraveyard(player1, "Bound // Determined");
+    }
+
+    @Test
     void determinedDrawsAndMakesLaterSpellsUncounterable() {
-        Forest drawn = new Forest();
+        Cytoshape drawn = new Cytoshape();
         harness.setLibrary(player1, List.of(drawn));
         harness.setHand(player1, List.of(new BoundDetermined()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -63,21 +108,22 @@ class BoundDeterminedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
 
-        CloudkinSeer seer = new CloudkinSeer();
-        harness.setHand(player1, List.of(seer));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.setHand(player2, List.of(new RedElementalBlast()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        SimicInitiate initiate = new SimicInitiate();
+        harness.setHand(player1, List.of(initiate));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Voidslime()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, seer.getId());
+        harness.castInstant(player2, 0, initiate.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Cloudkin Seer");
+        harness.assertOnBattlefield(player1, "Simic Initiate");
     }
 }

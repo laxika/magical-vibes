@@ -74,7 +74,7 @@ class FinalActTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters).containsEntry(player1.getId(), 2)
                 .doesNotContainKey(player2.getId());
         assertThat(gd.playerEnergyCounters).containsEntry(player1.getId(), 3)
-                .doesNotContainKey(player2.getId());
+                .containsEntry(player2.getId(), 0);
         assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 4)
                 .doesNotContainKey(player2.getId());
     }

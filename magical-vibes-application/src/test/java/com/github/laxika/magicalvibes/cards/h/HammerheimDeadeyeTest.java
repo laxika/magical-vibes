@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BloodKnight;
+import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,26 +15,26 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HammerheimDeadeye.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({HammerheimDeadeye.class, GiantDustwasp.class, BloodKnight.class})
 class HammerheimDeadeyeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield destroys a target creature with flying")
     void etbDestroysTargetCreatureWithFlying() {
-        harness.addToBattlefield(player2, new AirElemental());
-        castAndResolveDeadeye(harness.getPermanentId(player2, "Air Elemental"));
+        harness.addToBattlefield(player2, new GiantDustwasp());
+        castAndResolveDeadeye(harness.getPermanentId(player2, "Giant Dustwasp"));
 
-        harness.assertNotOnBattlefield(player2, "Air Elemental");
-        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertNotOnBattlefield(player2, "Giant Dustwasp");
+        harness.assertInGraveyard(player2, "Giant Dustwasp");
         harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
     }
 
     @Test
     @DisplayName("ETB cannot target a creature without flying")
     void etbCannotTargetCreatureWithoutFlying() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BloodKnight());
         prepareDeadeye();
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Blood Knight");
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -44,8 +44,8 @@ class HammerheimDeadeyeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining echo sacrifices Hammerheim Deadeye at its next upkeep")
     void decliningEchoSacrificesDeadeye() {
-        harness.addToBattlefield(player2, new AirElemental());
-        castAndResolveDeadeye(harness.getPermanentId(player2, "Air Elemental"));
+        harness.addToBattlefield(player2, new GiantDustwasp());
+        castAndResolveDeadeye(harness.getPermanentId(player2, "Giant Dustwasp"));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -60,8 +60,8 @@ class HammerheimDeadeyeTest extends BaseCardTest {
     @Test
     @DisplayName("Paying echo keeps Hammerheim Deadeye and echo does not trigger again")
     void payingEchoKeepsDeadeyeAndIsOneShot() {
-        harness.addToBattlefield(player2, new AirElemental());
-        castAndResolveDeadeye(harness.getPermanentId(player2, "Air Elemental"));
+        harness.addToBattlefield(player2, new GiantDustwasp());
+        castAndResolveDeadeye(harness.getPermanentId(player2, "Giant Dustwasp"));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -72,6 +72,29 @@ class HammerheimDeadeyeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
 
         advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
+    }
+
+    @Test
+    @DisplayName("ETB can target a flying creature its controller owns")
+    void etbCanTargetOwnFlyingCreature() {
+        harness.addToBattlefield(player1, new GiantDustwasp());
+        castAndResolveDeadeye(harness.getPermanentId(player1, "Giant Dustwasp"));
+
+        harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
+        harness.assertInGraveyard(player1, "Giant Dustwasp");
+        harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player2, new GiantDustwasp());
+        castAndResolveDeadeye(harness.getPermanentId(player2, "Giant Dustwasp"));
+
+        advanceToUpkeep(player2);
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
     }

@@ -192,6 +192,7 @@ class CastingPermissionServiceTest {
         Card island = new Card();
         island.setType(CardType.LAND);
         island.setSubtypes(List.of(CardSubtype.ISLAND));
+        when(gameQueryService.findGraveyardOwnerById(gd, forest.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesCardPredicate(
                 eq(island), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(false);
 
@@ -211,7 +212,8 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(false);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
@@ -247,6 +249,7 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.CREATURE);
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesCardPredicate(spell, filter, null, gd, player1Id))
                 .thenReturn(true);
 
@@ -254,6 +257,9 @@ class CastingPermissionServiceTest {
 
         assertThat(permission.sourcePermanentId()).isEqualTo(planar.getId());
         assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(3);
+
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player2Id);
+        assertThat(svc.findFilteredGraveyardPermission(gd, player1Id, spell)).isEmpty();
     }
 
     @Test
@@ -266,7 +272,8 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
 
         gd.activePlayerId = player2Id;
