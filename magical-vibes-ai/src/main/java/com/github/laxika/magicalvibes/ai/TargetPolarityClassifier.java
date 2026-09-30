@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -188,6 +189,9 @@ public class TargetPolarityClassifier {
             return best;
         }
         if (effect instanceof GrantStaticEffectToTargetEffect grant) {
+            return classify(gameData, grant.staticEffect(), aiPlayerId);
+        }
+        if (effect instanceof GrantStaticEffectToTargetUntilEndOfTurnEffect grant) {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
         }
         if (effect instanceof PerpetuallyGrantStaticEffectToTargetCreatureEffect grant) {
@@ -589,6 +593,8 @@ public class TargetPolarityClassifier {
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("ProtectionFromColorsEffect", TargetPolarity.BENEFICIAL),
+            entry("PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GuardianAngelPermissionEffect", TargetPolarity.BENEFICIAL),
@@ -653,6 +659,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeTargetCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
