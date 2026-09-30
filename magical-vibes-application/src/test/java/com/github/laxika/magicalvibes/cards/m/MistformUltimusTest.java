@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.e.ElvishChampion;
+import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,18 +12,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MistformUltimus.class, ElvishChampion.class})
+@CardUsed({MistformUltimus.class, LordOfAtlantis.class})
 class MistformUltimusTest extends BaseCardTest {
 
     @Test
     @DisplayName("Mistform Ultimus is every creature type on the battlefield")
     void isEveryCreatureTypeOnBattlefield() {
-        harness.addToBattlefield(player1, new ElvishChampion());
-        harness.addToBattlefield(player1, new MistformUltimus());
+        harness.addToBattlefield(player1, new LordOfAtlantis());
+        Permanent mistform = harness.addToBattlefieldAndReturn(player1, new MistformUltimus());
 
-        Permanent mistform = findPermanent(player1, "Mistform Ultimus");
-
-        assertThat(gqs.hasKeyword(gd, mistform, Keyword.CHANGELING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.MERFOLK)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mistform)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, mistform)).isEqualTo(4);
     }
@@ -55,5 +52,15 @@ class MistformUltimusTest extends BaseCardTest {
         assertThat(gqs.cardHasSubtype(graveyardMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
         assertThat(gqs.cardHasSubtype(libraryMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
         assertThat(gqs.cardHasSubtype(exileMistform, CardSubtype.WALL, gd, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mistform Ultimus is every creature type while it is a creature spell on the stack")
+    void isEveryCreatureTypeOnStack() {
+        harness.castFromHand(player1, new MistformUltimus(), "{3}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.cardHasSubtype(gd.stack.getFirst().getCard(), CardSubtype.MERFOLK, gd, player1.getId()))
+                .isTrue();
     }
 }

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "147")
+@CardRegistration(set = "NEC", collectorNumber = "108")
 public class OxOfAgonas extends Card {
 
     public OxOfAgonas() {

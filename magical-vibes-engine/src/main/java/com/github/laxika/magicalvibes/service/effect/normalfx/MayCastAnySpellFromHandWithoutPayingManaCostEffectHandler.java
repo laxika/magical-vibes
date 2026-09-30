@@ -57,7 +57,8 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
         List<Card> eligible = hand.stream()
                 .filter(c -> !c.hasType(CardType.LAND))
                 .filter(c -> c.getManaValue() <= maxManaValue)
-                .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.spellFilter(), null))
+                .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                        c, e.spellFilter(), null, gameData, controllerId))
                 .toList();
 
         for (int i = eligible.size() - 1; i >= 0; i--) {

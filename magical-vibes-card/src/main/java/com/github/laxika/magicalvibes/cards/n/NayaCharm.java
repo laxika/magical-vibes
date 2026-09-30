@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "DDH", collectorNumber = "29")
 @CardRegistration(set = "C13", collectorNumber = "200")
 @CardRegistration(set = "DMC", collectorNumber = "162")
+@CardRegistration(set = "C19", collectorNumber = "195")
 public class NayaCharm extends Card {
 
     public NayaCharm() {

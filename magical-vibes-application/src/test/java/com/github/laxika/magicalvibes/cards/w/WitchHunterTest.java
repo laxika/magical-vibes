@@ -73,6 +73,24 @@ class WitchHunterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns an opponent-controlled creature to its owner's hand")
+    void returnsTargetToItsOwnersHand() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        Squire targetCard = new Squire();
+        targetCard.setOwnerId(player1.getId());
+        Permanent target = addCreatureReady(player2, targetCard);
+        addBounceMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInHand(player1, "Squire");
+        harness.assertNotInHand(player2, "Squire");
+    }
+
+    @Test
     @DisplayName("Cannot activate the bounce ability without enough mana")
     void cannotActivateBounceAbilityWithoutEnoughMana() {
         addCreatureReady(player1, new WitchHunter());

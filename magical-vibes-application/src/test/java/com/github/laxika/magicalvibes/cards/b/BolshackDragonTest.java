@@ -38,8 +38,9 @@ class BolshackDragonTest extends BaseCardTest {
         gs.declareAttackers(gd, player1,
                 List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dragon)));
 
-        assertThat(dragon.isAttacking()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(8);
+        // Attacker declaration auto-passes through combat, so verify the boosted 8 power
+        // through both double-strike damage steps rather than the cleared attacking flag.
+        harness.assertLife(player2, 4);
         assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(6);
     }
 }

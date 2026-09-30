@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
@@ -32,15 +34,28 @@ public class ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler implements
         if (reduce.kickedOnly() && !context.kicked()) {
             return 0;
         }
+        if (reduce.faceDownOnly() && !context.castFaceDown()) {
+            return 0;
+        }
 
         var sourceCardId = source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId();
+        Card spellCharacteristics = context.spell();
+        if (context.castFaceDown()) {
+            Card faceDown = new Card();
+            faceDown.setName("");
+            faceDown.setType(CardType.CREATURE);
+            faceDown.setPower(2);
+            faceDown.setToughness(2);
+            spellCharacteristics = context.spell().createRuntimeCopyWithFace(faceDown);
+        }
         if (!predicateEvaluationService.matchesCardPredicate(
-                context.spell(), reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId())) {
+                spellCharacteristics, reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId())) {
             return 0;
         }
         var kickedSpellIds = context.gameData().getKickedSpellsCastThisTurn(context.castingPlayerId());
         boolean alreadyCastMatchingSpell = context.gameData().getSpellsCastThisTurn(context.castingPlayerId()).stream()
                 .filter(spell -> !reduce.kickedOnly() || kickedSpellIds.contains(spell.getId()))
+                .filter(spell -> !reduce.faceDownOnly() || isFaceDownSpell(spell))
                 .anyMatch(spell -> predicateEvaluationService.matchesCardPredicate(
                         spell, reduce.predicate(), sourceCardId, context.gameData(), context.castingPlayerId()));
         if (alreadyCastMatchingSpell) {
@@ -50,5 +65,9 @@ public class ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler implements
         var amountContext = new AmountContext(context.castingPlayerId(), source.sourcePermanent(),
                 null, 0, 0);
         return -amountEvaluationService.evaluate(context.gameData(), reduce.amount(), amountContext);
+    }
+
+    private boolean isFaceDownSpell(Card spell) {
+        return spell.getName() != null && spell.getName().isEmpty() && spell.hasType(CardType.CREATURE);
     }
 }

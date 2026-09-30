@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlackCat;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.a.AbyssalNocturnus;
+import com.github.laxika.magicalvibes.cards.m.Mortify;
+import com.github.laxika.magicalvibes.cards.s.SkyriderTrainee;
+import com.github.laxika.magicalvibes.cards.w.WildCantor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeizeTheSoul.class, GrizzlyBears.class, LightningBolt.class, BlackCat.class, WhiteKnight.class})
+@CardUsed({SeizeTheSoul.class, WildCantor.class, Mortify.class, AbyssalNocturnus.class, SkyriderTrainee.class})
 class SeizeTheSoulTest extends BaseCardTest {
 
     @Test
     void destroysTargetCreatesSpiritAndHauntTriggersOnHauntedCreatureDeath() {
-        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
 
         harness.setHand(player1, List.of(new SeizeTheSoul()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -35,7 +34,7 @@ class SeizeTheSoulTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(firstTarget.getId()));
-        assertThat(spiritTokens(player1)).hasSize(1);
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, hauntedCreature.getId());
@@ -43,13 +42,13 @@ class SeizeTheSoulTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Seize the Soul"));
 
-        destroyWithLightningBolt(hauntedCreature);
+        destroyWithMortify(hauntedCreature);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, secondTarget.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(spiritTokens(player1)).hasSize(2);
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(secondTarget.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -58,8 +57,8 @@ class SeizeTheSoulTest extends BaseCardTest {
 
     @Test
     void cannotTargetWhiteOrBlackCreature() {
-        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
-        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new BlackCat());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new SkyriderTrainee());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new AbyssalNocturnus());
         harness.setHand(player1, List.of(new SeizeTheSoul()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -70,20 +69,42 @@ class SeizeTheSoulTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private List<Permanent> spiritTokens(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SPIRIT))
-                .toList();
+    @Test
+    void hauntTriggerCannotTargetWhiteOrBlackCreature() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new SkyriderTrainee());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new AbyssalNocturnus());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+
+        harness.setHand(player1, List.of(new SeizeTheSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, firstTarget.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hauntedCreature.getId());
+        harness.passBothPriorities();
+
+        destroyWithMortify(hauntedCreature);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, whiteCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, blackCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, legalTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
-    private void destroyWithLightningBolt(Permanent target) {
+    private void destroyWithMortify(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Mortify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }

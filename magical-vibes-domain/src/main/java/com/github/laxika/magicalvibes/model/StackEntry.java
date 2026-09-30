@@ -60,6 +60,7 @@ public class StackEntry {
     /** Controller fixed when choosing a group of targets controlled by the same player. */
     @Setter private UUID requiredTargetControllerId;
     private boolean targetIdOverriddenForEffectResolution;
+    private UUID primaryTargetBeforeEffectResolution;
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     /** Controller of the source permanent when an activated ability was put on the stack. */
@@ -858,6 +859,7 @@ public class StackEntry {
         this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
+        this.primaryTargetBeforeEffectResolution = source.primaryTargetBeforeEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
         this.targetGroupSizes = source.targetGroupSizes.isEmpty()
@@ -1379,10 +1381,12 @@ public class StackEntry {
      * group 1.</p>
      */
     public List<UUID> targetsForGroup(int group) {
+        UUID primaryTarget = targetIdOverriddenForEffectResolution
+                ? primaryTargetBeforeEffectResolution : targetId;
         if (targetIdsFromAssignments) {
             // The flat list holds assignment keys, not this group's chosen targets; the card's
             // declared group targets the separately stored primary target.
-            return targetId != null ? List.of(targetId) : List.of();
+            return primaryTarget != null ? List.of(primaryTarget) : List.of();
         }
         Card targeting = getTargetingCard();
         List<SpellTarget> groups = targeting == null ? List.of() : targeting.getSpellTargets();
@@ -1393,7 +1397,7 @@ public class StackEntry {
         int firstFlatGroup = 0;
         if (targeting.isAura() || primaryTargetStoredSeparately) {
             if (group == 0) {
-                return targetId != null ? List.of(targetId) : List.of();
+                return primaryTarget != null ? List.of(primaryTarget) : List.of();
             }
             firstFlatGroup = 1;
         }
@@ -1429,6 +1433,9 @@ public class StackEntry {
     }
 
     public void setTargetIdForEffectResolution(UUID targetId) {
+        if (!this.targetIdOverriddenForEffectResolution) {
+            this.primaryTargetBeforeEffectResolution = this.targetId;
+        }
         this.targetId = targetId;
         this.targetIdOverriddenForEffectResolution = true;
     }
@@ -1436,6 +1443,7 @@ public class StackEntry {
     public void restoreTargetIdAfterEffectResolution(UUID targetId) {
         this.targetId = targetId;
         this.targetIdOverriddenForEffectResolution = false;
+        this.primaryTargetBeforeEffectResolution = null;
     }
 
     public void setResolvingEffectTargetGroup(Integer targetGroup) {

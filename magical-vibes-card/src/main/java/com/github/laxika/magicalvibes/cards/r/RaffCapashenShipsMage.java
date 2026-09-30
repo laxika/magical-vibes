@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "202")
 @CardRegistration(set = "CMM", collectorNumber = "351")
+@CardRegistration(set = "NEC", collectorNumber = "141")
 public class RaffCapashenShipsMage extends Card {
 
     public RaffCapashenShipsMage() {

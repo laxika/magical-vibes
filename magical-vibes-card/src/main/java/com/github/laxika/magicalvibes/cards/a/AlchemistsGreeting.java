@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INR", collectorNumber = "393")
 @CardRegistration(set = "EMN", collectorNumber = "116")
 @CardRegistration(set = "SIR", collectorNumber = "140")
+@CardRegistration(set = "C19", collectorNumber = "133")
 public class AlchemistsGreeting extends Card {
 
     public AlchemistsGreeting() {

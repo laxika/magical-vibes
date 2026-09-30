@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "SOI", collectorNumber = "145")
 @CardRegistration(set = "SIR", collectorNumber = "142")
+@CardRegistration(set = "C19", collectorNumber = "134")
 public class AvacynsJudgment extends Card {
 
     public AvacynsJudgment() {

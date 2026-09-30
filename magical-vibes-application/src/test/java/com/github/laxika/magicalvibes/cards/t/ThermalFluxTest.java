@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,9 +31,7 @@ class ThermalFluxTest extends BaseCardTest {
         castThermalFlux(0, target);
 
         assertThat(gqs.hasEffectiveSupertype(gd, target, CardSupertype.SNOW)).isTrue();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
         assertThat(gqs.hasEffectiveSupertype(gd, target, CardSupertype.SNOW)).isFalse();
     }
 
@@ -43,9 +43,7 @@ class ThermalFluxTest extends BaseCardTest {
         castThermalFlux(1, target);
 
         assertThat(gqs.hasEffectiveSupertype(gd, target, CardSupertype.SNOW)).isFalse();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
         assertThat(gqs.hasEffectiveSupertype(gd, target, CardSupertype.SNOW)).isTrue();
     }
 
@@ -83,7 +81,9 @@ class ThermalFluxTest extends BaseCardTest {
         castThermalFlux(0, target);
 
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
-        advanceToUpkeep(player2);
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.activePlayerId = player2.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

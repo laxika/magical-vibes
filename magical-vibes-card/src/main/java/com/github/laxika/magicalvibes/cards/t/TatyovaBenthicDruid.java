@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "CMM", collectorNumber = "358")
 @CardRegistration(set = "CMM", collectorNumber = "687")
 @CardRegistration(set = "DSC", collectorNumber = "235")
+@CardRegistration(set = "M3C", collectorNumber = "273")
 @CardRegistration(set = "LCC", collectorNumber = "290")
 public class TatyovaBenthicDruid extends Card {
 

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +34,14 @@ class SiegeOfTowersTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
         assertThat(mountain.getCard().hasType(CardType.LAND)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
     }
 
     @Test
@@ -41,11 +51,33 @@ class SiegeOfTowersTest extends BaseCardTest {
         castSiegeOfTowers(mountain, List.of("{1}{R}", "{1}{R}"));
 
         harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Replicate copy may choose a new Mountain target")
+    void replicateCopyMayTargetAnotherMountain() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        castSiegeOfTowers(originalTarget, List.of("{1}{R}"));
+
+        harness.passBothPriorities();
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, originalTarget)).isTrue();
+        assertThat(gqs.isCreature(gd, copyTarget)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, originalTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, originalTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, copyTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copyTarget)).isEqualTo(1);
     }
 
     @Test

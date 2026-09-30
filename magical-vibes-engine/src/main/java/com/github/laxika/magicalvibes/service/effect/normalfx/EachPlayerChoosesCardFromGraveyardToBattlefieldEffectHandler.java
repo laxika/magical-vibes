@@ -29,7 +29,8 @@ public class EachPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
         var chooseEffect = (EachPlayerChoosesCardFromGraveyardToBattlefieldEffect) effect;
         UUID controllerId = entry.getControllerId();
         gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
-                controllerId, java.util.List.of(), java.util.Map.of());
+                controllerId, java.util.List.of(), java.util.Map.of(), false, false, false, null,
+                chooseEffect.grantColor(), chooseEffect.grantSubtype(), chooseEffect.grantKeywords());
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
                     playerId, 1, chooseEffect.filter(), GraveyardChoiceDestination.BATTLEFIELD,

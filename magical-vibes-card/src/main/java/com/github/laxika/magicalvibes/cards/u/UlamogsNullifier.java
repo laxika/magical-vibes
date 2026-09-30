@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "207")
+@CardRegistration(set = "M3C", collectorNumber = "275")
 public class UlamogsNullifier extends Card {
 
     public UlamogsNullifier() {

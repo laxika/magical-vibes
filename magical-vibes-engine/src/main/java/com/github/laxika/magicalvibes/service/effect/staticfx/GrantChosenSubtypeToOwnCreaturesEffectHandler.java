@@ -27,6 +27,7 @@ public class GrantChosenSubtypeToOwnCreaturesEffectHandler implements StaticEffe
         if (chosenSubtype == null) return;
         if (grant.scope() == GrantScope.SELF) return;
         if (support.matchesCreatureScope(context, grant.scope(), grant.filter())) {
+            if (grant.overriding()) accumulator.setSubtypeOverriding(true);
             accumulator.addGrantedSubtype(chosenSubtype);
         }
     }

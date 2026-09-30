@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastP
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "170")
+@CardRegistration(set = "NEC", collectorNumber = "123")
 public class OrdealOfNylea extends Card {
 
     public OrdealOfNylea() {

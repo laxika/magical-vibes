@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.e.EnemyOfTheGuildpact;
+import com.github.laxika.magicalvibes.cards.g.GnatAlleyCreeper;
+import com.github.laxika.magicalvibes.cards.r.RakdosGuildmage;
+import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LyzoldaTheBloodWitch.class, DregscapeZombie.class, GrizzlyBears.class, RagingGoblin.class})
+@CardUsed({LyzoldaTheBloodWitch.class, EnemyOfTheGuildpact.class, GnatAlleyCreeper.class,
+        RakdosGuildmage.class, SimicRagworm.class})
 class LyzoldaTheBloodWitchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 2 damage when the sacrificed creature was red")
     void dealsDamageForRedCreature() {
         addLyzolda();
-        Permanent fodder = addCreatureReady(player1, new RagingGoblin());
+        Permanent fodder = addCreatureReady(player1, new GnatAlleyCreeper());
         harness.setHand(player1, List.of());
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -32,17 +34,37 @@ class LyzoldaTheBloodWitchTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lyzolda, the Blood Witch");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Gnat Alley Creeper");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Deals damage to a creature target when the sacrificed creature was red")
+    void dealsDamageToCreatureForRedCreature() {
+        addLyzolda();
+        Permanent fodder = addCreatureReady(player1, new GnatAlleyCreeper());
+        Permanent target = addCreatureReady(player2, new GnatAlleyCreeper());
+        harness.setHand(player1, List.of());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lyzolda, the Blood Witch");
+        harness.assertInGraveyard(player1, "Gnat Alley Creeper");
+        harness.assertInGraveyard(player2, "Gnat Alley Creeper");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test
     @DisplayName("Draws a card when the sacrificed creature was black")
     void drawsForBlackCreature() {
         addLyzolda();
-        Permanent fodder = addCreatureReady(player1, new DregscapeZombie());
+        Permanent fodder = addCreatureReady(player1, new EnemyOfTheGuildpact());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SimicRagworm()));
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -53,16 +75,36 @@ class LyzoldaTheBloodWitchTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Dregscape Zombie");
+        harness.assertInGraveyard(player1, "Enemy of the Guildpact");
+    }
+
+    @Test
+    @DisplayName("Deals damage and draws when the sacrificed creature was red and black")
+    void dealsDamageAndDrawsForRedAndBlackCreature() {
+        addLyzolda();
+        Permanent fodder = addCreatureReady(player1, new RakdosGuildmage());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SimicRagworm()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Rakdos Guildmage");
     }
 
     @Test
     @DisplayName("Does nothing extra when the sacrificed creature was neither red nor black")
     void doesNothingForGreenCreature() {
         addLyzolda();
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new SimicRagworm());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new RagingGoblin()));
+        harness.setLibrary(player1, List.of(new GnatAlleyCreeper()));
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -73,10 +115,10 @@ class LyzoldaTheBloodWitchTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Simic Ragworm");
     }
 
-    private Permanent addLyzolda() {
-        return addCreatureReady(player1, new LyzoldaTheBloodWitch());
+    private void addLyzolda() {
+        addCreatureReady(player1, new LyzoldaTheBloodWitch());
     }
 }

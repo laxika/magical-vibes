@@ -31,6 +31,7 @@ class RiverSongTest extends BaseCardTest {
         Card top = new GrizzlyBears();
         Card bottom = new GrizzlyBears();
         harness.setLibrary(player1, List.of(top, bottom));
+        gd.playerHands.get(player1.getId()).clear();
         harness.addToBattlefield(player1, new RiverSong());
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
@@ -81,7 +82,7 @@ class RiverSongTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(riverSong.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
     @Test

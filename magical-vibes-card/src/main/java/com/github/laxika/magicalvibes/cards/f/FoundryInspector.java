@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "SLZ", collectorNumber = "225")
 @CardRegistration(set = "SLZ", collectorNumber = "346")
 @CardRegistration(set = "CMM", collectorNumber = "385")
+@CardRegistration(set = "NEC", collectorNumber = "152")
 public class FoundryInspector extends Card {
 
     public FoundryInspector() {

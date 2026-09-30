@@ -133,6 +133,8 @@ combat damage step is processed.
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
+| `ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkEnchantedPlayerLandEntersTriggers` scans player-enchanting Curses attached to the entering land's controller | Non-targeting |
+| `ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES` | `TriggerCollectionService.checkEnchantedPlayerNontokenCreatureDeathTriggers` scans player-enchanting Curses attached to the dying creature's controller | Non-targeting |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ALLY_CREATURES_ATTACK` (targeting variants) | `CombatAttackService.declareAttackers` queues `AttackTriggerTarget`; non-targeting variants keep the direct stack-entry path. The target collector sees the attacking battlefield state, so restrictions such as "target attacking Goblin you control" are enforced | Attack |
 | `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` | `CombatAttackService.declareAttackers` scans face-up cards in the attacking player's command zone and queues `AttackTriggerTarget` with `sourcePermanentId = null`; targeted effects reuse `TriggerTargetCollector.Options.ATTACK` and the card's target filter | Attack |
@@ -158,6 +160,7 @@ combat damage step is processed.
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`; `PlayerAttacksOneOfYourOpponents` additionally queues once per distinct opponent directly attacked and captures that opponent) | Non-targeting (Total War) |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
 | `EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; scans the controller's face-up exile cards and stores the unblocked creature as non-targeting `targetId`, its attack destination as `attackedTargetId`, and any exile source ID as `sourcePermanentId`) | Non-targeting |
+| `EXILE_ON_ALLY_CREATURES_ATTACK` | `CombatAttackService.declareAttackers` (scans the controller's face-up exile cards once after attackers are declared; attacker count is stored as `xValue`) | Non-targeting |
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`) | Non-targeting (Total War) |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`, attack target stored as `attackedTargetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
 | `ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (spell controller's battlefield; targeted creature stored as non-targeting `targetId`, listener as `sourcePermanentId`) | Becomes-target |
@@ -195,6 +198,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_OPPONENT_SCRIES` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_CONTROLLER_SEARCHES_LIBRARY` | `LibrarySearchTriggerHelper` | Controller searches their own library; non-targeting effects enqueue directly |
+| `ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY` | `TriggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers` + `MiscTriggerCollectorService` | Controller's card enters their hand from their library; non-targeting effects enqueue directly |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
@@ -259,6 +263,7 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS` (only the
 non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget` pipeline),
 `ON_ENCHANTED_PLAYER_DRAWS`, `ON_OPPONENT_DISCARDS`,
+`ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_PERMANENT_SACRIFICED` (carries the sacrificing player as a non-targeting player reference), `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
@@ -719,6 +724,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of your upkeep, ..." | `UPKEEP_TRIGGERED` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
 | "At the beginning of enchanted creature's controller's upkeep, ..." | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
 | "At the beginning of enchanted player's upkeep, ..." | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
+| "At the beginning of enchanted player's draw step, ..." | `ENCHANTED_PLAYER_DRAW_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |
 | "Whenever enchanted opponent draws a card, ..." | `ON_ENCHANTED_PLAYER_DRAWS` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |
 | "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
 | "At the beginning of each player's upkeep, if this card is suspended, ..." | `SUSPENDED_EACH_UPKEEP_TRIGGERED` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |

@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "24")
 @CardRegistration(set = "SLD", collectorNumber = "1964")
+@CardRegistration(set = "NEC", collectorNumber = "87")
 public class ParhelionII extends Card {
 
     public ParhelionII() {

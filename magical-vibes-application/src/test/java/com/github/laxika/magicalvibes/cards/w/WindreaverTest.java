@@ -82,6 +82,22 @@ class WindreaverTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Windreaver");
     }
 
+    @Test
+    @DisplayName("Resolving the fourth ability returns a controlled Windreaver to its owner's hand")
+    void returnsToOwnersHandWhenControlledByAnotherPlayer() {
+        Windreaver windreaverCard = new Windreaver();
+        windreaverCard.setOwnerId(player1.getId());
+        addCreatureReady(player2, windreaverCard);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Windreaver");
+        harness.assertNotInHand(player2, "Windreaver");
+        harness.assertNotOnBattlefield(player2, "Windreaver");
+    }
+
     private void addWindreaver() {
         harness.addToBattlefield(player1, new Windreaver());
     }

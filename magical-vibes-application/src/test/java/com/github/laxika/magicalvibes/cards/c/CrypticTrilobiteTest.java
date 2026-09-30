@@ -59,13 +59,13 @@ class CrypticTrilobiteTest extends BaseCardTest {
     @Test
     @DisplayName("Ability-only mana pays for the counter ability")
     void abilityOnlyManaPaysForCounterAbility() {
-        Permanent trilobite = addReadyTrilobite(player1, 1);
+        Permanent trilobite = addReadyTrilobite(player1, 2);
         harness.activateAbility(player1, 0, 0, null, null);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(trilobite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(trilobite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(trilobite.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyManaTotal()).isEqualTo(1);
     }

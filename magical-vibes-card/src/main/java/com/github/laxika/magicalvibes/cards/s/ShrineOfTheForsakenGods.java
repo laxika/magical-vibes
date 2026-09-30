@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKC", collectorNumber = "292")
+@CardRegistration(set = "C19", collectorNumber = "273")
 public class ShrineOfTheForsakenGods extends Card {
 
     public ShrineOfTheForsakenGods() {

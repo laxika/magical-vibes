@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +36,22 @@ class PirateShipTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
 
         harness.passBothPriorities(); // resolve state trigger → sacrificed
+        harness.assertNotOnBattlefield(player1, "Pirate Ship");
+        harness.assertInGraveyard(player1, "Pirate Ship");
+    }
+
+    @Test
+    @DisplayName("Sacrifices when only the opponent controls an Island")
+    void sacrificesWhenOnlyOpponentControlsIsland() {
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new PirateShip()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Pirate Ship");
         harness.assertInGraveyard(player1, "Pirate Ship");
     }
@@ -103,12 +118,7 @@ class PirateShipTest extends BaseCardTest {
 
         addCreatureReady(player1, new PirateShip());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -120,12 +130,7 @@ class PirateShipTest extends BaseCardTest {
 
         addCreatureReady(player1, new PirateShip());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
     @Test
@@ -154,10 +159,9 @@ class PirateShipTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
-    private Permanent addReadyPirateShip(Player player) {
+    private void addReadyPirateShip(Player player) {
         // Pirate Ship added first so it sits at battlefield index 0 for activateAbility.
-        Permanent perm = addCreatureReady(player, new PirateShip());
+        addCreatureReady(player, new PirateShip());
         harness.addToBattlefield(player, new Island()); // keep Pirate Ship from being sacrificed
-        return perm;
     }
 }

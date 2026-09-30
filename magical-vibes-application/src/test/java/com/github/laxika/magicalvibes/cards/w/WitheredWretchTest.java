@@ -69,6 +69,18 @@ class WitheredWretchTest extends BaseCardTest {
     }
 
     @Test
+    void requiresAGraveyardTarget() {
+        Card wizard = new FugitiveWizard();
+        harness.addToBattlefield(player1, new WitheredWretch());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(wizard)));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
         Card wizard = new FugitiveWizard();
         harness.addToBattlefield(player1, new WitheredWretch());

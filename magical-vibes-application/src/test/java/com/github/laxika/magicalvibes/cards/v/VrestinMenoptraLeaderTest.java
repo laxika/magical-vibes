@@ -22,11 +22,12 @@ class VrestinMenoptraLeaderTest extends BaseCardTest {
     @Test
     void entersWithXCountersAndCreatesXFlyingAlienInsects() {
         harness.setHand(player1, List.of(new VrestinMenoptraLeader()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0, 2);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent vrestin = findPermanent(player1, "Vrestin, Menoptra Leader");
         assertThat(vrestin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

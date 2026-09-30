@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -95,7 +96,7 @@ class ZameckGuildmageTest extends BaseCardTest {
 
         assertThat(gd.additionalEnterCountersThisTurn).containsEntry(player1.getId(), 1);
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.additionalEnterCountersThisTurn).isEmpty();
     }

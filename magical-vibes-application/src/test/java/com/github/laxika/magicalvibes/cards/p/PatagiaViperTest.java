@@ -19,7 +19,7 @@ class PatagiaViperTest extends BaseCardTest {
     @Test
     @DisplayName("Creates two green and blue Snake tokens and remains when blue mana was spent")
     void createsTokensAndRemainsWhenBlueManaWasSpent() {
-        castPatagiaViper(ManaColor.BLUE);
+        castPatagiaViperWithBlueMana();
 
         List<Permanent> snakes = findPermanents(player1, "Snake");
         assertThat(snakes).hasSize(2);
@@ -36,17 +36,18 @@ class PatagiaViperTest extends BaseCardTest {
     @Test
     @DisplayName("Creates the Snake tokens but sacrifices itself when blue mana was not spent")
     void sacrificesItselfWithoutBlueMana() {
-        castPatagiaViper(ManaColor.GREEN);
+        harness.castFromHand(player1, new PatagiaViper(), "{3}{G}");
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Snake")).hasSize(2);
         harness.assertNotOnBattlefield(player1, "Patagia Viper");
         harness.assertInGraveyard(player1, "Patagia Viper");
     }
 
-    private void castPatagiaViper(ManaColor coloredGenericMana) {
+    private void castPatagiaViperWithBlueMana() {
         harness.setHand(player1, List.of(new PatagiaViper()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, coloredGenericMana, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);

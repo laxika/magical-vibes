@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -48,6 +50,71 @@ class StormbindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Ability deals 2 damage to a planeswalker")
+    void damagesPlaneswalker() {
+        harness.addToBattlefield(player1, new Stormbind());
+        ChandraNalaar chandra = new ChandraNalaar();
+        chandra.setLoyalty(6);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, chandra);
+        target.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Stormbind"), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Pays the random discard immediately when the ability is activated")
+    void paysRandomDiscardAsActivationCost() {
+        harness.addToBattlefield(player1, new Stormbind());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Stormbind"), null, player2.getId());
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player1, new Stormbind());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Stormbind"), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough mana for the generic cost")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new Stormbind());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Stormbind"), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 
     @Test

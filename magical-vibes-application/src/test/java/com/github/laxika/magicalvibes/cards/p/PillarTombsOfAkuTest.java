@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.w.Warthog;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PillarTombsOfAku.class, Warthog.class})
+@CardUsed({PillarTombsOfAku.class, Warthog.class, LeylineOfSanctity.class})
 class PillarTombsOfAkuTest extends BaseCardTest {
 
     @Test
@@ -77,6 +78,19 @@ class PillarTombsOfAkuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 15);
+        harness.assertNotOnBattlefield(player1, "Pillar Tombs of Aku");
+    }
+
+    @Test
+    @DisplayName("The upkeep penalty does not target the player")
+    void penaltyAppliesToPlayerWithHexproof() {
+        harness.addToBattlefield(player1, new PillarTombsOfAku());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
         harness.assertNotOnBattlefield(player1, "Pillar Tombs of Aku");
     }
 

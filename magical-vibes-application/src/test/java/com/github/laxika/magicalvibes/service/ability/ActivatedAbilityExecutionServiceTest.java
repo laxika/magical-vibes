@@ -1549,7 +1549,7 @@ class ActivatedAbilityExecutionServiceTest {
                     eq(gameData), eq(player1Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
-            when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1582,7 +1582,7 @@ class ActivatedAbilityExecutionServiceTest {
                     eq(gameData), eq(player2Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
-            when(gameQueryService.canPlayerLifeChange(gameData, player2Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gameData, player2Id)).thenReturn(true);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1790,6 +1790,6 @@ class ActivatedAbilityExecutionServiceTest {
                 eq(gameData), eq(player1Id), eq(damage), anyString(), anyBoolean(), eq(perm.getId())))
                 .thenReturn(damage);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
-        when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
+        when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(HallowedFountain.class)
 class HallowedFountainTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class HallowedFountainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Hallowed Fountain enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playHallowedFountain(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findFountain(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Hallowed Fountain produces white mana")
     void producesWhiteMana() {
         Permanent fountain = addFountainReady(player1);
@@ -78,9 +92,8 @@ class HallowedFountainTest extends BaseCardTest {
     }
 
     private Permanent addFountainReady(Player player) {
-        Permanent fountain = new Permanent(new HallowedFountain());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player, new HallowedFountain());
         fountain.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(fountain);
         return fountain;
     }
 

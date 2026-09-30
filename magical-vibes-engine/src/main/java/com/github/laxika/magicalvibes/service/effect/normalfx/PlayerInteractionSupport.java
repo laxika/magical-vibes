@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -20,6 +22,7 @@ import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -49,6 +52,7 @@ public class PlayerInteractionSupport {
 
     private final DrawService drawService;
     private final GraveyardService graveyardService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
@@ -401,10 +405,21 @@ public class PlayerInteractionSupport {
             if (currentHand.isEmpty()) break;
             int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
             Card discarded = currentHand.remove(randomIndex);
-            graveyardService.discardCard(gameData, playerId, discarded);
+            boolean entersBattlefield = gameData.discardCausedByOpponent
+                    && discarded.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                    .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
+            if (entersBattlefield) {
+                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                        gameData, playerId, new Permanent(discarded));
+            } else {
+                graveyardService.discardCard(gameData, playerId, discarded);
+            }
             gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
+            }
         }
         triggerCollectionService.finishDiscardEvent(gameData);
 

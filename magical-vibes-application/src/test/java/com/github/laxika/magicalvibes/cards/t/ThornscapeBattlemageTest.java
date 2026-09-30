@@ -68,7 +68,7 @@ class ThornscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.WHITE);
 
-        harness.castInstantWithRepeatedCosts(player1, 0, null, List.of("{W}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{W}"));
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, artifact.getId());
@@ -104,7 +104,7 @@ class ThornscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThornscapeBattlemage()));
         addMana(ManaColor.WHITE);
 
-        harness.castInstantWithRepeatedCosts(player1, 0, null, List.of("{W}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{W}"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())

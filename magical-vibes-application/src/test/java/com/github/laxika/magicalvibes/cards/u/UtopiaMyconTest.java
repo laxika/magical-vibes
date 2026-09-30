@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,6 +29,17 @@ class UtopiaMyconTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep trigger does not add a counter during the opponent's upkeep")
+    void upkeepTriggerOnlyWorksDuringControllerUpkeep() {
+        Permanent mycon = addMycon();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
+
+    @Test
     @DisplayName("Removing three spore counters creates a Saproling token")
     void removesThreeSporeCountersAndCreatesToken() {
         Permanent mycon = addMycon();
@@ -36,7 +49,11 @@ class UtopiaMyconTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isOne();
-        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        Permanent saproling = findPermanents(player1, "Saproling").getFirst();
+        assertThat(saproling.getEffectivePower()).isOne();
+        assertThat(saproling.getEffectiveToughness()).isOne();
+        assertThat(saproling.getEffectiveColor()).isEqualTo(CardColor.GREEN);
+        assertThat(saproling.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
     }
 
     @Test
@@ -77,9 +94,17 @@ class UtopiaMyconTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The mana ability cannot sacrifice a non-Saproling creature")
+    void manaAbilityCannotSacrificeNonSaprolingCreature() {
+        addMycon();
+        addMycon();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addMycon() {
-        Permanent mycon = harness.addToBattlefieldAndReturn(player1, new UtopiaMycon());
-        mycon.setSummoningSick(false);
-        return mycon;
+        return addCreatureReady(player1, new UtopiaMycon());
     }
 }

@@ -235,6 +235,7 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(castingPermissionService.canCastWithCastCondition(any(), any(), any())).thenReturn(true);
         lenient().when(castingPermissionService.isFlashCastTargetPermissionSatisfied(
                 any(), any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
@@ -277,6 +278,9 @@ class SpellCastingServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(3));
         lenient().when(castingCostService.applyColoredManaCostReductions(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class), anyBoolean()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
+        lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class), anyList()))
                 .thenAnswer(invocation -> invocation.getArgument(3));
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerLifeTotals.put(player1Id, 20);
@@ -811,7 +815,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Test Bear");
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -960,6 +964,27 @@ class SpellCastingServiceTest {
         }
 
         @Test
+        void coloredCostPaymentUsesChosenCreatureTarget() {
+            Card instant = createInstant("Reduced removal", "{1}{B}");
+            instant.target(1, 1);
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.COLORLESS, 1);
+            Permanent creature = new Permanent(createCreature("Bear", "{1}{G}"));
+            gd.playerBattlefields.get(player2Id).add(creature);
+            List<UUID> targets = List.of(creature.getId());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(castingCostService.applyColoredManaCostReductions(
+                    eq(gd), eq(player1Id), eq(instant), any(ManaCost.class), eq(targets)))
+                    .thenReturn(new ManaCost("{1}"));
+
+            svc.playCard(gd, player1, 0, null, creature.getId(), null,
+                    targets, null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        }
+
+        @Test
         @DisplayName("Target-based predicate cost reduction applies to any matching first target")
         void targetPredicateCostReductionAppliesToMatchingFirstTarget() {
             Card instant = createInstant("Test Response", "{4}{W}");
@@ -1051,7 +1076,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
             verify(targetLegalityService).validateSpellTargeting(
                     eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false), eq(false));
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 
@@ -1168,7 +1193,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(sorcery), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(sorcery), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1193,7 +1218,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(enchantment), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(enchantment), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1218,7 +1243,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(artifact), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(artifact), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1469,7 +1494,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(eq(gd), any(Permanent.class));
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(convokeCard), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(convokeCard), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1597,7 +1622,7 @@ class SpellCastingServiceTest {
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(stateBasedActionService).performStateBasedActions(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -1645,7 +1670,7 @@ class SpellCastingServiceTest {
 
             // Only verify the method completes normally without errors
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
         }
     }
 

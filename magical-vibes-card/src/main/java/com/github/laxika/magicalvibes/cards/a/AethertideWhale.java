@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "27")
+@CardRegistration(set = "M3C", collectorNumber = "175")
 public class AethertideWhale extends Card {
 
     public AethertideWhale() {

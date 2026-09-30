@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AncestralVision;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.cards.r.RealityStrobe;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,20 +15,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DustOfMoments.class, AncestralVision.class, GrizzlyBears.class})
+@CardUsed({DustOfMoments.class, RealityStrobe.class, FomoriNomad.class})
 class DustOfMomentsTest extends BaseCardTest {
 
     @Test
     void removesTwoTimeCountersFromEveryPermanentAndSuspendedCard() {
         Permanent ownPermanent = permanentWithTimeCounters(player1, 3);
         Permanent opposingPermanent = permanentWithTimeCounters(player2, 1);
-        AncestralVision ownSuspended = suspendedCard(player1, 4);
-        AncestralVision opposingSuspended = suspendedCard(player2, 3);
+        Permanent withoutTimeCounters = harness.addToBattlefieldAndReturn(player2, new FomoriNomad());
+        RealityStrobe ownSuspended = suspendedCard(player1, 4);
+        RealityStrobe opposingSuspended = suspendedCard(player2, 3);
 
         cast(0);
 
         assertThat(ownPermanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(opposingPermanent.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(withoutTimeCounters.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.exiledCardTimeCounters)
                 .containsEntry(ownSuspended.getId(), 2)
                 .containsEntry(opposingSuspended.getId(), 1);
@@ -37,9 +39,9 @@ class DustOfMomentsTest extends BaseCardTest {
     @Test
     void putsTwoTimeCountersOnPermanentsWithTimeCountersAndSuspendedCards() {
         Permanent withTimeCounters = permanentWithTimeCounters(player1, 1);
-        Permanent withoutTimeCounters = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        AncestralVision ownSuspended = suspendedCard(player1, 2);
-        AncestralVision opposingSuspended = suspendedCard(player2, 4);
+        Permanent withoutTimeCounters = harness.addToBattlefieldAndReturn(player2, new FomoriNomad());
+        RealityStrobe ownSuspended = suspendedCard(player1, 2);
+        RealityStrobe opposingSuspended = suspendedCard(player2, 4);
 
         cast(1);
 
@@ -53,7 +55,7 @@ class DustOfMomentsTest extends BaseCardTest {
     @Test
     void removingLastTimeCounterFromSuspendedCardOffersItsSuspendCast() {
         Permanent permanent = permanentWithTimeCounters(player1, 3);
-        AncestralVision suspended = suspendedCard(player2, 1);
+        RealityStrobe suspended = suspendedCard(player2, 1);
 
         cast(0);
 
@@ -62,14 +64,29 @@ class DustOfMomentsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
+    @Test
+    void ignoresExiledCardsWithNonSuspendTimeCounters() {
+        RealityStrobe suspended = suspendedCard(player1, 3);
+        FomoriNomad exiledCardWithNonSuspendCounters = new FomoriNomad();
+        harness.setExile(player2, List.of(exiledCardWithNonSuspendCounters));
+        gd.exiledCardTimeCounters.put(exiledCardWithNonSuspendCounters.getId(), 4);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(exiledCardWithNonSuspendCounters.getId());
+
+        cast(0);
+
+        assertThat(gd.exiledCardTimeCounters)
+                .containsEntry(suspended.getId(), 1)
+                .containsEntry(exiledCardWithNonSuspendCounters.getId(), 4);
+    }
+
     private Permanent permanentWithTimeCounters(Player player, int count) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new FomoriNomad());
         permanent.setCounterCount(CounterType.TIME, count);
         return permanent;
     }
 
-    private AncestralVision suspendedCard(Player owner, int timeCounters) {
-        AncestralVision card = new AncestralVision();
+    private RealityStrobe suspendedCard(Player owner, int timeCounters) {
+        RealityStrobe card = new RealityStrobe();
         harness.setExile(owner, List.of(card));
         gd.exiledCardTimeCounters.put(card.getId(), timeCounters);
         return card;

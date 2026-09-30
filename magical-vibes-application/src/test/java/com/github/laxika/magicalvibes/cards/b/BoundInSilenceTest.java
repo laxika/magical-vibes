@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoalitionRelic;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BoundInSilence.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({BoundInSilence.class, FomoriNomad.class, CoalitionRelic.class})
 class BoundInSilenceTest extends BaseCardTest {
 
     @Test
@@ -37,15 +36,10 @@ class BoundInSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot be declared as an attacker")
     void enchantedCreatureCannotAttack() {
-        Permanent bears = addCreatureReady(player1);
-        attachAura(player2, bears);
+        Permanent creature = addCreatureReady(player1);
+        attachAura(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -58,10 +52,7 @@ class BoundInSilenceTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))
@@ -72,20 +63,15 @@ class BoundInSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Bound in Silence restores the creature's combat abilities")
     void removingAuraRestoresCombatAbilities() {
-        Permanent bears = addCreatureReady(player1);
-        Permanent aura = attachAura(player2, bears);
+        Permanent creature = addCreatureReady(player1);
+        Permanent aura = attachAura(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
 
         gd.playerBattlefields.get(player2.getId()).remove(aura);
 
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
     }
 
     @Test
@@ -107,12 +93,12 @@ class BoundInSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("Bound in Silence cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent relic = harness.addToBattlefieldAndReturn(player2, new CoalitionRelic());
 
         harness.setHand(player1, List.of(new BoundInSilence()));
         addMana();
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, relic.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -124,7 +110,7 @@ class BoundInSilenceTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent attachAura(com.github.laxika.magicalvibes.model.Player controller, Permanent target) {
+    private Permanent attachAura(Player controller, Permanent target) {
         Permanent aura = new Permanent(new BoundInSilence());
         aura.setAttachedTo(target.getId());
         gd.playerBattlefields.get(controller.getId()).add(aura);
@@ -137,6 +123,6 @@ class BoundInSilenceTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new FomoriNomad());
     }
 }

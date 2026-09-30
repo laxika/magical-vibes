@@ -55,6 +55,24 @@ class AzoriusAethermageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting the payment without enough mana draws no card")
+    void acceptingPaymentWithoutEnoughManaDrawsNoCard() {
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        castAndResolveBounce(target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target.getOriginalCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
     @DisplayName("Returning Azorius Aethermage itself still triggers its ability")
     void returningItselfTriggersItsAbility() {
         Forest drawnCard = new Forest();
@@ -79,16 +97,14 @@ class AzoriusAethermageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).contains(target.getOriginalCard());
     }
 
     private void castAndResolveBounce(UUID targetId) {
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());

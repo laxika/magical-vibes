@@ -38,7 +38,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         var e = (GainControlOfTargetEffect) effect;
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
-            case END_OF_TURN, UNTIL_END_OF_YOUR_NEXT_TURN -> resolveTemporary(gameData, entry, e);
+            case END_OF_TURN, END_OF_COMBAT, UNTIL_END_OF_YOUR_NEXT_TURN ->
+                    resolveTemporary(gameData, entry, e);
             case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e, true, false);
             case WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true, true);
             case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false, false);

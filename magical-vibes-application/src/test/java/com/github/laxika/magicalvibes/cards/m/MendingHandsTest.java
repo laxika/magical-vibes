@@ -70,11 +70,12 @@ class MendingHandsTest extends BaseCardTest {
         harness.getGameData().playerDamagePreventionShields.put(player2.getId(), 4);
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
 
-        // 3 combat damage fully prevented (shield 4 >= 3) → life unchanged, 1 of shield remains
+        // Two combat damage is fully prevented; two shield points remain.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test

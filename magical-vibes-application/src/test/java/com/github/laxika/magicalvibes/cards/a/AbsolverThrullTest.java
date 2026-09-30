@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.h.HissingMiasma;
+import com.github.laxika.magicalvibes.cards.m.Mortify;
+import com.github.laxika.magicalvibes.cards.m.MourningThrull;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,30 +15,31 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbsolverThrull.class, GloriousAnthem.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({AbsolverThrull.class, HissingMiasma.class, MourningThrull.class, Mortify.class})
 class AbsolverThrullTest extends BaseCardTest {
 
     @Test
     void entersAndDestroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        UUID enchantmentId = harness.getPermanentId(player2, "Glorious Anthem");
+        harness.addToBattlefield(player2, new HissingMiasma());
+        UUID enchantmentId = harness.getPermanentId(player2, "Hissing Miasma");
         castAbsolver(enchantmentId);
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Hissing Miasma");
+        harness.assertInGraveyard(player2, "Hissing Miasma");
     }
 
     @Test
     void deathExilesItHauntingTargetCreature() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID enchantmentId = harness.getPermanentId(player2, "Glorious Anthem");
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new HissingMiasma());
+        harness.addToBattlefield(player2, new MourningThrull());
+        UUID enchantmentId = harness.getPermanentId(player2, "Hissing Miasma");
+        UUID creatureId = harness.getPermanentId(player2, "Mourning Thrull");
         castAbsolver(enchantmentId);
 
         UUID absolverId = harness.getPermanentId(player1, "Absolver Thrull");
-        destroyWithLightningBolt(absolverId);
+        destroyWithMortify(absolverId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, creatureId);
@@ -51,29 +52,42 @@ class AbsolverThrullTest extends BaseCardTest {
     }
 
     @Test
+    void enterTriggerCannotTargetCreature() {
+        harness.addToBattlefield(player2, new MourningThrull());
+        UUID creatureId = harness.getPermanentId(player2, "Mourning Thrull");
+        harness.setHand(player1, List.of(new AbsolverThrull()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an enchantment");
+    }
+
+    @Test
     void hauntedCreatureDeathDestroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID firstEnchantmentId = findPermanents(player2, "Glorious Anthem").getFirst().getId();
-        UUID secondEnchantmentId = findPermanents(player2, "Glorious Anthem").get(1).getId();
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new HissingMiasma());
+        harness.addToBattlefield(player2, new HissingMiasma());
+        harness.addToBattlefield(player2, new MourningThrull());
+        UUID firstEnchantmentId = findPermanents(player2, "Hissing Miasma").getFirst().getId();
+        UUID secondEnchantmentId = findPermanents(player2, "Hissing Miasma").get(1).getId();
+        UUID creatureId = harness.getPermanentId(player2, "Mourning Thrull");
         castAbsolver(firstEnchantmentId);
 
         UUID absolverId = harness.getPermanentId(player1, "Absolver Thrull");
-        destroyWithLightningBolt(absolverId);
+        destroyWithMortify(absolverId);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, creatureId);
         harness.passBothPriorities();
 
-        destroyWithLightningBolt(creatureId);
+        destroyWithMortify(creatureId);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, secondEnchantmentId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Mourning Thrull");
+        harness.assertNotOnBattlefield(player2, "Hissing Miasma");
+        harness.assertInGraveyard(player2, "Hissing Miasma");
     }
 
     private void castAbsolver(UUID targetId) {
@@ -86,12 +100,13 @@ class AbsolverThrullTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void destroyWithLightningBolt(UUID targetId) {
+    private void destroyWithMortify(UUID targetId) {
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Mortify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 
     private void setupPlayer1Active() {

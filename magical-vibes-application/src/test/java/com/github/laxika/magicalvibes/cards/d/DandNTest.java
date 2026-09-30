@@ -94,6 +94,26 @@ class DandNTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices when its last Island stops being an Island")
+    void sacrificedWhenLastIslandStopsBeingIsland() {
+        var island = harness.addToBattlefieldAndReturn(player1, new Island());
+        addCreatureReady(player1, new DandN());
+
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Dandân");
+        harness.assertInGraveyard(player1, "Dandân");
+    }
+
+    @Test
     @DisplayName("The sacrifice trigger does not recheck Islands when it resolves")
     void sacrificeTriggerDoesNotRecheckConditionOnResolution() {
         harness.setHand(player1, List.of(new DandN()));

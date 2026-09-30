@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -205,7 +206,7 @@ class SilenceTest extends BaseCardTest {
     void restrictionClearedAtEndOfTurn() {
         gd.playersSilencedThisTurn.add(player2.getId());
 
-        TurnCleanupService svc = new TurnCleanupService(null, null);
+        TurnCleanupService svc = GameTestEngineContext.get().getBean(TurnCleanupService.class);
         svc.resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersSilencedThisTurn).isEmpty();

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,16 +24,13 @@ class StitchInTimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        boolean won = gd.gameLog.stream().map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("wins the coin flip"));
+        boolean won = gameLogContains("wins the coin flip");
         if (won) {
             assertThat(gd.extraTurns).containsExactly(player1.getId());
         } else {
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                    .anyMatch(log -> log.contains("loses the coin flip"));
+            assertThat(gameLogContains("loses the coin flip")).isTrue();
             assertThat(gd.extraTurns).isEmpty();
         }
         assertThat(gd.stack).isEmpty();

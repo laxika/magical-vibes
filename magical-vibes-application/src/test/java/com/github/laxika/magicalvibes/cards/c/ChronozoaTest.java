@@ -36,6 +36,45 @@ class ChronozoaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices itself after its last time counter is removed")
+    void sacrificesItselfAfterLastTimeCounterIsRemoved() {
+        Permanent chronozoa = addCreatureReady(player1, new Chronozoa());
+        chronozoa.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Chronozoa")).hasSize(2);
+        assertThat(findPermanents(player1, "Chronozoa")).allMatch(permanent ->
+                permanent.getCard().isToken()
+                && permanent.getCounterCount(CounterType.TIME) == 3);
+    }
+
+    @Test
+    @DisplayName("Does not remove a time counter during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        Permanent chronozoa = addCreatureReady(player1, new Chronozoa());
+        chronozoa.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(chronozoa.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice itself if it has no time counters when its upkeep ability resolves")
+    void upkeepDoesNothingWithoutTimeCounters() {
+        Permanent chronozoa = addCreatureReady(player1, new Chronozoa());
+        chronozoa.setCounterCount(CounterType.TIME, 0);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Chronozoa")).containsExactly(chronozoa);
+    }
+
+    @Test
     @DisplayName("Creates two token copies when it dies without time counters")
     void createsTwoTokenCopiesWithoutTimeCounters() {
         Permanent chronozoa = addCreatureReady(player1, new Chronozoa());
