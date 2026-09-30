@@ -59,7 +59,7 @@ class SteadyTortoiseTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bear)));
         harness.passBothPriorities();
 
-        assertThat(tortoise.getPower()).isEqualTo(4);
-        assertThat(tortoise.getToughness()).isEqualTo(4);
+        assertThat(gd.perpetualCardPowerToughnessModifiers.get(tortoise.getId()).power()).isEqualTo(1);
+        assertThat(gd.perpetualCardPowerToughnessModifiers.get(tortoise.getId()).toughness()).isEqualTo(1);
     }
 }

@@ -45,7 +45,8 @@ class GrowOldTogetherTest extends BaseCardTest {
                 .contains(belowTopTenBear)
                 .hasSize(9);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.castCreature(player1, 0);

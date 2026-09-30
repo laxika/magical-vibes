@@ -57,11 +57,13 @@ class LochLarentTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
 
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent firstBear = findPermanents(player2, "Grizzly Bears").getFirst();

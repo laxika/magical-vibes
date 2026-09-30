@@ -61,9 +61,11 @@ class CeriseSlayerOfFearTest extends BaseCardTest {
     }
 
     private void advanceToPostcombatMain(Player activePlayer) {
+        harness.setHand(activePlayer, List.of());
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

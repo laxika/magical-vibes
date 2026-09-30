@@ -58,7 +58,6 @@ class TomeOfGadwickTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player2, "Shock");

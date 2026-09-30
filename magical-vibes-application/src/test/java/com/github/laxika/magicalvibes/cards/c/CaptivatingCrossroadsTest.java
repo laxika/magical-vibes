@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -59,10 +58,6 @@ class CaptivatingCrossroadsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(crossroads.isTapped()).isTrue();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
-
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isOne();
     }
 

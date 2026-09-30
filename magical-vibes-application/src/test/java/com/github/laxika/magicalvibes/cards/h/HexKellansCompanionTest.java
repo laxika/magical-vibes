@@ -28,6 +28,7 @@ class HexKellansCompanionTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
         harness.passBothPriorities();

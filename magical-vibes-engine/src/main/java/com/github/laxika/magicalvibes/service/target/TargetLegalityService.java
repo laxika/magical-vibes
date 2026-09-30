@@ -1330,7 +1330,9 @@ public class TargetLegalityService {
                     controllerId, null, xValue, kicked);
         }
         if (targetZone == Zone.STACK
-                || spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                || (spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(EffectResolution::targetsSpellOnStack))
                 && isSpellOnStack(gameData, targetId)) {
             TargetFilter stackTargetFilter = effectiveTargetFilter instanceof StackEntryPredicateTargetFilter
                     ? effectiveTargetFilter

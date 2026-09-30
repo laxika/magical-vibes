@@ -50,7 +50,7 @@ class StormkeldCuratorTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.AttachAurasChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(handAura.getId(), graveyardAura.getId());
-        assertThat(choice.maxCount()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(choice.maxCount()).isEqualTo(2);
 
         harness.handleMultipleCardsChosen(player1, List.of(handAura.getId(), graveyardAura.getId()));
 

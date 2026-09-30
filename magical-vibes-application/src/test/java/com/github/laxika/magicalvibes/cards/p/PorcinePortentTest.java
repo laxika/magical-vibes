@@ -36,6 +36,7 @@ class PorcinePortentTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.SpellbookDraftChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
