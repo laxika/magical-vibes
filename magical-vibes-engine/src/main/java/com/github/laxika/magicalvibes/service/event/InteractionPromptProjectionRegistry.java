@@ -148,6 +148,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectWorldsWithinWorldsChoice);
         register(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class,
                 this::projectEachPlayerMayPutCardFromHandChoice);
+        register(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class,
+                this::projectEachPlayerMayPutLandFromHandThenOpponentsDrawChoice);
         register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
                 this::projectRevealAnyNumberOfCardsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
@@ -192,6 +194,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectWerewhatOnEnterChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
+        register(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class,
+                this::projectArtifactPermanentOrGraveyardCardChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.ReturnAurasFromGraveyardChoice.class,
@@ -238,6 +242,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PerpetualCastCostHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualActivatedAbilityCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
@@ -862,6 +868,16 @@ public class InteractionPromptProjectionRegistry {
                                 + " card from your hand onto the battlefield.");
     }
 
+    private InteractionPromptMessage projectEachPlayerMayPutLandFromHandThenOpponentsDrawChoice(
+            GameData gameData, PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice interaction) {
+        List<CardView> cards = gameData.playerHands.getOrDefault(interaction.playerId(), List.of()).stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(interaction.validCardIds(), cards, 1,
+                "You may put a land card from your hand onto the battlefield.");
+    }
+
     private InteractionPromptMessage projectRevealAnyNumberOfCardsFromHandChoice(
             GameData gameData, PendingInteraction.RevealAnyNumberOfCardsFromHandChoice interaction) {
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
@@ -1200,7 +1216,7 @@ public class InteractionPromptProjectionRegistry {
                 gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()), interaction.validCardIds());
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                "Choose a nonland card from that player's hand or graveyard to exile.");
+                "Choose a card from that player's hand or graveyard to exile.");
     }
 
     private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(
@@ -1222,6 +1238,19 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, required,
                 interaction.sourceName() + " — exile " + required + " permanent"
                         + (required == 1 ? "" : "s") + " you control and/or cards from your hand.");
+    }
+
+    private InteractionPromptMessage projectArtifactPermanentOrGraveyardCardChoice(
+            GameData gameData, PendingInteraction.ArtifactPermanentOrGraveyardCardChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard).toList(), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectBeholdChoice(
@@ -1597,7 +1626,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectSpellbookCardChoice(
             GameData gameData, PendingInteraction.SpellbookCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()),
+                interaction.minCount(), interaction.maxCount(),
                 interaction.prompt());
     }
 

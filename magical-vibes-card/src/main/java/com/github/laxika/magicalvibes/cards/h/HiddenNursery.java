@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "276")
+@CardRegistration(set = "M3C", collectorNumber = "349")
 public class HiddenNursery extends Card {
 
     public HiddenNursery() {

@@ -73,7 +73,8 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                         replacementEffects.add(new ScryEffect(1));
                     }
                     replacementEffects.add(ExploreEffect.afterReplacement(
-                            exploreEffect.targeted(), exploreEffect.reference(), exploreEffect.permanentId()));
+                            exploreEffect.targeted(), exploreEffect.reference(), exploreEffect.permanentId(),
+                            exploreEffect.targetPredicate()));
                 }
                 insertEffectsAfter(entry, effect, replacementEffects);
                 return;
@@ -90,6 +91,11 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         }
 
         Card topCard = deck.getFirst();
+        // The explore event happened even when its revealed card is later handled by the land or
+        // nonland branch. Remember the controller for cards that check this history this turn.
+        if (controllerId != null) {
+            gameData.playersWhoControlledPermanentThatExploredThisTurn.add(controllerId);
+        }
 
         // Reveal the top card to all players
         gameLogService.append(gameData, GameLog.textCardText(sourceName + " explores — " + playerName + " reveals ", topCard, "."));
@@ -185,7 +191,8 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 List<CardEffect> remaining = new ArrayList<>(exploreCount - 1);
                 for (int j = 1; j < exploreCount; j++) {
                     remaining.add(exploreEffect.permanentId() == null
-                            ? new ExploreEffect(exploreEffect.targeted(), exploreEffect.reference())
+                            ? new ExploreEffect(exploreEffect.targeted(), exploreEffect.reference(),
+                            null, false, null, exploreEffect.targetPredicate())
                             : ExploreEffect.forPermanent(exploreEffect.permanentId()));
                 }
                 entry.insertEffectsToResolve(i + 1, remaining);

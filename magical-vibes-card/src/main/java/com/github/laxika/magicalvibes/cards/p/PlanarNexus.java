@@ -1,0 +1,41 @@
+package com.github.laxika.magicalvibes.cards.p;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
+
+import java.util.List;
+
+@CardRegistration(set = "M3C", collectorNumber = "80")
+@CardRegistration(set = "M3C", collectorNumber = "132")
+public class PlanarNexus extends Card {
+
+    public PlanarNexus() {
+        addEffect(EffectSlot.STATIC, new GrantSubtypesToSelfEffect(List.of(
+                CardSubtype.CAVE,
+                CardSubtype.DESERT,
+                CardSubtype.GATE,
+                CardSubtype.LAIR,
+                CardSubtype.LOCUS,
+                CardSubtype.MINE,
+                CardSubtype.POWER_PLANT,
+                CardSubtype.SPHERE,
+                CardSubtype.TOWER,
+                CardSubtype.URZAS
+        )));
+
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{1}",
+                List.of(new AwardAnyColorManaEffect()),
+                "{1}, {T}: Add one mana of any color."
+        ));
+    }
+}

@@ -28,12 +28,13 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1,
                 "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
         harness.handleListChoice(player1,
                 "Caesar deals damage equal to the number of creature tokens you control to target opponent");
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
 
         List<Permanent> soldiers = findPermanents(player1, "Soldier");
         assertThat(soldiers).hasSize(2);
@@ -44,7 +45,7 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
             assertThat(soldier.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
         });
-        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 8);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -60,11 +61,12 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Draw a card and lose 1 life");
         harness.handleListChoice(player1,
                 "Caesar deals damage equal to the number of creature tokens you control to target opponent");
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
         harness.assertInHand(player1, "Grizzly Bears");

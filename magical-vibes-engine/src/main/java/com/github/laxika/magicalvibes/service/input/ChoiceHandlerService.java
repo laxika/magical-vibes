@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
@@ -140,6 +141,8 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport bounceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
+    private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
+            eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
@@ -615,6 +618,10 @@ public class ChoiceHandlerService {
             handleSpellCreatureTypeChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellNonbasicLandTypeChoice) {
+            handleSpellNonbasicLandTypeChoice(gameData, player, colorName, colorChoice.options());
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
             handleSpellCardTypeChoice(gameData, player, colorName);
             return;
@@ -716,6 +723,11 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesColorThenExileOtherPermanentsChoice ctx) {
+            handleEachPlayerChoosesColorThenExileOtherPermanentsChoice(gameData, player, colorName, ctx,
+                    colorChoice.options());
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
@@ -3226,8 +3238,7 @@ public class ChoiceHandlerService {
         switch (counterKind) {
             case "POISON" -> gameData.playerPoisonCounters.computeIfPresent(
                     targetId, (id, count) -> Math.max(0, count - amount));
-            case "ENERGY" -> gameData.playerEnergyCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
+            case "ENERGY" -> gameData.removePlayerEnergyCounters(targetId, amount);
             default -> throw new IllegalArgumentException("Unknown player counter kind: " + counterKind);
         }
     }
@@ -3626,22 +3637,38 @@ public class ChoiceHandlerService {
 
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     ChooseOneEffect.ChooseOneOption chosen) {
+        return beginResolvingModalTargetChoice(gameData, ctx, chosen.effects(), chosen.targetFilter());
+    }
+
+    private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
+                                                    List<CardEffect> effects, TargetFilter targetFilter) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        // A combat-damage modal's "that player" effects reuse the damaged player already
+        // carried by the trigger; choosing a mode does not choose a different player.
+        if (pendingEntry != null && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId())
+                && ctx.effect().combatDamageTriggerContext()
+                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
+            return false;
+        }
         boolean combatContextPlayerTarget = pendingEntry != null
                 && pendingEntry.isNonTargeting()
                 && pendingEntry.getTargetId() != null
                 && gameData.playerIds.contains(pendingEntry.getTargetId())
-                && chosen.effects().stream().anyMatch(effect ->
+                && effects.stream().anyMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))
-                && chosen.effects().stream().noneMatch(effect ->
+                && effects.stream().noneMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
+        boolean nonTargetingCombatEntry = pendingEntry != null && pendingEntry.isNonTargeting()
+                && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId());
         if (pendingEntry == null
-                || (pendingEntry.getTargetId() != null && !combatContextPlayerTarget)
+                || (pendingEntry.getTargetId() != null && !nonTargetingCombatEntry)
                 || !pendingEntry.getTargetIds().isEmpty()) {
             return false;
         }
 
-        boolean needsTarget = chosen.effects().stream().anyMatch(effect ->
+        boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
         if (!needsTarget) {
@@ -3651,10 +3678,9 @@ public class ChoiceHandlerService {
         Permanent source = ctx.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        TargetFilter targetFilter = chosen.targetFilter();
         UUID defendingPlayerId = combatContextPlayerTarget ? pendingEntry.getTargetId() : null;
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                gameData, chosen.effects(), targetFilter, ctx.controllerId(), ctx.sourceCard(),
+                gameData, effects, targetFilter, ctx.controllerId(), ctx.sourceCard(),
                 TriggerTargetCollector.Options.ATTACK, source, defendingPlayerId);
         if (result.validTargets().isEmpty()) {
             return false;
@@ -3756,6 +3782,16 @@ public class ChoiceHandlerService {
         boolean hasTargets = selectedEffects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
+        if (hasTargets && ctx.sourceCard().getSpellTargets().isEmpty()) {
+            TargetFilter targetFilter = ctx.effect().options().stream()
+                    .filter(option -> chosenLabels.contains(option.label()))
+                    .map(ChooseOneEffect.ChooseOneOption::targetFilter)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse(null);
+            if (beginResolvingModalTargetChoice(gameData, ctx, selectedEffects, targetFilter)) {
+                return;
+            }
+        }
         if (hasTargets && !ctx.sourceCard().getSpellTargets().isEmpty()) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),
@@ -4280,6 +4316,10 @@ public class ChoiceHandlerService {
                             .build());
         }
 
+        cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                hand == null ? List.of() : hand);
+
         List<Card> toDiscard = hand == null ? List.of()
                 : new ArrayList<>(hand.stream()
                         .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
@@ -4289,7 +4329,7 @@ public class ChoiceHandlerService {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
+                graveyardService.discardCard(gameData, targetPlayerId, card);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
             triggerCollectionService.finishDiscardEvent(gameData);
@@ -5061,6 +5101,24 @@ public class ChoiceHandlerService {
         String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses creature type {} for a spell", gameData.id, player.getUsername(), subtype);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSpellNonbasicLandTypeChoice(GameData gameData, Player player, String subtypeName,
+                                                    List<String> options) {
+        if (!options.contains(subtypeName)) {
+            throw new IllegalArgumentException("Invalid nonbasic land type choice: " + subtypeName);
+        }
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.chosenSpellSubtype = subtype;
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses nonbasic land type {} for a spell",
+                gameData.id, player.getUsername(), subtype);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -6073,6 +6131,29 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerChoosesColorThenExileOtherPermanentsChoice(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.EachPlayerChoosesColorThenExileOtherPermanentsChoice ctx,
+            List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid color choice: " + colorName);
+        }
+
+        CardColor color = CardColor.valueOf(colorName);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses " + color.name().toLowerCase() + "."));
+        log.info("Game {} - {} chooses color {} for selective permanent exile",
+                gameData.id, player.getUsername(), color);
+
+        boolean complete = eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler.completeChoice(
+                gameData, ctx, color);
+        if (complete) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else {
+            inputCompletionService.publishStateAfterInput(gameData);
+        }
     }
 
     /**

@@ -94,7 +94,7 @@ class ThePandoricaTest extends BaseCardTest {
 
         assertThatThrownBy(() -> activate(pandorica, island))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target does not match the required predicate");
+                .hasMessageContaining("Target must be another nonland permanent");
     }
 
     private void activate(Permanent pandorica, Permanent target) {

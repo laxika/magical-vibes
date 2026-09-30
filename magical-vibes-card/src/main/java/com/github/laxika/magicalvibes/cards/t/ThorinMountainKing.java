@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOB", collectorNumber = "114")
+@CardRegistration(set = "HOC", collectorNumber = "114")
 public class ThorinMountainKing extends Card {
 
     public ThorinMountainKing() {

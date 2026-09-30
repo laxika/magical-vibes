@@ -35,7 +35,10 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         assertThat(butch.getPowerModifier()).isEqualTo(2);
         assertThat(butch.getToughnessModifier()).isEqualTo(2);
 
+        gs.declareBlockers(gd, player2, List.of());
+        butch.setAttacking(false);
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(butch.getPowerModifier()).isZero();

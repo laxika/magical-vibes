@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1504,6 +1503,10 @@ public class TriggeredAbilityQueueService {
             } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                if (pending.optionalTarget() && !validPlayerTargets.contains(pending.controllerId())) {
+                    validPlayerTargets = new ArrayList<>(validPlayerTargets);
+                    validPlayerTargets.add(pending.controllerId());
+                }
             } else if (pending.targetFilter() != null) {
                 // Permanent-filtered path: players are not offered.
                 validPlayerTargets = pending.optionalTarget() ? List.of(pending.controllerId()) : List.of();
@@ -2446,7 +2449,18 @@ public class TriggeredAbilityQueueService {
                     : pending.maxCount() > 0
                     ? pending.maxCount()
                     : describedTarget == null ? 1 : describedTarget.maxTargets();
+            SpellTarget declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            if (pending.maxCount() == 0 && declaredGroup != null) {
+                requestedMaxTargets = declaredGroup.getMaxTargets();
+            }
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
+            if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+                int graveyardCount = (int) matchingCards.stream()
+                        .map(candidate -> gameQueryService.findGraveyardOwnerById(gameData, candidate.getId()))
+                        .filter(java.util.Objects::nonNull).distinct().count();
+                maxTargets = Math.min(maxTargets, graveyardCount);
+                minTargets = maxTargets;
+            }
             String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
             String prompt = pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel

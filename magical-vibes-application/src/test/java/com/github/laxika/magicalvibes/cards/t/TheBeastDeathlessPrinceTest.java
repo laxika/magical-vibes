@@ -40,11 +40,12 @@ class TheBeastDeathlessPrinceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
     }

@@ -7,5 +7,5 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * trigger. The amount is evaluated when this effect resolves.
  */
 public record GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
-        DynamicAmount amount) implements CardEffect {
+        DynamicAmount amount) implements TriggeringSpellReferencingEffect {
 }

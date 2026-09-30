@@ -12,6 +12,27 @@ public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(
         CardPredicate spellFilter,
         List<CardEffect> resolvedEffects,
         boolean oneShot,
-        boolean sourceMustRemainOnBattlefield
-) implements CardEffect {
+        boolean sourceMustRemainOnBattlefield,
+        boolean persistsUntilConsumed
+) implements CombatDamageTriggerContextEffect {
+
+    public RegisterDelayedTargetPlayerSpellCastTriggerEffect(
+            CardPredicate spellFilter,
+            List<CardEffect> resolvedEffects,
+            boolean oneShot,
+            boolean sourceMustRemainOnBattlefield) {
+        this(spellFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, false);
+    }
+
+    /** Registers a source-independent one-shot boon that remains until the next matching spell. */
+    public static RegisterDelayedTargetPlayerSpellCastTriggerEffect oneShotUntilConsumed(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(
+                spellFilter, resolvedEffects, true, false, true);
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
+    }
 }

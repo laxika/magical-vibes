@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -33,6 +34,9 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
@@ -186,6 +190,17 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof GrantStaticEffectToTargetEffect grant) {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
+        }
+        if (effect instanceof GrantStaticEffectToTargetUntilEndOfTurnEffect grant) {
+            return classify(gameData, grant.staticEffect(), aiPlayerId);
+        }
+        if (effect instanceof PerpetuallyGrantStaticEffectToTargetCreatureEffect grant) {
+            return classify(gameData, grant.staticEffect(), aiPlayerId);
+        }
+        if (effect instanceof PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect grant
+                && grant.triggeredAbility() instanceof PerpetuallyBoostSourceEffect boost) {
+            return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
+                    ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return classify(gameData, exileThen.thenEffect(), aiPlayerId);
@@ -441,6 +456,7 @@ public class TargetPolarityClassifier {
             entry("SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryThenDiscoverEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
@@ -499,7 +515,10 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("MustAttackEffect", TargetPolarity.HARMFUL),
             entry("GoadTargetCreatureUntilNextTurnEffect", TargetPolarity.HARMFUL),
+            entry("GoadTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL),
+            entry("HuntedByTheFamilyEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -566,12 +585,16 @@ public class TargetPolarityClassifier {
             entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("CantBeBlockedEffect", TargetPolarity.BENEFICIAL),
+            entry("TurnTargetCreatureFaceUpIfFaceDownEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("ProtectionFromColorsEffect", TargetPolarity.BENEFICIAL),
+            entry("PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GuardianAngelPermissionEffect", TargetPolarity.BENEFICIAL),
@@ -626,6 +649,7 @@ public class TargetPolarityClassifier {
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("ConjureDuplicatesOfTargetPermanentsIntoHandEffect", TargetPolarity.NEUTRAL),
             entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
@@ -635,6 +659,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeTargetCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

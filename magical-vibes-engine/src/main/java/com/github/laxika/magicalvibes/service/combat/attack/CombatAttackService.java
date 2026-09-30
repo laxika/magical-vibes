@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -2058,6 +2059,40 @@ public class CombatAttackService {
             }
         }
 
+        // Check for exile-based "whenever you attack" triggers. These fire once per combat
+        // while the face-up card is in its owner's exile zone.
+        if (!attackerIndices.isEmpty()) {
+            for (ExiledCardEntry exiled : new ArrayList<>(gameData.exiledCards)) {
+                if (exiled.faceDown() || !playerId.equals(exiled.ownerId())) {
+                    continue;
+                }
+                List<CardEffect> exileAttackEffects = exiled.card().getEffects(
+                        EffectSlot.EXILE_ON_ALLY_CREATURES_ATTACK);
+                if (exileAttackEffects.isEmpty()) {
+                    continue;
+                }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        exiled.card(),
+                        playerId,
+                        exiled.card().getName() + "'s exile attack trigger",
+                        new ArrayList<>(exileAttackEffects),
+                        attackerIndices.size(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+                gameLogService.append(gameData,
+                        GameLog.builder().card(exiled.card()).text("'s exile attack ability triggers.").build());
+                log.info("Game {} - {} EXILE_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                        gameData.id, exiled.card().getName(), attackerIndices.size());
+            }
+        }
+
         // Check for "whenever a creature attacks you or a planeswalker you control" triggers
         // (ON_CREATURE_ATTACKS_YOU). These fire once per attacking creature, on the permanents of
         // the player being attacked (directly or via one of their planeswalkers). The attacking
@@ -2502,6 +2537,7 @@ public class CombatAttackService {
                                     attackerIndices.size(),
                                     perm.getId());
                             playerAttackTrigger.setTargetId(playerId);
+                            playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
                             playerAttackTrigger.setNonTargeting(true);
                             gameData.stack.add(playerAttackTrigger);
                             gameLogService.append(gameData,

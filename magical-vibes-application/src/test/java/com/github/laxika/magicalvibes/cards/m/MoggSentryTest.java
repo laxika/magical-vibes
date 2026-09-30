@@ -73,6 +73,7 @@ class MoggSentryTest extends BaseCardTest {
 
         opponentCastsSpell();
         harness.passBothPriorities(); // Resolve the first Mogg Sentry trigger
+        harness.passBothPriorities(); // Resolve the first spell
         opponentCastsSpell();
         harness.passBothPriorities(); // Resolve the second Mogg Sentry trigger
 

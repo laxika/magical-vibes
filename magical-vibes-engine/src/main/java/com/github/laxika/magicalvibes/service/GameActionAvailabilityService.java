@@ -1489,9 +1489,7 @@ public class GameActionAvailabilityService {
                 || castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
             return false;
         }
-        boolean hasPermission = playerId.equals(graveyardOwnerId)
-                ? castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
-                : false;
+        boolean hasPermission = castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card);
         return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
     }
 
@@ -1640,7 +1638,8 @@ public class GameActionAvailabilityService {
 
             boolean isJumpStart = !graveyardAbilitiesSuppressed
                     && (card.getCastingOption(JumpStartCast.class).isPresent()
-                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
+                    || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD)
+                    || gameData.cardsGrantedJumpStartUntilEndOfTurn.contains(card.getId()))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

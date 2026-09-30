@@ -46,12 +46,11 @@ class LastNightTogetherTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new HillGiant());
         Permanent unchosen = addCreatureReady(player1, new GrizzlyBears());
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         castLastNightTogether(bears, giant);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
 
         PendingInteraction.AttackerDeclaration prompt = gd.interaction.activeInteraction(
                 PendingInteraction.AttackerDeclaration.class);

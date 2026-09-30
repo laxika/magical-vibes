@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class SeekLibraryToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +51,9 @@ public class SeekLibraryToHandEffectHandler implements NormalEffectHandlerBean {
 
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.remove(chosen);
-        gameData.playerHands.get(controllerId).add(chosen);
+        gameData.addCardToHand(controllerId, chosen);
+        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                gameData, controllerId, chosen);
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts " + chosen.getName() + " into hand.").build());
     }

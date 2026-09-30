@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "113")
+@CardRegistration(set = "HOC", collectorNumber = "113")
 public class StoneGiantOfHighPass extends Card {
 
     public StoneGiantOfHighPass() {

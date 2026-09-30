@@ -498,6 +498,16 @@ public class GraveyardService {
                 : null;
         if (libraryReplacement != null) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
+            if (libraryReplacement.shuffleIntoLibrary()) {
+                deck.add(card);
+                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is revealed and shuffled into its owner's library instead of dying."));
+                log.info("Game {} - {} replacement effect: shuffled into library instead of dying",
+                        gameData.id, card.getName());
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return false;
+            }
             String position;
             String positionPhrase;
             if (libraryReplacement.putOnBottom()) {
@@ -697,7 +707,8 @@ public class GraveyardService {
             }
         }
         if (!isToken(gameData, card)) {
-            triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(
+                    gameData, ownerId, card, sourceZone);
             if (sourceZone != Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
                 triggerCollectionService.checkAllyArtifactCardPutIntoGraveyardFromNonBattlefieldTriggers(
                         gameData, ownerId, card);

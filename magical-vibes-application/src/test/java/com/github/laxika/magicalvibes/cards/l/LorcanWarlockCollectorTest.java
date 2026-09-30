@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LorcanWarlockCollectorTest extends BaseCardTest {
 
     private void millCreature(Card creature) {
+        creature.setOwnerId(player2.getId());
         harness.setLibrary(player2, List.of(creature, new TomeScour(), new TomeScour(),
                 new TomeScour(), new TomeScour()));
         harness.setHand(player1, List.of(new TomeScour()));
