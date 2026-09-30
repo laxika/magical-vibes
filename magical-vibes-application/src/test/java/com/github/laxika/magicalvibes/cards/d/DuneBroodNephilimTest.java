@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GruulTurf;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DuneBroodNephilim.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DuneBroodNephilim.class, GruulTurf.class})
 class DuneBroodNephilimTest extends BaseCardTest {
 
     @Test
@@ -27,7 +27,7 @@ class DuneBroodNephilimTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        List<Permanent> tokens = sandTokens(player1);
+        List<Permanent> tokens = findPermanents(player1, "Sand");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getEffectivePower()).isEqualTo(1);
@@ -38,31 +38,41 @@ class DuneBroodNephilimTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Sand token count uses lands controlled when the trigger resolves")
+    void tokenCountUsesLandsAtResolution() {
+        Permanent nephilim = addCreatureReady(player1, new DuneBroodNephilim());
+        nephilim.setAttacking(true);
+        addLands(player1, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+        harness.resolveCombatDamage();
+        addLands(player1, 2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Sand")).hasSize(3);
+    }
+
+    @Test
     @DisplayName("A blocked Dune-Brood Nephilim does not create Sand tokens")
     void blockedCombatDamageCreatesNoSandTokens() {
         Permanent nephilim = addCreatureReady(player1, new DuneBroodNephilim());
         nephilim.setAttacking(true);
         addLands(player1, 3);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new DuneBroodNephilim());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        assertThat(sandTokens(player1)).isEmpty();
+        assertThat(findPermanents(player1, "Sand")).isEmpty();
     }
 
     private void addLands(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
-            harness.addToBattlefield(player, new Forest());
+            harness.addToBattlefield(player, new GruulTurf());
         }
-    }
-
-    private List<Permanent> sandTokens(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.SAND))
-                .toList();
     }
 }

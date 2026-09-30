@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.g.Gristleback;
+import com.github.laxika.magicalvibes.cards.g.GodlessShrine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,13 +14,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoratoriumStone.class, GrizzlyBears.class, Plains.class})
+@CardUsed({MoratoriumStone.class, GodlessShrine.class, Gristleback.class})
 class MoratoriumStoneTest extends BaseCardTest {
 
     @Test
     void exilesTargetCardFromAnyGraveyard() {
-        harness.addToBattlefield(player1, new MoratoriumStone());
-        Plains target = new Plains();
+        MoratoriumStone stone = new MoratoriumStone();
+        harness.addToBattlefield(player1, stone);
+        GodlessShrine target = new GodlessShrine();
         harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         prepareActivation(player1);
@@ -30,19 +31,35 @@ class MoratoriumStoneTest extends BaseCardTest {
 
         assertThat(harness.getGameData().getPlayerExiledCards(player2.getId())).containsExactly(target);
         harness.assertOnBattlefield(player1, "Moratorium Stone");
+        assertThat(findPermanent(player1, "Moratorium Stone").isTapped()).isTrue();
+    }
+
+    @Test
+    void firstAbilityCanExileACardFromItsControllersGraveyard() {
+        harness.addToBattlefield(player1, new MoratoriumStone());
+        Gristleback target = new Gristleback();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareActivation(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId())).containsExactly(target);
+        harness.assertOnBattlefield(player1, "Moratorium Stone");
     }
 
     @Test
     void exilesAllMatchingGraveyardCardsAndPermanents() {
         harness.addToBattlefield(player1, new MoratoriumStone());
-        GrizzlyBears player1Permanent = new GrizzlyBears();
-        GrizzlyBears player2Permanent = new GrizzlyBears();
+        Gristleback player1Permanent = new Gristleback();
+        Gristleback player2Permanent = new Gristleback();
         harness.addToBattlefield(player1, player1Permanent);
         harness.addToBattlefield(player2, player2Permanent);
-        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new GodlessShrine());
 
-        GrizzlyBears player1Graveyard = new GrizzlyBears();
-        GrizzlyBears player2Target = new GrizzlyBears();
+        Gristleback player1Graveyard = new Gristleback();
+        Gristleback player2Target = new Gristleback();
         harness.setGraveyard(player1, List.of(player1Graveyard));
         harness.setGraveyard(player2, List.of(player2Target));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -58,16 +75,16 @@ class MoratoriumStoneTest extends BaseCardTest {
         assertThat(harness.getGameData().getPlayerExiledCards(player2.getId()))
                 .containsExactlyInAnyOrder(player2Target, player2Permanent);
         harness.assertInGraveyard(player1, "Moratorium Stone");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Gristleback");
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
-                .containsExactly("Plains");
+                .containsExactly("Godless Shrine");
     }
 
     @Test
     void secondAbilityCannotTargetALandCard() {
         harness.addToBattlefield(player1, new MoratoriumStone());
-        Plains target = new Plains();
+        GodlessShrine target = new GodlessShrine();
         harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);

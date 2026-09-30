@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,26 +13,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Vacuumelt.class, GrizzlyBears.class})
+@CardUsed({Vacuumelt.class, GhostWarden.class})
 class VacuumeltTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns the target creature to its owner's hand")
     void returnsTargetCreatureToHand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
         castVacuumelt(target, List.of());
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Ghost Warden");
+        harness.assertInHand(player2, "Ghost Warden");
     }
 
     @Test
     @DisplayName("Replicate creates a copy that may target another creature")
     void replicateCopyMayTargetAnotherCreature() {
-        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent copyTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
         castVacuumelt(originalTarget, List.of("{2}{U}"));
 
         harness.passBothPriorities();
@@ -42,15 +42,39 @@ class VacuumeltTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Ghost Warden");
+        harness.assertNotOnBattlefield(player2, "Ghost Warden");
+        harness.assertInHand(player1, "Ghost Warden");
+        harness.assertInHand(player2, "Ghost Warden");
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature")
-    void cannotTargetNoncreature() {
+    @DisplayName("Replicate creates one copy for each replicate payment")
+    void replicateCreatesOneCopyForEachPayment() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        Permanent firstCopyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        Permanent secondCopyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        castVacuumelt(originalTarget, List.of("{2}{U}", "{2}{U}"));
+
+        harness.passBothPriorities();
+        assertThat(gd.pendingMayAbilities).hasSize(2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstCopyTarget.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, secondCopyTarget.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ghost Warden");
+        harness.assertNotOnBattlefield(player2, "Ghost Warden");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Ghost Warden"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
         harness.setHand(player1, List.of(new Vacuumelt()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

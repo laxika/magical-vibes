@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
 import com.github.laxika.magicalvibes.cards.v.VolcanicDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SavageTwister.class, FeralShadow.class, TalruumMinotaur.class, VolcanicDragon.class})
+@CardUsed({SavageTwister.class, FeralShadow.class, Mountain.class, TalruumMinotaur.class, VolcanicDragon.class})
 class SavageTwisterTest extends BaseCardTest {
 
     private void castTwister(int xValue) {
@@ -43,6 +44,16 @@ class SavageTwisterTest extends BaseCardTest {
         castTwister(4);
 
         harness.assertNotOnBattlefield(player2, "Volcanic Dragon");
+    }
+
+    @Test
+    @DisplayName("Savage Twister does not damage noncreature permanents")
+    void doesNotDamageNoncreaturePermanents() {
+        harness.addToBattlefield(player2, new Mountain());
+
+        castTwister(3);
+
+        harness.assertOnBattlefield(player2, "Mountain");
     }
 
     @Test

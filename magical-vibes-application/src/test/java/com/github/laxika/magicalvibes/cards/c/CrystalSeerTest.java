@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,8 +22,7 @@ class CrystalSeerTest extends BaseCardTest {
     void resolvingTriggersTopFourReorder() {
         castCrystalSeer();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -35,41 +33,85 @@ class CrystalSeerTest extends BaseCardTest {
     @Test
     @DisplayName("Crystal Seer reorder changes the top four cards of its controller's library")
     void reorderChangesTopCards() {
+        Card originalTop0 = new CrystalSeer();
+        Card originalTop1 = new CrystalSeer();
+        Card originalTop2 = new CrystalSeer();
+        Card originalTop3 = new CrystalSeer();
+        Card untouched = new CrystalSeer();
+        harness.setLibrary(player1, List.of(originalTop0, originalTop1, originalTop2, originalTop3, untouched));
         castCrystalSeer();
 
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        Card originalTop0 = deck.get(0);
-        Card originalTop1 = deck.get(1);
-        Card originalTop2 = deck.get(2);
-        Card originalTop3 = deck.get(3);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
-        assertThat(deck).containsSubsequence(originalTop3, originalTop2, originalTop1, originalTop0);
+        assertThat(deck).containsExactly(originalTop3, originalTop2, originalTop1, originalTop0, untouched);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Crystal Seer can return itself to its owner's hand")
-    void returnsItselfToHand() {
-        Permanent seer = harness.addToBattlefieldAndReturn(player1, new CrystalSeer());
+    @DisplayName("Crystal Seer reorders all available cards when its library has fewer than four")
+    void reordersAllAvailableCardsInShortLibrary() {
+        Card first = new CrystalSeer();
+        Card second = new CrystalSeer();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castCrystalSeer();
+        resolveAllTriggers();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    @DisplayName("Crystal Seer returns itself to its owner's hand when its ability resolves")
+    void returnsItselfToHandWhenAbilityResolves() {
+        harness.addToBattlefieldAndReturn(player1, new CrystalSeer());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(seer);
+        harness.assertOnBattlefield(player1, "Crystal Seer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crystal Seer");
         harness.assertInHand(player1, "Crystal Seer");
     }
 
+    @Test
+    @DisplayName("Crystal Seer returns to its owner's hand when controlled by another player")
+    void returnsToOwnersHandWhenControlledByAnotherPlayer() {
+        CrystalSeer seerCard = new CrystalSeer();
+        seerCard.setOwnerId(player1.getId());
+        harness.addToBattlefieldAndReturn(player2, seerCard);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        harness.assertOnBattlefield(player2, "Crystal Seer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Crystal Seer");
+        harness.assertInHand(player1, "Crystal Seer");
+        harness.assertNotInHand(player2, "Crystal Seer");
+    }
+
     private void castCrystalSeer() {
-        harness.setHand(player1, List.of(new CrystalSeer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CrystalSeer(), "{4}{U}");
     }
 }
