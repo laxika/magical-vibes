@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FCA", collectorNumber = "21")
 @CardRegistration(set = "SOA", collectorNumber = "1")
+@CardRegistration(set = "M3C", collectorNumber = "165")
 @CardRegistration(set = "LCC", collectorNumber = "125")
 public class AkromasWill extends Card {
 

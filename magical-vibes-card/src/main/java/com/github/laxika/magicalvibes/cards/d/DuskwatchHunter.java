@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOB", collectorNumber = "153")
+@CardRegistration(set = "HOC", collectorNumber = "153")
 public class DuskwatchHunter extends Card {
 
     public DuskwatchHunter() {

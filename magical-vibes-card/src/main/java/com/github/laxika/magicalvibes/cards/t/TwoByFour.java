@@ -16,6 +16,7 @@ import java.util.List;
 public class TwoByFour extends Card {
 
     public TwoByFour() {
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a base power 4 counter on target creature",

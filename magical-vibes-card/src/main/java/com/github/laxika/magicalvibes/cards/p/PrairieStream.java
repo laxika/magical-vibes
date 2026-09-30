@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "LTC", collectorNumber = "324")
 @CardRegistration(set = "MSC", collectorNumber = "257")
 @CardRegistration(set = "MSC", collectorNumber = "485")
+@CardRegistration(set = "M3C", collectorNumber = "365")
 @CardRegistration(set = "MKC", collectorNumber = "281")
 @CardRegistration(set = "AFC", collectorNumber = "256")
 @CardRegistration(set = "C20", collectorNumber = "299")

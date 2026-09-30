@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayExiledCostCardThisTu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /** Grants the ability controller permission to play the card exiled to pay that ability. */
 @Component
 public class AllowPlayExiledCostCardThisTurnEffectHandler implements NormalEffectHandlerBean {
@@ -17,11 +19,15 @@ public class AllowPlayExiledCostCardThisTurnEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getExiledCostCardSnapshot() == null
-                || gameData.findExiledCard(entry.getExiledCostCardSnapshot().getId()) == null) {
+        UUID exiledCardId = entry.getExiledCostCardSnapshot() != null
+                ? entry.getExiledCostCardSnapshot().getId()
+                : entry.getActivatedAbilityExiledCardIds().size() == 1
+                ? entry.getActivatedAbilityExiledCardIds().getFirst()
+                : null;
+        if (exiledCardId == null || gameData.findExiledCard(exiledCardId) == null) {
             return;
         }
-        gameData.exilePlayPermissions.put(entry.getExiledCostCardSnapshot().getId(), entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(entry.getExiledCostCardSnapshot().getId());
+        gameData.exilePlayPermissions.put(exiledCardId, entry.getControllerId());
+        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledCardId);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -66,6 +67,26 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
             }
             addPerpetualKeywords(gameData, card.getId(), perpetual.keywords());
             addPerpetualTriggeredAbility(gameData, card.getId(), perpetual);
+        }
+
+        applyToCardsInZone(gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()),
+                perpetual.graveyardFilter(), gameData, entry, perpetual);
+        applyToCardsInZone(gameData.playerDecks.getOrDefault(entry.getControllerId(), List.of()),
+                perpetual.libraryFilter(), gameData, entry, perpetual);
+    }
+
+    private void applyToCardsInZone(List<Card> cards, CardPredicate filter,
+                                    GameData gameData, StackEntry entry,
+                                    PerpetuallyGrantKeywordToMatchingCardsEffect effect) {
+        if (filter == null) {
+            return;
+        }
+        for (Card card : cards) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    card, filter, null, gameData, entry.getControllerId())) {
+                addPerpetualKeywords(gameData, card.getId(), effect.keywords());
+                addPerpetualTriggeredAbility(gameData, card.getId(), effect);
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "STX", collectorNumber = "271")
 @CardRegistration(set = "SOC", collectorNumber = "395")
 @CardRegistration(set = "DSC", collectorNumber = "294")
+@CardRegistration(set = "M3C", collectorNumber = "366")
 public class QuandrixCampus extends Card {
 
     public QuandrixCampus() {

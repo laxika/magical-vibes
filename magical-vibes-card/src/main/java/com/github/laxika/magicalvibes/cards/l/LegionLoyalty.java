@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 
 @CardRegistration(set = "TDC", collectorNumber = "122")
+@CardRegistration(set = "M3C", collectorNumber = "171")
 public class LegionLoyalty extends Card {
 
     public LegionLoyalty() {

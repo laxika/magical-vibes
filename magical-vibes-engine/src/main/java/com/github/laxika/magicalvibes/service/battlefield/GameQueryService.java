@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.LifePaymentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenPlayerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageSourceExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
@@ -230,10 +231,10 @@ import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnergyCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
@@ -359,6 +360,7 @@ public class GameQueryService {
             CardSubtype.POWER_PLANT,
             CardSubtype.TOWER,
             CardSubtype.AURA,
+            CardSubtype.ARCANE,
             CardSubtype.PLAN,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
@@ -1104,11 +1106,7 @@ public class GameQueryService {
             CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
             CardSubtype.MOUNTAIN, CardSubtype.FOREST);
 
-    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
-            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
-            CardSubtype.MOUNTAIN, CardSubtype.FOREST, CardSubtype.DESERT,
-            CardSubtype.LAIR, CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.SPHERE,
-            CardSubtype.ULAMOGS);
+    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.copyOf(CardSubtype.landTypes());
 
     /**
      * The effective basic land types (Plains/Island/Swamp/Mountain/Forest) of a permanent,
@@ -1316,7 +1314,8 @@ public class GameQueryService {
                         result.add(chosen);
                     }
                 } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                        && grant.scope() != GrantScope.SELF) {
+                        && grant.scope() != GrantScope.SELF
+                        && grant.filter() == null) {
                     for (CardSubtype subtype : CardSubtype.values()) {
                         if (isCreatureSubtype(subtype) && !result.contains(subtype)) {
                             result.add(subtype);
@@ -1594,8 +1593,13 @@ public class GameQueryService {
         return Optional.empty();
     }
 
-    /** Returns the evoke alternate cast granted to a matching permanent spell by a permanent its controller controls. */
+    /** Returns the Evoke alternate cast granted to a matching card by its perpetual or battlefield grants. */
     public Optional<AlternateHandCast> findGrantedEvokeAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<AlternateHandCast> perpetual = card == null
+                ? null : gameData.perpetualEvokeAlternateCasts.get(card.getId());
+        if (perpetual != null && !perpetual.isEmpty()) {
+            return Optional.of(perpetual.getFirst());
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || card == null || card.isToken()) {
             return Optional.empty();
@@ -2228,7 +2232,14 @@ public class GameQueryService {
 
     /** Returns a graveyard card's effects in the given slot, respecting global ability loss. */
     public List<CardEffect> getEffectiveGraveyardEffects(GameData gameData, Card card, EffectSlot slot) {
-        return graveyardCardsHaveLostAllAbilities(gameData) ? List.of() : card.getEffects(slot);
+        if (graveyardCardsHaveLostAllAbilities(gameData)) {
+            return List.of();
+        }
+        List<CardEffect> effects = new ArrayList<>(card.getEffects(slot));
+        effects.addAll(gameData.perpetualTriggeredAbilityGrants
+                .getOrDefault(card.getId(), Map.of())
+                .getOrDefault(slot, List.of()));
+        return List.copyOf(effects);
     }
 
     /**
@@ -3484,13 +3495,19 @@ public class GameQueryService {
     /** Returns the current power of a non-battlefield card, including temporary graveyard changes. */
     public Integer getEffectiveCardPower(GameData gameData, Card card) {
         GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
-        return animation == null ? card.getPower() : animation.power();
+        if (animation == null) {
+            return card.getPower();
+        }
+        return animation.power();
     }
 
     /** Returns the current toughness of a non-battlefield card, including temporary graveyard changes. */
     public Integer getEffectiveCardToughness(GameData gameData, Card card) {
         GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
-        return animation == null ? card.getToughness() : animation.toughness();
+        if (animation == null) {
+            return card.getToughness();
+        }
+        return animation.toughness();
     }
 
     private UUID findNonBattlefieldCardOwner(GameData gameData, Card card) {
@@ -4378,7 +4395,24 @@ public class GameQueryService {
 
     /** Applies all energy-counter replacements for a player. */
     public int replaceEnergyCounters(GameData gameData, UUID playerId, int count) {
-        return replacePlayerCounters(gameData, playerId, count);
+        if (count <= 0 || playerId == null) {
+            return count;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return count;
+        }
+        int result = count;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : staticEffectsIncludingTemporary(
+                    gameData, permanent, playerId)) {
+                if (effect instanceof EnergyCounterReplacementEffect replacement) {
+                    result = MaroGoneNutsSupport.apply(
+                            gameData, effect, replacement.replaceEnergy(result));
+                }
+            }
+        }
+        return result;
     }
 
     private int replacePlayerCounters(GameData gameData, UUID playerId, int count) {
@@ -9504,6 +9538,10 @@ public class GameQueryService {
                 } else if (sourceControllerId != null
                         && effect instanceof ChosenPlayersDamageMultiplyingEffect multiplyingEffect
                         && multiplyingEffect.appliesTo(sourceControllerId, recipientPlayerId, p)) {
+                    multiplier[0] *= MaroGoneNutsSupport.apply(
+                            gameData, effect, multiplyingEffect.damageMultiplier());
+                } else if (effect instanceof ChosenPlayerRecipientDamageMultiplyingEffect multiplyingEffect
+                        && multiplyingEffect.appliesTo(recipientPlayerId, p)) {
                     multiplier[0] *= MaroGoneNutsSupport.apply(
                             gameData, effect, multiplyingEffect.damageMultiplier());
                 }

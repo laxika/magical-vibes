@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
@@ -1047,6 +1048,15 @@ public class GameViewProjectionFactory {
                     .alternateCostManaCost(grantedBlitz.get().getCost(ManaCastingCost.class)
                             .map(ManaCastingCost::manaCost)
                             .orElse(null))
+                    .build();
+        }
+        var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+        if (grantedEvoke.isPresent()) {
+            var exileHandCost = grantedEvoke.get().getCost(ExileCardsFromHandCastingCost.class);
+            return view.toBuilder()
+                    .hasAlternateCastingCost(true)
+                    .alternateCostExileHandCount(exileHandCost.map(ExileCardsFromHandCastingCost::count).orElse(0))
+                    .alternateCostExileHandLabel(exileHandCost.map(ExileCardsFromHandCastingCost::label).orElse(null))
                     .build();
         }
         WebSlingingEffect webSlinging = castingCostService.findWebSlingingEffectFromBattlefield(

@@ -32,8 +32,10 @@ class BellBorcaSpectralSergeantTest extends BaseCardTest {
         Card low = cardWithManaCost("Low", "{2}");
         Card high = cardWithManaCost("High", "{5}");
 
-        gd.addToExile(player2.getId(), low);
-        gd.addToExile(player1.getId(), high);
+        harness.inMutationScope(() -> {
+            gd.addToExile(player2.getId(), low);
+            gd.addToExile(player1.getId(), high);
+        });
 
         assertThat(gqs.getEffectivePower(gd, bell)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bell)).isEqualTo(5);

@@ -23,6 +23,7 @@ class NyssaOfTrakenTest extends BaseCardTest {
         Permanent firstTarget = addCreatureReady(player2, new GrizzlyBears());
         Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        gd.playerHands.get(player1.getId()).clear();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(nyssa)));
         resolveAllTriggers();
@@ -53,15 +54,14 @@ class NyssaOfTrakenTest extends BaseCardTest {
     @Test
     void sacrificingNoArtifactsDoesNotCreateReflexiveAbility() {
         Permanent nyssa = addCreatureReady(player1, new NyssaOfTraken());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.playerHands.get(player1.getId()).clear();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(nyssa)));
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

@@ -36,12 +36,13 @@ class OKagachiVengefulKamiTest extends BaseCardTest {
         resolveCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(target.getId(), attacker.getId())
                 .doesNotContain(land.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Astral Slide");
         assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getName().equals("Astral Slide"));

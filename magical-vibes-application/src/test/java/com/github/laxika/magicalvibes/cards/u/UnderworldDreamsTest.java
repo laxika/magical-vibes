@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UnderworldDreamsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
         harness.passUntil(activePlayer, TurnStep.DRAW);

@@ -277,6 +277,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.recordSacrificedCount()) {
+            entry.setEventValue(0);
+        }
+
         // Per CR 101.4 and the Destructive Force ruling (2010-08-15): active player chooses first,
         // then each other player in turn order, then all chosen permanents are sacrificed at the
         // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
@@ -331,10 +335,14 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (choosers.isEmpty()) {
             // All players auto-resolved — sacrifice everything now
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(autoSacrificeIds.size());
+            }
         } else {
             // Some players need to choose — begin the first prompt
             destructionSupport.beginNextForcedSacrificeFromQueue(
-                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices());
+                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices(), null,
+                    e.recordSacrificedCount());
         }
     }
 

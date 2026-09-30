@@ -72,7 +72,7 @@ class MariposaMilitaryBaseTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -88,7 +88,7 @@ class MariposaMilitaryBaseTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }

@@ -109,8 +109,8 @@ class ElvishPiperTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player1, "Giant Badger");
-        assertThat(findPermanent(player1, "Giant Badger").isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

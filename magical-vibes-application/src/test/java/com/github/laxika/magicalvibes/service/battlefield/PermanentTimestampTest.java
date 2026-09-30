@@ -141,6 +141,7 @@ class PermanentTimestampTest {
             when(gameQueryService.findPermanentById(gd, equipment.getId())).thenReturn(equipment);
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
             when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
+            when(gameQueryService.hasEffectiveSubtype(gd, equipment, CardSubtype.EQUIPMENT)).thenReturn(true);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             handler.resolve(gd, entry, new AttachTargetToSourcePermanentEffect());
 

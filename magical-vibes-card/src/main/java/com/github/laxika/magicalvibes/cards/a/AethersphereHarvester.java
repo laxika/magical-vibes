@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "142")
 @CardRegistration(set = "KLR", collectorNumber = "218")
+@CardRegistration(set = "M3C", collectorNumber = "280")
 public class AethersphereHarvester extends Card {
 
     public AethersphereHarvester() {

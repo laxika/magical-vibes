@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatExcessDamageAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -557,7 +558,8 @@ public class CombatDamageService {
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures,
-                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureEffects);
+                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureEffects,
+                state, damagedCreatureSnapshots);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -2212,6 +2214,9 @@ public class CombatDamageService {
                                 triggerTargetId,
                                 sourcePermanentId
                         );
+                        if (creature.getId().equals(sourcePermanentId)) {
+                            se.setSourcePermanentSnapshot(new Permanent(creature));
+                        }
                         for (CardEffect effect : effects) {
                             setCombatDamageEventValue(se, effect, damageDealt);
                         }
@@ -2511,6 +2516,9 @@ public class CombatDamageService {
         // control deals combat damage to a player, if this card is in your graveyard, you may return
         // this card to your hand." The stack entry's source is the graveyard card itself.
         if (battleDamage) return;
+        checkGraveyardAllyCreatureCombatDamageTriggers(gameData, creature, attackerId,
+                EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                firedBatchedAllyTriggerSources);
         List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
         if (graveyard == null) return;
         for (Card card : new ArrayList<>(graveyard)) {
@@ -2912,7 +2920,14 @@ public class CombatDamageService {
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                                         Map<Permanent, UUID> combatDamageDealerControllers,
                                                         Map<UUID, UUID> combatDamageTargetControllers,
-                                                        Map<Permanent, List<CardEffect>> damageToCreatureEffects) {
+                                                        Map<Permanent, List<CardEffect>> damageToCreatureEffects,
+                                                        CombatDamageState state,
+                                                        Map<UUID, Permanent> damagedCreatureSnapshots) {
+        Map<UUID, Integer> damageByCreature = new HashMap<>();
+        for (Map<UUID, Integer> damageAmounts : state.combatDamageAmountsToCreatures.values()) {
+            damageAmounts.forEach((creatureId, amount) -> damageByCreature.merge(creatureId, amount, Integer::sum));
+        }
+
         for (var entry : combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
             UUID controllerId = combatDamageDealerControllers.get(source);
@@ -2922,7 +2937,13 @@ public class CombatDamageService {
             if (effects.isEmpty()) continue;
 
             for (UUID damagedCreatureId : entry.getValue()) {
+                int excessDamage = combatExcessDamage(gameData, state, damagedCreatureId,
+                        damagedCreatureSnapshots.get(damagedCreatureId),
+                        damageByCreature.getOrDefault(damagedCreatureId, 0));
                 for (CardEffect effect : effects) {
+                    if (effect instanceof CombatExcessDamageAwareEffect && excessDamage <= 0) {
+                        continue;
+                    }
                     // Damaged creature is the fixed "that creature" — bake it as targetId, no choice.
                     StackEntry trigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -2937,11 +2958,30 @@ public class CombatDamageService {
                     trigger.setTriggeringPermanentId(damagedCreatureId);
                     trigger.setTriggeringPermanentControllerId(combatDamageTargetControllers.get(damagedCreatureId));
                     trigger.setNonTargeting(true);
+                    if (effect instanceof CombatExcessDamageAwareEffect) {
+                        trigger.setEventValue(excessDamage);
+                    }
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
             }
         }
+    }
+
+    private int combatExcessDamage(GameData gameData, CombatDamageState state, UUID damagedCreatureId,
+                                   Permanent damagedCreatureSnapshot, int damage) {
+        if (damage <= 0) {
+            return 0;
+        }
+        int markedDamageBefore = state.markedDamageBeforeStep.getOrDefault(damagedCreatureId, 0);
+        int lethalDamage = damagedCreatureSnapshot != null && damagedCreatureSnapshot.isDamagedByDeathtouch()
+                ? 1
+                : Math.max(0, state.lethalDamageThresholdBeforeStep.getOrDefault(damagedCreatureId,
+                        damagedCreatureSnapshot == null
+                                ? 0
+                                : gameQueryService.getLethalDamageThreshold(gameData, damagedCreatureSnapshot))
+                        - markedDamageBefore);
+        return Math.max(0, damage - lethalDamage);
     }
 
     private void processCombatDamageToBlockingCreatureTriggers(GameData gameData, CombatDamageState state) {
@@ -3139,12 +3179,50 @@ public class CombatDamageService {
         }
     }
 
+    private void checkGraveyardAllyCreatureCombatDamageTriggers(GameData gameData, Permanent creature,
+                                                                 UUID attackerId, EffectSlot slot,
+                                                                 Set<UUID> firedBatchedAllyTriggerSources) {
+        List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
+        if (graveyard == null) return;
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(gameData, card, slot)) {
+                if (!(effect instanceof AllyCombatDamageTriggerEffect trigger)) {
+                    continue;
+                }
+                if (trigger.dealerPredicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
+                        trigger.dealerPredicate())) {
+                    continue;
+                }
+                if (trigger.oncePerDamageStep() && !firedBatchedAllyTriggerSources.add(card.getId())) {
+                    continue;
+                }
+                StackEntry stackEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        attackerId,
+                        card.getName() + "'s graveyard trigger",
+                        List.of(trigger.effect()));
+                stackEntry.setNonTargeting(true);
+                gameData.stack.add(stackEntry);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        "'s graveyard trigger goes on the stack."));
+            }
+        }
+    }
+
     private void processAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, CombatDamageState state) {
+        Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
         for (var entry : state.combatDamageAmountsToPlaneswalkers.entrySet()) {
             Permanent source = entry.getKey();
             UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
             if (sourceControllerId == null) continue;
             for (var amountEntry : entry.getValue().entrySet()) {
+                if (amountEntry.getValue() > 0) {
+                    checkGraveyardAllyCreatureCombatDamageTriggers(gameData, source, sourceControllerId,
+                            EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                            firedBatchedAllyTriggerSources);
+                }
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                         gameData, source, sourceControllerId, amountEntry.getKey(), amountEntry.getValue(), true,
                         state.allyCreatureDealsDamageToPlaneswalkerTriggers);

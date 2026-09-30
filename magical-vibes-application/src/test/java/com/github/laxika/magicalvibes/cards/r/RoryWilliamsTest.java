@@ -17,11 +17,14 @@ class RoryWilliamsTest extends BaseCardTest {
     void partnerWithAmyLetsTargetPlayerSearchTheirLibrary() {
         AmyPond amy = new AmyPond();
         harness.setLibrary(player2, List.of(amy));
-        harness.setHand(player1, List.of(new RoryWilliams()));
+        RoryWilliams rory = new RoryWilliams();
+        harness.setExile(player1, List.of(rory));
+        gd.exilePlayPermissions.put(rory.getId(), player1.getId());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0, player2.getId());
+        harness.castFromExile(player1, rory.getId(), player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
@@ -41,7 +44,9 @@ class RoryWilliamsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rory);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(rory.getId(), 3);
+        assertThat(gd.suspendedSpellExiles).contains(
+                new com.github.laxika.magicalvibes.model.GameData.SuspendedSpellExile(
+                        rory.getId(), player1.getId(), 3));
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
@@ -50,7 +55,11 @@ class RoryWilliamsTest extends BaseCardTest {
     void castingFromExileDoesNotExileAgainOrInvestigate() {
         RoryWilliams rory = new RoryWilliams();
         harness.setExile(player1, List.of(rory));
+        gd.exilePlayPermissions.put(rory.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, rory.getId(), player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);

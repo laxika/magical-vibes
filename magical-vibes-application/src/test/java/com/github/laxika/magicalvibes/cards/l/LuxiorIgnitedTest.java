@@ -69,8 +69,8 @@ class LuxiorIgnitedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(luxior.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
 
@@ -78,8 +78,8 @@ class LuxiorIgnitedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 

@@ -44,7 +44,7 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4));
+        harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");

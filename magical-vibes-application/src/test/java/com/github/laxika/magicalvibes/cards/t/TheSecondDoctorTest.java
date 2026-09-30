@@ -41,15 +41,18 @@ class TheSecondDoctorTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player2, 1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleXValueChosen(player1, 1);
+            harness.handleXValueChosen(player2, 1);
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

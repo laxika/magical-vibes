@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MH2", collectorNumber = "93")
+@CardRegistration(set = "M3C", collectorNumber = "202")
 public class Necrogoyf extends Card {
 
     public Necrogoyf() {

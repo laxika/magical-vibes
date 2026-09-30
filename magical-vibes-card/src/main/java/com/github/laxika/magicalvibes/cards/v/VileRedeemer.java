@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "125")
+@CardRegistration(set = "M3C", collectorNumber = "251")
 public class VileRedeemer extends Card {
 
     private static final CreateTokenEffect SCION_TOKEN = new CreateTokenEffect(
