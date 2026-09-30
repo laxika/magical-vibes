@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DuskImp;
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
+import com.github.laxika.magicalvibes.cards.c.ChillingShade;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhobianPhantasm.class, CloudSprite.class, DuskImp.class})
+@CardUsed({PhobianPhantasm.class, BorealGriffin.class, ChillingShade.class, Ornithopter.class})
 class PhobianPhantasmTest extends BaseCardTest {
 
     @Test
@@ -37,6 +38,28 @@ class PhobianPhantasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep costs one black mana per age counter")
+    void cumulativeUpkeepScalesWithAgeCounters() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player1, new PhobianPhantasm());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(phantasm.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(phantasm);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Phobian Phantasm")
     void declineSacrifices() {
         Permanent phantasm = harness.addToBattlefieldAndReturn(player1, new PhobianPhantasm());
@@ -52,12 +75,11 @@ class PhobianPhantasmTest extends BaseCardTest {
     @Test
     @DisplayName("Fear prevents non-black creatures from blocking Phobian Phantasm")
     void fearPreventsNonBlackBlockers() {
-        Permanent phantasm = addCreatureReady(player1, new PhobianPhantasm());
-        phantasm.setAttacking(true);
+        addCreatureReady(player1, new PhobianPhantasm());
 
-        addCreatureReady(player2, new CloudSprite());
+        addCreatureReady(player2, new BorealGriffin());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,12 +89,25 @@ class PhobianPhantasmTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows black creatures to block Phobian Phantasm")
     void fearAllowsBlackBlockers() {
-        Permanent phantasm = addCreatureReady(player1, new PhobianPhantasm());
-        phantasm.setAttacking(true);
+        addCreatureReady(player1, new PhobianPhantasm());
 
-        addCreatureReady(player2, new DuskImp());
+        addCreatureReady(player2, new ChillingShade());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("declares 1 blocker"));
+    }
+
+    @Test
+    @DisplayName("Fear allows artifact creatures to block Phobian Phantasm")
+    void fearAllowsArtifactBlockers() {
+        addCreatureReady(player1, new PhobianPhantasm());
+
+        addCreatureReady(player2, new Ornithopter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))

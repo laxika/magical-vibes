@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KnightOfStromgald;
-import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.c.ChillToTheBone;
+import com.github.laxika.magicalvibes.cards.w.WhiteShieldCrusader;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HaakonStromgaldScourge.class, KnightOfStromgald.class, GrizzlyBears.class, Murder.class})
+@CardUsed({HaakonStromgaldScourge.class, WhiteShieldCrusader.class, BorealDruid.class,
+        ChillToTheBone.class})
 class HaakonStromgaldScourgeTest extends BaseCardTest {
 
     @Test
@@ -45,23 +46,46 @@ class HaakonStromgaldScourgeTest extends BaseCardTest {
     @DisplayName("Allows Knight spells to be cast from the controller's graveyard")
     void allowsKnightSpellsFromGraveyard() {
         harness.addToBattlefield(player1, new HaakonStromgaldScourge());
-        harness.setGraveyard(player1, List.of(new KnightOfStromgald()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setGraveyard(player1, List.of(new WhiteShieldCrusader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Knight of Stromgald");
+        harness.assertOnBattlefield(player1, "White Shield Crusader");
     }
 
     @Test
     @DisplayName("Does not allow non-Knight spells to be cast from the graveyard")
     void doesNotAllowNonKnightSpellsFromGraveyard() {
         harness.addToBattlefield(player1, new HaakonStromgaldScourge());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setGraveyard(player1, List.of(new BorealDruid()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card cannot be cast from graveyard");
+    }
+
+    @Test
+    @DisplayName("Does not allow Knight spells from the graveyard without Haakon")
+    void doesNotAllowKnightSpellsFromGraveyardWithoutHaakon() {
+        harness.setGraveyard(player1, List.of(new WhiteShieldCrusader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card cannot be cast from graveyard");
+    }
+
+    @Test
+    @DisplayName("Does not grant the opponent permission to cast Knight spells from their graveyard")
+    void doesNotAllowOpponentToCastKnightSpellsFromTheirGraveyard() {
+        harness.addToBattlefield(player1, new HaakonStromgaldScourge());
+        harness.setGraveyard(player2, List.of(new WhiteShieldCrusader()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Card cannot be cast from graveyard");
     }
@@ -70,11 +94,10 @@ class HaakonStromgaldScourgeTest extends BaseCardTest {
     @DisplayName("Controller loses 2 life when Haakon dies")
     void controllerLosesLifeWhenHaakonDies() {
         Permanent haakon = harness.addToBattlefieldAndReturn(player1, new HaakonStromgaldScourge());
-        harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.setHand(player2, List.of(new ChillToTheBone()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
 
-        harness.castInstant(player2, 0, haakon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, haakon.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);

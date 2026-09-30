@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KjeldoranJavelineer.class, KjeldoranOutrider.class})
 class KjeldoranJavelineerTest extends BaseCardTest {
 
     @Test
@@ -26,6 +27,20 @@ class KjeldoranJavelineerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(javelineer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deals no damage when it has no age counters")
+    void dealsNoDamageWithoutAgeCounters() {
+        Permanent javelineer = addReadyJavelineer();
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(javelineer.isTapped()).isTrue();
     }
 
     @Test
@@ -50,6 +65,20 @@ class KjeldoranJavelineerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, idle.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking");
+    }
+
+    @Test
+    @DisplayName("Does not deal damage if the target stops attacking before resolution")
+    void targetMustStillBeAttackingAtResolution() {
+        addReadyJavelineer();
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
     @Test
@@ -87,7 +116,7 @@ class KjeldoranJavelineerTest extends BaseCardTest {
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {
-        Permanent creature = addCreatureReady(player, new HillGiant());
+        Permanent creature = addCreatureReady(player, new KjeldoranOutrider());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
         if (attacking) {
