@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "110")
+@CardRegistration(set = "HOC", collectorNumber = "110")
 public class SmaugTheMagnificent extends Card {
 
     public SmaugTheMagnificent() {

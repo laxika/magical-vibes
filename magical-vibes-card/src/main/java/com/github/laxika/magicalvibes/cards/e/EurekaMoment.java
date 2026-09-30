@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "STX", collectorNumber = "184")
 @CardRegistration(set = "SOC", collectorNumber = "308")
 @CardRegistration(set = "DSC", collectorNumber = "216")
+@CardRegistration(set = "M3C", collectorNumber = "260")
 public class EurekaMoment extends Card {
 
     public EurekaMoment() {

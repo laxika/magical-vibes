@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "42")
+@CardRegistration(set = "C19", collectorNumber = "72")
 public class RayOfDistortion extends Card {
 
     public RayOfDistortion() {

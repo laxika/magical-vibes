@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "RNA", collectorNumber = "123")
 @CardRegistration(set = "FDN", collectorNumber = "553")
 @CardRegistration(set = "2X2", collectorNumber = "137")
+@CardRegistration(set = "MIC", collectorNumber = "135")
 public class BiogenicUpgrade extends Card {
 
     public BiogenicUpgrade() {

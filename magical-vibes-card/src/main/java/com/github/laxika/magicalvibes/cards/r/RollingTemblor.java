@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "161")
 @CardRegistration(set = "UMA", collectorNumber = "145")
+@CardRegistration(set = "C19", collectorNumber = "151")
 public class RollingTemblor extends Card {
 
     public RollingTemblor() {

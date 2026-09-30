@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "206")
+@CardRegistration(set = "NEC", collectorNumber = "135")
 public class ArcanistsOwl extends Card {
 
     public ArcanistsOwl() {

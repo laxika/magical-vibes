@@ -27,6 +27,7 @@ class FeralGhoulTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -40,6 +41,7 @@ class FeralGhoulTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, ghoul.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerRadCounters.get(player1.getId())).isNull();
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);

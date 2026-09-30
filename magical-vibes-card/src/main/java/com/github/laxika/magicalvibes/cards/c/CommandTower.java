@@ -50,16 +50,20 @@ import java.util.List;
 @CardRegistration(set = "MB2", collectorNumber = "256")
 @CardRegistration(set = "C21", collectorNumber = "284")
 @CardRegistration(set = "C20", collectorNumber = "264")
+@CardRegistration(set = "C19", collectorNumber = "237")
 @CardRegistration(set = "40K", collectorNumber = "270")
 @CardRegistration(set = "40K", collectorNumber = "271")
 @CardRegistration(set = "40K", collectorNumber = "272")
 @CardRegistration(set = "DSC", collectorNumber = "96")
 @CardRegistration(set = "LTC", collectorNumber = "301")
 @CardRegistration(set = "TDC", collectorNumber = "107")
+@CardRegistration(set = "M3C", collectorNumber = "331")
 @CardRegistration(set = "MKC", collectorNumber = "256")
 @CardRegistration(set = "AFC", collectorNumber = "230")
 @CardRegistration(set = "OTC", collectorNumber = "280")
 @CardRegistration(set = "LCC", collectorNumber = "325")
+@CardRegistration(set = "MIC", collectorNumber = "170")
+@CardRegistration(set = "NEC", collectorNumber = "167")
 public class CommandTower extends Card {
 
     public CommandTower() {

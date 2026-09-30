@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "208")
+@CardRegistration(set = "C19", collectorNumber = "40")
 public class ElshaOfTheInfinite extends Card {
 
     public ElshaOfTheInfinite() {

@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "6")
 @CardRegistration(set = "C21", collectorNumber = "82")
+@CardRegistration(set = "C19", collectorNumber = "60")
 public class DesolationTwin extends Card {
 
     public DesolationTwin() {

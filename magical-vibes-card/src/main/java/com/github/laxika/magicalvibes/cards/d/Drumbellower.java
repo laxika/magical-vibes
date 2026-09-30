@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "143")
+@CardRegistration(set = "NEC", collectorNumber = "6")
+@CardRegistration(set = "NEC", collectorNumber = "40")
 public class Drumbellower extends Card {
 
     public Drumbellower() {

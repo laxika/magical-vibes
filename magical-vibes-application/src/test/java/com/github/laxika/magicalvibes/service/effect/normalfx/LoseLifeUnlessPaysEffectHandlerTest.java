@@ -20,7 +20,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1, null);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -34,7 +34,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(5, 3, true);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -49,7 +49,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1, null);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
+                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 

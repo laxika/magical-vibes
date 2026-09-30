@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.AllButOneDamagePreventionEffe
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndDealThatMuchDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageAndSacrificeAttachedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfFromBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
@@ -525,6 +526,11 @@ public class DamagePreventionService {
             if (damage <= 0) return 0;
             if (gameQueryService.hasActiveStaticEffect(
                     gameData, permanent, PreventAllDamageEffect.class)) return 0;
+            if (gameQueryService.hasActiveStaticEffect(
+                    gameData, permanent, PreventDamageAndSacrificeAttachedEquipmentEffect.class)
+                    && preventDamageAndSacrificeAttachedEquipment(gameData, permanent)) {
+                return 0;
+            }
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(PreventDamageToSelfAndDealThatMuchDamageEffect.class::isInstance)) {
                 queuePhyrexianVindicatorTrigger(gameData, permanent, damage);
@@ -647,6 +653,32 @@ public class DamagePreventionService {
             return applyPermanentDamagePreventionShield(gameData, permanent, damage, isCombatDamage);
         }
         return damage;
+    }
+
+    private boolean preventDamageAndSacrificeAttachedEquipment(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+
+        List<Permanent> attachedEquipment = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (creature.getId().equals(permanent.getAttachedTo())
+                    && GameQueryService.permanentHasSubtype(permanent, CardSubtype.EQUIPMENT)) {
+                attachedEquipment.add(permanent);
+            }
+        });
+        if (attachedEquipment.isEmpty()) return false;
+
+        Permanent sacrificedEquipment = attachedEquipment.stream()
+                .filter(permanent -> controllerId.equals(gameQueryService.findPermanentController(
+                        gameData, permanent.getId())))
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                .findFirst()
+                .orElse(null);
+        if (sacrificedEquipment != null) {
+            destructionSupportProvider.getObject().sacrificeAndLog(gameData, sacrificedEquipment, controllerId);
+        }
+
+        return true;
     }
 
     public boolean consumeShieldCounter(GameData gameData, Permanent permanent) {

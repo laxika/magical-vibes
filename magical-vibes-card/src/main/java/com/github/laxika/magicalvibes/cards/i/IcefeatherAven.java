@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "178")
+@CardRegistration(set = "C19", collectorNumber = "194")
 public class IcefeatherAven extends Card {
 
     public IcefeatherAven() {

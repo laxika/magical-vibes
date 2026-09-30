@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureWithManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
@@ -723,6 +724,42 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CopySpellForAnotherOpponentPermanentEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCopySpellForAnotherOpponentPermanent(TriggerMatchContext match,
+            CopySpellForAnotherOpponentPermanentEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellSnapshot() != null) return false;
+
+        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
+        UUID originalTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
+        if (originalTargetId == null) return false;
+
+        Permanent originalTarget = gameQueryService.findPermanentById(match.gameData(), originalTargetId);
+        UUID originalTargetControllerId = gameQueryService.findPermanentController(
+                match.gameData(), originalTargetId);
+        if (originalTarget == null || originalTargetControllerId == null
+                || originalTargetControllerId.equals(match.controllerId())
+                || gameQueryService.isLand(match.gameData(), originalTarget)) {
+            return false;
+        }
+        if (!hasAnotherOpponentPermanentTarget(match.gameData(), spellEntry.getCard(),
+                sc.castingPlayerId(), match.controllerId(), originalTargetControllerId)) {
+            return false;
+        }
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CopySpellForAnotherOpponentPermanentEffect(
+                        new StackEntry(spellEntry), sc.castingPlayerId(), originalTargetId,
+                        originalTargetControllerId))));
+        match.gameData().stack.add(triggerEntry);
+        return true;
+    }
+
     @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherControlledCreature(TriggerMatchContext match,
@@ -827,6 +864,19 @@ public class SpellCastTriggerCollectorService {
         return gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of()).stream()
                 .anyMatch(permanent -> !permanent.getId().equals(originalTargetId)
                         && gameQueryService.isCreature(gameData, permanent)
+                && validTargetService.canPermanentBeTargetedBySpell(
+                                gameData, permanent, spellCard, castingPlayerId));
+    }
+
+    private boolean hasAnotherOpponentPermanentTarget(GameData gameData, Card spellCard,
+                                                       UUID castingPlayerId,
+                                                       UUID sourceControllerId,
+                                                       UUID originalTargetControllerId) {
+        return gameData.playerBattlefields.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(sourceControllerId)
+                        && !entry.getKey().equals(originalTargetControllerId))
+                .flatMap(entry -> entry.getValue().stream())
+                .anyMatch(permanent -> !gameQueryService.isLand(gameData, permanent)
                         && validTargetService.canPermanentBeTargetedBySpell(
                                 gameData, permanent, spellCard, castingPlayerId));
     }
@@ -1121,6 +1171,15 @@ public class SpellCastTriggerCollectorService {
 
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
+                sc.exiledSourcePermanentId());
+    }
+
+    @CollectsTrigger(value = SpellCastTriggerEffect.class,
+            slot = EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleExileResidentSpellCastTrigger(TriggerMatchContext match,
+            SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
                 sc.exiledSourcePermanentId());

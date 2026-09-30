@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "RTR", collectorNumber = "28")
+@CardRegistration(set = "C19", collectorNumber = "77")
 public class TrostanisJudgment extends Card {
 
     public TrostanisJudgment() {

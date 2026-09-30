@@ -7,6 +7,10 @@ public interface DyingCreatureLibraryReplacementEffect extends CardEffect {
 
     boolean putOnBottom();
 
+    default boolean shuffleIntoLibrary() {
+        return false;
+    }
+
     default boolean mayChoose() {
         return false;
     }

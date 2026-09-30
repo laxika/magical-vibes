@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "121")
+@CardRegistration(set = "C19", collectorNumber = "128")
 public class SilumgarAssassin extends Card {
 
     public SilumgarAssassin() {

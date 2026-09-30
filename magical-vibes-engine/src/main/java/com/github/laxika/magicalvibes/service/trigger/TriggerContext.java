@@ -509,7 +509,8 @@ public sealed interface TriggerContext {
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.
      * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
-     * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
+     * ON_ANY_NONTOKEN_CREATURE_DIES, ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES, and
+     * ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
      * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors
@@ -732,7 +733,11 @@ public sealed interface TriggerContext {
                                  UUID causeControllerId) implements TriggerContext {}
 
     /** Context for controller-graveyard triggers that care about any non-token card. */
-    record CardPutIntoGraveyard(Card card, UUID graveyardOwnerId) implements TriggerContext {}
+    record CardPutIntoGraveyard(Card card, UUID graveyardOwnerId, Zone sourceZone) implements TriggerContext {
+        public CardPutIntoGraveyard(Card card, UUID graveyardOwnerId) {
+            this(card, graveyardOwnerId, null);
+        }
+    }
 
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}
@@ -831,6 +836,10 @@ public sealed interface TriggerContext {
 
     /** Context for a card put from the controller's graveyard into their hand. */
     record ControllerCardReturnedFromGraveyardToHand(UUID graveyardOwnerId, Card returnedCard)
+            implements TriggerContext {}
+
+    /** Context for a card put from the controller's library into their hand. */
+    record ControllerCardPutIntoHandFromLibrary(UUID libraryOwnerId, Card card)
             implements TriggerContext {}
 
     /** Context for one instant or sorcery card leaving the controller's graveyard. */

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "4")
+@CardRegistration(set = "M3C", collectorNumber = "163")
 public class AethergeodeMiner extends Card {
 
     public AethergeodeMiner() {

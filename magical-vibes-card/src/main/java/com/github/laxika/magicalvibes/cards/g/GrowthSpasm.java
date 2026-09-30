@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "186")
+@CardRegistration(set = "MIC", collectorNumber = "139")
 public class GrowthSpasm extends Card {
 
     private static final CreateTokenEffect SPAWN_TOKEN = new CreateTokenEffect(

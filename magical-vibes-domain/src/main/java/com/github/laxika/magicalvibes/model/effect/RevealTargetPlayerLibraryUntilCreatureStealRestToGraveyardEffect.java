@@ -6,12 +6,22 @@ package com.github.laxika.magicalvibes.model.effect;
  * creature card onto the battlefield under their control (the card keeps its original owner). If the
  * library is exhausted without revealing a creature, every revealed card is put into the graveyard.
  * <p>
- * Used by Telemin Performance. Targets a player.
+ * Used by Telemin Performance and Curse of Unbinding. The latter uses the enchanted-player
+ * variant, which reads the player baked into the upkeep trigger instead of declaring a new target.
  */
-public record RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect() implements CardEffect {
+public record RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect(boolean enchantedPlayer)
+        implements CardEffect {
+
+    public RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect() {
+        this(false);
+    }
+
+    public static RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect forEnchantedPlayer() {
+        return new RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect(true);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.player());
+        return enchantedPlayer ? TargetSpec.NONE : TargetSpec.harmful(TargetPredicates.player());
     }
 }

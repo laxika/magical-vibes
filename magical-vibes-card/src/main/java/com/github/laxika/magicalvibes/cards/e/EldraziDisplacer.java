@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "13")
 @CardRegistration(set = "EA2", collectorNumber = "6")
+@CardRegistration(set = "M3C", collectorNumber = "169")
 public class EldraziDisplacer extends Card {
 
     public EldraziDisplacer() {

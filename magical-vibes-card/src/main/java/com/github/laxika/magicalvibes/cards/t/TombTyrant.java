@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "854")
+@CardRegistration(set = "MIC", collectorNumber = "23")
+@CardRegistration(set = "MIC", collectorNumber = "61")
 public class TombTyrant extends Card {
 
     public TombTyrant() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "217")
+@CardRegistration(set = "NEC", collectorNumber = "133")
 public class VastwoodSurge extends Card {
 
     public VastwoodSurge() {

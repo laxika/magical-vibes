@@ -42,7 +42,7 @@ class TardisTest extends BaseCardTest {
         Permanent tardis = addTardis();
         harness.addToBattlefieldAndReturn(player1, new TheFourthDoctor());
         addCreatureReady(player1, new GrizzlyBears());
-        crew(tardis);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> crew(tardis));
 
         declareAttackers(List.of(indexOf(player1, tardis)));
         harness.passBothPriorities();
@@ -71,7 +71,7 @@ class TardisTest extends BaseCardTest {
     void attackWithoutATimeLordDoesNotGrantTheTrigger() {
         Permanent tardis = addTardis();
         addCreatureReady(player1, new GrizzlyBears());
-        crew(tardis);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> crew(tardis));
 
         declareAttackers(List.of(indexOf(player1, tardis)));
         harness.passBothPriorities();
@@ -88,6 +88,9 @@ class TardisTest extends BaseCardTest {
     private void crew(Permanent tardis) {
         prepareMainPhase();
         harness.activateAbility(player1, indexOf(player1, tardis), null, null);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
+        }
         harness.passBothPriorities();
     }
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "INR", collectorNumber = "232")
 @CardRegistration(set = "EMN", collectorNumber = "181")
 @CardRegistration(set = "SIR", collectorNumber = "231")
+@CardRegistration(set = "C19", collectorNumber = "188")
 public class BloodhallPriest extends Card {
 
     public BloodhallPriest() {

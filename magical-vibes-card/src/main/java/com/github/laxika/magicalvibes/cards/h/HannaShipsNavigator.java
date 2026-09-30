@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "200")
 @CardRegistration(set = "CMM", collectorNumber = "340")
 @CardRegistration(set = "CMM", collectorNumber = "580")
+@CardRegistration(set = "NEC", collectorNumber = "139")
 public class HannaShipsNavigator extends Card {
 
     public HannaShipsNavigator() {

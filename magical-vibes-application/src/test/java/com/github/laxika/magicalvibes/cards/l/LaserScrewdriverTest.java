@@ -35,7 +35,7 @@ class LaserScrewdriverTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, null, artifact.getId());
+        harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(artifact.isTapped()).isTrue();
@@ -47,7 +47,7 @@ class LaserScrewdriverTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
     }
@@ -58,7 +58,7 @@ class LaserScrewdriverTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 2, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -71,7 +71,7 @@ class LaserScrewdriverTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 3, null, target.getId());
+        harness.activateAbility(player1, 0, 3, null, target.getId());
         harness.passBothPriorities();
 
         beginAttackers(player2);

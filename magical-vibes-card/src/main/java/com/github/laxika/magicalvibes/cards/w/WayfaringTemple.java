@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "209")
 @CardRegistration(set = "MM3", collectorNumber = "202")
+@CardRegistration(set = "C19", collectorNumber = "208")
 public class WayfaringTemple extends Card {
 
     public WayfaringTemple() {

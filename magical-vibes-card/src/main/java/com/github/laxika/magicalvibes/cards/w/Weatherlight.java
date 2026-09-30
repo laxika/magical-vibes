@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "237")
 @CardRegistration(set = "SLD", collectorNumber = "2100")
+@CardRegistration(set = "NEC", collectorNumber = "165")
 public class Weatherlight extends Card {
 
     public Weatherlight() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCC", collectorNumber = "232")
+@CardRegistration(set = "C19", collectorNumber = "31")
 public class ApexAltisaur extends Card {
 
     public ApexAltisaur() {

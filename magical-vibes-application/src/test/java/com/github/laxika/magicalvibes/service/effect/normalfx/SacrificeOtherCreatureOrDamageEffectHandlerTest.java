@@ -166,7 +166,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
                 when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
-                when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
@@ -236,7 +236,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
                 when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
-                when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 

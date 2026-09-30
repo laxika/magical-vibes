@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "WAR", collectorNumber = "2")
 @CardRegistration(set = "SLD", collectorNumber = "502")
 @CardRegistration(set = "SLD", collectorNumber = "1243")
+@CardRegistration(set = "M3C", collectorNumber = "160")
 public class UginTheIneffable extends Card {
 
     public UginTheIneffable() {

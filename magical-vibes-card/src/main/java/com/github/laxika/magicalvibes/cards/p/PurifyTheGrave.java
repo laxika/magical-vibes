@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
 @CardRegistration(set = "ISD", collectorNumber = "27")
+@CardRegistration(set = "C19", collectorNumber = "71")
 public class PurifyTheGrave extends Card {
 
     public PurifyTheGrave() {

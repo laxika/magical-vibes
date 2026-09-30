@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "XLN", collectorNumber = "207")
 @CardRegistration(set = "C13", collectorNumber = "170")
 @CardRegistration(set = "C20", collectorNumber = "190")
+@CardRegistration(set = "C19", collectorNumber = "181")
 public class SliceInTwain extends Card {
 
     public SliceInTwain() {

@@ -18,6 +18,7 @@ class GenasiRabbleRouserTest extends BaseCardTest {
 
     @Test
     void doubleTeamConjuresDuplicateAndRemovesKeyword() {
+        harness.setHand(player1, List.of());
         Permanent rabbleRouser = addCreatureReady(player1, new GenasiRabbleRouser());
 
         declareAttackers(List.of(0));

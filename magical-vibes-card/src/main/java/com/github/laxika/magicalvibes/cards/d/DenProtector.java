@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 
 @CardRegistration(set = "DTK", collectorNumber = "181")
 @CardRegistration(set = "MKC", collectorNumber = "169")
+@CardRegistration(set = "C19", collectorNumber = "161")
 public class DenProtector extends Card {
 
     public DenProtector() {

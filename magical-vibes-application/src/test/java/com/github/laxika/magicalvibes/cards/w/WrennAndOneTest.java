@@ -23,7 +23,8 @@ class WrennAndOneTest extends BaseCardTest {
     @DisplayName("Enters as a land planeswalker with one loyalty")
     void entersAsLandPlaneswalker() {
         WrennAndOne card = new WrennAndOne();
-        harness.addToBattlefield(player1, card);
+        harness.setHand(player1, java.util.List.of(card));
+        harness.playLand(player1, 0);
 
         Permanent wrenn = findPermanent(player1, "Wrenn and One");
         assertThat(wrenn.getCard().hasType(CardType.LAND)).isTrue();
