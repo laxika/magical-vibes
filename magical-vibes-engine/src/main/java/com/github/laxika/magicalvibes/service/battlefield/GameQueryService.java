@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
@@ -3459,12 +3460,24 @@ public class GameQueryService {
                 }
             }
         }
-        List<CardColor> intrinsic = card.getColors();
-        if (intrinsic != null && !intrinsic.isEmpty()) {
-            return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
+        Set<CardColor> intrinsic = EnumSet.noneOf(CardColor.class);
+        if (card.getColors() != null) {
+            intrinsic.addAll(card.getColors());
         }
-        CardColor single = card.getColor();
-        return addGraveyardAnimationColors(gameData, card, single != null ? Set.of(single) : Set.of());
+        if (card.getColor() != null) {
+            intrinsic.add(card.getColor());
+        }
+        ManaCost incorporated = gameData == null ? null
+                : gameData.perpetualManaCostIncreases.get(card.getId());
+        if (incorporated != null) {
+            for (CardColor color : CardColor.values()) {
+                ManaColor manaColor = ManaColor.fromCode(color.getCode());
+                if (incorporated.countColorSymbols(manaColor) > 0) {
+                    intrinsic.add(color);
+                }
+            }
+        }
+        return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
     }
 
     private Set<CardColor> addGraveyardAnimationColors(GameData gameData, Card card, Set<CardColor> colors) {

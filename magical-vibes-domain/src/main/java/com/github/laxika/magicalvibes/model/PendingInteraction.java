@@ -49,6 +49,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
         PendingInteraction.PlanarCardChoice, PendingInteraction.PlanarDieChoice,
         PendingInteraction.SpellbookDraftChoice,
+        PendingInteraction.SpellbookDraftToExileChoice,
         PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
         PendingInteraction.CommanderBattlefieldChoice,
         PendingInteraction.StingingStudyCommanderChoice,
@@ -749,6 +750,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public SpellbookDraftChoice {
             cards = java.util.List.copyOf(cards);
             chosenCardEffects = java.util.List.copyOf(chosenCardEffects);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** The controller chooses one spellbook card to exile face down with a source permanent. */
+    record SpellbookDraftToExileChoice(UUID playerId, UUID sourcePermanentId,
+                                       java.util.List<Card> cards, String sourceCardName)
+            implements PendingInteraction {
+
+        public SpellbookDraftToExileChoice {
+            cards = java.util.List.copyOf(cards);
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -3683,18 +3708,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                          String prompt, int power, int toughness,
                                          java.util.Set<Keyword> grantedKeywords,
                                          int genericCostReduction,
-                                         int noncombatDamageBonus)
+                                         int noncombatDamageBonus,
+                                         String perpetualManaCostIncrease,
+                                         CardEffect selfCastAbility)
             implements PendingInteraction, HandChoice {
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
                                              String prompt, int power, int toughness) {
-            this(playerId, validIndices, prompt, power, toughness, java.util.Set.of(), 0, 0);
+            this(playerId, validIndices, prompt, power, toughness, java.util.Set.of(), 0, 0, null, null);
         }
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
                                              String prompt, int power, int toughness,
                                              java.util.Set<Keyword> grantedKeywords) {
-            this(playerId, validIndices, prompt, power, toughness, grantedKeywords, 0, 0);
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords, 0, 0, null, null);
         }
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3702,7 +3729,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              java.util.Set<Keyword> grantedKeywords,
                                              int genericCostReduction) {
             this(playerId, validIndices, prompt, power, toughness, grantedKeywords,
-                    genericCostReduction, 0);
+                    genericCostReduction, 0, null, null);
+        }
+
+        public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                             String prompt, int power, int toughness,
+                                             java.util.Set<Keyword> grantedKeywords,
+                                             int genericCostReduction, int noncombatDamageBonus) {
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords,
+                    genericCostReduction, noncombatDamageBonus, null, null);
         }
 
         public PerpetualPowerToughnessChoice {

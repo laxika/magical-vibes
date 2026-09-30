@@ -384,6 +384,10 @@ public final class AnyColorManaChoiceSupport {
                 return new ChoiceContext.SpellOnlyManaColorChoice(
                         playerId, fromCreature, amount, true);
             }
+            if (effect.restriction() == ManaSpendRestriction.OUTSIDE_STARTING_DECK_SPELL_ONLY) {
+                return new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                        playerId, fromCreature, amount, true);
+            }
             if (effect.restriction() == ManaSpendRestriction.MULTICOLORED_SPELLS) {
                 return new ChoiceContext.MulticoloredSpellManaColorChoice(
                         playerId, fromCreature, amount, true);
@@ -418,6 +422,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.PathOfAncestryManaColorChoice(playerId, sourcePermanentId, amount);
             case SPELL_ONLY ->
                     new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
+            case OUTSIDE_STARTING_DECK_SPELL_ONLY ->
+                    new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                            playerId, fromCreature, amount, false);
             case MULTICOLORED_SPELLS ->
                     new ChoiceContext.MulticoloredSpellManaColorChoice(playerId, fromCreature, amount, false);
             case ABILITIES -> ChoiceContext.ManaColorChoice.abilityOnly(playerId, amount);
@@ -576,6 +583,8 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";
+            case OUTSIDE_STARTING_DECK_SPELL_ONLY ->
+                    "Choose a color of mana to add (spells not from your starting deck only).";
             case DEVOID_SPELL -> "Choose a color of mana to add (spells with devoid only).";
             case CHOSEN_SUBTYPE_SPELL -> "Choose a color of mana to add (spells of the chosen type only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
