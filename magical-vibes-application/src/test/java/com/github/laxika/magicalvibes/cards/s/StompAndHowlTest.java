@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
+import com.github.laxika.magicalvibes.cards.s.SealOfFire;
+import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,38 +15,37 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StompAndHowl.class, FountainOfYouth.class, GloriousAnthem.class, Ornithopter.class})
+@CardUsed({StompAndHowl.class, EnchantedEvening.class, SealOfFire.class, SimicSignet.class})
 class StompAndHowlTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a target artifact and a target enchantment")
     void destroysTargetArtifactAndEnchantment() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.addToBattlefield(player2, new SealOfFire());
         harness.setHand(player1, List.of(new StompAndHowl()));
         addMana();
 
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
-        UUID enchantmentId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castSorcery(player1, 0, List.of(artifactId, enchantmentId));
-        harness.passBothPriorities();
+        UUID artifactId = harness.getPermanentId(player2, "Simic Signet");
+        UUID enchantmentId = harness.getPermanentId(player2, "Seal of Fire");
+        harness.castAndResolveSorcery(player1, 0, List.of(artifactId, enchantmentId));
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Simic Signet");
+        harness.assertNotOnBattlefield(player2, "Seal of Fire");
+        harness.assertInGraveyard(player2, "Simic Signet");
+        harness.assertInGraveyard(player2, "Seal of Fire");
     }
 
     @Test
     @DisplayName("Destroys the remaining target when the other target becomes illegal")
     void destroysRemainingTargetWhenOtherTargetLeaves() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.addToBattlefield(player2, new SealOfFire());
         harness.setHand(player1, List.of(new StompAndHowl()));
         addMana();
 
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
-        UUID enchantmentId = harness.getPermanentId(player2, "Glorious Anthem");
+        UUID artifactId = harness.getPermanentId(player2, "Simic Signet");
+        UUID enchantmentId = harness.getPermanentId(player2, "Seal of Fire");
         harness.castSorcery(player1, 0, List.of(artifactId, enchantmentId));
 
         GameData gd = harness.getGameData();
@@ -54,23 +53,39 @@ class StompAndHowlTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Seal of Fire");
+        harness.assertInGraveyard(player2, "Seal of Fire");
     }
 
     @Test
     @DisplayName("Rejects an artifact in the enchantment target position")
     void rejectsWrongTargetType() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        harness.addToBattlefield(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.addToBattlefield(player2, new SimicSignet());
         harness.setHand(player1, List.of(new StompAndHowl()));
         addMana();
 
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
-        UUID secondArtifactId = harness.getPermanentId(player2, "Ornithopter");
+        UUID artifactId = harness.getPermanentId(player2, "Simic Signet");
+        UUID secondArtifactId = findPermanents(player2, "Simic Signet").get(1).getId();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(artifactId, secondArtifactId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Allows one artifact-enchantment permanent to fill both target positions")
+    void allowsSharedArtifactEnchantmentTarget() {
+        harness.addToBattlefield(player2, new EnchantedEvening());
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.setHand(player1, List.of(new StompAndHowl()));
+        addMana();
+
+        UUID signetId = harness.getPermanentId(player2, "Simic Signet");
+        harness.castAndResolveSorcery(player1, 0, List.of(signetId, signetId));
+
+        harness.assertNotOnBattlefield(player2, "Simic Signet");
+        harness.assertInGraveyard(player2, "Simic Signet");
+        harness.assertOnBattlefield(player2, "Enchanted Evening");
     }
 
     private void addMana() {

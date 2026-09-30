@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,8 +22,8 @@ class SimicSkySwallowerTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
-        Permanent swallower = addReadyCreature(player1, new SimicSkySwallower());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent swallower = addCreatureReady(player1, new SimicSkySwallower());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(swallower)));
 
@@ -55,8 +53,8 @@ class SimicSkySwallowerTest extends BaseCardTest {
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleAssignsExcessCombatDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
-        Permanent swallower = addReadyCreature(player1, new SimicSkySwallower());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent swallower = addCreatureReady(player1, new SimicSkySwallower());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         swallower.setAttacking(true);
         blocker.setBlocking(true);
@@ -73,11 +71,5 @@ class SimicSkySwallowerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
     }
 }

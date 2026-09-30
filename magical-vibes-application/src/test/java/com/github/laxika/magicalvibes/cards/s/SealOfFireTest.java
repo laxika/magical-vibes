@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SealOfFire.class, SpinelessThug.class})
+@CardUsed({SealOfFire.class, MistralCharger.class, JaceBeleren.class})
 class SealOfFireTest extends BaseCardTest {
 
     @Test
@@ -41,31 +43,42 @@ class SealOfFireTest extends BaseCardTest {
     @DisplayName("Seal of Fire deals 2 damage to a target creature")
     void dealsDamageToCreature() {
         addSealOfFire();
-        harness.addToBattlefield(player2, new SpinelessThug());
+        harness.addToBattlefield(player2, new MistralCharger());
 
-        var targetId = harness.getPermanentId(player2, "Spineless Thug");
+        var targetId = harness.getPermanentId(player2, "Mistral Charger");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Spineless Thug");
-        harness.assertInGraveyard(player2, "Spineless Thug");
+        harness.assertNotOnBattlefield(player2, "Mistral Charger");
+        harness.assertInGraveyard(player2, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Seal of Fire deals 2 damage to a target planeswalker")
+    void dealsDamageToPlaneswalker() {
+        addSealOfFire();
+        var planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Seal of Fire's ability fizzles when its target is removed")
     void fizzlesIfTargetRemoved() {
         addSealOfFire();
-        harness.addToBattlefield(player2, new SpinelessThug());
+        harness.addToBattlefield(player2, new MistralCharger());
 
-        var targetId = harness.getPermanentId(player2, "Spineless Thug");
+        var targetId = harness.getPermanentId(player2, "Mistral Charger");
         harness.activateAbility(player1, 0, null, targetId);
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).isEmpty();
-        assertThat(gameData.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     private void addSealOfFire() {
