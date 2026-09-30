@@ -1632,6 +1632,8 @@ public class GraveyardReturnSupport {
 
             Permanent permanent = new Permanent(card);
             initializePlaneswalkerLoyalty(permanent, card);
+            applyPermanentGrants(permanent, batch.grantColor(), batch.grantSubtype());
+            permanent.getPersistentGrantedKeywords().addAll(batch.grantKeywords());
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
             if (batch.enterTapped()) {
                 permanent.tap();

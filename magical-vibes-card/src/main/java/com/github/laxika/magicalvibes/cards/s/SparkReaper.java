@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "106")
+@CardRegistration(set = "MIC", collectorNumber = "128")
 public class SparkReaper extends Card {
 
     public SparkReaper() {

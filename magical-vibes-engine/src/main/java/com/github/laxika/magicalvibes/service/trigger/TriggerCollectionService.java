@@ -11371,6 +11371,31 @@ public class TriggerCollectionService {
                 gameData, perm, playerId, EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES, ctx));
     }
 
+    /**
+     * "Whenever a nontoken creature enchanted player controls dies".
+     * Scans player-enchanting Curse Auras attached to the dying creature's controller and queues
+     * one trigger for each matching Aura, controlled by the Aura's controller.
+     */
+    public void checkEnchantedPlayerNontokenCreatureDeathTriggers(
+            GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent,
+            int dyingPowerAtDeath) {
+        if (dyingPermanent.getCard().isToken()) return;
+
+        Card dyingCard = dyingPermanent.getCard();
+        var ctx = new TriggerContext.CreatureDeath(
+                dyingCard, dyingCreatureControllerId, dyingPowerAtDeath,
+                dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(), dyingPermanent);
+        gameData.forEachPermanent((auraControllerId, perm) -> {
+            if (!perm.getCard().isEnchantPlayer()
+                    || !perm.isAttached()
+                    || !dyingCreatureControllerId.equals(perm.getAttachedTo())) {
+                return;
+            }
+            dispatchSlot(gameData, perm, auraControllerId,
+                    EffectSlot.ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES, ctx);
+        });
+    }
+
     private void dispatchAnyPermanentDeathTriggersForWatcher(GameData gameData, UUID watcherControllerId,
                                                               Permanent watcher, Card dyingCard,
                                                               Permanent dyingPermanent,
@@ -13243,6 +13268,41 @@ public class TriggerCollectionService {
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} enchanted-player-creature-enters trigger queued", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
+    /**
+     * "Whenever a land enchanted player controls enters" (ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD).
+     * Scans player-enchanting Curse auras attached to the entering land's controller and queues one
+     * triggered ability each, controlled by the Aura's controller.
+     */
+    public void checkEnchantedPlayerLandEntersTriggers(GameData gameData, UUID enteringLandControllerId,
+                                                       Card enteringLand) {
+        gameData.forEachPermanent((auraControllerId, perm) -> {
+            if (!perm.isAttached() || !enteringLandControllerId.equals(perm.getAttachedTo())) return;
+            if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, auraControllerId)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) return;
+
+            int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
+                    gameData, auraControllerId, enteringLandControllerId, enteringLand);
+            for (int i = 0; i < triggerCount; i++) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(effects),
+                        enteringLandControllerId,
+                        perm.getId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} enchanted-player-land-enters trigger queued", gameData.id,
+                        perm.getCard().getName());
             }
         });
     }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "24")
+@CardRegistration(set = "MIC", collectorNumber = "86")
 public class HeraldOfWar extends Card {
 
     public HeraldOfWar() {

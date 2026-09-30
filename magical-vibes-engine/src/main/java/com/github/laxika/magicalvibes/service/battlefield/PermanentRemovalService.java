@@ -2033,6 +2033,8 @@ public class PermanentRemovalService {
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(
                             gameData, target.getCard(), ownerId);
+                    triggerCollectionService.checkEnchantedPlayerNontokenCreatureDeathTriggers(
+                            gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkOpponentCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
                     triggerCollectionService.checkEquippedCreatureDeathTriggers(

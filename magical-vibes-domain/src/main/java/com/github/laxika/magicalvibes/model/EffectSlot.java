@@ -57,6 +57,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  them while an accompanying {@code GainLifeEffect} feeds the Aura's controller ("you"). Checked in
      *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
     ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
+    /** Aura slot for player-enchanting Curses: "Whenever a land enchanted player controls enters".
+     *  Fires once per matching Curse attached to the entering land's controller. The enchanted
+     *  player's id is baked as the non-targeting {@code targetId}. */
+    ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD,
+    /** Aura slot for player-enchanting Curses: "Whenever a nontoken creature enchanted player controls dies".
+     *  Fires once per matching Curse attached to the dying creature's controller. */
+    ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES,
     STATIC,
     /** Marker for abilities that observe cards as they are put into exile without using the stack. */
     ON_ANY_CARD_EXILED,
@@ -596,6 +603,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */
     ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+    /** Aura slot for player-enchanting Curses: "At the beginning of enchanted player's draw step, ...".
+     *  Fires during the enchanted player's draw step and bakes that player's id as the
+     *  non-targeting {@code targetId}. */
+    ENCHANTED_PLAYER_DRAW_TRIGGERED,
     /** Aura slot for player-enchanting Curses: "At the beginning of each end step, enchanted player …".
      *  Fires at EVERY end step (any player's turn), unlike {@link #ENCHANTED_PLAYER_UPKEEP_TRIGGERED}
      *  which is gated to the enchanted player's own upkeep. The enchanted player's id is baked as the

@@ -2047,12 +2047,24 @@ public class LayerSystemService {
                     }
                 }
             }
-            case LoseAllCreatureTypesEffect ignored -> {
-                // Only reachable as a floating effect (the STATIC slot never carries it).
-                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                    state.removeKeyword(Keyword.CHANGELING);
+            case LoseAllCreatureTypesEffect lose -> {
+                if (instance.floating() != null) {
+                    for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                        CharacteristicState state = states.get(target.permanent().getId());
+                        state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                        state.removeKeyword(Keyword.CHANGELING);
+                    }
+                } else {
+                    applyStaticInstanceViaHandlers(gameData, instance, slots, board, true,
+                            (target, harvested) -> {
+                                if (!harvested.isSubtypeOverriding()) {
+                                    return;
+                                }
+                                CharacteristicState state = states.get(target.permanent().getId());
+                                state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                                state.removeKeyword(Keyword.CHANGELING);
+                                record(board, instance, target, new L4Contribution(List.of(), true, false));
+                            });
                 }
             }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {

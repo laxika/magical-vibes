@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
@@ -108,6 +110,8 @@ public class PermanentChoiceHandlerService {
     private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
     private final TargetOpponentChoosesPlayerForRestrictionEffectHandler
             targetOpponentChoosesPlayerForRestrictionEffectHandler;
+    private final CelestialJudgmentEffectHandler celestialJudgmentEffectHandler;
+    private final AttachCurseToOpponentAndDrawEffectHandler attachCurseToOpponentAndDrawEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -132,7 +136,12 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
+        if (context instanceof PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice) {
+            celestialJudgmentEffectHandler.completeChoice(gameData, permanentId, celestialJudgmentChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
             libraryChoiceHandlerService.completeLibraryNinjutsuChoice(gameData, player, permanentId, libraryNinjutsu);
         } else if (context instanceof PermanentChoiceContext.GutmornDiscardedCardPlayerChoice gutmornChoice) {
             gutmornEffectHandler.completeChoice(gameData, permanentId, gutmornChoice);
@@ -169,6 +178,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
+        } else if (context instanceof PermanentChoiceContext.LyndeCurseChoice lyndeCurseChoice) {
+            attachCurseToOpponentAndDrawEffectHandler.completeCurseChoice(
+                    gameData, permanentId, lyndeCurseChoice);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.InventoryManagementAttachment attachmentChoice) {
             inventoryManagementEffectHandler.completeCreatureChoice(gameData, permanentId, attachmentChoice);
         } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
@@ -360,6 +375,10 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
             gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.LyndeOpponentChoice lyndeOpponentChoice) {
+            attachCurseToOpponentAndDrawEffectHandler.completeOpponentChoice(
+                    gameData, permanentId, lyndeOpponentChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
             battlefieldHandler.handleChoosePlayerThenReturnCreatureToHand(gameData, permanentId, choosePlayer);
         } else if (context instanceof PermanentChoiceContext.ZndrsplatsJudgmentCreatureChoice judgmentChoice) {

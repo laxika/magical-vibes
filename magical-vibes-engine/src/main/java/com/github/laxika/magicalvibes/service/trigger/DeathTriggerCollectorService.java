@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
@@ -969,6 +970,14 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         CardEffect triggerEffect = snapshotDynamicMaxManaValue(match, effect, sd);
+        if (triggerEffect instanceof DyingCreaturePermanentAwareEffect aware
+                && sd.dyingPermanent() != null) {
+            triggerEffect = aware.boundToDyingCreature(sd.dyingPermanent());
+        }
+        if (triggerEffect instanceof DyingCreatureCardAwareEffect aware
+                && sd.dyingCard() != null) {
+            triggerEffect = aware.boundToDyingCard(sd.dyingCard().getId());
+        }
         if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
                 && sd.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(sd.dyingPermanent()));
@@ -2443,6 +2452,19 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyCurseDelayedReturn(TriggerMatchContext match,
+            RegisterDelayedReturnCurseAttachedToPlayerEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        if (death.dyingCard() == null) {
+            return true;
+        }
+        return handleAllyPermanentGraveyardDefault(match,
+                new RegisterDelayedReturnCurseAttachedToPlayerEffect(
+                        death.dyingCard().getId(), match.controllerId()), ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyPermanentGraveyardDefault(TriggerMatchContext match,
@@ -3539,6 +3561,29 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (any nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES)
+    boolean handleEnchantedPlayerNontokenCreatureDeathDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        CardEffect resolvedEffect = bindAllyNontokenDyingCard(effect, death.dyingCard());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolvedEffect)),
+                null,
+                match.permanent().getId());
+        if (death.dyingCard() != null) {
+            entry.setDyingPermanentManaValue(death.dyingCard().getManaValue());
+        }
+        match.gameData().stack.add(entry);
+        log.info("Game {} - {} triggers (enchanted player's nontoken creature died)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 

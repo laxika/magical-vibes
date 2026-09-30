@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "271")
 @CardRegistration(set = "OTC", collectorNumber = "304")
 @CardRegistration(set = "C20", collectorNumber = "285")
+@CardRegistration(set = "MIC", collectorNumber = "175")
 public class KrosanVerge extends Card {
 
     public KrosanVerge() {

@@ -419,11 +419,16 @@ public class TriggeredAbilityQueueService {
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         int maxTargets = Math.min(target.maxTargets(), matchingCards.size());
         String countLabel = maxTargets > 1 ? "up to " + maxTargets + " target " : "target ";
-        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
-                target.minTargets(),
-                pending.dyingCard().getName() + "'s ability — Choose " + countLabel + filterLabel
-                        + (maxTargets > 1 ? "s" : "") + " from " + zoneLabel
-                        + " " + target.destination() + ".");
+        String prompt = pending.dyingCard().getName() + "'s ability — Choose " + countLabel + filterLabel
+                + (maxTargets > 1 ? "s" : "") + " from " + zoneLabel
+                + " " + target.destination() + ".";
+        if (target.maximumTotalPower() != null) {
+            playerInputService.beginMultiGraveyardChoiceWithMaximumPower(gameData, pending.controllerId(),
+                    matchingCards, maxTargets, target.minTargets(), target.maximumTotalPower(), prompt);
+        } else {
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
+                    target.minTargets(), prompt);
+        }
 
         gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                 "'s death trigger — choose a graveyard target."));

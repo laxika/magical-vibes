@@ -564,6 +564,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (!faceDown && card.hasType(CardType.LAND)) {
+            triggerCollectionService.checkEnchantedPlayerLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkPlanarLandEntersTriggers(gameData, controllerId, card);

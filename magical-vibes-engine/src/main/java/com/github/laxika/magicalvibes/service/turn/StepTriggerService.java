@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
+import com.github.laxika.magicalvibes.model.action.DelayedReturnCurseAttachedToPlayer;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnSourceAuraToCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
@@ -275,6 +276,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTransformedReturnService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -327,6 +329,7 @@ public class StepTriggerService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final AuraAttachmentService auraAttachmentService;
     private final LifeSupport lifeSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTransformedReturnService graveyardTransformedReturnService;
@@ -351,6 +354,7 @@ public class StepTriggerService {
                               GameLogService gameLogService,
                               PlayerInputService playerInputService,
                               PermanentRemovalService permanentRemovalService,
+                              AuraAttachmentService auraAttachmentService,
                               LifeSupport lifeSupport,
                               BattlefieldEntryService battlefieldEntryService,
                               GraveyardTransformedReturnService graveyardTransformedReturnService,
@@ -374,6 +378,7 @@ public class StepTriggerService {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.permanentRemovalService = permanentRemovalService;
+        this.auraAttachmentService = auraAttachmentService;
         this.lifeSupport = lifeSupport;
         this.battlefieldEntryService = battlefieldEntryService;
         this.graveyardTransformedReturnService = graveyardTransformedReturnService;
@@ -3044,6 +3049,34 @@ public class StepTriggerService {
             }
         });
 
+        // Check all battlefields for player-enchanting Curses with ENCHANTED_PLAYER_DRAW_TRIGGERED
+        // effects. These fire during the enchanted player's draw step and act on that player.
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedPlayerDrawEffects =
+                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_DRAW_TRIGGERED);
+            if (enchantedPlayerDrawEffects == null || enchantedPlayerDrawEffects.isEmpty()) return;
+            if (!perm.isAttached()) return;
+
+            UUID enchantedPlayerId = perm.getAttachedTo();
+            if (!enchantedPlayerId.equals(activePlayerId)) return;
+
+            for (CardEffect effect : enchantedPlayerDrawEffects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s draw step ability",
+                        new ArrayList<>(List.of(effect)),
+                        enchantedPlayerId,
+                        perm.getId()
+                ));
+
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
+                log.info("Game {} - {} enchanted-player draw trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        });
+
         // Check all battlefields for EACH_DRAW_TRIGGERED effects (all players' draw steps)
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
@@ -5104,6 +5137,34 @@ public class StepTriggerService {
                         .card(auraCard)
                         .text(" returns to the battlefield attached to ")
                         .card(enchantedPermanent.getCard())
+                        .text(" (delayed trigger).")
+                        .build());
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedReturnCurseAttachedToPlayer.class)) {
+            List<DelayedReturnCurseAttachedToPlayer> pendingReturns =
+                    gameData.drainDelayedActions(DelayedReturnCurseAttachedToPlayer.class);
+            for (DelayedReturnCurseAttachedToPlayer pending : pendingReturns) {
+                Card curseCard = gameQueryService.findCardInGraveyardById(gameData, pending.cardId());
+                if (curseCard == null || !curseCard.isAura() || !curseCard.isEnchantPlayer()
+                        || !gameData.playerIds.contains(pending.attachedPlayerId())
+                        || gameQueryService.isCardBlockedFromEnteringFromZone(
+                        gameData, curseCard, Zone.GRAVEYARD)
+                        || !auraAttachmentService.canEnchantPlayer(
+                        gameData, curseCard, pending.ownerId(), pending.attachedPlayerId())) {
+                    continue;
+                }
+
+                permanentRemovalService.removeCardFromGraveyardById(gameData, pending.cardId());
+                Permanent cursePermanent = new Permanent(curseCard);
+                cursePermanent.setAttachedTo(pending.attachedPlayerId());
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, pending.ownerId(), cursePermanent);
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(curseCard)
+                        .text(" returns to the battlefield attached to ")
+                        .text(gameData.playerIdToName.get(pending.attachedPlayerId()))
                         .text(" (delayed trigger).")
                         .build());
             }

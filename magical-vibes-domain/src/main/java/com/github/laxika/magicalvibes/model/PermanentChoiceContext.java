@@ -28,6 +28,15 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    /** Celestial Judgment: the controller chooses one creature for each distinct battlefield power. */
+    record CelestialJudgmentChoice(List<Integer> powers, int powerIndex, List<UUID> chosenIds,
+                                   String sourceName) implements PermanentChoiceContext {
+        public CelestialJudgmentChoice {
+            powers = List.copyOf(powers);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
     /** Panglacial Shinobi: choose the unblocked attacker returned for library ninjutsu. */
     record LibraryNinjutsu(PendingInteraction.LibrarySearch search, Card card, String manaCost)
             implements PermanentChoiceContext {}
@@ -2712,5 +2721,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record EarthbendThenFightTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
                                     UUID firstTargetId, boolean choosingOpponentTarget)
             implements PermanentChoiceContext {}
+
+    /** Lynde: choose one Curse attached to the controller before choosing its opponent host. */
+    record LyndeCurseChoice(UUID controllerId, UUID fixedOpponentId) implements PermanentChoiceContext {}
+
+    /** Lynde: choose the opponent to which the selected Curse will be attached. */
+    record LyndeOpponentChoice(UUID controllerId, UUID curseId) implements PermanentChoiceContext {}
 
 }

@@ -560,6 +560,20 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses a matching permanent before the chosen permanents are sacrificed together. */
+    record EachOpponentSacrificesPermanentCreateTokens(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesPermanentCreateTokens {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** Each opponent chooses a nontoken creature to sacrifice for Replicating Terror. */
     record EachOpponentSacrificesNontokenCreatureConjuresDuplicates(
             java.util.List<PendingForcedSacrifice> remainingChoosers,
@@ -768,6 +782,14 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** The controller chooses any number of creatures that must block this combat if able. */
     record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of creatures with different powers. */
+    record ChooseCreaturesWithDifferentPowersGrantDoubleStrike() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of creatures with different powers to boost and grant vigilance. */
+    record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance() implements MultiPermanentChoiceContext {
     }
 
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */

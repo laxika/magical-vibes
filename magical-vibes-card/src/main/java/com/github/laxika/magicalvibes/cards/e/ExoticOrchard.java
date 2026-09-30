@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "142")
+@CardRegistration(set = "MIC", collectorNumber = "173")
 @CardRegistration(set = "PC2", collectorNumber = "117")
 @CardRegistration(set = "PCA", collectorNumber = "117")
 @CardRegistration(set = "SOC", collectorNumber = "369")

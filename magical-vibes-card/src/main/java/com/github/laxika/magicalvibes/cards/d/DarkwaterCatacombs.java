@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "AFC", collectorNumber = "232")
 @CardRegistration(set = "OTC", collectorNumber = "282")
 @CardRegistration(set = "C20", collectorNumber = "265")
+@CardRegistration(set = "MIC", collectorNumber = "171")
 public class DarkwaterCatacombs extends Card {
 
     public DarkwaterCatacombs() {

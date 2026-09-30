@@ -509,7 +509,8 @@ public sealed interface TriggerContext {
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.
      * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
-     * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
+     * ON_ANY_NONTOKEN_CREATURE_DIES, ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES, and
+     * ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
      * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors

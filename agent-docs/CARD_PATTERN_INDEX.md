@@ -46,6 +46,7 @@
 | Attack Mug trigger: each player mills one, land rider creates Treasure, and one exact milled spell may be cast from any graveyard this turn | `l/LockeTreasureHunter.java` + `MugEffect` |
 | planar arrival and upkeep token, then targeted-player chaos sacrifice with a toughness-based token rider | `t/TheWilds.java` + `TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffect` |
 | target player sacrifices an attacking creature, then the spell controller creates Soldier tokens equal to its toughness | `e/EntrapmentManeuver.java` + `TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffect` |
+| each opponent sacrifices one matching permanent, then the spell controller creates one token per permanent sacrificed | `v/VisionsOfRuin.java` + `EachOpponentSacrificesPermanentCreateTokensEffect` |
 | optional attack-trigger exile of another attacking creature you control, then reveal a creature onto the battlefield tapped and attacking | `f/FirefluxSquad.java` + `ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect` + `RevealUntilCardPredicateRestOnBottomRandomEffect.tappedAndAttacking(...)` |
 | attack trigger offers one artifact spell from hand or graveyard, cast by paying life equal to its mana value | `a/AnrakyrTheTraveller.java` + `MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffect` |
 | play lands and cast cards surveilled this turn from your graveyard, paying life equal to a spell's mana value | `e/EyeOfDuskmantle.java` + `CastSurveilledCardsFromGraveyardByPayingLifeEffect` |
