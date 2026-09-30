@@ -39,6 +39,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
             return "card sharing a creature type with this creature";
         }
+        if (predicate instanceof CardSharesColorWithControlledPermanentPredicate) {
+            return "card sharing a color with a permanent you control";
+        }
         if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
             return "creature card sharing a creature type with your commander";
         }
@@ -111,6 +114,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasColorManaSymbolPredicate p) {
             return "card with a " + p.color().name().toLowerCase() + " mana symbol";
         }
+        if (predicate instanceof CardHasHybridManaPredicate) {
+            return "card with hybrid mana in its mana cost";
+        }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
         }
@@ -128,6 +134,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardManaValueEqualsControllerHandSizePredicate) {
             return "card with mana value equal to the number of cards in your hand";
+        }
+        if (predicate instanceof CardManaValueGreaterThanSourceManaValuePredicate) {
+            return "card with mana value greater than this card's mana value";
         }
         if (predicate instanceof CardManaValueAtMostSourceCountersPredicate) {
             return "card with mana value at most this permanent's counters";
@@ -155,6 +164,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardMaxManaValueXPredicate) {
             return "card with mana value X or less";
+        }
+        if (predicate instanceof CardManaValueEqualsXPredicate) {
+            return "card with mana value X";
         }
         if (predicate instanceof CardManaValueLessThanXPredicate) {
             return "card with mana value less than X";

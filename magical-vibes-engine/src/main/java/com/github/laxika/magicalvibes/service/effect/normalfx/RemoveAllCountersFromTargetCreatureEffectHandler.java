@@ -33,6 +33,7 @@ public class RemoveAllCountersFromTargetCreatureEffectHandler implements NormalE
         UUID targetId = targetIds.isEmpty() ? entry.getTargetId() : targetIds.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
+            entry.setEventValue(0);
             return;
         }
 
@@ -46,6 +47,7 @@ public class RemoveAllCountersFromTargetCreatureEffectHandler implements NormalE
             target.setCounterCount(counterType, 0);
         }
         gameData.recordOilCounterRemoved(target, oilRemoved);
+        entry.setEventValue(removed);
 
         gameLogService.append(gameData,
                 GameLog.textCardText(removed + " counter(s) removed from ", target.getCard(), "."));

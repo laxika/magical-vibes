@@ -729,7 +729,7 @@ the fingerprint is unchanged. What is **NOT cached**: the per-target `StaticBonu
 fingerprint deliberately does not cover (emblems, the conditions of the conditional wrappers the
 pass did not collect, turn/step state, amount evaluation), so caching it would be dishonest;
 shrinking scope to the board only is the correctness-first trade. Dynamic amounts used by
-layer-7b base P/T setters are evaluated during board construction, so player life totals are part
+layer-7b base P/T setters are evaluated during board construction, so player life totals and recorded game losses are part
 of the board fingerprint. The wrappers the
 pass DOES collect (§5, step 17) are exactly those whose conditions read only fingerprinted state
 — that is what `ConditionBoardStability` decides, so widening it means widening

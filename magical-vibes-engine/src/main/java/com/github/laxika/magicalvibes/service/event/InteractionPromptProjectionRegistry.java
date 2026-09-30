@@ -190,6 +190,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectWerewhatOnEnterChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
+        register(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class,
+                this::projectArtifactPermanentOrGraveyardCardChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.ReturnAurasFromGraveyardChoice.class,
@@ -236,6 +238,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PerpetualCastCostHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualActivatedAbilityCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
@@ -1191,7 +1195,7 @@ public class InteractionPromptProjectionRegistry {
                 gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()), interaction.validCardIds());
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                "Choose a nonland card from that player's hand or graveyard to exile.");
+                "Choose a card from that player's hand or graveyard to exile.");
     }
 
     private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(
@@ -1213,6 +1217,19 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, required,
                 interaction.sourceName() + " — exile " + required + " permanent"
                         + (required == 1 ? "" : "s") + " you control and/or cards from your hand.");
+    }
+
+    private InteractionPromptMessage projectArtifactPermanentOrGraveyardCardChoice(
+            GameData gameData, PendingInteraction.ArtifactPermanentOrGraveyardCardChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard).toList(), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectBeholdChoice(

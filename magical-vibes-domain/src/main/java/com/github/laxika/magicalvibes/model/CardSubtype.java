@@ -338,6 +338,7 @@ public enum CardSubtype {
     GLIMMER("Glimmer"),
     NEPHILIM("Nephilim"),
     SAND("Sand"),
+    CHORUS("Chorus"),
     RIGGER("Rigger"),
     MIRRODIN("Mirrodin"),
     SERRAS_REALM("Serra's Realm"),
@@ -350,7 +351,7 @@ SYNTH("Synth"),
 
     private static final List<CardSubtype> LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, CLOUD, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
-            URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, OMEN);
+            URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

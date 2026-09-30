@@ -28,7 +28,8 @@ public class CreateBoonEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateBoonEffect boonEffect = (CreateBoonEffect) effect;
         gameData.boons.add(new Boon(entry.getControllerId(), entry.getCard(),
-                boonEffect.triggeredEffect(), boonEffect.uses(), boonEffect.trigger()));
+                boonEffect.triggeredEffect(), boonEffect.uses(),
+                boonEffect.trigger(), boonEffect.targetFilter()));
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(
                 playerName + " gets a " + boonEffect.uses() + "-time boon."));

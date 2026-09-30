@@ -123,9 +123,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -8377,7 +8374,8 @@ public class SpellCastingService {
         boolean isHarmonize = (harmonizeOpt.isPresent() && flashbackOpt.isEmpty() && !isDisturb) || grantedHarmonize;
         boolean isJumpStart = !graveyardAbilitiesSuppressed
                 && (card.getCastingOption(JumpStartCast.class).isPresent()
-                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD)
+                || gameData.cardsGrantedJumpStartUntilEndOfTurn.contains(card.getId()))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize;
         boolean isRetrace = !graveyardAbilitiesSuppressed
                 && (card.getCastingOption(Retrace.class).isPresent()
@@ -9439,9 +9437,7 @@ public class SpellCastingService {
         boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
         UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, graveyardCard.getId());
         Optional<CastingPermissionService.GraveyardLandPermission> graveyardLandPermission =
-                playerId.equals(graveyardOwnerId)
-                        ? castingPermissionService.findGraveyardLandPermission(gameData, playerId, graveyardCard)
-                        : Optional.empty();
+                castingPermissionService.findGraveyardLandPermission(gameData, playerId, graveyardCard);
         graveyardLandPermission.ifPresent(permission ->
                 castingPermissionService.markGraveyardLandPermissionUsed(
                         gameData, playerId, permission.sourcePermanentId()));

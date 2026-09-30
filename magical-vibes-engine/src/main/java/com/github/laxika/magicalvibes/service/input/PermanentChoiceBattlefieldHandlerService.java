@@ -241,6 +241,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler seizeTheSpotlightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler benthicAnomalyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentForTargetingRelayEffectHandler chooseOpponentForTargetingRelayEffectHandler;
@@ -1083,6 +1084,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleEachOpponentChoosesCreatureForTokenCopy(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy context) {
+        benthicAnomalyEffectHandler.completeCreatureChoice(gameData, permanentId, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleChooseOpponentGainsControlOfSource(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
@@ -1274,7 +1284,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler.sacrificeAndConjure(
-                gameData, target, context.sacrificingPlayerId(), context.resolvingEntry());
+                gameData, target, context.sacrificingPlayerId(), context.resolvingEntry(), context.effect());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -15,19 +15,24 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "M3C", collectorNumber = "320")
 @CardRegistration(set = "MB2", collectorNumber = "104")
 public class BasiliskGate extends Card {
 
     public BasiliskGate() {
+        // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
+        // {2}, {T}: Target creature gets +X/+X until end of turn, where X is the number of Gates
+        // you control. Activate only as a sorcery.
         PermanentCount gatesYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
                 List.of(new BoostTargetCreatureEffect(gatesYouControl, gatesYouControl)),
-                "{2}, {T}: Target creature gets +X/+X until end of turn, where X is the number of Gates you control. Activate only as a sorcery.",
+                "{2}, {T}: Target creature gets +X/+X until end of turn, where X is the number of "
+                        + "Gates you control. Activate only as a sorcery.",
                 TargetFilters.creature(),
                 null,
                 null,

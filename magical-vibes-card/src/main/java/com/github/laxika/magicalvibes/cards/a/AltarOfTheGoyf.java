@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MH2", collectorNumber = "220")
+@CardRegistration(set = "M3C", collectorNumber = "282")
 public class AltarOfTheGoyf extends Card {
 
     public AltarOfTheGoyf() {

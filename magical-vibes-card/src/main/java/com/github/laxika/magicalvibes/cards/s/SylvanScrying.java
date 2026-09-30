@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "MB1", collectorNumber = "192")
 @CardRegistration(set = "TSR", collectorNumber = "367")
 @CardRegistration(set = "EA3", collectorNumber = "4")
+@CardRegistration(set = "M3C", collectorNumber = "248")
 public class SylvanScrying extends Card {
 
     public SylvanScrying() {
