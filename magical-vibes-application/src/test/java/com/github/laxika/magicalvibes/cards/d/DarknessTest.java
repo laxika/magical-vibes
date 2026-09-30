@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
-import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,11 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Darkness.class, BarbaryApes.class, Pyrotechnics.class})
+@CardUsed({Darkness.class, Squire.class, Disintegrate.class})
 class DarknessTest extends BaseCardTest {
 
     @Test
@@ -59,9 +57,9 @@ class DarknessTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents combat damage to players and creatures")
     void preventsCombatDamageToPlayersAndCreatures() {
-        Permanent blockedAttacker = addCreatureReady(player1, new BarbaryApes());
-        Permanent unblockedAttacker = addCreatureReady(player1, new BarbaryApes());
-        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        Permanent blockedAttacker = addCreatureReady(player1, new Squire());
+        Permanent unblockedAttacker = addCreatureReady(player1, new Squire());
+        Permanent blocker = addCreatureReady(player2, new Squire());
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Darkness()));
@@ -88,9 +86,9 @@ class DarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0);
 
-        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.setHand(player1, List.of(new Disintegrate()));
         harness.addMana(player1, ManaColor.RED, 5);
-        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.castSorcery(player1, 0, 4, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);

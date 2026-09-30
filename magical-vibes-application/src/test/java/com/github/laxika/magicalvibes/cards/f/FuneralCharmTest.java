@@ -71,6 +71,17 @@ class FuneralCharmTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player2.getId())).isEmpty();
             assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         }
+
+        @Test
+        @DisplayName("Cannot target a permanent")
+        void cannotTargetPermanent() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new WandOfDenial());
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     @Nested
@@ -81,6 +92,20 @@ class FuneralCharmTest extends BaseCardTest {
         @DisplayName("Gives +2/-1")
         void boostsTarget() {
             Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.castInstant(player1, 0, 1, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(target.getEffectivePower()).isEqualTo(4);
+            assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Can target an opponent's creature")
+        void boostsOpponentsCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -127,6 +152,19 @@ class FuneralCharmTest extends BaseCardTest {
         @DisplayName("Grants swampwalk")
         void grantsSwampwalk() {
             Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.castInstant(player1, 0, 2, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Can target an opponent's creature")
+        void grantsSwampwalkToOpponentsCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 

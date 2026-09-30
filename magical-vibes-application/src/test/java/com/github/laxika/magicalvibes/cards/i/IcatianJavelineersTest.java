@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.Aeolipile;
+import com.github.laxika.magicalvibes.cards.f.FlyingMen;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IcatianJavelineers.class, IcatianInfantry.class, Aeolipile.class})
+@CardUsed({IcatianJavelineers.class, FlyingMen.class, TormodsCrypt.class})
 class IcatianJavelineersTest extends BaseCardTest {
 
     @Test
@@ -44,12 +45,23 @@ class IcatianJavelineersTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to a target creature")
     void dealsDamageToTargetCreature() {
         addReadyJavelineers();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcatianInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlyingMen());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Icatian Infantry");
+        harness.assertNotOnBattlefield(player2, "Flying Men");
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent javelineers = addReadyJavelineers();
+
+        harness.activateAbility(player1, 0, null, javelineers.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Icatian Javelineers");
     }
 
     @Test
@@ -63,10 +75,22 @@ class IcatianJavelineersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent javelineers = harness.enterBattlefieldAndReturn(player1, new IcatianJavelineers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(javelineers.isTapped()).isFalse();
+        assertThat(javelineers.getCounterCount(CounterType.JAVELIN)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature artifact")
     void cannotTargetNoncreatureArtifact() {
         Permanent javelineers = addReadyJavelineers();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Aeolipile());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -76,8 +100,8 @@ class IcatianJavelineersTest extends BaseCardTest {
     }
 
     private Permanent addReadyJavelineers() {
-        Permanent javelineers = addCreatureReady(player1, new IcatianJavelineers());
-        javelineers.setCounterCount(CounterType.JAVELIN, 1);
+        Permanent javelineers = harness.enterBattlefieldAndReturn(player1, new IcatianJavelineers());
+        javelineers.setSummoningSick(false);
         return javelineers;
     }
 }

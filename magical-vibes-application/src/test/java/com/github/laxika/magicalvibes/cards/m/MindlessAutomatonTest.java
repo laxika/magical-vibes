@@ -67,6 +67,21 @@ class MindlessAutomatonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing two counters leaves any additional counters on it")
+    void removeCountersLeavesAdditionalCounters() {
+        Permanent automaton = addReadyAutomaton(player1, 3);
+        MindlessAutomaton drawnCard = new MindlessAutomaton();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(automaton);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
     @DisplayName("The counter ability cannot be activated without a card to discard")
     void cannotAddCounterWithoutCardToDiscard() {
         Permanent automaton = addReadyAutomaton(player1, 2);
