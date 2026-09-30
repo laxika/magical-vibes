@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.g.Gristleback;
+import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlaguedRusalka.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({PlaguedRusalka.class, Gristleback.class, GruulSignet.class})
 class PlaguedRusalkaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a creature gives the target creature -1/-1 until end of turn")
     void sacrificesCreatureAndShrinksTarget() {
         addCreatureReady(player1, new PlaguedRusalka());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new Gristleback());
+        Permanent target = addCreatureReady(player2, new Gristleback());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -30,15 +30,15 @@ class PlaguedRusalkaTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Gristleback");
     }
 
     @Test
     @DisplayName("The -1/-1 effect wears off at end of turn")
     void shrinkWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new PlaguedRusalka());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new Gristleback());
+        Permanent target = addCreatureReady(player2, new Gristleback());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -57,7 +57,7 @@ class PlaguedRusalkaTest extends BaseCardTest {
     @DisplayName("Can sacrifice itself as the creature cost")
     void canSacrificeItself() {
         addCreatureReady(player1, new PlaguedRusalka());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Gristleback());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -71,11 +71,10 @@ class PlaguedRusalkaTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new PlaguedRusalka());
-        Permanent land = new Permanent(new Swamp());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

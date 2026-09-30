@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.d.DryadSophisticate;
+import com.github.laxika.magicalvibes.cards.s.ScorchedRusalka;
+import com.github.laxika.magicalvibes.cards.v.VertigoSpawn;
+import com.github.laxika.magicalvibes.cards.w.WeeDragonauts;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,57 +20,92 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TiborAndLumia.class, FugitiveWizard.class, GrizzlyBears.class, HillGiant.class, SuntailHawk.class})
+@CardUsed({TiborAndLumia.class, VertigoSpawn.class, DryadSophisticate.class,
+        ScorchedRusalka.class, WeeDragonauts.class})
 class TiborAndLumiaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a blue spell lets Tibor and Lumia give a creature flying until end of turn")
     void blueSpellGrantsFlyingToTargetCreature() {
         harness.addToBattlefield(player1, new TiborAndLumia());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new FugitiveWizard()));
+        Permanent dryad = harness.addToBattlefieldAndReturn(player1, new DryadSophisticate());
+        harness.setHand(player1, List.of(new VertigoSpawn()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, dryad.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(dryad.hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(dryad.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting a blue spell can target an opponent's creature")
+    void blueSpellCanTargetOpponentsCreature() {
+        harness.addToBattlefield(player1, new TiborAndLumia());
+        Permanent dryad = harness.addToBattlefieldAndReturn(player2, new DryadSophisticate());
+        harness.setHand(player1, List.of(new VertigoSpawn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, dryad.getId());
+        harness.passBothPriorities();
+
+        assertThat(dryad.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Casting a red spell damages creatures without flying")
     void redSpellDamagesCreaturesWithoutFlying() {
         Permanent tiborAndLumia = harness.addToBattlefieldAndReturn(player1, new TiborAndLumia());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
-        harness.setHand(player1, List.of(new HillGiant()));
+        Permanent dryad = harness.addToBattlefieldAndReturn(player2, new DryadSophisticate());
+        Permanent dragonauts = harness.addToBattlefieldAndReturn(player2, new WeeDragonauts());
+        harness.setHand(player1, List.of(new ScorchedRusalka()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(tiborAndLumia.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(hawk.getMarkedDamage()).isZero();
+        assertThat(dryad.getMarkedDamage()).isEqualTo(1);
+        assertThat(dragonauts.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's red spell does not trigger Tibor and Lumia")
+    void opponentsRedSpellDoesNotTrigger() {
+        Permanent tiborAndLumia = harness.addToBattlefieldAndReturn(player1, new TiborAndLumia());
+        harness.setHand(player2, List.of(new ScorchedRusalka()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(tiborAndLumia.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("A blue trigger cannot target a player")
     void blueTriggerCannotTargetPlayer() {
         harness.addToBattlefield(player1, new TiborAndLumia());
-        harness.setHand(player1, List.of(new FugitiveWizard()));
+        harness.setHand(player1, List.of(new VertigoSpawn()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
 
@@ -82,7 +117,7 @@ class TiborAndLumiaTest extends BaseCardTest {
     @DisplayName("Casting a green spell does not trigger either ability")
     void greenSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new TiborAndLumia());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DryadSophisticate()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WreakHavoc.class, Cancel.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({WreakHavoc.class, Cancel.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
+        Juggernaut.class})
 class WreakHavocTest extends BaseCardTest {
 
     private void setUpWreakHavoc(WreakHavoc card) {
@@ -32,11 +34,23 @@ class WreakHavocTest extends BaseCardTest {
         setUpWreakHavoc(new WreakHavoc());
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Wreak Havoc destroys an artifact creature")
+    void destroysArtifactCreature() {
+        harness.addToBattlefield(player2, new Juggernaut());
+        setUpWreakHavoc(new WreakHavoc());
+
+        UUID targetId = harness.getPermanentId(player2, "Juggernaut");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Juggernaut");
+        harness.assertInGraveyard(player2, "Juggernaut");
     }
 
     @Test
@@ -46,8 +60,7 @@ class WreakHavocTest extends BaseCardTest {
         setUpWreakHavoc(new WreakHavoc());
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");

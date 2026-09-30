@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -73,6 +74,33 @@ class LeylineOfLifeforceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == bears);
+    }
+
+    @Test
+    @DisplayName("Leyline prevents an opponent's creature spell from being countered")
+    void opponentsCreatureSpellsCannotBeCountered() {
+        harness.addToBattlefield(player1, new LeylineOfLifeforce());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        Cancel cancel = new Cancel();
+        harness.setHand(player1, List.of(cancel));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cancel");
     }
 
     @Test

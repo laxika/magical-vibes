@@ -12,15 +12,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GruulWarPlow.class, GrizzlyBears.class})
+@CardUsed({GruulWarPlow.class, GruulNodorog.class})
 class GruulWarPlowTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures you control have trample")
     void grantsTrampleToOwnCreatures() {
         Permanent plow = harness.addToBattlefieldAndReturn(player1, new GruulWarPlow());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GruulNodorog());
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.TRAMPLE)).isFalse();
@@ -37,10 +37,10 @@ class GruulWarPlowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, plow)).isTrue();
-        assertThat(gqs.isArtifact(plow)).isTrue();
+        assertThat(gqs.isArtifact(gd, plow)).isTrue();
         assertThat(gqs.getEffectivePower(gd, plow)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, plow)).isEqualTo(4);
-        assertThat(plow.getTransientSubtypes()).contains(CardSubtype.JUGGERNAUT);
+        assertThat(gqs.hasEffectiveSubtype(gd, plow, CardSubtype.JUGGERNAUT)).isTrue();
         assertThat(gqs.hasKeyword(gd, plow, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -59,7 +59,8 @@ class GruulWarPlowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, plow)).isFalse();
-        assertThat(gqs.isArtifact(plow)).isTrue();
+        assertThat(gqs.isArtifact(gd, plow)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, plow, CardSubtype.JUGGERNAUT)).isFalse();
         assertThat(gqs.hasKeyword(gd, plow, Keyword.TRAMPLE)).isFalse();
     }
 

@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed(RumblingSlum.class)
 class RumblingSlumTest extends BaseCardTest {
 
@@ -20,8 +18,8 @@ class RumblingSlumTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -34,7 +32,24 @@ class RumblingSlumTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Triggered damage resolves even if it leaves the battlefield before resolution")
+    void triggerStillDealsDamageIfSourceLeavesBeforeResolution() {
+        var slum = harness.addToBattlefieldAndReturn(player1, new RumblingSlum());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, slum));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

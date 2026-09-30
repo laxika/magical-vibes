@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SilhanaLedgewalker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhostCouncilOfOrzhova.class, GrizzlyBears.class})
+@CardUsed({GhostCouncilOfOrzhova.class, SilhanaLedgewalker.class})
 class GhostCouncilOfOrzhovaTest extends BaseCardTest {
 
     @Test
@@ -43,8 +43,8 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
     @Test
     @DisplayName("Activation sacrifices a creature and exiles Ghost Council")
     void activationSacrificesCreatureAndExilesGhostCouncil() {
-        Permanent ghostCouncil = harness.addToBattlefieldAndReturn(player1, new GhostCouncilOfOrzhova());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ghostCouncil = addCreatureReady(player1, new GhostCouncilOfOrzhova());
+        Permanent creature = addCreatureReady(player1, new SilhanaLedgewalker());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -54,7 +54,7 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(ghostCouncil.getCard().getId()));
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Silhana Ledgewalker");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(ghostCouncil.getCard().getId()));
     }
@@ -62,8 +62,8 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled Ghost Council returns at the next end step and retriggers its ETB")
     void returnsAtNextEndStepAndRetriggersEtb() {
-        harness.addToBattlefield(player1, new GhostCouncilOfOrzhova());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GhostCouncilOfOrzhova());
+        Permanent creature = addCreatureReady(player1, new SilhanaLedgewalker());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -83,6 +83,36 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
+    @Test
+    @DisplayName("A Ghost Council controlled by another player returns under its owner's control")
+    void returnsUnderItsOwnersControlWhenControlledByAnotherPlayer() {
+        GhostCouncilOfOrzhova ghostCouncilCard = new GhostCouncilOfOrzhova();
+        ghostCouncilCard.setOwnerId(player1.getId());
+        Permanent ghostCouncil = addCreatureReady(player2, ghostCouncilCard);
+        Permanent creature = addCreatureReady(player2, new SilhanaLedgewalker());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(ghostCouncil.getCard().getId()));
+
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        advanceToEndStep();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(ghostCouncil.getCard().getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(ghostCouncil.getCard().getId()));
+    }
+
     private void castGhostCouncil(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new GhostCouncilOfOrzhova()));
         addManaForGhostCouncil();
@@ -98,6 +128,6 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }

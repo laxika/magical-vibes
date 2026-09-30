@@ -38,6 +38,15 @@ class GruulScrapperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, scrapper, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Does not gain haste when it enters the battlefield without being cast")
+    void doesNotGainHasteWhenItEntersWithoutBeingCast() {
+        Permanent scrapper = harness.enterBattlefieldAndReturn(player1, new GruulScrapper());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, scrapper, Keyword.HASTE)).isFalse();
+    }
+
     private Permanent castScrapper(boolean spendRedMana) {
         harness.setHand(player1, List.of(new GruulScrapper()));
         harness.addMana(player1, ManaColor.GREEN, 1);

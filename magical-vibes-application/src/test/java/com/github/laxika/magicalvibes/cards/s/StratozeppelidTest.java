@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DaggerclawImp;
+import com.github.laxika.magicalvibes.cards.g.Gristleback;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Stratozeppelid.class, AvenFisher.class, GrizzlyBears.class})
+@CardUsed({Stratozeppelid.class, DaggerclawImp.class, Gristleback.class})
 class StratozeppelidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Stratozeppelid can block a creature with flying")
     void canBlockCreatureWithFlying() {
         Permanent blocker = addCreatureReady(player2, new Stratozeppelid());
-        Permanent attacker = addCreatureReady(player1, new AvenFisher());
+        Permanent attacker = addCreatureReady(player1, new DaggerclawImp());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -37,7 +37,7 @@ class StratozeppelidTest extends BaseCardTest {
     @DisplayName("Stratozeppelid cannot block a creature without flying")
     void cannotBlockCreatureWithoutFlying() {
         Permanent blocker = addCreatureReady(player2, new Stratozeppelid());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new Gristleback());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();

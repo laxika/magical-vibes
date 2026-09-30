@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfFire;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.FencersMagemark;
+import com.github.laxika.magicalvibes.cards.o.OrderOfTheStars;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,16 +16,33 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InfiltratorsMagemark.class, GrizzlyBears.class, WallOfFire.class})
+@CardUsed({InfiltratorsMagemark.class, FencersMagemark.class, IzzetGuildmage.class,
+        OrderOfTheStars.class})
 class InfiltratorsMagemarkTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Resolving Infiltrator's Magemark attaches it to the target creature")
+    void resolvingAttachesToTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetGuildmage());
+
+        harness.setHand(player1, List.of(new InfiltratorsMagemark()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof InfiltratorsMagemark
+                        && creature.getId().equals(permanent.getAttachedTo()));
+    }
 
     @Test
     @DisplayName("Infiltrator's Magemark boosts each enchanted creature you control")
     void boostsEnchantedCreaturesYouControl() {
-        Permanent firstBears = addCreature(player1);
-        Permanent secondBears = addCreature(player1);
-        Permanent unenchantedBears = addCreature(player1);
-        Permanent opponentBears = addCreature(player2);
+        Permanent firstBears = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent secondBears = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent unenchantedBears = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent opponentBears = addCreatureReady(player2, new IzzetGuildmage());
         addAura(firstBears);
         addAura(secondBears);
 
@@ -40,12 +57,78 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Infiltrator's Magemark boosts your creatures enchanted by any Aura")
+    void boostsCreaturesEnchantedByAnyAuraYouControl() {
+        Permanent otherEnchantedCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent magemarkEnchantedCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent opponentCreature = addCreatureReady(player2, new IzzetGuildmage());
+        addAura(magemarkEnchantedCreature);
+
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player2, new FencersMagemark());
+        otherAura.setAttachedTo(otherEnchantedCreature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, otherEnchantedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherEnchantedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, magemarkEnchantedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, magemarkEnchantedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Infiltrator's Magemark stops boosting when it leaves the battlefield")
+    void bonusStopsWhenRemoved() {
+        Permanent creature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent magemark = harness.addToBattlefieldAndReturn(player1, new InfiltratorsMagemark());
+        magemark.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(magemark);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Infiltrator's Magemark fizzles if its target leaves before resolution")
+    void fizzlesIfTargetRemoved() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetGuildmage());
+
+        harness.setHand(player1, List.of(new InfiltratorsMagemark()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof InfiltratorsMagemark);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof InfiltratorsMagemark);
+    }
+
+    @Test
+    @DisplayName("Infiltrator's Magemark cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InfiltratorsMagemark());
+        harness.setHand(player1, List.of(new InfiltratorsMagemark()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
     @DisplayName("An enchanted creature cannot be blocked by a creature without defender")
     void enchantedCreatureCannotBeBlockedByNormalCreature() {
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
         addAura(attacker);
         attacker.setAttacking(true);
-        addCreature(player2);
+        addCreatureReady(player2, new IzzetGuildmage());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -56,10 +139,10 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
     @Test
     @DisplayName("An enchanted creature can be blocked by a creature with defender")
     void enchantedCreatureCanBeBlockedByDefender() {
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
         addAura(attacker);
         attacker.setAttacking(true);
-        Permanent blocker = addCreature(player2, new WallOfFire());
+        Permanent blocker = addCreatureReady(player2, new OrderOfTheStars());
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -70,9 +153,9 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
     @Test
     @DisplayName("An unenchanted creature is unaffected by Infiltrator's Magemark")
     void unenchantedCreatureIsUnaffected() {
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
         attacker.setAttacking(true);
-        Permanent blocker = addCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new IzzetGuildmage());
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -80,21 +163,29 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private Permanent addCreature(Player player) {
-        return addCreature(player, new GrizzlyBears());
-    }
+    @Test
+    @DisplayName("Infiltrator's Magemark does not affect enchanted creatures controlled by an opponent")
+    void onlyAffectsEnchantedCreaturesYouControl() {
+        Permanent attacker = addCreatureReady(player2, new IzzetGuildmage());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player1, new IzzetGuildmage());
+        addAura(attacker);
+        prepareDeclareBlockers(player2);
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     private void addAura(Permanent enchantedCreature) {
-        Permanent aura = new Permanent(new InfiltratorsMagemark());
+        addAura(player1, enchantedCreature);
+    }
+
+    private void addAura(Player controller, Permanent enchantedCreature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new InfiltratorsMagemark());
         aura.setAttachedTo(enchantedCreature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
     }
 
 }

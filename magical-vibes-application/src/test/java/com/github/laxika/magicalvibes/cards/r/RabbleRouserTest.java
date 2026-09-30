@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RabbleRouser.class, GrizzlyBears.class})
+@CardUsed(RabbleRouser.class)
 class RabbleRouserTest extends BaseCardTest {
 
     @Test
@@ -51,11 +50,11 @@ class RabbleRouserTest extends BaseCardTest {
         Permanent rouser = addCreatureReady(player1, new RabbleRouser());
         rouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         rouser.setAttacking(true);
-        Permanent ownAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownAttacker = addCreatureReady(player1, new RabbleRouser());
         ownAttacker.setAttacking(true);
-        Permanent opposingAttacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opposingAttacker = addCreatureReady(player2, new RabbleRouser());
         opposingAttacker.setAttacking(true);
-        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new RabbleRouser());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, indexOf(player1, rouser), 0, null, null);
@@ -65,13 +64,14 @@ class RabbleRouserTest extends BaseCardTest {
         assertThat(ownAttacker.getPowerModifier()).isEqualTo(2);
         assertThat(opposingAttacker.getPowerModifier()).isEqualTo(2);
         assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(rouser.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("The activated ability's boost wears off at end of turn")
     void abilityBoostWearsOff() {
         Permanent rouser = addCreatureReady(player1, new RabbleRouser());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new RabbleRouser());
         attacker.setAttacking(true);
 
         harness.addMana(player1, ManaColor.RED, 1);
@@ -88,9 +88,7 @@ class RabbleRouserTest extends BaseCardTest {
     }
 
     private void castRabbleRouser() {
-        harness.setHand(player1, java.util.List.of(new RabbleRouser()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RabbleRouser(), "{3}{R}");
         resolveAllTriggers();
     }
 

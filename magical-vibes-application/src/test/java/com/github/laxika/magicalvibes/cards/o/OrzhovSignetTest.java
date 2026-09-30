@@ -38,6 +38,19 @@ class OrzhovSignetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate Orzhov Signet while it has summoning sickness")
+    void canActivateWhileSummoningSick() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new OrzhovSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot activate Orzhov Signet while tapped")
     void cannotActivateWhileTapped() {
         addReadySignet();
@@ -51,9 +64,6 @@ class OrzhovSignetTest extends BaseCardTest {
     }
 
     private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new OrzhovSignet());
-        signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
-        return signet;
+        return addCreatureReady(player1, new OrzhovSignet());
     }
 }
