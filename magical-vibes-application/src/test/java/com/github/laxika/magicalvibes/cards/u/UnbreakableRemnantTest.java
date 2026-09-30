@@ -22,6 +22,8 @@ class UnbreakableRemnantTest extends BaseCardTest {
     void escapeExilesCardsAndPerpetuallyBoostsOwnedCopies() {
         UnbreakableRemnant escapedCard = new UnbreakableRemnant();
         UnbreakableRemnant handCard = new UnbreakableRemnant();
+        escapedCard.setOwnerId(player1.getId());
+        handCard.setOwnerId(player1.getId());
         Card firstExiledCard = new GrizzlyBears();
         Card secondExiledCard = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(escapedCard, firstExiledCard, secondExiledCard));

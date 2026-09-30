@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -38,7 +37,14 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenAttachedToTargetEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        for (UUID targetId : entry.targetsForEffect(e)) {
+            createAttachedToken(gameData, entry, e, targetId);
+        }
+    }
+
+    private void createAttachedToken(GameData gameData, StackEntry entry,
+                                     CreateTokenAttachedToTargetEffect e, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         UUID targetControllerId = target == null
                 ? null : gameQueryService.findPermanentController(gameData, target.getId());
         boolean targetControllerMatches = switch (e.targetControllerRelation()) {

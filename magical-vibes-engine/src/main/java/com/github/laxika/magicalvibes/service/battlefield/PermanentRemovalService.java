@@ -1154,6 +1154,12 @@ public class PermanentRemovalService {
      * @return {@code true} if the permanent was destroyed, {@code false} if it survived
      */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated) {
+        return tryDestroyPermanent(gameData, target, cannotBeRegenerated, true);
+    }
+
+    /** Allows a resolving effect to reattach an Aura before orphaned attachments are cleaned up. */
+    public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated,
+                                       boolean cleanUpAttachments) {
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
@@ -1170,7 +1176,9 @@ public class PermanentRemovalService {
             return false;
         }
         destroyPermanentToGraveyard(gameData, target);
-        removeOrphanedAuras(gameData);
+        if (cleanUpAttachments) {
+            removeOrphanedAuras(gameData);
+        }
         return true;
     }
 

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MireInMisery.class, GloriousAnthem.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({MireInMisery.class, GloriousAnthem.class, GrizzlyBears.class, FountainOfYouth.class})
 class MireInMiseryTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,7 @@ class MireInMiseryTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         cast();
 
@@ -40,7 +40,7 @@ class MireInMiseryTest extends BaseCardTest {
 
     @Test
     void doesNothingWhenOpponentControlsNoCreatureOrEnchantment() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         cast();
 

@@ -4,16 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllMatchingCardsFromLibraryWithSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +24,7 @@ public class ExileAllMatchingCardsFromLibraryWithSourceThenEffectHandler impleme
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,18 +58,8 @@ public class ExileAllMatchingCardsFromLibraryWithSourceThenEffectHandler impleme
         }
 
         entry.setEventValue(matchingCards.size());
-        StackEntry reflexiveAbility = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                controllerId,
-                entry.getCard().getName() + "'s reflexive ability",
-                new ArrayList<>(List.of(exileThen.thenEffect())),
-                sourcePermanentId,
-                List.of()
-        );
-        reflexiveAbility.setEventValue(entry.getEventValue());
-        reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        gameData.stack.add(reflexiveAbility);
+        queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                new QueueReflexiveAbilityEffect(exileThen.thenEffect()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s reflexive ability triggers."));
     }
 }

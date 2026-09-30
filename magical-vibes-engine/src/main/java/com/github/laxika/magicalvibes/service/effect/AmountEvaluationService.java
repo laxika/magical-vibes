@@ -3324,6 +3324,11 @@ public class AmountEvaluationService {
      * not attacking or has no attack target. See {@link CountScope#DEFENDING_PLAYER}.
      */
     private UUID defendingPlayerId(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() != null && ctx.stackEntry().getAttackedTargetId() != null) {
+            UUID attackedTarget = ctx.stackEntry().getAttackedTargetId();
+            return gameData.playerIds.contains(attackedTarget) ? attackedTarget
+                    : gameQueryService.findPermanentController(gameData, attackedTarget);
+        }
         Permanent source = ctx.sourcePermanent();
         if (source != null) {
             if (!source.isAttacking() || source.getAttackTarget() == null) {

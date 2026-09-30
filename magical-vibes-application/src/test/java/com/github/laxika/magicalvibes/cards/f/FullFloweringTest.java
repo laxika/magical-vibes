@@ -24,9 +24,9 @@ class FullFloweringTest extends BaseCardTest {
     void populatesXTimes() {
         harness.addToBattlefield(player1, creatureToken("Soldier Token"));
         harness.setHand(player1, List.of(new FullFlowering()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.GREEN, 7);
 
-        harness.castSorcery(player1, 0, 2);
+        harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
         assertThat(countOf(player1, "Soldier Token")).isEqualTo(2);
@@ -40,7 +40,7 @@ class FullFloweringTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondCopy.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(countOf(player1, "Soldier Token")).isEqualTo(3);
+        assertThat(countOf(player1, "Soldier Token")).isEqualTo(4);
     }
 
     @Test

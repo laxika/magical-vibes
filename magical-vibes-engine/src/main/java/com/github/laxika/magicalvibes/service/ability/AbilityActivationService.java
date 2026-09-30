@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
@@ -145,7 +146,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -5254,6 +5254,29 @@ public class AbilityActivationService {
                                                    List<CardEffect> abilityEffects, int xValue,
                                                    Map<UUID, Integer> damageAssignments,
                                                    boolean deferAmountValidation) {
+        for (CardEffect effect : abilityEffects) {
+            if (!(effect instanceof DistributeCountersAmongTargetsEffect distribution)
+                    || distribution.mode() != DivisionMode.CHOSEN || distribution.etbAssignments()) {
+                continue;
+            }
+            Map<UUID, Integer> assignments = damageAssignments == null ? Map.of() : damageAssignments;
+            int expectedAmount = amountEvaluationService.evaluate(gameData, distribution.total(),
+                    new AmountContext(playerId, sourcePermanent, null, xValue, 0));
+            int assignedAmount = 0;
+            for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+                if (assignment.getValue() == null || assignment.getValue() <= 0) {
+                    throw new IllegalStateException("Each counter assignment must be positive");
+                }
+                assignedAmount += assignment.getValue();
+                targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId, ability,
+                        List.of(distribution), assignment.getKey(), null, sourcePermanent.getCard(), xValue);
+            }
+            if (!deferAmountValidation && !(assignments.isEmpty() && distribution.allowsNoTargets())
+                    && (distribution.allowsPartialDistribution()
+                    ? assignedAmount > expectedAmount : assignedAmount != expectedAmount)) {
+                throw new IllegalStateException("Counter assignments must sum to " + expectedAmount);
+            }
+        }
         DealDividedDamageEffect dividedDamage = abilityEffects.stream()
                 .filter(DealDividedDamageEffect.class::isInstance)
                 .map(DealDividedDamageEffect.class::cast)

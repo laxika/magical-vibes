@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpAttachAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -21,7 +20,7 @@ import java.util.List;
 public class GiftOfDoom extends Card {
 
     public GiftOfDoom() {
-        addMorph("{4}{B}", new SacrificePermanentsCost(1, new PermanentAllOfPredicate(List.of(
+        addMorph("", new SacrificePermanentsCost(1, new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ))));
@@ -30,9 +29,7 @@ public class GiftOfDoom extends Card {
                 .addEffect(EffectSlot.STATIC,
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                        new MayEffect(new AttachSourceAuraToTargetCreatureEffect(),
-                                "Attach this Aura to a creature?"));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.ON_TURNED_FACE_UP, new TurnFaceUpAttachAuraEffect());
     }
 }

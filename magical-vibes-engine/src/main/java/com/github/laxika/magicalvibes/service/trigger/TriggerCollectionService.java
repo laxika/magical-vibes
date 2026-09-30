@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingArtifactUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -54,7 +53,6 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
@@ -84,7 +82,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
@@ -1881,6 +1878,7 @@ public class TriggerCollectionService {
                             selfCastX
                     );
                     selfCastTrigger.setKicked(selfCastKicked);
+                    selfCastTrigger.setSourceZone(castZone);
                     if (selfCastTriggeredEffects.stream()
                             .anyMatch(TriggeringSpellReferencingEffect.class::isInstance)) {
                         selfCastTrigger.setTriggeringCardId(spellCard.getId());

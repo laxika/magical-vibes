@@ -7540,6 +7540,7 @@ public class GameData {
         copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
         copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
         copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
+        copy.cloneOperation.reflexiveEffects = this.cloneOperation.reflexiveEffects;
         copy.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 this.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         copy.cloneOperation.xValue = this.cloneOperation.xValue;

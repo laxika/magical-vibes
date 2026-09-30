@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -318,7 +317,15 @@ public class DestructionSupport {
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName, boolean cannotBeRegenerated) {
-        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)) {
+        return tryDestroyAndLog(gameData, target, sourceName, cannotBeRegenerated, true);
+    }
+
+    public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName,
+                                    boolean cannotBeRegenerated, boolean cleanUpAttachments) {
+        boolean destroyed = cleanUpAttachments
+                ? permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)
+                : permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated, false);
+        if (!destroyed) {
             return false;
         }
         gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));

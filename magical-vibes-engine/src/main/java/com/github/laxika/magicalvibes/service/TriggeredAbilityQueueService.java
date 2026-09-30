@@ -1111,7 +1111,7 @@ public class TriggeredAbilityQueueService {
 
     private boolean hasMultiTargetDeathTrigger(Card card, List<CardEffect> effects) {
         return card.getSpellTargets().stream()
-                .anyMatch(group -> group.getMaxTargets() > 1
+                .anyMatch(group -> (group.getMaxTargets() > 1 || group.getMinTargets() == 0)
                         && effects.stream().anyMatch(effect ->
                         card.isEffectBoundToTargetGroup(effect, group.getIndex())));
     }

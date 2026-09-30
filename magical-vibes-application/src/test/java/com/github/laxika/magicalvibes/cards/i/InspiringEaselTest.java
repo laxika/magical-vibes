@@ -31,7 +31,6 @@ class InspiringEaselTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.BLUE))
@@ -64,8 +63,9 @@ class InspiringEaselTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.stack).anyMatch(entry -> entry.getDescription() != null
-                && entry.getDescription().startsWith("Copy Lightning Bolt"));
+                && entry.getDescription().startsWith("Copy of Lightning Bolt"));
     }
 }

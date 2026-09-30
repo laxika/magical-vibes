@@ -134,12 +134,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
@@ -162,7 +160,6 @@ import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
@@ -4784,7 +4781,7 @@ public class SpellCastingService {
                                 + exileFromHandCostReduction + exileFromGraveyardCostReduction
                                 + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
-                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
+                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid, castTargetIds);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
@@ -5145,7 +5142,7 @@ public class SpellCastingService {
                                 + exileFromHandCostReduction + exileFromGraveyardCostReduction
                                 + tapCreaturesCostReduction, targetingTax,
                         (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
-                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
+                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid, castTargetIds);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
@@ -10970,6 +10967,17 @@ public class SpellCastingService {
                                  boolean kicked, int extraCostReduction, int targetingTax,
                                  int additionalGenericCost, String additionalManaCost,
                                  String escalateManaSuffix, boolean collectEvidenceCostPaid) {
+        return paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions,
+                phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
+                additionalManaCost, escalateManaSuffix, collectEvidenceCostPaid, List.of());
+    }
+
+    private int paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue,
+                                 List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
+                                 boolean kicked, int extraCostReduction, int targetingTax,
+                                 int additionalGenericCost, String additionalManaCost,
+                                 String escalateManaSuffix, boolean collectEvidenceCostPaid,
+                                 List<UUID> castTargetIds) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
@@ -10994,7 +11002,8 @@ public class SpellCastingService {
         try {
             payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                     phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
-                    additionalManaCost, escalateManaSuffix, Zone.HAND, false, collectEvidenceCostPaid);
+                    additionalManaCost, escalateManaSuffix, Zone.HAND, false, collectEvidenceCostPaid,
+                    null, castTargetIds);
         } finally {
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousClassLevelManaPermission);
         }
@@ -11464,6 +11473,19 @@ public class SpellCastingService {
                                         String escalateManaSuffix, Zone sourceZone,
                                         boolean anyManaType, boolean collectEvidenceCostPaid,
                                         String replacementManaCost) {
+        return computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
+                phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
+                additionalManaCost, escalateManaSuffix, sourceZone, anyManaType, collectEvidenceCostPaid,
+                replacementManaCost, List.of());
+    }
+
+    private SpellManaPayment computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
+                                        List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
+                                        boolean kicked, int extraCostReduction, int targetingTax,
+                                        int additionalGenericCost, String additionalManaCost,
+                                        String escalateManaSuffix, Zone sourceZone,
+                                        boolean anyManaType, boolean collectEvidenceCostPaid,
+                                        String replacementManaCost, List<UUID> castTargetIds) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         boolean previousClassPermission = pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery();
         boolean previousUnionKickedPermission =
@@ -11557,7 +11579,7 @@ public class SpellCastingService {
                     return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
                             convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
                             additionalGenericCost, additionalManaCost, escalateManaSuffix, effectiveSourceZone,
-                            anyManaType, collectEvidenceCostPaid, replacementManaCost);
+                            anyManaType, collectEvidenceCostPaid, replacementManaCost, castTargetIds);
                 } finally {
                     if (devoidMana != null) {
                         pool.restorePromotedDevoidSpellOnlyMana(devoidMana);
@@ -11577,7 +11599,7 @@ public class SpellCastingService {
                     return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
                             convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
                             additionalGenericCost, additionalManaCost, escalateManaSuffix, effectiveSourceZone,
-                            anyManaType, collectEvidenceCostPaid, replacementManaCost);
+                            anyManaType, collectEvidenceCostPaid, replacementManaCost, castTargetIds);
                 } finally {
                     if (devoidMana != null) {
                         pool.restorePromotedDevoidSpellOnlyMana(devoidMana);
@@ -11656,7 +11678,7 @@ public class SpellCastingService {
                                         int additionalGenericCost, String additionalManaCost,
                                         String escalateManaSuffix, Zone sourceZone,
                                         boolean anyManaType, boolean collectEvidenceCostPaid,
-                                        String replacementManaCost) {
+                                        String replacementManaCost, List<UUID> castTargetIds) {
         String suffix = escalateManaSuffix != null ? escalateManaSuffix : "";
         String baseMana = card.getManaCost() != null ? card.getManaCost() : "";
         boolean hasExileManaCostOverride = false;
@@ -11689,7 +11711,7 @@ public class SpellCastingService {
         if (!hasExileManaCostOverride
                 && castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, sourceZone)) {
             ManaCost additionalCosts = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, new ManaCost(additionalCostsMana));
+                    gameData, playerId, card, new ManaCost(additionalCostsMana), castTargetIds);
             if (!additionalCosts.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay additional spell costs");
             }
@@ -11698,7 +11720,7 @@ public class SpellCastingService {
         }
 
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, playerId, card, new ManaCost(totalMana));
+                gameData, playerId, card, new ManaCost(totalMana), castTargetIds);
         boolean blackManaLifePaymentPermission = gameQueryService.canPayBlackManaWithLife(gameData, playerId);
         if (blackManaLifePaymentPermission) {
             cost = cost.withBlackManaAsPhyrexian();

@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -1399,7 +1398,6 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         if (ctx.anyColorCombination()) {
-            manaPool.add(manaColor, 1);
             manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, 1);
             int remaining = ctx.amount() - 1;
             if (remaining > 0) {
@@ -1414,7 +1412,6 @@ public class ChoiceHandlerService {
                 return;
             }
         } else {
-            manaPool.add(manaColor, ctx.amount());
             manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, ctx.amount());
         }
 

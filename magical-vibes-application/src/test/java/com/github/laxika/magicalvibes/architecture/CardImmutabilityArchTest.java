@@ -117,6 +117,7 @@ class CardImmutabilityArchTest {
             "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
             "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
             "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
+            "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {
@@ -137,7 +138,8 @@ class CardImmutabilityArchTest {
     void onlyCardAssemblyClassesMutateCards() {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
-                .withImportOption(location -> !location.contains("test-fixtures"))
+                .withImportOption(location -> !location.contains("test-fixtures")
+                        && !location.contains("testFixtures"))
                 .importPackages("com.github.laxika.magicalvibes");
 
         noClasses()

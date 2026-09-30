@@ -135,6 +135,9 @@ public class CastingCostService {
      * player, pre-collected in a single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
+        public boolean containsEffect(Class<? extends CardEffect> effectType) {
+            return modifiers.stream().anyMatch(modifier -> effectType.isInstance(modifier.effect()));
+        }
     }
 
     public record AlternativeCostSelection(String manaCost, boolean castsWithWarp,

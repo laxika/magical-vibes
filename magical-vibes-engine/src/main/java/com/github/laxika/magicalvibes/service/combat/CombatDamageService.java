@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -80,7 +79,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -2128,7 +2126,10 @@ public class CombatDamageService {
         attachedDamageSources.forEach((perm, ownerId) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> rawEffects = new ArrayList<>();
-                rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                if (perm.getCard().getEffects(
+                        EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER).isEmpty()) {
+                    rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                }
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));

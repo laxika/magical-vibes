@@ -27,6 +27,7 @@ class KotoriPilotProdigyTest extends BaseCardTest {
         Permanent pilot = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, battlefieldIndex(player1, vehicle), 1, null, null);
+        harness.handlePermanentChosen(player1, pilot.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();

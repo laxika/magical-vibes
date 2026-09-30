@@ -2999,6 +2999,11 @@ public class PredicateEvaluationService {
         }
         return switch (predicate) {
             case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate(), context);
+            case PermanentIsSourceCardPredicate ignored -> context != null
+                    && (context.sourcePermanentId() != null
+                    ? permanent.getId().equals(context.sourcePermanentId())
+                    : context.sourceCardId() != null
+                    && permanent.getOriginalCard().getId().equals(context.sourceCardId()));
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();

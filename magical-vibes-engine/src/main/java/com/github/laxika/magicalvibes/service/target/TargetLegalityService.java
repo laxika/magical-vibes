@@ -4041,6 +4041,9 @@ public class TargetLegalityService {
                     : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
             if (targetPosition < consumed + Math.max(declaredSize, 0)) {
+                if (group.getFilter(entry.isKicked()) instanceof StackEntryPredicateTargetFilter) {
+                    return true;
+                }
                 return entry.getEffectsToResolve().stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
