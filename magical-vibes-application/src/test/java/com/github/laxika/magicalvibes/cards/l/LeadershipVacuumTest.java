@@ -31,7 +31,8 @@ class LeadershipVacuumTest extends BaseCardTest {
         var nonCommander = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         Card drawnCard = new GrizzlyBears();
-        setDeck(player1, List.of(drawnCard));
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(drawnCard);
         harness.setHand(player1, List.of(new LeadershipVacuum()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.BLUE, 1);
