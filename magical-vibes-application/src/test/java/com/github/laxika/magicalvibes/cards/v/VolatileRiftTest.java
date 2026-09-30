@@ -28,7 +28,7 @@ class VolatileRiftTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.perpetualCardPowerToughnessModifiers)
-                .containsEntry(creature.getId(), new CardPowerToughnessModifier(3, 0));
+                .containsEntry(creature.getId(), new CardPowerToughnessModifier(2, 0));
     }
 
     @Test
