@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "59")
 @CardRegistration(set = "EOS", collectorNumber = "104")
 @CardRegistration(set = "EOS", collectorNumber = "149")
+@CardRegistration(set = "M3C", collectorNumber = "339")
 public class EldraziTemple extends Card {
 
     public EldraziTemple() {

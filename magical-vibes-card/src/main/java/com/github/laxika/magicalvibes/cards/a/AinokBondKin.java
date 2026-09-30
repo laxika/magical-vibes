@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "4")
 @CardRegistration(set = "2X2", collectorNumber = "5")
 @CardRegistration(set = "CMM", collectorNumber = "7")
+@CardRegistration(set = "MIC", collectorNumber = "78")
 public class AinokBondKin extends Card {
 
     public AinokBondKin() {

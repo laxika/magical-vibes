@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "TSP", collectorNumber = "90")
 @CardRegistration(set = "A25", collectorNumber = "77")
 @CardRegistration(set = "TSR", collectorNumber = "97")
+@CardRegistration(set = "C19", collectorNumber = "101")
 public class VesuvanShapeshifter extends Card {
 
     public VesuvanShapeshifter() {

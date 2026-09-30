@@ -538,11 +538,7 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /**
-     * Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). Applies to any
-     * spell or ability whose mana cost includes an {X} symbol; the mana can pay any generic portion
-     * of such a cost. Stored in the x-cost-only colorless bucket.
-     */
+    /** Mana spendable only on costs that contain {X} (Rosheen Meanderer). */
     record XCosts() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -552,6 +548,23 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "costs that contain {X} only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with {X} in their mana costs (Anina, Natural Parallelist). */
+    record XSpellCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addXSpellOnlyColorless(amount);
+            } else {
+                pool.addXSpellOnlyMana(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "spells with {X} in their mana costs only";
         }
     }
 

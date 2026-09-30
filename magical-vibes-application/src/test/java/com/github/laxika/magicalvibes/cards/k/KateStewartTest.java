@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,15 +49,18 @@ class KateStewartTest extends BaseCardTest {
         timeCounterPermanent.setCounterCount(CounterType.TIME, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
-        declareAttackers(List.of(0, 1));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
-        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(2);
+        });
     }
 }

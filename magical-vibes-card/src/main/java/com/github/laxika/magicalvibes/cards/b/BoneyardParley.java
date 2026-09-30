@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndS
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "94")
+@CardRegistration(set = "C19", collectorNumber = "107")
 public class BoneyardParley extends Card {
 
     public BoneyardParley() {

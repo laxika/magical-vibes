@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements NormalEffectHandlerBean {
@@ -37,6 +39,9 @@ public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements Norm
         }
 
         Card exiledCard = target.getCard();
+        UUID tokenControllerId = e.createForTargetController()
+                ? gameQueryService.findPermanentController(gameData, target.getId())
+                : entry.getControllerId();
         permanentRemovalService.removePermanentToExile(gameData, target);
         gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
 
@@ -44,9 +49,10 @@ public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements Norm
             CreateTokenCopyOfTargetPermanentEffect tokenProfile =
                     new CreateTokenCopyOfTargetPermanentEffect(
                             e.additionalSubtypes(), e.additionalTypes(), e.powerOverride(), e.toughnessOverride(),
-                            java.util.Map.of(), false, true, false, false,
-                            false, false, e.colorOverride(), e.additionalKeywords(), java.util.List.of());
-            tokenCopySupport.createTokenCopies(gameData, entry, java.util.List.of(exiledCard), null, tokenProfile);
+                            java.util.Map.of(), false, e.exileTokenAtEndStep(), false, false,
+                            false, false, e.colorOverride(), e.additionalKeywords(), e.removeLegendary());
+            tokenCopySupport.createTokenCopies(
+                    gameData, entry, java.util.List.of(exiledCard), null, tokenControllerId, tokenProfile);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

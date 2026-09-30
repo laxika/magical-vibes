@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "OTJ", collectorNumber = "261")
+@CardRegistration(set = "M3C", collectorNumber = "356")
 public class LushOasis extends Card {
 
     public LushOasis() {

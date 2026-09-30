@@ -764,6 +764,26 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handlePutCountersOnSelfOnDiscard(TriggerMatchContext match,
+            PutCountersOnSelfEffect trigger, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller discard (put counters on source)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS),

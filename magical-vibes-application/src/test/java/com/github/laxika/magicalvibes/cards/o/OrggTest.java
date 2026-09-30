@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.i.IronrootTreefolk;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -46,14 +47,24 @@ class OrggTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't block an attacker whose effective power reaches 3")
+    void cantBlockEffectivePowerThree() {
+        Permanent orgg = addCreatureReady(player1, new Orgg());
+        Permanent goblinHero = addCreatureReady(player2, new GoblinHero()); // 2/2
+        goblinHero.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, orgg, goblinHero,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
     @DisplayName("Trample deals excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         orggReadyToAttack();
         Permanent goblinHero = addCreatureReady(player2, new GoblinHero()); // 2/2
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -73,6 +84,16 @@ class OrggTest extends BaseCardTest {
     void cantAttackWhenDefenderControlsUntappedPowerThree() {
         orggReadyToAttack();
         addCreatureReady(player2, new IronrootTreefolk()); // 3/5 untapped
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can't attack if defending player controls an untapped creature with power greater than 3")
+    void cantAttackWhenDefenderControlsUntappedPowerGreaterThanThree() {
+        orggReadyToAttack();
+        addCreatureReady(player2, new Orgg()); // 6/6 untapped
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

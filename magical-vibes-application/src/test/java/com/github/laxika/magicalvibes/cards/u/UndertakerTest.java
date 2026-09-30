@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.s.SoulChanneling;
 import com.github.laxika.magicalvibes.cards.s.SnortingGahr;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +27,7 @@ class UndertakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(discardedCard));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, 0, null, returnedCreature.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(returnedCreature.getId()));
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -48,7 +47,7 @@ class UndertakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -62,7 +61,7 @@ class UndertakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -76,7 +75,7 @@ class UndertakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -89,7 +88,7 @@ class UndertakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoulChanneling()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.handleCardChosen(player1, 0);
         gd.playerGraveyards.get(player1.getId()).remove(target);
         harness.passBothPriorities();

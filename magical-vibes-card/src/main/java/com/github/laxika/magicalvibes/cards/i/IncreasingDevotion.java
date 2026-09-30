@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "DDQ", collectorNumber = "14")
 @CardRegistration(set = "LTC", collectorNumber = "171")
 @CardRegistration(set = "C20", collectorNumber = "91")
+@CardRegistration(set = "C19", collectorNumber = "66")
 public class IncreasingDevotion extends Card {
 
     public IncreasingDevotion() {

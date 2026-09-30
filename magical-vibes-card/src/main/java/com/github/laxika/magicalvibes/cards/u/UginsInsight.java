@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "BFZ", collectorNumber = "87")
+@CardRegistration(set = "M3C", collectorNumber = "196")
 public class UginsInsight extends Card {
 
     public UginsInsight() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                              boolean optionalTarget)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
-        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
+        DyingCreaturePermanentAwareEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false, false);
@@ -116,8 +117,22 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)
-                .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+    }
+
+    @Override
+    public CardEffect boundToDyingCreature(Permanent dyingCreature) {
+        if (steps.stream().noneMatch(DyingCreaturePermanentAwareEffect.class::isInstance)) {
+            return this;
+        }
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreaturePermanentAwareEffect aware
+                        ? aware.boundToDyingCreature(dyingCreature) : step)
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override
@@ -128,8 +143,9 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
                         ? aware.boundToDyingCreatureCounters(counters) : step)
-                .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override

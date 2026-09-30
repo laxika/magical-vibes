@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "256")
+@CardRegistration(set = "C19", collectorNumber = "56")
 public class PendantOfProsperity extends Card {
 
     public PendantOfProsperity() {

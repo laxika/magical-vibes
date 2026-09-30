@@ -198,7 +198,7 @@ class ReturnToHandEffectHandlerTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -220,7 +220,7 @@ class ReturnToHandEffectHandlerTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
+            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
             handler.resolve(gd, entry, effect);

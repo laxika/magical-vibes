@@ -31,6 +31,7 @@ class MirrorOfLifeTrappingTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, mirror));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == secondCard);
@@ -64,6 +65,6 @@ class MirrorOfLifeTrappingTest extends BaseCardTest {
 
     private void castCreature(Card creature) {
         harness.castFromHand(player1, creature, "{1}{G}");
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

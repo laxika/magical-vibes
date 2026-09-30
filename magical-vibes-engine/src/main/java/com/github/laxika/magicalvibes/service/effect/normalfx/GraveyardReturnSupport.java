@@ -685,6 +685,11 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS && effect.fromAnywhereThisTurn()) {
+            resolveTrackedReturnAllFromAllGraveyards(gameData, entry, effect, controllerId, sourceCardId);
+            return;
+        }
+
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         
 
@@ -849,6 +854,92 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destName);
+    }
+
+    private void resolveTrackedReturnAllFromAllGraveyards(
+            GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
+            UUID controllerId, UUID sourceCardId) {
+        Map<UUID, List<Card>> cardsByGraveyard = new LinkedHashMap<>();
+        for (Map.Entry<UUID, List<Card>> graveyardEntry : gameData.playerGraveyards.entrySet()) {
+            Set<UUID> trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                    .get(graveyardEntry.getKey());
+            if (trackedIds == null || trackedIds.isEmpty()) {
+                continue;
+            }
+            List<Card> matchingCards = new ArrayList<>();
+            for (Card card : graveyardEntry.getValue()) {
+                if (!card.isToken()
+                        && trackedIds.contains(card.getId())
+                        && matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
+                    matchingCards.add(card);
+                }
+            }
+            if (!matchingCards.isEmpty()) {
+                cardsByGraveyard.put(graveyardEntry.getKey(), matchingCards);
+            }
+        }
+
+        if (cardsByGraveyard.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.text(entry.getDescription()
+                            + " - no cards were put into graveyards from anywhere this turn."));
+            return;
+        }
+
+        List<Card> returnedCards = new ArrayList<>();
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (Map.Entry<UUID, List<Card>> cardsEntry : cardsByGraveyard.entrySet()) {
+                UUID graveyardOwnerId = cardsEntry.getKey();
+                List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+                Set<UUID> trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                        .get(graveyardOwnerId);
+                for (Card card : cardsEntry.getValue()) {
+                    graveyard.remove(card);
+                    if (trackedIds != null) {
+                        trackedIds.remove(card.getId());
+                    }
+                    graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
+
+                    boolean toBattlefield = effect.destination() == GraveyardChoiceDestination.BATTLEFIELD;
+                    UUID targetPlayerId = (effect.destination() == GraveyardChoiceDestination.HAND
+                            || effect.underOwnersControl()) ? graveyardOwnerId : controllerId;
+                    if (toBattlefield) {
+                        Permanent returnedPermanent;
+                        if (effect.grantHaste() || effect.exileAtEndStep()
+                                || effect.exileAtYourNextEndStep() || effect.sacrificeAtEndStep()) {
+                            returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(
+                                    gameData, targetPlayerId, card, effect.grantHaste(), effect.exileAtEndStep(),
+                                    effect.sacrificeAtEndStep(), effect.exileIfLeavesBattlefield(),
+                                    effect.enterTapped(), effect.enterAttacking(), effect.exileAtYourNextEndStep(),
+                                    losesAllAbilitiesBeforeEntering(effect));
+                        } else {
+                            returnedPermanent = putCardOntoBattlefield(
+                                    gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
+                                    effect.enterTapped(), effect.enterAttacking(), null, false,
+                                    losesAllAbilitiesBeforeEntering(effect));
+                        }
+                        applyBattlefieldReturnRiders(
+                                gameData, targetPlayerId, card, effect, entry, graveyardOwnerId);
+                        queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
+                    } else {
+                        permanentRemovalService.addCardToHandFromGraveyard(
+                                gameData, graveyardOwnerId, targetPlayerId, card);
+                    }
+                    returnedCards.add(card);
+                }
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String destination = effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                ? "the battlefield" : "hand";
+        GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
+        appendCardList(builder, returnedCards);
+        builder.text(" onto " + destination + " from all graveyards.");
+        gameLogService.append(gameData, builder.build());
     }
 
     private void queueNextUpkeepExile(GameData gameData, StackEntry entry,
@@ -1632,6 +1723,8 @@ public class GraveyardReturnSupport {
 
             Permanent permanent = new Permanent(card);
             initializePlaneswalkerLoyalty(permanent, card);
+            applyPermanentGrants(permanent, batch.grantColor(), batch.grantSubtype());
+            permanent.getPersistentGrantedKeywords().addAll(batch.grantKeywords());
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
             if (batch.enterTapped()) {
                 permanent.tap();

@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "MUL", collectorNumber = "9")
 @CardRegistration(set = "MUL", collectorNumber = "74")
 @CardRegistration(set = "MUL", collectorNumber = "139")
+@CardRegistration(set = "NEC", collectorNumber = "91")
 public class EmryLurkerOfTheLoch extends Card {
 
     public EmryLurkerOfTheLoch() {

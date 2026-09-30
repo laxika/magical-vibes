@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TLE", collectorNumber = "5")
+@CardRegistration(set = "NEC", collectorNumber = "9")
+@CardRegistration(set = "NEC", collectorNumber = "44")
 public class ReleaseToMemory extends Card {
 
     public ReleaseToMemory() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "139")
+@CardRegistration(set = "MIC", collectorNumber = "146")
 public class WildBeastmaster extends Card {
 
     public WildBeastmaster() {

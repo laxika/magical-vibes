@@ -100,6 +100,29 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    void activationResolvesAfterSourceLeavesWithoutWatchingNewSourceObject() {
+        Permanent originalBarge = addBarge();
+        Permanent drowned = addDrowned(player2);
+
+        enterMain();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, indexOf(originalBarge), 0, null, drowned.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, originalBarge));
+        Permanent replacementBarge = addBarge();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drowned, Keyword.ISLANDWALK)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, replacementBarge));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(drowned);
+    }
+
+    @Test
     void delayedDestructionExpiresAtEndOfTurn() {
         Permanent barge = addBarge();
         Permanent troll = addDrowned(player2);

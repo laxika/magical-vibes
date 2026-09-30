@@ -51,7 +51,7 @@ public class EnergyCountersEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.playerEnergyCounters.put(entry.getControllerId(), updated);
+        gameData.setPlayerEnergyCounters(entry.getControllerId(), updated);
         String playerName = gameData.playerIdToName.getOrDefault(entry.getControllerId(), "Player");
         String action = changed > 0 ? "gets " + changed : "pays " + -changed;
         gameLogService.append(gameData, GameLog.text(playerName + " " + action + " energy counter(s)."));

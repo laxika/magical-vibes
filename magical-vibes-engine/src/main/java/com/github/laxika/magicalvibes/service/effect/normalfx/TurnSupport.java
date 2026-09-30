@@ -1,7 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,6 +70,10 @@ public class TurnSupport {
     }
 
     public void exileStackEntries(GameData gameData) {
+        exileStackEntries(gameData, "end the turn");
+    }
+
+    public void exileStackEntries(GameData gameData, String reason) {
         // The resolving spell (e.g. Time Stop) is already removed from the stack by resolveTopOfStack,
         // so we only need to handle remaining entries.
         List<StackEntry> remaining = new ArrayList<>(gameData.stack);
@@ -73,7 +91,7 @@ public class TurnSupport {
                 Card card = se.getPhysicalCard();
                 exileService.exileCard(gameData, se.getOwnerId(), card);
                 gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
-                log.info("Game {} - {} exiled from stack (end the turn)", gameData.id, card.getName());
+                log.info("Game {} - {} exiled from stack ({})", gameData.id, card.getName(), reason);
             }
             // Triggered/activated abilities just cease to exist
         }
@@ -83,8 +101,52 @@ public class TurnSupport {
         gameData.expireEndOfCombatFloatingEffects();
         combatService.clearCombatState(gameData);
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
+        gameData.clearDelayedActions(DelayedEndOfCombatTrigger.class);
+        gameData.clearDelayedActions(TapAndSkipUntapAtEndOfCombat.class);
+        gameData.clearDelayedActions(TapCombatOpponentsAtEndOfCombat.class);
+        gameData.clearDelayedActions(PhaseOutAtEndOfCombat.class);
+        gameData.clearDelayedActions(DealDamageToPermanentAtEndOfCombat.class);
+        gameData.clearDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
+        gameData.clearDelayedActions(DestroyEquipmentAtEndOfCombat.class);
+        gameData.clearDelayedActions(PutMinusOneCounterAtEndOfCombat.class);
+        gameData.clearDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
+        gameData.clearDelayedActions(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class);
+        gameData.clearDelayedActions(RemoveCounterFromSourceAtEndOfCombat.class);
+        gameData.clearDelayedActions(GainControlOfPermanentAtEndOfCombat.class);
+        gameData.clearDelayedActions(ExileAndReturnTransformedAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
-                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
+                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                        || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
+                        || a.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT
+                        || a.kind() == DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT);
+    }
+
+    public void endCombatPhase(GameData gameData) {
+        clearCombatState(gameData);
+        gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
+        gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
+        gameData.onlyLandCreaturesCanAttackThisCombat = false;
+        gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
+        gameData.creaturesCantAttackThisCombat = false;
+        gameData.onlyPermanentCanAttackThisCombatId = null;
+        gameData.onlyPermanentsCanAttackThisCombatIds = null;
+        gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
+        gameData.additionalCombatPhasesOnly = 0;
+        gameData.aggressiveCombatPhasesOnly = 0;
+        if (gameData.mindControlUntilEndOfCombat) {
+            gameData.mindControlledPlayerId = null;
+            gameData.mindControllerPlayerId = null;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
+        if (gameData.additionalCombatReturnActivePlayerId != null) {
+            gameData.activePlayerId = gameData.additionalCombatReturnActivePlayerId;
+            gameData.additionalCombatReturnActivePlayerId = null;
+        }
+        turnCleanupService.drainManaPools(gameData);
+        gameData.revertableManaActivations.clear();
+        gameData.priorityPassedBy.clear();
+        gameData.interaction.clearAwaitingInput();
+        gameData.currentStep = TurnStep.POSTCOMBAT_MAIN;
     }
 
     public void skipToCleanupStep(GameData gameData) {

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ISD", collectorNumber = "71")
 @CardRegistration(set = "INR", collectorNumber = "83")
 @CardRegistration(set = "INR", collectorNumber = "306")
+@CardRegistration(set = "MIC", collectorNumber = "103")
 public class RooftopStorm extends Card {
 
     public RooftopStorm() {

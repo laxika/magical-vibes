@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "152")
+@CardRegistration(set = "MIC", collectorNumber = "120")
 public class GravespawnSovereign extends Card {
 
     public GravespawnSovereign() {

@@ -199,6 +199,60 @@ class WeirdHarvestTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taking two cards triggers an opponent's search ability once")
+    void multiplePicksAreOneSearch() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Stopping after taking one card still shuffles the searched library")
+    void stoppingAfterFirstPickStillShuffles() {
+        setupCreatureLibrary(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Later picks stay within the original top four and the next player still searches")
+    void restrictedSearchRunningOutAdvancesToNextPlayer() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears fifth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, new Plains(), new Forest(), new Plains(), fifth));
+        setupCreatureLibrary(player2);
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.setHand(player1, List.of(new WeirdHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        assertThat(activeSearch().params().cards()).containsExactly(first);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(fifth);
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("Declining the optional search does not shuffle the library")
     void decliningSearchDoesNotShuffleLibrary() {
         setupCreatureLibrary(player1);

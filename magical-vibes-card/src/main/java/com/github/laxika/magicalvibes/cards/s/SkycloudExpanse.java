@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "294")
 @CardRegistration(set = "AFC", collectorNumber = "261")
 @CardRegistration(set = "C20", collectorNumber = "312")
+@CardRegistration(set = "NEC", collectorNumber = "177")
 public class SkycloudExpanse extends Card {
 
     public SkycloudExpanse() {

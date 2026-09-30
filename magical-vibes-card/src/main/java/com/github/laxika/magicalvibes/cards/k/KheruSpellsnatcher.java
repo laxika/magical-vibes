@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileThenGrant
 
 @CardRegistration(set = "KTK", collectorNumber = "45")
 @CardRegistration(set = "DSC", collectorNumber = "119")
+@CardRegistration(set = "C19", collectorNumber = "89")
 public class KheruSpellsnatcher extends Card {
 
     public KheruSpellsnatcher() {

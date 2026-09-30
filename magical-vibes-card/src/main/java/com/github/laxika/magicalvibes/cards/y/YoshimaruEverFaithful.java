@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "794")
 @CardRegistration(set = "SLD", collectorNumber = "2463")
+@CardRegistration(set = "NEC", collectorNumber = "32")
+@CardRegistration(set = "NEC", collectorNumber = "46")
 public class YoshimaruEverFaithful extends Card {
 
     public YoshimaruEverFaithful() {

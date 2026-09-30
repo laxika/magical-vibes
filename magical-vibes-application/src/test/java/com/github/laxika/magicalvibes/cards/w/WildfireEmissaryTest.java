@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.Regeneration;
+import com.github.laxika.magicalvibes.cards.s.SpectralGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WildfireEmissary.class, EkunduGriffin.class, Pacifism.class, Regeneration.class})
+@CardUsed({WildfireEmissary.class, EkunduGriffin.class, Pacifism.class, Regeneration.class, SpectralGuardian.class})
 class WildfireEmissaryTest extends BaseCardTest {
 
     @Test
@@ -137,5 +138,20 @@ class WildfireEmissaryTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(emissary)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from white prevents combat damage from white creatures")
+    void whiteCreatureCannotDealCombatDamage() {
+        Permanent emissary = addCreatureReady(player2, new WildfireEmissary());
+        Permanent whiteCreature = addCreatureReady(player1, new SpectralGuardian());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(emissary.getMarkedDamage()).isZero();
+        assertThat(whiteCreature.getMarkedDamage()).isEqualTo(2);
     }
 }

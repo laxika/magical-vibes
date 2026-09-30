@@ -88,4 +88,21 @@ class ConspiracyTest extends BaseCardTest {
         assertThat(gqs.computeStaticBonus(gd, findPermanent(player1, "Cateran Brute")).grantedSubtypes())
                 .doesNotContain(CardSubtype.GOBLIN);
     }
+
+    @Test
+    void replacesExistingCreatureTypesInsteadOfAddingChosenType() {
+        Permanent conspiracyPermanent = harness.addToBattlefieldAndReturn(player1, new Conspiracy());
+        conspiracyPermanent.setChosenSubtype(CardSubtype.GOBLIN);
+
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player1, new CateranBrute());
+        CateranBrute handCreature = new CateranBrute();
+        harness.setHand(player1, List.of(handCreature));
+
+        assertThat(gqs.hasEffectiveSubtype(gd, battlefieldCreature, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, battlefieldCreature, CardSubtype.HORROR)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, battlefieldCreature, CardSubtype.MERCENARY)).isFalse();
+        assertThat(gqs.getCardSubtypes(handCreature, gd, player1.getId()))
+                .contains(CardSubtype.GOBLIN)
+                .doesNotContain(CardSubtype.HORROR, CardSubtype.MERCENARY);
+    }
 }

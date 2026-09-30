@@ -56,6 +56,8 @@ class CurseOfVerbosityTest extends BaseCardTest {
     }
 
     private void placeCurseOnPlayer1() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfVerbosity());
         curse.setAttachedTo(player1.getId());
     }

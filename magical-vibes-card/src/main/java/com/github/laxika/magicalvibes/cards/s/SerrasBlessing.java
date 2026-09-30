@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SerrasBlessing extends Card {
 
     public SerrasBlessing() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

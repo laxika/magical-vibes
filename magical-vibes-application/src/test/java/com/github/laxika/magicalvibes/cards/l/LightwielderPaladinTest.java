@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightwielderPaladin.class, DrudgeSkeletons.class, GrizzlyBears.class, ShivanDragon.class})
 class LightwielderPaladinTest extends BaseCardTest {
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
@@ -28,17 +30,26 @@ class LightwielderPaladinTest extends BaseCardTest {
         return perm;
     }
 
+    private void dealUnblockedDamage() {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration) {
+            gs.declareBlockers(gd, player2, List.of());
+        }
+        resolveCombat();
+    }
+
     
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice when defender has black permanent")
     void combatDamageTriggerPresentsMayChoice() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        addReadyCreature(player2, new BlackKnight());
+        Permanent target = addReadyCreature(player2, new DrudgeSkeletons());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -47,36 +58,29 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("Accepting may and choosing a black permanent exiles it")
     void exilesBlackPermanent() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
+        Permanent blackKnight = addReadyCreature(player2, new DrudgeSkeletons());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        harness.handlePermanentChosen(player1, blackKnight.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
-                .contains(blackKnight.getId());
-
-        harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
-
-        harness.assertNotOnBattlefield(player2, "Black Knight");
-        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Black Knight"));
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Drudge Skeletons"));
     }
 
     @Test
     @DisplayName("Accepting may and choosing a red permanent exiles it")
     void exilesRedPermanent() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
         Permanent dragon = addReadyCreature(player2, new ShivanDragon());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId()));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Shivan Dragon");
         assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Shivan Dragon"));
@@ -86,14 +90,15 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("Declining the may ability does nothing")
     void declineDoesNothing() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
+        Permanent blackKnight = addReadyCreature(player2, new DrudgeSkeletons());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        harness.handlePermanentChosen(player1, blackKnight.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertOnBattlefield(player2, "Black Knight");
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
@@ -101,10 +106,10 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("No trigger when defender has no black or red permanents")
     void noTriggerWhenNoValidTargets() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
         addReadyCreature(player2, new GrizzlyBears()); // green, not a valid target
 
-        resolveCombat();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -113,9 +118,9 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("No trigger when defender has no permanents")
     void noTriggerWhenNoPermanents() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
 
-        resolveCombat();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -124,17 +129,14 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("Valid targets only include black or red permanents of the damaged player")
     void onlyBlackOrRedFromDamagedPlayer() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        Permanent ownBlack = addReadyCreature(player1, new BlackKnight());  // own black permanent
+        Permanent ownBlack = addReadyCreature(player1, new DrudgeSkeletons());  // own black permanent
         Permanent enemyGreen = addReadyCreature(player2, new GrizzlyBears()); // enemy green
-        Permanent enemyBlack = addReadyCreature(player2, new BlackKnight()); // enemy black
+        Permanent enemyBlack = addReadyCreature(player2, new DrudgeSkeletons()); // enemy black
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(enemyBlack.getId())
                 .doesNotContain(ownBlack.getId())
                 .doesNotContain(enemyGreen.getId());
@@ -145,11 +147,12 @@ class LightwielderPaladinTest extends BaseCardTest {
     void dealsCombatDamage() {
         harness.setLife(player2, 20);
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        addReadyCreature(player2, new BlackKnight());
+        Permanent target = addReadyCreature(player2, new DrudgeSkeletons());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         // Lightwielder Paladin is 4/4, should deal 4 damage
@@ -160,13 +163,13 @@ class LightwielderPaladinTest extends BaseCardTest {
     @DisplayName("Game advances after exile choice is made")
     void gameAdvancesAfterChoice() {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
-        paladin.setAttacking(true);
-        Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
+        Permanent blackKnight = addReadyCreature(player2, new DrudgeSkeletons());
 
-        resolveCombat();
-        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
-        harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
+        dealUnblockedDamage();
+        harness.handlePermanentChosen(player1, blackKnight.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);

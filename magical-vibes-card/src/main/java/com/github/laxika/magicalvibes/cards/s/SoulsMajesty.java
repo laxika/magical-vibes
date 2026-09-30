@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CON", collectorNumber = "92")
+@CardRegistration(set = "NEC", collectorNumber = "131")
 public class SoulsMajesty extends Card {
 
     public SoulsMajesty() {

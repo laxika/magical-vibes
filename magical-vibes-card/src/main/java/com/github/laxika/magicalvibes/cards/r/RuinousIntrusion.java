@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "255")
+@CardRegistration(set = "MIC", collectorNumber = "28")
+@CardRegistration(set = "MIC", collectorNumber = "66")
 public class RuinousIntrusion extends Card {
 
     public RuinousIntrusion() {

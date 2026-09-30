@@ -26,6 +26,8 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1825")
 @CardRegistration(set = "SLD", collectorNumber = "1853")
 @CardRegistration(set = "HA6", collectorNumber = "6")
+@CardRegistration(set = "NEC", collectorNumber = "37")
+@CardRegistration(set = "NEC", collectorNumber = "66")
 public class GoShintaiOfLifesOrigin extends Card {
 
     public GoShintaiOfLifesOrigin() {

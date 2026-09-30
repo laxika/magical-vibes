@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AA2", collectorNumber = "7")
+@CardRegistration(set = "M3C", collectorNumber = "50")
+@CardRegistration(set = "M3C", collectorNumber = "102")
 public class Barrowgoyf extends Card {
 
     public Barrowgoyf() {

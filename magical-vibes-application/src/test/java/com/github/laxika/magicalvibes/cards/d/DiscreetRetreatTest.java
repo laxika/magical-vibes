@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.a.ArrogantOutlaw;
+import com.github.laxika.magicalvibes.cards.o.OonasProwler;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +21,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiscreetRetreat.class, Forest.class, GrizzlyBears.class, ArrogantOutlaw.class})
+@CardUsed({DiscreetRetreat.class, Forest.class, GrizzlyBears.class, OonasProwler.class})
 class DiscreetRetreatTest extends BaseCardTest {
 
     @Test
@@ -46,7 +46,7 @@ class DiscreetRetreatTest extends BaseCardTest {
         attachToForest();
         addOutlawMana(ManaColor.BLACK);
 
-        harness.setHand(player1, List.of(new ArrogantOutlaw()));
+        harness.setHand(player1, List.of(new OonasProwler()));
         harness.castCreature(player1, 0);
         assertThat(gd.stack).isNotEmpty();
     }
@@ -84,10 +84,11 @@ class DiscreetRetreatTest extends BaseCardTest {
     void triggersOnlyForFirstOutlawSpellEachTurn() {
         attachToForest();
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
-        harness.setHand(player1, List.of(new ArrogantOutlaw(), new ArrogantOutlaw()));
+        harness.setHand(player1, List.of(new OonasProwler(), new OonasProwler()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

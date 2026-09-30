@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAttackingCreaturesOnTopOrB
 
 @CardRegistration(set = "M15", collectorNumber = "44")
 @CardRegistration(set = "C21", collectorNumber = "114")
+@CardRegistration(set = "MIC", collectorNumber = "97")
 public class Aetherspouts extends Card {
 
     public Aetherspouts() {

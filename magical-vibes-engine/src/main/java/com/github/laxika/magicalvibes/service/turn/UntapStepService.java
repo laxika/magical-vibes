@@ -550,6 +550,14 @@ public class UntapStepService {
      * "doesn't untap", untap locks, a pending skip, a global "doesn't untap" lock, or a "may not
      * untap" choice), or that the filter excludes, never count against the cap and are omitted.
      */
+    public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId,
+                                               StaticOrbEffect effect, PermanentPredicate restrictPredicate) {
+        return staticOrbUntapCandidates(gameData, activePlayerId, effect).stream()
+                .filter(id -> predicateEvaluationService.matchesPermanentPredicate(gameData,
+                        gameQueryService.findPermanentById(gameData, id), restrictPredicate))
+                .toList();
+    }
+
     public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId, StaticOrbEffect effect) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) {

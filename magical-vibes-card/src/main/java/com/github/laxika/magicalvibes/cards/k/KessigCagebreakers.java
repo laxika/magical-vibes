@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "189")
 @CardRegistration(set = "C15", collectorNumber = "187")
+@CardRegistration(set = "MIC", collectorNumber = "142")
 public class KessigCagebreakers extends Card {
 
     public KessigCagebreakers() {
