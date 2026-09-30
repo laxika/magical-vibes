@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.Set;
 
@@ -11,7 +12,8 @@ import java.util.Set;
  */
 public record GainKeywordsOfCreatureCardsExiledWithSourceEffect(
         Set<Keyword> watchedKeywords,
-        boolean copyProtectionEffects
+        boolean copyProtectionEffects,
+        CounterType requiredExiledCardCounter
 ) implements CardEffect {
 
     private static final Set<Keyword> DEATH_MASK_DUPLICANT_KEYWORDS = Set.of(
@@ -30,14 +32,23 @@ public record GainKeywordsOfCreatureCardsExiledWithSourceEffect(
     );
 
     public GainKeywordsOfCreatureCardsExiledWithSourceEffect() {
-        this(DEATH_MASK_DUPLICANT_KEYWORDS, true);
+        this(DEATH_MASK_DUPLICANT_KEYWORDS, true, null);
     }
 
     public GainKeywordsOfCreatureCardsExiledWithSourceEffect(
             Set<Keyword> watchedKeywords,
             boolean copyProtectionEffects
     ) {
+        this(watchedKeywords, copyProtectionEffects, null);
+    }
+
+    public GainKeywordsOfCreatureCardsExiledWithSourceEffect(
+            Set<Keyword> watchedKeywords,
+            boolean copyProtectionEffects,
+            CounterType requiredExiledCardCounter
+    ) {
         this.watchedKeywords = Set.copyOf(watchedKeywords);
         this.copyProtectionEffects = copyProtectionEffects;
+        this.requiredExiledCardCounter = requiredExiledCardCounter;
     }
 }

@@ -253,6 +253,7 @@ public enum CardSet {
     SET_SOA("SOA"),
     SET_SNC("SNC"),
     SET_NCC("NCC"),
+    SET_NEC("NEC"),
     SET_TDM("TDM"),
     SET_TDC("TDC"),
     SET_DSC("DSC"),
@@ -320,6 +321,7 @@ public enum CardSet {
     SET_C14("C14"),
     SET_CMD("CMD"),
     SET_C15("C15"),
+    SET_C19("C19"),
     SET_C20("C20"),
     SET_C21("C21"),
     SET_GN2("GN2"),
@@ -348,7 +350,8 @@ public enum CardSet {
     SET_PA1("PA1"),
     SET_CN2("CN2"),
     SET_PZA("PZA"),
-    SET_YDFT("YDFT");
+    SET_YDFT("YDFT"),
+    SET_YSOS("YSOS");
 
     @Getter
     private final String code;

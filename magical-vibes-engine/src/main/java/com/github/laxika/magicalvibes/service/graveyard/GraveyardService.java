@@ -2015,6 +2015,9 @@ public class GraveyardService {
 
     /** Notifies the graveyard departure watchers that the cards left by this event were exiled. */
     public void notifyCardsExiledFromGraveyard(GameData gameData, UUID ownerId, Card exiledCard) {
+        if (exiledCard != null && !isToken(gameData, exiledCard)) {
+            gameData.cardsExiledFromGraveyardThisTurn.add(exiledCard.getId());
+        }
         notifyCardsLeftGraveyard(gameData, ownerId, exiledCard);
         notifyCardsExiledFromGraveyard(gameData, ownerId, 1,
                 exiledCard != null && !isToken(gameData, exiledCard)
@@ -2026,6 +2029,10 @@ public class GraveyardService {
         if (exiledCards == null || exiledCards.isEmpty()) {
             return;
         }
+        exiledCards.stream()
+                .filter(card -> card != null && !isToken(gameData, card))
+                .map(Card::getId)
+                .forEach(gameData.cardsExiledFromGraveyardThisTurn::add);
         notifyCardsLeftGraveyard(gameData, ownerId, exiledCards);
         List<Card> creatureCards = exiledCards.stream()
                 .filter(card -> card != null && !isToken(gameData, card) && card.hasType(CardType.CREATURE))

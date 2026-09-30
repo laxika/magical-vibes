@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredica
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
@@ -824,6 +825,10 @@ public class PredicateEvaluationService {
             case CardPowerAtMostPredicate p -> {
                 Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 yield power != null && power <= p.maxPower();
+            }
+            case CardPowerAtMostXPredicate ignored -> {
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+                yield xValue != null && power != null && power <= xValue;
             }
             case CardPowerAtMostSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

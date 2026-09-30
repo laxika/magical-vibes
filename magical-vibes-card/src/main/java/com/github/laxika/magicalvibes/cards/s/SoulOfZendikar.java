@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "201")
+@CardRegistration(set = "C19", collectorNumber = "182")
 public class SoulOfZendikar extends Card {
 
     public SoulOfZendikar() {

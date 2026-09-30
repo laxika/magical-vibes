@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "OTC", collectorNumber = "266")
+@CardRegistration(set = "C19", collectorNumber = "57")
 public class Scaretiller extends Card {
 
     public Scaretiller() {

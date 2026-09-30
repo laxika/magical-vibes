@@ -11,11 +11,13 @@ import java.util.UUID;
  * @param controllerId player who controls the delayed ability
  * @param sourceCard card that created the delayed ability
  * @param effect effect resolved for each qualifying death
+ * @param allControllers whether creatures controlled by any player qualify
  */
 public record DamagedCreatureDeathTriggerWatcher(
         UUID damageSourceId,
         UUID controllerId,
         Card sourceCard,
-        CardEffect effect
+        CardEffect effect,
+        boolean allControllers
 ) {
 }

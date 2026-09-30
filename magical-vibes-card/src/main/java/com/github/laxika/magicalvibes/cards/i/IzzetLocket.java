@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "238")
+@CardRegistration(set = "C19", collectorNumber = "215")
 public class IzzetLocket extends Card {
 
     public IzzetLocket() {

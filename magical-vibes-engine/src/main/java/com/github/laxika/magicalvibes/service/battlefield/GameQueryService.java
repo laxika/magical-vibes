@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
@@ -223,6 +224,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDon
 import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
@@ -3458,12 +3460,24 @@ public class GameQueryService {
                 }
             }
         }
-        List<CardColor> intrinsic = card.getColors();
-        if (intrinsic != null && !intrinsic.isEmpty()) {
-            return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
+        Set<CardColor> intrinsic = EnumSet.noneOf(CardColor.class);
+        if (card.getColors() != null) {
+            intrinsic.addAll(card.getColors());
         }
-        CardColor single = card.getColor();
-        return addGraveyardAnimationColors(gameData, card, single != null ? Set.of(single) : Set.of());
+        if (card.getColor() != null) {
+            intrinsic.add(card.getColor());
+        }
+        ManaCost incorporated = gameData == null ? null
+                : gameData.perpetualManaCostIncreases.get(card.getId());
+        if (incorporated != null) {
+            for (CardColor color : CardColor.values()) {
+                ManaColor manaColor = ManaColor.fromCode(color.getCode());
+                if (incorporated.countColorSymbols(manaColor) > 0) {
+                    intrinsic.add(color);
+                }
+            }
+        }
+        return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
     }
 
     private Set<CardColor> addGraveyardAnimationColors(GameData gameData, Card card, Set<CardColor> colors) {
@@ -9805,6 +9819,30 @@ public class GameQueryService {
     public boolean isSpellCastingCombatLockActive(GameData gameData) {
         return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
                 && anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsDuringCombatEffect.class);
+    }
+
+    /** True while an opponent-controlled permanent prevents {@code playerId} from casting during combat. */
+    public boolean isOpponentSpellCastingCombatLockActive(GameData gameData, UUID playerId) {
+        if (gameData.currentStep == null || !gameData.currentStep.isCombatPhase()) {
+            return false;
+        }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            if (battlefield.stream().anyMatch(permanent ->
+                    !permanent.isFaceDown()
+                            && !hasLostAllAbilities(gameData, permanent)
+                            && staticEffectsIncludingTemporary(gameData, permanent, controllerId).stream()
+                            .anyMatch(OpponentsCantCastSpellsDuringCombatEffect.class::isInstance))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

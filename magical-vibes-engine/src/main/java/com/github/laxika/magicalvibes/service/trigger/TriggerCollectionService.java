@@ -695,6 +695,7 @@ public class TriggerCollectionService {
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
                                        Zone castZone, UUID exiledSourcePermanentId,
                                        boolean castFaceDown) {
+        gameData.initializeCardIntensity(spellCard);
         gameData.recordSpellCastFromZone(castingPlayerId, castZone);
         if (castZone == Zone.HAND) {
             gameData.recordSpellCastFromHand(spellCard);
@@ -1078,6 +1079,7 @@ public class TriggerCollectionService {
             }
         }
 
+        int spellManaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
         boolean castUsingTreasureMana = gameData.spellCastUsedTreasureMana(spellCard.getId());
         gameData.clearSpellCastManaSpent(spellCard.getId());
         gameData.clearSpellCastManaSources(spellCard.getId());
@@ -1129,6 +1131,7 @@ public class TriggerCollectionService {
                                     new ArrayList<>(trigger.resolvedEffects())
                             );
                             entry.setTriggeringCardId(spellCard.getId());
+                            entry.setXValue(spellManaSpent);
                             gameData.stack.add(entry);
                         }
 
@@ -11216,7 +11219,7 @@ public class TriggerCollectionService {
         UUID dyingCardId = dyingCard.getId();
         for (DamagedCreatureDeathTriggerWatcher watcher
                 : List.copyOf(gameData.damagedCreatureDeathTriggerWatchers)) {
-            if (!watcher.controllerId().equals(dyingCreatureControllerId)
+            if (!watcher.allControllers() && !watcher.controllerId().equals(dyingCreatureControllerId)
                     || !gameData.creatureCardsDamagedThisTurnBySource
                     .getOrDefault(watcher.damageSourceId(), Set.of()).contains(dyingCardId)) {
                 continue;
@@ -11343,6 +11346,9 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CreatureDeath(dyingCard, ownerId,
                 dyingCard.getPower() != null ? dyingCard.getPower() : 0,
                 dyingCard.getToughness() != null ? dyingCard.getToughness() : 0);
+
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
+                dyingCard.getId(), 0);
 
         gameData.forEachPermanent((playerId, perm) -> dispatchSlot(
                 gameData, perm, playerId, EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES, ctx));

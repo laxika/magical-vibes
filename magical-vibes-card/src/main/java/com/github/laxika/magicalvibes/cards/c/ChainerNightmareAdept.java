@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "289")
+@CardRegistration(set = "C19", collectorNumber = "39")
 public class ChainerNightmareAdept extends Card {
 
     public ChainerNightmareAdept() {

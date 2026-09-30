@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 @CardRegistration(set = "GK1", collectorNumber = "113")
 @CardRegistration(set = "PIO", collectorNumber = "308")
 @CardRegistration(set = "SLD", collectorNumber = "2444")
+@CardRegistration(set = "C19", collectorNumber = "193")
 public class GrowingRanks extends Card {
 
     public GrowingRanks() {

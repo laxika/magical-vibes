@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1874")
+@CardRegistration(set = "C19", collectorNumber = "37")
 public class AnjeFalkenrath extends Card {
 
     public AnjeFalkenrath() {

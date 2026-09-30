@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "RVR", collectorNumber = "174")
 @CardRegistration(set = "C21", collectorNumber = "213")
 @CardRegistration(set = "C20", collectorNumber = "206")
+@CardRegistration(set = "C19", collectorNumber = "190")
 public class CracklingDrake extends Card {
 
     public CracklingDrake() {

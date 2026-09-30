@@ -27,6 +27,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "343")
 @CardRegistration(set = "C20", collectorNumber = "292")
 @CardRegistration(set = "MIC", collectorNumber = "177")
+@CardRegistration(set = "C19", collectorNumber = "261")
 public class MyriadLandscape extends Card {
 
     public MyriadLandscape() {

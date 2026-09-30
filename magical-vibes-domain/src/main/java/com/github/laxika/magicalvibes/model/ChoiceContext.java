@@ -174,6 +174,8 @@ public sealed interface ChoiceContext {
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
+    record OutsideStartingDeckSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                                    boolean anyColorCombination) implements ChoiceContext {}
     record CommanderManaColorChoice(UUID playerId, boolean fromCreature, int amount,
                                     UUID recipientPlayerId) implements ChoiceContext {
 

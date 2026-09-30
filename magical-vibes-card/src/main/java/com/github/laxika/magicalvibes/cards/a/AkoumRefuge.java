@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DDP", collectorNumber = "67")
 @CardRegistration(set = "C13", collectorNumber = "272")
 @CardRegistration(set = "CMD", collectorNumber = "264")
+@CardRegistration(set = "C19", collectorNumber = "226")
 public class AkoumRefuge extends Card {
 
     public AkoumRefuge() {

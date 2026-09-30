@@ -170,6 +170,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.copyPowerToughnessFromSource = copyEffect.copyPowerToughnessFromSource();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
+        gameData.cloneOperation.cardTypesOverride = copyEffect.cardTypesOverride();
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = copyEffect.additionalSupertypesOverride();
@@ -231,6 +232,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -292,6 +294,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = copyEffect.nameOverride();
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -376,6 +379,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = 4;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -507,6 +511,7 @@ public class CloneService {
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
         boolean copyPowerToughnessFromSource = gameData.cloneOperation.copyPowerToughnessFromSource;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
+        Set<CardType> cardTypesOverride = gameData.cloneOperation.cardTypesOverride;
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
         String nameOverride = gameData.cloneOperation.nameOverride;
         Set<CardSupertype> additionalSupertypesOverride = gameData.cloneOperation.additionalSupertypesOverride;
@@ -542,6 +547,7 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.cardTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.nameOverride = null;
         gameData.cloneOperation.additionalSupertypesOverride = Set.of();
@@ -591,6 +597,7 @@ public class CloneService {
             permanentCopierService.applyCloneCopy(
                     perm, copiedCard, effectivePowerOverride, effectiveToughnessOverride,
                     additionalTypesOverride, List.of(), copyColor);
+            permanentCopierService.applyCardTypesOverride(perm, cardTypesOverride);
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,

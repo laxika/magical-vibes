@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "C14", collectorNumber = "28")
 @CardRegistration(set = "MKC", collectorNumber = "132")
 @CardRegistration(set = "MIC", collectorNumber = "127")
+@CardRegistration(set = "C19", collectorNumber = "125")
 public class OverseerOfTheDamned extends Card {
 
     public OverseerOfTheDamned() {

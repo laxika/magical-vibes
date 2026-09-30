@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -49,11 +47,11 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
                     return;
                 }
 
-                creatureControlService.applyControlEffect(gameData, newControllerId, source,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        EffectDuration.PERMANENT, null, entry.getCard().getName());
+                boolean controlApplied = creatureControlService.applyControlEffect(gameData, newControllerId, source,
+                        new GainControlOfTargetEffect(e.duration()),
+                        e.duration().toEffectDuration(), null, entry.getCard().getName());
 
-                if (e.thenEffect() != null) {
+                if (controlApplied && e.thenEffect() != null) {
                     int effectIndex = entry.getEffectsToResolve().indexOf(effect);
                     if (effectIndex >= 0) {
                         entry.insertEffectsToResolve(effectIndex + 1, List.of(e.thenEffect()));

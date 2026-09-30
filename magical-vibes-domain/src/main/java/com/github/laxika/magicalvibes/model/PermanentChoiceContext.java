@@ -89,6 +89,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record ChooseDwarfAndAttachAnyNumberOfControlledEquipment(String sourceCardName)
+            implements PermanentChoiceContext {}
+
     record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachEquipmentToSamurai {
@@ -1250,7 +1253,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
     /** Winota: choose the player or planeswalker for the selected Human to attack. */
-    record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+    record ChosenPermanentAttackTarget(UUID permanentId, UUID requiredAttackingPlayerId)
+            implements PermanentChoiceContext {
+
+        public ChosenPermanentAttackTarget(UUID permanentId) {
+            this(permanentId, null);
+        }
+    }
 
     /** Misleading Signpost: choose a new player or permanent for the attacking creature to attack. */
     record ReselectAttackingCreatureTarget(UUID permanentId) implements PermanentChoiceContext {}

@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttache
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueNotedForSourceThisTurn;
+import com.github.laxika.magicalvibes.model.amount.GreatestOpponentCardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -177,6 +178,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnte
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithFewerCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithLifeAtMost;
@@ -613,12 +615,16 @@ public class AmountEvaluationService {
                     highestOpponentLifeTotal(gameData, ctx);
             case GreatestOpponentHandSize ignored ->
                     greatestOpponentHandSize(gameData, ctx);
+            case GreatestOpponentCardsDrawnThisTurn ignored ->
+                    greatestOpponentCardsDrawnThisTurn(gameData, ctx);
             case OpponentsWithAtLeastTwoMoreLandsThanController ignored ->
                     opponentsWithAtLeastTwoMoreLandsThanController(gameData, ctx);
             case OpponentsWithLifeAtMost thresholdAmount ->
                     opponentsWithLifeAtMost(gameData, thresholdAmount, ctx);
             case OpponentsWithCreaturePowerAtLeast thresholdAmount ->
                     opponentsWithCreaturePowerAtLeast(gameData, thresholdAmount, ctx);
+            case OpponentsWithFewerCreaturesThanController ignored ->
+                    opponentsWithFewerCreaturesThanController(gameData, ctx);
             case OpponentsWithMoreCreaturesThanController ignored ->
                     opponentsWithMoreCreaturesThanController(gameData, ctx);
             case OpponentsWithLessLifeThanController ignored ->
@@ -842,10 +848,11 @@ public class AmountEvaluationService {
                     source = ctx.stackEntry().getSourcePermanentSnapshot();
                 }
                 if (source != null) {
-                    yield gameData.getCardIntensity(source.getCard().getId());
+                    yield gameData.getCardIntensity(source.getCard());
                 }
-                yield ctx.stackEntry() == null || ctx.stackEntry().getCard() == null
-                        ? 0 : gameData.getCardIntensity(ctx.stackEntry().getCard().getId());
+                yield gameData.getCardIntensity(ctx.sourceCard() != null
+                        ? ctx.sourceCard()
+                        : ctx.stackEntry() == null ? null : ctx.stackEntry().getCard());
             }
             case SourceManaValueMinusOne ignored ->
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
@@ -2851,6 +2858,16 @@ public class AmountEvaluationService {
         return greatest;
     }
 
+    private int greatestOpponentCardsDrawnThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int greatest = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            greatest = Math.max(greatest, gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0));
+        }
+        return greatest;
+    }
+
     private int targetGroupCount(TargetGroupCount amount, AmountContext ctx) {
         return ctx.stackEntry() == null
                 ? 0
@@ -2958,6 +2975,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
                     && countCreaturesControlledBy(gameData, playerId) > controllerCreatureCount) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int opponentsWithFewerCreaturesThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerCreatureCount = countCreaturesControlledBy(gameData, ctx.controllerId());
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && countCreaturesControlledBy(gameData, playerId) < controllerCreatureCount) {
                 count++;
             }
         }

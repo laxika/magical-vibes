@@ -84,6 +84,8 @@ public class GameData {
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
+    /** Physical card identities that began in each player's starting deck. */
+    public final Map<UUID, Set<UUID>> startingDeckCardIds = new ConcurrentHashMap<>();
     /** Cards owned by each player that began outside the game, such as a sideboard. */
     public final Map<UUID, List<Card>> playerSideboards = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerHands = new CommanderHandMap();
@@ -155,6 +157,8 @@ public class GameData {
     public final Set<UUID> playersWhoActedDuringTheirLastTurn = ConcurrentHashMap.newKeySet();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Players who cast a spell targeting a creature permanent this turn. */
+    private final Map<UUID, Set<UUID>> spellsCastTargetingCreatureThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells cast with Treasure-produced mana this turn. */
     private final Set<UUID> spellsCastUsingTreasureManaThisTurn = ConcurrentHashMap.newKeySet();
     /** Per-player spell-cast counts by source zone for this turn. */
@@ -373,6 +377,8 @@ public class GameData {
     public final Map<UUID, Set<Keyword>> perpetualKeywords = new ConcurrentHashMap<>();
     /** Perpetual generic cast-cost increases keyed by the affected card's identity. */
     public final Map<UUID, Integer> perpetualGenericCastCostIncreases = new ConcurrentHashMap<>();
+    /** Perpetual colored mana-cost additions keyed by the affected card's identity. */
+    public final Map<UUID, ManaCost> perpetualManaCostIncreases = new ConcurrentHashMap<>();
     /** Perpetual noncombat damage bonuses keyed by the affected card's identity. */
     public final Map<UUID, Integer> perpetualNoncombatDamageBonuses = new ConcurrentHashMap<>();
     /** Cards that perpetually let their controller spend mana as any color to cast them. */
@@ -547,6 +553,8 @@ public class GameData {
     public final Map<UUID, Integer> descentsThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard during the current combat phase. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardThisCombat = new ConcurrentHashMap<>();
+    /** Non-token card IDs exiled from a graveyard during this turn. */
+    public final Set<UUID> cardsExiledFromGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose noncreature permanents were destroyed by an opponent's spell or ability this turn. */
     public final Set<UUID> playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks card IDs each player cycled or discarded this turn (populated in the central discard hook
@@ -675,6 +683,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have blood counters (Rayami, First of the Fallen). */
+    public final Set<UUID> exiledCardsWithBloodCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
     public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have void counters (Dauthi Voidwalker). */
@@ -4032,6 +4042,10 @@ public class GameData {
         // card is cast again before end-of-turn cleanup, then let current grants be recorded below.
         spellAdditionalEnterCounters.remove(card.getId());
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+        if (spellTargetsCreaturePermanent(card, playerId)) {
+            spellsCastTargetingCreatureThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
         if (stack.stream().anyMatch(entry -> entry.getCard() != null
                 && entry.getCard().getId().equals(card.getId())
                 && entry.wasKicked())) {
@@ -4921,6 +4935,33 @@ public class GameData {
         return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
     }
 
+    public boolean hasSpellCastTargetingCreatureThisTurn(UUID playerId) {
+        return !spellsCastTargetingCreatureThisTurn.getOrDefault(playerId, Set.of()).isEmpty();
+    }
+
+    private boolean spellTargetsCreaturePermanent(Card card, UUID playerId) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            StackEntry entry = stack.get(i);
+            if (entry.getCard() == null || !entry.getCard().getId().equals(card.getId())
+                    || !playerId.equals(entry.getControllerId())) {
+                continue;
+            }
+            List<UUID> targetIds = new ArrayList<>(entry.getDeclaredTargetIds());
+            if (entry.getTargetId() != null && !targetIds.contains(entry.getTargetId())) {
+                targetIds.add(entry.getTargetId());
+            }
+            return targetIds.stream().anyMatch(this::isCreaturePermanent);
+        }
+        return false;
+    }
+
+    private boolean isCreaturePermanent(UUID targetId) {
+        return targetId != null && playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getId().equals(targetId)
+                        && permanent.getCard().hasType(CardType.CREATURE));
+    }
+
     public Set<UUID> getKickedSpellsCastThisTurn(UUID playerId) {
         return Collections.unmodifiableSet(kickedSpellsCastThisTurn.getOrDefault(playerId, Set.of()));
     }
@@ -4955,6 +4996,7 @@ public class GameData {
         target.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
         spellsCastThisTurn.clear();
+        spellsCastTargetingCreatureThisTurn.clear();
         spellsCastUsingTreasureManaThisTurn.clear();
         spellCastCountsByZoneThisTurn.clear();
         kickedSpellsCastThisTurn.clear();
@@ -5738,6 +5780,7 @@ public class GameData {
             stashCounterCardIds.remove(cardId);
             exiledCardScreamCounters.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
+            exiledCardsWithBloodCounters.remove(cardId);
             exiledCardsWithCroakCounters.remove(cardId);
             exiledCardsWithVoidCounters.remove(cardId);
             exiledCardsWithDiscoveryCounters.remove(cardId);
@@ -5764,6 +5807,7 @@ public class GameData {
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileCardsEnterTapped.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
+            cardsExiledFromGraveyardThisTurn.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
             exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             exiledCardHitCounters.remove(cardId);
@@ -6172,9 +6216,20 @@ public class GameData {
         return cardId == null ? 0 : cardIntensities.getOrDefault(cardId, 0);
     }
 
+    public int getCardIntensity(Card card) {
+        return card == null ? 0 : cardIntensities.getOrDefault(card.getId(), card.getStartingIntensity());
+    }
+
+    public void initializeCardIntensity(Card card) {
+        if (card != null && card.getStartingIntensity() > 0) {
+            cardIntensities.putIfAbsent(card.getId(), card.getStartingIntensity());
+        }
+    }
+
     public void intensifyCard(Card card, int amount) {
         if (card != null && amount > 0) {
-            cardIntensities.merge(card.getId(), amount, Integer::sum);
+            cardIntensities.compute(card.getId(), (ignored, current) ->
+                    (current == null ? card.getStartingIntensity() : current) + amount);
         }
     }
 
@@ -6753,6 +6808,7 @@ public class GameData {
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
+        copy.exiledCardsWithBloodCounters.addAll(this.exiledCardsWithBloodCounters);
         copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
         copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
         copy.exiledCardsWithDiscoveryCounters.addAll(this.exiledCardsWithDiscoveryCounters);
@@ -6782,6 +6838,7 @@ public class GameData {
         this.perpetualKeywords.forEach((cardId, keywords) ->
                 copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
         copy.perpetualGenericCastCostIncreases.putAll(this.perpetualGenericCastCostIncreases);
+        copy.perpetualManaCostIncreases.putAll(this.perpetualManaCostIncreases);
         copy.perpetualNoncombatDamageBonuses.putAll(this.perpetualNoncombatDamageBonuses);
         copy.perpetualAnyColorManaForCastCardIds.addAll(this.perpetualAnyColorManaForCastCardIds);
         copy.perpetualEnterTappedCardIds.addAll(this.perpetualEnterTappedCardIds);
@@ -6834,6 +6891,8 @@ public class GameData {
         copy.abilityActivationUsedTreasureMana.putAll(this.abilityActivationUsedTreasureMana);
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.startingDeckSizes.putAll(this.startingDeckSizes);
+        this.startingDeckCardIds.forEach((playerId, cardIds) ->
+                copy.startingDeckCardIds.put(playerId, new HashSet<>(cardIds)));
         copy.cardIntensities.putAll(this.cardIntensities);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
@@ -6859,6 +6918,10 @@ public class GameData {
         copy.playersWhoActedDuringTheirLastTurn.addAll(this.playersWhoActedDuringTheirLastTurn);
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
+        this.spellsCastTargetingCreatureThisTurn.forEach((k, v) ->
+                copy.spellsCastTargetingCreatureThisTurn.put(k, ConcurrentHashMap.newKeySet()));
+        this.spellsCastTargetingCreatureThisTurn.forEach((k, v) ->
+                copy.spellsCastTargetingCreatureThisTurn.get(k).addAll(v));
         copy.spellsCastUsingTreasureManaThisTurn.addAll(this.spellsCastUsingTreasureManaThisTurn);
         this.spellCastCountsByZoneThisTurn.forEach((k, v) ->
                 copy.spellCastCountsByZoneThisTurn.put(k, new ConcurrentHashMap<>(v)));
@@ -7146,6 +7209,7 @@ public class GameData {
         copy.exiledCardScreamCounters.putAll(this.exiledCardScreamCounters);
         copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
         copy.exiledCardsWithNonSuspendTimeCounters.addAll(this.exiledCardsWithNonSuspendTimeCounters);
+        copy.cardsExiledFromGraveyardThisTurn.addAll(this.cardsExiledFromGraveyardThisTurn);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
         copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
         copy.exiledCardRefineCounters.putAll(this.exiledCardRefineCounters);
@@ -7467,6 +7531,7 @@ public class GameData {
         copy.cloneOperation.toughnessOverride = this.cloneOperation.toughnessOverride;
         copy.cloneOperation.copyPowerToughnessFromSource = this.cloneOperation.copyPowerToughnessFromSource;
         copy.cloneOperation.additionalTypesOverride = this.cloneOperation.additionalTypesOverride;
+        copy.cloneOperation.cardTypesOverride = this.cloneOperation.cardTypesOverride;
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
         copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
         copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SIR", collectorNumber = "270")
 @CardRegistration(set = "AFC", collectorNumber = "241")
 @CardRegistration(set = "LCC", collectorNumber = "335")
+@CardRegistration(set = "C19", collectorNumber = "246")
 public class GeierReachSanitarium extends Card {
 
     public GeierReachSanitarium() {
