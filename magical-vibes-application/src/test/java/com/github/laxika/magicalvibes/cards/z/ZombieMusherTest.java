@@ -1,35 +1,34 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianSoulgorger;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZombieMusher.class, BorealCentaur.class, PhyrexianSoulgorger.class, SnowCoveredSwamp.class, Swamp.class})
 class ZombieMusherTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can't be blocked while the defending player controls a snow land")
     void cantBeBlockedWithSnowLand() {
-        addSnowLand(player2, new Swamp());
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SnowCoveredSwamp());
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
         Permanent musher = readyAttacker(player1);
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, musher))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,11 +39,24 @@ class ZombieMusherTest extends BaseCardTest {
     @DisplayName("Can be blocked when the defending player controls only a nonsnow land")
     void canBeBlockedWithNonsnowLand() {
         harness.addToBattlefield(player2, new Swamp());
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
         Permanent musher = readyAttacker(player1);
         harness.setLife(player2, 20);
 
-        beginBlockers();
+        prepareDeclareBlockers();
+        declareBlock(blocker, musher);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A snow creature without a snow land does not enable snow landwalk")
+    void snowNonlandDoesNotEnableLandwalk() {
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
+        Permanent musher = readyAttacker(player1);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
         declareBlock(blocker, musher);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -53,10 +65,10 @@ class ZombieMusherTest extends BaseCardTest {
     @Test
     @DisplayName("Snow mana activates regeneration")
     void snowManaActivatesRegeneration() {
-        Permanent musher = readyCreature(player1, new ZombieMusher());
+        Permanent musher = addCreatureReady(player1, new ZombieMusher());
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, indexOf(player1, musher), 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(musher.getRegenerationShield()).isEqualTo(1);
@@ -66,46 +78,46 @@ class ZombieMusherTest extends BaseCardTest {
     @Test
     @DisplayName("Regular mana cannot pay the snow activation cost")
     void regularManaCannotPaySnowCost() {
-        Permanent musher = readyCreature(player1, new ZombieMusher());
+        addCreatureReady(player1, new ZombieMusher());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, musher), 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    private void declareBlock(Permanent blocker, Permanent attacker) {
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                indexOf(player2, blocker), indexOf(player1, attacker))));
+    @Test
+    @DisplayName("The regeneration shield saves Zombie Musher from lethal combat damage")
+    void regenerationShieldSavesFromLethalCombatDamage() {
+        Permanent musher = addCreatureReady(player1, new ZombieMusher());
+        Permanent attacker = addCreatureReady(player2, new PhyrexianSoulgorger());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        musher.setBlocking(true);
+        musher.addBlockingTarget(0);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Zombie Musher");
+        assertThat(musher.isTapped()).isTrue();
+        assertThat(musher.getRegenerationShield()).isZero();
+        assertThat(musher.getMarkedDamage()).isZero();
+        assertThat(musher.isBlocking()).isFalse();
     }
 
-    private int indexOf(Player player, Permanent permanent) {
-        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    private void declareBlock(Permanent blocker, Permanent attacker) {
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 
     private Permanent readyAttacker(Player player) {
-        Permanent permanent = readyCreature(player, new ZombieMusher());
+        Permanent permanent = addCreatureReady(player, new ZombieMusher());
         permanent.setAttacking(true);
         return permanent;
-    }
-
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void addSnowLand(Player player, Card land) {
-        Permanent snowLand = new Permanent(land);
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player.getId()).add(snowLand);
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

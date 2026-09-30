@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(PhyrexianSnowcrusher.class)
 class PhyrexianSnowcrusherTest extends BaseCardTest {
 
     @Test
@@ -23,6 +25,17 @@ class PhyrexianSnowcrusherTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("A tapped Snowcrusher does not have to attack")
+    void doesNotHaveToAttackWhenTapped() {
+        Permanent snowcrusher = addReadySnowcrusher(player1);
+        snowcrusher.tap();
+
+        declareAttackers(List.of());
+
+        assertThat(snowcrusher.isAttacking()).isFalse();
     }
 
     @Test

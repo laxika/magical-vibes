@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiteOfFlame.class, SnowCoveredMountain.class, SnowCoveredIsland.class})
 class RiteOfFlameTest extends BaseCardTest {
 
     @Test
@@ -33,8 +37,8 @@ class RiteOfFlameTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count other cards in graveyards")
     void ignoresOtherCards() {
-        gd.playerGraveyards.get(player1.getId()).add(new com.github.laxika.magicalvibes.cards.k.Kindle());
-        gd.playerGraveyards.get(player2.getId()).add(new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new SnowCoveredMountain());
+        gd.playerGraveyards.get(player2.getId()).add(new SnowCoveredIsland());
 
         castRiteOfFlame();
 
@@ -47,19 +51,16 @@ class RiteOfFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfFlame(), new RiteOfFlame()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(5);
     }
 
     private void castRiteOfFlame() {
         harness.setHand(player1, List.of(new RiteOfFlame()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

@@ -41,10 +41,9 @@ class FrozenSolidTest extends BaseCardTest {
     void preventsUntapping() {
         Permanent creature = addCreatureReady(player2, new TitanicBulvox());
         creature.tap();
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FrozenSolid());
-        aura.setAttachedTo(creature.getId());
+        attachFrozenSolid(creature);
 
-        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }

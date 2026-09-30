@@ -1,49 +1,69 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.c.CoverOfWinter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RonomUnicorn.class, CoverOfWinter.class, BorealDruid.class})
 class RonomUnicornTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifice ability destroys target enchantment")
     void sacrificeAbilityDestroysTargetEnchantment() {
         harness.addToBattlefield(player1, new RonomUnicorn());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoverOfWinter());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ronom Unicorn");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Cover of Winter");
     }
 
     @Test
     @DisplayName("Can target an enchantment controlled by its controller")
     void canTargetOwnEnchantment() {
         harness.addToBattlefield(player1, new RonomUnicorn());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ronom Unicorn");
-        harness.assertInGraveyard(player1, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Cover of Winter");
     }
 
     @Test
     @DisplayName("Cannot target a non-enchantment permanent")
     void cannotTargetNonEnchantmentPermanent() {
         harness.addToBattlefield(player1, new RonomUnicorn());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice cost is paid even if the target leaves before resolution")
+    void sacrificesItselfWhenTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new RonomUnicorn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoverOfWinter());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(target.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Ronom Unicorn");
+        harness.assertNotOnBattlefield(player2, "Cover of Winter");
     }
 }

@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(KjeldoranOutrider.class)
 class KjeldoranOutriderTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,18 @@ class KjeldoranOutriderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can be activated while the creature has summoning sickness")
+    void abilityCanBeActivatedWithSummoningSickness() {
+        Permanent outrider = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(outrider.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without white mana")
     void cannotActivateWithoutMana() {
         addReadyOutrider();
@@ -67,9 +81,6 @@ class KjeldoranOutriderTest extends BaseCardTest {
     }
 
     private Permanent addReadyOutrider() {
-        Permanent outrider = new Permanent(new KjeldoranOutrider());
-        outrider.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(outrider);
-        return outrider;
+        return addCreatureReady(player1, new KjeldoranOutrider());
     }
 }

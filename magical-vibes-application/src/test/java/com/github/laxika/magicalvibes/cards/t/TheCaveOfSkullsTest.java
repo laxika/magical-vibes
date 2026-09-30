@@ -62,7 +62,7 @@ class TheCaveOfSkullsTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
-            assertThat(token.getCard().hasSubtype(CardSubtype.WARRIOR)).isTrue();
+            assertThat(token.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
         });
     }
 }

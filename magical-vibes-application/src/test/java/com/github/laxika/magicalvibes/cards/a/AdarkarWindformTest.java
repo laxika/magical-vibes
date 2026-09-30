@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AdarkarWindform.class, SnowCoveredPlains.class, WindDrake.class})
+@CardUsed({AdarkarWindform.class, SnowCoveredPlains.class, BorealGriffin.class})
 class AdarkarWindformTest extends BaseCardTest {
 
     @Test
     @DisplayName("Snow ability removes flying from target creature until end of turn")
     void removesFlyingUntilEndOfTurn() {
         addWindformReady(player1);
-        Permanent target = addCreatureReady(player2, new WindDrake());
+        Permanent target = addCreatureReady(player2, new BorealGriffin());
         payAbilityCost(player1);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
