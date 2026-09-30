@@ -13004,7 +13004,8 @@ public class TriggerCollectionService {
             }
 
             Permanent sourcePermanent = findPermanentByCard(gameData, boon.sourceCard());
-            if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            if (boon.targetFilter() != null
+                    && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         boon.sourceCard(), boon.controllerId(), new ArrayList<>(List.of(resolved)),
                         sourcePermanent == null ? null : sourcePermanent.getId(), enteringPermanent.getId(),

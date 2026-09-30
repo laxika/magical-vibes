@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class VolatileRiftTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.perpetualCardPowerToughnessModifiers)
-                .containsEntry(creature.getId(), new PerpetualPowerToughnessModifier(3, 0));
+                .containsEntry(creature.getId(), new CardPowerToughnessModifier(3, 0));
     }
 
     @Test
