@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsPowerToA
 
 @CardRegistration(set = "ARB", collectorNumber = "57")
 @CardRegistration(set = "HOP", collectorNumber = "91")
+@CardRegistration(set = "NEC", collectorNumber = "140")
 public class MageSlayer extends Card {
 
     public MageSlayer() {

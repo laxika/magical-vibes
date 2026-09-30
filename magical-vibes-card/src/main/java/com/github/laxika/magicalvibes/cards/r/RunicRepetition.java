@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHa
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "72")
+@CardRegistration(set = "C19", collectorNumber = "94")
 public class RunicRepetition extends Card {
 
     public RunicRepetition() {

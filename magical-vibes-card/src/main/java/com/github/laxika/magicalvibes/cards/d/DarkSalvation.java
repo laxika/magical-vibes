@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EMN", collectorNumber = "87")
 @CardRegistration(set = "SIR", collectorNumber = "105")
+@CardRegistration(set = "MIC", collectorNumber = "110")
 public class DarkSalvation extends Card {
 
     public DarkSalvation() {

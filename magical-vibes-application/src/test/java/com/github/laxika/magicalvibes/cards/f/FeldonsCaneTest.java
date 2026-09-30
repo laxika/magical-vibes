@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FeldonsCane.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({FeldonsCane.class, Squire.class, TormodsCrypt.class})
 class FeldonsCaneTest extends BaseCardTest {
     @Test
     @DisplayName("Activating exiles Feldon's Cane as cost and puts ability on stack")
@@ -51,7 +51,7 @@ class FeldonsCaneTest extends BaseCardTest {
     @DisplayName("Resolving shuffles controller's graveyard into their library")
     void resolvingShufflesGraveyardIntoLibrary() {
         harness.addToBattlefieldAndReturn(player1, new FeldonsCane());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GiantSpider()));
+        harness.setGraveyard(player1, List.of(new Squire(), new Squire(), new TormodsCrypt()));
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,21 +65,21 @@ class FeldonsCaneTest extends BaseCardTest {
     @DisplayName("Only shuffles the controller's own graveyard, not the opponent's")
     void doesNotShuffleOpponentGraveyard() {
         harness.addToBattlefieldAndReturn(player1, new FeldonsCane());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.setGraveyard(player2, List.of(new GiantSpider()));
+        harness.setGraveyard(player1, List.of(new Squire()));
+        harness.setGraveyard(player2, List.of(new TormodsCrypt()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Tormod's Crypt");
     }
 
     @Test
     @DisplayName("A dead token ceases to exist instead of being shuffled into the library")
     void deadTokenIsNotShuffledIntoLibrary() {
         harness.addToBattlefieldAndReturn(player1, new FeldonsCane());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new Squire()));
         Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token));
         harness.clearPriorityPassed();
@@ -88,7 +88,7 @@ class FeldonsCaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Only the Grizzly Bears card travels; the token ceases to exist (CR 111.7).
+        // Only the Squire card travels; the token ceases to exist (CR 111.7).
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId()))

@@ -745,6 +745,30 @@ public class BlockLegalityService {
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!blocker.getId().equals(floating.affectedPermanentId())
+                        || !(floating.effect() instanceof BlockingRestrictionEffect restriction)) {
+                    continue;
+                }
+                if (restriction.canBlockOnlyAttackersMatching() != null) {
+                    if (attackerFilterRestrictions == null) {
+                        attackerFilterRestrictions = new ArrayList<>(2);
+                    }
+                    attackerFilterRestrictions.add(restriction);
+                }
+                if (restriction.cantBlock()) {
+                    cantBlockStatic = true;
+                }
+                if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
+                    cantBlockPowerAtLeastOwnToughnessStatic = true;
+                }
+                Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
+                if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
+                    cantBlockPowerAtLeast = threshold;
+                }
+            }
+        }
         for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof BlockabilityPermissionEffect permission) {
                 blocksShadowAsThoughShadow |= permission.blocksShadowAsThoughShadow();

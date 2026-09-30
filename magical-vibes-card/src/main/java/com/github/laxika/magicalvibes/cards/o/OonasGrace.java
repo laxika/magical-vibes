@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "EVE", collectorNumber = "27")
 @CardRegistration(set = "EMA", collectorNumber = "63")
+@CardRegistration(set = "C19", collectorNumber = "91")
 public class OonasGrace extends Card {
 
     public OonasGrace() {

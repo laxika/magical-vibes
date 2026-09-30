@@ -18,11 +18,7 @@ class PouncingWurmTest extends BaseCardTest {
 
     @Test
     void castWithoutKickerEntersWithoutCountersOrHaste() {
-        harness.setHand(player1, List.of(new PouncingWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PouncingWurm(), "{3}{G}");
         harness.passBothPriorities();
 
         Permanent pouncingWurm = findPermanent(player1, "Pouncing Wurm");
@@ -49,6 +45,16 @@ class PouncingWurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PouncingWurm()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void castWithKickerWithoutEnoughGreenManaThrowsException() {
+        harness.setHand(player1, List.of(new PouncingWurm()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);

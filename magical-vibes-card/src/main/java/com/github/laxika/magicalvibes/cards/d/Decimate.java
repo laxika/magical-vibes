@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MKC", collectorNumber = "204")
 @CardRegistration(set = "OTC", collectorNumber = "220")
 @CardRegistration(set = "FIC", collectorNumber = "323")
+@CardRegistration(set = "NEC", collectorNumber = "137")
 public class Decimate extends Card {
 
     public Decimate() {

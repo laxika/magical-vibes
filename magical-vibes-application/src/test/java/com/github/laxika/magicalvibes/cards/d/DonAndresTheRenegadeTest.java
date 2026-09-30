@@ -38,10 +38,10 @@ class DonAndresTheRenegadeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, stolenCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, stolenCreature, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, stolenCreature, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(gqs.cardHasSubtype(stolenCreature.getCard(), CardSubtype.PIRATE, gd, player1.getId()))
+        assertThat(gqs.hasEffectiveSubtype(gd, stolenCreature, CardSubtype.PIRATE))
                 .isTrue();
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
-        assertThat(gqs.cardHasSubtype(opponentCreature.getCard(), CardSubtype.PIRATE, gd, player2.getId()))
+        assertThat(gqs.hasEffectiveSubtype(gd, opponentCreature, CardSubtype.PIRATE))
                 .isFalse();
     }
 

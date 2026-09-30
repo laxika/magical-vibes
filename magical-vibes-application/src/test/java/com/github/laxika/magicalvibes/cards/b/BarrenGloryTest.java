@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BarrenGlory.class)
+@CardUsed({BarrenGlory.class})
 class BarrenGloryTest extends BaseCardTest {
 
     @Test
@@ -59,5 +59,21 @@ class BarrenGloryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Wins if Barren Glory leaves before its trigger resolves")
+    void winsWhenSourceLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new BarrenGlory());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).removeLast();
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 }

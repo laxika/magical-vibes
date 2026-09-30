@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 
 @CardRegistration(set = "AFC", collectorNumber = "129")
+@CardRegistration(set = "C19", collectorNumber = "27")
 public class IgniteTheFuture extends Card {
 
     public IgniteTheFuture() {

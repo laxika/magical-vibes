@@ -77,6 +77,20 @@ public class CardRevealService {
                 gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, hand);
     }
 
+    public void revealMatchingHandCardsToAllPlayers(GameData gameData, UUID subjectPlayerId,
+                                                    List<Card> cards) {
+        String subjectName = gameData.playerIdToName.get(subjectPlayerId);
+        if (cards.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.text(subjectName + " reveals no matching cards from their hand."));
+        } else {
+            GameLog.Builder reveal = GameLog.builder().text(subjectName + " reveals matching cards from their hand: ");
+            appendCards(reveal, cards);
+            gameLogService.append(gameData, reveal.text(".").build());
+        }
+        revealToAllPlayers(gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, cards);
+    }
+
     public void lookAtFaceDownPermanent(GameData gameData, UUID viewerId, Permanent permanent) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
         String viewerName = gameData.playerIdToName.get(viewerId);

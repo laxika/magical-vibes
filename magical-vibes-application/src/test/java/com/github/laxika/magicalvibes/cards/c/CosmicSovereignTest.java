@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,22 +9,41 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureRandomCreatureWithManaValueEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CosmicSovereign.class)
+@CardUsed({CosmicSovereign.class, CentaurCourser.class})
 class CosmicSovereignTest extends BaseCardTest {
 
     @Test
     void conjuresACreatureWithTheSourcePowerAndExilesItAtTheNextEndStep() {
         Permanent sovereign = addCreatureReady(player1, new CosmicSovereign());
 
-        resolveBeginningOfCombat(player1);
+        // A random zero-toughness creature could die before this test can inspect it.
+        var handler = GameTestEngineContext.get().getBean(ConjureRandomCreatureWithManaValueEffectHandler.class);
+        @SuppressWarnings("unchecked")
+        Map<Integer, List<CardPrinting>> candidates = (Map<Integer, List<CardPrinting>>)
+                ReflectionTestUtils.getField(handler, "candidatesByManaValue");
+        List<CardPrinting> previous = candidates.put(3, List.of(new CardPrinting(
+                "M19", "171", CentaurCourser.class.getName(), "CentaurCourser", false, CentaurCourser::new)));
+        try {
+            resolveBeginningOfCombat(player1);
+        } finally {
+            if (previous == null) {
+                candidates.remove(3);
+            } else {
+                candidates.put(3, previous);
+            }
+        }
 
         List<Permanent> conjured = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(sovereign.getId()))
@@ -37,6 +57,15 @@ class CosmicSovereignTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(action -> action.permanentId().equals(creature.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(creature.getCard().getId()));
     }
 
     @Test
@@ -61,7 +90,9 @@ class CosmicSovereignTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+            resolveAllTriggers();
+        });
     }
 }

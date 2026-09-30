@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NeedlepeakSpider;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LavacoreElemental.class, GrizzlyBears.class})
+@CardUsed({LavacoreElemental.class, NeedlepeakSpider.class, ProdigalPyromancer.class})
 class LavacoreElementalTest extends BaseCardTest {
 
     @Test
@@ -38,17 +40,76 @@ class LavacoreElementalTest extends BaseCardTest {
     @DisplayName("Gets a time counter when a creature you control deals combat damage to a player")
     void getsTimeCounterOnAllyCombatDamage() {
         Permanent elemental = addReadyElemental();
-        Permanent bears = addReadyCreature();
-        bears.setAttacking(true);
+        Permanent spider = addCreatureReady(player1, new NeedlepeakSpider());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(spider)));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removes one time counter and stays on the battlefield when more remain")
+    void removesOneTimeCounterWhenMoreRemain() {
+        Permanent elemental = addReadyElemental();
+        elemental.setCounterCount(CounterType.TIME, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental);
+    }
+
+    @Test
+    @DisplayName("Does not get a time counter from an opponent's creature dealing combat damage")
+    void doesNotGetTimeCounterFromOpponentsCombatDamage() {
+        Permanent elemental = addReadyElemental();
+        Permanent spider = addCreatureReady(player2, new NeedlepeakSpider());
+
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(spider)));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not get a time counter when combat damage is dealt only to a creature")
+    void doesNotGetTimeCounterFromCombatDamageToCreature() {
+        Permanent elemental = addReadyElemental();
+        Permanent attacker = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent blocker = addCreatureReady(player2, new NeedlepeakSpider());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not get a time counter from noncombat damage to a player")
+    void doesNotGetTimeCounterFromNoncombatDamage() {
+        Permanent elemental = addReadyElemental();
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        int pyromancerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer);
+        harness.activateAbility(player1, pyromancerIndex, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }
 
     @Test
@@ -65,17 +126,8 @@ class LavacoreElementalTest extends BaseCardTest {
     }
 
     private Permanent addReadyElemental() {
-        Permanent permanent = new Permanent(new LavacoreElemental());
+        Permanent permanent = addCreatureReady(player1, new LavacoreElemental());
         permanent.setCounterCount(CounterType.TIME, 1);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyCreature() {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 }

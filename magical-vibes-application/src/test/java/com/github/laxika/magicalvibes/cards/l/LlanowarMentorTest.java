@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LlanowarMentor.class, GrizzlyBears.class})
+@CardUsed({LlanowarMentor.class, LlanowarAugur.class})
 class LlanowarMentorTest extends BaseCardTest {
 
     @Test
     void discardingACardCreatesLlanowarElvesToken() {
-        addReadyMentor();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent mentor = addReadyMentor();
+        harness.setHand(player1, List.of(new LlanowarAugur()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -29,28 +29,24 @@ class LlanowarMentorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        assertThat(mentor.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertNotInHand(player1, "Llanowar Augur");
+        harness.assertInGraveyard(player1, "Llanowar Augur");
+
+        Permanent token = findPermanent(player1, "Llanowar Elves");
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getName()).isEqualTo("Llanowar Elves");
+        assertThat(token.getCard().getPower()).isEqualTo(1);
+        assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELF, CardSubtype.DRUID);
+        assertThat(token.isSummoningSick()).isTrue();
     }
 
     @Test
     void LlanowarElvesTokenCanTapForGreenMana() {
-        addReadyMentor();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
-
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = createLlanowarElvesToken();
         token.setSummoningSick(false);
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
 
@@ -61,19 +57,53 @@ class LlanowarMentorTest extends BaseCardTest {
     }
 
     @Test
+    void LlanowarElvesTokenCannotTapForGreenManaWithSummoningSickness() {
+        Permanent token = createLlanowarElvesToken();
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, tokenIndex, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new LlanowarMentor());
+        harness.setHand(player1, List.of(new LlanowarAugur()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(mentor.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
     void cannotActivateWithoutACardToDiscard() {
-        addReadyMentor();
+        Permanent mentor = addReadyMentor();
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(mentor.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     private Permanent addReadyMentor() {
-        Permanent mentor = new Permanent(new LlanowarMentor());
-        mentor.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mentor);
-        return mentor;
+        return addCreatureReady(player1, new LlanowarMentor());
+    }
+
+    private Permanent createLlanowarElvesToken() {
+        addReadyMentor();
+        harness.setHand(player1, List.of(new LlanowarAugur()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Llanowar Elves");
     }
 }

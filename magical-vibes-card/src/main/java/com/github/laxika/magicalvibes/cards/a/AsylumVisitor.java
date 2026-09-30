@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "INR", collectorNumber = "96")
 @CardRegistration(set = "INR", collectorNumber = "371")
 @CardRegistration(set = "SOI", collectorNumber = "99")
+@CardRegistration(set = "C19", collectorNumber = "103")
 public class AsylumVisitor extends Card {
 
     public AsylumVisitor() {

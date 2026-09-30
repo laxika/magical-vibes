@@ -118,6 +118,32 @@ class HonorablePassageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents only the chosen source's next damage event")
+    void preventsOnlyChosenSourcesNextDamageEvent() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castPassage(player1);
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("Prevents damage from a chosen red spell on the stack to a creature and damages its controller")
     void preventsDamageFromRedSpellOnStackToCreature() {
         harness.setLife(player2, 20);
@@ -203,10 +229,7 @@ class HonorablePassageTest extends BaseCardTest {
     }
 
     private void castPassage(Player player) {
-        harness.setHand(player, List.of(new HonorablePassage()));
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castInstant(player, 0);
+        harness.castFromHand(player, new HonorablePassage(), "{1}{W}");
     }
 
     private int indexOf(Player player, Permanent perm) {

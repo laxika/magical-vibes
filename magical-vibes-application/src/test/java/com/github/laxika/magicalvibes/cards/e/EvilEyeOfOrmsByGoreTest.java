@@ -67,11 +67,9 @@ class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
     @Test
     @DisplayName("Evil Eye cannot be blocked by a non-Wall creature")
     void cannotBeBlockedByNonWall() {
-        Permanent evilEye = addCreatureReady(player1, new EvilEyeOfOrmsByGore());
-        evilEye.setAttacking(true);
-
+        addCreatureReady(player1, new EvilEyeOfOrmsByGore());
         addCreatureReady(player2, new GrizzlyBears());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -81,11 +79,9 @@ class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
     @Test
     @DisplayName("Evil Eye can be blocked by a Wall")
     void canBeBlockedByWall() {
-        Permanent evilEye = addCreatureReady(player1, new EvilEyeOfOrmsByGore());
-        evilEye.setAttacking(true);
-
+        addCreatureReady(player1, new EvilEyeOfOrmsByGore());
         Permanent wall = addCreatureReady(player2, new GlacialWall());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

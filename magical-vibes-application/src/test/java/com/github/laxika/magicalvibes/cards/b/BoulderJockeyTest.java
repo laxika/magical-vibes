@@ -57,8 +57,9 @@ class BoulderJockeyTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
         assertThat(boulder.isTapped()).isTrue();
-        assertThat(boulder.isAttacking()).isTrue();
-        assertThat(boulder.getAttackTarget()).isEqualTo(player2.getId());
+        // Auto-pass has already cleared combat state; Jockey and its attacking
+        // Boulder dealt 4 and 3 damage before this assertion.
+        harness.assertLife(player2, 13);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

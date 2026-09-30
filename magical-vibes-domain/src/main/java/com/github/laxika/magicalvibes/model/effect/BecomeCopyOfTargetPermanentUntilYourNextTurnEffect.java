@@ -27,7 +27,8 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
         Set<CardSupertype> additionalSupertypesOverride,
         Set<Keyword> additionalKeywordsOverride,
         PermanentPredicate targetPredicate,
-        EffectSlot retainedAbilitySlot
+        EffectSlot retainedAbilitySlot,
+        boolean retainSourceActivatedAbilities
 ) implements CardEffect {
 
     public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect {
@@ -52,13 +53,20 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
             Set<Keyword> additionalKeywordsOverride) {
         this(nameOverride, powerOverride, toughnessOverride, additionalSubtypesOverride,
                 additionalTypesOverride, additionalSupertypesOverride, additionalKeywordsOverride,
-                null, null);
+                null, null, false);
     }
 
     public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
             PermanentPredicate targetPredicate, EffectSlot retainedAbilitySlot) {
         this(null, null, null, Set.of(), Set.of(), Set.of(), Set.of(),
-                targetPredicate, retainedAbilitySlot);
+                targetPredicate, retainedAbilitySlot, false);
+    }
+
+    public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
+            PermanentPredicate targetPredicate, Integer powerOverride, Integer toughnessOverride,
+            boolean retainSourceActivatedAbilities) {
+        this(null, powerOverride, toughnessOverride, Set.of(), Set.of(), Set.of(), Set.of(),
+                targetPredicate, null, retainSourceActivatedAbilities);
     }
 
     private static PermanentPredicate defaultTargetPredicate() {

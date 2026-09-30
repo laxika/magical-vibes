@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromTargetHandOrGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -37,11 +40,21 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
         }
 
         UUID targetPlayerId = entry.getTargetId();
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        List<Card> hand = gameData.playerHands.getOrDefault(targetPlayerId, List.of());
+        List<Card> matchingHandCards = matchingCards(hand, exileEffect.handFilter(), gameData, targetPlayerId);
+        if (exileEffect.revealMatchingHand()) {
+            cardRevealService.revealMatchingHandCardsToAllPlayers(gameData, targetPlayerId, matchingHandCards);
+        } else {
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        }
 
         List<Card> candidates = new ArrayList<>();
-        addNonlands(candidates, gameData.playerHands.getOrDefault(targetPlayerId, List.of()));
-        addNonlands(candidates, gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()));
+        candidates.addAll(matchingHandCards);
+        if (!exileEffect.handOnly()) {
+            candidates.addAll(matchingCards(
+                    gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()),
+                    exileEffect.graveyardFilter(), gameData, targetPlayerId));
+        }
         if (candidates.isEmpty()) {
             return;
         }
@@ -53,9 +66,11 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
                         exileEffect.grantPlayPermission()));
     }
 
-    private static void addNonlands(List<Card> candidates, List<Card> cards) {
-        cards.stream()
-                .filter(card -> !card.hasType(com.github.laxika.magicalvibes.model.CardType.LAND))
-                .forEach(candidates::add);
+    private List<Card> matchingCards(List<Card> cards, CardPredicate filter,
+                                     GameData gameData, UUID cardOwnerId) {
+        return cards.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, null, gameData, cardOwnerId))
+                .toList();
     }
 }

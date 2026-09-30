@@ -230,6 +230,14 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets, requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX, opponentChoosesOneForHand, targetGroups, targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, true, declaresGraveyardTarget);
     }
 
+    public ReturnTargetCardsFromGraveyardToHandEffect withDeclaredGraveyardTarget() {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, dynamicMaxTargets,
+                xScaled, exactTargets, minTargets, requireSharedCreatureType, maxOnePerCardType,
+                unlessAnyPlayerPaysX, opponentChoosesOneForHand, targetGroups,
+                targetGroupsMustShareGraveyard, returnToOwnersHand,
+                bargainedBattlefieldMaxManaValue, recordsReturnedCount, true);
+    }
+
     public static ReturnTargetCardsFromGraveyardToHandEffect forTriggeredAbility(CardPredicate filter, int maxTargets) {
         return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, null, false, false, 0,
                 false, Set.of(), false, false, List.of(), false, false, null, false, true);

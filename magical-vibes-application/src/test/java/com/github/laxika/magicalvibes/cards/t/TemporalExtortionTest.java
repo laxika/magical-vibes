@@ -46,6 +46,24 @@ class TemporalExtortionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Temporal Extortion");
     }
 
+    @Test
+    @DisplayName("An opponent may pay their own half life rounded up to counter it")
+    void opponentMayPayTheirOwnHalfLifeToCounter() {
+        harness.setLife(player2, 19);
+        castTemporalExtortion();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 9);
+        harness.assertInGraveyard(player1, "Temporal Extortion");
+    }
+
     private void castTemporalExtortion() {
         harness.setHand(player1, List.of(new TemporalExtortion()));
         harness.addMana(player1, ManaColor.BLACK, 4);

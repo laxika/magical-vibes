@@ -10,23 +10,37 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * surrounding trigger. The overload with a follow-up effect is used for combat-damage abilities
  * whose follow-up happens only after control changes successfully.
  */
-public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect)
-        implements CardEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect,
+                                                              ControlDuration duration)
+        implements ControlStealingEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     public TargetPlayerGainsControlOfSourceCreatureEffect() {
-        this(true, null);
+        this(true, null, ControlDuration.PERMANENT);
     }
 
     public TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer) {
-        this(targetsPlayer, null);
+        this(targetsPlayer, null, ControlDuration.PERMANENT);
+    }
+
+    public TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect) {
+        this(targetsPlayer, thenEffect, ControlDuration.PERMANENT);
     }
 
     public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer() {
-        return new TargetPlayerGainsControlOfSourceCreatureEffect(false, null);
+        return triggeringPlayer(ControlDuration.PERMANENT);
     }
 
     public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(CardEffect thenEffect) {
-        return new TargetPlayerGainsControlOfSourceCreatureEffect(false, thenEffect);
+        return triggeringPlayer(ControlDuration.PERMANENT, thenEffect);
+    }
+
+    public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(ControlDuration duration) {
+        return new TargetPlayerGainsControlOfSourceCreatureEffect(false, null, duration);
+    }
+
+    public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(
+            ControlDuration duration, CardEffect thenEffect) {
+        return new TargetPlayerGainsControlOfSourceCreatureEffect(false, thenEffect, duration);
     }
 
     @Override
@@ -44,5 +58,10 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlay
         return thenEffect == null
                 ? new Fixed(0)
                 : new EventValue();
+    }
+
+    @Override
+    public ControlDuration controlDuration() {
+        return duration;
     }
 }

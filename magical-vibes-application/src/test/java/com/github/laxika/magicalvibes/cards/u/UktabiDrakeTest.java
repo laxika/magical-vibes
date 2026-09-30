@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(UktabiDrake.class)
@@ -47,12 +45,36 @@ class UktabiDrakeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Uktabi Drake");
     }
 
-    private void castAndResolveUktabiDrake() {
-        harness.setHand(player1, List.of(new UktabiDrake()));
+    @Test
+    @DisplayName("Echo cannot be paid without two green mana")
+    void echoRequiresTwoGreenMana() {
+        castAndResolveUktabiDrake();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Uktabi Drake");
+        harness.assertInGraveyard(player1, "Uktabi Drake");
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveUktabiDrake();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Uktabi Drake");
+    }
+
+    private void castAndResolveUktabiDrake() {
+        harness.castFromHand(player1, new UktabiDrake(), "{G}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Uktabi Drake");
     }
 }

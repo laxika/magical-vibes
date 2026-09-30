@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.f.FirefrightMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SimianSpiritGuide.class, RagingGoblin.class})
+@CardUsed({SimianSpiritGuide.class, FirefrightMage.class})
 class SimianSpiritGuideTest extends BaseCardTest {
 
     @Test
@@ -41,13 +41,12 @@ class SimianSpiritGuideTest extends BaseCardTest {
     @Test
     @DisplayName("The added mana can pay for a spell")
     void addedManaPaysForASpell() {
-        harness.setHand(player1, List.of(new SimianSpiritGuide(), new RagingGoblin()));
+        harness.setHand(player1, List.of(new SimianSpiritGuide(), new FirefrightMage()));
 
         harness.activateHandAbility(player1, 0, null);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Raging Goblin"));
+        harness.assertOnBattlefield(player1, "Firefright Mage");
     }
 }

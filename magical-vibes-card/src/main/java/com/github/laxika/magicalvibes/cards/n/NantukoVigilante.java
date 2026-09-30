@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "132")
 @CardRegistration(set = "MKC", collectorNumber = "177")
+@CardRegistration(set = "C19", collectorNumber = "174")
 public class NantukoVigilante extends Card {
 
     public NantukoVigilante() {

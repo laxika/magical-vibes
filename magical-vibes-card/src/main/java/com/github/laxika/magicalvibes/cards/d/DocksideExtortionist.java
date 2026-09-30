@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "107")
 @CardRegistration(set = "TLE", collectorNumber = "28")
+@CardRegistration(set = "C19", collectorNumber = "24")
 public class DocksideExtortionist extends Card {
 
     public DocksideExtortionist() {

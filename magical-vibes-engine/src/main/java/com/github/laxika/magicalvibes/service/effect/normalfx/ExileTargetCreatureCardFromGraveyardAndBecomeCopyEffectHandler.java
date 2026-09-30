@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,8 +58,17 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
         exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         if (source != null) {
             Card originalCard = source.getOriginalCard();
+            ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect copyEffect =
+                    (ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect) effect;
             permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of(),
                     originalCard.getActivatedAbilities());
+            if (copyEffect.retainedEffectSlot() != null) {
+                for (EffectRegistration registration : originalCard.getEffectRegistrations(
+                        copyEffect.retainedEffectSlot())) {
+                    source.getCard().addEffect(copyEffect.retainedEffectSlot(),
+                            registration.effect(), registration.triggerMode());
+                }
+            }
             gameLogService.append(gameData,
                     GameLog.textCardText(originalCard.getName() + " exiles ", targetCard,
                             " and becomes a copy of it."));

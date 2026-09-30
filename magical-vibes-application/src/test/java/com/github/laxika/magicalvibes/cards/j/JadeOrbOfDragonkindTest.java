@@ -45,7 +45,7 @@ class JadeOrbOfDragonkindTest extends BaseCardTest {
 
         Permanent dragon = findPermanent(player1, "Test Dragon");
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dragon.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class JadeOrbOfDragonkindTest extends BaseCardTest {
 
         Permanent creature = findPermanent(player1, "Test Goblin");
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -75,7 +75,7 @@ class JadeOrbOfDragonkindTest extends BaseCardTest {
 
         Permanent dragon = findPermanent(player1, "Test Dragon");
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(dragon.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.HEXPROOF)).isFalse();
     }
 
     private Permanent addReadyOrb() {

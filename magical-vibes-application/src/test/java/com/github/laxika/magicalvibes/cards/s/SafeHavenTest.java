@@ -45,6 +45,30 @@ class SafeHavenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{2}, {T} cannot target a noncreature permanent you control")
+    void exileAbilityCannotTargetOwnNonCreature() {
+        harness.addToBattlefieldAndReturn(player1, new SafeHaven());
+        Permanent otherHaven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherHaven.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Accepting the upkeep trigger sacrifices Safe Haven even when it has exiled no cards")
+    void acceptingUpkeepTriggerWithNothingExiledSacrificesLand() {
+        harness.addToBattlefieldAndReturn(player1, new SafeHaven());
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Safe Haven");
+    }
+
+    @Test
     @DisplayName("Accepting the upkeep trigger sacrifices Safe Haven and returns its exiled creature")
     void acceptingUpkeepTriggerSacrificesAndReturnsCreature() {
         Permanent haven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());

@@ -99,6 +99,7 @@ class PendingInteractionContractTest {
             PendingAnimalMagnetismChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
+            com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards.class,
             PendingDubiousChallengeChoice.class,
             PendingPortalPileSearch.class,
             PendingKarnRestart.class,

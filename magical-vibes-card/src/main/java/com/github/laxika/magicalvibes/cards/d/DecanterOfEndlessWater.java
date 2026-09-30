@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 
-@CardRegistration(set = "HBG", collectorNumber = "309")
+@CardRegistration(set = "CLB", collectorNumber = "309")
 public class DecanterOfEndlessWater extends Card {
 
     public DecanterOfEndlessWater() {

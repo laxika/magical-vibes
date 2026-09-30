@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1251")
 @CardRegistration(set = "C21", collectorNumber = "86")
 @CardRegistration(set = "C20", collectorNumber = "83")
+@CardRegistration(set = "MIC", collectorNumber = "82")
 public class CleansingNova extends Card {
 
     public CleansingNova() {

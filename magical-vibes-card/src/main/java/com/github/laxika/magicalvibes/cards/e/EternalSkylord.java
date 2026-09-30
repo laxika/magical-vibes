@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "49")
+@CardRegistration(set = "MIC", collectorNumber = "99")
 public class EternalSkylord extends Card {
 
     public EternalSkylord() {

@@ -1,20 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GravePeril;
+import com.github.laxika.magicalvibes.cards.l.LlanowarEmpath;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CentaurOmenreader.class, HillGiant.class, HeartlessSummoning.class})
+@CardUsed({CentaurOmenreader.class, LlanowarEmpath.class, GravePeril.class})
 class CentaurOmenreaderTest extends BaseCardTest {
 
     @Test
@@ -23,11 +20,7 @@ class CentaurOmenreaderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CentaurOmenreader());
         Permanent omenreader = findPermanent(player1, "Centaur Omenreader");
         omenreader.tap();
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarEmpath(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -37,11 +30,8 @@ class CentaurOmenreaderTest extends BaseCardTest {
     @DisplayName("Untapped Centaur Omenreader does not reduce creature spell costs")
     void untappedSourceDoesNotReduceCreatureSpellCost() {
         harness.addToBattlefield(player1, new CentaurOmenreader());
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new LlanowarEmpath(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -50,10 +40,19 @@ class CentaurOmenreaderTest extends BaseCardTest {
     void tappedSourceDoesNotReduceNoncreatureSpellCost() {
         harness.addToBattlefield(player1, new CentaurOmenreader());
         findPermanent(player1, "Centaur Omenreader").tap();
-        harness.setHand(player1, List.of(new HeartlessSummoning()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GravePeril(), "{B}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapped Centaur Omenreader does not reduce an opponent's creature spell")
+    void tappedSourceDoesNotReduceOpponentsCreatureSpell() {
+        harness.addToBattlefield(player1, new CentaurOmenreader());
+        findPermanent(player1, "Centaur Omenreader").tap();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new LlanowarEmpath(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

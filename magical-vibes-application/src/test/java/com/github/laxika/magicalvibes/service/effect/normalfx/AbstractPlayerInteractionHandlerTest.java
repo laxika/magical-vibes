@@ -67,7 +67,8 @@ abstract class AbstractPlayerInteractionHandlerTest {
         gd = game.gameData();
         lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
-        support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
+        support = new PlayerInteractionSupport(drawService, graveyardService, battlefieldEntryService,
+                gameQueryService, predicateEvaluationService,
                 gameLogService, playerInputService, cardRevealService,
                 triggerCollectionService, interactionHandlerRegistry);
         registry = new EffectHandlerRegistry();

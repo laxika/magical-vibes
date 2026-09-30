@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "50")
 @CardRegistration(set = "EOS", collectorNumber = "95")
 @CardRegistration(set = "EOS", collectorNumber = "140")
+@CardRegistration(set = "M3C", collectorNumber = "326")
 public class CascadingCataracts extends Card {
 
     public CascadingCataracts() {

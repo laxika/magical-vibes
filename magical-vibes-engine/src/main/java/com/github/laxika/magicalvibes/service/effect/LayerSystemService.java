@@ -82,7 +82,6 @@ import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
-import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -653,6 +652,8 @@ public class LayerSystemService {
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
         h = mix(h, gameData.cardIntensities.hashCode());
         h = mix(h, gameData.cardIntensities.size());
+        h = mix(h, gameData.playersWhoLostGameThisMatch.hashCode());
+        h = mix(h, gameData.playersWhoLostGameThisMatch.size());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> commanders = gameData.playerCommanders.get(playerId);
@@ -742,6 +743,10 @@ public class LayerSystemService {
         }
         h = mix(h, gameData.exiledCardsWithBrainCounters.hashCode());
         h = mix(h, gameData.exiledCardsWithBrainCounters.size());
+        h = mix(h, gameData.exiledCardsWithBloodCounters.hashCode());
+        h = mix(h, gameData.exiledCardsWithBloodCounters.size());
+        h = mix(h, gameData.exiledCardsWithIceCounters.hashCode());
+        h = mix(h, gameData.exiledCardsWithIceCounters.size());
         long imprintedSum = 0;
         for (Map.Entry<UUID, Card> entry : gameData.imprintedCards.entrySet()) {
             imprintedSum += mix64(entry.getKey().hashCode());
@@ -1110,6 +1115,10 @@ public class LayerSystemService {
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
+        // Most triggered and activated effects do not participate in continuous-effect layers.
+        if (LayerClassifier.possibleLayers(effect.getClass()).isEmpty()) {
+            return null;
+        }
         try {
             return LayerClassifier.classify(effect, false);
         } catch (IllegalArgumentException unclassified) {
@@ -1601,7 +1610,7 @@ public class LayerSystemService {
                         allCreatureTypes.add(subtype);
                     }
                 }
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null,
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(),
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     allCreatureTypes.forEach(state::addSubtype);
@@ -1772,9 +1781,13 @@ public class LayerSystemService {
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).addSubtype(chosen);
+                    if (grant.overriding()) {
+                        setCreatureType(states.get(target.permanent().getId()), chosen);
+                    } else {
+                        states.get(target.permanent().getId()).addSubtype(chosen);
+                    }
                     record(board, instance, target, new L4Contribution(
-                            chosen, false, false, null, null));
+                            chosen, grant.overriding(), false, null, null));
                 }
             }
             case SetChosenNameAndCreatureTypeEffect set -> {
@@ -2047,12 +2060,24 @@ public class LayerSystemService {
                     }
                 }
             }
-            case LoseAllCreatureTypesEffect ignored -> {
-                // Only reachable as a floating effect (the STATIC slot never carries it).
-                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                    state.removeKeyword(Keyword.CHANGELING);
+            case LoseAllCreatureTypesEffect lose -> {
+                if (instance.floating() != null) {
+                    for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                        CharacteristicState state = states.get(target.permanent().getId());
+                        state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                        state.removeKeyword(Keyword.CHANGELING);
+                    }
+                } else {
+                    applyStaticInstanceViaHandlers(gameData, instance, slots, board, true,
+                            (target, harvested) -> {
+                                if (!harvested.isSubtypeOverriding()) {
+                                    return;
+                                }
+                                CharacteristicState state = states.get(target.permanent().getId());
+                                state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                                state.removeKeyword(Keyword.CHANGELING);
+                                record(board, instance, target, new L4Contribution(List.of(), true, false));
+                            });
                 }
             }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {

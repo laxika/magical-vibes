@@ -24,6 +24,26 @@ class MaelstromDjinnTest extends BaseCardTest {
     }
 
     @Test
+    void faceDownDjinnDoesNotHaveVanishingBeforeBeingTurnedFaceUp() {
+        harness.setHand(player1, List.of(new MaelstromDjinn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent djinn = findPermanent(player1, "Maelstrom Djinn");
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(djinn.isFaceDown()).isTrue();
+        assertThat(djinn.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gqs.hasKeyword(gd, djinn, Keyword.VANISHING)).isFalse();
+        harness.assertOnBattlefield(player1, "Maelstrom Djinn");
+    }
+
+    @Test
     void vanishingRemovesCountersAndSacrificesOnLastCounter() {
         Permanent djinn = turnFaceUpDjinn();
 

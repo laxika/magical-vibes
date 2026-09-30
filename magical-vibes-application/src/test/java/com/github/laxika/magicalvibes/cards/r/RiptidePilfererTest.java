@@ -19,7 +19,7 @@ class RiptidePilfererTest extends BaseCardTest {
 
     @Test
     void combatDamageMakesDamagedPlayerDiscard() {
-        Permanent pilferer = addAttackingPilferer(player1);
+        addAttackingPilferer(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
         resolveCombat();
@@ -37,7 +37,7 @@ class RiptidePilfererTest extends BaseCardTest {
 
     @Test
     void blockedCombatDamageDoesNotTriggerDiscard() {
-        Permanent pilferer = addAttackingPilferer(player1);
+        addAttackingPilferer(player1);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

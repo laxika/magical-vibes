@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -190,6 +191,9 @@ class DrawServiceTest {
 
     @Mock
     private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
+
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
 
     @InjectMocks
     private DrawService sut;

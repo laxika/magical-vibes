@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForAnotherOpponentPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
@@ -80,6 +81,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+    private final CopySpellForAnotherOpponentPermanentEffectHandler copySpellForAnotherOpponentPermanentHandler;
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -90,6 +92,12 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
         copySpellHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCopySpellForAnotherOpponentPermanent(GameData gameData, UUID permanentId,
+                                                            PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice context) {
+        copySpellForAnotherOpponentPermanentHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -393,6 +401,9 @@ public class PermanentChoiceTriggerHandlerService {
                 new ArrayList<>(context.effects()),
                 context.sourcePermanentId(),
                 targetIds);
+        entry.setTargetCardIds(targetIds.stream()
+                .filter(id -> gameQueryService.findCardInGraveyardById(gameData, id) != null)
+                .toList());
         if (context.eventValue() != null) {
             entry.setEventValue(context.eventValue());
         }
@@ -1337,12 +1348,24 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleChosenPermanentAttackTarget(GameData gameData, UUID attackTargetId,
                                                    PermanentChoiceContext.ChosenPermanentAttackTarget context) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
-        if (permanent != null && gameQueryService.isCreature(gameData, permanent)) {
+        boolean legalForRestrictedChoice = context.requiredAttackingPlayerId() == null
+                || currentAttackTargetIds(gameData, context.requiredAttackingPlayerId()).contains(attackTargetId);
+        if (permanent != null && gameQueryService.isCreature(gameData, permanent) && legalForRestrictedChoice) {
             permanent.setAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
             permanent.setAttackTarget(attackTargetId);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private java.util.Set<UUID> currentAttackTargetIds(GameData gameData, UUID attackingPlayerId) {
+        java.util.Set<UUID> attackTargetIds = new java.util.LinkedHashSet<>();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of())) {
+            if (permanent.isAttacking() && permanent.getAttackTarget() != null) {
+                attackTargetIds.add(permanent.getAttackTarget());
+            }
+        }
+        return attackTargetIds;
     }
 
     public void handleReselectAttackingCreatureTarget(GameData gameData, UUID attackTargetId,

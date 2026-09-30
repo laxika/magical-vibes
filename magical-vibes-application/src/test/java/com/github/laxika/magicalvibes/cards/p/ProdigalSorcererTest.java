@@ -113,4 +113,17 @@ class ProdigalSorcererTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("Ability still resolves if its source leaves before resolution")
+    void resolvesIfSourceLeavesBeforeResolution() {
+        harness.setLife(player2, 20);
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sorcerer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FlyingMen;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,13 +12,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwampMosquito.class, StormCrow.class})
+@CardUsed({SwampMosquito.class, FlyingMen.class})
 class SwampMosquitoTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent atk = addCreatureReady(player1, new SwampMosquito());
-        atk.setAttacking(true);
-        return atk;
+        return addCreatureReady(player1, new SwampMosquito());
     }
 
     @Test
@@ -44,13 +43,27 @@ class SwampMosquitoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only unblocked attackers give poison counters")
+    void onlyUnblockedAttackersGivePoison() {
+        addAttacker();
+        addAttacker();
+        addCreatureReady(player2, new FlyingMen());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Blocked attacker gives no poison counter")
     void blockedNoPoison() {
-        addCreatureReady(player2, new StormCrow());
+        addCreatureReady(player2, new FlyingMen());
 
         addAttacker();
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 

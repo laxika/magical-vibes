@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "M19", collectorNumber = "173")
 @CardRegistration(set = "ANB", collectorNumber = "92")
 @CardRegistration(set = "AFC", collectorNumber = "154")
+@CardRegistration(set = "C19", collectorNumber = "158")
 public class ColossalMajesty extends Card {
 
     public ColossalMajesty() {

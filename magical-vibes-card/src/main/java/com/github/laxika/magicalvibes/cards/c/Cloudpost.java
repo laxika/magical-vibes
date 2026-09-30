@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "280")
+@CardRegistration(set = "M3C", collectorNumber = "330")
 public class Cloudpost extends Card {
 
     public Cloudpost() {

@@ -25,7 +25,7 @@ public class DuchessWaywardTavernkeep extends Card {
     public DuchessWaywardTavernkeep() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null,
-                        new PutCountersOnSelfEffect(CounterType.QUEST)));
+                        new PutCountersOnSelfEffect(CounterType.QUEST), true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

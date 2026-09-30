@@ -26,6 +26,7 @@ class ShadeOfTrokairTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -47,6 +48,25 @@ class ShadeOfTrokairTest extends BaseCardTest {
 
         Permanent permanent = findPermanent(player1, "Shade of Trokair");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Shade of Trokair in exile")
+    void decliningLastCounterLeavesShadeExiled() {
+        ShadeOfTrokair card = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == card);
     }
 
     @Test
@@ -78,10 +98,6 @@ class ShadeOfTrokairTest extends BaseCardTest {
     }
 
     private Permanent addReadyShadeOfTrokair(Player player) {
-        ShadeOfTrokair card = new ShadeOfTrokair();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ShadeOfTrokair());
     }
 }
