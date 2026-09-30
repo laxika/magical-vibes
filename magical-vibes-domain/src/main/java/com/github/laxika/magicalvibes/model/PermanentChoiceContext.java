@@ -79,6 +79,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record ChooseDwarfAndAttachAnyNumberOfControlledEquipment(String sourceCardName)
+            implements PermanentChoiceContext {}
+
     record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachEquipmentToSamurai {

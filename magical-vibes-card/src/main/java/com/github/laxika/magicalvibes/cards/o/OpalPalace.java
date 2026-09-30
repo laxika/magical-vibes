@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "40K", collectorNumber = "286")
 @CardRegistration(set = "SOC", collectorNumber = "390")
 @CardRegistration(set = "C21", collectorNumber = "306")
+@CardRegistration(set = "NEC", collectorNumber = "172")
 public class OpalPalace extends Card {
 
     public OpalPalace() {

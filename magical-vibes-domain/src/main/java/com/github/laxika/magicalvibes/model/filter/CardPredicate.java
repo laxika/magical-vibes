@@ -72,6 +72,7 @@ public sealed interface CardPredicate permits
         CardNotPredicate,
         CardPowerAtLeastPredicate,
         CardPowerAtMostPredicate,
+        CardPowerAtMostXPredicate,
         CardPowerAtMostSourcePowerPredicate,
         CardPowerLessThanSourcePowerPredicate,
         CardPowerToughnessTotalAtMostPredicate,

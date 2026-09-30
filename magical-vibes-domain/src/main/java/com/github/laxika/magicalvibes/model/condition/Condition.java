@@ -217,6 +217,7 @@ public sealed interface Condition permits
         ModifiedCreatureDiedUnderYourControlThisTurn,
         DealtDamageByRedSpellThisTurn,
         DefendingPlayerControlsPermanent,
+        DefendingPlayerControlsMoreLandsThanController,
         DefendingPlayerHasMoreCardsInHandThanController,
         DefendingPlayerHandAtMost,
         DefendingPlayerPoisoned,

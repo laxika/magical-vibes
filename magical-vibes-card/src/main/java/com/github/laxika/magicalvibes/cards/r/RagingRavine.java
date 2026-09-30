@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "80")
 @CardRegistration(set = "EOS", collectorNumber = "125")
 @CardRegistration(set = "EOS", collectorNumber = "170")
+@CardRegistration(set = "NEC", collectorNumber = "176")
 public class RagingRavine extends Card {
 
     public RagingRavine() {

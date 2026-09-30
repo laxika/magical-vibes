@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "GN3", collectorNumber = "120")
 @CardRegistration(set = "C14", collectorNumber = "276")
 @CardRegistration(set = "C15", collectorNumber = "272")
+@CardRegistration(set = "NEC", collectorNumber = "164")
 public class SwordOfVengeance extends Card {
 
     public SwordOfVengeance() {

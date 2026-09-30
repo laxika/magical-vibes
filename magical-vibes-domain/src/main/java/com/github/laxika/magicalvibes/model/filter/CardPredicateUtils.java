@@ -162,6 +162,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardPowerAtMostPredicate p) {
             return "card with power " + p.maxPower() + " or less";
         }
+        if (predicate instanceof CardPowerAtMostXPredicate) {
+            return "card with power X or less";
+        }
         if (predicate instanceof CardPowerAtMostSourcePowerPredicate) {
             return "card with power at most this creature's power";
         }

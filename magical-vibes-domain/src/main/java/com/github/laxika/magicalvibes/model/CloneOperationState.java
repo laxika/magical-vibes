@@ -20,6 +20,7 @@ public class CloneOperationState {
     public Integer toughnessOverride;
     public boolean copyPowerToughnessFromSource;
     public Set<CardType> additionalTypesOverride = Set.of();
+    public Set<CardType> cardTypesOverride = Set.of();
     public List<ActivatedAbility> additionalActivatedAbilities = List.of();
     public String nameOverride;
     public Set<CardSupertype> additionalSupertypesOverride = Set.of();

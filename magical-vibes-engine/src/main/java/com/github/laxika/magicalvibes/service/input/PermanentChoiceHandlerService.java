@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturn
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
@@ -108,6 +109,8 @@ public class PermanentChoiceHandlerService {
     private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
     private final TargetOpponentChoosesPlayerForRestrictionEffectHandler
             targetOpponentChoosesPlayerForRestrictionEffectHandler;
+    private final ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler
+            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -154,6 +157,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachSacrificedEquipmentToTarget(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachControlledEquipmentToTargetCreature attachEquip) {
             battlefieldHandler.handleAttachControlledEquipmentToTargetCreature(gameData, permanentId, attachEquip);
+        } else if (context instanceof PermanentChoiceContext.ChooseDwarfAndAttachAnyNumberOfControlledEquipment chooseDwarf) {
+            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler.completeChoice(
+                    gameData, playerId, permanentId, chooseDwarf);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {

@@ -245,6 +245,7 @@ public enum CardSet {
     SET_SOA("SOA"),
     SET_SNC("SNC"),
     SET_NCC("NCC"),
+    SET_NEC("NEC"),
     SET_TDM("TDM"),
     SET_TDC("TDC"),
     SET_DSC("DSC"),

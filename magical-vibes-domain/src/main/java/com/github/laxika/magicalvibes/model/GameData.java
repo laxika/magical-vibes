@@ -7375,6 +7375,7 @@ public class GameData {
         copy.cloneOperation.toughnessOverride = this.cloneOperation.toughnessOverride;
         copy.cloneOperation.copyPowerToughnessFromSource = this.cloneOperation.copyPowerToughnessFromSource;
         copy.cloneOperation.additionalTypesOverride = this.cloneOperation.additionalTypesOverride;
+        copy.cloneOperation.cardTypesOverride = this.cloneOperation.cardTypesOverride;
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
         copy.cloneOperation.nameOverride = this.cloneOperation.nameOverride;
         copy.cloneOperation.additionalSupertypesOverride = this.cloneOperation.additionalSupertypesOverride;

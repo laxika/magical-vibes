@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUnti
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "MKC", collectorNumber = "108")
+@CardRegistration(set = "NEC", collectorNumber = "14")
+@CardRegistration(set = "NEC", collectorNumber = "50")
 public class KappaCannoneer extends Card {
 
     public KappaCannoneer() {
