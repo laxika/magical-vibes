@@ -47,7 +47,7 @@ class SheoldredsAssimilatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the ETB trigger leaves the targeted card in its graveyard")
+    @DisplayName("Declining the duplicate leaves the targeted card exiled")
     void etbMayBeDeclined() {
         Card graveyardCard = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(graveyardCard));
@@ -60,8 +60,9 @@ class SheoldredsAssimilatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.playerDecks.get(player1.getId())).noneMatch(Card::isTokenCard);
     }
 
     @Test

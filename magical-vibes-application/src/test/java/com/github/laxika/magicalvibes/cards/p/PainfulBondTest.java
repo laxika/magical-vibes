@@ -26,7 +26,7 @@ class PainfulBondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(handCreature, handLand, drawnCreature, drawnLand);
@@ -34,12 +34,12 @@ class PainfulBondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(handCreature));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(drawnCreature));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
 

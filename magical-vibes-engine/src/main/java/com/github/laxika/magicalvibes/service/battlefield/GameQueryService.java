@@ -4422,6 +4422,9 @@ public class GameQueryService {
                 if (effect instanceof EnergyCounterReplacementEffect replacement) {
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, replacement.replaceEnergy(result));
+                } else if (effect instanceof PlayerCounterReplacementEffect replacement) {
+                    result = MaroGoneNutsSupport.apply(
+                            gameData, effect, replacement.replace(result));
                 }
             }
         }

@@ -47,15 +47,12 @@ class PhyrexianScrapyardTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing three Scrapyards conjures Soul of New Phyrexia")
     void sacrificingThreeScrapyardsConjuresSoul() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new PhyrexianScrapyard());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new PhyrexianScrapyard());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new PhyrexianScrapyard());
+        harness.addToBattlefield(player1, new PhyrexianScrapyard());
+        harness.addToBattlefield(player1, new PhyrexianScrapyard());
+        harness.addToBattlefield(player1, new PhyrexianScrapyard());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, null, null);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, third.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))

@@ -41,9 +41,9 @@ class PlunderersPrizeTest extends BaseCardTest {
         Card prize = new PlunderersPrize();
         harness.setHand(player1, List.of(prize));
         harness.setLibrary(player1, List.of(new FountainOfYouth()));
-        addManaForX(1);
+        addManaForX(0);
 
-        harness.castSorceryForX(player1, 0, 1, Map.of());
+        harness.castSorceryForX(player1, 0, 0, Map.of());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Fountain of Youth");

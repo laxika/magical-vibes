@@ -58,6 +58,7 @@ class ScalespeakerShepherdTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FrenziedRaptor()));
         harness.addMana(player1, ManaColor.RED, 1);
 
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);

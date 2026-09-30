@@ -18,6 +18,7 @@ class InnovativeMetatectTest extends BaseCardTest {
 
     @Test
     void artifactCreatureCombatDamageSeeksOneEligibleCard() {
+        harness.setHand(player1, List.of());
         Card eligible = new GrizzlyBears();
         Card land = new Forest();
         Card tooExpensive = new HillGiant();
@@ -38,6 +39,7 @@ class InnovativeMetatectTest extends BaseCardTest {
 
     @Test
     void multipleArtifactCreaturesCauseOnlyOneSeek() {
+        harness.setHand(player1, List.of());
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
         harness.setLibrary(player1, List.of(first, second));
@@ -55,6 +57,7 @@ class InnovativeMetatectTest extends BaseCardTest {
 
     @Test
     void nonartifactCreatureCombatDamageDoesNotTrigger() {
+        harness.setHand(player1, List.of());
         Card card = new GrizzlyBears();
         harness.setLibrary(player1, List.of(card));
         addCreatureReady(player1, new InnovativeMetatect());

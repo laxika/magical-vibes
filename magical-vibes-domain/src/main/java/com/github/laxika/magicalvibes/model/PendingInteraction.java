@@ -2563,7 +2563,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds,
-                    0, maxCount);
+                    context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets targets
+                            ? targets.minTargets() : 0, maxCount);
         }
     }
 

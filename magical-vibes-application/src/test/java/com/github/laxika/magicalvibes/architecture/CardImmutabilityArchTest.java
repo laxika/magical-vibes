@@ -109,6 +109,14 @@ class CardImmutabilityArchTest {
             "WerewhatSupport", // assembles fresh front and back face runtime copies
             "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
+            "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
+            "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
+            "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
+            "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
+            "ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler", // decorates a fresh conjured duplicate
+            "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
+            "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
+            "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

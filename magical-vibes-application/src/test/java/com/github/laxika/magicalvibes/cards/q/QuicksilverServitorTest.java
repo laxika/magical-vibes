@@ -25,7 +25,7 @@ class QuicksilverServitorTest extends BaseCardTest {
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         addBearsMana();
         harness.castCreature(player1, 0);

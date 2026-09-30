@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KamiOfMourning.class, GrizzlyBears.class, HillGiant.class})
 class KamiOfMourningTest extends BaseCardTest {
@@ -36,6 +37,8 @@ class KamiOfMourningTest extends BaseCardTest {
         assertThat(choice.validIds()).doesNotContain(opponentCreature.getId());
         assertThat(choice.validCardIds()).containsExactly(controlledGraveyardCreature.getId());
         assertThat(choice.validCardIds()).doesNotContain(opponentGraveyardCreature.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .hasMessageContaining("Too few targets");
     }
 
     @Test
@@ -49,12 +52,12 @@ class KamiOfMourningTest extends BaseCardTest {
 
         Permanent sameManaValueCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         kill(sameManaValueCreature);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(targetCard);
 
         Permanent greaterManaValueCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         kill(greaterManaValueCreature);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(targetCard.getId())
@@ -76,7 +79,7 @@ class KamiOfMourningTest extends BaseCardTest {
 
         Permanent greaterManaValueCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         kill(greaterManaValueCreature);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(target.getOriginalCard().getId())

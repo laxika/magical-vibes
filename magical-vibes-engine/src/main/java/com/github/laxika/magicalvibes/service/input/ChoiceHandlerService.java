@@ -3648,7 +3648,9 @@ public class ChoiceHandlerService {
         if (pendingEntry != null && pendingEntry.getTargetId() != null
                 && gameData.playerIds.contains(pendingEntry.getTargetId())
                 && ctx.effect().combatDamageTriggerContext()
-                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
+                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
+                && effects.stream().noneMatch(effect -> effect.targetSpec().admits(
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))) {
             return false;
         }
         boolean combatContextPlayerTarget = pendingEntry != null

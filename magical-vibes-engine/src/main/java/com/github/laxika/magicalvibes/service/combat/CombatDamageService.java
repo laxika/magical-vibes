@@ -2274,6 +2274,8 @@ public class CombatDamageService {
             return sequence.steps().stream().anyMatch(this::readsCombatDamage);
         }
         return effect instanceof DiscardEffect
+                || (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
+                        && discover.discoverValue() instanceof EventValue)
                 || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
                 || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
                 || (effect instanceof CombatDamageAmountAwareEffect amountAware

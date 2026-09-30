@@ -401,6 +401,9 @@ public class PermanentChoiceTriggerHandlerService {
                 new ArrayList<>(context.effects()),
                 context.sourcePermanentId(),
                 targetIds);
+        entry.setTargetCardIds(targetIds.stream()
+                .filter(id -> gameQueryService.findCardInGraveyardById(gameData, id) != null)
+                .toList());
         if (context.eventValue() != null) {
             entry.setEventValue(context.eventValue());
         }

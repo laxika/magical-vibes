@@ -39,11 +39,11 @@ class GlisteningExtractorTest extends BaseCardTest {
         Card matchingManaValue = new GrizzlyBears();
         harness.setLibrary(player1, List.of(wrongManaValue, matchingManaValue));
 
-        gd.turnNumber = 2;
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).contains(matchingManaValue);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(matchingManaValue);
@@ -56,11 +56,11 @@ class GlisteningExtractorTest extends BaseCardTest {
         extractor.setCounterCount(CounterType.OIL, 0);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
-        gd.turnNumber = 2;
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears);
         assertThat(gd.playerDecks.get(player1.getId())).anyMatch(card -> card instanceof GrizzlyBears);

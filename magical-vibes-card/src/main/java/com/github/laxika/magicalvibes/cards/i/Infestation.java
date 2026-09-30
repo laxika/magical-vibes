@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -19,8 +20,9 @@ import java.util.List;
 public class Infestation extends Card {
 
     public Infestation() {
-        // Evoke {1}{B}{B}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{B}{B}"))));
+        // Evoke {1}{B}{B}, pay 3 life; it's sacrificed on entry.
+        addCastingOption(new AlternateHandCast(List.of(
+                new ManaCastingCost("{1}{B}{B}"), new LifeCastingCost(3))));
 
         // When this creature enters, conjure a card named Blowfly Infestation onto the battlefield.
         // Then put a -1/-1 counter on each creature.

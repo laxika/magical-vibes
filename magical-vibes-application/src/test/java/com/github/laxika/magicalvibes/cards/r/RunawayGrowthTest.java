@@ -41,9 +41,9 @@ class RunawayGrowthTest extends BaseCardTest {
         aura.setCounterCount(CounterType.INTENSITY, 3);
 
         harness.tapPermanent(player1, 0);
-        harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        resolveAllTriggers();
         assertThat(aura.getCounterCount(CounterType.INTENSITY)).isEqualTo(4);
     }
 }

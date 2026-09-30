@@ -38,7 +38,7 @@ class CircadianStruggleTest extends BaseCardTest {
         harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(greenCard));
         harness.passBothPriorities();
 
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(blueCard));
         harness.passBothPriorities();

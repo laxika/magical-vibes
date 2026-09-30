@@ -24,6 +24,7 @@ class PepRaucousRaiderTest extends BaseCardTest {
         addPep();
         addAttacker();
         Card topCard = new GrizzlyBears();
+        topCard.setOwnerId(player2.getId());
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
@@ -41,9 +42,12 @@ class PepRaucousRaiderTest extends BaseCardTest {
         addAttacker();
         harness.addToBattlefield(player1, new AvariceTotem());
         Card topCard = new GrizzlyBears();
+        topCard.setOwnerId(player2.getId());
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromExile(player1, topCard.getId());
         harness.passBothPriorities();
@@ -54,6 +58,7 @@ class PepRaucousRaiderTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(gqs.isArtifact(gd, artifactCreature)).isTrue();
 
+        artifactCreature.setSummoningSick(false);
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(artifactCreature), null, null);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)

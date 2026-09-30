@@ -40,6 +40,7 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         Permanent propagator = addPropagator();
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(propagator.getCounterCount(CounterType.FUNGUS)).isOne();
     }

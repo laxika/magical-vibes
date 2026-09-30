@@ -2179,6 +2179,32 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
+            // A single target may come from either the battlefield or a graveyard.
+            // Keep both zones in one choice rather than restricting it to graveyard cards.
+            if (pending.effects().stream().anyMatch(effect ->
+                    effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                            && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+                Permanent source = gameData.playerBattlefields.getOrDefault(pending.controllerId(), List.of())
+                        .stream().filter(permanent -> permanent.getCard().getId()
+                                .equals(pending.sourceCard().getId())).findFirst().orElse(null);
+                TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
+                        gameData, pending.effects(), pending.sourceCard().getTargetFilter(),
+                        pending.controllerId(), pending.sourceCard(), TriggerTargetCollector.Options.END_STEP,
+                        source);
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+                if (targets.validTargets().isEmpty() && targets.validGraveyardCardIds().isEmpty()) {
+                    continue;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, pending.controllerId(),
+                        targets.validTargets(), targets.validGraveyardCardIds(), 1,
+                        new MultiPermanentChoiceContext.SelfTriggeredAbilityTargets(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(),
+                                "enter-the-battlefield", source == null ? null : source.getId(), null,
+                                Math.max(0, declaredMinimumTargetCount(pending.sourceCard(), pending.effects()))),
+                        pending.sourceCard().getName() + "'s ability — Choose a target creature or creature card.");
+                return;
+            }
+
             ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect opponentChoiceEffect = pending.effects().stream()
                     .map(this::opponentChoiceEffect)
                     .filter(java.util.Objects::nonNull)

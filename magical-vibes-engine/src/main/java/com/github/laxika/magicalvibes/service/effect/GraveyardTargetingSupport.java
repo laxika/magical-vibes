@@ -261,7 +261,7 @@ public class GraveyardTargetingSupport {
         GraveyardSearchScope declaredScope = effect.targetSpec().graveyardScope().orElse(null);
         if (declaredScope != null) {
             return new Target(effect.targetSpec().graveyardCardPredicate().orElse(null), declaredScope,
-                    "to exile", 1, 1);
+                    "to exile", 1, effect.hasOptionalTarget() ? 0 : 1);
         }
         return null;
     }

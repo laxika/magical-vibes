@@ -32,6 +32,7 @@ class SoulServitudeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
                 .isNotNull();
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
@@ -70,6 +71,6 @@ class SoulServitudeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

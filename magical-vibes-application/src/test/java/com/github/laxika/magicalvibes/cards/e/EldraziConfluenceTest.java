@@ -39,6 +39,7 @@ class EldraziConfluenceTest extends BaseCardTest {
     @Test
     void repeatedModesCanCreateMultipleScionsAndScionAddsColorlessMana() {
         cast(new int[]{2, 2, 2}, List.of());
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(3);
 

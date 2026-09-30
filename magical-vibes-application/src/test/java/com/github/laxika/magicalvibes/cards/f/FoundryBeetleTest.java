@@ -47,7 +47,9 @@ class FoundryBeetleTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passUntil(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castArtifact(player1, 0);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Webspinner Cuff"));

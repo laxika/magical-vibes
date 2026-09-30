@@ -53,6 +53,7 @@ class PhyrexianHarvesterTest extends BaseCardTest {
     @Test
     @DisplayName("Does not seek when the library has no nonland cards")
     void doesNotSeekLands() {
+        harness.setHand(player1, List.of());
         Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land));

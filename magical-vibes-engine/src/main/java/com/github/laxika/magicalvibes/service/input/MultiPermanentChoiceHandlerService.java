@@ -363,6 +363,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() < attackTarget.minTargets()) {
             throw new IllegalStateException("Too few targets selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets selfTarget
+                && permanentIds.size() < selfTarget.minTargets()) {
+            throw new IllegalStateException("Too few targets selected");
+        }
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturePutsVowCounterChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice
