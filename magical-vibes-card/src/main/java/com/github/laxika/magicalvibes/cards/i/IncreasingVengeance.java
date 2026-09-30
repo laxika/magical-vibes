@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "95")
 @CardRegistration(set = "STA", collectorNumber = "40")
+@CardRegistration(set = "C19", collectorNumber = "147")
 public class IncreasingVengeance extends Card {
 
     public IncreasingVengeance() {

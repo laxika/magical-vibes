@@ -663,6 +663,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have blood counters (Rayami, First of the Fallen). */
+    public final Set<UUID> exiledCardsWithBloodCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
     public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have void counters (Dauthi Voidwalker). */
@@ -5659,6 +5661,7 @@ public class GameData {
             stashCounterCardIds.remove(cardId);
             exiledCardScreamCounters.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
+            exiledCardsWithBloodCounters.remove(cardId);
             exiledCardsWithCroakCounters.remove(cardId);
             exiledCardsWithVoidCounters.remove(cardId);
             exiledCardsWithDiscoveryCounters.remove(cardId);
@@ -6668,6 +6671,7 @@ public class GameData {
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
+        copy.exiledCardsWithBloodCounters.addAll(this.exiledCardsWithBloodCounters);
         copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
         copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
         copy.exiledCardsWithDiscoveryCounters.addAll(this.exiledCardsWithDiscoveryCounters);

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEf
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -723,6 +724,21 @@ public class DamageTriggerCollectorService {
             DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         CardEffect effectToAdd = trigger.bindDamageSourceController(dc.damageSourceControllerId(), dc.damageDealt());
+        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
+        return true;
+    }
+
+    @CollectsTrigger(value = DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect.class,
+            slot = EffectSlot.ON_DEALT_DAMAGE)
+    private boolean handleOpponentDamageSourceControllerAware(TriggerMatchContext match,
+            DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect trigger, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageSourceControllerId() == null
+                || dc.damageSourceControllerId().equals(match.controllerId())) {
+            return false;
+        }
+        CardEffect effectToAdd = trigger.bindDamageSourceController(
+                dc.damageSourceControllerId(), dc.damageDealt());
         addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
         return true;
     }

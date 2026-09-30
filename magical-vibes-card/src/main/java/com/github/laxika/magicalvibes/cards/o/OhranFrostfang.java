@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 @CardRegistration(set = "SOC", collectorNumber = "279")
 @CardRegistration(set = "MKC", collectorNumber = "180")
 @CardRegistration(set = "OTC", collectorNumber = "199")
+@CardRegistration(set = "C19", collectorNumber = "33")
 public class OhranFrostfang extends Card {
 
     public OhranFrostfang() {

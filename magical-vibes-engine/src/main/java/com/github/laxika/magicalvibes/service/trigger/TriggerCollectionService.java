@@ -11239,7 +11239,7 @@ public class TriggerCollectionService {
         UUID dyingCardId = dyingCard.getId();
         for (DamagedCreatureDeathTriggerWatcher watcher
                 : List.copyOf(gameData.damagedCreatureDeathTriggerWatchers)) {
-            if (!watcher.controllerId().equals(dyingCreatureControllerId)
+            if (!watcher.allControllers() && !watcher.controllerId().equals(dyingCreatureControllerId)
                     || !gameData.creatureCardsDamagedThisTurnBySource
                     .getOrDefault(watcher.damageSourceId(), Set.of()).contains(dyingCardId)) {
                 continue;

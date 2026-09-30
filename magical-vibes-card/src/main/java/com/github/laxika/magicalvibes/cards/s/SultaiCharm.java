@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "204")
 @CardRegistration(set = "DMC", collectorNumber = "168")
+@CardRegistration(set = "C19", collectorNumber = "202")
 public class SultaiCharm extends Card {
 
     public SultaiCharm() {

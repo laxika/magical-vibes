@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "279")
 @CardRegistration(set = "TDC", collectorNumber = "368")
 @CardRegistration(set = "C20", collectorNumber = "277")
+@CardRegistration(set = "C19", collectorNumber = "248")
 public class GolgariRotFarm extends Card {
 
     public GolgariRotFarm() {

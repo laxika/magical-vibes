@@ -2597,8 +2597,8 @@ public class SpellCastingService {
     }
 
     /** Validates the permanent choices for a morph face-up sacrifice cost before any cost is paid. */
-    public void validateMorphSacrificeCost(GameData gameData, Player player, SacrificePermanentsCost cost,
-                                           List<UUID> permanentIds) {
+    public void validateMorphSacrificeCost(GameData gameData, Player player, UUID sourcePermanentId,
+                                           SacrificePermanentsCost cost, List<UUID> permanentIds) {
         List<UUID> ids = permanentIds != null ? permanentIds : List.of();
         if (ids.size() != cost.count()) {
             throw new IllegalStateException("Must sacrifice exactly " + cost.count() + " permanents");
@@ -2616,19 +2616,21 @@ public class SpellCastingService {
             if (toSacrifice == null) {
                 throw new IllegalStateException("Sacrifice target not found on your battlefield");
             }
-            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toSacrifice, cost.filter())) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(
+                    toSacrifice, cost.filter(), FilterContext.of(gameData).withSourcePermanentId(sourcePermanentId))) {
                 throw new IllegalStateException("Sacrifice target does not match the required filter");
             }
         }
     }
 
     /** Pays the already-validated permanents for a morph face-up sacrifice cost. */
-    public void payMorphSacrificeCost(GameData gameData, Player player, Card card, SacrificePermanentsCost cost,
-                                      List<UUID> permanentIds) {
+    public void payMorphSacrificeCost(GameData gameData, Player player, UUID sourcePermanentId, Card card,
+                                      SacrificePermanentsCost cost, List<UUID> permanentIds) {
         for (UUID permanentId : permanentIds) {
             paySingleSacrificeCost(gameData, player, card, permanentId, "a matching permanent",
                     permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent, cost.filter()));
+                            permanent, cost.filter(),
+                            FilterContext.of(gameData).withSourcePermanentId(sourcePermanentId)));
         }
     }
 

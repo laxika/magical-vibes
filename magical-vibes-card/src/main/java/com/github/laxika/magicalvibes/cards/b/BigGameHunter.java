@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "63")
 @CardRegistration(set = "TSR", collectorNumber = "102")
+@CardRegistration(set = "C19", collectorNumber = "106")
 public class BigGameHunter extends Card {
 
     public BigGameHunter() {

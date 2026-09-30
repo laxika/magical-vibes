@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "294")
 @CardRegistration(set = "OTC", collectorNumber = "302")
 @CardRegistration(set = "C20", collectorNumber = "283")
+@CardRegistration(set = "C19", collectorNumber = "252")
 public class IzzetBoilerworks extends Card {
 
     public IzzetBoilerworks() {

@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "25")
 @CardRegistration(set = "M12", collectorNumber = "32")
+@CardRegistration(set = "C19", collectorNumber = "73")
 public class RocEgg extends Card {
 
     public RocEgg() {

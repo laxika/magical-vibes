@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "208")
 @CardRegistration(set = "DDM", collectorNumber = "42")
+@CardRegistration(set = "C19", collectorNumber = "207")
 public class VraskaTheUnseen extends Card {
 
     public VraskaTheUnseen() {

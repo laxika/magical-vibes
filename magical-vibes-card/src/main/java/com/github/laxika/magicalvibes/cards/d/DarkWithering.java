@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "TSP", collectorNumber = "101")
 @CardRegistration(set = "TSR", collectorNumber = "107")
 @CardRegistration(set = "DMR", collectorNumber = "79")
+@CardRegistration(set = "C19", collectorNumber = "110")
 public class DarkWithering extends Card {
 
     public DarkWithering() {

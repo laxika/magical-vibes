@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MB2", collectorNumber = "251")
+@CardRegistration(set = "C19", collectorNumber = "41")
 public class GerrardWeatherlightHero extends Card {
 
     public GerrardWeatherlightHero() {

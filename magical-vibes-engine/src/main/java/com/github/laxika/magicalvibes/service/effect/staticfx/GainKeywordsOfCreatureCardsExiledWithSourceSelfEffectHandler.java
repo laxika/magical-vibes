@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -30,6 +31,11 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
                 (GainKeywordsOfCreatureCardsExiledWithSourceEffect) effect;
         for (Card card : context.gameData().getCardsExiledByPermanent(context.sourceId())) {
             if (!card.hasType(CardType.CREATURE)) {
+                continue;
+            }
+            if (keywordEffect.requiredExiledCardCounter() != null
+                    && (keywordEffect.requiredExiledCardCounter() != CounterType.BLOOD
+                    || !context.gameData().exiledCardsWithBloodCounters.contains(card.getId()))) {
                 continue;
             }
 

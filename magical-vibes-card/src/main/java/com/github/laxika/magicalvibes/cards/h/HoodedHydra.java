@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "136")
 @CardRegistration(set = "MKC", collectorNumber = "171")
+@CardRegistration(set = "C19", collectorNumber = "172")
 public class HoodedHydra extends Card {
 
     public HoodedHydra() {

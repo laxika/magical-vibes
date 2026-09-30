@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "64")
 @CardRegistration(set = "2XM", collectorNumber = "94")
+@CardRegistration(set = "C19", collectorNumber = "114")
 public class GethLordOfTheVault extends Card {
 
     public GethLordOfTheVault() {

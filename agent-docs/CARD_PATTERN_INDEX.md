@@ -14,6 +14,7 @@
 | playtest artifact that replaces normal turns with sequential phases | `r/RunedTerror.java` + `RunedTerrorEffect` + turn progression phase-cycle support |
 | playtest artifact with tap-to-surveil and temporary graveyard animation | `m/Microscope.java` + `AnimateTargetGraveyardCardEffect` |
 | global static replacement that makes every creature assign combat damage using mana value | `n/NarodTheBeigeFlower.java` + `AssignCombatDamageWithManaValueEffect(ALL_CREATURES)` |
+| global static replacement that exiles nontoken creatures with blood counters and grants the source keywords from those exiled cards | `r/RayamiFirstOfTheFallen.java` + `ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect` + `GainKeywordsOfCreatureCardsExiledWithSourceEffect(..., BLOOD)` |
 | playtest legendary banding creature with banding-creature cost reduction and band-size attack boosts | `c/ChatzukMightyGuitarist.java` + `ReduceCastCostForMatchingSpellsEffect` + `BoostCreaturesInAttackingBandsEffect` |
 | playtest creature that enters with five custom counters for each Forest or Plant its controller controls | `d/DairyCow.java` + `EnterWithCountersEffect(MILK, Scaled(PermanentCount(Forest or Plant, CONTROLLER), 5))` |
 | playtest creature with library-only ninjutsu and a mandatory combat-damage draw | `p/PanglacialShinobi.java` + `LibraryNinjutsuEffect` + `DrawCardEffect` |
@@ -157,6 +158,7 @@
 | beginning-of-combat opponent choice remembered for a static menace grant to creatures attacking that player | `t/TriarchStalker.java` + `ChooseOpponentForTargetingRelayEffect` + `PermanentIsAttackingRememberedPlayerPredicate` |
 | upkeep creates tokens for each opponent meeting a hand-size threshold | `CreateTokenEffect(new PlayersWithCardsInHandAtLeast(CountScope.OPPONENTS, threshold), ...)` |
 | attack trigger scales a defending-player sacrifice count by that player's poison counters | `k/KozilekCompleated.java` + `DefendingPlayerPoisonCounters` + `SacrificePermanentsEffect(..., DEFENDING_PLAYER)` |
+| attack trigger makes each player tied for most lands sacrifice two lands | `t/TectonicHellion.java` + `SacrificePermanentsEffect(2, PermanentIsLandPredicate, PLAYERS_WITH_MOST_LANDS)` |
 | ETB flips once for each opponent, resolving a separate win/loss branch for that opponent | `ON_ENTER_BATTLEFIELD FlipCoinForEachOpponentEffect(winEffect, lossEffect)` |
 | any number of target opponents; create one token for each creature they control | `CreateTokensForEachTargetPlayerCreatureEffect` + `target(opponent, 0, 99)` |
 | upkeep: each opponent chooses one of three results; controller and chooser share the result | `EachOpponentChoosesMasterOfCeremoniesEffect` |

@@ -1463,7 +1463,7 @@ public class GameService {
             SacrificePermanentsCost morphSacrificeCost = permanent.getCard().getMorphSacrificeCost();
             if (!manifestedOrCloaked && morphSacrificeCost != null) {
                 spellCastingService.validateMorphSacrificeCost(
-                        gameData, player, morphSacrificeCost, additionalCostPermanentIds);
+                        gameData, player, permanent.getId(), morphSacrificeCost, additionalCostPermanentIds);
             }
             DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
             if (morphDiscardCost != null) {
@@ -1565,7 +1565,8 @@ public class GameService {
             }
             if (!manifestedOrCloaked && morphSacrificeCost != null) {
                 spellCastingService.payMorphSacrificeCost(
-                        gameData, player, permanent.getCard(), morphSacrificeCost, additionalCostPermanentIds);
+                        gameData, player, permanent.getId(), permanent.getCard(), morphSacrificeCost,
+                        additionalCostPermanentIds);
             }
             if (morphDiscardCost != null) {
                 spellCastingService.payMorphDiscardCost(

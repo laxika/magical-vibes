@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 @CardRegistration(set = "STA", collectorNumber = "21")
 @CardRegistration(set = "NCC", collectorNumber = "235")
 @CardRegistration(set = "OTC", collectorNumber = "117")
+@CardRegistration(set = "C19", collectorNumber = "98")
 public class TezzeretsGambit extends Card {
 
     public TezzeretsGambit() {

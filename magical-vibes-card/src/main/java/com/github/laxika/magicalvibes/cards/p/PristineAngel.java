@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "9")
+@CardRegistration(set = "C19", collectorNumber = "70")
 public class PristineAngel extends Card {
 
     public PristineAngel() {

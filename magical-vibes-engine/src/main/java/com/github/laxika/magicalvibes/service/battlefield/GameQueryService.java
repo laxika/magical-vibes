@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDon
 import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
@@ -9767,6 +9768,30 @@ public class GameQueryService {
     public boolean isSpellCastingCombatLockActive(GameData gameData) {
         return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
                 && anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsDuringCombatEffect.class);
+    }
+
+    /** True while an opponent-controlled permanent prevents {@code playerId} from casting during combat. */
+    public boolean isOpponentSpellCastingCombatLockActive(GameData gameData, UUID playerId) {
+        if (gameData.currentStep == null || !gameData.currentStep.isCombatPhase()) {
+            return false;
+        }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            if (battlefield.stream().anyMatch(permanent ->
+                    !permanent.isFaceDown()
+                            && !hasLostAllAbilities(gameData, permanent)
+                            && staticEffectsIncludingTemporary(gameData, permanent, controllerId).stream()
+                            .anyMatch(OpponentsCantCastSpellsDuringCombatEffect.class::isInstance))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

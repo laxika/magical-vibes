@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "ROE", collectorNumber = "197")
+@CardRegistration(set = "C19", collectorNumber = "173")
 public class MomentousFall extends Card {
 
     public MomentousFall() {

@@ -373,6 +373,13 @@ public class CastingPermissionService {
             spellTypes.removeIf(CardType::isPlanar);
             restricted.addAll(spellTypes);
         }
+        // Marisi, Breaker of the Coil: during combat, only opponents of its controller are locked.
+        if (gameQueryService.isOpponentSpellCastingCombatLockActive(gameData, playerId)) {
+            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
+            spellTypes.remove(CardType.LAND);
+            spellTypes.removeIf(CardType::isPlanar);
+            restricted.addAll(spellTypes);
+        }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
         for (UUID pid : gameData.orderedPlayerIds) {
