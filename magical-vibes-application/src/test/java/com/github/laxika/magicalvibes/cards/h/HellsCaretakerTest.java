@@ -41,7 +41,7 @@ class HellsCaretakerTest extends BaseCardTest {
 
         assertThat(caretaker.isTapped()).isTrue();
         // Sacrificed creature is in the graveyard
-        harness.assertInGraveyard(player1, "Durkwood Boars");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Reanimated creature is on the battlefield, no longer in the graveyard
         harness.assertOnBattlefield(player1, "Headless Horseman");
         harness.assertNotInGraveyard(player1, "Headless Horseman");

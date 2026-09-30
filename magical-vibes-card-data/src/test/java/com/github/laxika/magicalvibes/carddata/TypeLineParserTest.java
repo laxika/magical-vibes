@@ -7,6 +7,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TypeLineParserTest {
     @Test
+    void parsesLegacySummonCreatureTypeLine() {
+        var licid = TypeLineParser.parse("Summon Licid");
+        assertThat(licid.type()).isEqualTo(CardType.CREATURE);
+        assertThat(licid.subtypes()).containsExactly(CardSubtype.LICID);
+    }
+
+    @Test
     void parsesPlanarTypesAndKeepsMultiwordPlanarSubtypeTogether() {
         var plane = TypeLineParser.parse("Plane \u2014 Serra's Realm");
         assertThat(plane.type()).isEqualTo(CardType.PLANE);
@@ -23,5 +30,11 @@ class TypeLineParserTest {
         assertThat(creature.type()).isEqualTo(CardType.ARTIFACT);
         assertThat(creature.additionalTypes()).containsExactly(CardType.CREATURE);
         assertThat(creature.subtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.WIZARD);
+    }
+
+    @Test
+    void parsesTimeLordAlongsideDoctor() {
+        var doctor = TypeLineParser.parse("Legendary Creature \u2014 Time Lord Doctor");
+        assertThat(doctor.subtypes()).containsExactly(CardSubtype.TIME_LORD, CardSubtype.DOCTOR);
     }
 }

@@ -58,5 +58,6 @@ class SycoraxCommanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

@@ -24,7 +24,28 @@ import java.util.Map;
  */
 public final class CardDataSupport {
 
+    // Both providers expose these Mystery Booster 2 cards only at their alternate numbers.
+    private static final Map<String, String> MB2_PRINTING_ALIASES = Map.of(
+            "313", "549", "315", "551", "346", "584", "347", "585", "353", "592");
+
     private CardDataSupport() {
+    }
+
+    public static void applyMissingMb2Printings(String setCode, Map<String, JsonNode> cards,
+                                                Map<String, String> rarities) {
+        if (!"MB2".equalsIgnoreCase(setCode)) {
+            return;
+        }
+        MB2_PRINTING_ALIASES.forEach((missingNumber, alternateNumber) -> {
+            JsonNode alternate = cards.get(alternateNumber);
+            if (alternate != null && !cards.containsKey(missingNumber)) {
+                cards.put(missingNumber, alternate);
+                String rarity = rarities.get(alternateNumber);
+                if (rarity != null) {
+                    rarities.put(missingNumber, rarity);
+                }
+            }
+        });
     }
 
     public static final Map<String, CardColor> COLOR_MAP = Map.of(
@@ -108,6 +129,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Shadow", Keyword.SHADOW);
         KEYWORD_MAP.put("Flanking", Keyword.FLANKING);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
+        KEYWORD_MAP.put("Demonstrate", Keyword.DEMONSTRATE);
         KEYWORD_MAP.put("Replicate", Keyword.REPLICATE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
         KEYWORD_MAP.put("Jump", Keyword.JUMP);

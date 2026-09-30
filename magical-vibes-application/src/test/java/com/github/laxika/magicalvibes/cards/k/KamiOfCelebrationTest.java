@@ -80,11 +80,4 @@ class KamiOfCelebrationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
 }

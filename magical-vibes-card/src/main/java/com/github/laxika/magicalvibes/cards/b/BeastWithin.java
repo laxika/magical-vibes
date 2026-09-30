@@ -30,6 +30,7 @@ import java.util.Set;
 @CardRegistration(set = "C21", collectorNumber = "186")
 @CardRegistration(set = "DSC", collectorNumber = "80")
 @CardRegistration(set = "TDC", collectorNumber = "249")
+@CardRegistration(set = "M3C", collectorNumber = "223")
 @CardRegistration(set = "AFC", collectorNumber = "152")
 @CardRegistration(set = "LCC", collectorNumber = "233")
 @CardRegistration(set = "DMC", collectorNumber = "129")

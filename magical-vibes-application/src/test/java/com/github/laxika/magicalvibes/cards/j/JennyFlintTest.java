@@ -71,6 +71,7 @@ class JennyFlintTest extends BaseCardTest {
         vastra.setName("Madame Vastra");
         harness.setLibrary(player2, List.of(vastra));
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.enterBattlefieldAndReturn(player1, new JennyFlint());
         harness.passBothPriorities();

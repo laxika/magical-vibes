@@ -58,6 +58,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCastCostHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualEnterExileHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualActivatedAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));
         register(new InvokeCalamityCastChoiceAiStrategy());
@@ -87,6 +88,13 @@ public final class AiInteractionStrategies {
         register(new HostileNegotiationsFaceUpChoiceAiStrategy());
         register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ReturnExiledCardsToHandChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.WerewhatOnEnterChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class, 1));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class));
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new EachPlayerChoosesOneCardOfEachColorChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());

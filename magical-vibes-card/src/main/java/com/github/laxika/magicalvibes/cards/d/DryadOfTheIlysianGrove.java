@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "169")
 @CardRegistration(set = "SLD", collectorNumber = "191")
+@CardRegistration(set = "M3C", collectorNumber = "225")
 public class DryadOfTheIlysianGrove extends Card {
 
     public DryadOfTheIlysianGrove() {

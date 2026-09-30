@@ -30,6 +30,7 @@ import java.util.Set;
 @CardRegistration(set = "OGW", collectorNumber = "12")
 @CardRegistration(set = "SPG", collectorNumber = "119")
 @CardRegistration(set = "PA1", collectorNumber = "9")
+@CardRegistration(set = "M3C", collectorNumber = "162")
 public class WarpingWail extends Card {
 
     public WarpingWail() {

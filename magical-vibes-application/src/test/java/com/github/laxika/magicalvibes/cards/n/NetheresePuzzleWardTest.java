@@ -49,6 +49,7 @@ class NetheresePuzzleWardTest extends BaseCardTest {
     @Test
     void naturalFourScriesFourThenDraws() {
         setD4Roll(4);
+        gd.playerHands.get(player1.getId()).clear();
         harness.addToBattlefield(player1, new NetheresePuzzleWard());
         harness.setLibrary(player1, bears(5));
 
@@ -66,6 +67,7 @@ class NetheresePuzzleWardTest extends BaseCardTest {
     @Test
     void nonMaximumD4StillScriesButDoesNotDraw() {
         setD4Roll(3);
+        gd.playerHands.get(player1.getId()).clear();
         harness.addToBattlefield(player1, new NetheresePuzzleWard());
         harness.setLibrary(player1, bears(4));
 

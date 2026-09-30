@@ -484,6 +484,9 @@ public final class AnyColorManaChoiceSupport {
             case CHOSEN_SUBTYPE_CREATURE -> chosenSubtype == null
                     ? null
                     : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, chosenSubtype);
+            case CHOSEN_SUBTYPE_SPELL -> chosenSubtype == null
+                    ? null
+                    : new ChoiceContext.ManaColorSpellChoice(playerId, amount, Set.of(chosenSubtype));
             case CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE -> chosenSubtype == null
                     ? null
                     : ChoiceContext.ManaColorChoice.chosenSubtypeCreatureUncounterable(playerId, amount, chosenSubtype);
@@ -574,6 +577,7 @@ public final class AnyColorManaChoiceSupport {
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";
             case DEVOID_SPELL -> "Choose a color of mana to add (spells with devoid only).";
+            case CHOSEN_SUBTYPE_SPELL -> "Choose a color of mana to add (spells of the chosen type only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
                     "Choose a color of mana to add (qualifying creature spells only).";

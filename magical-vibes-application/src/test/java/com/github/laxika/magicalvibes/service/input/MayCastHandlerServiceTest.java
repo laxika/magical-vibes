@@ -84,6 +84,8 @@ class MayCastHandlerServiceTest {
     @Mock private ValidTargetService validTargetService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
 
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport copySupport;
+
     @InjectMocks
     private MayCastHandlerService svc;
 

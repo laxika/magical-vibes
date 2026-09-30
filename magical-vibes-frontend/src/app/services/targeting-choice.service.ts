@@ -3438,6 +3438,11 @@ export class TargetingChoiceService {
   }
 
   private availableXValue(perm: Permanent, ability: ActivatedAbilityView): number {
+    if (ability.xValueFromEnergyCounters) {
+      const game = this.gameSignal();
+      const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+      return playerIndex >= 0 ? game?.energyCounters?.[playerIndex] ?? 0 : 0;
+    }
     if (ability.xValueFromCardsInHandColor) {
       return this.gameSignal()?.hand?.filter(card =>
         card.colors?.includes(ability.xValueFromCardsInHandColor!)).length ?? 0;

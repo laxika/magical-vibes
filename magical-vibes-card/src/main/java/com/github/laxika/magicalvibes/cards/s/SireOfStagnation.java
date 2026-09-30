@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerLi
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "206")
+@CardRegistration(set = "M3C", collectorNumber = "272")
 public class SireOfStagnation extends Card {
 
     public SireOfStagnation() {

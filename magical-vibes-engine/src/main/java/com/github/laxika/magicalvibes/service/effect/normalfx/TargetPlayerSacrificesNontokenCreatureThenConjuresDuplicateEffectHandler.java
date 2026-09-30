@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,19 +54,22 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
 
         if (creatureIds.size() == 1) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
-            sacrificeAndConjure(gameData, creature, targetPlayerId, entry);
+            sacrificeAndConjure(gameData, creature, targetPlayerId, entry,
+                    (TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect) effect);
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate(
-                        targetPlayerId, entry));
+                        targetPlayerId, entry,
+                        (TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect) effect));
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 entry.getCard().getName() + " — Choose a nontoken creature to sacrifice.");
     }
 
     public void sacrificeAndConjure(GameData gameData, Permanent creature,
-                                    UUID sacrificingPlayerId, StackEntry entry) {
+                                    UUID sacrificingPlayerId, StackEntry entry,
+                                    TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect effect) {
         if (creature == null
                 || !sacrificingPlayerId.equals(gameQueryService.findPermanentController(gameData, creature.getId()))
                 || !gameQueryService.isCreature(gameData, creature)
@@ -74,19 +80,37 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
         }
 
         Card sacrificedCard = creature.getCard();
-        Card duplicate = sacrificedCard.getManaValue() <= 2 ? sacrificedCard.createCardCopy() : null;
+        boolean qualifiesForDuplicate = effect.maxManaValue() < 0
+                || sacrificedCard.getManaValue() <= effect.maxManaValue();
         destructionSupport.sacrificeAndLog(gameData, creature, sacrificingPlayerId);
 
-        if (duplicate == null) {
+        if (!qualifiesForDuplicate) {
             return;
         }
 
-        duplicate.setOwnerId(entry.getControllerId());
+        if (effect.mayDiscard()) {
+            if (gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty()) {
+                return;
+            }
+            MayEffect mayDiscard = new MayEffect(
+                    new DiscardCardThenEffect(null,
+                            new ConjureDuplicateOfCardIntoHandEffect(sacrificedCard), "a card"),
+                    "discard a card to conjure a duplicate of the sacrificed creature?");
+            gameData.queueMayAbility(entry.getCard(), entry.getControllerId(), mayDiscard);
+            return;
+        }
+
+        conjure(gameData, entry.getControllerId(), sacrificedCard);
+    }
+
+    private void conjure(GameData gameData, UUID recipientId, Card sourceCard) {
+        Card duplicate = sourceCard.createCardCopy();
+        duplicate.setOwnerId(recipientId);
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
-        gameData.addCardToHand(entry.getControllerId(), duplicate);
+        gameData.addCardToHand(recipientId, duplicate);
         gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
-                + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+                + gameData.playerIdToName.get(recipientId) + "'s hand."));
     }
 
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId) {

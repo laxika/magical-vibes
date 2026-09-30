@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,15 +49,20 @@ class ShabrazTheSkysharkTest extends BaseCardTest {
     @Test
     @DisplayName("Drawing a card puts a +1/+1 counter on Shabraz and gains 1 life")
     void drawingPutsCounterAndGainsLife() {
-        Permanent shabraz = harness.addToBattlefieldAndReturn(player1, new ShabrazTheSkyshark());
+        Permanent shabraz = new Permanent(new ShabrazTheSkyshark());
+        gd.playerBattlefields.get(player1.getId()).add(shabraz);
         harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
-        advanceToDraw(player1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        resolveAllTriggers();
 
         assertThat(shabraz.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
 
-        advanceToDraw(player2);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        resolveAllTriggers();
 
         assertThat(shabraz.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
@@ -95,13 +99,6 @@ class ShabrazTheSkysharkTest extends BaseCardTest {
                 .hasMessageContaining("Human");
     }
 
-    private void advanceToDraw(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 
     private Card namedCard(String name) {
         Card card = new Card();
