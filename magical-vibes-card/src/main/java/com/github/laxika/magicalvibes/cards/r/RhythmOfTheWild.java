@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantB
 @CardRegistration(set = "RVR", collectorNumber = "217")
 @CardRegistration(set = "PZA", collectorNumber = "12")
 @CardRegistration(set = "LCC", collectorNumber = "287")
+@CardRegistration(set = "NEC", collectorNumber = "142")
 public class RhythmOfTheWild extends Card {
 
     public RhythmOfTheWild() {

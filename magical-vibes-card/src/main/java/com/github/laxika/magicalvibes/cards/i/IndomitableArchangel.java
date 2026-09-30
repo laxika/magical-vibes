@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "11")
 @CardRegistration(set = "MM2", collectorNumber = "19")
+@CardRegistration(set = "NEC", collectorNumber = "85")
 public class IndomitableArchangel extends Card {
 
     public IndomitableArchangel() {

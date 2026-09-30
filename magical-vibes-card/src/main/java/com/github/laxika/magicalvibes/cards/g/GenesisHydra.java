@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "298")
 @CardRegistration(set = "OTC", collectorNumber = "193")
 @CardRegistration(set = "C20", collectorNumber = "172")
+@CardRegistration(set = "NEC", collectorNumber = "118")
 public class GenesisHydra extends Card {
 
     public GenesisHydra() {
