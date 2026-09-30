@@ -897,6 +897,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 500);
@@ -921,6 +922,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 200);
@@ -953,6 +955,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 200);

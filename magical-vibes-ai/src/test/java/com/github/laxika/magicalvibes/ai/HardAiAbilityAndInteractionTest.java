@@ -151,7 +151,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates Prodigal Pyromancer's tap ability to deal damage to opponent creature")
     void activatesProdigalPyromancerTapAbility() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
 
         // Set up as opponent's turn, end step A?€�t good timing for "any time" abilities
         harness.forceActivePlayer(player2);
@@ -528,7 +529,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI prefers killing a creature over pinging opponent face")
     void prefersKillingCreatureOverFaceDamage() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
@@ -796,7 +798,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates untargeted +N loyalty ability during main phase")
     void activatesUntargetedPlusLoyaltyAbility() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
         giveAiPriority(player1);
 
         // Jace Beleren: +2 each player draws a card (no target)
@@ -833,7 +836,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates -N loyalty ability when effect value justifies loyalty cost")
     void activatesMinusLoyaltyAbilityWhenWorthIt() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
         giveAiPriority(player1);
 
         // Garruk Wildspeaker with 5 loyalty: A?�?’1 create a 3/3 Beast token (no target)
