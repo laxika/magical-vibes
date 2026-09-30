@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.Extirpate;
+import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TreacherousUrge.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TreacherousUrge.class, GossamerPhantasm.class, Extirpate.class})
 class TreacherousUrgeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chooses a creature from the target opponent's hand and puts it under the caster's control")
     void choosesCreatureFromTargetOpponentsHand() {
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Extirpate(), new GossamerPhantasm()));
         castTreacherousUrge();
 
         PendingInteraction.TargetedHandBattlefieldChoice choice =
@@ -36,18 +36,18 @@ class TreacherousUrgeTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 1);
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
+        assertThat(phantasm.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .containsExactly("Forest");
+                .containsExactly("Extirpate");
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(bears.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .contains(new DelayedPermanentAction(phantasm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
     }
 
     @Test
     @DisplayName("Sacrifices the chosen creature at the next end step")
     void sacrificesChosenCreatureAtNextEndStep() {
-        Card opponentCreature = new GrizzlyBears();
+        Card opponentCreature = new GossamerPhantasm();
         opponentCreature.setOwnerId(player2.getId());
         harness.setHand(player2, List.of(opponentCreature));
         castTreacherousUrge();
@@ -57,22 +57,53 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
+        harness.assertInGraveyard(player2, "Gossamer Phantasm");
     }
 
     @Test
     @DisplayName("Declining leaves the target hand unchanged")
     void decliningLeavesTargetHandUnchanged() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
 
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Gossamer Phantasm");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not prompt when the target hand contains no creatures")
+    void noCreaturesMeansNoChoice() {
+        harness.setHand(player2, List.of(new Extirpate()));
+        castTreacherousUrge();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Extirpate");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Haste lasts through cleanup until the next end step")
+    void hasteLastsUntilNextEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new GossamerPhantasm()));
+        castTreacherousUrge();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleCardChosen(player1, 0));
+
+        Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
+        assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
     }
 
     @Test

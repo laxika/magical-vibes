@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ISD", collectorNumber = "170")
 @CardRegistration(set = "MM3", collectorNumber = "119")
 @CardRegistration(set = "SIS", collectorNumber = "48")
+@CardRegistration(set = "MIC", collectorNumber = "132")
 public class AvacynsPilgrim extends Card {
 
     public AvacynsPilgrim() {

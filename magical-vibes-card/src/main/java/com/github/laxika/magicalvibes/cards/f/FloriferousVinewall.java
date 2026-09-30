@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DMU", collectorNumber = "163")
+@CardRegistration(set = "M3C", collectorNumber = "228")
 public class FloriferousVinewall extends Card {
 
     public FloriferousVinewall() {

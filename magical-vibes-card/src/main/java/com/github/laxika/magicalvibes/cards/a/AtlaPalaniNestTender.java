@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1397")
 @CardRegistration(set = "2X2", collectorNumber = "177")
 @CardRegistration(set = "DMC", collectorNumber = "142")
+@CardRegistration(set = "C19", collectorNumber = "38")
 public class AtlaPalaniNestTender extends Card {
 
     public AtlaPalaniNestTender() {

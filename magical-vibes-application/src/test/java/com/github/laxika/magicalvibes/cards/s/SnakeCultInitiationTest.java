@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +53,23 @@ class SnakeCultInitiationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can enchant an opponent's creature")
+    void canEnchantOpponentCreature() {
+        harness.setLife(player1, 20);
+        Permanent creature = addReadyCreature(player2);
+        attachAura(creature);
+        creature.setAttacking(true);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.POISONOUS)).isTrue();
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Poisonous ability ends when Snake Cult Initiation leaves the battlefield")
     void effectsEndWhenAuraLeavesBattlefield() {
         Permanent creature = addReadyCreature(player1);
@@ -75,17 +93,13 @@ class SnakeCultInitiationTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    private Permanent addReadyCreature(Player player) {
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new SnakeCultInitiation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SnakeCultInitiation());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }

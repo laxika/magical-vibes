@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,12 +16,9 @@ class WaningWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with two time counters")
     void entersWithTimeCounters() {
-        harness.setHand(player1, List.of(new WaningWurm()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WaningWurm(), "{3}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,6 +35,19 @@ class WaningWurmTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(wurm.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
+    }
+
+    @Test
+    @DisplayName("Does not remove a time counter during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        Permanent wurm = addCreatureReady(player1, new WaningWurm());
+        wurm.setCounterCount(CounterType.TIME, 2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.TIME)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
     }
 

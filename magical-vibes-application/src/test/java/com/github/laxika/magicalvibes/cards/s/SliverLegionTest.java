@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.v.VirulentSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,15 +10,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SliverLegion.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({SliverLegion.class, VirulentSliver.class, BlindPhantasm.class})
 class SliverLegionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sliver creatures get +1/+1 for each other Sliver on the battlefield")
     void boostsSliversByOtherSlivers() {
-        Permanent firstSliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
-        Permanent secondSliver = harness.addToBattlefieldAndReturn(player2, new MetallicSliver());
-        Permanent unrelatedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstSliver = harness.addToBattlefieldAndReturn(player1, new VirulentSliver());
+        Permanent secondSliver = harness.addToBattlefieldAndReturn(player2, new VirulentSliver());
+        Permanent unrelatedCreature = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
         int firstBasePower = firstSliver.getEffectivePower();
         int firstBaseToughness = firstSliver.getEffectiveToughness();
         int secondBasePower = secondSliver.getEffectivePower();
@@ -43,7 +43,7 @@ class SliverLegionTest extends BaseCardTest {
     @DisplayName("The bonus updates when another Sliver leaves the battlefield")
     void bonusUpdatesWhenSliverLeaves() {
         Permanent legion = harness.addToBattlefieldAndReturn(player1, new SliverLegion());
-        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new VirulentSliver());
         int legionBasePower = legion.getCard().getPower();
         int legionBaseToughness = legion.getCard().getToughness();
         int sliverBasePower = sliver.getCard().getPower();

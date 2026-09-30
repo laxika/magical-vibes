@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedgeTroll;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReveredDead.class, GrizzlyBears.class})
+@CardUsed({ReveredDead.class, HedgeTroll.class})
 class ReveredDeadTest extends BaseCardTest {
 
     @Test
@@ -24,26 +26,27 @@ class ReveredDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
     @Test
     @DisplayName("Regeneration shield saves Revered Dead from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent dead = addCreatureReady(player1, new ReveredDead());
-        dead.setRegenerationShield(1);
-        dead.setBlocking(true);
-        dead.addBlockingTarget(0);
-
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        addCreatureReady(player2, new HedgeTroll());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Revered Dead");
         assertThat(dead.isTapped()).isTrue();
+        assertThat(dead.isBlocking()).isFalse();
+        assertThat(dead.getMarkedDamage()).isZero();
         assertThat(dead.getRegenerationShield()).isZero();
     }
 }

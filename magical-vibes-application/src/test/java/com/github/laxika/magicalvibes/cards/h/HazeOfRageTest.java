@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,29 +14,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HazeOfRage.class, GrizzlyBears.class})
+@CardUsed({HazeOfRage.class, NessianCourser.class})
 class HazeOfRageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures you control get +1/+0 until end of turn")
     void boostsOwnCreaturesUntilEndOfTurn() {
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCourser = addCreatureReady(player1, new NessianCourser());
+        Permanent opposingCourser = addCreatureReady(player2, new NessianCourser());
         harness.setHand(player1, List.of(new HazeOfRage()));
         addMana(2);
 
         castHazeOfRage();
-        resolveSpellAndStorm();
+        resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCourser)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCourser)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingCourser)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Haze of Rage");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCourser)).isEqualTo(3);
     }
 
     @Test
@@ -49,7 +49,7 @@ class HazeOfRageTest extends BaseCardTest {
         harness.castSorceryWithBuyback(player1, 0, null);
         assertThat(gd.stack.stream().anyMatch(StackEntry::isBuyback)).isTrue();
 
-        resolveSpellAndStorm();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Haze of Rage");
         harness.assertNotInGraveyard(player1, "Haze of Rage");
@@ -58,9 +58,9 @@ class HazeOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("Storm creates one copy for each spell cast before Haze of Rage")
     void stormCopiesForEachPriorSpell() {
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new NessianCourser());
+        gd.recordSpellCast(player2.getId(), new NessianCourser());
+        Permanent ownCourser = addCreatureReady(player1, new NessianCourser());
         harness.setHand(player1, List.of(new HazeOfRage()));
         addMana(2);
 
@@ -73,18 +73,13 @@ class HazeOfRageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCourser)).isEqualTo(6);
     }
 
     private void castHazeOfRage() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castSorcery(player1, 0, 0);
-    }
-
-    private void resolveSpellAndStorm() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private void addMana(int amount) {

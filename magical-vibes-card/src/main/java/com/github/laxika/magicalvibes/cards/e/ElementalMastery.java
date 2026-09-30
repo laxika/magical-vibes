@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "90")
+@CardRegistration(set = "NEC", collectorNumber = "105")
 public class ElementalMastery extends Card {
 
     public ElementalMastery() {

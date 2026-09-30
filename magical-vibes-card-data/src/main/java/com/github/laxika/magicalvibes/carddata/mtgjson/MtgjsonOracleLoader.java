@@ -216,6 +216,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
 
     static void applyMissingPrintingAliases(String setCode, Map<String, JsonNode> frontFaces,
                                             Map<String, String> rarities) {
+        CardDataSupport.applyMissingMb2Printings(setCode, frontFaces, rarities);
         if (!"MSC".equalsIgnoreCase(setCode)) {
             return;
         }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.cards.s.SynchronousSliver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReflexSliver.class, SynchronousSliver.class, GrizzlyBears.class})
+@CardUsed({ReflexSliver.class, SynchronousSliver.class, GiantDustwasp.class})
 class ReflexSliverTest extends BaseCardTest {
 
     @Test
@@ -44,8 +44,22 @@ class ReflexSliverTest extends BaseCardTest {
     @DisplayName("Does not grant haste to a non-Sliver creature")
     void doesNotGrantToNonSliver() {
         addCreatureReady(player1, new ReflexSliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonSliver = addCreatureReady(player1, new GiantDustwasp());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonSliver, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Stops granting haste when it leaves the battlefield")
+    void stopsGrantingHasteWhenSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new ReflexSliver());
+        Permanent otherSliver = addCreatureReady(player1, new SynchronousSliver());
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.HASTE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.HASTE)).isFalse();
     }
 }

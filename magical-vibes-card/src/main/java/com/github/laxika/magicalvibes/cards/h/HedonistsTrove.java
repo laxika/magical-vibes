@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "106")
+@CardRegistration(set = "C19", collectorNumber = "119")
 public class HedonistsTrove extends Card {
 
     public HedonistsTrove() {

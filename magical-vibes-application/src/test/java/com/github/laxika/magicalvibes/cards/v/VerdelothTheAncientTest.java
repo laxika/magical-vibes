@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.i.IronrootTreefolk;
-import com.github.laxika.magicalvibes.cards.n.NomadicElf;
+import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IronrootTreefolk.class, NomadicElf.class, VerdelothTheAncient.class})
+@CardUsed({VerdelothTheAncient.class, IronrootTreefolk.class, Thallid.class})
 class VerdelothTheAncientTest extends BaseCardTest {
 
     @Test
@@ -26,20 +27,41 @@ class VerdelothTheAncientTest extends BaseCardTest {
         Permanent opponentTreefolk = harness.addToBattlefieldAndReturn(player2,
                 new IronrootTreefolk());
         Permanent unrelated = harness.addToBattlefieldAndReturn(player2,
-                new NomadicElf());
+                new Thallid());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new VerdelothTheAncient());
 
-        assertThat(gqs.getEffectivePower(gd, ownTreefolk)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, ownTreefolk)).isEqualTo(6);
-        assertThat(gqs.getEffectivePower(gd, opponentTreefolk)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, opponentTreefolk)).isEqualTo(6);
-        assertThat(gqs.getEffectivePower(gd, unrelated)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, unrelated)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownTreefolk)).isEqualTo(ownTreefolk.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, ownTreefolk)).isEqualTo(ownTreefolk.getCard().getToughness() + 1);
+        assertThat(gqs.getEffectivePower(gd, opponentTreefolk)).isEqualTo(opponentTreefolk.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentTreefolk)).isEqualTo(opponentTreefolk.getCard().getToughness() + 1);
+        assertThat(gqs.getEffectivePower(gd, unrelated)).isEqualTo(unrelated.getCard().getPower());
+        assertThat(gqs.getEffectiveToughness(gd, unrelated)).isEqualTo(unrelated.getCard().getToughness());
 
         int sourcePower = source.getCard().getPower();
         int sourceToughness = source.getCard().getToughness();
         assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(sourcePower);
         assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(sourceToughness);
+    }
+
+    @Test
+    @DisplayName("Saprolings controlled by an opponent get +1/+1")
+    void buffsOpponentSaproling() {
+        harness.addToBattlefieldAndReturn(player1, new VerdelothTheAncient());
+        Permanent thallid = harness.addToBattlefieldAndReturn(player2, new Thallid());
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+        assertThat(tokens).singleElement().satisfies(token -> {
+            assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        });
     }
 
     @Test

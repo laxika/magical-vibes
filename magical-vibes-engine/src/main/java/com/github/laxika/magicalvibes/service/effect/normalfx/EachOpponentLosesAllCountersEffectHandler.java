@@ -36,7 +36,7 @@ public class EachOpponentLosesAllCountersEffectHandler implements NormalEffectHa
             }
 
             gameData.playerPoisonCounters.remove(playerId);
-            gameData.playerEnergyCounters.remove(playerId);
+            gameData.removePlayerEnergyCounters(playerId, Integer.MAX_VALUE);
             gameData.playerExperienceCounters.remove(playerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.getOrDefault(playerId, "Player")

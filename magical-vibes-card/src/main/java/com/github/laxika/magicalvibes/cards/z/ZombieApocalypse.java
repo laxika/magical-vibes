@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "80")
 @CardRegistration(set = "SLD", collectorNumber = "1354")
+@CardRegistration(set = "MIC", collectorNumber = "131")
 public class ZombieApocalypse extends Card {
 
     public ZombieApocalypse() {

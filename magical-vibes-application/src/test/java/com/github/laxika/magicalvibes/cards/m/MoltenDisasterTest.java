@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoltenDisaster.class, GrizzlyBears.class, AirElemental.class, Shock.class})
+@CardUsed({MoltenDisaster.class, GrizzlyBears.class, AirElemental.class, Shock.class, MoggFanatic.class})
 class MoltenDisasterTest extends BaseCardTest {
 
     @Test
@@ -28,10 +28,35 @@ class MoltenDisasterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().getLife(player1.getId())).isEqualTo(18);
-        assertThat(harness.getGameData().getLife(player2.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    void unKickedSpellCanBeRespondedToWhileOnStack() {
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(2);
+    }
+
+    @Test
+    void splitSecondAlsoPreventsNonManaAbilityActivation() {
+        addCreatureReady(player2, new MoggFanatic());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castKickedSorcery(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

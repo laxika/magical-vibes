@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RadhaHeirToKeld.class, GrizzlyBears.class})
+@CardUsed({RadhaHeirToKeld.class, SerraSphinx.class})
 class RadhaHeirToKeldTest extends BaseCardTest {
 
     @Test
@@ -62,7 +62,7 @@ class RadhaHeirToKeldTest extends BaseCardTest {
     void anotherCreatureAttackingDoesNotTriggerRadha() {
         Permanent radha = harness.addToBattlefieldAndReturn(player1, new RadhaHeirToKeld());
         radha.setSummoningSick(true);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SerraSphinx());
 
         declareAttackers(List.of(1));
 

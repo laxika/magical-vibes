@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "110")
+@CardRegistration(set = "MIC", collectorNumber = "156")
 public class TrostanisSummoner extends Card {
 
     public TrostanisSummoner() {

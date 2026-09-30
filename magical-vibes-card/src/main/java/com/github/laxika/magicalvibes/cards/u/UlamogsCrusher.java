@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "DDP", collectorNumber = "44")
 @CardRegistration(set = "UMA", collectorNumber = "8")
 @CardRegistration(set = "CMM", collectorNumber = "6")
+@CardRegistration(set = "M3C", collectorNumber = "161")
 public class UlamogsCrusher extends Card {
 
     public UlamogsCrusher() {

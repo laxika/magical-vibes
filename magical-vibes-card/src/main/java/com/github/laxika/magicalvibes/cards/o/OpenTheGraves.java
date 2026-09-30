@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "112")
+@CardRegistration(set = "MIC", collectorNumber = "126")
 public class OpenTheGraves extends Card {
 
     public OpenTheGraves() {

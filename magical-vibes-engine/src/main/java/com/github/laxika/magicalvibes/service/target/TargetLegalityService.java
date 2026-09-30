@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
@@ -673,7 +672,8 @@ public class TargetLegalityService {
                 }
                 if (exileCopy.filter() != null
                         && !predicateEvaluationService.matchesCardPredicate(
-                        card, exileCopy.filter(), sourceCardId, gameData, playerId)) {
+                        card, exileCopy.filter(), sourceCardId, gameData, playerId,
+                        null, null, xValue)) {
                     throw new IllegalStateException("Target card must be a "
                             + CardPredicateUtils.describeFilter(exileCopy.filter()));
                 }
@@ -1330,7 +1330,9 @@ public class TargetLegalityService {
                     controllerId, null, xValue, kicked);
         }
         if (targetZone == Zone.STACK
-                || spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                || (spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(EffectResolution::targetsSpellOnStack))
                 && isSpellOnStack(gameData, targetId)) {
             TargetFilter stackTargetFilter = effectiveTargetFilter instanceof StackEntryPredicateTargetFilter
                     ? effectiveTargetFilter
@@ -4039,6 +4041,9 @@ public class TargetLegalityService {
                     : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
             if (targetPosition < consumed + Math.max(declaredSize, 0)) {
+                if (group.getFilter(entry.isKicked()) instanceof StackEntryPredicateTargetFilter) {
+                    return true;
+                }
                 return entry.getEffectsToResolve().stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));

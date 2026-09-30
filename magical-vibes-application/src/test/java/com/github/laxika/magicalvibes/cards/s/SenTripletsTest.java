@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -116,7 +117,7 @@ class SenTripletsTest extends BaseCardTest {
         gd.senControllerPlayerId = player1.getId();
         gd.senControlledPlayerId = player2.getId();
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersSilencedThisTurn).isEmpty();
         assertThat(gd.playersCantActivateAbilitiesThisTurn).isEmpty();

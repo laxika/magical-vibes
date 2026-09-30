@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "61")
+@CardRegistration(set = "C19", collectorNumber = "88")
 public class JacesSanctum extends Card {
 
     public JacesSanctum() {

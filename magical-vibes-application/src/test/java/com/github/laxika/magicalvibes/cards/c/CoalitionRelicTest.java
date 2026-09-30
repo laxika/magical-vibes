@@ -75,6 +75,21 @@ class CoalitionRelicTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
+    @Test
+    @DisplayName("First main phase trigger only fires during the controller's first main phase")
+    void firstMainPhaseTriggerOnlyFiresOnControllerTurn() {
+        Permanent relic = addRelic(player1);
+        relic.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToPrecombatMain(player2);
+        harness.passBothPriorities();
+
+        assertThat(relic.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addRelic(Player player) {
         return harness.addToBattlefieldAndReturn(player, new CoalitionRelic());
     }
@@ -82,7 +97,6 @@ class CoalitionRelicTest extends BaseCardTest {
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }

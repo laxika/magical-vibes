@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -23,10 +24,14 @@ class KlementNoviceAcolyteTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent klement = findPermanent(player1, "Klement, Novice Acolyte");
         assertThat(klement.getCard().getActivatedAbilities()).hasSize(5);
 
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.castCreature(player1, 0);

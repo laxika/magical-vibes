@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "EMA", collectorNumber = "249")
 @CardRegistration(set = "NEO", collectorNumber = "282")
 @CardRegistration(set = "LTC", collectorNumber = "344")
+@CardRegistration(set = "C19", collectorNumber = "285")
 public class WindScarredCrag extends Card {
 
     public WindScarredCrag() {

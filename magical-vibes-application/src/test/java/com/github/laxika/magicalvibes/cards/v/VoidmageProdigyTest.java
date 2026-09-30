@@ -66,6 +66,27 @@ class VoidmageProdigyTest extends BaseCardTest {
     }
 
     @Test
+    void countersCreatureSpell() {
+        VoidmageProdigy prodigy = new VoidmageProdigy();
+        harness.addToBattlefield(player1, prodigy);
+        ElvishWarrior warrior = new ElvishWarrior();
+        harness.setHand(player2, List.of(warrior));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, warrior.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Voidmage Prodigy");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+    }
+
+    @Test
     void onlyWizardsCanBeSacrificed() {
         VoidmageProdigy prodigy = new VoidmageProdigy();
         Permanent prodigyPermanent = harness.addToBattlefieldAndReturn(player1, prodigy);

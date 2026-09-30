@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOI", collectorNumber = "173")
 @CardRegistration(set = "UMA", collectorNumber = "139")
+@CardRegistration(set = "C19", collectorNumber = "150")
 public class MalevolentWhispers extends Card {
 
     public MalevolentWhispers() {

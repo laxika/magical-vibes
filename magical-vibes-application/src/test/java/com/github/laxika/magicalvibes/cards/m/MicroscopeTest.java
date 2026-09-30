@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,7 @@ class MicroscopeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCardPower(gd, target)).isZero();
         assertThat(gqs.getEffectiveCardToughness(gd, target)).isZero();
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player2.getId())).isFalse();
         assertThat(gqs.cardHasSubtype(target, CardSubtype.GERM, gd, player2.getId())).isFalse();

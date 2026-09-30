@@ -68,21 +68,20 @@ class ChaosDragonTest extends BaseCardTest {
 
         assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isTrue();
         declareAttackers(List.of(0));
-        assertThat(dragon.isAttacking()).isTrue();
+        harness.assertLife(player2, 16);
     }
 
     @Test
     void attackRestrictionExpiresAtEndOfCombat() {
         setD20Rolls(Map.of(player1.getId(), 1, player2.getId(), 20));
         Permanent dragon = addCreatureReady(player1, new ChaosDragon());
+        addCreatureReady(player1, new GrizzlyBears());
 
         advanceToBeginningOfCombat();
         resolveAllTriggers();
         assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isFalse();
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackers(List.of(1));
 
         assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isTrue();
     }

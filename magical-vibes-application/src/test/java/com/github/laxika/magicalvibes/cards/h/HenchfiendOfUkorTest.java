@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HenchfiendOfUkor.class})
@@ -74,6 +72,17 @@ class HenchfiendOfUkorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo does not trigger during the opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveHenchfiend();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Henchfiend of Ukor");
+    }
+
+    @Test
     @DisplayName("Paying echo keeps Henchfiend of Ukor and echo does not trigger again")
     void payingEchoKeepsHenchfiendOfUkorAndIsOneShot() {
         castAndResolveHenchfiend();
@@ -100,12 +109,8 @@ class HenchfiendOfUkorTest extends BaseCardTest {
     }
 
     private void castAndResolveHenchfiend() {
-        harness.setHand(player1, List.of(new HenchfiendOfUkor()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new HenchfiendOfUkor(), "{3}{R}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Henchfiend of Ukor");
     }
 }

@@ -47,7 +47,7 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
         attackAndAccept(ambergris, 2);
         resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, ambergris)).isEqualTo(4);
     }
 
@@ -89,7 +89,7 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
         attackAndAccept(ambergris, 2);
         resolveAllTriggers();
 
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 13);
     }
 
     @Test
@@ -100,8 +100,10 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
 
         attackAndAccept(ambergris, 2);
         resolveAllTriggers();
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        resolveAllTriggers();
 
-        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     private Permanent specialize(CardColor color, int abilityIndex, Card discardedCard) {
@@ -109,7 +111,6 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -121,9 +122,7 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
     }
 
     private void attackAndAccept(Permanent ambergris, Integer discardCount) {
-        ambergris.setAttacking(true);
-        ambergris.setAttackTarget(player2.getId());
-        resolveCombat();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(ambergris)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         if (discardCount != null) {

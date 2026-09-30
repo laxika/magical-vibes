@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -579,7 +580,41 @@ class DeathTriggerCollectorServiceTest {
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        void transformedDeathBindsThePhysicalCardId() {
+            Card front = createCreature("Front", 2, 2);
+            Card back = createCreature("Back", 4, 4);
+            Permanent permanent = new Permanent(front);
+            permanent.setCard(back);
+            permanent.setTransformed(true);
+            var effect = new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect();
+            var context = new TriggerContext.SelfDeath(back, PLAYER1_ID, true, permanent);
+
+            svc.handleDeathDefault(match(permanent, PLAYER1_ID, effect), effect, context);
+
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect(front.getId()));
+        }
+
+        @Test
+        void unchangedDeathSequencePreservesItsTargetBinding() {
+            Card card = createCreature("Optional death trigger", 2, 2);
+            CardEffect effect = SequenceEffect.of(
+                    new MayEffect(new DrawCardEffect(1), "Draw?"),
+                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+            card.target(0, 1).addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_DEATH, effect);
+            Permanent permanent = new Permanent(card);
+
+            svc.handleDeathDefault(match(permanent, PLAYER1_ID, effect), effect,
+                    new TriggerContext.SelfDeath(card, PLAYER1_ID, true, permanent));
+
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+            assertThat(pending).isNotNull();
+            assertThat(pending.dyingCard().isEffectBoundToTargetGroup(pending.effects().getFirst(), 0)).isTrue();
         }
 
         @Test

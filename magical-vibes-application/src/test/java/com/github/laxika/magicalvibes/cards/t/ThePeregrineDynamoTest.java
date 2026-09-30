@@ -29,7 +29,6 @@ class ThePeregrineDynamoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
 
         UUID rekiTriggerId = gd.stack.stream()
                 .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
@@ -69,7 +68,6 @@ class ThePeregrineDynamoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
 
         UUID rekiTriggerId = gd.stack.stream()
                 .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)

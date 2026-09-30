@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BloodKnight;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,17 +15,17 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DustElemental.class, GrizzlyBears.class, Island.class})
+@CardUsed({DustElemental.class, BloodKnight.class, UrborgTombOfYawgmoth.class})
 class DustElementalTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB lets you choose exactly three creatures you control, including Dust Elemental")
     void choosesThreeCreaturesToReturn() {
-        UUID firstBearId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
-        UUID secondBearId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
-        UUID thirdBearId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
-        harness.addToBattlefieldAndReturn(player1, new Island());
-        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID firstCreatureId = harness.addToBattlefieldAndReturn(player1, new BloodKnight()).getId();
+        UUID secondCreatureId = harness.addToBattlefieldAndReturn(player1, new BloodKnight()).getId();
+        UUID thirdCreatureId = harness.addToBattlefieldAndReturn(player1, new BloodKnight()).getId();
+        harness.addToBattlefieldAndReturn(player1, new UrborgTombOfYawgmoth());
+        harness.addToBattlefieldAndReturn(player2, new BloodKnight());
         harness.setHand(player1, List.of(new DustElemental()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -38,21 +38,21 @@ class DustElementalTest extends BaseCardTest {
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
-                firstBearId, secondBearId, thirdBearId, dustElementalId);
+                firstCreatureId, secondCreatureId, thirdCreatureId, dustElementalId);
         assertThat(choice.maxCount()).isEqualTo(3);
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
-                List.of(firstBearId, secondBearId)))
+                List.of(firstCreatureId, secondCreatureId)))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultiplePermanentsChosen(player1,
-                List.of(dustElementalId, firstBearId, secondBearId));
+                List.of(dustElementalId, firstCreatureId, secondCreatureId));
 
         harness.assertInHand(player1, "Dust Elemental");
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Island");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Blood Knight");
+        harness.assertOnBattlefield(player1, "Blood Knight");
+        harness.assertOnBattlefield(player1, "Urborg, Tomb of Yawgmoth");
+        harness.assertOnBattlefield(player2, "Blood Knight");
     }
 
     @Test

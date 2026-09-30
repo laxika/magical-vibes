@@ -28,10 +28,7 @@ class DuneriderOutlawTest extends BaseCardTest {
 
         assertThat(outlaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToEndStepAndResolveTriggers();
 
         assertThat(outlaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -41,10 +38,7 @@ class DuneriderOutlawTest extends BaseCardTest {
     void noCounterWithoutDamageToOpponent() {
         Permanent outlaw = addCreatureReady(player1, new DuneriderOutlaw());
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToEndStepAndResolveTriggers();
 
         assertThat(outlaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -64,5 +58,27 @@ class DuneriderOutlawTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from green prevents combat damage from a green creature")
+    void greenCreatureCannotDealCombatDamage() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent outlaw = addCreatureReady(player1, new DuneriderOutlaw());
+        outlaw.setBlocking(true);
+        outlaw.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Dunerider Outlaw");
+        assertThat(outlaw.getMarkedDamage()).isZero();
+    }
+
+    private void advanceToEndStepAndResolveTriggers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

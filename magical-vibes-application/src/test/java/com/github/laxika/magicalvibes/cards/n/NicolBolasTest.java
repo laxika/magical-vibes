@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
-import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
+import com.github.laxika.magicalvibes.cards.f.FireWhip;
+import com.github.laxika.magicalvibes.cards.f.FlyingMen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NicolBolas.class, DurkwoodBoars.class, HermeticStudy.class})
+@CardUsed({NicolBolas.class, FlyingMen.class, FireWhip.class})
 class NicolBolasTest extends BaseCardTest {
 
     @Test
@@ -53,7 +53,7 @@ class NicolBolasTest extends BaseCardTest {
     @DisplayName("Dealing combat damage to an opponent makes them discard their whole hand")
     void combatDamageDiscardsHand() {
         harness.setLife(player2, 20);
-        harness.setHand(player2, List.of(new DurkwoodBoars(), new DurkwoodBoars()));
+        harness.setHand(player2, List.of(new FlyingMen(), new FlyingMen()));
         Permanent bolas = addCreatureReady(player1, new NicolBolas());
         bolas.setAttacking(true);
 
@@ -63,38 +63,38 @@ class NicolBolasTest extends BaseCardTest {
         // The whole hand (both cards) was discarded to the graveyard.
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .hasSize(2)
-                .allMatch(c -> c.getName().equals("Durkwood Boars"));
+                .allMatch(c -> c.getName().equals("Flying Men"));
     }
 
     @Test
     @DisplayName("Noncombat damage to an opponent also makes them discard their whole hand")
     void noncombatDamageDiscardsHand() {
-        harness.setHand(player2, List.of(new DurkwoodBoars(), new DurkwoodBoars()));
+        harness.setHand(player2, List.of(new FlyingMen(), new FlyingMen()));
         Permanent bolas = addCreatureReady(player1, new NicolBolas());
-        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
-        study.setAttachedTo(bolas.getId());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(bolas.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .hasSize(2)
-                .allMatch(c -> c.getName().equals("Durkwood Boars"));
+                .allMatch(c -> c.getName().equals("Flying Men"));
     }
 
     @Test
     @DisplayName("Damage to Nicol Bolas's controller does not trigger the discard ability")
     void damageToControllerDoesNotDiscard() {
-        harness.setHand(player1, List.of(new DurkwoodBoars(), new DurkwoodBoars()));
+        harness.setHand(player1, List.of(new FlyingMen(), new FlyingMen()));
         Permanent bolas = addCreatureReady(player1, new NicolBolas());
-        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
-        study.setAttachedTo(bolas.getId());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(bolas.getId());
 
         harness.activateAbility(player1, 0, null, player1.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .hasSize(2)
-                .allMatch(c -> c.getName().equals("Durkwood Boars"));
+                .allMatch(c -> c.getName().equals("Flying Men"));
     }
 }

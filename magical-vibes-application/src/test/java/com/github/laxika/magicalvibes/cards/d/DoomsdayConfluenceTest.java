@@ -25,6 +25,7 @@ class DoomsdayConfluenceTest extends BaseCardTest {
         int modes = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 1, 1, 2);
         gs.playModalXCard(gd, player1, 0, modes, 3, null, List.of());
         harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
 
         assertThat(countPermanents(player1, "Dalek")).isEqualTo(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");

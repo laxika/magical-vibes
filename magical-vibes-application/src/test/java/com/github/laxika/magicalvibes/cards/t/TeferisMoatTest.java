@@ -37,6 +37,20 @@ class TeferisMoatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The color chosen as Teferi's Moat enters controls its attack restriction")
+    void chosenColorFromEntryRestrictsGroundCreature() {
+        harness.castFromHand(player1, new TeferisMoat(), "{3}{W}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        addCreatureReady(player2, new YavimayaBarbarian());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
     @DisplayName("A chosen-color creature without flying cannot attack the Moat controller")
     void chosenColorGroundCreatureCannotAttackController() {
         addMoatWithChosenColor(player2, CardColor.RED);

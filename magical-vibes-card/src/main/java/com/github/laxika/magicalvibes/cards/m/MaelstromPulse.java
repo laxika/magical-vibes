@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "UMA", collectorNumber = "204")
 @CardRegistration(set = "HA2", collectorNumber = "16")
 @CardRegistration(set = "2XM", collectorNumber = "207")
+@CardRegistration(set = "M3C", collectorNumber = "269")
 public class MaelstromPulse extends Card {
 
     public MaelstromPulse() {

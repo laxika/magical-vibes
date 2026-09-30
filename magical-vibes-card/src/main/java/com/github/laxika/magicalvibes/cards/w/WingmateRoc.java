@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "31")
+@CardRegistration(set = "C19", collectorNumber = "78")
 public class WingmateRoc extends Card {
 
     public WingmateRoc() {

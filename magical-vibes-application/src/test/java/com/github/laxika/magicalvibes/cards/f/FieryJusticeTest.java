@@ -76,6 +76,21 @@ class FieryJusticeTest extends BaseCardTest {
     }
 
     @Test
+    void damageAssignmentsMustBePositive() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FieryJustice()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+
+        assertThatThrownBy(() ->
+                harness.castSorcery(player1, 0, player2.getId(), Map.of(bears.getId(), 0, player2.getId(), 5))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void lifeGainTargetMustBeAnOpponent() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new FieryJustice()));

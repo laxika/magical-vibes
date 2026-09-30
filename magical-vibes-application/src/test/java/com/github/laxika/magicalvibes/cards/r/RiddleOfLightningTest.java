@@ -2,25 +2,27 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({RiddleOfLightning.class, FomoriNomad.class, RiverOfTears.class})
 class RiddleOfLightningTest extends BaseCardTest {
 
     @Test
     @DisplayName("Scries before revealing the top card and damages the target by its mana value")
     void scriesThenDamagesTargetPlayerByRevealedManaValue() {
-        Card bears = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), bears));
+        Card topCard = new FomoriNomad();
+        harness.setLibrary(player1,
+                List.of(new RiverOfTears(), new RiverOfTears(), new RiverOfTears(), topCard));
         harness.setLife(player2, 20);
 
         castRiddle(player2.getId());
@@ -29,34 +31,45 @@ class RiddleOfLightningTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2)));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 
     @Test
     @DisplayName("Deals the revealed card's mana value to a creature target")
     void damagesCreatureTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Card topCard = new GrizzlyBears();
+        harness.addToBattlefield(player2, new FomoriNomad());
+        Card topCard = new FomoriNomad();
         harness.setLibrary(player1, List.of(topCard));
 
-        castRiddle(harness.getPermanentId(player2, "Grizzly Bears"));
+        castRiddle(harness.getPermanentId(player2, "Fomori Nomad"));
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Fomori Nomad");
+        harness.assertInGraveyard(player2, "Fomori Nomad");
     }
 
     @Test
     @DisplayName("A zero-mana-value revealed card deals no damage")
     void landDealsNoDamage() {
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new RiverOfTears()));
         harness.setLife(player2, 20);
 
         castRiddle(player2.getId());
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("An empty library reveals no card and deals no damage")
+    void emptyLibraryDealsNoDamage() {
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player2, 20);
+
+        castRiddle(player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

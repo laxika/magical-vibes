@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,11 +35,23 @@ class BlightspeakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The first ability may target its controller")
+    void targetControllerLosesLife() {
+        Permanent blightspeaker = addReadyBlightspeaker();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(blightspeaker.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The second ability offers only Rebel permanents with mana value 3 or less")
     void searchesForEligibleRebelPermanent() {
         addReadyBlightspeaker();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new DefiantFalcon(),
                 new RamosianCommander(),
                 new GrizzlyBears(),
@@ -56,7 +67,7 @@ class BlightspeakerTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactly("Defiant Falcon");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Defiant Falcon");
     }
@@ -65,8 +76,7 @@ class BlightspeakerTest extends BaseCardTest {
     @DisplayName("The second ability does nothing when no eligible Rebel is in the library")
     void noEligibleRebelFound() {
         addReadyBlightspeaker();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new RamosianCommander(), new GrizzlyBears(), new HolyDay()));
+        harness.setLibrary(player1, List.of(new RamosianCommander(), new GrizzlyBears(), new HolyDay()));
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 0, 1, null, null);
@@ -78,9 +88,6 @@ class BlightspeakerTest extends BaseCardTest {
     }
 
     private Permanent addReadyBlightspeaker() {
-        harness.addToBattlefield(player1, new Blightspeaker());
-        Permanent blightspeaker = findPermanent(player1, "Blightspeaker");
-        blightspeaker.setSummoningSick(false);
-        return blightspeaker;
+        return addCreatureReady(player1, new Blightspeaker());
     }
 }

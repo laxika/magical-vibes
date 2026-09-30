@@ -28,6 +28,7 @@ class MysteriousStrangerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();
@@ -49,6 +50,7 @@ class MysteriousStrangerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of(ownCounsel.getId()));
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();

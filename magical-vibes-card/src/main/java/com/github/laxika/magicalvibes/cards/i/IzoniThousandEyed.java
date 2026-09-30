@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "180")
 @CardRegistration(set = "GK1", collectorNumber = "50")
+@CardRegistration(set = "M3C", collectorNumber = "267")
 public class IzoniThousandEyed extends Card {
 
     public IzoniThousandEyed() {

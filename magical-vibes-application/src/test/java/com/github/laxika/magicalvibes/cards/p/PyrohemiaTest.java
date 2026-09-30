@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.f.FirefrightMage;
+import com.github.laxika.magicalvibes.cards.k.KavuPredator;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pyrohemia.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({Pyrohemia.class, FirefrightMage.class, KavuPredator.class})
 class PyrohemiaTest extends BaseCardTest {
 
     @Test
@@ -23,32 +21,27 @@ class PyrohemiaTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Pyrohemia());
-        harness.addToBattlefield(player2, new FugitiveWizard());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FirefrightMage());
+        harness.addToBattlefield(player2, new FirefrightMage());
+        harness.addToBattlefield(player2, new KavuPredator());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player1, "Firefright Mage");
+        harness.assertNotOnBattlefield(player2, "Firefright Mage");
+        harness.assertOnBattlefield(player2, "Kavu Predator");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Sacrifices itself at end step when no creatures are on the battlefield")
     void sacrificesAtEndStepWhenNoCreatures() {
-        GameData gd = harness.getGameData();
-        Permanent pyrohemia = new Permanent(new Pyrohemia());
-        gd.playerBattlefields.get(player1.getId()).add(pyrohemia);
+        harness.addToBattlefield(player1, new Pyrohemia());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -63,17 +56,44 @@ class PyrohemiaTest extends BaseCardTest {
     @Test
     @DisplayName("Does not sacrifice itself while a creature is on the battlefield")
     void doesNotSacrificeWhenCreaturePresent() {
-        GameData gd = harness.getGameData();
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Pyrohemia()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Pyrohemia());
+        harness.addToBattlefield(player2, new KavuPredator());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Pyrohemia"));
         harness.assertOnBattlefield(player1, "Pyrohemia");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself at an opponent's end step when no creatures are on the battlefield")
+    void sacrificesAtOpponentsEndStepWhenNoCreatures() {
+        harness.addToBattlefield(player1, new Pyrohemia());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pyrohemia");
+        harness.assertInGraveyard(player1, "Pyrohemia");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice itself if a creature appears before the trigger resolves")
+    void doesNotSacrificeIfCreatureAppearsBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new Pyrohemia());
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player2, new FirefrightMage());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pyrohemia");
+        harness.assertNotInGraveyard(player1, "Pyrohemia");
     }
 }

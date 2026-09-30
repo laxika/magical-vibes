@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeilingOddity.class, GrizzlyBears.class})
+@CardUsed({VeilingOddity.class, CitanulWoodreaders.class, Timecrafting.class})
 class VeilingOddityTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,8 @@ class VeilingOddityTest extends BaseCardTest {
 
     @Test
     void nonLastTimeCounterDoesNotMakeCreaturesUnblockable() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CitanulWoodreaders());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CitanulWoodreaders());
         suspendCard();
 
         advanceToUpkeep(player1);
@@ -40,8 +41,8 @@ class VeilingOddityTest extends BaseCardTest {
 
     @Test
     void lastTimeCounterMakesAllCreaturesUnblockableUntilEndOfTurn() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CitanulWoodreaders());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CitanulWoodreaders());
         suspendCard();
 
         for (int i = 0; i < 4; i++) {
@@ -61,6 +62,47 @@ class VeilingOddityTest extends BaseCardTest {
 
         assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isFalse();
+    }
+
+    @Test
+    void creaturesEnteringLaterAlsoCannotBeBlockedThisTurn() {
+        suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new CitanulWoodreaders());
+
+        assertThat(gqs.hasCantBeBlocked(gd, laterCreature)).isTrue();
+    }
+
+    @Test
+    void lastCounterTriggerStillResolvesIfTimeCounterIsAddedBeforeItResolves() {
+        VeilingOddity card = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        advanceToUpkeep(player1);
+        Timecrafting timecrafting = new Timecrafting();
+        harness.setHand(player1, List.of(timecrafting));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.passBothPriorities();
+
+        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        Permanent ownCreature = harness.enterBattlefieldAndReturn(player1, new CitanulWoodreaders());
+        assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isTrue();
     }
 
     private VeilingOddity suspendCard() {

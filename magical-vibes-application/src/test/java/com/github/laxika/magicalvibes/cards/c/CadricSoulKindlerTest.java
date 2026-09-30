@@ -54,6 +54,7 @@ class CadricSoulKindlerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CadricSoulKindler());
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setHand(player1, List.of(new TsaboTavoc()));
 
         harness.castCreature(player1, 0);

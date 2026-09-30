@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.List;
 
 /** Resolves self-scoped untap locks, including locks gated by a static condition. */
 @Component
@@ -21,7 +23,13 @@ public class UntapPreventionSupport {
 
     public boolean hasActiveSelfDoesntUntap(GameData gameData, Permanent permanent) {
         UUID controllerId = gameData.findControllerOf(permanent);
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameData.floatingEffects.stream().anyMatch(floating ->
+                permanent.getId().equals(floating.affectedPermanentId())
+                        && floating.effect() instanceof DoesntUntapEffect lock
+                        && lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
+                        && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())
+                        .stream().anyMatch(source -> source.getId().equals(floating.sourcePermanentId())))
+                || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> hasActiveSelfDoesntUntap(gameData, permanent, controllerId, effect));
     }
 

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PsychotropeThallid.class, Forest.class})
+@CardUsed(PsychotropeThallid.class)
 class PsychotropeThallidTest extends BaseCardTest {
 
     @Test
@@ -26,10 +24,21 @@ class PsychotropeThallidTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent psychotropeThallid = addPsychotropeThallid();
 
-        advanceToUpkeep();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isOne();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does not fire during an opponent's upkeep")
+    void upkeepTriggerDoesNotFireDuringOpponentsUpkeep() {
+        Permanent psychotropeThallid = addPsychotropeThallid();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isZero();
     }
 
     @Test
@@ -46,6 +55,36 @@ class PsychotropeThallidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The token ability creates a 1/1 green Saproling creature token")
+    void createdTokenHasSaprolingCharacteristics() {
+        Permanent psychotropeThallid = addPsychotropeThallid();
+        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent saproling = findPermanent(player1, "Saproling");
+        assertThat(saproling.getCard().isToken()).isTrue();
+        assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(saproling.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(saproling.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+        assertThat(gqs.getEffectivePower(gd, saproling)).isOne();
+        assertThat(gqs.getEffectiveToughness(gd, saproling)).isOne();
+    }
+
+    @Test
+    @DisplayName("Removing three spore counters leaves additional counters")
+    void removesExactlyThreeSporeCounters() {
+        Permanent psychotropeThallid = addPsychotropeThallid();
+        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(psychotropeThallid.getCounterCount(CounterType.FUNGUS)).isOne();
+    }
+
+    @Test
     @DisplayName("The token ability requires three spore counters")
     void tokenAbilityRequiresThreeSporeCounters() {
         addPsychotropeThallid().setCounterCount(CounterType.FUNGUS, 2);
@@ -57,18 +96,27 @@ class PsychotropeThallidTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a Saproling draws a card")
     void sacrificingSaprolingDrawsCard() {
-        addPsychotropeThallid();
-        harness.addToBattlefield(player1, createSaprolingToken());
+        addSaproling();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of());
-        setDeck(player1, List.of(new Forest()));
+        PsychotropeThallid drawnCard = new PsychotropeThallid();
+        harness.setLibrary(player1, List.of(drawnCard));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         harness.assertInGraveyard(player1, "Saproling");
+    }
+
+    @Test
+    @DisplayName("The draw ability requires one mana")
+    void drawAbilityRequiresMana() {
+        addSaproling();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
     @Test
@@ -85,26 +133,13 @@ class PsychotropeThallidTest extends BaseCardTest {
         return addCreatureReady(player1, new PsychotropeThallid());
     }
 
-    private Card createSaprolingToken() {
-        Card card = new Card();
-        card.setName("Saproling");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.SAPROLING));
-        return card;
-    }
+    private Permanent addSaproling() {
+        Permanent psychotropeThallid = addPsychotropeThallid();
+        psychotropeThallid.setCounterCount(CounterType.FUNGUS, 3);
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<? extends Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
 
-    private void advanceToUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+        return findPermanent(player1, "Saproling");
     }
 }

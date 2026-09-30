@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,32 @@ class PactOfTheTitanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates a Giant creature token")
+    void createsGiantCreatureToken() {
+        castPact();
+
+        Permanent giant = findPermanent(player1, "Giant");
+        assertThat(giant.getCard().isToken()).isTrue();
+        assertThat(giant.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(giant.getCard().getSubtypes()).containsExactly(CardSubtype.GIANT);
+    }
+
+    @Test
+    @DisplayName("Schedules the exact payment at the Pact controller's next upkeep")
+    void waitsForControllerNextUpkeep() {
+        castPact();
+        advanceToUpkeep(player2);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).singleElement()
+                .satisfies(action -> {
+                    assertThat(action.playerId()).isEqualTo(player1.getId());
+                    assertThat(action.manaCost()).isEqualTo("{4}{R}");
+                });
+    }
+
+    @Test
     @DisplayName("Paying {4}{R} at the next upkeep avoids losing the game")
     void payingAvoidsLoss() {
         castPact();
@@ -44,6 +71,18 @@ class PactOfTheTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Being unable to pay at the next upkeep loses the game")
+    void beingUnableToPayCausesLoss() {
+        castPact();
+        reachPactUpkeepPrompt();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test
@@ -67,10 +106,7 @@ class PactOfTheTitanTest extends BaseCardTest {
     }
 
     private void reachPactUpkeepPrompt() {
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.turnNumber = 3;
-        gd.activePlayerId = player1.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
     }
 }

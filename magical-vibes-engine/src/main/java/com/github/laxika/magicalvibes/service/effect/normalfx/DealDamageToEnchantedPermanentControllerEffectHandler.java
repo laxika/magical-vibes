@@ -65,6 +65,7 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
         }
 
         UUID capturedControllerId = entry.getTargetId();
-        return gameData.playerIds.contains(capturedControllerId) ? capturedControllerId : null;
+        return capturedControllerId != null && gameData.playerIds.contains(capturedControllerId)
+                ? capturedControllerId : null;
     }
 }

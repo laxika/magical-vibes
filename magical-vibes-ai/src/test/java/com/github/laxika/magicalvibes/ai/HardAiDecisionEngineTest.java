@@ -897,6 +897,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 500);
@@ -921,6 +922,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 200);
@@ -953,6 +955,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
+        engine.setTimeBudgetMs(500);
 
         long start = System.currentTimeMillis();
         SimulationAction action = engine.search(gd, player1.getId(), 200);
@@ -2896,10 +2899,12 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 32));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // With one sorcery-speed option after combat, the evaluator chooses the spell
+        // directly instead of a rollout deciding whether to wait until after combat.
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
         gd.interaction.clearAwaitingInput();

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "DSC", collectorNumber = "251")
 @CardRegistration(set = "MKC", collectorNumber = "235")
+@CardRegistration(set = "C19", collectorNumber = "58")
 public class ScrollOfFate extends Card {
 
     public ScrollOfFate() {

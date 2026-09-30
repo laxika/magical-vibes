@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,50 +11,52 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagusOfTheArena.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({MagusOfTheArena.class, GiantDustwasp.class, MireBoa.class})
 class MagusOfTheArenaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Opponent chooses the second creature, which is tapped and fights the first")
     void opponentChoosesSecondCreatureAndItFights() {
-        Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheArena());
-        magus.setSummoningSick(false);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent magus = addCreatureReady(player1, new MagusOfTheArena());
+        Permanent fighter = addCreatureReady(player1, new MireBoa());
+        Permanent opposingDustwasp = addCreatureReady(player2, new GiantDustwasp());
+        Permanent opposingBoa = addCreatureReady(player2, new MireBoa());
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, fighter.getId());
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.validPermanentIds()).containsExactly(elves.getId());
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(opposingDustwasp.getId(), opposingBoa.getId());
 
-        harness.handlePermanentChosen(player2, elves.getId());
+        harness.handlePermanentChosen(player2, opposingDustwasp.getId());
         harness.passBothPriorities();
 
         assertThat(magus.isTapped()).isTrue();
-        assertThat(bears.isTapped()).isTrue();
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Mire Boa");
+        assertThat(opposingDustwasp.isTapped()).isTrue();
+        assertThat(opposingDustwasp.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingBoa.isTapped()).isFalse();
+        assertThat(opposingBoa.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Taps the remaining target but does not fight when one target is gone")
     void tapsRemainingTargetWhenOpponentTargetIsGone() {
-        Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheArena());
-        magus.setSummoningSick(false);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent magus = addCreatureReady(player1, new MagusOfTheArena());
+        Permanent fighter = addCreatureReady(player1, new GiantDustwasp());
+        Permanent boa = addCreatureReady(player2, new MireBoa());
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
-        harness.handlePermanentChosen(player2, elves.getId());
+        harness.activateAbility(player1, 0, null, fighter.getId());
+        harness.handlePermanentChosen(player2, boa.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
         assertThat(magus.isTapped()).isTrue();
-        assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(fighter.isTapped()).isTrue();
+        assertThat(fighter.getMarkedDamage()).isZero();
     }
 }

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GaeasAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoalitionRelic;
+import com.github.laxika.magicalvibes.cards.d.DakmorSalvage;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.r.RitesOfFlourishing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LinessaZephyrMage.class, GrizzlyBears.class, DarksteelRelic.class, GaeasAnthem.class, Forest.class})
+@CardUsed({LinessaZephyrMage.class, NessianCourser.class, CoalitionRelic.class,
+        RitesOfFlourishing.class, DakmorSalvage.class})
 class LinessaZephyrMageTest extends BaseCardTest {
 
     @Test
@@ -24,14 +25,14 @@ class LinessaZephyrMageTest extends BaseCardTest {
     void returnsCreatureWithManaValueX() {
         Permanent linessa = harness.addToBattlefieldAndReturn(player1, new LinessaZephyrMage());
         linessa.setSummoningSick(false);
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.BLUE, 4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.activateAbility(player1, 0, 2, bear.getId());
+        harness.activateAbility(player1, 0, 3, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Nessian Courser");
+        harness.assertInHand(player2, "Nessian Courser");
         assertThat(linessa.isTapped()).isTrue();
     }
 
@@ -40,39 +41,82 @@ class LinessaZephyrMageTest extends BaseCardTest {
     void rejectsCreatureWithDifferentManaValue() {
         Permanent linessa = harness.addToBattlefieldAndReturn(player1, new LinessaZephyrMage());
         linessa.setSummoningSick(false);
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, bear.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        harness.assertOnBattlefield(player2, "Nessian Courser");
+    }
+
+    @Test
+    @DisplayName("Tap ability rejects a noncreature with mana value X")
+    void rejectsNonCreatureWithMatchingManaValue() {
+        Permanent linessa = harness.addToBattlefieldAndReturn(player1, new LinessaZephyrMage());
+        linessa.setSummoningSick(false);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CoalitionRelic());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Coalition Relic");
+        assertThat(linessa.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Grandeur requires another Linessa in hand")
+    void grandeurRequiresAnotherLinessa() {
+        harness.addToBattlefield(player1, new LinessaZephyrMage());
+        harness.setHand(player1, List.of(new NessianCourser()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Nessian Courser");
     }
 
     @Test
     @DisplayName("Grandeur returns a creature, artifact, enchantment, and land controlled by the target player")
     void grandeurReturnsEachPermanentType() {
         harness.addToBattlefield(player1, new LinessaZephyrMage());
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent relic = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
-        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GaeasAnthem());
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CoalitionRelic());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new RitesOfFlourishing());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DakmorSalvage());
         harness.setHand(player1, List.of(new LinessaZephyrMage()));
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, bear.getId());
-        harness.handlePermanentChosen(player2, relic.getId());
-        harness.handlePermanentChosen(player2, anthem.getId());
-        harness.handlePermanentChosen(player2, forest.getId());
+        harness.handlePermanentChosen(player2, creature.getId());
+        harness.handlePermanentChosen(player2, artifact.getId());
+        harness.handlePermanentChosen(player2, enchantment.getId());
+        harness.handlePermanentChosen(player2, land.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .doesNotContain(bear, relic, anthem, forest);
-        harness.assertInHand(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Darksteel Relic");
-        harness.assertInHand(player2, "Gaea's Anthem");
-        harness.assertInHand(player2, "Forest");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Linessa, Zephyr Mage"));
+        harness.assertNotOnBattlefield(player2, "Nessian Courser");
+        harness.assertNotOnBattlefield(player2, "Coalition Relic");
+        harness.assertNotOnBattlefield(player2, "Rites of Flourishing");
+        harness.assertNotOnBattlefield(player2, "Dakmor Salvage");
+        harness.assertInHand(player2, "Nessian Courser");
+        harness.assertInHand(player2, "Coalition Relic");
+        harness.assertInHand(player2, "Rites of Flourishing");
+        harness.assertInHand(player2, "Dakmor Salvage");
+        harness.assertInGraveyard(player1, "Linessa, Zephyr Mage");
+    }
+
+    @Test
+    @DisplayName("Grandeur skips permanent types the target player does not control")
+    void grandeurSkipsMissingPermanentTypes() {
+        harness.addToBattlefield(player1, new LinessaZephyrMage());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
+        harness.setHand(player1, List.of(new LinessaZephyrMage()));
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Nessian Courser");
+        harness.assertInHand(player1, "Nessian Courser");
+        harness.assertInGraveyard(player1, "Linessa, Zephyr Mage");
     }
 }
