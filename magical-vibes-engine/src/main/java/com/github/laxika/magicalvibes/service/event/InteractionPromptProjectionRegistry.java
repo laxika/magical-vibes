@@ -74,6 +74,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
         register(PendingInteraction.PlanarDieChoice.class, this::projectPlanarDieChoice);
         register(PendingInteraction.SpellbookDraftChoice.class, this::projectSpellbookDraftChoice);
+        register(PendingInteraction.SpellbookDraftToExileChoice.class,
+                this::projectSpellbookDraftToExileChoice);
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
         register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
@@ -450,6 +452,13 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectSpellbookDraftChoice(
             GameData gameData, PendingInteraction.SpellbookDraftChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), 1,
+                "Choose a card from " + interaction.sourceCardName() + "'s spellbook.");
+    }
+
+    private InteractionPromptMessage projectSpellbookDraftToExileChoice(
+            GameData gameData, PendingInteraction.SpellbookDraftToExileChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.cards()), 1,
                 "Choose a card from " + interaction.sourceCardName() + "'s spellbook.");

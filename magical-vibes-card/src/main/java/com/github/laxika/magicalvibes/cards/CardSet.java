@@ -339,7 +339,8 @@ public enum CardSet {
     SET_PA1("PA1"),
     SET_CN2("CN2"),
     SET_PZA("PZA"),
-    SET_YDFT("YDFT");
+    SET_YDFT("YDFT"),
+    SET_YSOS("YSOS");
 
     @Getter
     private final String code;

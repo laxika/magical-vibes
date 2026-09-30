@@ -251,10 +251,21 @@ public class GameTestHarness {
 
     public void setHand(Player player, List<Card> cards) {
         gameData.playerHands.put(player.getId(), new ArrayList<>(cards));
+        markUnownedCardsAsStartingDeckCards(player, cards);
     }
 
     public void setLibrary(Player player, List<? extends Card> cards) {
         gameData.playerDecks.put(player.getId(), new ArrayList<>(cards));
+        markUnownedCardsAsStartingDeckCards(player, cards);
+    }
+
+    private void markUnownedCardsAsStartingDeckCards(Player player, List<? extends Card> cards) {
+        var startingDeckCardIds = gameData.startingDeckCardIds.computeIfAbsent(
+                player.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet());
+        cards.stream()
+                .filter(card -> card.getOwnerId() == null)
+                .map(Card::getId)
+                .forEach(startingDeckCardIds::add);
     }
 
     public void addMana(Player player, ManaColor color, int amount) {

@@ -2914,6 +2914,13 @@ public class SpellCastingService {
         if (repeatedAdditionalCosts == null) repeatedAdditionalCosts = List.of();
         if (additionalCostSacrificePermanentIds == null) additionalCostSacrificePermanentIds = List.of();
         if (targetIds == null) targetIds = List.of();
+        List<UUID> castTargetIds = targetId == null || targetIds.contains(targetId)
+                ? targetIds
+                : new ArrayList<>(targetIds);
+        if (targetId != null && !castTargetIds.contains(targetId)) {
+            castTargetIds = new ArrayList<>(castTargetIds);
+            castTargetIds.add(targetId);
+        }
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
         if (conspireCreatureIds == null) conspireCreatureIds = List.of();
         if (spliceHandCardIndices == null) spliceHandCardIndices = List.of();
@@ -3804,7 +3811,7 @@ public class SpellCastingService {
             if (manaCost.isPresent()) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                        gameData, playerId, card, new ManaCost(manaCost.get().manaCost()));
+                        gameData, playerId, card, new ManaCost(manaCost.get().manaCost()), castTargetIds);
                 if (cost.hasX() && effectiveXValue < 0) {
                     throw new IllegalStateException("X value cannot be negative");
                 }
@@ -3901,6 +3908,10 @@ public class SpellCastingService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             boolean manaValueAtLeastFiveOrX = card.getManaValue() >= 5
                     || card.getParsedManaCost() != null && card.getParsedManaCost().hasX();
+            ManaPool.XSpellOnlyManaState xSpellOnlyMana =
+                    card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                            && pool.getXSpellOnlyManaTotal() > 0
+                            ? pool.promoteXSpellOnlyMana() : null;
             ManaPool.ManaValueAtLeastFiveOrXSpellManaState manaValueAtLeastFiveOrXMana =
                     manaValueAtLeastFiveOrX && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0
                             ? pool.promoteManaValueAtLeastFiveOrXOnlyMana() : null;
@@ -3938,7 +3949,7 @@ public class SpellCastingService {
                         ? card.getManaCost() + perTargetManaCost + escalateManaSuffix : escalateManaSuffix;
                 if (!manaCostString.isEmpty()) {
                     ManaCost normalCost = castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(manaCostString));
+                            gameData, playerId, card, new ManaCost(manaCostString), castTargetIds);
                     boolean normalCostPayable = normalCost.hasX()
                             ? normalCost.canPayWithAdditionalGenericCost(
                                     pool, effectiveXValue, additionalCost - selectedDelveReduction)
@@ -3956,7 +3967,7 @@ public class SpellCastingService {
                 // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
                 if (card.getManaCost() != null) {
                     ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix), castTargetIds);
                     if (cost.hasX()) {
                         if (effectiveXValue < 0) {
                             throw new IllegalStateException("X value cannot be negative");
@@ -4001,7 +4012,7 @@ public class SpellCastingService {
                 // Validate creature-only mana restriction (e.g. Myr Superion)
                 if (card.isRequiresCreatureMana()) {
                     ManaCost creatureCost = castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix), castTargetIds);
                     int additionalCostForCreature = castingCostService.getCastCostModifier(
                             gameData, playerId, card, effectiveXValue, null, kicked, collectEvidenceCostPaid);
                     if (!creatureCost.canPayCreatureOnly(pool, additionalCostForCreature)) {
@@ -4010,7 +4021,7 @@ public class SpellCastingService {
                 }
                 if (card.isRequiresBasicLandMana()) {
                     ManaCost basicLandCost = castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix), castTargetIds);
                     int additionalCostForBasicLand = castingCostService.getCastCostModifier(
                             gameData, playerId, card, effectiveXValue);
                     if (!basicLandCost.canPayBasicLandOnly(pool, effectiveXValue, additionalCostForBasicLand)) {
@@ -4024,6 +4035,9 @@ public class SpellCastingService {
                 }
                 if (manaValueAtLeastFiveOrXMana != null) {
                     pool.restorePromotedManaValueAtLeastFiveOrXOnlyMana(manaValueAtLeastFiveOrXMana);
+                }
+                if (xSpellOnlyMana != null) {
+                    pool.restorePromotedXSpellOnlyMana(xSpellOnlyMana);
                 }
                 if (noncreatureMana != null) {
                     pool.restorePromotedNoncreatureSpellOnlyMana(noncreatureMana);
@@ -11470,6 +11484,9 @@ public class SpellCastingService {
         ManaPool.NonOwnedSpellOnlyManaState nonOwnedMana = card.getOwnerId() != null
                 && !playerId.equals(card.getOwnerId())
                 ? pool.promoteNonOwnedSpellOnlyMana() : null;
+        ManaPool.OutsideStartingDeckSpellOnlyManaState outsideStartingDeckMana =
+                !gameData.startingDeckCardIds.getOrDefault(playerId, Set.of()).contains(card.getId())
+                        ? pool.promoteOutsideStartingDeckSpellOnlyMana() : null;
         Set<CardSubtype> subtypeOrLegendaryCreatureContext = card.hasType(CardType.CREATURE)
                 ? (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 || card.hasKeyword(Keyword.CHANGELING))
@@ -11494,6 +11511,11 @@ public class SpellCastingService {
                         ? pool.promoteRoomSpellsOrUnlocksMana() : null;
         boolean manaValueAtLeastFiveOrX = card.getManaValue() >= 5
                 || card.getParsedManaCost() != null && card.getParsedManaCost().hasX();
+        ManaPool.XSpellOnlyManaState xSpellOnlyMana =
+                card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                        && pool.getXSpellOnlyManaTotal() > 0
+                        ? pool.promoteXSpellOnlyMana()
+                        : null;
         ManaPool.ManaValueAtLeastFiveOrXSpellManaState manaValueAtLeastFiveOrXMana =
                 manaValueAtLeastFiveOrX && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0
                         ? pool.promoteManaValueAtLeastFiveOrXOnlyMana()
@@ -11568,6 +11590,9 @@ public class SpellCastingService {
             if (manaValueAtLeastFiveOrXMana != null) {
                 pool.restorePromotedManaValueAtLeastFiveOrXOnlyMana(manaValueAtLeastFiveOrXMana);
             }
+            if (xSpellOnlyMana != null) {
+                pool.restorePromotedXSpellOnlyMana(xSpellOnlyMana);
+            }
             if (noncreatureMana != null) {
                 pool.restorePromotedNoncreatureSpellOnlyMana(noncreatureMana);
             }
@@ -11586,6 +11611,9 @@ public class SpellCastingService {
             }
             if (coloredSpellWithoutXMana != null) {
                 pool.restorePromotedColoredSpellWithoutXOnlyMana(coloredSpellWithoutXMana);
+            }
+            if (outsideStartingDeckMana != null) {
+                pool.restorePromotedOutsideStartingDeckSpellOnlyMana(outsideStartingDeckMana);
             }
             if (nonOwnedMana != null) {
                 pool.restorePromotedNonOwnedSpellOnlyMana(nonOwnedMana);
@@ -11641,7 +11669,9 @@ public class SpellCastingService {
         String extraMana = additionalManaCost != null ? additionalManaCost : "";
         String additionalCostsMana = extraMana + suffix;
         String totalMana = baseMana + additionalCostsMana;
-        if (totalMana.isEmpty()) return new SpellManaPayment(0, 0);
+        if (totalMana.isEmpty() && !gameData.perpetualManaCostIncreases.containsKey(card.getId())) {
+            return new SpellManaPayment(0, 0);
+        }
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
         int additionalCost = castingCostService.getCastCostModifier(
@@ -11652,8 +11682,8 @@ public class SpellCastingService {
         // is still paid (CR 702.124c — free cast waives the mana cost, not additional costs).
         if (!hasExileManaCostOverride
                 && castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, sourceZone)) {
-            if (additionalCostsMana.isEmpty()) return new SpellManaPayment(0, 0);
-            ManaCost additionalCosts = new ManaCost(additionalCostsMana);
+            ManaCost additionalCosts = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(additionalCostsMana));
             if (!additionalCosts.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay additional spell costs");
             }

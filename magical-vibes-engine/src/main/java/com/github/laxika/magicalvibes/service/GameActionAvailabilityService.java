@@ -535,6 +535,13 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteManaValueAtLeastFiveOrXOnlyMana();
         }
+        if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                && pool.getXSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteXSpellOnlyMana();
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && ctx.stackEmpty()
@@ -989,6 +996,14 @@ public class GameActionAvailabilityService {
                 paymentPool = new ManaPool(pool);
             }
             paymentPool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES);
+        }
+        if (!gameData.startingDeckCardIds.getOrDefault(playerId, Set.of()).contains(card.getId())
+                && paymentPool.getOutsideStartingDeckSpellOnlyManaTotal() > 0) {
+            if (paymentPool == pool) {
+                paymentPool = pool instanceof VirtualManaPool virtual
+                        ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            }
+            paymentPool.promoteOutsideStartingDeckSpellOnlyMana();
         }
         ManaPool initialPaymentPool = paymentPool;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.

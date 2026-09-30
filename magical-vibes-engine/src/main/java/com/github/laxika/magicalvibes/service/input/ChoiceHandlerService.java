@@ -345,6 +345,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.OutsideStartingDeckSpellManaColorChoice ctx) {
+            handleOutsideStartingDeckSpellManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.SpellOnlyManaColorChoice ctx) {
             handleSpellOnlyManaColorChosen(gameData, player, colorName, ctx);
             return;
@@ -1370,6 +1375,40 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
                 + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
                 + colorName.toLowerCase() + " mana (spells only)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleOutsideStartingDeckSpellManaColorChosen(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.OutsideStartingDeckSpellManaColorChoice ctx) {
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        if (ctx.anyColorCombination()) {
+            manaPool.add(manaColor, 1);
+            manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, 1);
+            int remaining = ctx.amount() - 1;
+            if (remaining > 0) {
+                ChoiceContext.OutsideStartingDeckSpellManaColorChoice nextContext =
+                        new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                                ctx.playerId(), ctx.fromCreature(), remaining, true);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextContext,
+                        List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                        "Choose a color of mana to add (spells not from your starting deck only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+        } else {
+            manaPool.add(manaColor, ctx.amount());
+            manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana (spells not from their starting deck only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

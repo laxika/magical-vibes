@@ -1663,7 +1663,7 @@ public class ConditionEvaluationService {
             case SourceIntensityThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null
-                        && gameData.getCardIntensity(source.getCard().getId()) >= c.threshold();
+                        && gameData.getCardIntensity(source.getCard()) >= c.threshold();
             }
             case SourceExiledCardsThreshold c ->
                     ctx.sourcePermanentId() != null

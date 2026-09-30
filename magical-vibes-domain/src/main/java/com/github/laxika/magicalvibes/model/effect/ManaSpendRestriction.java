@@ -72,6 +72,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells from a graveyard (Rootcoil Creeper). */
     GRAVEYARD_SPELL_ONLY,
 
+    /** Spendable only to cast spells that are not from the controller's starting deck. */
+    OUTSIDE_STARTING_DECK_SPELL_ONLY,
+
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
     CREATURE_OR_ENCHANTMENT_SPELL_ONLY,

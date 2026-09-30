@@ -163,6 +163,8 @@ public class Card {
     private Integer power;
     private Integer toughness;
     private Set<Keyword> keywords = Set.of();
+    /** Persistent starting intensity for digital cards that use the intensity mechanic. */
+    private int startingIntensity;
     private Integer loyalty;
     /** Printed defense for Battle permanents (enters with that many defense counters). */
     private Integer defense;
@@ -385,6 +387,7 @@ public class Card {
         this.power = source.power;
         this.toughness = source.toughness;
         this.keywords = source.keywords;
+        this.startingIntensity = source.startingIntensity;
         this.loyalty = source.loyalty;
         this.defense = source.defense;
         this.xColorRestrictions = source.xColorRestrictions == null
@@ -617,6 +620,13 @@ public class Card {
     public void setPower(Integer power) { assertMutable(); this.power = power; }
     public void setToughness(Integer toughness) { assertMutable(); this.toughness = toughness; }
     public void setKeywords(Set<Keyword> keywords) { assertMutable(); this.keywords = keywords; }
+    public void setStartingIntensity(int startingIntensity) {
+        assertMutable();
+        if (startingIntensity < 0) {
+            throw new IllegalArgumentException("Starting intensity cannot be negative");
+        }
+        this.startingIntensity = startingIntensity;
+    }
     public void setLoyalty(Integer loyalty) { assertMutable(); this.loyalty = loyalty; }
     public void setDefense(Integer defense) { assertMutable(); this.defense = defense; }
     /** Restrict X to a single color (Consume Spirit). */

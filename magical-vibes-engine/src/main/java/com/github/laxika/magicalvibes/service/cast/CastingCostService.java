@@ -665,8 +665,23 @@ public class CastingCostService {
     public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
                                                    ManaCost cost, CostModifierSnapshot snapshot,
                                                    boolean flashbackCost) {
-        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
-        ManaCost effectiveCost = cost;
+        return applyColoredManaCostReductions(gameData, playerId, card, cost, snapshot,
+                flashbackCost, List.of());
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, List<UUID> targetIds) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), false, targetIds);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, CostModifierSnapshot snapshot,
+                                                   boolean flashbackCost, List<UUID> targetIds) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, flashbackCost, targetIds);
+        ManaCost effectiveCost = cost.increasedBy(
+                gameData.perpetualManaCostIncreases.get(card.getId()));
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
