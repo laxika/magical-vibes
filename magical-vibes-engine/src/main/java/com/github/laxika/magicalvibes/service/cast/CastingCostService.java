@@ -135,6 +135,9 @@ public class CastingCostService {
      * player, pre-collected in a single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
+        public boolean containsEffect(Class<? extends CardEffect> effectType) {
+            return modifiers.stream().anyMatch(modifier -> effectType.isInstance(modifier.effect()));
+        }
     }
 
     public record AlternativeCostSelection(String manaCost, boolean castsWithWarp,
@@ -1277,6 +1280,21 @@ public class CastingCostService {
                                 .withSourcePermanentId(permanent.getId()))) {
                     reduction += evaluateActivatedAbilityCostReduction(
                             gameData, reducer, permanent, activatingPlayerId);
+                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
+                }
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (var floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof ActivatedAbilityCostReducingEffect reducer
+                        && java.util.Objects.equals(floating.affectedPlayerId(), activatingPlayerId)
+                        && reducer.appliesTo(ability, floating.sourcePermanentId(), targetId, targetIds)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        sourcePermanent, reducer.affectedPermanents(),
+                        FilterContext.of(gameData).withSourceControllerId(floating.controllerId())
+                                .withSourcePermanentId(floating.sourcePermanentId()))) {
+                    reduction += evaluateActivatedAbilityCostReduction(
+                            gameData, reducer, null, floating.controllerId());
                     preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
                 }
             }

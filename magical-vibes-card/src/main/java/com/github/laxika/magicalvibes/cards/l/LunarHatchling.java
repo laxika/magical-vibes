@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "141")
+@CardRegistration(set = "WHO", collectorNumber = "424")
+@CardRegistration(set = "WHO", collectorNumber = "1015")
+@CardRegistration(set = "WHO", collectorNumber = "746")
 public class LunarHatchling extends Card {
 
     public LunarHatchling() {

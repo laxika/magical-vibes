@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.b.BallLightning;
 import com.github.laxika.magicalvibes.cards.b.BrothersOfFire;
 import com.github.laxika.magicalvibes.cards.i.Inferno;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,10 +26,8 @@ class UncleIstvanTest extends BaseCardTest {
         istvan.setBlocking(true);
         istvan.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new BallLightning());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new BallLightning());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         resolveCombat(player2);
 
@@ -56,8 +55,7 @@ class UncleIstvanTest extends BaseCardTest {
     @Test
     @DisplayName("Damage from a noncreature source (a spell) is not prevented")
     void spellSourceDamageIsNotPrevented() {
-        Permanent istvan = addCreatureReady(player2, new UncleIstvan());
-        UUID istvanId = harness.getPermanentId(player2, "Uncle Istvan");
+        addCreatureReady(player2, new UncleIstvan());
         harness.setHand(player1, List.of(new Inferno()));
         harness.addMana(player1, ManaColor.RED, 7);
 
@@ -65,14 +63,13 @@ class UncleIstvanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Inferno is an instant (a noncreature source), so its damage is not prevented.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(istvanId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(istvan.getCard().getId()));
+        harness.assertNotOnBattlefield(player2, "Uncle Istvan");
+        harness.assertInGraveyard(player2, "Uncle Istvan");
     }
 
     @Test
-    void noncombatCreatureSourceDamageIsNotPreventedAfterSourceLeavesBattlefield() {
+    @DisplayName("Prevents noncombat creature damage after the source leaves the battlefield")
+    void noncombatCreatureSourceDamageIsPreventedAfterSourceLeavesBattlefield() {
         Permanent istvan = addCreatureReady(player2, new UncleIstvan());
         Permanent brothers = addCreatureReady(player1, new BrothersOfFire());
         UUID istvanId = istvan.getId();
@@ -83,8 +80,28 @@ class UncleIstvanTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(brothers);
         harness.passBothPriorities();
 
-        assertThat(istvan.getMarkedDamage()).isEqualTo(1);
+        assertThat(istvan.getMarkedDamage()).isZero();
         harness.assertLife(player1, 19);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(istvan);
+        harness.assertOnBattlefield(player2, "Uncle Istvan");
+    }
+
+    @Test
+    @CardUsed(TurnToFrog.class)
+    @DisplayName("Does not prevent creature damage after losing its ability")
+    void doesNotPreventDamageAfterLosingAbility() {
+        addCreatureReady(player2, new UncleIstvan());
+        Permanent brothers = addCreatureReady(player1, new BrothersOfFire());
+        UUID istvanId = harness.getPermanentId(player2, "Uncle Istvan");
+
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, istvanId);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, istvanId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(brothers);
+        harness.assertInGraveyard(player2, "Uncle Istvan");
     }
 }

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.e.ElementalResonance;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlaringFlameKin.class, Pacifism.class})
+@CardUsed({FlaringFlameKin.class, ElementalResonance.class})
 class FlaringFlameKinTest extends BaseCardTest {
 
     @Test
@@ -47,6 +48,25 @@ class FlaringFlameKinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The firebreathing boost lasts only until end of turn")
+    void firebreathingBoostExpiresAtEndOfTurn() {
+        Permanent kin = addKin();
+        addAura(kin);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(5);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Flaring Flame-Kin loses the conditional abilities when the Aura leaves")
     void losesEffectsWhenAuraLeaves() {
         Permanent kin = addKin();
@@ -63,13 +83,11 @@ class FlaringFlameKinTest extends BaseCardTest {
     }
 
     private Permanent addKin() {
-        Permanent kin = harness.addToBattlefieldAndReturn(player1, new FlaringFlameKin());
-        kin.setSummoningSick(false);
-        return kin;
+        return addCreatureReady(player1, new FlaringFlameKin());
     }
 
     private Permanent addAura(Permanent kin) {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ElementalResonance());
         aura.setAttachedTo(kin.getId());
         return aura;
     }

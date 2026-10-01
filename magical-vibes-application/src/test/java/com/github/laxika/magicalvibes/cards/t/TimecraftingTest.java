@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AncestralVision;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AeonChronicler;
+import com.github.laxika.magicalvibes.cards.a.AetherMembrane;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Timecrafting.class, AncestralVision.class, GrizzlyBears.class})
+@CardUsed({Timecrafting.class, AeonChronicler.class, AetherMembrane.class})
 class TimecraftingTest extends BaseCardTest {
 
     @Test
     void removesPaidXTimeCountersFromTargetPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AetherMembrane());
         target.setCounterCount(CounterType.TIME, 5);
 
         cast(0, 3, target.getId());
@@ -29,7 +29,7 @@ class TimecraftingTest extends BaseCardTest {
 
     @Test
     void addsPaidXTimeCountersToTargetPermanentWithTimeCounter() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AetherMembrane());
         target.setCounterCount(CounterType.TIME, 1);
 
         cast(1, 3, target.getId());
@@ -39,7 +39,7 @@ class TimecraftingTest extends BaseCardTest {
 
     @Test
     void adjustsPaidXTimeCountersOnSuspendedCard() {
-        AncestralVision target = suspendedCard(4);
+        AeonChronicler target = suspendedCard(4);
 
         cast(0, 2, target.getId());
 
@@ -47,15 +47,35 @@ class TimecraftingTest extends BaseCardTest {
     }
 
     @Test
+    void putsPaidXTimeCountersOnSuspendedCard() {
+        AeonChronicler target = suspendedCard(1);
+
+        cast(1, 3, target.getId());
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 4);
+    }
+
+    @Test
     void putModeCannotTargetPermanentWithoutTimeCounter() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AetherMembrane());
 
         assertThatThrownBy(() -> cast(1, 2, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private AncestralVision suspendedCard(int timeCounters) {
-        AncestralVision target = new AncestralVision();
+    @Test
+    void cannotTargetExiledCardWithNonSuspendTimeCounters() {
+        AetherMembrane target = new AetherMembrane();
+        harness.setExile(player2, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+
+        assertThatThrownBy(() -> cast(0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private AeonChronicler suspendedCard(int timeCounters) {
+        AeonChronicler target = new AeonChronicler();
         harness.setExile(player2, List.of(target));
         gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
         return target;

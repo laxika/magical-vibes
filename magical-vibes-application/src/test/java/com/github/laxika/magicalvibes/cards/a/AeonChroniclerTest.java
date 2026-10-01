@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,16 +12,43 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AeonChronicler.class, GrizzlyBears.class})
+@CardUsed(AeonChronicler.class)
 class AeonChroniclerTest extends BaseCardTest {
 
     @Test
     void powerAndToughnessEqualCardsInControllerHand() {
         Permanent chronicler = harness.addToBattlefieldAndReturn(player1, new AeonChronicler());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AeonChronicler(), new AeonChronicler(), new AeonChronicler()));
 
         assertThat(gqs.getEffectivePower(gd, chronicler)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, chronicler)).isEqualTo(3);
+    }
+
+    @Test
+    void powerAndToughnessUpdateWithControllerHandSize() {
+        Permanent chronicler = harness.addToBattlefieldAndReturn(player1, new AeonChronicler());
+
+        harness.setHand(player1, List.of(new AeonChronicler()));
+        assertThat(gqs.getEffectivePower(gd, chronicler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, chronicler)).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new AeonChronicler(), new AeonChronicler()));
+        assertThat(gqs.getEffectivePower(gd, chronicler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, chronicler)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, chronicler)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, chronicler)).isZero();
+    }
+
+    @Test
+    void powerAndToughnessIgnoreOpponentsHand() {
+        Permanent chronicler = harness.addToBattlefieldAndReturn(player1, new AeonChronicler());
+        harness.setHand(player1, List.of(new AeonChronicler()));
+        harness.setHand(player2, List.of(new AeonChronicler(), new AeonChronicler(), new AeonChronicler()));
+
+        assertThat(gqs.getEffectivePower(gd, chronicler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, chronicler)).isEqualTo(1);
     }
 
     @Test
@@ -53,8 +79,7 @@ class AeonChroniclerTest extends BaseCardTest {
         int handSizeBeforeUpkeep = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeUpkeep + 1);
@@ -74,6 +99,25 @@ class AeonChroniclerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeUpkeep + 1);
+    }
+
+    @Test
+    void lastTimeCounterCanCastCardWithoutPayingMana() {
+        AeonChronicler card = suspendCard(1);
+        harness.setHand(player1, List.of(new AeonChronicler()));
+        harness.setLibrary(player1, List.of(new AeonChronicler()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aeon Chronicler");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     private AeonChronicler suspendCard(int xValue) {

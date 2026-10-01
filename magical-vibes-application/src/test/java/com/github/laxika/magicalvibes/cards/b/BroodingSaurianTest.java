@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HuntedTroll;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BroodingSaurian.class, Forest.class, HuntedTroll.class})
 class BroodingSaurianTest extends BaseCardTest {
 
     @Test
@@ -40,9 +42,11 @@ class BroodingSaurianTest extends BaseCardTest {
     @DisplayName("Does not return token permanents")
     void doesNotReturnTokens() {
         harness.addToBattlefield(player1, new BroodingSaurian());
-        Card tokenCard = new Card();
-        tokenCard.setToken(true);
-        Permanent token = harness.addToBattlefieldAndReturn(player2, tokenCard);
+        harness.enterBattlefieldAndReturn(player1, new HuntedTroll());
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        Permanent token = findPermanents(player2, "Faerie").getFirst();
         gd.stolenCreatures.put(token.getId(), player2.getId());
         assertThat(token.getCard().isToken()).isTrue();
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)

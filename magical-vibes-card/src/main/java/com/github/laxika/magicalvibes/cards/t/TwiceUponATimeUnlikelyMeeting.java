@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "61")
+@CardRegistration(set = "WHO", collectorNumber = "666")
 public class TwiceUponATimeUnlikelyMeeting extends Card {
 
     public TwiceUponATimeUnlikelyMeeting() {

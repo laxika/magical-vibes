@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "6")
+@CardRegistration(set = "WHO", collectorNumber = "611")
 @CardRegistration(set = "WHO", collectorNumber = "347")
+@CardRegistration(set = "WHO", collectorNumber = "536")
+@CardRegistration(set = "WHO", collectorNumber = "938")
+@CardRegistration(set = "WHO", collectorNumber = "1127")
 public class SarahJaneSmith extends Card {
 
     public SarahJaneSmith() {

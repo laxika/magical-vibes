@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlizzardSpecter.class, GrizzlyBears.class})
+@CardUsed({BlizzardSpecter.class, BorealDruid.class})
 class BlizzardSpecterTest extends BaseCardTest {
 
     private static final String RETURN_MODE = "That player returns a permanent they control to its owner's hand.";
@@ -23,8 +21,8 @@ class BlizzardSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage mode returns a permanent controlled by the damaged player")
     void returnsDamagedPlayersPermanent() {
-        Permanent specter = addReadyCreature(player1, new BlizzardSpecter());
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent specter = addCreatureReady(player1, new BlizzardSpecter());
+        Permanent target = addCreatureReady(player2, new BorealDruid());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -38,15 +36,15 @@ class BlizzardSpecterTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, target.getId());
 
-        harness.assertInHand(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Boreal Druid");
+        harness.assertNotOnBattlefield(player2, "Boreal Druid");
     }
 
     @Test
     @DisplayName("Combat damage discard mode makes the damaged player discard")
     void discardsDamagedPlayersCard() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        Permanent specter = addReadyCreature(player1, new BlizzardSpecter());
+        harness.setHand(player2, List.of(new BorealDruid()));
+        Permanent specter = addCreatureReady(player1, new BlizzardSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -60,18 +58,33 @@ class BlizzardSpecterTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Boreal Druid");
+    }
+
+    @Test
+    @DisplayName("Return mode does nothing when the damaged player controls no permanents")
+    void returnModeDoesNothingWithoutPermanent() {
+        Permanent specter = addCreatureReady(player1, new BlizzardSpecter());
+        specter.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, RETURN_MODE);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Blizzard Specter");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("A blocked Blizzard Specter does not trigger")
     void blockedSpecterDoesNotTrigger() {
         GameData gameData = harness.getGameData();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BorealDruid()));
 
-        Permanent specter = addReadyCreature(player1, new BlizzardSpecter());
+        Permanent specter = addCreatureReady(player1, new BlizzardSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BorealDruid());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -79,12 +92,5 @@ class BlizzardSpecterTest extends BaseCardTest {
 
         assertThat(gameData.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gameData.interaction.activeInteraction()).isNull();
-    }
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

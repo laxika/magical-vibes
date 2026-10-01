@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "151")
+@CardRegistration(set = "WHO", collectorNumber = "756")
+@CardRegistration(set = "WHO", collectorNumber = "435")
+@CardRegistration(set = "WHO", collectorNumber = "1026")
 public class RegenerationsRestored extends Card {
 
     public RegenerationsRestored() {

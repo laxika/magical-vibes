@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.a.AccordersShield;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MuragandaPetroglyphs;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.v.VeilstoneAmulet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuietDisrepair.class, AccordersShield.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({QuietDisrepair.class, VeilstoneAmulet.class, MuragandaPetroglyphs.class, NessianCourser.class})
 class QuietDisrepairTest extends BaseCardTest {
 
     private static final String DESTROY_MODE = "Destroy enchanted permanent.";
@@ -22,7 +22,7 @@ class QuietDisrepairTest extends BaseCardTest {
 
     @Test
     void cannotEnchantCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
         harness.setHand(player1, List.of(new QuietDisrepair()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -34,7 +34,7 @@ class QuietDisrepairTest extends BaseCardTest {
 
     @Test
     void destroyModeDestroysEnchantedArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new VeilstoneAmulet());
         Permanent aura = castOn(artifact);
 
         advanceToUpkeep(player1);
@@ -48,7 +48,7 @@ class QuietDisrepairTest extends BaseCardTest {
 
     @Test
     void gainLifeModeLeavesEnchantedEnchantmentOnTheBattlefield() {
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new MuragandaPetroglyphs());
         Permanent aura = castOn(enchantment);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -57,6 +57,21 @@ class QuietDisrepairTest extends BaseCardTest {
         harness.handleListChoice(player1, GAIN_LIFE_MODE);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantment);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new MuragandaPetroglyphs());
+        Permanent aura = castOn(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantment);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
     }

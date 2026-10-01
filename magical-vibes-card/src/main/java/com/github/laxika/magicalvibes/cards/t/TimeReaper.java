@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "71")
+@CardRegistration(set = "WHO", collectorNumber = "374")
+@CardRegistration(set = "WHO", collectorNumber = "676")
+@CardRegistration(set = "WHO", collectorNumber = "965")
 public class TimeReaper extends Card {
 
     public TimeReaper() {

@@ -21,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "78")
+@CardRegistration(set = "WHO", collectorNumber = "380")
+@CardRegistration(set = "WHO", collectorNumber = "683")
+@CardRegistration(set = "WHO", collectorNumber = "971")
 public class DanLewis extends Card {
 
     public DanLewis() {

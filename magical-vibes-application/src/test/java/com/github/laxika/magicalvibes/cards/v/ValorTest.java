@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Valor.class, Plains.class, GrizzlyBears.class})
+@CardUsed({Valor.class, Plains.class, Squire.class})
 class ValorTest extends BaseCardTest {
 
     @Test
@@ -21,8 +21,8 @@ class ValorTest extends BaseCardTest {
     void grantsFirstStrikeWithPlainsControlled() {
         harness.setGraveyard(player1, List.of(new Valor()));
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Squire());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isFalse();
@@ -33,7 +33,7 @@ class ValorTest extends BaseCardTest {
     @DisplayName("Requires a Plains controlled by the graveyard card's controller")
     void requiresOwnPlains() {
         harness.setGraveyard(player1, List.of(new Valor()));
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
         harness.addToBattlefield(player2, new Plains());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
@@ -48,7 +48,7 @@ class ValorTest extends BaseCardTest {
     void doesNotFunctionFromBattlefield() {
         harness.addToBattlefield(player1, new Valor());
         harness.addToBattlefield(player1, new Plains());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -67,11 +67,26 @@ class ValorTest extends BaseCardTest {
     void stopsWhenValorLeavesGraveyard() {
         harness.setGraveyard(player1, List.of(new Valor()));
         harness.addToBattlefield(player1, new Plains());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Stops granting first strike when the required Plains leaves the battlefield")
+    void stopsWhenPlainsLeavesBattlefield() {
+        harness.setGraveyard(player1, List.of(new Valor()));
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Squire());
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, plains));
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
     }

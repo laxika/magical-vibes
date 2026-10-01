@@ -83,7 +83,9 @@ class ConcordWithTheKamiTest extends BaseCardTest {
         for (String mode : modes) {
             harness.handleListChoice(player1, mode);
         }
-        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
     }
 
     private void attach(com.github.laxika.magicalvibes.model.Card card, Permanent creature) {

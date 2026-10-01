@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AzoriusChancery;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,29 +13,43 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VigeanIntuition.class, Forest.class, GrizzlyBears.class, Island.class, Shock.class})
+@CardUsed({VigeanIntuition.class, AzoriusChancery.class, AzoriusFirstWing.class, VisionSkeins.class})
 class VigeanIntuitionTest extends BaseCardTest {
 
     @Test
     void putsCardsOfChosenTypeIntoHandAndTheRestIntoGraveyard() {
-        Card forest = new Forest();
-        Card island = new Island();
-        Card creature = new GrizzlyBears();
-        Card instant = new Shock();
-        harness.setLibrary(player1, List.of(forest, island, creature, instant));
-        harness.setHand(player1, List.of(new VigeanIntuition()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card firstLand = new AzoriusChancery();
+        Card secondLand = new AzoriusChancery();
+        Card creature = new AzoriusFirstWing();
+        Card instant = new VisionSkeins();
+        harness.setLibrary(player1, List.of(firstLand, secondLand, creature, instant));
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new VigeanIntuition(), "{3}{G}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, CardType.LAND.name());
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, island);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand, secondLand);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature, instant);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void processesTheAvailableCardsWhenLibraryHasFewerThanFour() {
+        Card land = new AzoriusChancery();
+        Card creature = new AzoriusFirstWing();
+        Card instant = new VisionSkeins();
+        harness.setLibrary(player1, List.of(land, creature, instant));
+
+        harness.castFromHand(player1, new VigeanIntuition(), "{3}{G}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, instant);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "156")
+@CardRegistration(set = "WHO", collectorNumber = "440")
+@CardRegistration(set = "WHO", collectorNumber = "553")
+@CardRegistration(set = "WHO", collectorNumber = "761")
+@CardRegistration(set = "WHO", collectorNumber = "1031")
+@CardRegistration(set = "WHO", collectorNumber = "1144")
 public class TheSecondDoctor extends Card {
 
     public TheSecondDoctor() {

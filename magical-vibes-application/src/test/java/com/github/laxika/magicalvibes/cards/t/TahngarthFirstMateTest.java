@@ -46,7 +46,10 @@ class TahngarthFirstMateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(tahngarth);
         assertThat(tahngarth.isAttacking()).isTrue();
@@ -54,6 +57,7 @@ class TahngarthFirstMateTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tahngarth);
     }
 

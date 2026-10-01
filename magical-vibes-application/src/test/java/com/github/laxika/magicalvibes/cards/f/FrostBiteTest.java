@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FrostBite.class, GarrukWildspeaker.class, HillGiant.class,
+        SnowCoveredForest.class, SnowCoveredIsland.class, SnowCoveredMountain.class})
 class FrostBiteTest extends BaseCardTest {
 
     @Test
@@ -25,7 +28,7 @@ class FrostBiteTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
         castFrostBite(harness.getPermanentId(player2, "Hill Giant"));
 
-        assertThat(permanentOf(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -50,7 +53,7 @@ class FrostBiteTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(permanentOf(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -91,10 +94,4 @@ class FrostBiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnowCoveredMountain());
     }
 
-    private Permanent permanentOf(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> name.equals(permanent.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
-    }
 }

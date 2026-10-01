@@ -23,6 +23,9 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "99")
 @CardRegistration(set = "EOS", collectorNumber = "144")
 @CardRegistration(set = "WHO", collectorNumber = "267")
+@CardRegistration(set = "WHO", collectorNumber = "486")
+@CardRegistration(set = "WHO", collectorNumber = "858")
+@CardRegistration(set = "WHO", collectorNumber = "1077")
 public class CreepingTarPit extends Card {
 
     public CreepingTarPit() {

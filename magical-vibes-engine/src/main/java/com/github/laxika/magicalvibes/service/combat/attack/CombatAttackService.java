@@ -82,7 +82,6 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
@@ -159,7 +158,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
@@ -1301,6 +1299,7 @@ public class CombatAttackService {
                                     attacker.getId()
                             );
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                            attackTrigger.setDefendingPlayerId(defendingPlayerId);
                             attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                             if (otherEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
                                 attackTrigger.setEventValue(attackingPower);
@@ -1603,6 +1602,12 @@ public class CombatAttackService {
                     normalizedEffect = onceEffect.wrapped();
                 }
                 if (normalizedEffect != effect) {
+                    if (normalizedEffect instanceof ConditionalEffect conditional
+                            && containsHasAttackerCondition(conditional.condition())
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
                     filteredEffects.add(normalizedEffect);
                 } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
                     boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -2396,6 +2401,7 @@ public class CombatAttackService {
                                 perm.getId()
                         );
                         anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                         anyAttackTrigger.setTriggeringPermanentControllerId(playerId);
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
@@ -3348,7 +3354,8 @@ public class CombatAttackService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (int idx : attackableIndices) {
-            if (!declaredAttackerIndices.contains(idx)) {
+            if (!declaredAttackerIndices.contains(idx)
+                    && !canOnlyAttackAlone(gameData, battlefield.get(idx))) {
                 throw new IllegalStateException(battlefield.get(idx).getCard().getName()
                         + " must also attack when another creature you control attacks");
             }

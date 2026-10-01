@@ -2225,6 +2225,16 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Each player chooses a mode for a face-up planar object. */
+    record EachPlayerChoosesPlanarModeChoice(
+            com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPlanarModeEffect effect,
+            UUID planarObjectId, List<UUID> remainingPlayerIds, String sourceName) implements ChoiceContext {
+
+        public EachPlayerChoosesPlanarModeChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
     /** Elrond of the White Council: the current player voted for fellowship or aid. */
     record ElrondOfTheWhiteCouncilChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
                                          List<UUID> fellowshipVoterIds, int aidVotes,

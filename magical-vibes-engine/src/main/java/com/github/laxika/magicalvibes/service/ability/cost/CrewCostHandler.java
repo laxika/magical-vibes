@@ -72,6 +72,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> !p.isTapped())
+                .filter(p -> !p.isTapRestrictedUnlessAttacking())
                 // "Other untapped creatures" excludes the source permanent.
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
@@ -84,6 +85,9 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (chosen.isTapped()) {
             throw new IllegalStateException("Creature is already tapped");
+        }
+        if (chosen.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Creature can't become tapped unless it is attacking");
         }
         if (sourcePermanentId != null && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("The source permanent cannot pay this cost");

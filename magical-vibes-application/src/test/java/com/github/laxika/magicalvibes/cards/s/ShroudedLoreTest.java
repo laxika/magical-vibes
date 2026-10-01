@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HollowhengeBeast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShroudedLore.class, GrizzlyBears.class, Divination.class})
+@CardUsed({ShroudedLore.class, HollowhengeBeast.class, Divination.class})
 class ShroudedLoreTest extends BaseCardTest {
 
     private void castShroudedLore(ShroudedLore spell, int extraBlackMana) {
@@ -37,7 +37,7 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent chooses from the caster's graveyard; declining the {B} returns that card")
     void declineReturnsTheChosenCard() {
-        Card chosenCard = new GrizzlyBears();
+        Card chosenCard = new HollowhengeBeast();
         Card otherCard = new Divination();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
@@ -59,7 +59,7 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B} repeats the process and excludes already-chosen cards")
     void payingRepeatsAndExcludesChosenCards() {
-        Card firstCard = new GrizzlyBears();
+        Card firstCard = new HollowhengeBeast();
         Card secondCard = new Divination();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(firstCard, secondCard));
@@ -83,7 +83,7 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("No payment is offered when the caster can't afford {B}")
     void noPaymentPromptWithoutMana() {
-        Card chosenCard = new GrizzlyBears();
+        Card chosenCard = new HollowhengeBeast();
         Card otherCard = new Divination();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
@@ -97,9 +97,48 @@ class ShroudedLoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying with no unchosen cards skips the choice and offers payment again")
+    void payingWithNoUnchosenCardsOffersPaymentAgain() {
+        Card onlyCard = new HollowhengeBeast();
+        ShroudedLore spell = new ShroudedLore();
+        harness.setGraveyard(player1, List.of(onlyCard));
+
+        castShroudedLore(spell, 2);
+
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.payOption("{B}"));
+
+        PendingInteraction.ColorChoice payment =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(payment).isNotNull();
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        assertThat(payment.options()).containsExactly(
+                ChoiceContext.ForgottenLorePaymentChoice.payOption("{B}"),
+                ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("An empty graveyard resolves without opening a choice")
+    void emptyGraveyardDoesNothing() {
+        ShroudedLore spell = new ShroudedLore();
+        harness.setGraveyard(player1, List.of());
+
+        castShroudedLore(spell, 1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
     @DisplayName("Shrouded Lore can't target its own controller")
     void cannotTargetSelf() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new HollowhengeBeast()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new ShroudedLore()));

@@ -16,8 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvoidFate.class, Boomerang.class, ChainLightning.class, GiantStrength.class,
-        KoboldsOfKherKeep.class, ManaDrain.class})
+@CardUsed({AlabasterPotion.class, AvoidFate.class, Boomerang.class, ChainLightning.class,
+        GiantStrength.class, KoboldsOfKherKeep.class, ManaDrain.class})
 class AvoidFateTest extends BaseCardTest {
 
     @Test
@@ -99,6 +99,23 @@ class AvoidFateTest extends BaseCardTest {
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, chainLightning.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target an instant that targets a player")
+    void cannotTargetInstantTargetingPlayer() {
+        AlabasterPotion alabasterPotion = new AlabasterPotion();
+        harness.setHand(player1, List.of(alabasterPotion));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.setHand(player2, List.of(new AvoidFate()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castModalInstantForX(player1, 0, 0, 0, player2.getId());
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, alabasterPotion.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

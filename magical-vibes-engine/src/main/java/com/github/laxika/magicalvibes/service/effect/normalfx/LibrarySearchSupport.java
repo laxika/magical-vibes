@@ -288,6 +288,10 @@ public class LibrarySearchSupport {
                     .filter(card -> card.hasAllCardNames() || name.equals(card.getName()))
                     .filter(card -> !queue.creatureOnly() || card.hasType(CardType.CREATURE))
                     .toList();
+            int topLimit = opponentSearchTopCardsLimit(gameData, playerId);
+            if (topLimit != Integer.MAX_VALUE) {
+                matches = restrictToTopCards(gameData, libraryOwnerId, matches, topLimit);
+            }
             if (matches.isEmpty()) {
                 continue;
             }

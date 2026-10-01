@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.u.Ulcerate;
+import com.github.laxika.magicalvibes.cards.r.RakdosPitDragon;
+import com.github.laxika.magicalvibes.cards.s.StalkingVengeance;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SlaughterhouseBouncer.class, GrizzlyBears.class, Ulcerate.class})
+@CardUsed({SlaughterhouseBouncer.class, RakdosPitDragon.class, StalkingVengeance.class,
+        WreckingBall.class})
 class SlaughterhouseBouncerTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
     void deathTriggerShrinksTargetWithEmptyHand() {
         harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SlaughterhouseBouncer());
-        Permanent target = addFourFourTarget();
+        Permanent target = addLargeTarget();
 
         destroyBouncer();
 
@@ -39,9 +41,9 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
     @Test
     @DisplayName("The death trigger does not trigger while its controller has cards in hand")
     void deathTriggerDoesNotTriggerWithCardsInHand() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WreckingBall()));
         harness.addToBattlefield(player1, new SlaughterhouseBouncer());
-        Permanent target = addFourFourTarget();
+        Permanent target = addLargeTarget();
 
         destroyBouncer();
 
@@ -55,11 +57,11 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
     void deathTriggerRechecksEmptyHandOnResolution() {
         harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SlaughterhouseBouncer());
-        Permanent target = addFourFourTarget();
+        Permanent target = addLargeTarget();
 
         destroyBouncer();
         harness.handlePermanentChosen(player1, target.getId());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WreckingBall()));
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
@@ -71,7 +73,7 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
     void debuffWearsOffAtEndOfTurn() {
         harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SlaughterhouseBouncer());
-        Permanent target = addFourFourTarget();
+        Permanent target = addLargeTarget();
 
         destroyBouncer();
         harness.handlePermanentChosen(player1, target.getId());
@@ -91,32 +93,40 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
     void debuffKillsThreeThreeCreature() {
         harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SlaughterhouseBouncer());
-        GrizzlyBears targetCard = new GrizzlyBears();
-        targetCard.setPower(3);
-        targetCard.setToughness(3);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RakdosPitDragon());
 
         destroyBouncer();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Rakdos Pit Dragon");
+        harness.assertInGraveyard(player2, "Rakdos Pit Dragon");
     }
 
-    private Permanent addFourFourTarget() {
-        GrizzlyBears targetCard = new GrizzlyBears();
-        targetCard.setPower(4);
-        targetCard.setToughness(4);
-        return harness.addToBattlefieldAndReturn(player2, targetCard);
+    @Test
+    @DisplayName("The death trigger does not use the stack when no creature can be targeted")
+    void deathTriggerDoesNotTriggerWithoutLegalTarget() {
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new SlaughterhouseBouncer());
+
+        destroyBouncer();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addLargeTarget() {
+        return harness.addToBattlefieldAndReturn(player2, new StalkingVengeance());
     }
 
     private void destroyBouncer() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Ulcerate()));
+        harness.setHand(player2, List.of(new WreckingBall()));
         harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         UUID bouncerId = harness.getPermanentId(player1, "Slaughterhouse Bouncer");
         harness.castInstant(player2, 0, bouncerId);

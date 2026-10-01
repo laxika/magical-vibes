@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class CrystalSeer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{U}",
-                List.of(new ReturnSelfToHandCost()),
+                List.of(ReturnToHandEffect.self()),
                 "{4}{U}: Return this creature to its owner's hand."
         ));
     }

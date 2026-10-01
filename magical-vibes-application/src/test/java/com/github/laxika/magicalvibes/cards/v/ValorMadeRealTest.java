@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,17 +22,14 @@ class ValorMadeRealTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature can block any number of attackers")
     void targetCreatureCanBlockAnyNumberOfAttackers() {
-        Permanent blocker = addCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         addAttacker();
         addAttacker();
         addAttacker();
 
         castValorMadeReal(blocker);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIndex, 0),
@@ -47,7 +43,7 @@ class ValorMadeRealTest extends BaseCardTest {
     @Test
     @DisplayName("Valor Made Real's effect expires at end of turn")
     void effectExpiresAtEndOfTurn() {
-        Permanent blocker = addCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         castValorMadeReal(blocker);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -73,19 +69,11 @@ class ValorMadeRealTest extends BaseCardTest {
     private void castValorMadeReal(Permanent target) {
         harness.setHand(player1, List.of(new ValorMadeReal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
-    }
-
-    private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addAttacker() {
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
     }

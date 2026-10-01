@@ -52,7 +52,7 @@ public class DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraE
 
         if (enchanted != null) {
             String sourceName = entry.getCard() == null ? "Shifting Shadow" : entry.getCard().getName();
-            destructionSupport.tryDestroyAndLog(gameData, enchanted, sourceName);
+            destructionSupport.tryDestroyAndLog(gameData, enchanted, sourceName, false, false);
         }
         if (enchantedControllerId == null) {
             return;

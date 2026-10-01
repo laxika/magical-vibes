@@ -48,6 +48,27 @@ class GiantDustwaspTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Declining the suspend cast leaves Giant Dustwasp exiled without time counters")
+    void decliningSuspendCastLeavesCardExiled() {
+        GiantDustwasp card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
+        harness.assertNotInGraveyard(player1, "Giant Dustwasp");
+    }
+
     private GiantDustwasp suspendCard() {
         GiantDustwasp card = new GiantDustwasp();
         harness.setHand(player1, List.of(card));

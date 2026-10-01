@@ -26,6 +26,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "136")
+@CardRegistration(set = "WHO", collectorNumber = "420")
+@CardRegistration(set = "WHO", collectorNumber = "741")
+@CardRegistration(set = "WHO", collectorNumber = "1011")
 public class JennyFlint extends Card {
 
     private static final String PARTNER_NAME = "Madame Vastra";

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.cards.l.LucentLiminid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,15 +11,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScourgeOfKherRidges.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({ScourgeOfKherRidges.class, FomoriNomad.class, LucentLiminid.class})
 class ScourgeOfKherRidgesTest extends BaseCardTest {
 
     @Test
     @DisplayName("The first ability damages creatures without flying")
     void firstAbilityDamagesOnlyNonFlyers() {
         Permanent scourge = addCreatureReady(player1, new ScourgeOfKherRidges());
-        Permanent groundCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent flyingCreature = addCreatureReady(player2, new SuntailHawk());
+        Permanent groundCreature = addCreatureReady(player2, new FomoriNomad());
+        Permanent flyingCreature = addCreatureReady(player2, new LucentLiminid());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -26,20 +27,22 @@ class ScourgeOfKherRidgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Scourge of Kher Ridges");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Fomori Nomad");
+        harness.assertOnBattlefield(player2, "Lucent Liminid");
         assertThat(scourge.getMarkedDamage()).isZero();
         assertThat(flyingCreature.getMarkedDamage()).isZero();
         assertThat(groundCreature.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("The second ability damages other creatures with flying")
     void secondAbilityDamagesOnlyOtherFlyers() {
         Permanent scourge = addCreatureReady(player1, new ScourgeOfKherRidges());
-        addCreatureReady(player1, new SuntailHawk());
-        addCreatureReady(player2, new SuntailHawk());
-        Permanent groundCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownFlyingCreature = addCreatureReady(player1, new LucentLiminid());
+        Permanent opposingFlyingCreature = addCreatureReady(player2, new LucentLiminid());
+        Permanent groundCreature = addCreatureReady(player2, new FomoriNomad());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
@@ -47,10 +50,14 @@ class ScourgeOfKherRidgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Scourge of Kher Ridges");
-        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Lucent Liminid");
+        harness.assertNotOnBattlefield(player2, "Lucent Liminid");
+        harness.assertOnBattlefield(player2, "Fomori Nomad");
         assertThat(scourge.getMarkedDamage()).isZero();
+        assertThat(ownFlyingCreature.getMarkedDamage()).isEqualTo(6);
+        assertThat(opposingFlyingCreature.getMarkedDamage()).isEqualTo(6);
         assertThat(groundCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

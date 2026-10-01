@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.SaltfieldRecluse;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiftmarkedKnight.class})
+@CardUsed({RiftmarkedKnight.class, SaltfieldRecluse.class})
 class RiftmarkedKnightTest extends BaseCardTest {
 
     @Test
@@ -26,11 +28,38 @@ class RiftmarkedKnightTest extends BaseCardTest {
     }
 
     @Test
+    void removingAnEarlierTimeCounterDoesNotCreateTheKnightToken() {
+        suspendCard();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Knight")))
+                .isEmpty();
+    }
+
+    @Test
     void knightHasProtectionFromBlack() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new RiftmarkedKnight());
 
         assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.BLACK)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    void flankingWeakensNonFlankingBlocker() {
+        Permanent knight = addCreatureReady(player1, new RiftmarkedKnight());
+        knight.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SaltfieldRecluse());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(blocker.getEffectivePower()).isZero();
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
     }
 
     @Test
@@ -46,6 +75,7 @@ class RiftmarkedKnightTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()

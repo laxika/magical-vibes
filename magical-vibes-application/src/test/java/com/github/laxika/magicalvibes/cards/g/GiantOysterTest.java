@@ -46,6 +46,26 @@ class GiantOysterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability fizzles if the target untaps before resolution")
+    void abilityFizzlesIfTargetUntapsBeforeResolution() {
+        Permanent oyster = addOyster(player1);
+        Permanent creature = addCreature(player2, true);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(oyster.isTapped()).isTrue();
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("The locked creature does not untap while Giant Oyster remains tapped")
     void lockedCreatureDoesNotUntap() {
         Permanent oyster = addOyster(player1);
@@ -224,9 +244,7 @@ class GiantOysterTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        Permanent land = new Permanent(new AysenAbbey());
-        gd.playerBattlefields.get(player.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player, new AysenAbbey());
     }
 
     /** Taps the Oyster to lock a tapped creature that player2 controls, and resolves the ability. */

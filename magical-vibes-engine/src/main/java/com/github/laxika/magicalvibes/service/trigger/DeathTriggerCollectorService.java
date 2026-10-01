@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturn
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
@@ -976,7 +975,9 @@ public class DeathTriggerCollectorService {
         }
         if (triggerEffect instanceof DyingCreatureCardAwareEffect aware
                 && sd.dyingCard() != null) {
-            triggerEffect = aware.boundToDyingCard(sd.dyingCard().getId());
+            UUID dyingCardId = sd.dyingPermanent() == null ? sd.dyingCard().getId()
+                    : sd.dyingPermanent().getOriginalCard().getId();
+            triggerEffect = aware.boundToDyingCard(dyingCardId);
         }
         if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
                 && sd.dyingPermanent() != null) {
@@ -996,7 +997,7 @@ public class DeathTriggerCollectorService {
             // A ConditionalEffect's intervening-"if" may be about the dying permanent itself
             // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
             // permanent has already left the battlefield — turn-scoped trackers are keyed by id.
-            UUID sourcePermanentId = triggerEffect instanceof ConditionalEffect ? match.permanent().getId() : null;
+            UUID sourcePermanentId = match.permanent().getId();
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sd.dyingCard(),
@@ -1575,7 +1576,7 @@ public class DeathTriggerCollectorService {
         Integer eventValue = effectReferencesEventValue(effect)
                 ? Math.max(0, epd.dyingCreaturePower())
                 : null;
-        addEnchantedPermanentDeathEntry(match, effect, eventValue);
+        addEnchantedPermanentDeathEntry(match, effect, eventValue, epd.dyingPermanentControllerId());
         return true;
     }
 
@@ -1585,6 +1586,11 @@ public class DeathTriggerCollectorService {
 
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
             Integer eventValue) {
+        addEnchantedPermanentDeathEntry(match, effect, eventValue, null);
+    }
+
+    private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
+            Integer eventValue, UUID enchantedControllerId) {
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
@@ -1601,6 +1607,10 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect))
         );
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        if (enchantedControllerId != null) {
+            entry.setTargetId(enchantedControllerId);
+            entry.setNonTargeting(true);
+        }
         // Only effects that read the death event's numeric payload (e.g. the dying creature's
         // last-known power) bake one; the field is a primitive, so a null would unbox and throw.
         if (eventValue != null) {
@@ -3017,7 +3027,7 @@ public class DeathTriggerCollectorService {
                     null, new Permanent(match.permanent())
             ));
         } else {
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
@@ -3025,7 +3035,20 @@ public class DeathTriggerCollectorService {
                     new ArrayList<>(List.of(effect)),
                     null,
                     match.permanent().getId()
-            ));
+            );
+            if (ctx instanceof TriggerContext.CreatureDeath death) {
+                if (death.dyingCard() != null) {
+                    entry.setTriggeringCardId(death.dyingCard().getId());
+                    if (death.dyingPermanentId() != null) {
+                        entry.rememberLastKnownPermanentCard(death.dyingPermanentId(), death.dyingCard());
+                    }
+                }
+                entry.setTriggeringPermanentId(death.dyingPermanentId());
+                entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
+                entry.setTriggeringPermanentPowerAtTrigger(death.dyingCreaturePower());
+                entry.setEventValue(death.dyingCreaturePower());
+            }
+            gameData.stack.add(entry);
         }
         logAnyCreatureDeath(match);
         return true;

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "24")
+@CardRegistration(set = "WHO", collectorNumber = "629")
 public class TheNightOfTheDoctor extends Card {
 
     public TheNightOfTheDoctor() {

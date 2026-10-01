@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "164")
+@CardRegistration(set = "WHO", collectorNumber = "449")
+@CardRegistration(set = "WHO", collectorNumber = "563")
+@CardRegistration(set = "WHO", collectorNumber = "769")
+@CardRegistration(set = "WHO", collectorNumber = "1040")
+@CardRegistration(set = "WHO", collectorNumber = "1154")
 public class TheTwelfthDoctor extends Card {
 
     public TheTwelfthDoctor() {

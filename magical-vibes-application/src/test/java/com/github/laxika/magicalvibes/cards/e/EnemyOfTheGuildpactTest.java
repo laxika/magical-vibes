@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,35 @@ class EnemyOfTheGuildpactTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFromSource(gd, enemy, multicoloredSource)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, enemy, monocoloredSource)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A multicolored creature cannot block Enemy of the Guildpact")
+    void multicoloredCreatureCannotBlock() {
+        Permanent enemy = addCreatureReady(player1, new EnemyOfTheGuildpact());
+        enemy.setAttacking(true);
+        addCreatureReady(player2, new WoollyThoctar());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Combat damage from a multicolored creature is prevented")
+    void multicoloredCombatDamageIsPrevented() {
+        Permanent attacker = addCreatureReady(player1, new WoollyThoctar());
+        attacker.setAttacking(true);
+        Permanent enemy = addCreatureReady(player2, new EnemyOfTheGuildpact());
+        enemy.setBlocking(true);
+        enemy.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(enemy.getMarkedDamage()).isZero();
     }
 
     @Test

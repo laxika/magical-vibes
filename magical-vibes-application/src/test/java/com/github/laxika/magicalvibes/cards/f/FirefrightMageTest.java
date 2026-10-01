@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FirefrightMage.class, GoblinPiker.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({FirefrightMage.class, CitanulWoodreaders.class, Ornithopter.class})
 class FirefrightMageTest extends BaseCardTest {
 
     @Test
     void activationRequiresDiscardingACard() {
-        Permanent mage = addReady(player1, new FirefrightMage());
-        Permanent target = addReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Ornithopter()));
+        Permanent mage = addCreatureReady(player1, new FirefrightMage());
+        Permanent target = addCreatureReady(player1, new CitanulWoodreaders());
+        harness.setHand(player1, List.of(new CitanulWoodreaders(), new Ornithopter()));
         addActivationMana();
 
         harness.activateAbility(player1, indexOf(player1, mage), null, target.getId());
@@ -36,10 +35,10 @@ class FirefrightMageTest extends BaseCardTest {
     @Test
     void nonArtifactNonRedCreatureCannotBlock() {
         Permanent target = activateOnTarget();
-        Permanent blocker = addReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CitanulWoodreaders());
 
         target.setAttacking(true);
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, target))
                 .isInstanceOf(IllegalStateException.class)
@@ -49,10 +48,10 @@ class FirefrightMageTest extends BaseCardTest {
     @Test
     void artifactCreatureCanBlock() {
         Permanent target = activateOnTarget();
-        Permanent blocker = addReady(player2, new Ornithopter());
+        Permanent blocker = addCreatureReady(player2, new Ornithopter());
 
         target.setAttacking(true);
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, target);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -61,10 +60,10 @@ class FirefrightMageTest extends BaseCardTest {
     @Test
     void redCreatureCanBlock() {
         Permanent target = activateOnTarget();
-        Permanent blocker = addReady(player2, new GoblinPiker());
+        Permanent blocker = addCreatureReady(player2, new FirefrightMage());
 
         target.setAttacking(true);
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, target);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -73,14 +72,14 @@ class FirefrightMageTest extends BaseCardTest {
     @Test
     void restrictionExpiresAtEndOfTurn() {
         Permanent target = activateOnTarget();
-        Permanent blocker = addReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CitanulWoodreaders());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         target.setAttacking(true);
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, target);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -88,8 +87,8 @@ class FirefrightMageTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutCardToDiscard() {
-        Permanent mage = addReady(player1, new FirefrightMage());
-        Permanent target = addReady(player1, new GrizzlyBears());
+        Permanent mage = addCreatureReady(player1, new FirefrightMage());
+        Permanent target = addCreatureReady(player1, new CitanulWoodreaders());
         harness.setHand(player1, List.of());
         addActivationMana();
 
@@ -97,10 +96,27 @@ class FirefrightMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canTargetCreatureOpponentControls() {
+        Permanent target = activateOnTarget(player2);
+        Permanent blocker = addCreatureReady(player1, new CitanulWoodreaders());
+
+        target.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> declareBlock(player1, blocker, player2, target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact creatures and/or red creatures");
+    }
+
     private Permanent activateOnTarget() {
-        Permanent mage = addReady(player1, new FirefrightMage());
-        Permanent target = addReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        return activateOnTarget(player1);
+    }
+
+    private Permanent activateOnTarget(Player targetController) {
+        Permanent mage = addCreatureReady(player1, new FirefrightMage());
+        Permanent target = addCreatureReady(targetController, new CitanulWoodreaders());
+        harness.setHand(player1, List.of(new CitanulWoodreaders()));
         addActivationMana();
 
         harness.activateAbility(player1, indexOf(player1, mage), null, target.getId());
@@ -110,28 +126,19 @@ class FirefrightMageTest extends BaseCardTest {
         return target;
     }
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private void declareBlock(Permanent blocker, Permanent attacker) {
+        declareBlock(player2, blocker, player1, attacker);
     }
 
-    private void declareBlock(Permanent blocker, Permanent attacker) {
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                indexOf(player2, blocker), indexOf(player1, attacker))));
+    private void declareBlock(Player defendingPlayer, Permanent blocker,
+                              Player attackingPlayer, Permanent attacker) {
+        gs.declareBlockers(gd, defendingPlayer, List.of(new BlockerAssignment(
+                indexOf(defendingPlayer, blocker), indexOf(attackingPlayer, attacker))));
     }
 
     private int indexOf(Player player, Permanent permanent) {

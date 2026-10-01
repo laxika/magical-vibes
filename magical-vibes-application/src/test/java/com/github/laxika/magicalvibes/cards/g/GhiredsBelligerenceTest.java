@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -29,11 +27,7 @@ class GhiredsBelligerenceTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castBelligerence(Map.of(bears.getId(), 2));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1,
-                gd.playerBattlefields.get(player1.getId()).stream()
-                        .filter(p -> p.getCard().getName().equals("Soldier Token"))
-                        .findFirst().orElseThrow().getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(p -> p.getCard().isToken()).hasSize(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -53,11 +47,7 @@ class GhiredsBelligerenceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1,
-                gd.playerBattlefields.get(player1.getId()).stream()
-                        .filter(p -> p.getCard().getName().equals("Soldier Token"))
-                        .findFirst().orElseThrow().getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(p -> p.getCard().isToken()).hasSize(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");

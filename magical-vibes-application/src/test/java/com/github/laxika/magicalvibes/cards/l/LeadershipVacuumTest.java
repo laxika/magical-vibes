@@ -61,7 +61,7 @@ class LeadershipVacuumTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessageContaining("only target players");
     }
 
     private Card commander(com.github.laxika.magicalvibes.model.Player owner, String name) {

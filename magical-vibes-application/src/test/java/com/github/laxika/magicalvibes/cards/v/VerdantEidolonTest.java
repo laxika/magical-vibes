@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VerdantEidolon.class, AdelizTheCinderWind.class, GrizzlyBears.class})
+@CardUsed({VerdantEidolon.class, AzoriusFirstWing.class, SimicInitiate.class, WreckingBall.class})
 class VerdantEidolonTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,7 @@ class VerdantEidolonTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.assertInGraveyard(player1, "Verdant Eidolon");
     }
 
@@ -37,12 +39,8 @@ class VerdantEidolonTest extends BaseCardTest {
     void multicoloredSpellReturnsEidolonToHand() {
         VerdantEidolon eidolon = new VerdantEidolon();
         harness.setGraveyard(player1, List.of(eidolon));
-        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -53,16 +51,48 @@ class VerdantEidolonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the multicolored-spell trigger leaves Verdant Eidolon in the graveyard")
+    void decliningReturnLeavesEidolonInGraveyard() {
+        VerdantEidolon eidolon = new VerdantEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(eidolon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
     @DisplayName("A monocolored spell does not trigger Verdant Eidolon's graveyard ability")
     void monocoloredSpellDoesNotTriggerReturn() {
         VerdantEidolon eidolon = new VerdantEidolon();
         harness.setGraveyard(player1, List.of(eidolon));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SimicInitiate(), "{G}");
 
         assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
+    @DisplayName("A multicolored spell cast by an opponent does not trigger Verdant Eidolon")
+    void opponentsMulticoloredSpellDoesNotTriggerReturn() {
+        VerdantEidolon eidolon = new VerdantEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        harness.addToBattlefield(player1, new SimicInitiate());
+        harness.setHand(player2, List.of(new WreckingBall()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Simic Initiate"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+        harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
     }
 }

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
+import com.github.laxika.magicalvibes.cards.s.SurgingAether;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,29 +17,27 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrovikanWhispers.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({KrovikanWhispers.class, BorealDruid.class, MishrasBauble.class, SurgingAether.class})
 class KrovikanWhispersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Krovikan Whispers steals the enchanted creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BorealDruid());
 
         harness.setHand(player1, List.of(new KrovikanWhispers()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(creature.getId()));
+        harness.assertOnBattlefield(player1, "Boreal Druid");
+        harness.assertNotOnBattlefield(player2, "Boreal Druid");
     }
 
     @Test
     @DisplayName("Cumulative upkeep can be paid with black mana")
     void cumulativeUpkeepAcceptsBlackMana() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BorealDruid());
         harness.setHand(player1, List.of(new KrovikanWhispers()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castEnchantment(player1, 0, creature.getId());
@@ -62,7 +61,7 @@ class KrovikanWhispersTest extends BaseCardTest {
     @Test
     @DisplayName("Declining cumulative upkeep sacrifices the Aura and loses life for its age counters")
     void decliningUpkeepSacrificesAndLosesLife() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BorealDruid());
         harness.setHand(player1, List.of(new KrovikanWhispers()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castEnchantment(player1, 0, creature.getId());
@@ -85,9 +84,35 @@ class KrovikanWhispersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returning the Aura to hand does not cause its graveyard ability")
+    void returningAuraToHandDoesNotLoseLife() {
+        Permanent creature = addCreatureReady(player2, new BorealDruid());
+        harness.setHand(player1, List.of(new KrovikanWhispers()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent whispers = findPermanent(player1, "Krovikan Whispers");
+        whispers.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(new SurgingAether()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, whispers.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Krovikan Whispers");
+        harness.assertInHand(player1, "Krovikan Whispers");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Krovikan Whispers cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MishrasBauble());
         harness.setHand(player1, List.of(new KrovikanWhispers()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

@@ -16,9 +16,7 @@ class DryadArborTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Dryad Arbor produces one green mana")
     void tappingProducesGreenMana() {
-        Permanent perm = new Permanent(new DryadArbor());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
+        Permanent perm = addCreatureReady(player1, new DryadArbor());
 
         gs.tapPermanent(gd, player1, 0);
 
@@ -29,9 +27,8 @@ class DryadArborTest extends BaseCardTest {
     @Test
     @DisplayName("Summoning-sick Dryad Arbor cannot tap for mana")
     void summoningSickCannotTap() {
-        Permanent perm = new Permanent(new DryadArbor());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
         perm.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
 
         assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 0))
                 .isInstanceOf(IllegalStateException.class);

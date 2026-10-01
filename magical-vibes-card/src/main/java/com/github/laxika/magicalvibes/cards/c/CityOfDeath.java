@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "99")
+@CardRegistration(set = "WHO", collectorNumber = "704")
 public class CityOfDeath extends Card {
 
     private static final PermanentPredicate TARGET = new PermanentAllOfPredicate(List.of(

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
-import com.github.laxika.magicalvibes.cards.r.RazortoothRats;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FireWhip.class, BenalishInfantry.class, RazortoothRats.class})
+@CardUsed({FireWhip.class, Squire.class, FlyingMen.class})
 class FireWhipTest extends BaseCardTest {
 
     @Test
@@ -22,16 +21,16 @@ class FireWhipTest extends BaseCardTest {
     void grantedAbilityDealsDamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        assertThat(infantry.isTapped()).isTrue();
+        assertThat(squire.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Fire Whip");
     }
 
@@ -40,10 +39,10 @@ class FireWhipTest extends BaseCardTest {
     void sacrificeAbilityDealsDamage() {
         harness.setLife(player2, 20);
 
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -51,33 +50,33 @@ class FireWhipTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         harness.assertNotOnBattlefield(player1, "Fire Whip");
         harness.assertInGraveyard(player1, "Fire Whip");
-        assertThat(infantry.isTapped()).isFalse();
+        assertThat(squire.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Granted ability kills a 1-toughness creature")
     void grantedAbilityKillsOneToughnessCreature() {
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
-        addCreatureReady(player2, new RazortoothRats());
-        Permanent rats = findPermanent(player2, "Razortooth Rats");
+        addCreatureReady(player2, new FlyingMen());
+        Permanent flyingMen = findPermanent(player2, "Flying Men");
 
-        harness.activateAbility(player1, 0, null, rats.getId());
+        harness.activateAbility(player1, 0, null, flyingMen.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Razortooth Rats");
+        harness.assertNotOnBattlefield(player2, "Flying Men");
     }
 
     @Test
     @DisplayName("Creature loses the granted ability when Fire Whip leaves the battlefield")
     void abilityGoesAwayWhenAuraRemoved() {
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -89,55 +88,71 @@ class FireWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Fire Whip can only enchant a creature you control")
     void cannotEnchantOpponentCreature() {
-        Permanent enemyInfantry = harness.addToBattlefieldAndReturn(player2, new BenalishInfantry());
+        Permanent enemySquire = harness.addToBattlefieldAndReturn(player2, new Squire());
 
         harness.setHand(player1, List.of(new FireWhip()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enemyInfantry.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enemySquire.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Fire Whip can enchant a creature you control")
     void canEnchantOwnCreature() {
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         harness.setHand(player1, List.of(new FireWhip()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castEnchantment(player1, 0, infantry.getId());
+        harness.castEnchantment(player1, 0, squire.getId());
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Fire Whip");
-        assertThat(aura.getAttachedTo()).isEqualTo(infantry.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(squire.getId());
     }
 
     @Test
     @DisplayName("Sacrificing Fire Whip can deal 1 damage to a creature")
     void sacrificeAbilityDealsDamageToCreature() {
-        Permanent infantry = addCreatureReady(player1, new BenalishInfantry());
+        Permanent squire = addCreatureReady(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
-        Permanent rats = addCreatureReady(player2, new RazortoothRats());
+        Permanent flyingMen = addCreatureReady(player2, new FlyingMen());
 
-        harness.activateAbility(player1, 1, null, rats.getId());
+        harness.activateAbility(player1, 1, null, flyingMen.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Razortooth Rats");
+        harness.assertNotOnBattlefield(player2, "Flying Men");
         harness.assertInGraveyard(player1, "Fire Whip");
     }
 
     @Test
     @DisplayName("A summoning-sick creature cannot use Fire Whip's granted tap ability")
     void summoningSickCreatureCannotUseGrantedAbility() {
-        Permanent infantry = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new Squire());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
-        aura.setAttachedTo(infantry.getId());
+        aura.setAttachedTo(squire.getId());
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped creature cannot activate Fire Whip's granted ability again")
+    void tappedCreatureCannotActivateGrantedAbilityAgain() {
+        Permanent squire = addCreatureReady(player1, new Squire());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(squire.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(squire.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

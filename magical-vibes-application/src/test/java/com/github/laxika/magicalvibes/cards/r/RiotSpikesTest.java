@@ -33,6 +33,19 @@ class RiotSpikesTest extends BaseCardTest {
     }
 
     @Test
+    void canEnchantCreatureControlledByOpponent() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RiotSpikes()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
     void boostEndsWhenAuraLeavesBattlefield() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new RiotSpikes());

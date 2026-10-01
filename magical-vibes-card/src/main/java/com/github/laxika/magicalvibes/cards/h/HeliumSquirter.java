@@ -34,7 +34,7 @@ public class HeliumSquirter extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
                 "{1}: Target creature with a +1/+1 counter on it gains flying until end of turn.",

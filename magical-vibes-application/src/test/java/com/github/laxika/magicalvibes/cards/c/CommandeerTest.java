@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Commandeer.class, Boomerang.class, Counterspell.class, GrizzlyBears.class,
+        LavaAxe.class, LeoninScimitar.class})
 class CommandeerTest extends BaseCardTest {
 
     @Test
@@ -65,6 +68,49 @@ class CommandeerTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
         harness.assertInGraveyard(player1, "Lava Axe");
         harness.assertInGraveyard(player2, "Commandeer");
+    }
+
+    @Test
+    @DisplayName("May keep the spell's original targets")
+    void mayKeepOriginalTargets() {
+        LavaAxe lavaAxe = new LavaAxe();
+        harness.setHand(player1, List.of(lavaAxe));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.setHand(player2, List.of(new Commandeer(), new Counterspell(), new Boomerang()));
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstantWithAlternateExileFromHand(player2, 0, lavaAxe.getId(), List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 5);
+        harness.assertInGraveyard(player1, "Lava Axe");
+        harness.assertInGraveyard(player2, "Commandeer");
+    }
+
+    @Test
+    @DisplayName("Alternate cost requires two blue cards")
+    void alternateCostRequiresBlueCards() {
+        LeoninScimitar scimitar = new LeoninScimitar();
+        harness.setHand(player1, List.of(scimitar));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.setHand(player2, List.of(new Commandeer(), new GrizzlyBears(), new Counterspell()));
+        harness.castArtifact(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player2, 0, scimitar.getId(), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blue");
     }
 
     @Test

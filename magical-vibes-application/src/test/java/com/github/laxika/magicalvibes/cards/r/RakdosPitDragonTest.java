@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RakdosPitDragon.class, GrizzlyBears.class})
+@CardUsed({RakdosPitDragon.class, Ragamuffyn.class})
 class RakdosPitDragonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains flying until end of turn")
     void gainsFlyingUntilEndOfTurn() {
-        Permanent dragon = addReadyDragon();
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -38,7 +37,7 @@ class RakdosPitDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+0 until end of turn")
     void getsPlusOnePowerUntilEndOfTurn() {
-        Permanent dragon = addReadyDragon();
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
         int basePower = gqs.getEffectivePower(gd, dragon);
         int baseToughness = gqs.getEffectiveToughness(gd, dragon);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -51,10 +50,28 @@ class RakdosPitDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The +1/+0 bonus expires at the end of the turn")
+    void pumpBonusExpiresAtEndOfTurn() {
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
+        int basePower = gqs.getEffectivePower(gd, dragon);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower + 1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower);
+    }
+
+    @Test
     @DisplayName("Has double strike with an empty hand")
     void hasDoubleStrikeWithEmptyHand() {
         harness.setHand(player1, List.of());
-        Permanent dragon = addReadyDragon();
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -63,18 +80,24 @@ class RakdosPitDragonTest extends BaseCardTest {
     @DisplayName("Loses double strike when a card enters its controller's hand")
     void losesDoubleStrikeWhenHandGrows() {
         harness.setHand(player1, List.of());
-        Permanent dragon = addReadyDragon();
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isTrue();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Ragamuffyn()));
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    private Permanent addReadyDragon() {
-        Permanent dragon = new Permanent(new RakdosPitDragon());
-        dragon.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(dragon);
-        return dragon;
+    @Test
+    @DisplayName("Regains double strike when its controller's hand becomes empty")
+    void regainsDoubleStrikeWhenHandEmpties() {
+        harness.setHand(player1, List.of(new Ragamuffyn()));
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.setHand(player1, List.of());
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 }

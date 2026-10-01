@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.p.PiracyCharm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrainGorgers.class, GrizzlyBears.class, RavensCrime.class})
+@CardUsed({BrainGorgers.class, BloodKnight.class, PiracyCharm.class})
 class BrainGorgersTest extends BaseCardTest {
 
     @Test
@@ -24,8 +23,7 @@ class BrainGorgersTest extends BaseCardTest {
     void resolvesWhenNoCreatureIsSacrificed() {
         castBrainGorgers(player1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Brain Gorgers");
     }
@@ -33,7 +31,7 @@ class BrainGorgersTest extends BaseCardTest {
     @Test
     @DisplayName("Any opponent may sacrifice a creature to counter it")
     void opponentMaySacrificeToCounterIt() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
         castBrainGorgers(player1);
 
         harness.passBothPriorities();
@@ -41,7 +39,7 @@ class BrainGorgersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Blood Knight");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(creature.getId()));
     }
@@ -49,8 +47,8 @@ class BrainGorgersTest extends BaseCardTest {
     @Test
     @DisplayName("The caster may sacrifice a creature and remaining players still get a choice")
     void casterMaySacrificeAndRemainingPlayersGetChoice() {
-        Permanent casterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent casterCreature = harness.addToBattlefieldAndReturn(player1, new BloodKnight());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
         castBrainGorgers(player1);
 
         harness.passBothPriorities();
@@ -60,7 +58,7 @@ class BrainGorgersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Blood Knight");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(casterCreature.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -68,10 +66,31 @@ class BrainGorgersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A later player may sacrifice when the first player declines")
+    void laterPlayerMaySacrificeAfterFirstPlayerDeclines() {
+        Permanent casterCreature = harness.addToBattlefieldAndReturn(player1, new BloodKnight());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
+        castBrainGorgers(player1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player1, "Brain Gorgers");
+        harness.assertInGraveyard(player2, "Blood Knight");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(casterCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(opponentCreature.getId()));
+    }
+
+    @Test
     @DisplayName("A player chooses which creature to sacrifice when they control several")
     void choosesCreatureWhenSeveralAreControlled() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
         castBrainGorgers(player1);
 
         harness.passBothPriorities();
@@ -90,17 +109,27 @@ class BrainGorgersTest extends BaseCardTest {
     @Test
     @DisplayName("Madness casting Brain Gorgers still creates its cast trigger")
     void madnessCastsBrainGorgers() {
-        BrainGorgers brainGorgers = discardViaRavensCrime();
+        BrainGorgers brainGorgers = discardViaPiracyCharm();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(brainGorgers.getId()));
+    }
+
+    @Test
+    @DisplayName("Declining madness puts Brain Gorgers into its owner's graveyard")
+    void decliningMadnessPutsBrainGorgersIntoGraveyard() {
+        discardViaPiracyCharm();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Brain Gorgers");
     }
 
     private void castBrainGorgers(Player player) {
@@ -110,15 +139,15 @@ class BrainGorgersTest extends BaseCardTest {
         harness.castCreature(player, 0);
     }
 
-    private BrainGorgers discardViaRavensCrime() {
+    private BrainGorgers discardViaPiracyCharm() {
         BrainGorgers brainGorgers = new BrainGorgers();
         harness.setHand(player1, List.of(brainGorgers));
-        harness.setHand(player2, List.of(new RavensCrime()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new PiracyCharm()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
+        harness.castModalInstant(player2, 0, 2, List.of(player1.getId()));
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         return brainGorgers;

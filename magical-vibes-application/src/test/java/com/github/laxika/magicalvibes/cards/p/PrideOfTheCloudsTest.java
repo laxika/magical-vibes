@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,16 +18,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrideOfTheClouds.class, SuntailHawk.class, GrizzlyBears.class})
+@CardUsed({PrideOfTheClouds.class, AzoriusFirstWing.class, GuardianOfTheGuildpact.class})
 class PrideOfTheCloudsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets +1/+1 for each other creature with flying")
     void boostsForOtherFlyingCreatures() {
         Permanent pride = harness.addToBattlefieldAndReturn(player1, new PrideOfTheClouds());
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player2, new SuntailHawk());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AzoriusFirstWing());
+        harness.addToBattlefield(player2, new AzoriusFirstWing());
+        harness.addToBattlefield(player1, new GuardianOfTheGuildpact());
 
         assertThat(gqs.getEffectivePower(gd, pride)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, pride)).isEqualTo(3);
@@ -49,10 +49,7 @@ class PrideOfTheCloudsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(pride);
         harness.passBothPriorities();
 
-        Permanent bird = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent bird = findPermanent(player1, "Bird");
         assertThat(bird.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
         assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);

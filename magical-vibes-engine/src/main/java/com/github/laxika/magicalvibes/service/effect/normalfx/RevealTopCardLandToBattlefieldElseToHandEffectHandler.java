@@ -50,6 +50,7 @@ public class RevealTopCardLandToBattlefieldElseToHandEffectHandler implements No
         if (topCard.hasType(CardType.LAND)) {
             Permanent perm = new Permanent(topCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(topCard, playerName));
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",

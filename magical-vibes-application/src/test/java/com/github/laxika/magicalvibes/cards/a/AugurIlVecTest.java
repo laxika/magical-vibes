@@ -1,14 +1,21 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.s.SpiritEnDal;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AugurIlVec.class)
+@CardUsed({AugurIlVec.class, BlindPhantasm.class, SpiritEnDal.class})
 class AugurIlVecTest extends BaseCardTest {
 
     @Test
@@ -53,5 +60,48 @@ class AugurIlVecTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("Shadow prevents a non-shadow creature from blocking it")
+    void shadowCreatureCannotBeBlockedByNonShadowCreature() {
+        addCreatureReady(player1, new AugurIlVec());
+        Permanent blocker = addCreatureReady(player2, new BlindPhantasm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> declareBlock(blocker, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Shadow prevents it from blocking a non-shadow creature")
+    void shadowCreatureCannotBlockNonShadowCreature() {
+        Permanent attacker = addCreatureReady(player1, new BlindPhantasm());
+        Permanent blocker = addCreatureReady(player2, new AugurIlVec());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> declareBlock(blocker, gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Shadow creatures can block each other")
+    void shadowCreatureCanBeBlockedByAnotherShadowCreature() {
+        Permanent attacker = addCreatureReady(player1, new SpiritEnDal());
+        Permanent blocker = addCreatureReady(player2, new AugurIlVec());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        declareBlock(blocker, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    private void declareBlock(Permanent blocker, int attackerIndex) {
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
     }
 }

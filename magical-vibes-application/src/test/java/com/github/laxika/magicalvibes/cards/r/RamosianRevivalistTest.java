@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.DefiantFalcon;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.a.AugurIlVec;
+import com.github.laxika.magicalvibes.cards.j.JudgeUnworthy;
 import com.github.laxika.magicalvibes.cards.j.JhovallQueen;
+import com.github.laxika.magicalvibes.cards.s.SamiteCenserBearer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,9 +14,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RamosianRevivalist.class, DefiantFalcon.class, GrizzlyBears.class, HolyDay.class,
+@CardUsed({RamosianRevivalist.class, SamiteCenserBearer.class, AugurIlVec.class, JudgeUnworthy.class,
         JhovallQueen.class})
 class RamosianRevivalistTest extends BaseCardTest {
 
@@ -24,22 +25,23 @@ class RamosianRevivalistTest extends BaseCardTest {
     @DisplayName("Returns a target Rebel permanent with mana value 5 or less from the graveyard")
     void returnsTargetRebelPermanent() {
         int revivalistIndex = addReadyRevivalist();
-        Card target = new DefiantFalcon();
+        Card target = new SamiteCenserBearer();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbilityWithGraveyardTargets(player1, revivalistIndex, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Defiant Falcon");
-        harness.assertNotInGraveyard(player1, "Defiant Falcon");
+        harness.assertOnBattlefield(player1, "Samite Censer-Bearer");
+        harness.assertNotInGraveyard(player1, "Samite Censer-Bearer");
+        assertThat(findPermanent(player1, "Ramosian Revivalist").isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a non-Rebel card")
     void rejectsNonRebelCard() {
         int revivalistIndex = addReadyRevivalist();
-        Card target = new GrizzlyBears();
+        Card target = new AugurIlVec();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -52,13 +54,54 @@ class RamosianRevivalistTest extends BaseCardTest {
     @DisplayName("Cannot target a non-permanent card")
     void rejectsNonPermanentCard() {
         int revivalistIndex = addReadyRevivalist();
-        Card target = new HolyDay();
+        Card target = new JudgeUnworthy();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, revivalistIndex, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a Rebel permanent in an opponent's graveyard")
+    void rejectsOpponentsGraveyard() {
+        int revivalistIndex = addReadyRevivalist();
+        Card target = new SamiteCenserBearer();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, revivalistIndex, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires six mana to activate")
+    void requiresSixMana() {
+        int revivalistIndex = addReadyRevivalist();
+        Card target = new SamiteCenserBearer();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, revivalistIndex, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires an untapped source")
+    void requiresUntappedSource() {
+        int revivalistIndex = addReadyRevivalist();
+        findPermanent(player1, "Ramosian Revivalist").tap();
+        Card target = new SamiteCenserBearer();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, revivalistIndex, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     @Test
@@ -75,9 +118,7 @@ class RamosianRevivalistTest extends BaseCardTest {
     }
 
     private int addReadyRevivalist() {
-        harness.addToBattlefield(player1, new RamosianRevivalist());
-        Permanent revivalist = findPermanent(player1, "Ramosian Revivalist");
-        revivalist.setSummoningSick(false);
+        Permanent revivalist = addCreatureReady(player1, new RamosianRevivalist());
         return gd.playerBattlefields.get(player1.getId()).indexOf(revivalist);
     }
 }

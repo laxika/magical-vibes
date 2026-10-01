@@ -186,6 +186,11 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), ManaSpendRestriction.NONE, null, false, false, false, false, false, false, Set.of(), false);
     }
 
+    public AwardAnyColorManaEffect(int amount, List<ManaColor> allowedColors) {
+        this(new Fixed(amount), ManaSpendRestriction.NONE, null, false, false, false, false, false, false,
+                Set.of(), false, allowedColors);
+    }
+
     /** "Add N mana in any combination of colors." */
     public AwardAnyColorManaEffect(int amount, boolean anyColorCombination) {
         this(new Fixed(amount), ManaSpendRestriction.NONE, null, false,

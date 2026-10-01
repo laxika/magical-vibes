@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MinisterOfImpediments;
+import com.github.laxika.magicalvibes.cards.o.OcularHalo;
+import com.github.laxika.magicalvibes.cards.r.RakdosIckspitter;
+import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,24 +14,26 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CryptChampion.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CryptChampion.class, MinisterOfImpediments.class, OcularHalo.class,
+        RakdosIckspitter.class, TransguildCourier.class})
 class CryptChampionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns one qualifying creature from each graveyard and survives when red mana was spent")
     void returnsQualifyingCreatureFromEachGraveyardAndSurvivesWithRedMana() {
-        Card ownCreature = new GrizzlyBears();
-        Card opponentCreature = new GrizzlyBears();
-        Card tooExpensive = new HillGiant();
+        Card ownCreature = new RakdosIckspitter();
+        Card opponentCreature = new RakdosIckspitter();
+        Card tooExpensive = new TransguildCourier();
         harness.setGraveyard(player1, List.of(ownCreature, tooExpensive));
         harness.setGraveyard(player2, List.of(opponentCreature));
 
         castCryptChampion(true);
-        resolveEnterTriggers();
+        resolveAllTriggers();
 
-        assertThat(battlefieldCards(player1)).contains(ownCreature);
-        assertThat(battlefieldCards(player2)).contains(opponentCreature);
+        assertThat(findPermanent(player1, ownCreature.getName()).getCard()).isSameAs(ownCreature);
+        assertThat(findPermanent(player2, opponentCreature.getName()).getCard()).isSameAs(opponentCreature);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(tooExpensive);
         harness.assertOnBattlefield(player1, "Crypt Champion");
     }
@@ -37,22 +41,76 @@ class CryptChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Returns qualifying creatures before sacrificing itself when red mana was not spent")
     void returnsQualifyingCreaturesThenSacrificesWithoutRedMana() {
-        Card ownCreature = new GrizzlyBears();
-        Card opponentCreature = new GrizzlyBears();
-        Card tooExpensive = new HillGiant();
+        Card ownCreature = new RakdosIckspitter();
+        Card opponentCreature = new RakdosIckspitter();
+        Card tooExpensive = new TransguildCourier();
         harness.setGraveyard(player1, List.of(ownCreature, tooExpensive));
         harness.setGraveyard(player2, List.of(opponentCreature));
 
         castCryptChampion(false);
-        resolveEnterTriggers();
+        resolveAllTriggers();
 
-        assertThat(battlefieldCards(player1)).contains(ownCreature);
-        assertThat(battlefieldCards(player2)).contains(opponentCreature);
+        assertThat(findPermanent(player1, ownCreature.getName()).getCard()).isSameAs(ownCreature);
+        assertThat(findPermanent(player2, opponentCreature.getName()).getCard()).isSameAs(opponentCreature);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(tooExpensive)
                 .doesNotContain(ownCreature);
         harness.assertNotOnBattlefield(player1, "Crypt Champion");
         harness.assertInGraveyard(player1, "Crypt Champion");
+    }
+
+    @Test
+    @DisplayName("Each player chooses one qualifying creature when multiple are available")
+    void eachPlayerChoosesOneQualifyingCreatureWhenMultipleAreAvailable() {
+        Card ownFirst = new RakdosIckspitter();
+        Card ownChosen = new MinisterOfImpediments();
+        Card opponentFirst = new RakdosIckspitter();
+        Card opponentChosen = new MinisterOfImpediments();
+        harness.setGraveyard(player1, List.of(ownFirst, ownChosen));
+        harness.setGraveyard(player2, List.of(opponentFirst, opponentChosen));
+
+        castCryptChampion(true);
+        resolveAllTriggers();
+        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleGraveyardCardChosen(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, ownChosen.getName()).getCard()).isSameAs(ownChosen);
+        assertThat(findPermanent(player2, opponentChosen.getName()).getCard()).isSameAs(opponentChosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownFirst);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentFirst);
+        harness.assertOnBattlefield(player1, "Crypt Champion");
+    }
+
+    @Test
+    @DisplayName("Does not allow a player to decline returning an eligible creature")
+    void doesNotAllowDecliningAnEligibleCreature() {
+        harness.setGraveyard(player1, List.of(new RakdosIckspitter(), new MinisterOfImpediments()));
+        harness.setGraveyard(player2, List.of(new RakdosIckspitter()));
+
+        castCryptChampion(true);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return noncreature or over-cost creature cards")
+    void doesNotReturnNoncreatureOrOverCostCreatureCards() {
+        Card nonCreature = new OcularHalo();
+        Card tooExpensive = new TransguildCourier();
+        harness.setGraveyard(player1, List.of(nonCreature, tooExpensive));
+        harness.setGraveyard(player2, List.of(new OcularHalo()));
+
+        castCryptChampion(true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonCreature, tooExpensive);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, nonCreature.getName());
+        harness.assertNotOnBattlefield(player1, tooExpensive.getName());
+        harness.assertOnBattlefield(player1, "Crypt Champion");
     }
 
     private void castCryptChampion(boolean spendRedMana) {
@@ -64,16 +122,5 @@ class CryptChampionTest extends BaseCardTest {
         }
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-    }
-
-    private void resolveEnterTriggers() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private List<Card> battlefieldCards(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .map(permanent -> permanent.getCard())
-                .toList();
     }
 }

@@ -13,7 +13,7 @@ public class KeenSense extends Card {
 
     public KeenSense() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+                .addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                         new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CloudsteelKirin;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.w.Wanderlust;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -62,6 +63,25 @@ class SigardasAidTest extends BaseCardTest {
 
         Permanent equipment = findPermanent(player1, "Leonin Scimitar");
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @CardUsed(CloudsteelKirin.class)
+    @DisplayName("Can attach creature Equipment with reconfigure through its entry trigger")
+    void attachesCreatureEquipmentWithReconfigure() {
+        harness.addToBattlefield(player1, new SigardasAid());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new CloudsteelKirin(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.runStateBasedActions();
+
+        Permanent equipment = findPermanent(player1, "Cloudsteel Kirin");
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.isCreature(gd, equipment)).isFalse();
     }
 
     @Test

@@ -52,6 +52,20 @@ class FacelessButcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB cannot target Faceless Butcher itself")
+    void etbCannotTargetItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new FacelessButcher(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Faceless Butcher");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Faceless Butcher"));
+    }
+
+    @Test
     @DisplayName("Exiled creature returns when Faceless Butcher leaves")
     void exiledCreatureReturnsWhenButcherDies() {
         harness.addToBattlefield(player2, new CarrionRats());
