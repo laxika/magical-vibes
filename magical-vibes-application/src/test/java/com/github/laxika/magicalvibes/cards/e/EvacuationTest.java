@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSpirit;
-import com.github.laxika.magicalvibes.cards.p.Portcullis;
-import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
-import com.github.laxika.magicalvibes.cards.s.SliverQueen;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SiegeGangCommander;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
-import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
+import com.github.laxika.magicalvibes.cards.t.Threaten;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Evacuation.class, CloudSpirit.class, SpinedWurm.class, Portcullis.class,
-        VolrathsStronghold.class, ReinsOfPower.class, SliverQueen.class})
+@CardUsed({Evacuation.class, AirElemental.class, SpinedWurm.class, GloriousAnthem.class,
+        Island.class, SiegeGangCommander.class, Threaten.class})
 class EvacuationTest extends BaseCardTest {
 
     @Test
@@ -36,9 +37,9 @@ class EvacuationTest extends BaseCardTest {
     @Test
     @DisplayName("Returns all creatures on both sides to their owners' hands")
     void returnsAllCreaturesToHands() {
-        harness.addToBattlefield(player1, new CloudSpirit());
+        harness.addToBattlefield(player1, new AirElemental());
         harness.addToBattlefield(player1, new SpinedWurm());
-        harness.addToBattlefield(player2, new CloudSpirit());
+        harness.addToBattlefield(player2, new AirElemental());
 
         harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
         harness.passBothPriorities();
@@ -47,42 +48,43 @@ class EvacuationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> (Object) card.getClass())
-                .containsExactlyInAnyOrder(CloudSpirit.class, SpinedWurm.class);
+                .containsExactlyInAnyOrder(AirElemental.class, SpinedWurm.class);
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(card -> (Object) card.getClass())
-                .contains(CloudSpirit.class);
+                .contains(AirElemental.class);
     }
 
     @Test
     @DisplayName("Does not return non-creature permanents")
     void doesNotReturnNonCreaturePermanents() {
-        harness.addToBattlefield(player1, new Portcullis());
-        harness.addToBattlefield(player1, new VolrathsStronghold());
-        harness.addToBattlefield(player1, new CloudSpirit());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new AirElemental());
 
         harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> (Object) permanent.getCard().getClass())
-                .containsExactlyInAnyOrder(Portcullis.class, VolrathsStronghold.class);
+                .containsExactlyInAnyOrder(GloriousAnthem.class, Island.class);
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> (Object) card.getClass())
-                .containsExactly(CloudSpirit.class);
+                .containsExactly(AirElemental.class);
     }
 
     @Test
     @DisplayName("Returns creature tokens, which cease to exist outside the battlefield")
     void returnsCreatureTokens() {
-        harness.addToBattlefield(player1, new SliverQueen());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new SiegeGangCommander()));
+        harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
-                .hasSize(1);
+                .hasSize(3);
 
         harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
         harness.passBothPriorities();
@@ -90,7 +92,7 @@ class EvacuationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> (Object) card.getClass())
-                .containsExactly(SliverQueen.class);
+                .containsExactly(SiegeGangCommander.class);
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.isToken());
     }
@@ -119,23 +121,25 @@ class EvacuationTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures return to their owners' hands after a control exchange")
     void creaturesReturnToTheirOwnersHandsAfterControlExchange() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CloudSpirit());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
 
-        harness.setHand(player1, List.of(new ReinsOfPower()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Threaten()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castAndResolveSorcery(player2, 0, ownCreature.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opposingCreature);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactlyInAnyOrder(ownCreature, opposingCreature);
 
         harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> (Object) card.getClass())
-                .containsExactly(CloudSpirit.class);
+                .containsExactly(AirElemental.class);
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(card -> (Object) card.getClass())
                 .contains(SpinedWurm.class);

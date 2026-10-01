@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "HOC", collectorNumber = "13")
 @CardRegistration(set = "HOC", collectorNumber = "53")
+@CardRegistration(set = "HOC", collectorNumber = "162")
 public class DawnOfANewAge extends Card {
 
     public DawnOfANewAge() {

@@ -104,6 +104,38 @@ class RootwaterMatriarchTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gains control if the target becomes enchanted before resolution")
+    void gainsControlIfTargetBecomesEnchantedBeforeResolution() {
+        addReadyMatriarch(player1);
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        attachAura(player1, creature, new Pacifism());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Can gain control of a creature enchanted by an opponent's Aura")
+    void canGainControlOfCreatureEnchantedByOpponentsAura() {
+        addReadyMatriarch(player1);
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+        attachAura(player2, creature, new Pacifism());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(creature.getId()));
+    }
+
+    @Test
     @DisplayName("Control remains after Rootwater Matriarch untaps")
     void controlRemainsAfterMatriarchUntaps() {
         Permanent matriarch = addReadyMatriarch(player1);
@@ -362,9 +394,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Disenchant()));
         harness.addMana(caster, ManaColor.WHITE, 2);
-        harness.passPriority(player1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
 

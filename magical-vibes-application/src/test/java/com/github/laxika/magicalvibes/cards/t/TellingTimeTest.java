@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,15 +22,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TellingTime.class, GrizzlyBears.class})
 class TellingTimeTest extends BaseCardTest {
 
+    private void castAndResolveTellingTime() {
+        harness.castFromHand(player1, new TellingTime(), "{1}{U}");
+        harness.passBothPriorities();
+    }
+
     // ===== Casting =====
 
     @Test
     @DisplayName("Casting Telling Time puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TellingTime(), "{1}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -47,10 +48,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving enters hand/top/bottom choice state")
     void resolvingEntersHandTopBottomChoiceState() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
@@ -61,10 +59,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Telling Time goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
@@ -79,9 +74,6 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing distributes cards to hand, top, and bottom correctly")
     void choosingDistributesCardsCorrectly() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card originalTop0 = deck.get(0);
@@ -89,7 +81,7 @@ class TellingTimeTest extends BaseCardTest {
         Card originalTop2 = deck.get(2);
         int originalDeckSize = deck.size();
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         // Choose: card 1 to hand, card 0 to top, card 2 to bottom
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(1, 0));
@@ -110,16 +102,13 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing first card for hand and last for top works correctly")
     void choosingFirstForHandLastForTop() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card originalTop0 = deck.get(0);
         Card originalTop1 = deck.get(1);
         Card originalTop2 = deck.get(2);
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         // Choose: card 0 to hand, card 2 to top, card 1 to bottom
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 2));
@@ -132,10 +121,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing clears awaiting state")
     void choosingClearsAwaitingState() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
@@ -149,16 +135,13 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("With 2 cards in library, one goes to hand and one to top")
     void twoCardsInLibrary() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         Card cardA = new GrizzlyBears();
         Card cardB = new GrizzlyBears();
         harness.setLibrary(player1, List.of(cardA, cardB));
         List<Card> deck = gd.playerDecks.get(player1.getId());
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(2);
@@ -175,14 +158,11 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("With 1 card in library, it automatically goes to hand")
     void oneCardInLibrary() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         Card singleCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(singleCard));
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(singleCard);
@@ -193,13 +173,10 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("With empty library, nothing happens")
     void emptyLibrary() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         harness.setLibrary(player1, List.of());
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -211,10 +188,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects same index for hand and top")
     void rejectsSameIndex() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
@@ -224,12 +198,24 @@ class TellingTimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rejecting a choice leaves the pending choice available")
+    void rejectsChoiceWithoutClearingPendingInteraction() {
+        castAndResolveTellingTime();
+
+        GameData gd = harness.getGameData();
+        assertThatThrownBy(() ->
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 0))
+        ).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be different");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Rejects out-of-range hand card index")
     void rejectsOutOfRangeHandIndex() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
@@ -241,10 +227,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects out-of-range top card index")
     void rejectsOutOfRangeTopIndex() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
@@ -256,10 +239,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects wrong player responding")
     void rejectsWrongPlayer() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
@@ -283,10 +263,7 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Game log records looking at cards and distributing them")
     void gameLogRecordsActions() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("3"));
@@ -299,13 +276,10 @@ class TellingTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Game log for 2-card case does not mention bottom")
     void gameLogTwoCardCase() {
-        harness.setHand(player1, List.of(new TellingTime()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         GameData gd = harness.getGameData();
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.castAndResolveInstant(player1, 0);
+        castAndResolveTellingTime();
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->

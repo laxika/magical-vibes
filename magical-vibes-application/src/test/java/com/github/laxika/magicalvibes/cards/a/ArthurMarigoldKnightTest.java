@@ -41,7 +41,7 @@ class ArthurMarigoldKnightTest extends BaseCardTest {
                 TurnStep.DECLARE_ATTACKERS,
                 TurnStep.DECLARE_BLOCKERS));
         addCreatureReady(player1, new ArthurMarigoldKnight());
-        addCreatureReady(player1, new FountainOfYouth());
+        addCreatureReady(player1, new GrizzlyBears());
         GrizzlyBears creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(
                 new FountainOfYouth(),
@@ -60,10 +60,11 @@ class ArthurMarigoldKnightTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(creature.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
-        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
-        Permanent entered = findPermanent(player1, "Grizzly Bears");
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
+                .findFirst().orElseThrow();
         assertThat(entered.isTapped()).isTrue();
         assertThat(entered.isAttacking()).isTrue();
         assertThat(entered.getAttackTarget()).isEqualTo(player2.getId());

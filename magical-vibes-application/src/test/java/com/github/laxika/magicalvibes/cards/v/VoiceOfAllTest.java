@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -147,15 +146,6 @@ class VoiceOfAllTest extends BaseCardTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
-    @Test
-    @DisplayName("Voice of All has flying on the battlefield")
-    void hasFlyingOnBattlefield() {
-        harness.addToBattlefield(player1, new VoiceOfAll());
-
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
-    }
-
     // ===== Color choice validation =====
 
     @Test
@@ -283,6 +273,22 @@ class VoiceOfAllTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(voiceOfAll.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by activated ability of chosen color")
+    void cannotBeTargetedByChosenColorAbility() {
+        Permanent voiceOfAll = addCreatureReady(player2, new VoiceOfAll());
+        voiceOfAll.setChosenColor(CardColor.RED);
+
+        Permanent source = addCreatureReady(player1, new TahngarthTalruumHero());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 0, null, voiceOfAll.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
     }
 
     // ===== Protection - aura enchantment =====

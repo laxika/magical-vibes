@@ -76,6 +76,7 @@ class AKillerAmongUsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.DEATHTOUCH)).isTrue();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.DEATHTOUCH)).isFalse();
@@ -130,9 +131,9 @@ class AKillerAmongUsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, subtype.name());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "A Killer Among Us");
     }
 

@@ -170,6 +170,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
@@ -3531,7 +3532,12 @@ public class StepTriggerService {
                         gameData, effect, perm, activePlayerId)) {
                     continue;
                 }
+                effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                if (effect == null) {
+                    continue;
+                }
                 triggering.add(effect);
+                OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
             }
             if (triggering.isEmpty()) {
                 continue;
@@ -5754,6 +5760,11 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step permanent-count trigger pushed onto stack",
                                 gameData.id, perm.getCard().getName());
+                    } else if (effect.targetSpec().declaredTarget() != null
+                            && (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                        gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                     } else {
                         // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
                         // player off targetId; every other end-step effect gets a null target id.

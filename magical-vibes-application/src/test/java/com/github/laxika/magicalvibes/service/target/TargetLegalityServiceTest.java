@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanMa
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
@@ -2442,6 +2443,34 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, xEntry,
                     new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
                     player1Id, source)).isTrue();
+        }
+
+        @Test
+        @DisplayName("matches a spell with power or toughness at most a fixed number")
+        void matchesPowerOrToughnessAtMost() {
+            Card powerMatchingCard = createCreature("Power match", CardColor.GREEN);
+            powerMatchingCard.setPower(2);
+            powerMatchingCard.setToughness(4);
+            StackEntry powerMatchingEntry = new StackEntry(powerMatchingCard, player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, powerMatchingEntry,
+                    new StackEntryPowerOrToughnessAtMostPredicate(2), player1Id)).isTrue();
+
+            Card toughnessMatchingCard = createCreature("Toughness match", CardColor.GREEN);
+            toughnessMatchingCard.setPower(4);
+            toughnessMatchingCard.setToughness(2);
+            StackEntry toughnessMatchingEntry = new StackEntry(toughnessMatchingCard, player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, toughnessMatchingEntry,
+                    new StackEntryPowerOrToughnessAtMostPredicate(2), player1Id)).isTrue();
+
+            Card nonmatchingCard = createCreature("No match", CardColor.GREEN);
+            nonmatchingCard.setPower(3);
+            nonmatchingCard.setToughness(3);
+            StackEntry nonmatchingEntry = new StackEntry(nonmatchingCard, player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, nonmatchingEntry,
+                    new StackEntryPowerOrToughnessAtMostPredicate(2), player1Id)).isFalse();
         }
 
         @Test

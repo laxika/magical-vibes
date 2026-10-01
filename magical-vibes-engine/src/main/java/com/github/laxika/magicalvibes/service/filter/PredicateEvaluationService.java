@@ -374,6 +374,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
@@ -3478,6 +3479,7 @@ public class PredicateEvaluationService {
             case PermanentPowerToughnessTotalAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentMinManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentManaValueParityPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentManaValueEqualsTriggeringPermanentPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -4748,6 +4750,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueAtMostSourcePowerPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
+            case StackEntryPowerOrToughnessAtMostPredicate ignored -> false;
             case StackEntryManaValueParityMatchesSourceChosenParityPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;

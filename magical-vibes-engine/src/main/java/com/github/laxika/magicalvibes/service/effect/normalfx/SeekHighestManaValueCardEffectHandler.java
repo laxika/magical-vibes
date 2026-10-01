@@ -42,7 +42,8 @@ public class SeekHighestManaValueCardEffectHandler implements NormalEffectHandle
 
         SeekHighestManaValueCardEffect seek = (SeekHighestManaValueCardEffect) effect;
         int maximumManaValue = Math.max(0, amountEvaluationService.evaluate(
-                gameData, seek.maximumManaValue(), AmountContext.forStackEntry(entry, null)));
+                gameData, seek.maximumManaValue(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot())));
         List<Card> matchingCards = library.stream()
                 .filter(card -> !card.isToken() && card.getManaValue() <= maximumManaValue)
                 .toList();

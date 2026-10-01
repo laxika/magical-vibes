@@ -39,6 +39,26 @@ class RuleOfLawTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Rule of Law counts toward the spell limit")
+    void castingRuleOfLawCountsTowardLimit() {
+        harness.setHand(player1, List.of(new RuleOfLaw(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rule of Law");
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
     @DisplayName("Second spell is not playable with Rule of Law on battlefield")
     void preventsSecondSpellFromBeingPlayable() {
         harness.addToBattlefield(player1, new RuleOfLaw());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 
 @CardUsed({GrizzlyBears.class, Island.class, SeaMonster.class, AvianChangeling.class})
 class SeaMonsterTest extends BaseCardTest {
@@ -46,7 +46,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.castFromHand(player1, new SeaMonster(), "{4}{U}{U}");
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent perm = findPermanent(player1, "Sea Monster");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -60,6 +60,18 @@ class SeaMonsterTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         // Combat auto-advances; verify attack went through by checking damage dealt
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Sea Monster can attack when defending player controls a tapped Island")
+    void canAttackWhenDefenderControlsTappedIsland() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
+
+        addCreatureReady(player1, new SeaMonster());
+        declareAttackers(List.of(0));
+
         harness.assertLife(player2, 14);
     }
 

@@ -24,7 +24,7 @@ class SaintElendaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.SpellbookCardChoice choice =
                 (PendingInteraction.SpellbookCardChoice) gd.interaction.activeInteraction();

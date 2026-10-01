@@ -64,6 +64,21 @@ class BallistaSquadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an attacking creature controlled by its controller")
+    void canTargetOwnAttackingCreature() {
+        addBallistaReadyToCombat(player1);
+        Permanent targetPerm = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 1, targetPerm.getId());
+        harness.passBothPriorities();
+
+        assertThat(targetPerm.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(targetPerm);
+    }
+
+    @Test
     @DisplayName("Activating ability taps the permanent")
     void activatingAbilityTapsPermanent() {
         Permanent ballistaPerm = addBallistaReadyToCombat(player1);

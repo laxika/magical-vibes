@@ -19,10 +19,7 @@ class LumengridWardenTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Lumengrid Warden puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new LumengridWarden()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LumengridWarden(), "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -31,10 +28,7 @@ class LumengridWardenTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Lumengrid Warden onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new LumengridWarden()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LumengridWarden(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -55,10 +49,7 @@ class LumengridWardenTest extends BaseCardTest {
     @Test
     @DisplayName("Lumengrid Warden enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new LumengridWarden()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LumengridWarden(), "{2}{U}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Lumengrid Warden");

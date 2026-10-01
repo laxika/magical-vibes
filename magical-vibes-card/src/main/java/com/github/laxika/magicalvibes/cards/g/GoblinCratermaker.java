@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "103")
 @CardRegistration(set = "LTC", collectorNumber = "218")
+@CardRegistration(set = "HOC", collectorNumber = "194")
 public class GoblinCratermaker extends Card {
 
     public GoblinCratermaker() {

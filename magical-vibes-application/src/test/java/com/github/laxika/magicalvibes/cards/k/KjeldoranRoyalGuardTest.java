@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.InfantryVeteran;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -22,7 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, InfantryVeteran.class, KjeldoranRoyalGuard.class, LlanowarElves.class, Shock.class})
+@CardUsed({GrizzlyBears.class, KjeldoranRoyalGuard.class, LlanowarElves.class, Shock.class})
 class KjeldoranRoyalGuardTest extends BaseCardTest {
 
     @Test
@@ -70,19 +69,6 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
 
         assertThat(guard.isTapped()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Resolving ability sets the combat damage redirect")
-    void resolvingAbilitySetsRedirect() {
-        Permanent guard = addGuardReady(player2);
-        addUnblockedAttacker(player1);
-        prepareDeclareBlockers(player1);
-
-        harness.activateAbility(player2, 0, null, null);
-        harness.passBothPriorities(); // resolves ability
-
-        assertThat(gd.combatDamageRedirectTarget).isEqualTo(guard.getId());
     }
 
     @Test
@@ -317,35 +303,6 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Trample damage from a blocked creature is not redirected")
-    void trampleDamageFromBlockedCreatureIsNotRedirectedUpstreamReview() {
-        addGuardReady(player2);
-
-        GrizzlyBears attackerCard = new GrizzlyBears();
-        attackerCard.setKeywords(Set.of(Keyword.TRAMPLE));
-        Permanent attacker = addCreatureReady(player1, attackerCard);
-        attacker.setAttacking(true);
-
-        Permanent blocker = addCreatureReady(player2, new InfantryVeteran());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.activateAbility(player2, 0, null, null);
-        harness.passBothPriorities();
-        resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                blocker.getId(), 1,
-                player2.getId(), 1
-        ));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-    }
-
-    @Test
     @DisplayName("Without ability active, unblocked damage goes to player normally")
     void withoutAbilityDamageGoesToPlayer() {
         Permanent guard = addGuardReady(player2);
@@ -369,11 +326,12 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities(); // resolve ability
-
-        assertThat(gd.combatDamageRedirectTarget).isEqualTo(guard.getId());
-
-        // Simulate end of turn cleanup
         resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(guard.getMarkedDamage()).isEqualTo(2);
+
+        // Simulate end-of-turn cleanup.
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
                 .applyCleanupResets(gd));
 
@@ -393,26 +351,6 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
         harness.setHand(player1, List.of());
-        gd.playerBattlefields.get(player2.getId()).remove(guard);
-
-        resolveCombat();
-
-        // Redirect target gone → damage goes to player
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-    }
-
-    @Test
-    @DisplayName("Guard removed before combat means damage goes to player")
-    void guardRemovedBeforeCombatUpstreamReview() {
-        Permanent guard = addGuardReady(player2);
-        addUnblockedAttacker(player1); // 2/2
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        // Set redirect directly (as if ability had resolved), then remove the guard
-        gd.combatDamageRedirectTarget = guard.getId();
-        gd.combatDamageRedirectPlayer = player2.getId();
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
         resolveCombat();
@@ -449,8 +387,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, guard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, guard.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(guard);

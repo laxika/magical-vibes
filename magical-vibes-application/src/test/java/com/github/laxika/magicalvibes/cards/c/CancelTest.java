@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cancel.class, GrizzlyBears.class, MightOfOaks.class})
+@CardUsed({Cancel.class, GaeasHerald.class, GrizzlyBears.class, MightOfOaks.class})
 class CancelTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -41,7 +42,6 @@ class CancelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry cancelEntry = gd.stack.getLast();
         assertThat(cancelEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
         assertThat(cancelEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -65,7 +65,6 @@ class CancelTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry cancelEntry = gd.stack.getLast();
-        assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
         assertThat(cancelEntry.getTargetId()).isEqualTo(might.getId());
     }
 
@@ -128,7 +127,30 @@ class CancelTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Might of Oaks");
         assertThat(gd.stack)
-                .noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
+                .noneMatch(se -> might.getId().equals(se.getTargetableId()));
+    }
+
+    @Test
+    @DisplayName("Does not counter a creature spell protected by Gaea's Herald")
+    void doesNotCounterUncounterableCreatureSpell() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     @Test
@@ -168,7 +190,7 @@ class CancelTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Grizzly Bears"));
+        gd.stack.removeIf(se -> bears.getId().equals(se.getTargetableId()));
 
         harness.passBothPriorities();
 
