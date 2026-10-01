@@ -136,6 +136,7 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -314,6 +315,7 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -342,7 +344,8 @@ public class GraveyardChoiceHandlerService {
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
             UUID cardGraveyardOwnerId = null;
             if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
-                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY) {
+                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND) {
                 // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
                 if (cardPool != null) {
                     card = cardPool.get(cardIndex);
@@ -586,6 +589,15 @@ public class GraveyardChoiceHandlerService {
                             " to exile from their graveyard."));
                     log.info("Game {} - {} chooses {} for a random-player graveyard copy ability",
                             gameData.id, player.getUsername(), card.getName());
+                }
+                case CONJURE_DUPLICATE_INTO_HAND -> {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry == null) {
+                        throw new IllegalStateException("No pending effect resolution for graveyard duplicate choice");
+                    }
+                    pendingEntry.setTargetId(card.getId());
+                    gameLogService.append(gameData, GameLog.text(
+                            player.getUsername() + " secretly chooses a card from their graveyard."));
                 }
                 case MAY_ABILITY_TARGET -> {
                     // Resolution-time flow: set target on pending entry and resume resolution

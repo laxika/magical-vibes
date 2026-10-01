@@ -542,6 +542,29 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PerpetuallyBoostCardEffect.class,
+            slot = EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
+    private boolean handleExileTokenSacrificePerpetualBoost(TriggerMatchContext match,
+                                                             PerpetuallyBoostCardEffect effect,
+                                                             TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.AllySacrificed sacrificed)
+                || sacrificed.sacrificedCard() == null
+                || !sacrificed.sacrificedCard().isToken()
+                || match.sourceCard() == null) {
+            return false;
+        }
+
+        Card sourceCard = match.sourceCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect))));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
     /** Queues a watcher for a creature controlled by the player exploiting another creature. */
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_EXPLOITS)

@@ -113,7 +113,7 @@ import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -744,12 +744,13 @@ public class TriggerCollectionService {
         }
 
         gameData.expireFloatingEffects(fe ->
-                fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
-                        && castingPlayerId.equals(fe.controllerId())
-                        && fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
-                        && (!reduction.faceDownOnly() || castFaceDown)
+                (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
+                        || fe.duration() == EffectDuration.UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST)
+                        && fe.effect() instanceof NextMatchingSpellCostEffect next
+                        && next.appliesToPlayer(castingPlayerId, fe.controllerId())
+                        && next.appliesToFaceDownCast(castFaceDown)
                         && predicateEvaluationService.matchesCardPredicate(
-                                spellCard, reduction.predicate(), null, gameData, castingPlayerId));
+                                spellCard, next.predicate(), null, gameData, castingPlayerId));
 
         if (spellCard.hasType(CardType.CREATURE)) {
             gameData.expireFloatingEffectsOnCreatureSpellCast();
@@ -4206,6 +4207,7 @@ public class TriggerCollectionService {
         gameData.recordSacrificedPermanent(sacrificingPlayerId, sacrificedCard);
         checkSacrificeBoonTriggers(gameData, sacrificingPlayerId);
         checkGraveyardAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+        checkExileControllerTokenSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
         if (battlefield != null || !gameData.simultaneousDyingPermanents.isEmpty()) {
             var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
@@ -4265,6 +4267,25 @@ public class TriggerCollectionService {
 
         if (gameData.simultaneousDyingPermanents.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
+        }
+    }
+
+    /** Fires token-sacrifice triggers from face-up cards in the sacrificing player's exile zone. */
+    private void checkExileControllerTokenSacrificedTriggers(GameData gameData,
+                                                              UUID sacrificingPlayerId,
+                                                              Card sacrificedCard) {
+        if (sacrificedCard == null || !sacrificedCard.isToken()) return;
+
+        var context = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
+        for (ExiledCardEntry exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            if (exiledEntry.faceDown() || !sacrificingPlayerId.equals(exiledEntry.ownerId())) continue;
+
+            Card sourceCard = exiledEntry.card();
+            for (CardEffect effect : sourceCard.getEffects(EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)) {
+                registry.dispatch(new TriggerMatchContext(
+                                gameData, null, sacrificingPlayerId, effect, sourceCard),
+                        EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED, effect, context);
+            }
         }
     }
 

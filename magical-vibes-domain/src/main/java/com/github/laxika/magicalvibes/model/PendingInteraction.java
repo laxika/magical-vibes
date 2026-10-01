@@ -3430,6 +3430,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    && destination != GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
                     && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
