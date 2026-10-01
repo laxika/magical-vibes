@@ -65,6 +65,7 @@ public class ScryTriggerCollectorService {
                     scry.scryingPlayerId(),
                     match.permanent().getId());
             entry.setEventValue(scry.bottomedCardCount());
+            entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
             entry.setNonTargeting(true);
             if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
                 entry.setMarkSourceOncePerTurnOnAcceptance(true);
@@ -90,6 +91,7 @@ public class ScryTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setEventValue(scry.bottomedCardCount());
+            entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
             if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
                 entry.setMarkSourceOncePerTurnOnAcceptance(true);
             }

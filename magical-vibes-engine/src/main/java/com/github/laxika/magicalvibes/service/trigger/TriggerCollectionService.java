@@ -2422,11 +2422,16 @@ public class TriggerCollectionService {
      * collector in {@code CombatDamageService} instead — do not call this from the combat path.
      */
     public void checkScryTriggers(GameData gameData, UUID scryingPlayerId) {
-        checkScryTriggers(gameData, scryingPlayerId, 0);
+        checkScryTriggers(gameData, scryingPlayerId, 0, 0);
     }
 
     public void checkScryTriggers(GameData gameData, UUID scryingPlayerId, int bottomedCardCount) {
-        var ctx = new TriggerContext.Scry(scryingPlayerId, bottomedCardCount);
+        checkScryTriggers(gameData, scryingPlayerId, bottomedCardCount, 0);
+    }
+
+    public void checkScryTriggers(GameData gameData, UUID scryingPlayerId,
+                                  int bottomedCardCount, int cardsLookedAt) {
+        var ctx = new TriggerContext.Scry(scryingPlayerId, bottomedCardCount, cardsLookedAt);
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(scryingPlayerId);
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {

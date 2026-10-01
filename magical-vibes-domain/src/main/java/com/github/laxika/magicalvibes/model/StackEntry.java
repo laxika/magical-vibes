@@ -265,6 +265,8 @@ public class StackEntry {
      * {@code EventValue} dynamic amount at resolution.
     */
     @Setter private int eventValue;
+    /** Number of cards looked at by the scry event that caused this triggered ability. */
+    @Setter private int cardsLookedAtWhileScrying;
     @Setter private Integer combatOpponentPowerAtTrigger;
     @Setter private Integer combatOpponentToughnessAtTrigger;
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
@@ -796,6 +798,7 @@ public class StackEntry {
         this.attackedTargetId = source.attackedTargetId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
+        this.cardsLookedAtWhileScrying = source.cardsLookedAtWhileScrying;
         this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
         this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;

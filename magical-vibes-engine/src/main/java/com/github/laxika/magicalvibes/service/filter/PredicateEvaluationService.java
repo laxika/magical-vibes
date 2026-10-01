@@ -366,6 +366,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
@@ -4654,6 +4655,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueAtMostSourcePowerPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
+            case StackEntryPowerOrToughnessAtMostPredicate ignored -> false;
             case StackEntryManaValueParityMatchesSourceChosenParityPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;

@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
@@ -4947,6 +4948,12 @@ public class TargetLegalityService {
             return manaValue == fixedNumber.number()
                     || power != null && power == fixedNumber.number()
                     || toughness != null && toughness == fixedNumber.number();
+        }
+        if (predicate instanceof StackEntryPowerOrToughnessAtMostPredicate atMost) {
+            Integer power = stackEntry.getCard().getPower();
+            Integer toughness = stackEntry.getCard().getToughness();
+            return power != null && power <= atMost.maxValue()
+                    || toughness != null && toughness <= atMost.maxValue();
         }
         if (predicate instanceof StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate) {
             if (source == null) {
