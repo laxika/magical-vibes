@@ -26,6 +26,17 @@ class AncestralVisionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Suspend counters are removed only during Ancestral Vision's owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        AncestralVision card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
     @DisplayName("The last suspend counter offers a free cast that draws three cards for the target player")
     void lastCounterOffersFreeCastAndDrawsForTargetPlayer() {
         AncestralVision card = suspendCard();
@@ -47,6 +58,23 @@ class AncestralVisionTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore + 3);
         harness.assertInGraveyard(player1, "Ancestral Vision");
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Ancestral Vision in exile")
+    void decliningSuspendCastLeavesCardInExile() {
+        AncestralVision card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotInGraveyard(player1, "Ancestral Vision");
     }
 
     private AncestralVision suspendCard() {

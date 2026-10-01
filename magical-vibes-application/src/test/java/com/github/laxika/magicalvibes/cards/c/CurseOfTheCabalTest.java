@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({CurseOfTheCabal.class, GrizzlyBears.class})
+@CardUsed({CurseOfTheCabal.class, DurkwoodBaloth.class})
 class CurseOfTheCabalTest extends BaseCardTest {
 
     @Test
@@ -28,9 +28,9 @@ class CurseOfTheCabalTest extends BaseCardTest {
     @Test
     @DisplayName("Curse of the Cabal sacrifices half the target player's permanents rounded down")
     void sacrificesHalfTargetPermanentsRoundedDown() {
-        Permanent first = addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent first = addCreatureReady(player2, new DurkwoodBaloth());
+        addCreatureReady(player2, new DurkwoodBaloth());
+        addCreatureReady(player2, new DurkwoodBaloth());
         CurseOfTheCabal card = new CurseOfTheCabal();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -67,11 +67,24 @@ class CurseOfTheCabalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting the suspended upkeep trigger without a permanent does not add counters")
+    void acceptingSuspendedUpkeepTriggerWithoutPermanentDoesNotAddCounters() {
+        CurseOfTheCabal card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+    }
+
+    @Test
     @DisplayName("Accepting the suspended upkeep trigger sacrifices a permanent and adds two counters")
     void acceptingSuspendedUpkeepTriggerAddsCountersAfterSacrifice() {
         CurseOfTheCabal card = suspendCard();
-        Permanent sacrificed = addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent sacrificed = addCreatureReady(player2, new DurkwoodBaloth());
+        addCreatureReady(player2, new DurkwoodBaloth());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();

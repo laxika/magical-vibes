@@ -72,4 +72,20 @@ class FlowstoneChannelerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate without a card to discard")
+    void cannotActivateWithoutCardToDiscard() {
+        Permanent channeler = addCreatureReady(player1, new FlowstoneChanneler());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(channeler.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
 }

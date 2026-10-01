@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrayOgre;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.a.AmrouScout;
+import com.github.laxika.magicalvibes.cards.a.AmrouSeekers;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LivingEnd.class, GrayOgre.class, GrizzlyBears.class, HillGiant.class, SavannahLions.class})
+@CardUsed({LivingEnd.class, AmrouScout.class, AmrouSeekers.class, AshcoatBear.class,
+        BenalishCavalry.class, Island.class})
 class LivingEndTest extends BaseCardTest {
 
     @Test
@@ -33,13 +35,13 @@ class LivingEndTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Living End replaces each player's creatures with creatures from their graveyard")
+    @DisplayName("Living End replaces creatures with graveyard creatures and leaves noncreatures")
     void replacesCreaturesFromGraveyards() {
         suspendCard();
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new SavannahLions());
-        harness.setGraveyard(player1, List.of(new HillGiant()));
-        harness.setGraveyard(player2, List.of(new GrayOgre()));
+        addCreatureReady(player1, new AshcoatBear());
+        addCreatureReady(player2, new BenalishCavalry());
+        harness.setGraveyard(player1, List.of(new AmrouScout(), new Island()));
+        harness.setGraveyard(player2, List.of(new AmrouSeekers(), new Island()));
 
         for (int i = 0; i < 2; i++) {
             advanceToUpkeep(player1);
@@ -50,18 +52,19 @@ class LivingEndTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Hill Giant");
-        harness.assertOnBattlefield(player2, "Gray Ogre");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertOnBattlefield(player1, "Amrou Scout");
+        harness.assertOnBattlefield(player2, "Amrou Seekers");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player2, "Island");
     }
 
-    private LivingEnd suspendCard() {
+    private void suspendCard() {
         LivingEnd card = new LivingEnd();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateHandAbility(player1, 0, null);
-        return card;
     }
 }

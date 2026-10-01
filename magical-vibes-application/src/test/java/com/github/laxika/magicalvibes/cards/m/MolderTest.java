@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,22 @@ class MolderTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Howling Mine");
         harness.castInstant(player1, 0, 2, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Howling Mine");
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Destroys an artifact even when it has a regeneration shield")
+    void cannotBeRegenerated() {
+        harness.setLife(player1, 15);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        target.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new Molder()));
+        addMana(2);
+
+        harness.castInstant(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Howling Mine");

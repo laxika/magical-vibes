@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.c.Combust;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.OrcishCannonade;
+import com.github.laxika.magicalvibes.cards.s.SlipstreamSerpent;
+import com.github.laxika.magicalvibes.cards.s.SuddenShock;
+import com.github.laxika.magicalvibes.cards.s.SuddenSpoiling;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,19 +20,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlatedPegasus.class, Shock.class, ProdigalSorcerer.class,
-        ChandraNalaar.class, Combust.class})
+@CardUsed({PlatedPegasus.class, SuddenShock.class, FledglingMawcor.class,
+        ChandraNalaar.class, Combust.class, SlipstreamSerpent.class, Island.class,
+        OrcishCannonade.class, SuddenSpoiling.class})
 class PlatedPegasusTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents 1 damage from a spell to a player")
     void preventsSpellDamageToPlayer() {
         harness.addToBattlefield(player1, new PlatedPegasus());
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new SuddenShock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 19);
     }
@@ -40,12 +42,13 @@ class PlatedPegasusTest extends BaseCardTest {
     @DisplayName("Prevents 1 damage from a spell to a creature")
     void preventsSpellDamageToCreature() {
         harness.addToBattlefield(player1, new PlatedPegasus());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, createWhiteCreature("Shielded Creature", 2, 4));
-        harness.setHand(player1, List.of(new Shock()));
+        harness.addToBattlefield(player2, new Island());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SlipstreamSerpent());
+        harness.setHand(player1, List.of(new SuddenShock()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
     }
@@ -56,11 +59,11 @@ class PlatedPegasusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PlatedPegasus());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new SuddenShock()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
@@ -69,7 +72,7 @@ class PlatedPegasusTest extends BaseCardTest {
     @DisplayName("Does not prevent damage from an activated ability")
     void doesNotPreventAbilityDamage() {
         harness.addToBattlefield(player1, new PlatedPegasus());
-        Permanent sorcerer = harness.addToBattlefieldAndReturn(player2, new ProdigalSorcerer());
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player2, new FledglingMawcor());
         sorcerer.setSummoningSick(false);
         harness.forceActivePlayer(player2);
 
@@ -81,27 +84,64 @@ class PlatedPegasusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prevent combat damage")
+    void doesNotPreventCombatDamage() {
+        harness.addToBattlefield(player1, new PlatedPegasus());
+        Permanent attacker = addCreatureReady(player2, new FledglingMawcor());
+
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
     @DisplayName("Does not prevent damage that cannot be prevented")
     void doesNotPreventUnpreventableSpellDamage() {
         harness.addToBattlefield(player1, new PlatedPegasus());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2,
-                createWhiteCreature("Unpreventable Target", 2, 6));
+        harness.addToBattlefield(player2, new Island());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SlipstreamSerpent());
         harness.setHand(player1, List.of(new Combust()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(5);
     }
 
-    private static Card createWhiteCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.WHITE);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("Prevents each damage event from a spell independently")
+    void preventsEachSpellDamageEventIndependently() {
+        harness.addToBattlefield(player1, new PlatedPegasus());
+        harness.addToBattlefield(player2, new Island());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SlipstreamSerpent());
+        harness.setHand(player1, List.of(new OrcishCannonade()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Stops preventing damage after losing its abilities")
+    void doesNotPreventDamageAfterLosingAbilities() {
+        harness.addToBattlefield(player1, new PlatedPegasus());
+        harness.setHand(player2, List.of(new SuddenSpoiling()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 }

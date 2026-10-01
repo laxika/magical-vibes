@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,35 +14,50 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NantukoShaman.class, Forest.class, GrizzlyBears.class})
+@CardUsed({NantukoShaman.class, Forest.class})
 class NantukoShamanTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws a card when it enters and you control no tapped lands")
     void drawsWithNoTappedLands() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
         castNantukoShaman();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
     @DisplayName("Draws when you control an untapped land")
     void drawsWithUntappedLand() {
         harness.addToBattlefield(player1, new Forest());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
         castNantukoShaman();
 
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not draw if a land becomes tapped before its enter trigger resolves")
+    void doesNotDrawIfLandBecomesTappedBeforeTriggerResolves() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+        castNantukoShaman();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        forest.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Forest");
     }
 
     @Test
@@ -49,14 +65,45 @@ class NantukoShamanTest extends BaseCardTest {
     void doesNotTriggerWithTappedLand() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
         castNantukoShaman();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card instanceof GrizzlyBears);
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Suspend exiles Nantuko Shaman with one time counter")
+    void suspendExilesWithOneTimeCounter() {
+        NantukoShaman card = suspendNantukoShaman();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suspended Nantuko Shaman may be cast for free and draws a card")
+    void suspendedCardCastsForFreeAndDraws() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        suspendNantukoShaman();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        Permanent permanent = findPermanent(player1, "Nantuko Shaman");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
     }
 
     private void castNantukoShaman() {
@@ -64,5 +111,14 @@ class NantukoShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
+    }
+
+    private NantukoShaman suspendNantukoShaman() {
+        NantukoShaman card = new NantukoShaman();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+        return card;
     }
 }

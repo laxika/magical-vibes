@@ -9,13 +9,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Cancel.class, GrizzlyBears.class, MightOfOaks.class})
 class CancelTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -64,6 +67,23 @@ class CancelTest extends BaseCardTest {
         StackEntry cancelEntry = gd.stack.getLast();
         assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
         assertThat(cancelEntry.getTargetId()).isEqualTo(might.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, bears);
+
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(
+                player2, 0, harness.getPermanentId(player1, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Cancel");
     }
 
     // ===== Resolving =====

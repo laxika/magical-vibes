@@ -54,6 +54,32 @@ class FacelessDevourerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("If Faceless Devourer leaves before its ETB resolves, the target remains exiled")
+    void leavingBeforeEntryTriggerResolvesLeavesTargetExiled() {
+        Permanent shadowCreature = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+        UUID targetId = shadowCreature.getId();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FacelessDevourer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Faceless Devourer");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, sourceId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Faceless Devourer");
+        harness.assertNotOnBattlefield(player2, "Soltari Foot Soldier");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Soltari Foot Soldier"));
+    }
+
+    @Test
     @DisplayName("ETB cannot target a creature without shadow")
     void etbRejectsCreatureWithoutShadow() {
         Permanent nonShadowCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

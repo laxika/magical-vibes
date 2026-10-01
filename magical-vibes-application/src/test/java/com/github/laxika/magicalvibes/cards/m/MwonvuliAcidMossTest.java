@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,14 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MwonvuliAcidMoss.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({MwonvuliAcidMoss.class, Forest.class, Island.class, AshcoatBear.class})
 class MwonvuliAcidMossTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys the target land and puts a Forest onto the battlefield tapped")
     void destroysTargetLandAndSearchesForForest() {
         Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
-        harness.setLibrary(player1, List.of(new Forest(), new Island(), new GrizzlyBears()));
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, new Island(), new AshcoatBear()));
         castSpell(targetLand);
 
         harness.passBothPriorities();
@@ -35,13 +35,15 @@ class MwonvuliAcidMossTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).hasSize(1);
+        assertThat(search.params().cards()).containsExactly(forest);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && permanent.isTapped());
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -49,7 +51,7 @@ class MwonvuliAcidMossTest extends BaseCardTest {
     @DisplayName("Can fail to find a Forest")
     void canFailToFindForest() {
         Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
-        harness.setLibrary(player1, List.of(new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island(), new AshcoatBear()));
         castSpell(targetLand);
 
         harness.passBothPriorities();
@@ -57,13 +59,14 @@ class MwonvuliAcidMossTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(targetLand.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new MwonvuliAcidMoss()));
         addMana();
 

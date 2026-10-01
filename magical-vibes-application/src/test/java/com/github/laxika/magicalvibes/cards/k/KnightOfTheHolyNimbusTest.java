@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrappleWithDeath;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.s.StranglingSoot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,17 +16,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KnightOfTheHolyNimbus.class, GrappleWithDeath.class, GrizzlyBears.class})
+@CardUsed({KnightOfTheHolyNimbus.class, StranglingSoot.class, AshcoatBear.class})
 class KnightOfTheHolyNimbusTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flanking gives a non-flanking blocker -1/-1")
     void flankingHitsNonFlankingBlocker() {
-        Permanent knight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
-        knight.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new KnightOfTheHolyNimbus());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -35,21 +34,36 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flanking does not affect a blocker with flanking")
+    void flankingDoesNotAffectFlankingBlocker() {
+        addCreatureReady(player1, new KnightOfTheHolyNimbus());
+        Permanent blocker = addCreatureReady(player2, new KnightOfTheHolyNimbus());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Intrinsic regeneration saves Knight of the Holy Nimbus from destruction")
     void intrinsicRegenerationSavesFromDestruction() {
         Permanent knight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
 
-        harness.setHand(player2, List.of(new GrappleWithDeath()));
+        harness.setHand(player2, List.of(new StranglingSoot()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        addGrappleMana();
+        addStranglingSootMana();
 
-        harness.castSorcery(player2, 0, 0, knight.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, knight.getId());
 
         harness.assertOnBattlefield(player1, "Knight of the Holy Nimbus");
+        harness.assertNotInGraveyard(player1, "Knight of the Holy Nimbus");
         assertThat(knight.isTapped()).isTrue();
+        assertThat(knight.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -71,6 +85,25 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration prevention expires at the end of the turn")
+    void abilityPreventionExpiresAtEndOfTurn() {
+        Permanent knight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(knight.isCantRegenerateThisTurn()).isTrue();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(knight.isCantRegenerateThisTurn()).isFalse();
+    }
+
+    @Test
     @DisplayName("The opponent's ability prevents intrinsic regeneration this turn")
     void abilityPreventsIntrinsicRegeneration() {
         Permanent knight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
@@ -79,21 +112,19 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player2, List.of(new GrappleWithDeath()));
+        harness.setHand(player2, List.of(new StranglingSoot()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        addGrappleMana();
-        harness.castSorcery(player2, 0, 0, knight.getId());
-        harness.passBothPriorities();
+        addStranglingSootMana();
+        harness.castAndResolveInstant(player2, 0, knight.getId());
 
         harness.assertNotOnBattlefield(player1, "Knight of the Holy Nimbus");
         harness.assertInGraveyard(player1, "Knight of the Holy Nimbus");
     }
 
-    private void addGrappleMana() {
+    private void addStranglingSootMana() {
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
     }
 }
