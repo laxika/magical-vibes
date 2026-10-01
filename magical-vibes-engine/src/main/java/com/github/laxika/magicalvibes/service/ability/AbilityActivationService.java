@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
@@ -145,7 +146,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -282,6 +282,9 @@ public class AbilityActivationService {
         Permanent permanent = battlefield.get(permanentIndex);
         if (permanent.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
+        }
+        if (permanent.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Permanent can't become tapped unless it is attacking");
         }
         // Printed ON_TAP mana is an ability: a continuous "loses all abilities" strips it
         // (Imprisoned in the Moon / Deep Freeze). Granted mana abilities use activateAbility.
@@ -902,6 +905,9 @@ public class AbilityActivationService {
         }
         if (permanent.isTapped()) {
             throw new IllegalStateException("Land is already tapped");
+        }
+        if (permanent.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Land can't become tapped unless it is attacking");
         }
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
         ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
@@ -5254,6 +5260,29 @@ public class AbilityActivationService {
                                                    List<CardEffect> abilityEffects, int xValue,
                                                    Map<UUID, Integer> damageAssignments,
                                                    boolean deferAmountValidation) {
+        for (CardEffect effect : abilityEffects) {
+            if (!(effect instanceof DistributeCountersAmongTargetsEffect distribution)
+                    || distribution.mode() != DivisionMode.CHOSEN || distribution.etbAssignments()) {
+                continue;
+            }
+            Map<UUID, Integer> assignments = damageAssignments == null ? Map.of() : damageAssignments;
+            int expectedAmount = amountEvaluationService.evaluate(gameData, distribution.total(),
+                    new AmountContext(playerId, sourcePermanent, null, xValue, 0));
+            int assignedAmount = 0;
+            for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+                if (assignment.getValue() == null || assignment.getValue() <= 0) {
+                    throw new IllegalStateException("Each counter assignment must be positive");
+                }
+                assignedAmount += assignment.getValue();
+                targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId, ability,
+                        List.of(distribution), assignment.getKey(), null, sourcePermanent.getCard(), xValue);
+            }
+            if (!deferAmountValidation && !(assignments.isEmpty() && distribution.allowsNoTargets())
+                    && (distribution.allowsPartialDistribution()
+                    ? assignedAmount > expectedAmount : assignedAmount != expectedAmount)) {
+                throw new IllegalStateException("Counter assignments must sum to " + expectedAmount);
+            }
+        }
         DealDividedDamageEffect dividedDamage = abilityEffects.stream()
                 .filter(DealDividedDamageEffect.class::isInstance)
                 .map(DealDividedDamageEffect.class::cast)
@@ -6333,6 +6362,9 @@ public class AbilityActivationService {
             }
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
+            }
+            if (permanent.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException("Permanent can't become tapped unless it is attacking");
             }
             if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");
@@ -8044,6 +8076,7 @@ public class AbilityActivationService {
                                      ActivatedAbility ability, int amount, boolean sourceMustBeTapped) {
         List<Permanent> eligible = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> !permanent.isTapRestrictedUnlessAttacking())
                 .filter(permanent -> !sourceMustBeTapped || !permanent.getId().equals(source.getId()))
                 .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
                         || gameQueryService.isCreature(gameData, permanent))
@@ -8151,6 +8184,7 @@ public class AbilityActivationService {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Permanent> eligibleCreatures = battlefield.stream()
                 .filter(creature -> !creature.isTapped())
+                .filter(creature -> !creature.isTapRestrictedUnlessAttacking())
                 .filter(creature -> !ability.isRequiresTap() || !creature.getId().equals(source.getId()))
                 .filter(creature -> gameQueryService.isCreature(gameData, creature))
                 .toList();
@@ -8176,6 +8210,9 @@ public class AbilityActivationService {
             if (creature.isTapped()) {
                 throw new IllegalStateException("Selected creature is already tapped");
             }
+            if (creature.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException("Selected creature can't become tapped unless it is attacking");
+            }
             if (ability.isRequiresTap() && creature.getId().equals(source.getId())) {
                 throw new IllegalStateException("The source cannot pay both tap costs");
             }
@@ -8189,7 +8226,9 @@ public class AbilityActivationService {
             if (creature == null) {
                 throw new IllegalStateException("Selected creature is no longer on the battlefield");
             }
-            creature.tap();
+            if (!creature.tap()) {
+                throw new IllegalStateException("Selected creature can't become tapped unless it is attacking");
+            }
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " taps ", creature.getCard(), " as a cost."));

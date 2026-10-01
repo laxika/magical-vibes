@@ -153,6 +153,12 @@ public record ExileGraveyardCardsEffect(
                 null, null, false, false, false, null, false, true);
     }
 
+    /** Exiles up to one card from any graveyard and tracks it with the source permanent. */
+    public static ExileGraveyardCardsEffect upToOneTargetFromAnyGraveyardWithSource() {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                null, null, false, true, false, null, false, true);
+    }
+
     /** Exiles source-tracked controller-graveyard cards and marks each with a kick counter. */
     public static ExileGraveyardCardsEffect upToControllerGraveyardWithKickCounters(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(100, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,

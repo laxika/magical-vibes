@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnaBattlemage.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AnaBattlemage.class, SerraSphinx.class})
 class AnaBattlemageTest extends BaseCardTest {
 
     @Test
@@ -35,7 +34,7 @@ class AnaBattlemageTest extends BaseCardTest {
     @Test
     @DisplayName("Blue kicker makes a target player discard three cards")
     void blueKickerDiscardsThree() {
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new SerraSphinx(), new SerraSphinx(), new SerraSphinx(), new SerraSphinx()));
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(4, ManaColor.BLUE);
 
@@ -55,7 +54,7 @@ class AnaBattlemageTest extends BaseCardTest {
     @Test
     @DisplayName("Black kicker taps an untapped creature and deals damage equal to its power")
     void blackKickerTapsCreatureAndDealsPowerDamage() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(3, ManaColor.BLACK);
 
@@ -66,14 +65,14 @@ class AnaBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Both kicker abilities resolve independently")
     void bothKickers() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        harness.setHand(player2, List.of(new SerraSphinx(), new SerraSphinx(), new SerraSphinx(), new SerraSphinx()));
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(5, ManaColor.BLUE, ManaColor.BLACK);
 
@@ -89,7 +88,7 @@ class AnaBattlemageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
@@ -97,8 +96,8 @@ class AnaBattlemageTest extends BaseCardTest {
     @Test
     @DisplayName("Black kicker only permits untapped creatures as targets")
     void blackKickerOnlyTargetsUntappedCreatures() {
-        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
         tappedCreature.tap();
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(3, ManaColor.BLACK);

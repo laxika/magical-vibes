@@ -16,14 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoldmeadowLookout.class, GrizzlyBears.class})
+@CardUsed({GoldmeadowLookout.class, GroveOfTheBurnwillows.class})
 class GoldmeadowLookoutTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating creates a Goldmeadow Harrier token after discarding a card")
     void activatingCreatesGoldmeadowHarrierToken() {
-        addReadyLookout();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent lookout = addCreatureReady(player1, new GoldmeadowLookout());
+        GoldmeadowLookout discardedCard = new GoldmeadowLookout();
+        harness.setHand(player1, List.of(discardedCard));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -32,10 +33,11 @@ class GoldmeadowLookoutTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        assertThat(lookout.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+
+        Permanent token = findPermanent(player1, "Goldmeadow Harrier");
         assertThat(token.getCard().getName()).isEqualTo("Goldmeadow Harrier");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -47,19 +49,16 @@ class GoldmeadowLookoutTest extends BaseCardTest {
     @Test
     @DisplayName("Goldmeadow Harrier token can tap a creature")
     void tokenAbilityTapsTargetCreature() {
-        addReadyLookout();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of(new GoldmeadowLookout()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Goldmeadow Harrier");
         token.setSummoningSick(false);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldmeadowLookout());
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -71,21 +70,33 @@ class GoldmeadowLookoutTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate without a card to discard")
-    void cannotActivateWithoutCardToDiscard() {
-        addReadyLookout();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of());
+    @DisplayName("Goldmeadow Harrier token cannot target a noncreature permanent")
+    void tokenAbilityCannotTargetNoncreaturePermanent() {
+        addCreatureReady(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of(new GoldmeadowLookout()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Goldmeadow Harrier");
+        token.setSummoningSick(false);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GroveOfTheBurnwillows());
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, tokenIndex, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyLookout() {
-        Permanent lookout = new Permanent(new GoldmeadowLookout());
-        lookout.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(lookout);
-        return lookout;
+    @Test
+    @DisplayName("Cannot activate without a card to discard")
+    void cannotActivateWithoutCardToDiscard() {
+        addCreatureReady(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

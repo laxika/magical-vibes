@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +12,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinFurrier.class, RimeboundDead.class})
 class GoblinFurrierTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents its combat damage to snow creatures")
     void preventsCombatDamageToSnowCreature() {
-        Permanent furrier = readyCreature(player1, new GoblinFurrier());
-        Permanent snowCreature = readyCreature(player2, new RimeboundDead());
-        furrier.setAttacking(true);
-        snowCreature.setBlocking(true);
-        snowCreature.addBlockingTarget(0);
+        Permanent furrier = addCreatureReady(player1, new GoblinFurrier());
+        Permanent snowCreature = addCreatureReady(player2, new RimeboundDead());
 
-        resolveCombatDamage();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
 
         assertThat(snowCreature.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(snowCreature);
@@ -35,32 +34,32 @@ class GoblinFurrierTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prevent its combat damage to nonsnow creatures")
     void doesNotPreventCombatDamageToNonsnowCreature() {
-        Permanent furrier = readyCreature(player1, new GoblinFurrier());
-        Permanent nonsnowCreature = readyCreature(player2, new GrizzlyBears());
-        furrier.setAttacking(true);
-        nonsnowCreature.setBlocking(true);
-        nonsnowCreature.addBlockingTarget(0);
+        Permanent furrier = addCreatureReady(player1, new GoblinFurrier());
+        Permanent nonsnowCreature = addCreatureReady(player2, new GoblinFurrier());
 
-        resolveCombatDamage();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(nonsnowCreature);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Goblin Furrier");
         assertThat(furrier.getMarkedDamage()).isEqualTo(2);
     }
 
-    private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Does not prevent damage to snow creatures from other sources")
+    void doesNotPreventDamageFromOtherSources() {
+        addCreatureReady(player1, new GoblinFurrier());
+        Permanent otherSource = addCreatureReady(player1, new RimeboundDead());
+        addCreatureReady(player2, new RimeboundDead());
 
-    private void resolveCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Goblin Furrier");
+        harness.assertInGraveyard(player2, "Rimebound Dead");
+        assertThat(otherSource).isNotIn(gd.playerBattlefields.get(player1.getId()));
     }
 }

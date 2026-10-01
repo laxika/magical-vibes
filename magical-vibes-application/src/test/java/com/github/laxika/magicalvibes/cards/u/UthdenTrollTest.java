@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UthdenTroll.class, GrizzlyBears.class})
+@CardUsed(UthdenTroll.class)
 class UthdenTrollTest extends BaseCardTest {
 
     // ===== Activate regeneration ability =====
@@ -43,6 +42,28 @@ class UthdenTrollTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(troll.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated regeneration shield saves Uthden Troll from lethal combat damage")
+    void activatedRegenerationShieldSavesFromLethalCombatDamage() {
+        Permanent troll = addCreatureReady(player1, new UthdenTroll());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        troll.setBlocking(true);
+        troll.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new UthdenTroll());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Uthden Troll");
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -87,7 +108,7 @@ class UthdenTrollTest extends BaseCardTest {
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new UthdenTroll());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -104,7 +125,7 @@ class UthdenTrollTest extends BaseCardTest {
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new UthdenTroll());
         attacker.setAttacking(true);
 
         resolveCombat(player2);

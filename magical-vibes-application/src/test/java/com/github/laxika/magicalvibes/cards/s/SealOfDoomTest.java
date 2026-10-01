@@ -73,4 +73,18 @@ class SealOfDoomTest extends BaseCardTest {
                 .hasMessageContaining("nonblack creature");
     }
 
+    @Test
+    void abilityFizzlesIfTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new MoggToady());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Seal of Doom");
+    }
+
 }

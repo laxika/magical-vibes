@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
@@ -389,6 +390,8 @@ public class GameData {
     public final Set<UUID> perpetualExileInsteadOfDyingCardIds = ConcurrentHashMap.newKeySet();
     /** Perpetual triggered abilities keyed by the affected card's identity. */
     public final Map<UUID, List<CardEffect>> perpetualTriggeredAbilities = new ConcurrentHashMap<>();
+    /** Perpetually removed printed triggered abilities keyed by the affected card's identity. */
+    public final Map<UUID, Set<CardEffect>> perpetuallyRemovedTriggeredAbilities = new ConcurrentHashMap<>();
     /** Perpetual triggered-ability grants reapplied when the affected card enters the battlefield. */
     public final Map<UUID, Map<EffectSlot, List<CardEffect>>> perpetualTriggeredAbilityGrants =
             new ConcurrentHashMap<>();
@@ -1445,6 +1448,14 @@ public class GameData {
     public Integer pendingEachPlayerDrawUpToInitialCount;
     /** Chosen count for the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerMayDrawChosenCount;
+    /** APNAP-ordered players choosing for "each player may draw, then drawers gain life" effects. */
+    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeQueue =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Players who actually drew during the current "may draw, then gain life" resolution. */
+    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeDrawers =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Draw count before the current Kwain-style optional draw instruction. */
+    public Integer pendingEachPlayerMayDrawThenGainLifeInitialCount;
     /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
     public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** The Ring emblem state for players who have been tempted by the Ring. */
@@ -1886,6 +1897,10 @@ public class GameData {
         }
     }
 
+    /** A turn-scoped single-use grant to cast one foretold card owned by the player. */
+    public record ForetoldCardCastPermission(UUID playerId, boolean singleUse) {
+    }
+
     /** Targeted cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
@@ -2086,6 +2101,7 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnBeginning = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
      *  Current-turn grants are cleared during cleanup; grants tied to a later play-permission
@@ -2123,6 +2139,9 @@ public class GameData {
             new CopyOnWriteArrayList<>();
     /** Source-linked exile cast grants that expire at end of turn. */
     public final List<ExileCastPermission> exileCastPermissionsUntilEndOfTurn =
+            new CopyOnWriteArrayList<>();
+    /** Turn-scoped grants to cast one foretold card owned by the granting player for free. */
+    public final List<ForetoldCardCastPermission> foretoldCardCastPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
     /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
     public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
@@ -2583,6 +2602,10 @@ public class GameData {
     public final Map<UUID, Map<UUID, Integer>> damageDealtToPermanentsBySourceThisTurn =
             new ConcurrentHashMap<>();
 
+    /** Tracks actual damage dealt to each permanent this turn, grouped by the controller of each damage source. */
+    public final Map<UUID, Map<UUID, Integer>> damageDealtToPermanentsBySourceControllerThisTurn =
+            new ConcurrentHashMap<>();
+
     /** Snapshots the names of damage source objects seen this turn. */
     public final Map<UUID, String> damageSourceNamesThisTurn = new ConcurrentHashMap<>();
 
@@ -2627,17 +2650,37 @@ public class GameData {
         recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName);
     }
 
+    /** Records actual damage dealt to a permanent together with the controller of its source. */
+    public void recordDamageToPermanent(UUID permanentId, int amount, UUID sourceId, String sourceName,
+                                        UUID sourceControllerId) {
+        recordDamageToPermanent(permanentId, amount);
+        recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName, sourceControllerId);
+    }
+
     /** Records the source attribution for actual damage already recorded for a permanent. */
     public void recordDamageToPermanentFromSource(UUID permanentId, int amount, UUID sourceId,
                                                   String sourceName) {
-        if (permanentId == null || amount <= 0 || sourceId == null) {
+        recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName, null);
+    }
+
+    /** Records source attribution and source-controller attribution for actual damage. */
+    public void recordDamageToPermanentFromSource(UUID permanentId, int amount, UUID sourceId,
+                                                  String sourceName, UUID sourceControllerId) {
+        if (permanentId == null || amount <= 0) {
             return;
         }
-        damageDealtToPermanentsBySourceThisTurn
-                .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
-                .merge(sourceId, amount, Integer::sum);
-        if (sourceName != null) {
-            damageSourceNamesThisTurn.putIfAbsent(sourceId, sourceName);
+        if (sourceId != null) {
+            damageDealtToPermanentsBySourceThisTurn
+                    .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
+                    .merge(sourceId, amount, Integer::sum);
+            if (sourceName != null) {
+                damageSourceNamesThisTurn.putIfAbsent(sourceId, sourceName);
+            }
+        }
+        if (sourceControllerId != null) {
+            damageDealtToPermanentsBySourceControllerThisTurn
+                    .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
+                    .merge(sourceControllerId, amount, Integer::sum);
         }
     }
 
@@ -2686,6 +2729,9 @@ public class GameData {
      *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks source permanents whose once-only triggered ability has already fired. */
+    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
 
     /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
     public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
@@ -4912,6 +4958,9 @@ public class GameData {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
+                    } else if (effect instanceof PlayersWithChosenPlanarModePlayAdditionalLandEffect mode
+                            && mode.mode().equals(planar.getChosenModeByPlayer().get(playerId))) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
                             && playerId.equals(planechase.controllerId)) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE,
@@ -5799,6 +5848,7 @@ public class GameData {
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileCardsEnterTapped.remove(cardId);
@@ -6648,6 +6698,9 @@ public class GameData {
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
+        copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
+        copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
+        copy.pendingEachPlayerMayDrawThenGainLifeInitialCount = this.pendingEachPlayerMayDrawThenGainLifeInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
@@ -6841,6 +6894,8 @@ public class GameData {
         copy.perpetualExileInsteadOfDyingCardIds.addAll(this.perpetualExileInsteadOfDyingCardIds);
         this.perpetualTriggeredAbilities.forEach((cardId, effects) ->
                 copy.perpetualTriggeredAbilities.put(cardId, List.copyOf(effects)));
+        this.perpetuallyRemovedTriggeredAbilities.forEach((cardId, effects) ->
+                copy.perpetuallyRemovedTriggeredAbilities.put(cardId, Set.copyOf(effects)));
         this.perpetualTriggeredAbilityGrants.forEach((cardId, effectsBySlot) -> {
             Map<EffectSlot, List<CardEffect>> copied = new EnumMap<>(EffectSlot.class);
             effectsBySlot.forEach((slot, effects) -> copied.put(slot, List.copyOf(effects)));
@@ -7104,6 +7159,11 @@ public class GameData {
             sources.putAll(v);
             copy.damageDealtToPermanentsBySourceThisTurn.put(k, sources);
         });
+        this.damageDealtToPermanentsBySourceControllerThisTurn.forEach((k, v) -> {
+            Map<UUID, Integer> controllers = new ConcurrentHashMap<>();
+            controllers.putAll(v);
+            copy.damageDealtToPermanentsBySourceControllerThisTurn.put(k, controllers);
+        });
         copy.damageSourceNamesThisTurn.putAll(this.damageSourceNamesThisTurn);
         copy.controllersOfPermanentsDealtExcessDamageThisTurn.addAll(
                 this.controllersOfPermanentsDealtExcessDamageThisTurn);
@@ -7118,6 +7178,7 @@ public class GameData {
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryPlayPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryPlayPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.onceOnlyTriggersFired.addAll(this.onceOnlyTriggersFired);
         this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
                 copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {
@@ -7540,6 +7601,7 @@ public class GameData {
         copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
         copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
         copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
+        copy.cloneOperation.reflexiveEffects = this.cloneOperation.reflexiveEffects;
         copy.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 this.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         copy.cloneOperation.xValue = this.cloneOperation.xValue;
@@ -7784,6 +7846,7 @@ public class GameData {
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayPermissionsExpireAtTurnBeginning.putAll(this.exilePlayPermissionsExpireAtTurnBeginning);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
         copy.discordCopySourcePermanents.putAll(this.discordCopySourcePermanents);
@@ -7798,6 +7861,7 @@ public class GameData {
         copy.playersCantPlayFromGraveyardsThisTurn.addAll(this.playersCantPlayFromGraveyardsThisTurn);
         copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
+        copy.foretoldCardCastPermissionsThisTurn.addAll(this.foretoldCardCastPermissionsThisTurn);
         copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.playersMayPlayFaceUpCardsFromExileThisTurn.addAll(this.playersMayPlayFaceUpCardsFromExileThisTurn);
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn

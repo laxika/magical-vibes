@@ -1651,7 +1651,7 @@ public class GameService {
         effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
         effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
         effects = effects.stream()
-                .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
+                .filter(effect -> !(effect instanceof com.github.laxika.magicalvibes.model.effect.ReplacementEffect))
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
         if (!effects.isEmpty()) {

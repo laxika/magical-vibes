@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCrea
 @CardRegistration(set = "BRR", collectorNumber = "19")
 @CardRegistration(set = "MSC", collectorNumber = "200")
 @CardRegistration(set = "MSC", collectorNumber = "437")
+@CardRegistration(set = "BLC", collectorNumber = "276")
 public class HelmOfTheHost extends Card {
 
     public HelmOfTheHost() {

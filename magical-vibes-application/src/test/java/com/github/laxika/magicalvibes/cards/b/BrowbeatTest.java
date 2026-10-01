@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.f.FlyingMen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Browbeat.class, SuntailHawk.class})
+@CardUsed({Browbeat.class, FlyingMen.class})
 class BrowbeatTest extends BaseCardTest {
 
     private void castAndResolveToChoice() {
@@ -26,8 +26,7 @@ class BrowbeatTest extends BaseCardTest {
     private void castAndResolveToChoice(Player caster, Player target) {
         prepareToCast(caster);
 
-        harness.castSorcery(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(caster, 0, target.getId());
     }
 
     private void prepareToCast(Player caster) {
@@ -49,6 +48,18 @@ class BrowbeatTest extends BaseCardTest {
 
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Accepting the damage skips the fallback draw")
+    void acceptingDamageSkipsFallbackDraw() {
+        castAndResolveToChoice();
+        int targetHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -100,17 +111,17 @@ class BrowbeatTest extends BaseCardTest {
     @Test
     @DisplayName("Browbeat cannot target a creature")
     void cannotTargetCreature() {
-        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+        Permanent creature = addCreatureReady(player2, new FlyingMen());
         prepareToCast(player1);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, hawk.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("The caster can be the target of the fallback draw")
     void casterDrawsWhenEveryoneDeclines() {
-        castAndResolveToChoiceForJudReview(player1.getId());
+        castAndResolveToChoice(player1, player1);
         int casterHandBefore = gd.playerHands.get(player1.getId()).size();
         int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
 
@@ -119,14 +130,5 @@ class BrowbeatTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(casterHandBefore + 3);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
-    }
-
-    private void castAndResolveToChoiceForJudReview(java.util.UUID targetPlayerId) {
-        harness.setHand(player1, List.of(new Browbeat()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }

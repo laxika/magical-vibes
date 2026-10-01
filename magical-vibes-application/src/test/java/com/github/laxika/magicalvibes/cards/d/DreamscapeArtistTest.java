@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,14 +36,14 @@ class DreamscapeArtistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificedLand);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(artist.isTapped()).isTrue();
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard)
@@ -64,8 +62,74 @@ class DreamscapeArtistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("May find no basic lands")
+    void mayFindNoBasicLands() {
+        Permanent artist = addCreatureReady(player1, new DreamscapeArtist());
+        Forest sacrificedLand = new Forest();
+        harness.addToBattlefield(player1, sacrificedLand);
+        GrizzlyBears discarded = new GrizzlyBears();
+        Forest forest = new Forest();
+        GrizzlyBears nonBasic = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(forest, nonBasic));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(artist.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactly(artist.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, nonBasic);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Puts one basic land onto the battlefield when only one is available")
+    void searchesForOnlyOneAvailableBasicLand() {
+        Permanent artist = addCreatureReady(player1, new DreamscapeArtist());
+        Forest sacrificedLand = new Forest();
+        harness.addToBattlefield(player1, sacrificedLand);
+        GrizzlyBears discarded = new GrizzlyBears();
+        Forest forest = new Forest();
+        GrizzlyBears nonBasic = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(forest, nonBasic));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactlyInAnyOrder(artist.getCard(), forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonBasic);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a card to discard")
+    void requiresCardToDiscard() {
+        addCreatureReady(player1, new DreamscapeArtist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addActivationMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
     }
 }

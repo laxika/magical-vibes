@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import java.util.Set;
 
 @CardRegistration(set = "FCA", collectorNumber = "53")
+@CardRegistration(set = "BLC", collectorNumber = "89")
 public class IshaiOjutaiDragonspeaker extends Card {
 
     public IshaiOjutaiDragonspeaker() {

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DaggerclawImp;
+import com.github.laxika.magicalvibes.cards.g.GruulNodorog;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,53 +16,65 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WurmweaverCoil.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({WurmweaverCoil.class, GruulNodorog.class, DaggerclawImp.class})
 class WurmweaverCoilTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Wurmweaver Coil attaches it and gives a green creature +6/+6")
     void resolvingAttachesAndBoostsGreenCreature() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GruulNodorog());
         harness.setHand(player1, List.of(new WurmweaverCoil()));
         harness.addMana(player1, ManaColor.GREEN, 6);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof WurmweaverCoil
                         && permanent.isAttached()
-                        && bears.getId().equals(permanent.getAttachedTo()));
+                        && creature.getId().equals(permanent.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Wurmweaver Coil does not boost another creature")
     void doesNotBoostAnotherCreature() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent otherBears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GruulNodorog());
+        Permanent otherCreature = addCreatureReady(player1, new GruulNodorog());
 
-        Permanent coil = new Permanent(new WurmweaverCoil());
-        coil.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(coil);
+        Permanent coil = harness.addToBattlefieldAndReturn(player1, new WurmweaverCoil());
+        coil.setAttachedTo(creature.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
-        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Wurmweaver Coil cannot enchant a non-green creature")
     void cannotEnchantNonGreenCreature() {
-        Permanent elemental = addReadyCreature(player1, new AirElemental());
+        Permanent creature = addCreatureReady(player1, new DaggerclawImp());
         harness.setHand(player1, List.of(new WurmweaverCoil()));
         harness.addMana(player1, ManaColor.GREEN, 6);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, elemental.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a green creature");
+    }
+
+    @Test
+    @DisplayName("Wurmweaver Coil cannot enchant a green noncreature")
+    void cannotEnchantGreenNonCreature() {
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new WurmweaverCoil());
+        harness.setHand(player1, List.of(new WurmweaverCoil()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a green creature");
     }
@@ -71,10 +82,9 @@ class WurmweaverCoilTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Wurmweaver Coil creates a 6/6 green Wurm token")
     void sacrificingCreatesWurmToken() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent coil = new Permanent(new WurmweaverCoil());
-        coil.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(coil);
+        Permanent creature = addCreatureReady(player1, new GruulNodorog());
+        Permanent coil = harness.addToBattlefieldAndReturn(player1, new WurmweaverCoil());
+        coil.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateAbility(player1, 1, null, null);
@@ -84,20 +94,14 @@ class WurmweaverCoilTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
                 .satisfies(token -> {
+                    assertThat(token.getCard().getName()).isEqualTo("Wurm");
                     assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
                     assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WURM);
                     assertThat(token.getEffectivePower()).isEqualTo(6);
                     assertThat(token.getEffectiveToughness()).isEqualTo(6);
                 });
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Wurmweaver Coil");
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
     }
 }

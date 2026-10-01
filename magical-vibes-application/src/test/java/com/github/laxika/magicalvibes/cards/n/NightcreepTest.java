@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,37 +15,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Nightcreep.class, Forest.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({Nightcreep.class, AssaultZeppelid.class, NovijenHeartOfProgress.class})
 class NightcreepTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes all creatures black and all lands Swamps")
     void affectsCreaturesAndLandsControlledByBothPlayers() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new NovijenHeartOfProgress());
 
         castNightcreep();
 
         assertThat(gqs.getEffectiveColors(gd, ownCreature)).containsExactly(CardColor.BLACK);
         assertThat(gqs.getEffectiveColors(gd, opponentCreature)).containsExactly(CardColor.BLACK);
-        assertThat(gqs.computeStaticBonus(gd, ownForest).grantedSubtypes())
+        assertThat(gqs.computeStaticBonus(gd, ownLand).grantedSubtypes())
                 .containsExactly(CardSubtype.SWAMP);
-        assertThat(gqs.computeStaticBonus(gd, opponentMountain).grantedSubtypes())
+        assertThat(gqs.computeStaticBonus(gd, opponentLand).grantedSubtypes())
                 .containsExactly(CardSubtype.SWAMP);
     }
 
     @Test
-    @DisplayName("A Forest changed to a Swamp produces black mana")
+    @DisplayName("A nonbasic land changed to a Swamp produces only black mana")
     void changedLandProducesBlackMana() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
 
         castNightcreep();
-        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(land));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
     @Test
@@ -55,19 +55,19 @@ class NightcreepTest extends BaseCardTest {
     void laterPermanentsAreNotAffected() {
         castNightcreep();
 
-        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent laterForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent laterLand = harness.addToBattlefieldAndReturn(player2, new NovijenHeartOfProgress());
 
         assertThat(gqs.hasColor(gd, laterCreature, CardColor.BLACK)).isFalse();
-        StaticBonus laterForestBonus = gqs.computeStaticBonus(gd, laterForest);
-        assertThat(laterForestBonus.grantedSubtypes()).doesNotContain(CardSubtype.SWAMP);
+        StaticBonus laterLandBonus = gqs.computeStaticBonus(gd, laterLand);
+        assertThat(laterLandBonus.grantedSubtypes()).doesNotContain(CardSubtype.SWAMP);
     }
 
     @Test
     @DisplayName("The changes wear off at end of turn")
     void changesWearOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
 
         castNightcreep();
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -75,7 +75,7 @@ class NightcreepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasColor(gd, creature, CardColor.BLACK)).isFalse();
-        assertThat(gqs.computeStaticBonus(gd, forest).grantedSubtypes())
+        assertThat(gqs.computeStaticBonus(gd, land).grantedSubtypes())
                 .doesNotContain(CardSubtype.SWAMP);
     }
 

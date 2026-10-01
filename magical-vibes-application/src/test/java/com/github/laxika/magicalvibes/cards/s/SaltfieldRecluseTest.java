@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KavuPredator;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,37 +12,75 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SaltfieldRecluse.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SaltfieldRecluse.class, KavuPredator.class, UrborgTombOfYawgmoth.class})
 class SaltfieldRecluseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps to give target creature -2/-0 until end of turn")
     void givesTargetCreatureNegativePowerUntilEndOfTurn() {
         Permanent recluse = addCreatureReady(player1, new SaltfieldRecluse());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent kavu = addCreatureReady(player2, new KavuPredator());
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, kavu.getId());
         harness.passBothPriorities();
 
         assertThat(recluse.isTapped()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        addCreatureReady(player1, new SaltfieldRecluse());
+        Permanent kavu = addCreatureReady(player1, new KavuPredator());
+
+        harness.activateAbility(player1, 0, null, kavu.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWithSummoningSickness() {
+        Permanent recluse = harness.addToBattlefieldAndReturn(player1, new SaltfieldRecluse());
+        Permanent kavu = addCreatureReady(player2, new KavuPredator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kavu.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
+        assertThat(recluse.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent recluse = addCreatureReady(player1, new SaltfieldRecluse());
+        recluse.tap();
+        Permanent kavu = addCreatureReady(player2, new KavuPredator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kavu.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void rejectsNonCreatureTarget() {
-        addCreatureReady(player1, new SaltfieldRecluse());
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent recluse = addCreatureReady(player1, new SaltfieldRecluse());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new UrborgTombOfYawgmoth());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(recluse.isTapped()).isFalse();
     }
 }

@@ -46,6 +46,30 @@ class DeadlyGrubTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not remove a time counter during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        Permanent grub = addCreatureReady(player1, new DeadlyGrub());
+        grub.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(grub.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does nothing during upkeep when it has no time counters")
+    void upkeepDoesNothingWithoutTimeCounters() {
+        Permanent grub = addCreatureReady(player1, new DeadlyGrub());
+        grub.setCounterCount(CounterType.TIME, 0);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Deadly Grub")).containsExactly(grub);
+    }
+
+    @Test
     @DisplayName("Sacrifices itself when its last time counter is removed")
     void lastTimeCounterCausesSacrifice() {
         Permanent grub = addCreatureReady(player1, new DeadlyGrub());
@@ -56,6 +80,18 @@ class DeadlyGrubTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Deadly Grub");
         harness.assertInGraveyard(player1, "Deadly Grub");
+    }
+
+    @Test
+    @DisplayName("Creates an Insect after vanishing sacrifices it")
+    void createsInsectAfterVanishingSacrifice() {
+        Permanent grub = addCreatureReady(player1, new DeadlyGrub());
+        grub.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Insect")).hasSize(1);
     }
 
     @Test

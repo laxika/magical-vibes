@@ -56,6 +56,7 @@ class CalderaBreakerTest extends BaseCardTest {
 
     @Test
     void returnsTrackedCardsToTheirOwnersAndConjuresVolcanicGeysersOnDeath() {
+        harness.setLibrary(player1, List.of());
         Permanent breaker = harness.addToBattlefieldAndReturn(player1, new CalderaBreaker());
         HillGiant returned = new HillGiant();
         gd.addToExile(player2.getId(), returned, breaker.getId());

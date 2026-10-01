@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCard
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "92")
+@CardRegistration(set = "WHO", collectorNumber = "388")
+@CardRegistration(set = "WHO", collectorNumber = "697")
+@CardRegistration(set = "WHO", collectorNumber = "979")
 public class ReturnThePast extends Card {
 
     public ReturnThePast() {

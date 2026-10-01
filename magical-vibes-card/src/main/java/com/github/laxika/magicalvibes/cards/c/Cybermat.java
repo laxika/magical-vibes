@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "175")
+@CardRegistration(set = "WHO", collectorNumber = "780")
 public class Cybermat extends Card {
 
     public Cybermat() {

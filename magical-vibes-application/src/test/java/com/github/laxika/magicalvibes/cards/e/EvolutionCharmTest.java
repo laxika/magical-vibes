@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KavuPredator;
+import com.github.laxika.magicalvibes.cards.s.SealOfPrimordium;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,15 +21,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvolutionCharm.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({EvolutionCharm.class, Forest.class, KavuPredator.class, SealOfPrimordium.class})
 class EvolutionCharmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Searches for a basic land and puts it into hand")
     void searchesForBasicLand() {
         Card forest = new Forest();
-        Card creature = new GrizzlyBears();
-        setLibrary(player1, List.of(forest, creature));
+        Card creature = new KavuPredator();
+        harness.setLibrary(player1, List.of(forest, creature));
         castCharm(0);
 
         PendingInteraction.LibrarySearch search =
@@ -47,7 +47,7 @@ class EvolutionCharmTest extends BaseCardTest {
     @DisplayName("Returns a target creature card from the graveyard to hand")
     void returnsCreatureFromGraveyard() {
         Card forest = new Forest();
-        Card creature = new GrizzlyBears();
+        Card creature = new KavuPredator();
         harness.setGraveyard(player1, List.of(forest, creature));
         harness.setHand(player1, List.of(new EvolutionCharm()));
         addMana();
@@ -62,15 +62,26 @@ class EvolutionCharmTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Kavu Predator");
+        harness.assertNotInGraveyard(player1, "Kavu Predator");
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Creature-return mode requires a creature card in the graveyard")
+    void creatureReturnModeRequiresTarget() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new EvolutionCharm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Gives target creature flying until end of turn")
     void givesFlyingUntilEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuPredator());
         castCharm(2, target.getId());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -85,7 +96,7 @@ class EvolutionCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Flying mode cannot target a noncreature permanent")
     void flyingModeCannotTargetNoncreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SealOfPrimordium());
         harness.setHand(player1, List.of(new EvolutionCharm()));
         addMana();
 
@@ -104,8 +115,4 @@ class EvolutionCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
     }
 
-    private void setLibrary(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }

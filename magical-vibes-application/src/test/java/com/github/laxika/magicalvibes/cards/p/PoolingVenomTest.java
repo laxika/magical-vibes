@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PoolingVenom.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({PoolingVenom.class, DryadArbor.class, Tarmogoyf.class})
 class PoolingVenomTest extends BaseCardTest {
 
     @Test
@@ -36,10 +36,27 @@ class PoolingVenomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Pooling Venom can enchant an opponent's land")
+    void resolvesAttachedToOpponentsLand() {
+        Permanent land = addLand(player2);
+        harness.setHand(player1, List.of(new PoolingVenom()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PoolingVenom
+                        && permanent.isAttached()
+                        && land.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
     @DisplayName("Pooling Venom cannot target a non-land permanent")
     void cannotTargetNonLand() {
         addLand(player1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Tarmogoyf());
         harness.setHand(player1, List.of(new PoolingVenom()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -56,7 +73,7 @@ class PoolingVenomTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 18);
     }
@@ -70,7 +87,24 @@ class PoolingVenomTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Pooling Venom uses the land's controller when the trigger resolves")
+    void lifeLossUsesCurrentEnchantedLandController() {
+        Permanent land = addLand(player1);
+        attachAura(player1, land);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -88,30 +122,38 @@ class PoolingVenomTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Dryad Arbor");
+    }
+
+    @Test
+    @DisplayName("Pooling Venom's ability destroys an opponent's enchanted land")
+    void abilityDestroysOpponentsEnchantedLand() {
+        Permanent land = addLand(player2);
+        attachAura(player1, land);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dryad Arbor");
     }
 
     private Permanent addLand(Player owner) {
-        harness.addToBattlefield(owner, new Mountain());
-        List<Permanent> battlefield = gd.playerBattlefields.get(owner.getId());
-        return battlefield.get(battlefield.size() - 1);
+        Permanent land = harness.addToBattlefieldAndReturn(owner, new DryadArbor());
+        land.setSummoningSick(false);
+        return land;
     }
 
     private Permanent attachAura(Player auraController, Permanent land) {
-        Permanent aura = new Permanent(new PoolingVenom());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new PoolingVenom());
         aura.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return aura;
     }
 
     private void addLandWithAura(Player owner) {
         Permanent land = addLand(owner);
         attachAura(owner, land);
-    }
-
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }

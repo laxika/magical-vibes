@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class Narcomoeba extends Card {
 
     public Narcomoeba() {
-        addEffect(EffectSlot.ON_SELF_MILLED, new MayEffect(
+        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY, new MayEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
                 "Put Narcomoeba onto the battlefield?"));
     }

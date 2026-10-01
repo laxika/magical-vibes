@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandWithManaValueAtLeastAndSuspendEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "95")
+@CardRegistration(set = "WHO", collectorNumber = "700")
 public class SibyllineSoothsayer extends Card {
 
     public SibyllineSoothsayer() {

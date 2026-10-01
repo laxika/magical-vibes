@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "96")
+@CardRegistration(set = "WHO", collectorNumber = "701")
 public class SontaranGeneral extends Card {
 
     public SontaranGeneral() {

@@ -54,7 +54,8 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
         } else {
             beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
                             gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
-                    entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
+                    entry.getControllerId(), new HashMap<>(), entry.getCard().getName(),
+                    willOfTheCouncil.creaturesOnly());
         }
     }
 
@@ -70,15 +71,17 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
         UUID chosenId = permanentIds.getFirst();
         votes.merge(chosenId, 1, Integer::sum);
         beginNextVote(gameData, context.remainingPlayerIds(), context.effectControllerId(), votes,
-                context.sourceName());
+                context.sourceName(), context.creaturesOnly());
     }
 
     private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds,
-                               UUID effectControllerId, Map<UUID, Integer> votes, String sourceName) {
+                               UUID effectControllerId, Map<UUID, Integer> votes, String sourceName,
+                               boolean creaturesOnly) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID choosingPlayerId = remaining.removeFirst();
-            List<UUID> candidates = nonlandPermanentIdsNotControlledBy(gameData, effectControllerId);
+            List<UUID> candidates = nonlandPermanentIdsNotControlledBy(
+                    gameData, effectControllerId, creaturesOnly);
 
             if (candidates.isEmpty()) {
                 continue;
@@ -93,8 +96,10 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
             playerInputService.beginMultiPermanentChoice(
                     gameData, choosingPlayerId, candidates, 1,
                     new MultiPermanentChoiceContext.WillOfTheCouncilChoice(
-                            effectControllerId, remaining, votes, sourceName),
-                    sourceName + " — vote for a nonland permanent you don't control.");
+                            effectControllerId, remaining, votes, sourceName, false, creaturesOnly),
+                    sourceName + (creaturesOnly
+                            ? " - vote for a creature you don't control."
+                            : " - vote for a nonland permanent you don't control."));
             return;
         }
 
@@ -102,14 +107,16 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
         exileMostVoted(gameData, votes, sourceName);
     }
 
-    private List<UUID> nonlandPermanentIdsNotControlledBy(GameData gameData, UUID effectControllerId) {
+    private List<UUID> nonlandPermanentIdsNotControlledBy(
+            GameData gameData, UUID effectControllerId, boolean creaturesOnly) {
         List<UUID> candidates = new ArrayList<>();
         for (UUID controllerId : gameData.orderedPlayerIds) {
             if (controllerId.equals(effectControllerId)) {
                 continue;
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                if (!gameQueryService.isLand(gameData, permanent)) {
+                if ((!creaturesOnly && !gameQueryService.isLand(gameData, permanent))
+                        || (creaturesOnly && gameQueryService.isCreature(gameData, permanent))) {
                     candidates.add(permanent.getId());
                 }
             }

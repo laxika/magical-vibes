@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValue
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "105")
+@CardRegistration(set = "WHO", collectorNumber = "397")
+@CardRegistration(set = "WHO", collectorNumber = "710")
+@CardRegistration(set = "WHO", collectorNumber = "988")
 public class JamieMcCrimmon extends Card {
 
     public JamieMcCrimmon() {

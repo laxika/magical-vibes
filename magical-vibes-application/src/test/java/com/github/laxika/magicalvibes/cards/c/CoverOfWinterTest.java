@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
+import com.github.laxika.magicalvibes.cards.l.LightningStorm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoverOfWinter.class, KjeldoranOutrider.class, LightningStorm.class})
 class CoverOfWinterTest extends BaseCardTest {
 
     @Test
@@ -28,10 +30,7 @@ class CoverOfWinterTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
@@ -47,10 +46,7 @@ class CoverOfWinterTest extends BaseCardTest {
         addAttacker(player2);
 
         harness.setLife(player1, 20);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
@@ -62,12 +58,11 @@ class CoverOfWinterTest extends BaseCardTest {
         cover.setCounterCount(CounterType.AGE, 2);
         harness.setLife(player1, 20);
 
-        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new LightningStorm()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 
     @Test
@@ -102,11 +97,25 @@ class CoverOfWinterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Sacrifices itself when cumulative upkeep is not paid")
+    void cumulativeUpkeepSacrificesIfNotPaid() {
+        Permanent cover = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(cover.getCounterCount(CounterType.AGE)).isEqualTo(1);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Cover of Winter");
+        harness.assertInGraveyard(player1, "Cover of Winter");
+    }
+
     private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        return addCreatureReady(player, new KjeldoranOutrider());
     }
 
     private Permanent addAttacker(Player player) {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Phantasmagorian.class, GrizzlyBears.class})
+@CardUsed({Phantasmagorian.class, GossamerPhantasm.class})
 class PhantasmagorianTest extends BaseCardTest {
 
     @Test
@@ -32,7 +32,7 @@ class PhantasmagorianTest extends BaseCardTest {
     @Test
     @DisplayName("Any player may discard three cards to counter it")
     void anyPlayerMayDiscardThreeCardsToCounterIt() {
-        castPhantasmagorian(player1, List.of(), threeBears());
+        castPhantasmagorian(player1, List.of(), threeGossamerPhantasms());
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -50,7 +50,7 @@ class PhantasmagorianTest extends BaseCardTest {
     @Test
     @DisplayName("Remaining players still receive the discard choice after one player accepts")
     void remainingPlayersStillReceiveTheChoice() {
-        castPhantasmagorian(player1, threeBears(), threeBears());
+        castPhantasmagorian(player1, threeGossamerPhantasms(), threeGossamerPhantasms());
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -69,7 +69,7 @@ class PhantasmagorianTest extends BaseCardTest {
     void returnsFromGraveyardToHand() {
         Phantasmagorian phantasmagorian = new Phantasmagorian();
         harness.setGraveyard(player1, List.of(phantasmagorian));
-        harness.setHand(player1, threeBears());
+        harness.setHand(player1, threeGossamerPhantasms());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateGraveyardAbility(player1, 0);
@@ -80,6 +80,18 @@ class PhantasmagorianTest extends BaseCardTest {
         harness.assertInHand(player1, "Phantasmagorian");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Phantasmagorian"));
+    }
+
+    @Test
+    @DisplayName("The graveyard ability requires no mana beyond discarding three cards")
+    void graveyardAbilityRequiresNoMana() {
+        Phantasmagorian phantasmagorian = new Phantasmagorian();
+        harness.setGraveyard(player1, List.of(phantasmagorian));
+        harness.setHand(player1, threeGossamerPhantasms());
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
     }
 
     private void castPhantasmagorian(Player caster, List<Card> casterCards, List<Card> opponentCards) {
@@ -97,8 +109,8 @@ class PhantasmagorianTest extends BaseCardTest {
         harness.handleCardChosen(player, 0);
     }
 
-    private List<Card> threeBears() {
-        return List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+    private List<Card> threeGossamerPhantasms() {
+        return List.of(new GossamerPhantasm(), new GossamerPhantasm(), new GossamerPhantasm());
     }
 
     private List<Card> concat(List<Card> first, List<Card> second) {

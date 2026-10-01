@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,22 +11,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MinionsMurmurs.class, GrizzlyBears.class})
+@CardUsed({MinionsMurmurs.class, BlindPhantasm.class, HorizonCanopy.class})
 class MinionsMurmursTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws and loses life equal to the number of creatures you control")
     void drawsAndLosesLifeForControlledCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new BlindPhantasm());
+        harness.addToBattlefield(player1, new BlindPhantasm());
+        harness.addToBattlefield(player2, new BlindPhantasm());
+        harness.setLibrary(player1, List.of(new BlindPhantasm(), new BlindPhantasm(), new BlindPhantasm()));
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new MinionsMurmurs()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new MinionsMurmurs(), "{2}{B}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -35,15 +32,29 @@ class MinionsMurmursTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not count noncreatures or creatures controlled by an opponent")
+    void countsOnlyCreaturesYouControl() {
+        harness.addToBattlefield(player1, new BlindPhantasm());
+        harness.addToBattlefield(player1, new HorizonCanopy());
+        harness.addToBattlefield(player2, new BlindPhantasm());
+        harness.setLibrary(player1, List.of(new BlindPhantasm(), new BlindPhantasm(), new BlindPhantasm()));
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new MinionsMurmurs(), "{2}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
     @DisplayName("Does nothing when you control no creatures")
     void doesNothingWithoutCreatures() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BlindPhantasm()));
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new MinionsMurmurs()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new MinionsMurmurs(), "{2}{B}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

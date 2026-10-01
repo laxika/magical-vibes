@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(WildCantor.class)
+@CardUsed({WildCantor.class})
 class WildCantorTest extends BaseCardTest {
 
     @Test
@@ -39,5 +39,16 @@ class WildCantorTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Wild Cantor can add mana outside its own colors")
+    void canAddManaOfAnyColor() {
+        harness.addToBattlefield(player1, new WildCantor());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 }

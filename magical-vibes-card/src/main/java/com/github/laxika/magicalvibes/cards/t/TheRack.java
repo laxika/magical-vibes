@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "352")
 @CardRegistration(set = "SUM", collectorNumber = "278")
@@ -24,9 +25,9 @@ public class TheRack extends Card {
     public TheRack() {
         // "As this artifact enters, choose an opponent. At the beginning of the chosen player's
         // upkeep, this artifact deals X damage to that player, where X is 3 minus the number of
-        // cards in their hand." The chosen opponent is implicit (single-opponent model, like Cursed
-        // Rack), so OPPONENT_UPKEEP_TRIGGERED fires on that opponent's upkeep with them as target.
+        // cards in their hand." Remember that player even if this artifact changes controllers.
         // X = max(0, 3 - cards in hand), floored so a full hand deals no damage.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RememberTargetPlayerEffect());
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),

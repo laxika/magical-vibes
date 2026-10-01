@@ -22,8 +22,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MyojinOfBloomingDawnTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Cast from hand enters with a divinity counter and indestructible")
-    void castFromHandEntersWithDivinityCounter() {
+    @DisplayName("Cast from hand enters with a indestructible counter and indestructible")
+    void castFromHandEntersWithIndestructibleCounter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new MyojinOfBloomingDawn()));
@@ -34,23 +34,24 @@ class MyojinOfBloomingDawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent myojin = findPermanent(player1, "Myojin of Blooming Dawn");
-        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
-    @DisplayName("Entering without being cast from hand does not get a divinity counter")
-    void enteringWithoutCastingDoesNotGetDivinityCounter() {
+    @DisplayName("Entering without being cast from hand does not get a indestructible counter")
+    void enteringWithoutCastingDoesNotGetIndestructibleCounter() {
         Permanent myojin = harness.enterBattlefieldAndReturn(player1, new MyojinOfBloomingDawn());
 
-        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
-    @DisplayName("Removing a divinity counter creates one Spirit token per permanent you control")
-    void removingDivinityCounterCreatesSpiritTokensPerPermanent() {
+    @DisplayName("Removing a indestructible counter creates one Spirit token per permanent you control")
+    void removingIndestructibleCounterCreatesSpiritTokensPerPermanent() {
         Permanent myojin = addReadyMyojin();
+        myojin.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -60,7 +61,7 @@ class MyojinOfBloomingDawnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
         assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(findPermanents(player1, "Spirit")).hasSize(3);
         assertThat(findPermanents(player1, "Spirit"))
@@ -69,10 +70,10 @@ class MyojinOfBloomingDawnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability cannot be activated without a divinity counter")
-    void cannotActivateWithoutDivinityCounter() {
+    @DisplayName("The ability cannot be activated without a indestructible counter")
+    void cannotActivateWithoutIndestructibleCounter() {
         Permanent myojin = addReadyMyojin();
-        myojin.setCounterCount(CounterType.DIVINITY, 0);
+        myojin.setCounterCount(CounterType.INDESTRUCTIBLE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

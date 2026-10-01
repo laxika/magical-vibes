@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "165")
+@CardRegistration(set = "WHO", collectorNumber = "450")
+@CardRegistration(set = "WHO", collectorNumber = "770")
+@CardRegistration(set = "WHO", collectorNumber = "1041")
 public class TheValeyard extends Card {
 
     public TheValeyard() {

@@ -30,6 +30,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "234")
 @CardRegistration(set = "DBL", collectorNumber = "406")
 @CardRegistration(set = "TDC", collectorNumber = "203")
+@CardRegistration(set = "BLC", collectorNumber = "191")
 public class Abrade extends Card {
 
     public Abrade() {

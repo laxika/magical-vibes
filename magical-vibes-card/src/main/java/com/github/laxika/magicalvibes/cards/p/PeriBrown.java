@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "26")
 @CardRegistration(set = "WHO", collectorNumber = "344")
+@CardRegistration(set = "WHO", collectorNumber = "631")
+@CardRegistration(set = "WHO", collectorNumber = "935")
 public class PeriBrown extends Card {
 
     public PeriBrown() {

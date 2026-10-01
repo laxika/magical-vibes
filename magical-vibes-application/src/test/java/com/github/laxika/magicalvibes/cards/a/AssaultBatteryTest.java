@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Desert;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.j.JaceThePerfectedMind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,20 +19,35 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AssaultBattery.class, AngelOfMercy.class, Forest.class, InvasionOfInnistrad.class})
+@CardUsed({AssaultBattery.class, Desert.class, Dodecapod.class, InvasionOfInnistrad.class,
+        JaceThePerfectedMind.class})
 class AssaultBatteryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Assault deals 2 damage to a creature")
     void assaultDealsDamageToCreature() {
-        harness.addToBattlefield(player2, new AngelOfMercy());
+        harness.addToBattlefield(player2, new Dodecapod());
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        castAssault(harness.getPermanentId(player2, "Angel of Mercy"));
+        harness.castSorcery(player1, 0, 0, harness.getPermanentId(player2, "Dodecapod"));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Angel of Mercy").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Dodecapod").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Assault deals 2 damage to a planeswalker")
+    void assaultDealsDamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceThePerfectedMind());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new AssaultBattery()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test
@@ -39,7 +56,7 @@ class AssaultBatteryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        castAssault(player2.getId());
+        harness.castSorcery(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
@@ -53,7 +70,7 @@ class AssaultBatteryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        castAssault(battle.getId());
+        harness.castSorcery(player1, 0, 0, battle.getId());
         harness.passBothPriorities();
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
@@ -83,16 +100,12 @@ class AssaultBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Assault cannot target a land")
     void assaultCannotTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Desert());
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> castAssault(harness.getPermanentId(player2, "Forest")))
+        assertThatThrownBy(() -> harness.castSorcery(
+                player1, 0, 0, harness.getPermanentId(player2, "Desert")))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private void castAssault(java.util.UUID targetId) {
-        harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
     }
 }

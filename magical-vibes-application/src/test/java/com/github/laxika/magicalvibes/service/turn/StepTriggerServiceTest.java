@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -510,6 +509,26 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        void optionalMultipleUpkeepTargetsUseGroupSelection() {
+            Card card = createCardWithName("Artifact animator");
+            CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+            card.target(0, 3).addEffect(EffectSlot.UPKEEP_TRIGGERED, effect);
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class))
+                    .isNotNull()
+                    .satisfies(trigger -> {
+                        assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
+                        assertThat(trigger.effects()).containsExactly(effect);
+                    });
+            verify(etbTokenTargetService).processNextETBTokenMultiTargetTrigger(gd);
         }
 
         @Test

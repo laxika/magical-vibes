@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GiantSolifuge;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,10 +12,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SkeletalVampire.class)
+@CardUsed({SkeletalVampire.class, GiantSolifuge.class})
 class SkeletalVampireTest extends BaseCardTest {
 
     @Test
@@ -59,10 +61,35 @@ class SkeletalVampireTest extends BaseCardTest {
         assertThat(vampire.getRegenerationShield()).isEqualTo(1);
     }
 
+    @Test
+    void regenerationShieldSavesSkeletalVampireFromLethalCombatDamage() {
+        castSkeletalVampire();
+        Permanent vampire = findPermanent(player1, "Skeletal Vampire");
+        Permanent bat = bats().getFirst();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, bat.getId());
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new GiantSolifuge());
+        attacker.setAttacking(true);
+        vampire.setBlocking(true);
+        vampire.addBlockingTarget(0);
+
+        resolveCombat(player2);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(
+                vampire.getId(), 3,
+                player1.getId(), 1));
+
+        harness.assertOnBattlefield(player1, "Skeletal Vampire");
+        harness.assertInGraveyard(player2, "Giant Solifuge");
+        assertThat(vampire.getRegenerationShield()).isZero();
+        assertThat(vampire.isTapped()).isTrue();
+        assertThat(vampire.getMarkedDamage()).isZero();
+    }
+
     private void castSkeletalVampire() {
-        harness.setHand(player1, List.of(new SkeletalVampire()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkeletalVampire(), "{4}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

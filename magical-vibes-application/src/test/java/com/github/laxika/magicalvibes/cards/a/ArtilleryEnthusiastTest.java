@@ -47,6 +47,7 @@ class ArtilleryEnthusiastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matching);

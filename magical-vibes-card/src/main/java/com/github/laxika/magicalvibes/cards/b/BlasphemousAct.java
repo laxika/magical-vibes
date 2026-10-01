@@ -22,6 +22,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "TMC", collectorNumber = "47")
 @CardRegistration(set = "C14", collectorNumber = "172")
 @CardRegistration(set = "WHO", collectorNumber = "224")
+@CardRegistration(set = "WHO", collectorNumber = "472")
+@CardRegistration(set = "WHO", collectorNumber = "815")
+@CardRegistration(set = "WHO", collectorNumber = "1063")
 @CardRegistration(set = "PIP", collectorNumber = "188")
 @CardRegistration(set = "PIP", collectorNumber = "465")
 @CardRegistration(set = "PIP", collectorNumber = "716")
@@ -33,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "LTC", collectorNumber = "211")
 @CardRegistration(set = "TDC", collectorNumber = "207")
 @CardRegistration(set = "LCC", collectorNumber = "216")
+@CardRegistration(set = "BLC", collectorNumber = "114")
 public class BlasphemousAct extends Card {
 
     public BlasphemousAct() {

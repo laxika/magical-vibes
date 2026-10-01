@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "121")
+@CardRegistration(set = "WHO", collectorNumber = "726")
 public class TheDayOfTheDoctor extends Card {
 
     public TheDayOfTheDoctor() {

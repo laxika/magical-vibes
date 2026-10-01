@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.f.FrenzySliver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,15 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HomingSliver.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({HomingSliver.class, FrenzySliver.class, BlindPhantasm.class})
 class HomingSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Homing Sliver grants Slivercycling to Sliver cards in each player's hand")
     void grantsSlivercyclingToOpposingSliverCard() {
         harness.addToBattlefield(player1, new HomingSliver());
-        harness.setHand(player2, List.of(new MetallicSliver()));
-        harness.setLibrary(player2, List.of(new MetallicSliver(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new FrenzySliver()));
+        harness.setLibrary(player2, List.of(new FrenzySliver(), new BlindPhantasm()));
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -34,23 +34,64 @@ class HomingSliverTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .extracting(card -> card.getName())
-                .containsExactly("Metallic Sliver");
+                .containsExactly("Frenzy Sliver");
 
         harness.handleCardChosen(player2, 0);
 
-        harness.assertInGraveyard(player2, "Metallic Sliver");
-        harness.assertInHand(player2, "Metallic Sliver");
+        harness.assertInGraveyard(player2, "Frenzy Sliver");
+        harness.assertInHand(player2, "Frenzy Sliver");
+    }
+
+    @Test
+    @DisplayName("Homing Sliver grants Slivercycling to Sliver cards in its controller's hand")
+    void grantsSlivercyclingToControllersSliverCard() {
+        harness.addToBattlefield(player1, new HomingSliver());
+        harness.setHand(player1, List.of(new FrenzySliver()));
+        harness.setLibrary(player1, List.of(new FrenzySliver(), new BlindPhantasm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .extracting(card -> card.getName())
+                .containsExactly("Frenzy Sliver");
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Frenzy Sliver");
+        harness.assertInHand(player1, "Frenzy Sliver");
     }
 
     @Test
     @DisplayName("Homing Sliver does not grant Slivercycling to non-Sliver cards")
     void doesNotGrantSlivercyclingToNonSliverCard() {
         harness.addToBattlefield(player1, new HomingSliver());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BlindPhantasm()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Card has no hand-activated ability");
+    }
+
+    @Test
+    @DisplayName("Homing Sliver has its own Slivercycling while in hand")
+    void hasPrintedSlivercyclingInHand() {
+        harness.setHand(player1, List.of(new HomingSliver()));
+        FrenzySliver sliver = new FrenzySliver();
+        harness.setLibrary(player1, List.of(new BlindPhantasm(), sliver));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(sliver);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sliver);
+        harness.assertInGraveyard(player1, "Homing Sliver");
     }
 }

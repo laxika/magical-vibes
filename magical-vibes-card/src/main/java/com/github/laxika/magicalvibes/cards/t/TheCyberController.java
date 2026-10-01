@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "119")
+@CardRegistration(set = "WHO", collectorNumber = "405")
+@CardRegistration(set = "WHO", collectorNumber = "724")
+@CardRegistration(set = "WHO", collectorNumber = "996")
 public class TheCyberController extends Card {
 
     public TheCyberController() {

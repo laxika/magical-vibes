@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -23,9 +25,9 @@ public class FreneticSliver extends Card {
         ActivatedAbility ability = new ActivatedAbility(
                 false,
                 "{0}",
-                List.of(new FlipCoinWinEffect(
+                List.of(new ConditionalEffect(new SourceIsOnBattlefield(), new FlipCoinWinEffect(
                         FlickerEffect.exileSelfReturnAtEndStepUnderOwnerControl(false),
-                        new SacrificeSelfEffect())),
+                        new SacrificeSelfEffect()))),
                 "{0}: If this permanent is on the battlefield, flip a coin. If you win the flip, "
                         + "exile this permanent and return it to the battlefield under its owner's "
                         + "control at the beginning of the next end step. If you lose the flip, "

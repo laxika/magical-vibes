@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TanukiTransplanter.class, GrizzlyBears.class, HillGiant.class})
@@ -16,10 +18,8 @@ class TanukiTransplanterTest extends BaseCardTest {
 
     @Test
     void attackingUnconfiguredTransplanterAddsManaEqualToItsPower() {
-        Permanent transplanter = addCreatureReady(player1, new TanukiTransplanter());
-        transplanter.setAttacking(true);
-
-        resolveCombat();
+        addCreatureReady(player1, new TanukiTransplanter());
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
@@ -32,9 +32,7 @@ class TanukiTransplanterTest extends BaseCardTest {
         Permanent transplanter = addCreatureReady(player1, new TanukiTransplanter());
         Permanent creature = addCreatureReady(player1, new HillGiant());
         transplanter.setAttachedTo(creature.getId());
-        creature.setAttacking(true);
-
-        resolveCombat();
+        declareAttackers(List.of(1));
         harness.passBothPriorities();
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());

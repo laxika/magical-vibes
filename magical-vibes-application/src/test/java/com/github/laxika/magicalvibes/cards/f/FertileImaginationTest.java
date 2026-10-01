@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
+import com.github.laxika.magicalvibes.cards.n.NovijenHeartOfProgress;
+import com.github.laxika.magicalvibes.cards.v.Voidslime;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,18 +19,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FertileImagination.class, AirElemental.class, GrizzlyBears.class, Opt.class})
+@CardUsed({FertileImagination.class, CoilingOracle.class, NovijenHeartOfProgress.class, Voidslime.class})
 class FertileImaginationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates two Saprolings for each revealed card of the chosen type")
     void createsTokensForEachMatchingCard() {
         harness.setHand(player1, List.of(new FertileImagination()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new AirElemental(), new Opt()));
+        harness.setHand(player2, List.of(new CoilingOracle(), new CoilingOracle(), new Voidslime(),
+                new NovijenHeartOfProgress()));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, CardType.CREATURE.name());
@@ -38,8 +38,12 @@ class FertileImaginationTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(4);
         assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.isTapped()).isFalse();
         });
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("reveals their hand"));
     }
@@ -48,15 +52,28 @@ class FertileImaginationTest extends BaseCardTest {
     @DisplayName("Creates no tokens when the chosen type is absent")
     void absentTypeCreatesNoTokens() {
         harness.setHand(player1, List.of(new FertileImagination()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new AirElemental(), new Opt()));
+        harness.setHand(player2, List.of(new CoilingOracle(), new CoilingOracle(), new Voidslime(),
+                new NovijenHeartOfProgress()));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, CardType.LAND.name());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, CardType.ARTIFACT.name());
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not offer emblem as a card type")
+    void doesNotOfferEmblemAsCardType() {
+        harness.setHand(player1, List.of(new FertileImagination()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).doesNotContain("EMBLEM");
     }
 
     @Test

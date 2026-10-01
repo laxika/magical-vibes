@@ -15,6 +15,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "191")
 @CardRegistration(set = "WHO", collectorNumber = "367")
+@CardRegistration(set = "WHO", collectorNumber = "796")
+@CardRegistration(set = "WHO", collectorNumber = "958")
 public class OsgoodOperationDouble extends Card {
 
     public OsgoodOperationDouble() {

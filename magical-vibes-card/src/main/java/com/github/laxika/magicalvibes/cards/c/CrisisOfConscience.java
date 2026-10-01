@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "17")
 @CardRegistration(set = "WHO", collectorNumber = "337")
+@CardRegistration(set = "WHO", collectorNumber = "622")
+@CardRegistration(set = "WHO", collectorNumber = "928")
 public class CrisisOfConscience extends Card {
 
     public CrisisOfConscience() {

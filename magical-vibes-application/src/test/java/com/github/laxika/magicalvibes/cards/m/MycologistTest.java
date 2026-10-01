@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,7 +21,7 @@ class MycologistTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent mycologist = addMycologist();
 
-        advanceToUpkeep();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isOne();
@@ -40,6 +37,25 @@ class MycologistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isZero();
+        Permanent saproling = findPermanent(player1, "Saproling");
+        assertThat(saproling.getCard().isToken()).isTrue();
+        assertThat(saproling.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(saproling.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(saproling.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+        assertThat(gqs.getEffectivePower(gd, saproling)).isOne();
+        assertThat(gqs.getEffectiveToughness(gd, saproling)).isOne();
+    }
+
+    @Test
+    @DisplayName("Removing three spore counters leaves additional counters")
+    void removesExactlyThreeSporeCounters() {
+        Permanent mycologist = addMycologist();
+        mycologist.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(mycologist.getCounterCount(CounterType.FUNGUS)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -55,8 +71,11 @@ class MycologistTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a Saproling gains 2 life")
     void sacrificingSaprolingGainsLife() {
-        addMycologist();
-        harness.addToBattlefield(player1, createSaprolingToken());
+        Permanent mycologist = addMycologist();
+        mycologist.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
 
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
@@ -64,7 +83,7 @@ class MycologistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().getLife(player1.getId())).isEqualTo(lifeBefore + 2);
-        harness.assertInGraveyard(player1, "Saproling");
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
 
     @Test
@@ -80,21 +99,4 @@ class MycologistTest extends BaseCardTest {
         return addCreatureReady(player1, new Mycologist());
     }
 
-    private Card createSaprolingToken() {
-        Card card = new Card();
-        card.setName("Saproling");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.SAPROLING));
-        return card;
-    }
-
-    private void advanceToUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
-    }
 }

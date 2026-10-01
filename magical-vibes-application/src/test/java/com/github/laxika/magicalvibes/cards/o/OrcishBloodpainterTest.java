@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrcishBloodpainter.class, GrizzlyBears.class, LlanowarElves.class})
 class OrcishBloodpainterTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class OrcishBloodpainterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -52,14 +54,11 @@ class OrcishBloodpainterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Orcish Bloodpainter");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(bloodpainter.isTapped()).isTrue();
     }
 
     private Permanent addReadyBloodpainter(Player player) {
-        Permanent bloodpainter = new Permanent(new OrcishBloodpainter());
-        bloodpainter.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(bloodpainter);
-        return bloodpainter;
+        return addCreatureReady(player, new OrcishBloodpainter());
     }
 }

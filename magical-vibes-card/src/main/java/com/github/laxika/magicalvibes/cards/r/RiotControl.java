@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "DGM", collectorNumber = "6")
+@CardRegistration(set = "BLC", collectorNumber = "151")
 public class RiotControl extends Card {
 
     public RiotControl() {

@@ -78,6 +78,113 @@ class AGoldenOpportunityTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Golden Egg")).isEmpty();
     }
 
+    @Test
+    void enteringSagaConjuresGooseAndTriggersItsFoodAbility() {
+        harness.enterBattlefieldAndReturn(player1, new AGoldenOpportunity());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Gilded Goose")).singleElement()
+                .satisfies(goose -> assertThat(goose.getCard().isToken()).isFalse());
+        assertThat(findPermanents(player1, "Food")).singleElement()
+                .satisfies(food -> assertThat(food.getCard().isToken()).isTrue());
+        assertThat(findPermanents(player2, "Gilded Goose")).isEmpty();
+    }
+
+    @Test
+    void chapterDoesNothingWithoutABird() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GoldenEgg());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Golden Egg")).containsExactly(artifact);
+    }
+
+    @Test
+    void tappedBirdCannotPayForChapter() {
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new GildedGoose());
+        bird.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GoldenEgg());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Golden Egg")).containsExactly(artifact);
+    }
+
+    @Test
+    void opponentsBirdAndArtifactCannotPayForChapter() {
+        Permanent bird = harness.addToBattlefieldAndReturn(player2, new GildedGoose());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GoldenEgg());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(bird.isTapped()).isFalse();
+        assertThat(findPermanents(player2, "Golden Egg")).containsExactly(artifact);
+        assertThat(findPermanents(player1, "Golden Egg")).isEmpty();
+    }
+
+    @Test
+    void chapterIIIUsesSummoningSickBirdAndTappedArtifact() {
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new GildedGoose());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GoldenEgg());
+        artifact.tap();
+        Permanent saga = addSagaWithLore(2);
+
+        triggerChapter();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        assertThat(findPermanents(player1, "Golden Egg")).singleElement();
+        resolveAllTriggers();
+
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact, saga);
+        assertThat(findPermanents(player1, "Golden Egg")).singleElement()
+                .satisfies(egg -> {
+                    assertThat(egg.getCard().getId()).isNotEqualTo(artifact.getCard().getId());
+                    assertThat(egg.getCard().isToken()).isFalse();
+                    assertThat(egg.isTapped()).isFalse();
+                });
+        harness.assertInGraveyard(player1, "Golden Egg");
+        harness.assertInGraveyard(player1, "A Golden Opportunity");
+    }
+
+    @Test
+    void chapterLetsControllerChooseOneOfMultipleBirds() {
+        Permanent firstBird = harness.addToBattlefieldAndReturn(player1, new GildedGoose());
+        Permanent secondBird = harness.addToBattlefieldAndReturn(player1, new GildedGoose());
+        Permanent opposingBird = harness.addToBattlefieldAndReturn(player2, new GildedGoose());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GoldenEgg());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice tapChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(tapChoice.validPermanentIds()).containsExactlyInAnyOrder(
+                firstBird.getId(), secondBird.getId());
+        harness.handlePermanentChosen(player1, secondBird.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(firstBird.isTapped()).isFalse();
+        assertThat(secondBird.isTapped()).isTrue();
+        assertThat(opposingBird.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(findPermanents(player1, "Golden Egg")).singleElement();
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new AGoldenOpportunity());
         saga.setCounterCount(CounterType.LORE, loreCounters);

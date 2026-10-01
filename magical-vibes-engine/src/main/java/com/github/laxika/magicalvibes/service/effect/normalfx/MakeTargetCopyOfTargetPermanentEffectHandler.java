@@ -32,14 +32,17 @@ public class MakeTargetCopyOfTargetPermanentEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targets = entry.getTargetIds();
-        if (targets == null || targets.size() < 2) {
+        MakeTargetCopyOfTargetPermanentEffect copyEffect =
+                (MakeTargetCopyOfTargetPermanentEffect) effect;
+        List<UUID> targets = entry.targetsForGroup(copyEffect.targetGroup());
+        List<UUID> copySourceTargets = entry.targetsForGroup(copyEffect.copySourceGroup());
+        if (targets.isEmpty() || copySourceTargets.isEmpty()) {
             log.info("Game {} - Permanent copy spell fizzles, insufficient targets", gameData.id);
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targets.get(0));
-        Permanent copySource = gameQueryService.findPermanentById(gameData, targets.get(1));
+        Permanent target = gameQueryService.findPermanentById(gameData, targets.getFirst());
+        Permanent copySource = gameQueryService.findPermanentById(gameData, copySourceTargets.getFirst());
         if (target == null || copySource == null) {
             log.info("Game {} - Permanent copy spell fizzles, a target left the battlefield", gameData.id);
             return;

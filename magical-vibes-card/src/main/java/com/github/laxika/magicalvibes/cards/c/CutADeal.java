@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsThenControll
 
 @CardRegistration(set = "FIC", collectorNumber = "238")
 @CardRegistration(set = "MSC", collectorNumber = "127")
+@CardRegistration(set = "BLC", collectorNumber = "105")
 public class CutADeal extends Card {
 
     public CutADeal() {

@@ -27,9 +27,8 @@ class TamanoaTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -45,19 +44,33 @@ class TamanoaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for damage from a noncreature source an opponent controls")
+    void doesNotTriggerForOpponentControlledNoncreatureSourceDamage() {
+        harness.addToBattlefield(player1, new Tamanoa());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test
     @DisplayName("Does not trigger for damage from a creature source")
     void doesNotTriggerForCreatureSourceDamage() {
         harness.addToBattlefield(player1, new Tamanoa());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

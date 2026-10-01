@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "BRO", collectorNumber = "199")
 @CardRegistration(set = "SOC", collectorNumber = "349")
 @CardRegistration(set = "DSC", collectorNumber = "247")
+@CardRegistration(set = "BLC", collectorNumber = "274")
 public class HaywireMite extends Card {
 
     public HaywireMite() {

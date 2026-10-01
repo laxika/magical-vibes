@@ -186,6 +186,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.reflexiveEffects = copyEffect.reflexiveEffects();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
@@ -526,6 +527,7 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        List<CardEffect> reflexiveEffects = gameData.cloneOperation.reflexiveEffects;
         boolean shieldCounterIfControllerControlsCopiedPermanent =
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
@@ -563,6 +565,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.reflexiveEffects = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
@@ -708,6 +711,15 @@ public class CloneService {
                     perm.getId());
             exileTrigger.setTriggeringCardId(targetCard.getId());
             gameData.stack.add(exileTrigger);
+        }
+
+        if (targetPerm != null && !reflexiveEffects.isEmpty()) {
+            StackEntry reflexiveTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, enteredCard, controllerId,
+                    card.getName() + "'s reflexive ability", reflexiveEffects,
+                    targetPerm.getId(), perm.getId());
+            reflexiveTrigger.setNonTargeting(true);
+            gameData.stack.add(reflexiveTrigger);
         }
 
         if (!gameData.interaction.isAwaitingInput()) {

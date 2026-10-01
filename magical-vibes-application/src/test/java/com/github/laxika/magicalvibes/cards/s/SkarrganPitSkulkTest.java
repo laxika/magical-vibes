@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhorClanSavage;
+import com.github.laxika.magicalvibes.cards.g.GruulScrapper;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkarrganPitSkulk.class, DarksteelMyr.class, GrizzlyBears.class})
+@CardUsed({SkarrganPitSkulk.class, SilhanaStarfletcher.class, GhorClanSavage.class,
+        GruulScrapper.class})
 class SkarrganPitSkulkTest extends BaseCardTest {
 
     @Test
@@ -24,6 +24,17 @@ class SkarrganPitSkulkTest extends BaseCardTest {
     void bloodthirstApplies() {
         gd.recordDamageToPlayer(player2.getId(), 1);
         castSkulk();
+
+        assertThat(findPermanent(player1, "Skarrgan Pit-Skulk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bloodthirst counts damage dealt after casting but before it enters")
+    void bloodthirstCountsDamageBeforeResolution() {
+        harness.castFromHand(player1, new SkarrganPitSkulk(), "{G}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Skarrgan Pit-Skulk")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,8 +62,11 @@ class SkarrganPitSkulkTest extends BaseCardTest {
     @Test
     @DisplayName("A creature with less power cannot block it")
     void lowerPowerCreatureCannotBlock() {
-        Permanent blocker = addCreatureReady(player2, new DarksteelMyr());
-        Permanent skulk = addCreatureReady(player1, new SkarrganPitSkulk());
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        castSkulk();
+
+        Permanent blocker = addCreatureReady(player2, new SilhanaStarfletcher());
+        Permanent skulk = findPermanent(player1, "Skarrgan Pit-Skulk");
         skulk.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -73,7 +87,26 @@ class SkarrganPitSkulkTest extends BaseCardTest {
         castSkulk();
 
         Permanent skulk = findPermanent(player1, "Skarrgan Pit-Skulk");
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GhorClanSavage());
+        skulk.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(skulk);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with greater power can block it")
+    void greaterPowerCreatureCanBlock() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        castSkulk();
+
+        Permanent skulk = findPermanent(player1, "Skarrgan Pit-Skulk");
+        Permanent blocker = addCreatureReady(player2, new GruulScrapper());
         skulk.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -86,9 +119,7 @@ class SkarrganPitSkulkTest extends BaseCardTest {
     }
 
     private void castSkulk() {
-        harness.setHand(player1, List.of(new SkarrganPitSkulk()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkarrganPitSkulk(), "{G}");
         resolveAllTriggers();
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "1755")
 @CardRegistration(set = "MAR", collectorNumber = "21")
 @CardRegistration(set = "OMB", collectorNumber = "21")
+@CardRegistration(set = "BLC", collectorNumber = "113")
 public class SawInHalf extends Card {
 
     public SawInHalf() {

@@ -41,6 +41,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
         register(new PlanarDieChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftToExileChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ApplejackToyChoice.class, 1));
@@ -61,6 +62,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualActivatedAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class));
         register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());

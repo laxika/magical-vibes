@@ -69,6 +69,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
                 .filter(p -> !cost.excludeSelf() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> !p.isTapped())
+                .filter(p -> !p.isTapRestrictedUnlessAttacking())
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.predicate()))
                 .map(Permanent::getId)
                 .toList();
@@ -84,6 +85,9 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         }
         if (chosen.isTapped()) {
             throw new IllegalStateException("Creature is already tapped");
+        }
+        if (chosen.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Creature can't become tapped unless it is attacking");
         }
         if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
             throw new IllegalStateException("Creature does not match the required predicate");

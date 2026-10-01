@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WallOfStolenIdentity.class, GrizzlyBears.class})
+@CardUsed({WallOfStolenIdentity.class, GrizzlyBears.class, ControlMagic.class})
 class WallOfStolenIdentityTest extends BaseCardTest {
 
     @Test
@@ -52,6 +53,35 @@ class WallOfStolenIdentityTest extends BaseCardTest {
     }
 
     @Test
+    void copiedCreatureUntapsAfterWallChangesControllers() {
+        Permanent bears = addBears();
+        castWallAndChoose(bears.getId(), true);
+        assertThat(bears.isTapped()).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, copiedWall().getId());
+        resolveAllTriggers();
+        advanceToNextTurn(player1);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void copyChoiceAndReflexiveAbilityDoNotTarget() {
+        Permanent bears = addBears();
+        bears.getGrantedKeywords().add(Keyword.HEXPROOF);
+
+        castWallAndChoose(bears.getId(), true);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(copiedWall()).isNotNull();
+    }
+
+    @Test
     @DisplayName("Declining the copy leaves the 0/0 Wall dead")
     void diesWhenCopyIsDeclined() {
         addBears();
@@ -83,6 +113,7 @@ class WallOfStolenIdentityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, accept);
         if (accept) {
             harness.handlePermanentChosen(player1, targetId);
+            resolveAllTriggers();
         }
     }
 

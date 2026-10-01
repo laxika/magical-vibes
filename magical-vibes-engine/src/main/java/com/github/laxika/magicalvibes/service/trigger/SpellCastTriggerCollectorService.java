@@ -360,7 +360,7 @@ public class SpellCastTriggerCollectorService {
                                                     SpellweaverVoluteTriggerEffect trigger,
                                                     TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!sc.spellCard().hasType(CardType.SORCERY)) {
+        if (!sc.spellCard().hasType(CardType.SORCERY) || !sc.castingPlayerId().equals(match.controllerId())) {
             return false;
         }
         StackEntry castEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());

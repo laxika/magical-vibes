@@ -22,7 +22,7 @@ public class CryptChampion extends Card {
 
     public CryptChampion() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
+                EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.mandatory(
                         1,
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

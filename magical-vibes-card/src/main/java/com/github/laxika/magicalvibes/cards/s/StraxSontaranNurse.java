@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "160")
+@CardRegistration(set = "WHO", collectorNumber = "444")
+@CardRegistration(set = "WHO", collectorNumber = "765")
+@CardRegistration(set = "WHO", collectorNumber = "1035")
 public class StraxSontaranNurse extends Card {
 
     public StraxSontaranNurse() {

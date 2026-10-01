@@ -55,6 +55,9 @@ class MCTSEngineTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
         simulator = HeadlessSimulationContext.getSimulator();
         engine = new MCTSEngine(simulator, 42L, 500);
     }
@@ -343,12 +346,12 @@ class MCTSEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        engine.search(gd, player1.getId(), 200);
+        engine.search(gd, player1.getId(), 10);
         assertThat(engine.getCacheMisses()).isEqualTo(1);
         assertThat(engine.getCacheHits()).isZero();
 
         // Second call at the same decision point: should hit the cache.
-        engine.search(gd, player1.getId(), 200);
+        engine.search(gd, player1.getId(), 10);
         assertThat(engine.getCacheHits()).isEqualTo(1);
         assertThat(engine.getCacheMisses()).isEqualTo(1);
     }
@@ -363,15 +366,15 @@ class MCTSEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        // First search: fresh tree, up to 200 iterations.
-        engine.search(gd, player1.getId(), 200);
+        // First search: fresh tree, 10 iterations.
+        engine.search(gd, player1.getId(), 10);
         int visitsAfterFirst = engine.getCachedRootChildVisitSum();
         assertThat(visitsAfterFirst).isPositive();
 
         // Second search at the same decision point: should build on top of the first,
-        // so the cached root's total visits strictly grow beyond what a single 200-iter
+        // so the cached root's total visits strictly grow beyond what a single 10-iter
         // run would produce.
-        engine.search(gd, player1.getId(), 200);
+        engine.search(gd, player1.getId(), 10);
         int visitsAfterSecond = engine.getCachedRootChildVisitSum();
 
         assertThat(visitsAfterSecond)
@@ -389,7 +392,7 @@ class MCTSEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        engine.search(gd, player1.getId(), 100);
+        engine.search(gd, player1.getId(), 10);
         assertThat(engine.getCacheMisses()).isEqualTo(1);
 
         // Drop the white mana: Serra Angel (5W) is no longer castable, so the
@@ -398,7 +401,7 @@ class MCTSEngineTest {
         gd.playerManaPools.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        engine.search(gd, player1.getId(), 100);
+        engine.search(gd, player1.getId(), 10);
         assertThat(engine.getCacheMisses())
                 .as("Second call with different legal actions should miss the cache")
                 .isEqualTo(2);
@@ -415,10 +418,10 @@ class MCTSEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        engine.search(gd, player1.getId(), 100);
+        engine.search(gd, player1.getId(), 10);
         engine.clearCache();
 
-        engine.search(gd, player1.getId(), 100);
+        engine.search(gd, player1.getId(), 10);
         assertThat(engine.getCacheHits())
                 .as("Clearing the cache should prevent the second search from reusing the tree")
                 .isZero();

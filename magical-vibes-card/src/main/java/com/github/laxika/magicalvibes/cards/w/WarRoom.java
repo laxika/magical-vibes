@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCommanderColorC
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "330")
+@CardRegistration(set = "WHO", collectorNumber = "921")
+@CardRegistration(set = "WHO", collectorNumber = "533")
+@CardRegistration(set = "WHO", collectorNumber = "1124")
 @CardRegistration(set = "PIP", collectorNumber = "1068")
 @CardRegistration(set = "SOC", collectorNumber = "422")
 @CardRegistration(set = "MKC", collectorNumber = "310")

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AncestralVision;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.k.KnightOfSursi;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShivanSandMage.class, AncestralVision.class, GrizzlyBears.class})
+@CardUsed({ShivanSandMage.class, KnightOfSursi.class, BlindPhantasm.class})
 class ShivanSandMageTest extends BaseCardTest {
 
     @Test
@@ -36,8 +37,16 @@ class ShivanSandMageTest extends BaseCardTest {
     }
 
     @Test
+    void cannotPutTimeCountersOnTargetPermanentWithoutTimeCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+
+        assertThatThrownBy(() -> cast(1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void removesTwoTimeCountersFromTargetSuspendedCard() {
-        AncestralVision target = suspendedCard(4);
+        KnightOfSursi target = suspendedCard(4);
 
         castAtTriggerTime(0, target.getId());
 
@@ -46,11 +55,20 @@ class ShivanSandMageTest extends BaseCardTest {
 
     @Test
     void putsTwoTimeCountersOnTargetSuspendedCard() {
-        AncestralVision target = suspendedCard(1);
+        KnightOfSursi target = suspendedCard(1);
 
         castAtTriggerTime(1, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+    }
+
+    @Test
+    void cannotTargetAnUnsuspendedExiledCard() {
+        KnightOfSursi target = new KnightOfSursi();
+        harness.setExile(player2, List.of(target));
+
+        assertThatThrownBy(() -> cast(0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -68,7 +86,7 @@ class ShivanSandMageTest extends BaseCardTest {
 
     @Test
     void removingLastTimeCounterFromTargetSuspendedCardOffersItsSuspendCast() {
-        AncestralVision target = suspendedCard(1);
+        KnightOfSursi target = suspendedCard(1);
 
         castAtTriggerTime(0, target.getId());
 
@@ -77,13 +95,13 @@ class ShivanSandMageTest extends BaseCardTest {
     }
 
     private Permanent permanentWithTimeCounters(com.github.laxika.magicalvibes.model.Player player, int count) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new BlindPhantasm());
         permanent.setCounterCount(CounterType.TIME, count);
         return permanent;
     }
 
-    private AncestralVision suspendedCard(int timeCounters) {
-        AncestralVision card = new AncestralVision();
+    private KnightOfSursi suspendedCard(int timeCounters) {
+        KnightOfSursi card = new KnightOfSursi();
         harness.setExile(player2, List.of(card));
         gd.exiledCardTimeCounters.put(card.getId(), timeCounters);
         return card;

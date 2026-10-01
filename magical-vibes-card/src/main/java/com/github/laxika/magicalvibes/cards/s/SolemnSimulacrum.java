@@ -26,6 +26,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "C14", collectorNumber = "271")
 @CardRegistration(set = "C15", collectorNumber = "269")
 @CardRegistration(set = "WHO", collectorNumber = "246")
+@CardRegistration(set = "WHO", collectorNumber = "837")
+@CardRegistration(set = "WHO", collectorNumber = "480")
+@CardRegistration(set = "WHO", collectorNumber = "1071")
 @CardRegistration(set = "PIP", collectorNumber = "240")
 @CardRegistration(set = "PIP", collectorNumber = "486")
 @CardRegistration(set = "PIP", collectorNumber = "768")
@@ -39,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "MKC", collectorNumber = "238")
 @CardRegistration(set = "AFC", collectorNumber = "216")
 @CardRegistration(set = "DMC", collectorNumber = "191")
+@CardRegistration(set = "BLC", collectorNumber = "284")
 @CardRegistration(set = "NEC", collectorNumber = "162")
 public class SolemnSimulacrum extends Card {
 

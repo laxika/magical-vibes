@@ -75,8 +75,9 @@ class DoomedArtisanTest extends BaseCardTest {
 
     private void createSculptureAtEndStep() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 

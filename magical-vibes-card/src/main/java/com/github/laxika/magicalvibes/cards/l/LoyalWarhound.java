@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "23")
+@CardRegistration(set = "BLC", collectorNumber = "107")
 public class LoyalWarhound extends Card {
 
     public LoyalWarhound() {

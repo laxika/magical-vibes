@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.Cytoshape;
+import com.github.laxika.magicalvibes.cards.g.GlaringSpotlight;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.o.Omnibian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,14 +18,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShieldingPlax.class, GrizzlyBears.class, Shock.class, ProdigalSorcerer.class})
+@CardUsed({ShieldingPlax.class, MistralCharger.class, Cytoshape.class, Omnibian.class,
+        GlaringSpotlight.class})
 class ShieldingPlaxTest extends BaseCardTest {
 
     @Test
     @DisplayName("Shielding Plax draws a card when it enters attached to a creature")
     void drawsCardWhenItEnters() {
         Permanent creature = addReadyCreature(player1);
-        Card libraryCard = new GrizzlyBears();
+        MistralCharger libraryCard = new MistralCharger();
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setHand(player1, List.of(new ShieldingPlax()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -47,22 +48,23 @@ class ShieldingPlaxTest extends BaseCardTest {
     void opponentSpellCannotTargetEnchantedCreature() {
         Permanent creature = addShieldingPlax(player1, player1);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Cytoshape()));
+        addCytoshapeMana(player2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
+                .hasMessageContaining("can't be targeted");
     }
 
     @Test
     @DisplayName("Enchanted creature can't be targeted by an opponent's ability")
     void opponentAbilityCannotTargetEnchantedCreature() {
         Permanent creature = addShieldingPlax(player1, player1);
-        Permanent sorcerer = addReadySorcerer(player2);
+        Permanent omnibian = addReadyOmnibian(player2);
+        addOmnibianMana(player2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -70,8 +72,8 @@ class ShieldingPlaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
-        assertThat(sorcerer.isTapped()).isFalse();
+                .hasMessageContaining("can't be targeted");
+        assertThat(omnibian.isTapped()).isFalse();
     }
 
     @Test
@@ -79,32 +81,86 @@ class ShieldingPlaxTest extends BaseCardTest {
     void controllerCanTargetEnchantedCreature() {
         Permanent creature = addShieldingPlax(player1, player1);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Cytoshape()));
+        addCytoshapeMana(player1);
         harness.castInstant(player1, 0, creature.getId());
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The enchanted creature's controller is an opponent of the Aura's controller")
+    void enchantedCreatureControllerCannotTargetWhenAuraIsControlledByOpponent() {
+        Permanent creature = addShieldingPlax(player2, player1);
+
+        harness.setHand(player2, List.of(new Cytoshape()));
+        addCytoshapeMana(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be targeted");
+    }
+
+    @Test
+    @DisplayName("The Aura's controller can target an enchanted creature controlled by an opponent")
+    void auraControllerCanTargetOpponentCreature() {
+        Permanent creature = addShieldingPlax(player2, player1);
+
+        harness.setHand(player1, List.of(new Cytoshape()));
+        addCytoshapeMana(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, creature.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Glaring Spotlight does not bypass Shielding Plax's targeting restriction")
+    void hexproofBypassDoesNotBypassShieldingPlax() {
+        Permanent creature = addShieldingPlax(player1, player1);
+        harness.addToBattlefield(player2, new GlaringSpotlight());
+
+        harness.setHand(player2, List.of(new Cytoshape()));
+        addCytoshapeMana(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be targeted");
+    }
+
     private Permanent addShieldingPlax(Player creatureController, Player auraController) {
         Permanent creature = addReadyCreature(creatureController);
-        Permanent aura = new Permanent(new ShieldingPlax());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new ShieldingPlax());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return creature;
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        return addCreatureReady(player, new MistralCharger());
     }
 
-    private Permanent addReadySorcerer(Player player) {
-        Permanent sorcerer = new Permanent(new ProdigalSorcerer());
-        sorcerer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(sorcerer);
-        return sorcerer;
+    private Permanent addReadyOmnibian(Player player) {
+        return addCreatureReady(player, new Omnibian());
+    }
+
+    private void addCytoshapeMana(Player player) {
+        harness.addMana(player, ManaColor.COLORLESS, 1);
+        harness.addMana(player, ManaColor.GREEN, 1);
+        harness.addMana(player, ManaColor.BLUE, 1);
+    }
+
+    private void addOmnibianMana(Player player) {
+        harness.addMana(player, ManaColor.COLORLESS, 1);
+        harness.addMana(player, ManaColor.GREEN, 2);
+        harness.addMana(player, ManaColor.BLUE, 1);
     }
 }

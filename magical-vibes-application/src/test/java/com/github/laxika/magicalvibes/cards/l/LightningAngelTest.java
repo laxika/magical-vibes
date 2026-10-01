@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.b.BloodfireDwarf;
+import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +13,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LightningAngel.class, BloodfireDwarf.class})
+@CardUsed({LightningAngel.class, Thallid.class})
 class LightningAngelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a ground creature from blocking")
     void flyingPreventsGroundCreatureFromBlocking() {
         addCreatureReady(player1, new LightningAngel());
-        addCreatureReady(player2, new BloodfireDwarf());
+        addCreatureReady(player2, new Thallid());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
 

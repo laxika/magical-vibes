@@ -542,6 +542,29 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PerpetuallyBoostCardEffect.class,
+            slot = EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
+    private boolean handleExileTokenSacrificePerpetualBoost(TriggerMatchContext match,
+                                                             PerpetuallyBoostCardEffect effect,
+                                                             TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.AllySacrificed sacrificed)
+                || sacrificed.sacrificedCard() == null
+                || !sacrificed.sacrificedCard().isToken()
+                || match.sourceCard() == null) {
+            return false;
+        }
+
+        Card sourceCard = match.sourceCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect))));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
     /** Queues a watcher for a creature controlled by the player exploiting another creature. */
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_EXPLOITS)
@@ -3649,6 +3672,18 @@ public class MiscTriggerCollectorService {
         log.info("Game {} - {} triggers on cards leaving graveyard (turn-scoped modal)",
                 match.gameData().id, sourceCard.getName());
         return true;
+    }
+
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    boolean handleConditionalControllerCardsLeaveGraveyard(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard cardsLeft)
+                || cardsLeft.cards().stream().noneMatch(card -> predicateEvaluationService.matchesCardPredicate(
+                card, conditional.predicate(), null, match.gameData(), match.controllerId()))) {
+            return false;
+        }
+        return handleControllerCardsLeaveGraveyard(match, conditional.wrapped(), ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)

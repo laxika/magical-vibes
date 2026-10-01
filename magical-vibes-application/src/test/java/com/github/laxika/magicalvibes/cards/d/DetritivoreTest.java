@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,15 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Detritivore.class, Forest.class, GhostQuarter.class})
+@CardUsed({Detritivore.class, Forest.class, DreadshipReef.class})
 class DetritivoreTest extends BaseCardTest {
 
     @Test
     void powerAndToughnessEqualNonbasicLandCardsInOpponentsGraveyards() {
         Permanent detritivore = harness.addToBattlefieldAndReturn(player1, new Detritivore());
-        harness.setGraveyard(player1, List.of(new GhostQuarter()));
+        harness.setGraveyard(player1, List.of(new DreadshipReef()));
         harness.setGraveyard(player2, List.of(
-                new GhostQuarter(), new GhostQuarter(), new Forest()));
+                new DreadshipReef(), new DreadshipReef(), new Forest()));
 
         assertThat(gqs.getEffectivePower(gd, detritivore)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, detritivore)).isEqualTo(2);
@@ -31,8 +30,8 @@ class DetritivoreTest extends BaseCardTest {
     @Test
     void timeCounterTriggerDestroysTargetNonbasicLand() {
         Detritivore card = suspendCard(1);
-        harness.addToBattlefield(player2, new GhostQuarter());
-        var targetId = harness.getPermanentId(player2, "Ghost Quarter");
+        Permanent nonbasicLand = harness.addToBattlefieldAndReturn(player2, new DreadshipReef());
+        harness.addToBattlefield(player2, new Forest());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -43,12 +42,46 @@ class DetritivoreTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, targetId);
+        var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(nonbasicLand.getId());
+        harness.handlePermanentChosen(player1, nonbasicLand.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
-        harness.assertInGraveyard(player2, "Ghost Quarter");
+        harness.assertNotOnBattlefield(player2, "Dreadship Reef");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Dreadship Reef");
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void suspendXExilesCardWithXTimeCounters() {
+        Detritivore card = suspendCard(2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void timeCounterTriggerFiresBeforeTheLastCounter() {
+        Detritivore card = suspendCard(2);
+        Permanent nonbasicLand = harness.addToBattlefieldAndReturn(player2, new DreadshipReef());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(nonbasicLand.getId());
+        harness.handlePermanentChosen(player1, nonbasicLand.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dreadship Reef");
+        harness.assertInGraveyard(player2, "Dreadship Reef");
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
     }
 
     @Test

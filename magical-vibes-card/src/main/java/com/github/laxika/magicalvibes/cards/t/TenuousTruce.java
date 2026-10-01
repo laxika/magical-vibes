@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "NCC", collectorNumber = "87")
 @CardRegistration(set = "NCC", collectorNumber = "95")
+@CardRegistration(set = "BLC", collectorNumber = "159")
 public class TenuousTruce extends Card {
 
     public TenuousTruce() {
