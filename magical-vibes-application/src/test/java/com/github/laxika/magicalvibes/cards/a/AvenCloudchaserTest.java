@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,29 +17,31 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 @CardUsed({AvenCloudchaser.class, GloriousAnthem.class, AngelicChorus.class, GrizzlyBears.class})
 class AvenCloudchaserTest extends BaseCardTest {
 
+    @Test
+    @DisplayName("Aven Cloudchaser has flying")
+    void hasFlying() {
+        Permanent cloudchaser = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
+
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FLYING)).isTrue();
+    }
+
     // ===== Casting and resolving =====
 
     @Test
-    @DisplayName("Casting Aven Cloudchaser puts it on the stack with target")
-    void castingPutsItOnStackWithTarget() {
+    @DisplayName("Casting Aven Cloudchaser does not choose its ETB target")
+    void castingDoesNotChooseEtbTarget() {
         harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Aven Cloudchaser");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -46,16 +49,15 @@ class AvenCloudchaserTest extends BaseCardTest {
     @DisplayName("Resolving Aven Cloudchaser enters battlefield and triggers ETB destroy")
     void resolvingEntersBattlefieldAndTriggersEtb() {
         harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Aven Cloudchaser");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, targetId);
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -63,22 +65,20 @@ class AvenCloudchaserTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Aven Cloudchaser");
         assertThat(trigger.getTargetId()).isEqualTo(targetId);
+
+        harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("ETB resolves and destroys target enchantment")
     void etbDestroysTargetEnchantment() {
         harness.addToBattlefield(player2, new GloriousAnthem());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
-        // Resolve creature spell
         harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
@@ -88,15 +88,19 @@ class AvenCloudchaserTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with Aven Cloudchaser's ETB")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new AvenCloudchaser());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
-        UUID targetId = harness.getPermanentId(player2, "Aven Cloudchaser");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("enchantment");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        resolveAllTriggers();
     }
 
     @Test
@@ -119,13 +123,11 @@ class AvenCloudchaserTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy own enchantment with ETB")
     void canDestroyOwnEnchantment() {
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
-        UUID targetId = harness.getPermanentId(player1, "Glorious Anthem");
-        harness.castCreature(player1, 0, targetId);
-
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Glorious Anthem");
@@ -136,14 +138,12 @@ class AvenCloudchaserTest extends BaseCardTest {
     @DisplayName("ETB fizzles if target enchantment is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
         UUID targetId = target.getId();
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
-        // Resolve creature spell → ETB on stack
+        // Resolve creature spell → choose the ETB target
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
 
         // Remove target before ETB resolves
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -162,11 +162,8 @@ class AvenCloudchaserTest extends BaseCardTest {
     @DisplayName("Can choose an enchantment when the ETB trigger is put on the stack")
     void canChooseEnchantmentAtTriggerTime() {
         harness.addToBattlefield(player2, new AngelicChorus());
-        harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -207,9 +204,7 @@ class AvenCloudchaserTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AvenCloudchaser()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

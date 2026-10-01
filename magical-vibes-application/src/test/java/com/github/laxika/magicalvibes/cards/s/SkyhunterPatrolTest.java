@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinReplica;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,13 +12,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyhunterPatrol.class, GoblinReplica.class, SomberHoverguard.class})
+@CardUsed({SkyhunterPatrol.class, GrizzlyBears.class, SuntailHawk.class})
 class SkyhunterPatrolTest extends BaseCardTest {
 
     @Test
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new SkyhunterPatrol());
-        addCreatureReady(player2, new GoblinReplica());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -31,14 +31,15 @@ class SkyhunterPatrolTest extends BaseCardTest {
     @Test
     void firstStrikeDealsDamageBeforeNonFirstStrikeCreature() {
         Permanent attacker = addCreatureReady(player1, new SkyhunterPatrol());
-        Permanent blocker = addCreatureReady(player2, new SomberHoverguard());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        harness.assertInGraveyard(player2, "Somber Hoverguard");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 }

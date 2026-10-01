@@ -8,14 +8,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import java.util.List;
 
-@CardUsed({HolyDay.class, GrizzlyBears.class, DurkwoodBoars.class, Shock.class})
+@CardUsed({HolyDay.class, GrizzlyBears.class, Shock.class})
 class HolyDayTest extends BaseCardTest {
 
     @Test
@@ -69,8 +68,8 @@ class HolyDayTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents combat damage dealt to players and creatures")
     void preventsCombatDamageToPlayersAndCreatures() {
-        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
-        Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
         harness.castFromHand(player1, new HolyDay(), "{W}");
         harness.passBothPriorities();

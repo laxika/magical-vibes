@@ -21,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GrizzlyBears.class, PhantomWarrior.class})
 class PhantomWarriorTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Phantom Warrior puts it on the stack")
     void castingPutsOnStack() {
@@ -63,19 +61,14 @@ class PhantomWarriorTest extends BaseCardTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
-    // ===== Can't be blocked =====
-
     @Test
     @DisplayName("Phantom Warrior cannot be blocked by a ground creature")
     void cannotBeBlockedByGroundCreature() {
         // Player2 has Grizzly Bears as potential blocker
         addCreatureReady(player2, new GrizzlyBears());
 
-        // Player1 has Phantom Warrior as attacker
-        Permanent atkPerm = addCreatureReady(player1, new PhantomWarrior());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new PhantomWarrior());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,24 +81,20 @@ class PhantomWarriorTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         Permanent attacker = addCreatureReady(player1, new PhantomWarrior());
-        attacker.setAttacking(true);
         attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
     }
-
-    // ===== Deals combat damage when unblocked =====
 
     @Test
     @DisplayName("Unblocked Phantom Warrior deals 2 damage to defending player")
     void dealsTwoDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = addCreatureReady(player1, new PhantomWarrior());
-        atkPerm.setAttacking(true);
+        addCreatureReady(player1, new PhantomWarrior());
+        declareAttackers(List.of(0));
 
         resolveCombat();
 

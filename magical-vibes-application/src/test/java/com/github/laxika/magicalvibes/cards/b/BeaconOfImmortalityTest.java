@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DutifulKnowledgeSeeker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BeaconOfImmortality.class)
+@CardUsed({BeaconOfImmortality.class, DutifulKnowledgeSeeker.class})
 class BeaconOfImmortalityTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -57,8 +60,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(40);
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("doubled from 20 to 40"));
@@ -71,8 +73,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -84,8 +85,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(6);
     }
@@ -101,8 +101,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         GameData gd = harness.getGameData();
         // Not in graveyard
@@ -117,14 +116,26 @@ class BeaconOfImmortalityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Shuffling Beacon into a library triggers library-put abilities")
+    void shufflingIntoLibraryTriggersLibraryPutAbilities() {
+        Permanent seeker = harness.addToBattlefieldAndReturn(player2, new DutifulKnowledgeSeeker());
+        harness.setHand(player1, List.of(new BeaconOfImmortality()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Stack is empty after resolution")
     void stackIsEmptyAfterResolution() {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
     }

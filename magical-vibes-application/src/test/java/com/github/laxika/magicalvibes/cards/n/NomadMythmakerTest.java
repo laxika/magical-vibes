@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.o.Overgrowth;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvilPresence.class, GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Pacifism.class})
+@CardUsed({GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Overgrowth.class, Pacifism.class})
 class NomadMythmakerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,10 +33,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @DisplayName("Casting Nomad Mythmaker puts it on the stack")
     void castingPutsItOnStack() {
         NomadMythmaker card = new NomadMythmaker();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{2}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -48,10 +45,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @DisplayName("Resolving Nomad Mythmaker puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
         NomadMythmaker card = new NomadMythmaker();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{2}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -161,6 +155,29 @@ class NomadMythmakerTest extends BaseCardTest {
                 .orElse(null);
         assertThat(auraPerm).isNotNull();
         assertThat(auraPerm.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Ability still resolves if Nomad Mythmaker leaves the battlefield before resolution")
+    void resolvesIfSourceLeavesBattlefield() {
+        Permanent mythmakerPerm = addMythmakerReady(player1);
+        Card holyStrength = new HolyStrength();
+        addToGraveyard(player1, holyStrength);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
+        gd.playerBattlefields.get(player1.getId()).remove(mythmakerPerm);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(creature.getId());
+
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == holyStrength
+                        && permanent.getAttachedTo().equals(creature.getId()));
     }
 
     @Test
@@ -274,21 +291,20 @@ class NomadMythmakerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(EvilPresence.class)
     @DisplayName("Aura remains in graveyard when it cannot enchant a creature")
     void auraWithIncompatibleEnchantRestrictionRemainsInGraveyard() {
         addMythmakerReady(player1);
-        Card evilPresence = new EvilPresence();
-        addToGraveyard(player1, evilPresence);
+        Card overgrowth = new Overgrowth();
+        addToGraveyard(player1, overgrowth);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, evilPresence.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, overgrowth.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(evilPresence);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(overgrowth);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() == evilPresence);
+                .noneMatch(permanent -> permanent.getCard() == overgrowth);
     }
 
     // ===== Validation errors =====
@@ -421,7 +437,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Attachment choice excludes creatures controlled by the opponent")
     void attachmentChoiceExcludesOpponentsCreatures() {
-        addMythmakerReadyForJudReview(player1);
+        addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
@@ -436,11 +452,4 @@ class NomadMythmakerTest extends BaseCardTest {
                 .doesNotContain(opponentCreature.getId());
     }
 
-    private Permanent addMythmakerReadyForJudReview(Player player) {
-        NomadMythmaker card = new NomadMythmaker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

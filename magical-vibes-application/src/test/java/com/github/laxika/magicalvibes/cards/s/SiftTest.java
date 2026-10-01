@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sift.class, SkyshroudFalcon.class})
+@CardUsed({Sift.class, GrizzlyBears.class})
 class SiftTest extends BaseCardTest {
 
     @Test
@@ -84,8 +85,8 @@ class SiftTest extends BaseCardTest {
     @DisplayName("Can choose which card to discard")
     void canChooseWhichCardToDiscard() {
         Sift sift = new Sift();
-        SkyshroudFalcon firstDraw = new SkyshroudFalcon();
-        SkyshroudFalcon secondDraw = new SkyshroudFalcon();
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears secondDraw = new GrizzlyBears();
         Sift discardedDraw = new Sift();
         harness.setHand(player1, List.of(sift));
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, discardedDraw));
@@ -102,10 +103,10 @@ class SiftTest extends BaseCardTest {
     @DisplayName("Can discard a card that was already in hand")
     void canDiscardCardAlreadyInHand() {
         Sift sift = new Sift();
-        SkyshroudFalcon preexistingCard = new SkyshroudFalcon();
-        SkyshroudFalcon firstDraw = new SkyshroudFalcon();
-        SkyshroudFalcon secondDraw = new SkyshroudFalcon();
-        SkyshroudFalcon thirdDraw = new SkyshroudFalcon();
+        GrizzlyBears preexistingCard = new GrizzlyBears();
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        GrizzlyBears thirdDraw = new GrizzlyBears();
         harness.setHand(player1, List.of(sift, preexistingCard));
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
         harness.addMana(player1, ManaColor.BLUE, 4);

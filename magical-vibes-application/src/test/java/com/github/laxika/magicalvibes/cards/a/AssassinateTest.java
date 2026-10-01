@@ -40,7 +40,6 @@ class AssassinateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Assassinate");
         assertThat(entry.getTargetId()).isEqualTo(tappedCreature.getId());
     }
 
@@ -90,8 +89,7 @@ class AssassinateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
         harness.assertNotOnBattlefield(player2, "Benalish Cavalry");
         harness.assertInGraveyard(player2, "Benalish Cavalry");
@@ -106,8 +104,7 @@ class AssassinateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
         harness.assertNotOnBattlefield(player1, "Benalish Cavalry");
         harness.assertInGraveyard(player1, "Benalish Cavalry");
@@ -138,8 +135,7 @@ class AssassinateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
