@@ -43,9 +43,7 @@ class RevenantPatriarchTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot block")
     void cannotBlock() {
-        Permanent blocker = new Permanent(new RevenantPatriarch());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new RevenantPatriarch());
 
         assertThat(bls.canBlock(gd, blocker)).isFalse();
     }

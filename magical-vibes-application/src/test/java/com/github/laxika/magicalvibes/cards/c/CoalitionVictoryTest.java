@@ -82,6 +82,17 @@ class CoalitionVictoryTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("The requirements cannot be combined across players")
+    void requirementsMustBeMetByTheSamePlayer() {
+        addAllBasicLandTypes(player1);
+        harness.addToBattlefield(player1, new GalinasKnight());
+        addAllRequiredCreatures(player2);
+        castCoalitionVictory();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
     private void castCoalitionVictory() {
         harness.castFromHand(player1, new CoalitionVictory(), "{3}{W}{U}{B}{R}{G}");
         harness.passBothPriorities();

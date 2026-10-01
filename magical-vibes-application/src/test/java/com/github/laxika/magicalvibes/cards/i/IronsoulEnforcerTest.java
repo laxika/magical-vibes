@@ -22,7 +22,8 @@ class IronsoulEnforcerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact));
         addCreatureReady(player1, new IronsoulEnforcer());
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
         chooseArtifactAndResolve(artifact);
 
         assertThat(findPermanentByCardId(artifact.getId())).isNotNull();
@@ -38,7 +39,8 @@ class IronsoulEnforcerTest extends BaseCardTest {
         gd.makeCommander(player1.getId(), commander);
         addCreatureReady(player1, commander);
 
-        declareAttackers(player1, List.of(1));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
         chooseArtifactAndResolve(artifact);
 
         assertThat(findPermanentByCardId(artifact.getId())).isNotNull();
@@ -52,7 +54,8 @@ class IronsoulEnforcerTest extends BaseCardTest {
         addCreatureReady(player1, new IronsoulEnforcer());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0, 1));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Fountain of Youth");
@@ -65,7 +68,8 @@ class IronsoulEnforcerTest extends BaseCardTest {
         addCreatureReady(player1, new IronsoulEnforcer());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(1));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Fountain of Youth");

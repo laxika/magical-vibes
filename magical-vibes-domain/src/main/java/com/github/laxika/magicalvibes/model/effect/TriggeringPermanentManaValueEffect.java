@@ -5,4 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * triggered ability at trigger time.
  */
 public interface TriggeringPermanentManaValueEffect extends CardEffect {
+
+    default boolean usesTriggeringPermanentManaValue() {
+        return true;
+    }
 }

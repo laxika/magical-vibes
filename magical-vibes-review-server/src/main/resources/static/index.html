@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Card review desk</title>
+  <link rel="stylesheet" href="/review.css">
+  <script src="/review.js" defer></script>
+</head>
+<body>
+  <aside class="rail">
+    <a class="brand" href="#runs"><span class="card-mark" aria-hidden="true">✦</span><span>Magical vibes<br><strong>Review desk</strong></span></a>
+    <nav aria-label="Main navigation"><a href="#runs" id="nav-runs">Runs</a><a href="#cards" id="nav-cards">Card catalog</a></nav>
+    <p class="rail-note">One review per implementation.<br>Every printing stays connected.</p>
+  </aside>
+  <div class="workspace">
+    <header class="toolbar">
+      <form id="global-search" role="search"><label class="sr-only" for="search">Find a card</label><input id="search" name="query" placeholder="Find a card, class, or printing…" autocomplete="off"><button type="submit">Find card</button></form>
+      <span class="refresh-note" id="refresh-note">Updates every 5 seconds</span>
+    </header>
+    <div id="notice" role="alert" hidden></div>
+    <main id="content" aria-live="polite"><p>Loading the review desk…</p></main>
+  </div>
+  <dialog id="new-run">
+    <form id="run-form">
+      <div class="dialog-heading"><h2>Create a run</h2><button type="button" id="close-dialog" aria-label="Close">×</button></div>
+      <p>Review every implemented card once with this model and reasoning level.</p>
+      <label>Run name<input name="name" required maxlength="200" placeholder="Luna baseline"></label>
+      <label>Model<input name="model" required maxlength="200" value="gpt-5.6-luna" list="models"></label>
+      <datalist id="models"><option value="gpt-5.6-luna"><option value="gpt-5.6-sol"></datalist>
+      <label>Reasoning level<select name="reasoningEffort"><option>low</option><option>medium</option><option>high</option><option selected>xhigh</option><option>max</option></select></label>
+      <p class="muted">The first run becomes active. For later runs, select “Make active” when you want workers to start them.</p>
+      <button class="primary" type="submit">Create run</button>
+    </form>
+  </dialog>
+</body>
+</html>

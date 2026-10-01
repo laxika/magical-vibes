@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CausticRain;
+import com.github.laxika.magicalvibes.cards.c.Cremate;
+import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,62 +14,92 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IzzetChronarch.class, Divination.class, GrizzlyBears.class, Shock.class})
+@CardUsed({IzzetChronarch.class, CausticRain.class, Cremate.class, GhostWarden.class})
 class IzzetChronarchTest extends BaseCardTest {
 
     private void castIzzetChronarch() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new IzzetChronarch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IzzetChronarch(), "{3}{U}{R}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("ETB returns a targeted instant card from graveyard to hand")
     void etbReturnsInstantToHand() {
-        Shock shock = new Shock();
-        harness.setGraveyard(player1, List.of(shock));
+        Cremate cremate = new Cremate();
+        harness.setGraveyard(player1, List.of(cremate));
 
         castIzzetChronarch();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(cremate.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Shock");
-        harness.assertNotInGraveyard(player1, "Shock");
+        harness.assertInHand(player1, "Cremate");
+        harness.assertNotInGraveyard(player1, "Cremate");
     }
 
     @Test
     @DisplayName("ETB returns a targeted sorcery card from graveyard to hand")
     void etbReturnsSorceryToHand() {
-        Divination divination = new Divination();
-        harness.setGraveyard(player1, List.of(divination));
+        CausticRain causticRain = new CausticRain();
+        harness.setGraveyard(player1, List.of(causticRain));
 
         castIzzetChronarch();
 
-        harness.handleMultipleCardsChosen(player1, List.of(divination.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(causticRain.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Divination");
-        harness.assertNotInGraveyard(player1, "Divination");
+        harness.assertInHand(player1, "Caustic Rain");
+        harness.assertNotInGraveyard(player1, "Caustic Rain");
+    }
+
+    @Test
+    @DisplayName("ETB returns only the chosen card when multiple legal targets exist")
+    void etbReturnsOnlyChosenCard() {
+        Cremate cremate = new Cremate();
+        CausticRain causticRain = new CausticRain();
+        harness.setGraveyard(player1, List.of(cremate, causticRain));
+
+        castIzzetChronarch();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(cremate.getId(), causticRain.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(cremate.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cremate");
+        harness.assertNotInGraveyard(player1, "Cremate");
+        harness.assertInGraveyard(player1, "Caustic Rain");
+        harness.assertNotInHand(player1, "Caustic Rain");
     }
 
     @Test
     @DisplayName("A creature card in the graveyard is not a legal target")
     void creatureNotTargetable() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new GhostWarden()));
 
         castIzzetChronarch();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Ghost Warden");
+    }
+
+    @Test
+    @DisplayName("An instant in an opponent's graveyard is not a legal target")
+    void opponentGraveyardNotTargetable() {
+        harness.setGraveyard(player2, List.of(new Cremate()));
+
+        castIzzetChronarch();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Cremate");
     }
 
     @Test

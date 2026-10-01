@@ -915,7 +915,7 @@ public class BattlefieldPlacementService {
      *
      * <p>With {@code copyEnchantedCreature} the copied permanent is the creature the source Aura is
      * attached to instead (Infinite Reflection); an unattached source does nothing. {@code nontokenOnly}
-     * skips entering tokens.
+     * skips entering tokens, while {@code tokenOnly} skips nontoken creatures.
      */
     private void applyCreaturesEnterAsCopyReplacementEffect(GameData gameData, UUID controllerId, Permanent entering) {
         if (!entering.getCard().hasType(CardType.CREATURE)) {
@@ -931,6 +931,9 @@ public class BattlefieldPlacementService {
                     .findFirst().orElse(null);
             if (effect != null) {
                 if (effect.nontokenOnly() && entering.getCard().isToken()) {
+                    continue;
+                }
+                if (effect.tokenOnly() && !entering.getCard().isToken()) {
                     continue;
                 }
                 Permanent copied = source;
@@ -1036,6 +1039,13 @@ public class BattlefieldPlacementService {
                 enterTappedTypes.addAll(enterTapped.cardTypes());
             }
         });
+        if (gameData.planechase != null) {
+            gameData.planechase.faceUp.forEach(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
+                    .map(EnterPermanentsOfTypesTappedEffect.class::cast)
+                    .filter(enterTapped -> !enterTapped.opponentsOnly() && !enterTapped.castOnly())
+                    .forEach(enterTapped -> enterTappedTypes.addAll(enterTapped.cardTypes())));
+        }
         return enterTappedTypes;
     }
 

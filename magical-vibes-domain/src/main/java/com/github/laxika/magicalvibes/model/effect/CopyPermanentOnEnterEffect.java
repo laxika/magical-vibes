@@ -74,7 +74,47 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                          CardPredicate cardFilter,
                                          boolean copyUntilEndOfTurn,
                                          boolean addVanishingIfCopiedPermanentLacksIt,
-                                         Set<CardType> cardTypesOverride) implements ReplacementEffect {
+                                         Set<CardType> cardTypesOverride,
+                                         List<CardEffect> reflexiveEffects) implements ReplacementEffect {
+
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
+                                      Integer toughnessOverride, Set<CardType> additionalTypesOverride,
+                                      List<ActivatedAbility> additionalActivatedAbilities,
+                                      CardColor embalmColorOverride, CardSubtype embalmAddedSubtype,
+                                      boolean embalmRemoveManaCost, DynamicAmount additionalPlusOnePlusOneCounters,
+                                      Set<CardSubtype> additionalSubtypesOverride,
+                                      Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                      boolean copyPowerToughnessFromSource, boolean entersTapped,
+                                      String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
+                                      Set<Keyword> additionalKeywordsOverride,
+                                      boolean additionalCreatureOnlyCharacteristics, boolean copyColor,
+                                      Set<CardSupertype> removedSupertypesOverride,
+                                      boolean addTypeAppropriateCounters,
+                                      boolean shieldCounterIfControllerControlsCopiedPermanent,
+                                      CardPredicate cardFilter, boolean copyUntilEndOfTurn,
+                                      boolean addVanishingIfCopiedPermanentLacksIt,
+                                      Set<CardType> cardTypesOverride) {
+        this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride,
+                additionalActivatedAbilities, embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost,
+                additionalPlusOnePlusOneCounters, additionalSubtypesOverride, additionalSlotEffects,
+                copyPowerToughnessFromSource, entersTapped, nameOverride, additionalSupertypesOverride,
+                additionalKeywordsOverride, additionalCreatureOnlyCharacteristics, copyColor,
+                removedSupertypesOverride, addTypeAppropriateCounters,
+                shieldCounterIfControllerControlsCopiedPermanent, cardFilter, copyUntilEndOfTurn,
+                addVanishingIfCopiedPermanentLacksIt, cardTypesOverride, List.of());
+    }
+
+    /** A non-targeting "when you do" ability referring to the permanent chosen for the copy. */
+    public CopyPermanentOnEnterEffect withReflexiveEffects(List<CardEffect> effects) {
+        return new CopyPermanentOnEnterEffect(filter, typeLabel, powerOverride, toughnessOverride,
+                additionalTypesOverride, additionalActivatedAbilities, embalmColorOverride, embalmAddedSubtype,
+                embalmRemoveManaCost, additionalPlusOnePlusOneCounters, additionalSubtypesOverride,
+                additionalSlotEffects, copyPowerToughnessFromSource, entersTapped, nameOverride,
+                additionalSupertypesOverride, additionalKeywordsOverride, additionalCreatureOnlyCharacteristics,
+                copyColor, removedSupertypesOverride, addTypeAppropriateCounters,
+                shieldCounterIfControllerControlsCopiedPermanent, cardFilter, copyUntilEndOfTurn,
+                addVanishingIfCopiedPermanentLacksIt, cardTypesOverride, List.copyOf(effects));
+    }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                        Integer toughnessOverride, Set<CardType> additionalTypesOverride,

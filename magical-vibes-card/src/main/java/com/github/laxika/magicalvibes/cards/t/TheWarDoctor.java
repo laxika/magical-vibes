@@ -19,6 +19,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "167")
+@CardRegistration(set = "WHO", collectorNumber = "452")
+@CardRegistration(set = "WHO", collectorNumber = "548")
+@CardRegistration(set = "WHO", collectorNumber = "772")
+@CardRegistration(set = "WHO", collectorNumber = "1043")
+@CardRegistration(set = "WHO", collectorNumber = "1139")
 public class TheWarDoctor extends Card {
 
     public TheWarDoctor() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
  * you control.
  */
 @CardRegistration(set = "WHO", collectorNumber = "60")
+@CardRegistration(set = "WHO", collectorNumber = "665")
+@CardRegistration(set = "WHO", collectorNumber = "961")
 @CardRegistration(set = "WHO", collectorNumber = "370")
 public class TraverseEternity extends Card {
 

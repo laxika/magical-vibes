@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "95")
+@CardRegistration(set = "BLC", collectorNumber = "185")
 public class NestedShambler extends Card {
 
     public NestedShambler() {

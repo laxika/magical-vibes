@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
-import com.github.laxika.magicalvibes.cards.v.VampireBats;
+import com.github.laxika.magicalvibes.cards.d.DauthiSlayer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SolkanarTheSwampKing.class, VampireBats.class, BarbaryApes.class, Swamp.class})
+@CardUsed({SolkanarTheSwampKing.class, DauthiSlayer.class, Squire.class, Swamp.class})
 class SolkanarTheSwampKingTest extends BaseCardTest {
 
     @Test
@@ -27,14 +26,14 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player1, new VampireBats(), "{B}");
+        harness.castFromHand(player1, new DauthiSlayer(), "{B}{B}");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getCard().getName().equals("Sol'kanar the Swamp King"));
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
     }
 
     @Test
@@ -47,10 +46,13 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player2, new VampireBats(), "{B}");
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new DauthiSlayer(), "{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.assertLife(player2, opponentLifeBefore);
     }
 
     @Test
@@ -58,7 +60,7 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
     void nonblackSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new SolkanarTheSwampKing());
 
-        harness.castFromHand(player1, new BarbaryApes(), "{1}{G}");
+        harness.castFromHand(player1, new Squire(), "{1}{W}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -74,18 +76,16 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
         harness.castFromHand(player1, new SolkanarTheSwampKing(), "{2}{U}{B}{R}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertLife(player1, lifeBefore + 1);
     }
 
     @Test
     @DisplayName("Swampwalk prevents blocking when the defending player controls a Swamp")
     void swampwalkPreventsBlockingWithSwamp() {
         harness.addToBattlefield(player2, new Swamp());
-        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        Permanent blocker = addCreatureReady(player2, new Squire());
         Permanent attacker = addCreatureReady(player1, new SolkanarTheSwampKing());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -98,11 +98,9 @@ class SolkanarTheSwampKingTest extends BaseCardTest {
     @Test
     @DisplayName("Swampwalk allows blocking when the defending player controls no Swamp")
     void swampwalkAllowsBlockingWithoutSwamp() {
-        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        Permanent blocker = addCreatureReady(player2, new Squire());
         Permanent attacker = addCreatureReady(player1, new SolkanarTheSwampKing());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

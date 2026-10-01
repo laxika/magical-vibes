@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "50")
 @CardRegistration(set = "WHO", collectorNumber = "365")
+@CardRegistration(set = "WHO", collectorNumber = "655")
+@CardRegistration(set = "WHO", collectorNumber = "956")
 public class NardoleResourcefulCyborg extends Card {
 
     public NardoleResourcefulCyborg() {

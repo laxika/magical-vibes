@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "MID", collectorNumber = "263")
 @CardRegistration(set = "DBL", collectorNumber = "263")
 @CardRegistration(set = "WHO", collectorNumber = "286")
+@CardRegistration(set = "WHO", collectorNumber = "502")
+@CardRegistration(set = "WHO", collectorNumber = "877")
+@CardRegistration(set = "WHO", collectorNumber = "1093")
 public class HauntedRidge extends Card {
 
     public HauntedRidge() {

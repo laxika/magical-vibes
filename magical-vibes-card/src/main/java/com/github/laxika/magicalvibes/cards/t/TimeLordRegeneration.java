@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "59")
+@CardRegistration(set = "WHO", collectorNumber = "664")
 public class TimeLordRegeneration extends Card {
 
     private static final CardPredicate TIME_LORD_CREATURE_CARD = new CardAllOfPredicate(List.of(

@@ -15,6 +15,12 @@ This is a **read-only review of implementation**. Do **not** edit card classes, 
 
 The hard rules in `CLAUDE.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
 
+## Test execution limits
+
+- Never run the full test suite, module-wide tests, package filters, wildcards, or unrelated cards' tests. Run only an exact test class belonging to the card being reviewed, one class at a time, through `scripts/run-card-test.ps1 <ExactCardTestClass> -TimeoutSeconds 7200`. Never invoke Gradle directly for a review.
+- Allow the full **7200 seconds (two hours)** for compilation and test execution. Even a single filtered class can require compiling more than 30,000 card/test classes. A quiet build or a long `compileTestJava` step is expected and is not evidence of a failure. If a tool yields a running session, keep polling until it finishes or the actual two-hour deadline expires; never abandon, cancel, or restart it after a shorter wait.
+- When invoked by `review-worker.ps1`, **do not run tests in the agent session**. Return the completed oracle/implementation review and permitted test edits; the worker validates each changed class using the exact filter and the two-hour timeout before publishing. Tests awaiting worker validation are not an execution error. This worker-specific delegation overrides the optional test-running steps below.
+
 ## Step 1 — Gather context
 
 Run the helper once (same as implement-card). It loads compact Scryfall oracle data through the shared Card Info whole-set cache, finds the existing class/test paths, and prints reprint status:

@@ -44,7 +44,7 @@ class AkkiBattleSquadTest extends BaseCardTest {
         addCreatureReady(player1, new AkkiBattleSquad());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAkkiAttackers(List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAkkiAttackers(List.of(1)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(1);

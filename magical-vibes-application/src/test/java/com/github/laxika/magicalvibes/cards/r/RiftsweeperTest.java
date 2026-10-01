@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,13 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Riftsweeper.class, Shock.class})
+@CardUsed({Riftsweeper.class, BlindPhantasm.class})
 class RiftsweeperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Shuffles a face-up exiled card into its owner's library")
     void shufflesFaceUpExiledCardIntoOwnersLibrary() {
-        Shock exiledCard = new Shock();
+        BlindPhantasm exiledCard = new BlindPhantasm();
         harness.setExile(player2, List.of(exiledCard));
         harness.setHand(player1, List.of(new Riftsweeper()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -30,8 +28,7 @@ class RiftsweeperTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ETBExiledCardTargetChoice.class);
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.CardsChosen(List.of(exiledCard.getId())));
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
         harness.passBothPriorities();
 
@@ -43,7 +40,7 @@ class RiftsweeperTest extends BaseCardTest {
     @Test
     @DisplayName("Does not target a face-down exiled card")
     void doesNotTargetFaceDownExiledCard() {
-        Card exiledCard = new Shock();
+        BlindPhantasm exiledCard = new BlindPhantasm();
         gd.addToExile(player2.getId(), exiledCard, null, true);
         harness.setHand(player1, List.of(new Riftsweeper()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -54,5 +51,30 @@ class RiftsweeperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Offers only face-up exiled cards when a face-down card is also present")
+    void offersOnlyFaceUpExiledCards() {
+        BlindPhantasm faceUpCard = new BlindPhantasm();
+        BlindPhantasm faceDownCard = new BlindPhantasm();
+        harness.setExile(player2, List.of(faceUpCard));
+        gd.addToExile(player2.getId(), faceDownCard, null, true);
+        harness.setHand(player1, List.of(new Riftsweeper()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.ETBExiledCardTargetChoice choice =
+                (PendingInteraction.ETBExiledCardTargetChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(faceUpCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(faceUpCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(faceUpCard.getId())).isNull();
+        assertThat(gd.findExiledCard(faceDownCard.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player2.getId())).contains(faceUpCard);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(faceDownCard);
     }
 }

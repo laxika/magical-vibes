@@ -69,14 +69,14 @@ class ReverseThePolarityTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, null);
         harness.passBothPriorities();
 
-        assertThat(ownBear.isCantBeBlocked()).isTrue();
-        assertThat(opposingBear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ownBear)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingBear)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBear.isCantBeBlocked()).isFalse();
-        assertThat(opposingBear.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ownBear)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingBear)).isFalse();
     }
 }

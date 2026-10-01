@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GnatAlleyCreeper;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,15 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyHussar.class, CloudSprite.class, Forest.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({SkyHussar.class, MistralCharger.class, SilkwingScout.class, GnatAlleyCreeper.class})
 class SkyHussarTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it enters, untaps all creatures its controller controls")
     void entersAndUntapsControlledCreaturesOnly() {
-        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new CloudSprite());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new SilkwingScout());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GnatAlleyCreeper());
         whiteCreature.tap();
         blueCreature.tap();
         opponentCreature.tap();
@@ -46,24 +45,22 @@ class SkyHussarTest extends BaseCardTest {
     @Test
     @DisplayName("Forecast taps two controlled white or blue creatures and draws a card")
     void forecastTapsEligibleCreaturesAndDraws() {
-        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new CloudSprite());
-        Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new SilkwingScout());
+        Permanent ineligibleCreature = harness.addToBattlefieldAndReturn(player1, new GnatAlleyCreeper());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
         SkyHussar skyHussar = new SkyHussar();
         harness.setHand(player1, List.of(skyHussar));
-        Forest drawnCard = new Forest();
+        SkyHussar drawnCard = new SkyHussar();
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
 
         harness.activateHandAbility(player1, 0, null);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(skyHussar);
         assertThat(whiteCreature.isTapped()).isTrue();
         assertThat(blueCreature.isTapped()).isTrue();
-        assertThat(greenCreature.isTapped()).isFalse();
+        assertThat(ineligibleCreature.isTapped()).isFalse();
         assertThat(opponentCreature.isTapped()).isFalse();
 
         harness.passBothPriorities();
@@ -72,14 +69,29 @@ class SkyHussarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Forecast cannot use a tapped eligible creature to pay its cost")
+    void forecastRequiresTwoUntappedEligibleCreatures() {
+        advanceToUpkeep(player1);
+        Permanent tappedWhiteCreature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Permanent untappedWhiteCreature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        tappedWhiteCreature.tap();
+        harness.setHand(player1, List.of(new SkyHussar()));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents");
+
+        assertThat(tappedWhiteCreature.isTapped()).isTrue();
+        assertThat(untappedWhiteCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Forecast cannot be activated more than once during its controller's upkeep")
     void forecastIsLimitedToOncePerTurn() {
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player1, new MistralCharger());
+        harness.addToBattlefield(player1, new SilkwingScout());
         harness.setHand(player1, List.of(new SkyHussar()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
 
         harness.activateHandAbility(player1, 0, null);
 
@@ -91,8 +103,8 @@ class SkyHussarTest extends BaseCardTest {
     @Test
     @DisplayName("Forecast requires its controller's upkeep and two eligible creatures")
     void forecastChecksTimingAndTapCost() {
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MistralCharger());
+        harness.addToBattlefield(player1, new GnatAlleyCreeper());
         harness.setHand(player1, List.of(new SkyHussar()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -102,7 +114,7 @@ class SkyHussarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your upkeep");
 
-        harness.forceStep(TurnStep.UPKEEP);
+        advanceToUpkeep(player1);
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough untapped permanents");

@@ -1,23 +1,25 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GutlessGhoul.class, BorealDruid.class})
 class GutlessGhoulTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another creature gains 2 life")
     void sacrificeAnotherCreatureGainsTwoLife() {
         harness.addToBattlefield(player1, new GutlessGhoul());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -30,8 +32,9 @@ class GutlessGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Boreal Druid");
         harness.assertOnBattlefield(player1, "Gutless Ghoul");
+        assertThat(findPermanent(player1, "Gutless Ghoul").isTapped()).isFalse();
     }
 
     @Test

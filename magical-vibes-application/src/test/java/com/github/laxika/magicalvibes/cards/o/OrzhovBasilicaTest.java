@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.g.GodlessShrine;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrzhovBasilica.class, Plains.class})
+@CardUsed({OrzhovBasilica.class, GodlessShrine.class, OrzhovSignet.class})
 class OrzhovBasilicaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters the battlefield tapped and prompts to return a land")
     void entersTappedAndPromptsToReturnLand() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent godlessShrine = harness.addToBattlefieldAndReturn(player1, new GodlessShrine());
         harness.setHand(player1, List.of(new OrzhovBasilica()));
         harness.playLand(player1, 0);
 
@@ -32,22 +32,63 @@ class OrzhovBasilicaTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(basilica.getId(), plains.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(basilica.getId(), godlessShrine.getId());
     }
 
     @Test
     @DisplayName("The ETB ability returns the chosen land to its owner's hand")
     void returnsChosenLandToHand() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent godlessShrine = harness.addToBattlefieldAndReturn(player1, new GodlessShrine());
         harness.setHand(player1, List.of(new OrzhovBasilica()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, plains.getId());
+        harness.handlePermanentChosen(player1, godlessShrine.getId());
 
         harness.assertOnBattlefield(player1, "Orzhov Basilica");
-        harness.assertNotOnBattlefield(player1, "Plains");
-        harness.assertInHand(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Godless Shrine");
+        harness.assertInHand(player1, "Godless Shrine");
+    }
+
+    @Test
+    @DisplayName("The ETB ability only offers lands controlled by its controller")
+    void onlyOffersControlledLands() {
+        harness.addToBattlefield(player1, new OrzhovSignet());
+        harness.setHand(player1, List.of(new OrzhovBasilica()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent basilica = findPermanent(player1, "Orzhov Basilica");
+        GameData gd = harness.getGameData();
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(basilica.getId());
+
+        harness.handlePermanentChosen(player1, basilica.getId());
+
+        harness.assertOnBattlefield(player1, "Orzhov Signet");
+        harness.assertNotOnBattlefield(player1, "Orzhov Basilica");
+        harness.assertInHand(player1, "Orzhov Basilica");
+    }
+
+    @Test
+    @DisplayName("The ETB ability does not offer an opponent's land")
+    void onlyOffersLandsControlledByItsController() {
+        Permanent opponentShrine = harness.addToBattlefieldAndReturn(player2, new GodlessShrine());
+        harness.setHand(player1, List.of(new OrzhovBasilica()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent basilica = findPermanent(player1, "Orzhov Basilica");
+        GameData gd = harness.getGameData();
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(basilica.getId());
+
+        harness.handlePermanentChosen(player1, basilica.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentShrine);
+        harness.assertInHand(player1, "Orzhov Basilica");
     }
 
     @Test

@@ -18,12 +18,11 @@ import java.util.List;
 public class HomingSliver extends Card {
 
     public HomingSliver() {
-        addCycling("{3}");
-
         ActivatedAbility slivercycling = new ActivatedAbility(false, "{3}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SLIVER))),
                 "Slivercycling {3} ({3}, Discard this card: Search your library for a Sliver card, "
                         + "reveal it, put it into your hand, then shuffle.)");
+        addHandActivatedAbility(slivercycling);
         addEffect(EffectSlot.STATIC, new GrantHandActivatedAbilityToCardsEffect(
                 slivercycling, new CardSubtypePredicate(CardSubtype.SLIVER)));
     }

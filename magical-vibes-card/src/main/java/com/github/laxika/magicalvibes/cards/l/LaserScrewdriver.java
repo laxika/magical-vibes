@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "178")
+@CardRegistration(set = "WHO", collectorNumber = "783")
 public class LaserScrewdriver extends Card {
 
     public LaserScrewdriver() {

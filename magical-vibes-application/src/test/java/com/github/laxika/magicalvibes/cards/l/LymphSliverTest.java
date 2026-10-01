@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.ArcBlade;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.f.FrenzySliver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,26 +16,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LymphSliver.class, MetallicSliver.class, Shock.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({LymphSliver.class, FrenzySliver.class, ArcBlade.class, BlindPhantasm.class})
 class LymphSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Absorb 1 prevents one damage from each damage event to every Sliver")
     void preventsOneDamageFromEachDamageEventToEverySliver() {
         Permanent sourceSliver = addCreatureReady(player1, new LymphSliver());
-        Permanent opposingSliver = addCreatureReady(player2, new MetallicSliver());
-        Permanent nonSliver = addCreatureReady(player2, new AirElemental());
+        Permanent opposingSliver = addCreatureReady(player2, new FrenzySliver());
+        Permanent nonSliver = addCreatureReady(player2, new BlindPhantasm());
 
-        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setHand(player1, List.of(new ArcBlade(), new ArcBlade(), new ArcBlade(), new ArcBlade()));
+        harness.addMana(player1, ManaColor.RED, 20);
 
-        harness.castInstant(player1, 0, sourceSliver.getId());
+        harness.castSorcery(player1, 0, sourceSliver.getId());
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, sourceSliver.getId());
+        harness.castSorcery(player1, 0, sourceSliver.getId());
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, opposingSliver.getId());
+        harness.castSorcery(player1, 0, opposingSliver.getId());
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, nonSliver.getId());
+        harness.castSorcery(player1, 0, nonSliver.getId());
         harness.passBothPriorities();
 
         assertThat(sourceSliver.getMarkedDamage()).isEqualTo(2);
@@ -47,7 +46,7 @@ class LymphSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Absorb 1 prevents one combat damage to a Sliver")
     void preventsCombatDamageToSliver() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BlindPhantasm());
         Permanent blocker = addCreatureReady(player2, new LymphSliver());
         attacker.setAttacking(true);
 

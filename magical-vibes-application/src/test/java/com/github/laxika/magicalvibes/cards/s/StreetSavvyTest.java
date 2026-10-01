@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.z.ZodiacMonkey;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,7 +26,7 @@ class StreetSavvyTest extends BaseCardTest {
     @Test
     @DisplayName("Street Savvy gives the enchanted creature +0/+2")
     void enchantedCreatureGetsToughnessBoost() {
-        Permanent creature = readyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachStreetSavvy(creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -39,10 +38,10 @@ class StreetSavvyTest extends BaseCardTest {
     void enchantedCreatureCanBlockForestwalker() {
         harness.addToBattlefield(player2, new Forest());
         Permanent attacker = readyAttacker(player1);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         attachStreetSavvy(blocker);
 
-        beginBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -53,12 +52,12 @@ class StreetSavvyTest extends BaseCardTest {
     void enchantedCreatureCanBlockSnowLandwalker() {
         Permanent snowForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         TestCards.mutableCard(snowForest).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        Permanent attacker = readyCreature(player1, new RimeDryad());
+        Permanent attacker = addCreatureReady(player1, new RimeDryad());
         attacker.setAttacking(true);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         attachStreetSavvy(blocker);
 
-        beginBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -69,11 +68,26 @@ class StreetSavvyTest extends BaseCardTest {
     void unenchantedCreatureCannotBlockForestwalker() {
         harness.addToBattlefield(player2, new Forest());
         Permanent attacker = readyAttacker(player1);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Street Savvy only grants the landwalk permission to its enchanted creature")
+    void permissionIsLimitedToEnchantedCreature() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent attacker = readyAttacker(player1);
+        Permanent enchantedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        attachStreetSavvy(enchantedBlocker);
+        Permanent unenchantedBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(unenchantedBlocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -82,41 +96,26 @@ class StreetSavvyTest extends BaseCardTest {
     void permissionEndsWhenAuraLeavesBattlefield() {
         harness.addToBattlefield(player2, new Forest());
         Permanent attacker = readyAttacker(player1);
-        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = attachStreetSavvy(blocker);
         gd.playerBattlefields.get(player2.getId()).remove(aura);
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent readyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent readyAttacker(Player player) {
-        Permanent attacker = readyCreature(player, new ZodiacMonkey());
+        Permanent attacker = addCreatureReady(player, new ZodiacMonkey());
         attacker.setAttacking(true);
         return attacker;
     }
 
     private Permanent attachStreetSavvy(Permanent creature) {
-        Permanent aura = new Permanent(new StreetSavvy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StreetSavvy());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
         return aura;
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {

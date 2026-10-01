@@ -41,19 +41,34 @@ class ThunderheadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Replicated tokens are also exiled at the next end step")
+    void exilesReplicatedTokensAtNextEndStep() {
+        castThunderheads(List.of("{2}{U}"));
+        assertThat(getTokens()).hasSize(2);
+
+        advanceToNextEndStep();
+
+        assertThat(getTokens()).isEmpty();
+    }
+
+    @Test
     @DisplayName("Exiles the token at the next end step")
     void exilesTokenAtNextEndStep() {
         castThunderheads(List.of());
         assertThat(getTokens()).hasSize(1);
 
+        advanceToNextEndStep();
+
+        assertThat(getTokens()).isEmpty();
+    }
+
+    private void advanceToNextEndStep() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-
-        assertThat(getTokens()).isEmpty();
     }
 
     private void castThunderheads(List<String> replicatePayments) {

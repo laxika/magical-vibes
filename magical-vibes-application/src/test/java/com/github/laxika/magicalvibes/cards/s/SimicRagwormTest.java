@@ -7,13 +7,14 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SimicRagworm.class})
 class SimicRagwormTest extends BaseCardTest {
 
     @Test
     void payingBlueManaUntapsSimicRagworm() {
-        Permanent ragworm = addRagwormReady();
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
         ragworm.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -25,7 +26,7 @@ class SimicRagwormTest extends BaseCardTest {
 
     @Test
     void activatingAbilityDoesNotTapSimicRagworm() {
-        Permanent ragworm = addRagwormReady();
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -33,10 +34,15 @@ class SimicRagwormTest extends BaseCardTest {
         assertThat(ragworm.isTapped()).isFalse();
     }
 
-    private Permanent addRagwormReady() {
-        Permanent ragworm = new Permanent(new SimicRagworm());
-        ragworm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(ragworm);
-        return ragworm;
+    @Test
+    void activatingAbilityRequiresBlueMana() {
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
+        ragworm.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ragworm.isTapped()).isTrue();
     }
 }

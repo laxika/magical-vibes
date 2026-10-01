@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "V13", collectorNumber = "13")
 @CardRegistration(set = "SLD", collectorNumber = "33")
 @CardRegistration(set = "SLD", collectorNumber = "2374")
+@CardRegistration(set = "BLC", collectorNumber = "77")
 public class InkEyesServantOfOni extends Card {
 
     public InkEyesServantOfOni() {

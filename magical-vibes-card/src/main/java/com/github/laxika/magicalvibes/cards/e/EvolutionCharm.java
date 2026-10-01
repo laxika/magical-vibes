@@ -29,8 +29,8 @@ public class EvolutionCharm extends Card {
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.CREATURE), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
+                                new CardTypePredicate(CardType.CREATURE))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains flying until end of turn",
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),

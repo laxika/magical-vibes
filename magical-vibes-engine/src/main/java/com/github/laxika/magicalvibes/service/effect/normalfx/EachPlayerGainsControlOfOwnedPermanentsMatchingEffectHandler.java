@@ -38,7 +38,8 @@ public class EachPlayerGainsControlOfOwnedPermanentsMatchingEffectHandler implem
             UUID ownerId = gameData.defaultControllerOf(permanent.getId());
             if (ownerId != null && !ownerId.equals(controllerId)
                     && predicateEvaluationService.matchesPermanentPredicate(
-                    permanent, resolvingEffect.filter(), FilterContext.of(gameData).withSourceControllerId(ownerId))) {
+                    permanent, resolvingEffect.filter(), FilterContext.of(gameData)
+                            .withSourceControllerId(entry.getControllerId()))) {
                 toReturn.add(new OwnedPermanent(ownerId, permanent));
             }
         });

@@ -489,6 +489,7 @@ public class CardChoiceHandlerService {
         UUID returnSourcePermanentId = null;
         UUID untapSourcePermanentId = null;
         Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype = Set.of();
+        boolean markEntryAsPutByTriggeringPermanent = false;
         UUID blockingAttackerId = null;
         CardPredicate drawAndRepeatPredicate = null;
         CardPredicate enterTappedAndAttackingIf = null;
@@ -521,6 +522,7 @@ public class CardChoiceHandlerService {
             returnExiledSourceCardId = hc.returnExiledSourceCardId();
             untapSourcePermanentId = hc.untapSourcePermanentId();
             untapSourceIfEnteredCardHasAnySubtype = hc.untapSourceIfEnteredCardHasAnySubtype();
+            markEntryAsPutByTriggeringPermanent = hc.markEntryAsPutByTriggeringPermanent();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
             enterTappedAndAttackingIf = hc.enterTappedAndAttackingIf();
@@ -641,7 +643,8 @@ public class CardChoiceHandlerService {
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                         cloaked, returnExiledSourceCardId, blockingAttackerId,
                         applyEntryCounters ? entryCounterType : null,
-                        applyEntryCounters ? entryCounterCount : 0);
+                        applyEntryCounters ? entryCounterCount : 0,
+                        markEntryAsPutByTriggeringPermanent, untapSourcePermanentId);
                 if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData,
                             gameData.pendingEffectResolutionEntry, enteredPermanent,
@@ -916,6 +919,31 @@ public class CardChoiceHandlerService {
         } else {
             finishDiscardChoice(gameData, player, playerId, followUp, card);
         }
+    }
+
+    /** Answers the choice to put one of a set of hand cards into its owner's graveyard. */
+    public void handlePutCardFromHandIntoGraveyardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PutCardFromHandIntoGraveyardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card card = hand.remove(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        if (graveyardService.addCardToGraveyard(gameData, player.getId(), card, Zone.HAND)) {
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " puts ", card, " into their graveyard."));
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     public void resumeDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted) {
@@ -1992,7 +2020,7 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (choice.grantHaste()) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {
@@ -2504,7 +2532,9 @@ public class CardChoiceHandlerService {
                                              Set<CardType> faceDownCardTypes,
                                              boolean cloaked,
                                              UUID returnExiledSourceCardId, UUID blockingAttackerId,
-                                             CounterType entryCounterType, int entryCounterCount) {
+                                             CounterType entryCounterType, int entryCounterCount,
+                                             boolean markEntryAsPutByTriggeringPermanent,
+                                             UUID triggeringSourcePermanentId) {
         Permanent permanent = new Permanent(card);
         if (cloaked) {
             permanent.setFaceDownAsCloaked();
@@ -2523,6 +2553,9 @@ public class CardChoiceHandlerService {
         }
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;
+        if (markEntryAsPutByTriggeringPermanent) {
+            permanent.setPutOntoBattlefieldWithAbilitySourcePermanentId(triggeringSourcePermanentId);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         if (entryCounterType != null && entryCounterCount > 0) {
             permanentCounterSupport.placeCounterOnPermanent(gameData,

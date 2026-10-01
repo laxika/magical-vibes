@@ -1,42 +1,40 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.r.ReveredDead;
+import com.github.laxika.magicalvibes.cards.s.SimianSpiritGuide;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ProdigalPyromancer.class, ReveredDead.class, SimianSpiritGuide.class, ChandraNalaar.class})
 class ProdigalPyromancerTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new ProdigalPyromancer()));
+        ProdigalPyromancer card = new ProdigalPyromancer();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castCreature(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(entry.getCard()).isSameAs(card);
     }
 
     @Test
@@ -48,7 +46,6 @@ class ProdigalPyromancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Prodigal Pyromancer");
     }
@@ -56,16 +53,15 @@ class ProdigalPyromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
     void activatingTargetingPlayerPutsOnStack() {
-        Permanent pyromancer = addReadyPyromancer(player1);
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(pyromancer.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Prodigal Pyromancer");
+        assertThat(entry.getCard()).isSameAs(pyromancer.getCard());
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -73,12 +69,11 @@ class ProdigalPyromancerTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        addReadyPyromancer(player1);
+        addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -86,36 +81,45 @@ class ProdigalPyromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
-        addReadyPyromancer(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ReveredDead());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Revered Dead");
+        harness.assertInGraveyard(player2, "Revered Dead");
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
-        addReadyPyromancer(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SimianSpiritGuide());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Simian Spirit Guide");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        ProdigalPyromancer card = new ProdigalPyromancer();
-        Permanent pyromancer = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(pyromancer);
+        harness.addToBattlefield(player1, new ProdigalPyromancer());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -125,7 +129,7 @@ class ProdigalPyromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent pyromancer = addReadyPyromancer(player1);
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         pyromancer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -136,27 +140,18 @@ class ProdigalPyromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetCreatureRemoved() {
-        addReadyPyromancer(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SimianSpiritGuide());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
 
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    private Permanent addReadyPyromancer(Player player) {
-        ProdigalPyromancer card = new ProdigalPyromancer();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
 

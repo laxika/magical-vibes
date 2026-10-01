@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "364")
 @CardRegistration(set = "TDC", collectorNumber = "345")
 @CardRegistration(set = "OTC", collectorNumber = "276")
+@CardRegistration(set = "BLC", collectorNumber = "297")
 public class CascadeBluffs extends Card {
 
     public CascadeBluffs() {

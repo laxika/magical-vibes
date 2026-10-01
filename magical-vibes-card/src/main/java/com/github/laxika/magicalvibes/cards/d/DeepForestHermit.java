@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "161")
+@CardRegistration(set = "BLC", collectorNumber = "213")
 public class DeepForestHermit extends Card {
 
     public DeepForestHermit() {

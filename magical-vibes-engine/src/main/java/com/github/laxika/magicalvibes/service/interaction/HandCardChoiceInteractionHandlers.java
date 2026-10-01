@@ -56,6 +56,32 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Choose a card from a restricted set in hand to put into its owner's graveyard. */
+    @Component
+    public static class PutCardFromHandIntoGraveyardChoiceInteractionHandler
+            extends Base<PendingInteraction.PutCardFromHandIntoGraveyardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PutCardFromHandIntoGraveyardChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PutCardFromHandIntoGraveyardChoice> handledType() {
+            return PendingInteraction.PutCardFromHandIntoGraveyardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PutCardFromHandIntoGraveyardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePutCardFromHandIntoGraveyardChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /** Pull of the Mist Moon: choose a hand card to receive its perpetual ETB ability. */
     @Component
     public static class PerpetualEnterExileHandCardChoiceInteractionHandler

@@ -233,7 +233,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID targetCardId
     ) implements PermanentChoiceContext {}
 
-    record SpellRetarget(UUID spellCardId, Integer targetIndex) implements PermanentChoiceContext {
+    record SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets,
+                        UUID chooserId) implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId, Integer targetIndex) {
+            this(spellCardId, targetIndex, null, null);
+        }
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }
 
@@ -426,6 +430,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** The controller chooses one matching permanent to exile, then creates a token. */
+    record ExilePermanentYouControlThenCreateToken(
+            Card sourceCard,
+            UUID controllerId,
+            PermanentPredicate filter,
+            CreateTokenEffect token
+    ) implements PermanentChoiceContext {}
+
     /** The Master, Formed Anew: choose a creature to exile with a takeover counter. */
     record TakeoverCreatureToExile(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -528,6 +540,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             remainingChooserIds = List.copyOf(remainingChooserIds);
             accumulatedChoices = List.copyOf(accumulatedChoices);
         }
+    }
+
+    /** Caught in a Parallel Universe: each player chooses a creature controlled by the player to their left. */
+    record CaughtInAParallelUniverseCreatureChoice(
+            UUID controllerId,
+            Card sourceCard,
+            UUID choosingPlayerId,
+            UUID chosenFromPlayerId,
+            List<UUID> orderedPlayerIds,
+            List<UUID> remainingChooserIds,
+            List<CaughtInAParallelUniverseCreatureCopy> accumulatedChoices
+    ) implements PermanentChoiceContext {
+        public CaughtInAParallelUniverseCreatureChoice {
+            orderedPlayerIds = List.copyOf(orderedPlayerIds);
+            remainingChooserIds = List.copyOf(remainingChooserIds);
+            accumulatedChoices = List.copyOf(accumulatedChoices);
+        }
+    }
+
+    record CaughtInAParallelUniverseCreatureCopy(UUID permanentId, UUID tokenControllerId) {
     }
 
     /** Sothera: each opponent chooses a creature they control to exile with the source. */

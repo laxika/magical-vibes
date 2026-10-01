@@ -110,6 +110,8 @@ class CardImmutabilityArchTest {
             "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
+            "ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffectHandler", // decorates a fresh conjured duplicate
+            "DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler", // grants effects on a fresh runtime copy
             "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
             "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
             "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
@@ -117,6 +119,7 @@ class CardImmutabilityArchTest {
             "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
             "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
             "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
+            "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {
@@ -137,7 +140,11 @@ class CardImmutabilityArchTest {
     void onlyCardAssemblyClassesMutateCards() {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
-                .withImportOption(location -> !location.contains("test-fixtures"))
+                .withImportOption(location -> !location.contains("test-fixtures")
+                        && !location.contains("testFixtures")
+                        && !location.contains("/classes/java/test/"))
+                // Card classes are exempt from this rule; importing their bytecode adds no coverage.
+                .withImportOption(location -> !location.contains("/com/github/laxika/magicalvibes/cards/"))
                 .importPackages("com.github.laxika.magicalvibes");
 
         noClasses()

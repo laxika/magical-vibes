@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.h.HeroesRemembered;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,11 +9,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KavuPredator.class, AngelOfMercy.class})
+@CardUsed({KavuPredator.class, HeroesRemembered.class})
 class KavuPredatorTest extends BaseCardTest {
 
     @Test
@@ -25,15 +22,10 @@ class KavuPredatorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AngelOfMercy()));
-        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.castFromHand(player2, new HeroesRemembered(), "{6}{W}{W}{W}");
+        resolveAllTriggers();
 
-        harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
     }
 
     @Test
@@ -41,12 +33,8 @@ class KavuPredatorTest extends BaseCardTest {
     void doesNotTriggerForControllerLifeGain() {
         Permanent predator = harness.addToBattlefieldAndReturn(player1, new KavuPredator());
 
-        harness.setHand(player1, List.of(new AngelOfMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new HeroesRemembered(), "{6}{W}{W}{W}");
+        resolveAllTriggers();
 
         assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

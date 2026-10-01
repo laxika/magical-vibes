@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.n.NewBenalia;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,15 +16,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpinIntoMyth.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SpinIntoMyth.class, NessianCourser.class, NewBenalia.class})
 class SpinIntoMythTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts the target creature on top, then fateseals 2")
     void putsTargetOnTopThenFatesealsTwo() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Card firstCard = libraryCard("First card");
-        Card secondCard = libraryCard("Second card");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
+        NewBenalia firstCard = new NewBenalia();
+        NessianCourser secondCard = new NessianCourser();
         harness.setLibrary(player2, List.of(firstCard, secondCard));
         harness.setHand(player1, List.of(new SpinIntoMyth()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -34,20 +33,44 @@ class SpinIntoMythTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        PendingInteraction.Scry fateseal = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(fateseal).isNotNull();
+        assertThat(fateseal.cards()).containsExactly(target.getCard(), firstCard);
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
                 firstCard, secondCard, target.getCard());
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Nessian Courser");
         harness.assertInGraveyard(player1, "Spin into Myth");
+    }
+
+    @Test
+    @DisplayName("Fateseal 2 looks at only the remaining card when the library has one card")
+    void fatesealUsesRemainingLibrarySize() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new SpinIntoMyth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry fateseal = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(fateseal).isNotNull();
+        assertThat(fateseal.cards()).containsExactly(target.getCard());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard());
+        harness.assertNotOnBattlefield(player2, "Nessian Courser");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NewBenalia());
         harness.setHand(player1, List.of(new SpinIntoMyth()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -55,11 +78,5 @@ class SpinIntoMythTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-    }
-
-    private Card libraryCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
     }
 }

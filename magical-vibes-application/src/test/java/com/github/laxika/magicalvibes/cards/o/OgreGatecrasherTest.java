@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.s.SilkwingScout;
+import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,32 +15,46 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OgreGatecrasher.class, WallOfWood.class, GrizzlyBears.class})
+@CardUsed({OgreGatecrasher.class, WakestoneGargoyle.class, SilkwingScout.class})
 class OgreGatecrasherTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it enters, it destroys target creature with defender")
     void entersAndDestroysCreatureWithDefender() {
-        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfWood());
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new WakestoneGargoyle());
 
-        castOgreGatecrasher(wall.getId());
+        castOgreGatecrasher(defender.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wall of Wood");
-        harness.assertInGraveyard(player2, "Wall of Wood");
+        harness.assertNotOnBattlefield(player2, "Wakestone Gargoyle");
+        harness.assertInGraveyard(player2, "Wakestone Gargoyle");
+        harness.assertOnBattlefield(player1, "Ogre Gatecrasher");
+    }
+
+    @Test
+    @DisplayName("It can destroy a defender controlled by its controller")
+    void entersAndDestroysItsControllersDefender() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player1, new WakestoneGargoyle());
+
+        castOgreGatecrasher(defender.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wakestone Gargoyle");
+        harness.assertInGraveyard(player1, "Wakestone Gargoyle");
         harness.assertOnBattlefield(player1, "Ogre Gatecrasher");
     }
 
     @Test
     @DisplayName("It cannot target a creature without defender")
     void cannotTargetCreatureWithoutDefender() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SilkwingScout());
         harness.setHand(player1, List.of(new OgreGatecrasher()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("defender");
     }
@@ -48,16 +62,13 @@ class OgreGatecrasherTest extends BaseCardTest {
     @Test
     @DisplayName("It enters without an ETB trigger when no creature has defender")
     void entersWithoutTargetWhenNoCreatureHasDefender() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new OgreGatecrasher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addToBattlefield(player2, new SilkwingScout());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new OgreGatecrasher(), "{3}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ogre Gatecrasher");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Silkwing Scout");
         assertThat(gd.stack).isEmpty();
     }
 

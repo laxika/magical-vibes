@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: review-db/changelog/001-review-schema.sql
+  - include:
+      file: review-db/changelog/002-review-cost.sql

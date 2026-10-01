@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhorClanSavage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,11 +9,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkarrganSkybreaker.class, GrizzlyBears.class})
+@CardUsed({SkarrganSkybreaker.class, GhorClanSavage.class})
 class SkarrganSkybreakerTest extends BaseCardTest {
 
     @Test
@@ -21,6 +19,17 @@ class SkarrganSkybreakerTest extends BaseCardTest {
     void bloodthirstApplies() {
         gd.recordDamageToPlayer(player2.getId(), 1);
         castSkybreaker();
+
+        assertThat(findPermanent(player1, "Skarrgan Skybreaker")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Bloodthirst 3 sees damage dealt after casting but before resolution")
+    void bloodthirstAppliesWhenDamageOccursBeforeResolution() {
+        harness.castFromHand(player1, new SkarrganSkybreaker(), "{4}{R}{R}{G}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Skarrgan Skybreaker")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -54,21 +63,17 @@ class SkarrganSkybreakerTest extends BaseCardTest {
     @DisplayName("Deals damage equal to its power to a target creature")
     void dealsPowerDamageToCreature() {
         addCreatureReady(player1, new SkarrganSkybreaker());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhorClanSavage());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Ghor-Clan Savage");
     }
 
     private void castSkybreaker() {
-        harness.setHand(player1, List.of(new SkarrganSkybreaker()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkarrganSkybreaker(), "{4}{R}{R}{G}");
         resolveAllTriggers();
     }
 }

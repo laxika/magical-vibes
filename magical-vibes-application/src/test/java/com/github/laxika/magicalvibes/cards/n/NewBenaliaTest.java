@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NewBenalia.class, GrizzlyBears.class})
+@CardUsed({NewBenalia.class, Tarmogoyf.class})
 class NewBenaliaTest extends BaseCardTest {
 
     @Test
@@ -29,8 +29,8 @@ class NewBenaliaTest extends BaseCardTest {
 
     @Test
     void scriesOneOnEntering() {
-        Card topCard = new GrizzlyBears();
-        Card bottomCard = new GrizzlyBears();
+        Card topCard = new Tarmogoyf();
+        Card bottomCard = new Tarmogoyf();
         harness.setLibrary(player1, List.of(topCard, bottomCard));
         harness.setHand(player1, List.of(new NewBenalia()));
 
@@ -44,6 +44,22 @@ class NewBenaliaTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomCard, topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void mayKeepTheTopCardWhenScrying() {
+        Card topCard = new Tarmogoyf();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new NewBenalia()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

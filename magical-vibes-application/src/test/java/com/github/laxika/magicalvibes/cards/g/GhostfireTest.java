@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,8 +24,7 @@ class GhostfireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ghostfire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
@@ -34,8 +36,7 @@ class GhostfireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ghostfire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -48,9 +49,22 @@ class GhostfireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ghostfire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Paladin en-Vec"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Paladin en-Vec"));
 
         harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Deals 3 damage to a planeswalker")
+    void dealsThreeDamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 }

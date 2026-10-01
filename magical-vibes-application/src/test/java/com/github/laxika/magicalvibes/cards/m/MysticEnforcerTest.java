@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.g.GhastlyDemise;
+import com.github.laxika.magicalvibes.cards.i.InfectedVermin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticEnforcer.class, DuskImp.class, GhastlyDemise.class})
+@CardUsed({MysticEnforcer.class, DuskImp.class, GhastlyDemise.class, InfectedVermin.class})
 class MysticEnforcerTest extends BaseCardTest {
 
     @Test
@@ -78,9 +79,8 @@ class MysticEnforcerTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new GhastlyDemise()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.passPriority(player1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, enforcer.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, enforcer.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -113,6 +113,21 @@ class MysticEnforcerTest extends BaseCardTest {
         assertThat(enforcer.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Mystic Enforcer");
         harness.assertInGraveyard(player2, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents noncombat damage from black sources")
+    void protectionFromBlackPreventsNoncombatDamage() {
+        Permanent enforcer = addEnforcer(player1);
+        addCreatureReady(player2, new InfectedVermin());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(enforcer.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
     }
 
     private Permanent addEnforcer(Player player) {

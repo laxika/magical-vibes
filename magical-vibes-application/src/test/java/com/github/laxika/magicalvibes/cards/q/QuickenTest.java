@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BloodscaleProwler;
+import com.github.laxika.magicalvibes.cards.c.CullingSun;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +13,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Quicken.class, BloodscaleProwler.class, CullingSun.class})
 class QuickenTest extends BaseCardTest {
 
     private void resolveQuicken() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new Quicken()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
+        harness.setLibrary(player1, List.of(new BloodscaleProwler()));
+        harness.castFromHand(player1, new Quicken(), "{U}");
         harness.passBothPriorities();
     }
 
@@ -29,7 +28,7 @@ class QuickenTest extends BaseCardTest {
         resolveQuicken();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Bloodscale Prowler");
     }
 
     @Test
@@ -39,13 +38,10 @@ class QuickenTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Culling Sun");
     }
 
     @Test
@@ -55,16 +51,14 @@ class QuickenTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player1, List.of(new Divination(), new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setLibrary(player1, List.of(new BloodscaleProwler(), new BloodscaleProwler()));
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
         harness.passBothPriorities();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -76,12 +70,14 @@ class QuickenTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new BloodscaleProwler(), "{2}{R}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Culling Sun");
     }
 
     @Test
@@ -96,10 +92,8 @@ class QuickenTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

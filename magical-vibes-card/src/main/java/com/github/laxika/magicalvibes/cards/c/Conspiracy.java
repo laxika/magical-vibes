@@ -13,6 +13,6 @@ public class Conspiracy extends Card {
 
     public Conspiracy() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(true));
+        addEffect(EffectSlot.STATIC, GrantChosenSubtypeToOwnCreaturesEffect.replacingInAllZones());
     }
 }

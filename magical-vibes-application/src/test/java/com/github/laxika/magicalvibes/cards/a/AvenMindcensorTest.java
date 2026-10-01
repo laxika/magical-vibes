@@ -9,12 +9,11 @@ import com.github.laxika.magicalvibes.cards.r.RampantGrowth;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AvenMindcensor.class, DiabolicTutor.class, Forest.class, GrizzlyBears.class,
+        Island.class, Plains.class, RampantGrowth.class, Swamp.class})
 class AvenMindcensorTest extends BaseCardTest {
 
     @Test
@@ -33,7 +34,6 @@ class AvenMindcensorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve Diabolic Tutor -> search prompt
 
-        GameData gd = harness.getGameData();
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -53,11 +53,10 @@ class AvenMindcensorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards().getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -72,7 +71,6 @@ class AvenMindcensorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Aven Mindcensor only affects opponents, so player1 still searches their whole library.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .hasSize(6);
@@ -87,13 +85,11 @@ class AvenMindcensorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Only basic land is a Forest sitting fifth; the top four are all Grizzly Bears.
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new Forest()));
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(entry -> entry.contains("top 4 cards"));
@@ -108,9 +104,7 @@ class AvenMindcensorTest extends BaseCardTest {
     }
 
     private void setSixCardLibrary(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new Forest(), new Island(),
+        harness.setLibrary(player, List.of(new Plains(), new Swamp(), new Forest(), new Island(),
                 new GrizzlyBears(), new GrizzlyBears()));
     }
 }

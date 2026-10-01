@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "51")
 @CardRegistration(set = "WHO", collectorNumber = "366")
+@CardRegistration(set = "WHO", collectorNumber = "656")
+@CardRegistration(set = "WHO", collectorNumber = "957")
 public class NyssaOfTraken extends Card {
 
     public NyssaOfTraken() {

@@ -28,7 +28,7 @@ class ArchaeomancersSpadeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(flaringPain, thinkTwice);

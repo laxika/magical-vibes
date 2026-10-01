@@ -36,6 +36,24 @@ class ResurrectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns the chosen creature when multiple creatures are in your graveyard")
+    void returnsChosenCreatureWhenMultipleCreaturesAreInOwnGraveyard() {
+        Card otherCreature = new GrizzlyBears();
+        Card targetCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(otherCreature, targetCreature));
+        harness.setHand(player1, List.of(new Resurrection()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, targetCreature.getId());
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(targetCreature.getId()));
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(otherCreature.getId()))
+                .noneMatch(card -> card.getId().equals(targetCreature.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot target a creature card in an opponent's graveyard")
     void cannotTargetOpponentGraveyard() {
         Card creature = new GrizzlyBears();

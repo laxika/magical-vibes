@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SteamVents.class)
 class SteamVentsTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class SteamVentsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Steam Vents enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playSteamVents(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findSteamVents(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Steam Vents produces blue mana")
     void producesBlueMana() {
         Permanent steamVents = addSteamVentsReady(player1);
@@ -78,9 +92,8 @@ class SteamVentsTest extends BaseCardTest {
     }
 
     private Permanent addSteamVentsReady(Player player) {
-        Permanent steamVents = new Permanent(new SteamVents());
+        Permanent steamVents = harness.addToBattlefieldAndReturn(player, new SteamVents());
         steamVents.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(steamVents);
         return steamVents;
     }
 

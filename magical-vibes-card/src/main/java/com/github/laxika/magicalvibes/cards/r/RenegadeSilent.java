@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "53")
+@CardRegistration(set = "WHO", collectorNumber = "658")
 public class RenegadeSilent extends Card {
 
     public RenegadeSilent() {

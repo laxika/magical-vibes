@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
+import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
@@ -2124,6 +2125,8 @@ public class DrawService {
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                 if (effect == null) continue;
+                effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                if (effect == null) continue;
 
                 if (effect instanceof ExceptFirstDrawStepTriggerEffect
                         && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
@@ -2249,6 +2252,7 @@ public class DrawService {
                     }
                 }
                 OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
             }
         }
 
@@ -2256,6 +2260,7 @@ public class DrawService {
 
     private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
                                                          EffectSlot slot) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
         if (graveyard == null) return;
 
@@ -2280,6 +2285,7 @@ public class DrawService {
     }
 
     private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         if (cardsDrawnThisTurn != 2) return;
 
@@ -2386,6 +2392,8 @@ public class DrawService {
                 for (CardEffect authoredEffect : drawEffects) {
                     CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                     if (effect == null) continue;
+                    effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                    if (effect == null) continue;
                     if (effect instanceof ExceptFirstDrawStepTriggerEffect
                             && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                         continue;
@@ -2442,6 +2450,7 @@ public class DrawService {
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         });

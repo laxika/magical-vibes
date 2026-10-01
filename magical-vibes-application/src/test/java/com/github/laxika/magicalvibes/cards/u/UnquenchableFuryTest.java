@@ -25,9 +25,12 @@ class UnquenchableFuryTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attachAura(attacker);
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
         gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
         harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }

@@ -304,6 +304,9 @@ class TargetPolarityGuardTest {
                 new com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetSpellAndCreatureEffect(),
+                aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1),
                 aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,

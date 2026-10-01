@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Icequake;
-import com.github.laxika.magicalvibes.cards.t.TraceOfAbundance;
+import com.github.laxika.magicalvibes.cards.s.StoneRain;
+import com.github.laxika.magicalvibes.cards.w.WildGrowth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsecrateLand.class, Forest.class, GrizzlyBears.class, Icequake.class, TraceOfAbundance.class})
+@CardUsed({ConsecrateLand.class, Forest.class, GrizzlyBears.class, StoneRain.class, WildGrowth.class})
 class ConsecrateLandTest extends BaseCardTest {
 
     @Test
@@ -35,8 +35,8 @@ class ConsecrateLandTest extends BaseCardTest {
         Permanent forest = addForest();
         castConsecrateLand(forest);
 
-        harness.setHand(player1, List.of(new Icequake()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, forest.getId());
         harness.passBothPriorities();
 
@@ -49,8 +49,8 @@ class ConsecrateLandTest extends BaseCardTest {
         Permanent forest = addForest();
         castConsecrateLand(forest);
 
-        harness.setHand(player1, List.of(new TraceOfAbundance()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new WildGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);

@@ -76,6 +76,34 @@ class LlanowarRebornTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Graft does not trigger without a +1/+1 counter")
+    void graftDoesNotTriggerWithoutCounter() {
+        Permanent reborn = addRebornWithCounter();
+        reborn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        castCreature(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft does not trigger when a land enters")
+    void graftDoesNotTriggerForNoncreatureEntry() {
+        Permanent reborn = addRebornWithCounter();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new LlanowarReborn()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The land's controller chooses for an opponent's creature")
     void controllerChoosesForOpponentsCreature() {
         Permanent reborn = addRebornWithCounter();
@@ -92,17 +120,13 @@ class LlanowarRebornTest extends BaseCardTest {
     }
 
     private Permanent addRebornWithCounter() {
-        Permanent reborn = harness.addToBattlefieldAndReturn(player1, new LlanowarReborn());
-        reborn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        return reborn;
+        return harness.enterBattlefieldAndReturn(player1, new LlanowarReborn());
     }
 
     private void castCreature(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MagewrightsStone;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,12 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CytospawnShambler.class, GrizzlyBears.class})
+@CardUsed({CytospawnShambler.class, MagewrightsStone.class, MistralCharger.class})
 class CytospawnShamblerTest extends BaseCardTest {
 
     @Test
@@ -32,25 +31,57 @@ class CytospawnShamblerTest extends BaseCardTest {
     void graftMovesCounterOntoEnteringCreature() {
         Permanent shambler = castShambler();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent charger = findPermanent(player1, "Mistral Charger");
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft moves a counter onto an opponent's creature that enters")
+    void graftMovesCounterOntoOpponentsEnteringCreature() {
+        Permanent shambler = castShambler();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player2, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may be declined")
+    void graftMayBeDeclined() {
+        Permanent shambler = castShambler();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("The activated ability grants trample until end of turn")
     void grantsTrampleUntilEndOfTurn() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent shambler = castShambler();
         shambler.setSummoningSick(false);
 
@@ -59,22 +90,41 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shambler),
-                null, bears.getId());
+                null, charger.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The activated ability can target an opponent's creature with a +1/+1 counter")
+    void grantsTrampleToOpponentCreatureWithCounter() {
+        Permanent charger = addCreatureReady(player2, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent shambler = castShambler();
+        shambler.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shambler),
+                null, charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("The activated ability cannot target a creature without a +1/+1 counter")
     void cannotTargetCreatureWithoutCounter() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
         Permanent shambler = castShambler();
         shambler.setSummoningSick(false);
 
@@ -84,18 +134,53 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1,
-                gd.playerBattlefields.get(player1.getId()).indexOf(shambler), null, bears.getId()))
+                gd.playerBattlefields.get(player1.getId()).indexOf(shambler), null, charger.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activated ability cannot target a noncreature permanent with a +1/+1 counter")
+    void cannotTargetNoncreatureWithCounter() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new MagewrightsStone());
+        stone.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent shambler = castShambler();
+        shambler.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(shambler), null, stone.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activated ability fizzles if the target loses its +1/+1 counter before resolution")
+    void targetMustStillHaveCounterOnResolution() {
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent shambler = castShambler();
+        shambler.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shambler),
+                null, charger.getId());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent castShambler() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CytospawnShambler()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CytospawnShambler(), "{6}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Cytospawn Shambler");
     }

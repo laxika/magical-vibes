@@ -276,6 +276,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSeizeTheSpotlightCreatureChoice(gameData, permanentId, seizeChoice);
         } else if (context instanceof PermanentChoiceContext.OrderOfSuccession orderOfSuccession) {
             battlefieldHandler.handleOrderOfSuccessionChoice(gameData, permanentId, orderOfSuccession);
+        } else if (context instanceof PermanentChoiceContext.CaughtInAParallelUniverseCreatureChoice parallelChoice) {
+            battlefieldHandler.handleCaughtInAParallelUniverseCreatureChoice(gameData, permanentId, parallelChoice);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureToExileWithSource(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy benthicChoice) {
@@ -331,6 +333,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesPermanentToExile(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.PermanentYouControlToExile exileChoice) {
             battlefieldHandler.handlePermanentYouControlToExile(gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.ExilePermanentYouControlThenCreateToken exileChoice) {
+            battlefieldHandler.handleExilePermanentYouControlThenCreateToken(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.TakeoverCreatureToExile takeoverChoice) {
             battlefieldHandler.handleTakeoverCreatureToExile(gameData, permanentId, takeoverChoice);
         } else if (context instanceof PermanentChoiceContext.ExileAnotherCreatureAndConjureRandomCreature exileChoice) {

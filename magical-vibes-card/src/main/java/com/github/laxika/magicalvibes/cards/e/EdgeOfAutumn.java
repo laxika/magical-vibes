@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,17 +21,15 @@ import java.util.List;
 public class EdgeOfAutumn extends Card {
 
     public EdgeOfAutumn() {
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                new ControlsPermanentCountAtMost(4, new PermanentIsLandPredicate()),
+                new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED)));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
-                "{1}{G}",
+                null,
                 List.of(
                         new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land", false),
-                        new ConditionalEffect(
-                                new ControlsPermanentCountAtMost(4, new PermanentIsLandPredicate()),
-                                new SearchLibraryEffect(
-                                        CardPredicateUtils.basicLand(),
-                                        LibrarySearchDestination.BATTLEFIELD_TAPPED)),
                         new DrawCardEffect(1)),
-                "Cycling {1}{G} ({1}{G}, Sacrifice a land, Discard this card: Draw a card.)"));
+                "Cycling—Sacrifice a land (Sacrifice a land, Discard this card: Draw a card.)"));
     }
 }
