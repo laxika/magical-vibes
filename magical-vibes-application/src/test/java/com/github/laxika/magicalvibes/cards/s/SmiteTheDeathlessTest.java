@@ -49,7 +49,7 @@ class SmiteTheDeathlessTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("This spell cannot target players");
     }
 
     private void castSmite(Permanent target) {

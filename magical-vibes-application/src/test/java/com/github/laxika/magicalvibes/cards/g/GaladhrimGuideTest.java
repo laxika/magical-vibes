@@ -23,6 +23,7 @@ class GaladhrimGuideTest extends BaseCardTest {
         Island second = new Island();
         harness.setLibrary(player1, List.of(first, second));
         harness.enterBattlefieldAndReturn(player1, new GaladhrimGuide());
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())

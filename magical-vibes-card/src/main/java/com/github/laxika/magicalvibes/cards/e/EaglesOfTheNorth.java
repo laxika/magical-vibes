@@ -15,6 +15,6 @@ public class EaglesOfTheNorth extends Card {
         // When this creature enters, creatures you control get +1/+0 and gain first strike until end of turn.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllOwnCreaturesEffect(1, 0));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES));
     }
 }

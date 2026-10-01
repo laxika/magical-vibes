@@ -28,7 +28,7 @@ class FogOnTheBarrowDownsTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureCannotAttack() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         attachAura(bears);
 
         harness.forceActivePlayer(player1);
@@ -69,7 +69,7 @@ class FogOnTheBarrowDownsTest extends BaseCardTest {
 
     @Test
     void removingAuraRestoresCreatureTypeAndCombat() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachAura(bears);
         gd.playerBattlefields.get(player2.getId()).remove(aura);
 

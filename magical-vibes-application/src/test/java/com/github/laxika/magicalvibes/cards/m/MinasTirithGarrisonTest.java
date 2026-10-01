@@ -64,6 +64,6 @@ class MinasTirithGarrisonTest extends BaseCardTest {
     }
 
     private Permanent addReady(Card card) {
-        return harness.addToBattlefieldAndReturn(player1, card);
+        return addCreatureReady(player1, card);
     }
 }
