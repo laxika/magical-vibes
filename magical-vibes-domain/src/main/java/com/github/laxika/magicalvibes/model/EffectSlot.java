@@ -809,6 +809,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller casts a spell while this card is in exile. */
     EXILE_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the card's owner sacrifices a token while this card is face up in exile. */
+    EXILE_ON_CONTROLLER_TOKEN_SACRIFICED,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's

@@ -2728,6 +2728,9 @@ public class GameData {
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks source permanents whose once-only triggered ability has already fired. */
+    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
+
     /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
     public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
 
@@ -7171,6 +7174,7 @@ public class GameData {
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryPlayPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryPlayPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.onceOnlyTriggersFired.addAll(this.onceOnlyTriggersFired);
         this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
                 copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {

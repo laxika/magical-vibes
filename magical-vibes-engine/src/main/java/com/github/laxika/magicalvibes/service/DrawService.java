@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
+import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
@@ -2124,6 +2125,8 @@ public class DrawService {
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                 if (effect == null) continue;
+                effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                if (effect == null) continue;
 
                 if (effect instanceof ExceptFirstDrawStepTriggerEffect
                         && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
@@ -2249,6 +2252,7 @@ public class DrawService {
                     }
                 }
                 OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
             }
         }
 
@@ -2388,6 +2392,8 @@ public class DrawService {
                 for (CardEffect authoredEffect : drawEffects) {
                     CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
                     if (effect == null) continue;
+                    effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
+                    if (effect == null) continue;
                     if (effect instanceof ExceptFirstDrawStepTriggerEffect
                             && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                         continue;
@@ -2444,6 +2450,7 @@ public class DrawService {
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         });

@@ -1,6 +1,7 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
 One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect` when the spell types are sufficient; its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell. `ReduceCastCostForNextMatchingSpellEffect` supports arbitrary card predicates; its ordinary dynamic amounts are evaluated at cast time, while `EventValue` amounts are snapshotted when the one-shot effect resolves. Its `faceDownOnly` form ignores face-up casts and remains pending until a matching face-down spell is cast. `GameData.recordSpellCast` consumes type-based reductions after a successful matching cast; matching-predicate floating reductions are consumed by `TriggerCollectionService` when the spell is cast.
+`IncreaseCastCostForNextMatchingSpellEffect` is the targeted tax counterpart: its normal-effect handler captures the selected player in a floating modifier, and its battlefield cost handler contributes the generic increase only to that player's next matching spell. `TriggerCollectionService` consumes it after the matching cast.
 
 `ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not
@@ -189,6 +190,9 @@ another player's dash costs.
   restricts by source zone, hand plotting, or face-down casting, matches the spell against the predicate,
   and evaluates the amount with the **source permanent** in the `AmountContext` so `CountersOnSource`
   works ("costs {1} less for each +1/+1 counter on this creature" — Herald of War).
+- `cast/costmod/IncreaseCastCostForNextMatchingSpellEffectHandler.java` — battlefield handler for
+  `IncreaseCastCostForNextMatchingSpellEffect(CardPredicate, int)`; applies only to the captured
+  target player's next matching spell.
 - `cast/costmod/ModifyCastCostForCardsDrawnThisTurnEffectHandler.java` — battlefield handler for
   `ModifyCastCostForCardsDrawnThisTurnEffect(int, boolean)`; matches the spell's card id against
   the per-turn draw-id tracker for the source controller or that controller's opponents, then
