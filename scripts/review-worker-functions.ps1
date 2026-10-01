@@ -1,5 +1,62 @@
 . (Join-Path $PSScriptRoot 'review-card-instructions.ps1')
 
+function Read-ReviewPricing {
+    param([string] $Path = (Join-Path $PSScriptRoot 'review-model-pricing.json'))
+    $configuration = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($null -eq $configuration.models -or $configuration.models -isnot [pscustomobject]) { throw 'Review pricing must contain a models object.' }
+    $prices = @{}
+    foreach ($model in $configuration.models.PSObject.Properties) {
+        $rates = @{}
+        foreach ($field in @('inputUsdPerMillion', 'cachedInputUsdPerMillion', 'outputUsdPerMillion')) {
+            $value = $model.Value.$field
+            if ($null -eq $value -or $value -is [string] -or $value -is [bool] -or [decimal] $value -lt 0) { throw "Invalid $field rate for $($model.Name)." }
+            $rates[$field] = [decimal] $value
+        }
+        $prices[$model.Name] = $rates
+    }
+    return $prices
+}
+
+function Get-ReviewUsage {
+    param([string[]] $LogPaths, [string] $Model, [hashtable] $Pricing)
+    $usage = [ordered] @{ inputTokens = $null; cachedInputTokens = $null; outputTokens = $null; estimatedCostUsd = $null }
+    [long] $inputTokens = 0
+    [long] $cachedTokens = 0
+    [long] $outputTokens = 0
+    foreach ($path in $LogPaths) {
+        # Missing usage for any invocation makes the total unknown, rather than zero or a partial estimate.
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $usage }
+        $found = $false
+        $reader = [System.IO.StreamReader]::new($path, [System.Text.Encoding]::UTF8)
+        try {
+            while (($line = $reader.ReadLine()) -ne $null) {
+                try { $event = $line | ConvertFrom-Json } catch { continue }
+                if ($event.type -notin @('turn.completed', 'turn.failed')) { continue }
+                foreach ($field in @('input_tokens', 'cached_input_tokens', 'output_tokens')) {
+                    $value = $event.usage.$field
+                    if ($null -eq $value -or $value -isnot [ValueType] -or $value -is [bool] -or $value -lt 0 -or [decimal] $value -ne [decimal] [long] $value) { return $usage }
+                }
+                if ($event.usage.cached_input_tokens -gt $event.usage.input_tokens) { return $usage }
+                $inputTokens += [long] $event.usage.input_tokens
+                $cachedTokens += [long] $event.usage.cached_input_tokens
+                $outputTokens += [long] $event.usage.output_tokens
+                $found = $true
+            }
+        }
+        finally { $reader.Dispose() }
+        if (-not $found) { return $usage }
+    }
+    $usage.inputTokens = $inputTokens
+    $usage.cachedInputTokens = $cachedTokens
+    $usage.outputTokens = $outputTokens
+    if ($Pricing -and $Pricing.ContainsKey($Model)) {
+        $rates = $Pricing[$Model]
+        $usage.estimatedCostUsd = (([decimal] $inputTokens - $cachedTokens) * $rates.inputUsdPerMillion +
+            [decimal] $cachedTokens * $rates.cachedInputUsdPerMillion + [decimal] $outputTokens * $rates.outputUsdPerMillion) / 1000000
+    }
+    return $usage
+}
+
 function Invoke-ReviewGit {
     param([string] $Root, [string[]] $Arguments)
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -210,7 +267,7 @@ function Publish-ReviewTests {
 }
 
 function Invoke-ReviewTask {
-    param([string] $Root, $Task, [string] $Directory)
+    param([string] $Root, $Task, [string] $Directory, [hashtable] $Pricing = (Read-ReviewPricing))
     New-Item -ItemType Directory -Force -Path $Directory | Out-Null
     $reviewedCommit = Get-ReviewGitText $Root @('rev-parse', 'HEAD')
     $outputPath = Join-Path $Directory 'codex-result.json'
@@ -219,8 +276,9 @@ function Invoke-ReviewTask {
     [System.IO.File]::WriteAllText($schemaPath, $schema, [System.Text.UTF8Encoding]::new($false))
     $result = [ordered] @{ attemptToken = $Task.attemptToken; outcome = 'ERROR'; cardName = $null; findings = @(); reviewedCommit = $reviewedCommit; publicationStatus = 'NOT_REQUIRED'; publishedCommit = $null; executionError = $null; publicationError = $null }
     $stop = $false
+    $logPaths = @((Join-Path $Directory 'codex.jsonl'))
     try {
-        Invoke-ReviewCodex $Root $Task $outputPath $schemaPath (Join-Path $Directory 'codex.jsonl')
+        Invoke-ReviewCodex $Root $Task $outputPath $schemaPath $logPaths[0]
         $review = Read-ReviewOutput $outputPath
         if ($review.outcome -eq 'ERROR') { throw $review.executionError }
         $changes = @(Get-ReviewChangedPaths $Root | Where-Object { -not (Test-ReviewDatabasePath $_) })
@@ -241,7 +299,8 @@ function Invoke-ReviewTask {
                 }
                 $feedback = "The worker has now finished focused validation: compilation succeeded, but behavioral tests failed after your initial PASS. Read these validation logs: $($testLogs -join ', '). Reconcile the verdict with the oracle and failing behavior; return FINDINGS describing actual card bugs when confirmed. This follow-up is entirely read-only: do not edit any files or run any tests. If the tests themselves are invalid or no card bug can be confirmed, return ERROR with an explanation for recovery."
                 $validatedOutput = Join-Path $Directory 'validated-result.json'
-                Invoke-ReviewCodex $Root $Task $validatedOutput $schemaPath (Join-Path $Directory 'validated-codex.jsonl') $feedback
+                $logPaths += Join-Path $Directory 'validated-codex.jsonl'
+                Invoke-ReviewCodex $Root $Task $validatedOutput $schemaPath $logPaths[1] $feedback
                 $validatedReview = Read-ReviewOutput $validatedOutput
                 foreach ($path in $changes) {
                     if ((Get-FileHash -LiteralPath (Join-Path $Root $path) -Algorithm SHA256).Hash -ne $validatedHashes[$path]) { throw 'The validation follow-up changed tested files; changes were preserved for recovery.' }
@@ -261,6 +320,10 @@ function Invoke-ReviewTask {
         $dirty = @(Get-ReviewChangedPaths $Root | Where-Object { -not (Test-ReviewDatabasePath $_) })
         $stop = $dirty.Count -gt 0 -or (Get-ReviewGitText $Root @('branch', '--show-current')) -ne 'main' -or (Get-ReviewGitText $Root @('rev-parse', 'HEAD')) -ne $reviewedCommit
     }
+    $usage = [ordered] @{ inputTokens = $null; cachedInputTokens = $null; outputTokens = $null; estimatedCostUsd = $null }
+    try { $usage = Get-ReviewUsage $logPaths $Task.model $Pricing }
+    catch { Write-Warning "Could not read review usage: $($_.Exception.Message)" }
+    foreach ($field in $usage.Keys) { $result[$field] = $usage[$field] }
     return [pscustomobject] @{ Result = $result; Stop = $stop }
 }
 

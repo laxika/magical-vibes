@@ -42,6 +42,7 @@ function heading(title, subtitle, ...controls) { return node('div', {class: 'pag
 function table(headers, rows) { return node('div', {class: 'panel table-wrap'}, node('table', {}, node('thead', {}, node('tr', {}, headers.map(text => node('th', {}, text)))), node('tbody', {}, rows.map(cells => node('tr', {}, cells.map(cell => node('td', {}, cell))))))); }
 function empty(text) { return node('div', {class: 'panel empty'}, text); }
 function date(value) { return value ? new Date(value).toLocaleString() : '—'; }
+function cost(value) { return value == null ? 'Unavailable' : new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6}).format(value); }
 function route() { const [path, query] = location.hash.slice(1).split('?'); return {path: path || 'runs', params: new URLSearchParams(query)}; }
 function pagination(result, path, params) {
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
@@ -95,10 +96,10 @@ async function runPage(id, params) {
   result.push(node('div', {class: 'section-heading'}, filters(`runs/${id}`, params, true), node('div', {class: 'controls'}, action('Requeue failed', () => api(`/runs/${id}/requeue`, 'POST', {status: 'FAILED'})), action('Requeue running', () => {
     if (confirm('Requeue all running tasks? Results from their current workers will be rejected.')) return api(`/runs/${id}/requeue`, 'POST', {status: 'RUNNING'});
   }))));
-  result.push(tasks.items.length ? table(['Card', 'Printing', 'Review', 'Worker', 'Publication', ''], tasks.items.map(task => [
+  result.push(tasks.items.length ? table(['Card', 'Printing', 'Review', 'Worker', 'Estimated cost', 'Publication', ''], tasks.items.map(task => [
     node('div', {}, link(task.cardName, `cards/${task.cardId}`, 'card-name'), node('span', {class: 'subline'}, task.className.split('.').pop())),
     `${task.setCode} ${task.collectorNumber}`, node('div', {class: 'badges'}, badge(task.status), task.outcome ? badge(task.outcome) : null, task.findingCount ? `${task.findingCount} findings` : null),
-    node('div', {}, task.workerId || '—', node('span', {class: 'subline'}, task.startedAt ? date(task.startedAt) : '')), task.publicationStatus || '—',
+    node('div', {}, task.workerId || '—', node('span', {class: 'subline'}, task.startedAt ? date(task.startedAt) : '')), cost(task.estimatedCostUsd), task.publicationStatus || '—',
     action('Requeue', () => {
       if (task.status !== 'RUNNING' || confirm('Requeue this running task? Its current result will be rejected.')) return api(`/tasks/${task.id}/requeue`, 'POST');
     })
@@ -114,6 +115,8 @@ async function catalogPage(params) {
 
 function attemptBody(attempt) {
   return [attempt.findings.length ? node('ol', {class: 'findings'}, attempt.findings.map(description => node('li', {}, description))) : node('p', {class: 'muted'}, attempt.outcome === 'PASS' ? 'No bugs reported.' : attempt.outcome === 'ERROR' ? 'The review did not complete.' : 'Waiting for the worker to submit its result.'),
+    node('p', {class: 'review-meta', title: 'Token estimate at configured API rates; actual billing may differ.'}, `Estimated token cost: ${cost(attempt.estimatedCostUsd)}`,
+      attempt.inputTokens == null ? null : node('span', {class: 'subline'}, `${attempt.inputTokens.toLocaleString()} input tokens (${attempt.cachedInputTokens.toLocaleString()} cached) · ${attempt.outputTokens.toLocaleString()} output tokens`)),
     attempt.executionError ? node('p', {class: 'failure'}, attempt.executionError) : null,
     attempt.publicationError ? node('p', {class: 'failure'}, `Publication failed: ${attempt.publicationError}`) : null,
     node('div', {class: 'review-meta'}, `Worker: ${attempt.workerId}`, node('br'), `Started: ${date(attempt.startedAt)}`, node('br'), `Finished: ${date(attempt.finishedAt)}`, node('br'), `Reviewed commit: ${attempt.reviewedCommit || '—'}`, node('br'), `Publication: ${attempt.publicationStatus || 'pending'}`, attempt.publishedCommit ? node('div', {}, `Published commit: ${attempt.publishedCommit}`) : null)

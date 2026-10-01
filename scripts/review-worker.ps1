@@ -7,11 +7,13 @@
 param(
     [string] $ServerUrl = 'http://localhost:8091',
     [string] $WorkerId,
+    [string] $PricingPath = (Join-Path $PSScriptRoot 'review-model-pricing.json'),
     [ValidateRange(1, 3600)][int] $PollSeconds = 5
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'review-worker-functions.ps1')
+$pricing = Read-ReviewPricing $PricingPath
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 if (-not $WorkerId) { $WorkerId = Split-Path -Leaf $repositoryRoot }
 $ServerUrl = $ServerUrl.TrimEnd('/')
@@ -52,13 +54,15 @@ while ($true) {
     if (-not $task) { Start-Sleep -Seconds $PollSeconds; continue }
     Write-Host "Run $($task.runId): $($task.setCode) $($task.collectorNumber), $($task.model) / $($task.reasoningEffort)"
     $directory = Join-Path $workerDirectory ([string] $task.attemptToken)
-    $completed = Invoke-ReviewTask $repositoryRoot $task $directory
+    $completed = Invoke-ReviewTask $repositoryRoot $task $directory $pricing
     $pending = @{ serverUrl = $ServerUrl; taskId = $task.id; result = $completed.Result; stop = $completed.Stop }
     $pendingJson = $pending | ConvertTo-Json -Depth 12
     $temporaryPath = $pendingPath + '.tmp'
     [System.IO.File]::WriteAllText($temporaryPath, $pendingJson, [System.Text.UTF8Encoding]::new($false))
     Move-Item -LiteralPath $temporaryPath -Destination $pendingPath
-    Write-Host "$($completed.Result.outcome): $($completed.Result.findings.Count) findings. Result saved for upload."
+    $cost = 'unavailable (usage or model pricing missing)'
+    if ($null -ne $completed.Result.estimatedCostUsd) { $cost = '$' + $completed.Result.estimatedCostUsd.ToString('F6', [System.Globalization.CultureInfo]::InvariantCulture) + ' USD' }
+    Write-Host "$($completed.Result.outcome): $($completed.Result.findings.Count) findings. Estimated token cost: $cost. Result saved for upload."
 }
 }
 finally { $workerLock.Dispose() }

@@ -39,6 +39,10 @@ In each clean checkout on `main`, with Git, Codex, and Windows PowerShell on `PA
 
 The worker ID defaults to the checkout folder name; override with `-WorkerId`. Start one worker per checkout. A local lock prevents two worker scripts from using the same checkout simultaneously. Workers remain running when the queue is empty and take work from whichever run the dashboard activates next. Stop with Ctrl+C.
 
+Workers report input, cached input, and output tokens from Codex's JSON usage events, and an estimated token cost in USD. A validation follow-up is included in the same attempt's total. The estimate uses `(input - cached input) × input rate + cached input × cached rate + output × output rate`, with rates per million tokens from [OpenAI pricing](https://developers.openai.com/api/docs/pricing). Defaults are in `scripts/review-model-pricing.json`; use `-PricingPath C:/path/to/pricing.json` for another rate table, including custom model identifiers. Prices are loaded at worker startup; restart workers after changing them.
+
+This is an API token estimate, not a billing total for a ChatGPT subscription. Defaults use standard short-context rates and exclude tool fees, cache-write premiums, long-context premiums, service-tier premiums, and regional surcharges. Update the configured rates as needed. Unknown models or missing usage show an unavailable cost rather than zero. Older reviews remain unavailable. Recorded costs persist with each attempt and appear on the card page (including previous attempts) and the run's card table. Upload retries preserve the original estimate without reviewing or charging the estimate twice.
+
 Before each claim, the worker pulls `origin/main`. Tasks supply their model and reasoning level. Reviews inspect shared implementation logic even when the representative printing is a reprint. Production code remains read-only. The same review instructions are shared with the existing set-based script.
 
 Permitted test changes are checked with focused card tests, committed, and pushed directly to `main`. Confirmed bug-exposing failures are published. A build failure, unexpected production edit, or conflicting Git update preserves the checkout and stops publication. Non-conflicting push races are fetched, rebased, and retried up to five times. Findings retain only bug descriptions; test code and output are not included in reports.
@@ -84,6 +88,8 @@ Tests and smoke checks use temporary databases or paths under `build`; no initia
 | Card comparisons | `GET /api/cards/{id}` | Printings and reviews grouped by run |
 
 Result fields: `attemptToken`, `outcome` (`PASS`, `FINDINGS`, or `ERROR`), `cardName`, `findings` (array of descriptions), `reviewedCommit`, `publicationStatus` (`NOT_REQUIRED`, `PUSHED`, or `FAILED`), `publishedCommit`, `executionError`, and `publicationError`. Unused metadata fields may be null. Completed reviews require a full Git commit hash. Findings must be empty for passes/execution errors and nonempty for findings verdicts. Publication and execution failures require their corresponding error descriptions.
+
+Optional usage fields: `inputTokens`, `cachedInputTokens`, `outputTokens`, and `estimatedCostUsd`. Counts must be supplied together as nonnegative integers, with cached input no greater than total input. Cost must be nonnegative and requires usage; it may be null when pricing is unknown. Legacy workers may omit all four fields. Task and card history endpoints return these fields for current and previous attempts, including execution/publication failures.
 
 Repeated identical submissions are accepted without duplicating findings. Invalid input returns 400, unknown records 404, and stale/conflicting submissions 409. Paged endpoints return `items`, `total`, `page`, and `pageSize` (50).
 

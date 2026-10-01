@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -47,6 +48,8 @@ public class ReviewService {
                    a.outcome,a.reviewed_commit AS reviewedCommit,a.publication_status AS publicationStatus,
                    a.published_commit AS publishedCommit,a.execution_error AS executionError,
                    a.publication_error AS publicationError,
+                   a.input_tokens AS inputTokens,a.cached_input_tokens AS cachedInputTokens,
+                   a.output_tokens AS outputTokens,a.estimated_cost_usd AS estimatedCostUsd,
                    (SELECT COUNT(*) FROM review_finding WHERE attempt_token=a.token) AS findingCount
             FROM review_task t JOIN review_card c ON c.id=t.card_id
             LEFT JOIN review_attempt a ON a.token=t.current_attempt
@@ -188,16 +191,19 @@ public class ReviewService {
             }
             var attempt = one("SELECT result_json FROM review_attempt WHERE token=?", result.attemptToken());
             if (attempt.get("result_json") != null) {
-                if (serialized.equals(attempt.get("result_json"))) {
+                // Read older payloads with missing optional usage fields as null, so queued retries remain idempotent after migration.
+                if (result.equals(mapper.readValue((String) attempt.get("result_json"), Result.class))) {
                     return;
                 }
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "A different result was already accepted for this attempt");
             }
             jdbc.update("""
                     UPDATE review_attempt SET finished_at=?,outcome=?,reviewed_commit=?,publication_status=?,
-                           published_commit=?,execution_error=?,publication_error=?,result_json=? WHERE token=?
+                           published_commit=?,execution_error=?,publication_error=?,result_json=?,
+                           input_tokens=?,cached_input_tokens=?,output_tokens=?,estimated_cost_usd=? WHERE token=?
                     """, Instant.now().toString(), result.outcome(), result.reviewedCommit(), result.publicationStatus(),
-                    result.publishedCommit(), result.executionError(), result.publicationError(), serialized, result.attemptToken());
+                    result.publishedCommit(), result.executionError(), result.publicationError(), serialized,
+                    result.inputTokens(), result.cachedInputTokens(), result.outputTokens(), result.estimatedCostUsd(), result.attemptToken());
             for (String finding : result.findings()) {
                 jdbc.update("INSERT INTO review_finding(attempt_token,description) VALUES (?,?)", result.attemptToken(), finding.trim());
             }
@@ -275,6 +281,8 @@ public class ReviewService {
                        a.outcome,a.reviewed_commit AS reviewedCommit,a.publication_status AS publicationStatus,
                        a.published_commit AS publishedCommit,a.execution_error AS executionError,
                        a.publication_error AS publicationError,
+                       a.input_tokens AS inputTokens,a.cached_input_tokens AS cachedInputTokens,
+                       a.output_tokens AS outputTokens,a.estimated_cost_usd AS estimatedCostUsd,
                        CASE WHEN a.token=t.current_attempt THEN 1 ELSE 0 END AS current
                 FROM review_attempt a JOIN review_task t ON t.id=a.task_id WHERE a.task_id=? ORDER BY a.rowid DESC
                 """, taskId);
@@ -287,6 +295,17 @@ public class ReviewService {
     private void validate(Result result) {
         require(result != null, "Result is required");
         requireText(result.attemptToken(), "Attempt token", 100);
+        boolean hasUsage = result.inputTokens() != null || result.cachedInputTokens() != null || result.outputTokens() != null;
+        if (hasUsage) {
+            require(result.inputTokens() != null && result.cachedInputTokens() != null && result.outputTokens() != null,
+                    "Token usage must include input, cached input, and output counts");
+            require(result.inputTokens() >= 0 && result.cachedInputTokens() >= 0 && result.outputTokens() >= 0
+                    && result.cachedInputTokens() <= result.inputTokens(), "Invalid token usage counts");
+        }
+        if (result.estimatedCostUsd() != null) {
+            require(hasUsage && result.estimatedCostUsd().signum() >= 0, "Estimated cost requires token usage and cannot be negative");
+            require(Double.isFinite(result.estimatedCostUsd().doubleValue()), "Estimated cost is too large");
+        }
         require(result.outcome() != null && Set.of("PASS", "FINDINGS", "ERROR").contains(result.outcome()), "Unknown review outcome");
         require(result.findings() != null, "Findings must be an array");
         require(result.findings().size() <= 1000, "Too many findings");
@@ -368,5 +387,6 @@ public class ReviewService {
     public record Claim(String workerId) {}
     public record Result(String attemptToken, String outcome, String cardName, List<String> findings,
                          String reviewedCommit, String publicationStatus, String publishedCommit,
-                         String executionError, String publicationError) {}
+                         String executionError, String publicationError, Long inputTokens, Long cachedInputTokens,
+                         Long outputTokens, BigDecimal estimatedCostUsd) {}
 }
