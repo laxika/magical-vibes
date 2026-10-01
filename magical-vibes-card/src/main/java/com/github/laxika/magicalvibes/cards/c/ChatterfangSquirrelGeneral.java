@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "151")
+@CardRegistration(set = "BLC", collectorNumber = "82")
+@CardRegistration(set = "BLC", collectorNumber = "95")
+@CardRegistration(set = "BLC", collectorNumber = "209")
 public class ChatterfangSquirrelGeneral extends Card {
 
     public ChatterfangSquirrelGeneral() {

@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.c.ColdsteelHeart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BorealCentaur.class, BorealDruid.class, ColdsteelHeart.class, HibernationsEnd.class})
 class HibernationsEndTest extends BaseCardTest {
 
     @Test
@@ -23,23 +24,47 @@ class HibernationsEndTest extends BaseCardTest {
     void payingCumulativeUpkeepSearchesForMatchingCreature() {
         Permanent hibernationsEnd = harness.addToBattlefieldAndReturn(player1, new HibernationsEnd());
         hibernationsEnd.setCounterCount(CounterType.AGE, 1);
-        harness.setLibrary(player1, List.of(new LlanowarElves(), new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(new BorealDruid(), new BorealCentaur(), new ColdsteelHeart()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).extracting("name").containsExactly("Grizzly Bears");
+        assertThat(search.params().cards()).extracting("name").containsExactly("Boreal Centaur");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Boreal Centaur");
+        harness.assertNotOnBattlefield(player1, "Boreal Druid");
+        harness.assertNotOnBattlefield(player1, "Coldsteel Heart");
+    }
+
+    @Test
+    @DisplayName("Paying cumulative upkeep may decline the creature search")
+    void payingCumulativeUpkeepMayDeclineCreatureSearch() {
+        Permanent hibernationsEnd = harness.addToBattlefieldAndReturn(player1, new HibernationsEnd());
+        harness.setLibrary(player1, List.of(new BorealCentaur()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanent(player1, "Hibernation's End")).isSameAs(hibernationsEnd);
+        harness.assertNotOnBattlefield(player1, "Boreal Centaur");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting("name")
+                .containsExactly("Boreal Centaur");
     }
 
     @Test

@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "C21", collectorNumber = "126")
 @CardRegistration(set = "TDC", collectorNumber = "162")
 @CardRegistration(set = "LCC", collectorNumber = "166")
+@CardRegistration(set = "BLC", collectorNumber = "111")
 public class RapidHybridization extends Card {
 
     public RapidHybridization() {

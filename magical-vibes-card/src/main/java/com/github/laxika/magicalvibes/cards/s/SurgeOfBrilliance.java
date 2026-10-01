@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThis
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "57")
+@CardRegistration(set = "WHO", collectorNumber = "662")
 public class SurgeOfBrilliance extends Card {
 
     public SurgeOfBrilliance() {

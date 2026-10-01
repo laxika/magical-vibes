@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "106")
+@CardRegistration(set = "WHO", collectorNumber = "711")
 public class KarvanistaLoyalLupari extends Card {
 
     public KarvanistaLoyalLupari() {

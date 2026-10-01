@@ -287,6 +287,9 @@ public class MultiPermanentChoiceHandlerService {
             chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.NihiloorTapAndStealEffectHandler
             nihiloorTapAndStealEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffectHandler
+            humanTimeLordMetaCrisisHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -345,6 +348,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ChoosePlayersAsEnter
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two players must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice
+                && (permanentIds.isEmpty() || permanentIds.size() > 2)) {
+            throw new IllegalStateException("Choose one or two creatures");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves exileChoice
                 && permanentIds.size() != exileChoice.requiredCount()) {
@@ -963,6 +970,12 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx) {
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
                     gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+        } else if (context instanceof MultiPermanentChoiceContext
+                .EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice ctx) {
+            humanTimeLordMetaCrisisHandler.completeChoice(gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }

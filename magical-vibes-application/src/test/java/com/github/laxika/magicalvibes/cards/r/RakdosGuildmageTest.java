@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Drekavac;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,15 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RakdosGuildmage.class, GrizzlyBears.class})
+@CardUsed({RakdosGuildmage.class, Drekavac.class, RakdosSignet.class})
 class RakdosGuildmageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Black ability requires discarding a card and gives a creature -2/-2")
     void blackAbilityDebuffsTargetCreature() {
-        addReadyGuildmage(player1);
-        Permanent target = addReadyCreature(player2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new RakdosGuildmage());
+        Permanent target = addCreatureReady(player2, new RakdosGuildmage());
+        harness.setHand(player1, List.of(new Drekavac()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -36,15 +35,40 @@ class RakdosGuildmageTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Drekavac");
+        harness.assertInGraveyard(player2, "Rakdos Guildmage");
+    }
+
+    @Test
+    @DisplayName("Black ability's -2/-2 lasts only until end of turn")
+    void blackAbilityDebuffExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new RakdosGuildmage());
+        Permanent target = addCreatureReady(player2, new Drekavac());
+        harness.setHand(player1, List.of(new Drekavac()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Black ability cannot be activated without a card to discard")
     void blackAbilityRequiresCardInHand() {
-        addReadyGuildmage(player1);
-        Permanent target = addReadyCreature(player2);
+        addCreatureReady(player1, new RakdosGuildmage());
+        Permanent target = addCreatureReady(player2, new RakdosGuildmage());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -55,9 +79,22 @@ class RakdosGuildmageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Black ability cannot target a noncreature permanent")
+    void blackAbilityRejectsNoncreatureTarget() {
+        addCreatureReady(player1, new RakdosGuildmage());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RakdosSignet());
+        harness.setHand(player1, List.of(new Drekavac()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Red ability creates a hasty 2/1 Goblin that is exiled at the next end step")
     void redAbilityCreatesAndExilesGoblinToken() {
-        addReadyGuildmage(player1);
+        addCreatureReady(player1, new RakdosGuildmage());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -75,23 +112,30 @@ class RakdosGuildmageTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }
 
-    private Permanent addReadyGuildmage(Player player) {
-        Permanent permanent = new Permanent(new RakdosGuildmage());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Red ability exiles the token at the next end step even on the opponent's turn")
+    void redAbilityExilesTokenAtOpponentsNextEndStep() {
+        addCreatureReady(player1, new RakdosGuildmage());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }
 }

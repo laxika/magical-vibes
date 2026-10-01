@@ -23,6 +23,8 @@ import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "67")
 @CardRegistration(set = "WHO", collectorNumber = "372")
+@CardRegistration(set = "WHO", collectorNumber = "672")
+@CardRegistration(set = "WHO", collectorNumber = "963")
 public class DoomsdayConfluence extends Card {
 
     public DoomsdayConfluence() {

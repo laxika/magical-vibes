@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "56")
+@CardRegistration(set = "WHO", collectorNumber = "661")
 public class StartTheTARDIS extends Card {
 
     public StartTheTARDIS() {

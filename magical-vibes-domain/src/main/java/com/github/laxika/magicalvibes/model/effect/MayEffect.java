@@ -19,7 +19,8 @@ import java.util.UUID;
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
         implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
-        SacrificedPermanentManaValueAwareEffect, DyingCreaturePermanentAwareEffect {
+        SacrificedPermanentManaValueAwareEffect, DyingCreaturePermanentAwareEffect,
+        TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -88,6 +89,26 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     public boolean sourceIsTriggeringPermanent() {
         return wrapped instanceof TriggeringPermanentSourceEffect source
                 && source.sourceIsTriggeringPermanent();
+    }
+
+    @Override
+    public boolean usesTriggeringPermanentManaValue() {
+        return usesTriggeringPermanentManaValue(wrapped) || usesTriggeringPermanentManaValue(elseEffect);
+    }
+
+    private static boolean usesTriggeringPermanentManaValue(CardEffect effect) {
+        return effect instanceof TriggeringPermanentManaValueEffect valueEffect
+                && valueEffect.usesTriggeringPermanentManaValue();
+    }
+
+    @Override
+    public boolean suppressesTriggeringPermanentEntry() {
+        return suppressesTriggeringPermanentEntry(wrapped) || suppressesTriggeringPermanentEntry(elseEffect);
+    }
+
+    private static boolean suppressesTriggeringPermanentEntry(CardEffect effect) {
+        return effect instanceof TriggeringPermanentEntryExclusionEffect exclusion
+                && exclusion.suppressesTriggeringPermanentEntry();
     }
 
     @Override

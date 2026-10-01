@@ -131,7 +131,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         // All creatures on all battlefields should be unblockable
         gd.forEachPermanent((playerId, perm) -> {
             if (gqs.isCreature(gd, perm)) {
-                assertThat(perm.isCantBeBlocked()).isTrue();
+                assertThat(gqs.hasCantBeBlocked(gd, perm)).isTrue();
             }
         });
     }
@@ -146,7 +146,7 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         // Venser himself (a planeswalker) should not be affected
         Permanent venserPerm = findPermanent(player1, "Venser, the Sojourner");
-        assertThat(venserPerm.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, venserPerm)).isFalse();
     }
 
     // ===== -8 ability: Emblem =====

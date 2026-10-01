@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "93")
+@CardRegistration(set = "WHO", collectorNumber = "389")
+@CardRegistration(set = "WHO", collectorNumber = "698")
+@CardRegistration(set = "WHO", collectorNumber = "980")
 public class RMSTitanic extends Card {
 
     public RMSTitanic() {

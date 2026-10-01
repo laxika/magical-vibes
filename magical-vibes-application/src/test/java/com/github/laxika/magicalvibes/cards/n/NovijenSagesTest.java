@@ -1,22 +1,19 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NovijenSages.class, GrizzlyBears.class})
+@CardUsed({NovijenSages.class, MistralCharger.class})
 class NovijenSagesTest extends BaseCardTest {
 
     @Test
@@ -32,26 +29,59 @@ class NovijenSagesTest extends BaseCardTest {
     void graftMovesCounterOntoEnteringCreature() {
         Permanent sages = castSages();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent charger = findPermanent(player1, "Mistral Charger");
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may decline moving a counter onto an entering creature")
+    void graftMayBeDeclined() {
+        Permanent sages = castSages();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft may move a counter onto a creature entering under an opponent's control")
+    void graftMovesCounterOntoOpponentsEnteringCreature() {
+        Permanent sages = castSages();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player2, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Ability removes two +1/+1 counters from among creatures and draws a card")
     void removesTwoCountersAndDraws() {
-        Permanent sages = addReadySages(player1);
+        Permanent sages = addCreatureReady(player1, new NovijenSages());
         sages.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -62,14 +92,32 @@ class NovijenSagesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(sages.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability cannot use +1/+1 counters on an opponent's creature")
+    void abilityRequiresCountersOnControlledCreatures() {
+        Permanent sages = addCreatureReady(player1, new NovijenSages());
+        Permanent opponentCharger = addCreatureReady(player2, new MistralCharger());
+        opponentCharger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("counter");
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("Ability cannot be activated without two +1/+1 counters among creatures")
     void abilityRequiresTwoCounters() {
-        Permanent sages = addReadySages(player1);
+        Permanent sages = addCreatureReady(player1, new NovijenSages());
         sages.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
@@ -85,18 +133,8 @@ class NovijenSagesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new NovijenSages()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NovijenSages(), "{4}{U}{U}");
         harness.passBothPriorities();
         return findPermanent(player1, "Novijen Sages");
-    }
-
-    private Permanent addReadySages(Player player) {
-        Permanent sages = new Permanent(new NovijenSages());
-        sages.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(sages);
-        return sages;
     }
 }

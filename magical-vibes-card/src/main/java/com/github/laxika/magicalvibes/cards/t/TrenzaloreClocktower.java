@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "190")
+@CardRegistration(set = "WHO", collectorNumber = "463")
+@CardRegistration(set = "WHO", collectorNumber = "795")
+@CardRegistration(set = "WHO", collectorNumber = "1054")
 public class TrenzaloreClocktower extends Card {
 
     public TrenzaloreClocktower() {

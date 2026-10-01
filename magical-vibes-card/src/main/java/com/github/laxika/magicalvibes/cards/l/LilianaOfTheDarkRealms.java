@@ -28,6 +28,8 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1107")
 @CardRegistration(set = "SLD", collectorNumber = "1593")
 @CardRegistration(set = "PIO", collectorNumber = "334")
+@CardRegistration(set = "BLC", collectorNumber = "78")
+@CardRegistration(set = "BLC", collectorNumber = "94")
 public class LilianaOfTheDarkRealms extends Card {
 
     public LilianaOfTheDarkRealms() {

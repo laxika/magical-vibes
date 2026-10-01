@@ -18,6 +18,11 @@ import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "1")
 @CardRegistration(set = "WHO", collectorNumber = "192")
+@CardRegistration(set = "WHO", collectorNumber = "407")
+@CardRegistration(set = "WHO", collectorNumber = "540")
+@CardRegistration(set = "WHO", collectorNumber = "606")
+@CardRegistration(set = "WHO", collectorNumber = "998")
+@CardRegistration(set = "WHO", collectorNumber = "1131")
 public class DavrosDalekCreator extends Card {
 
     public DavrosDalekCreator() {

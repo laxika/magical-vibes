@@ -13,6 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "144")
+@CardRegistration(set = "WHO", collectorNumber = "427")
+@CardRegistration(set = "WHO", collectorNumber = "543")
+@CardRegistration(set = "WHO", collectorNumber = "749")
+@CardRegistration(set = "WHO", collectorNumber = "1018")
+@CardRegistration(set = "WHO", collectorNumber = "1134")
 public class TheMasterGallifreysEnd extends Card {
 
     public TheMasterGallifreysEnd() {

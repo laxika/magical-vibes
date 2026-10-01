@@ -35,8 +35,8 @@ class FungalBehemothTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(2);
 
         behemoth.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(4);
     }
 
     @Test
@@ -108,11 +108,13 @@ class FungalBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

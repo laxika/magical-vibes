@@ -109,7 +109,9 @@ public class SpellbookCardChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
         gameData.addCardToHand(player.getId(), drafted);
         if (interaction.draftMode()
-                == com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.DraftMode.MAY_CAST_WITHOUT_PAYING_MANA_COST) {
+                == com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.DraftMode.MAY_CAST_WITHOUT_PAYING_MANA_COST
+                || interaction.draftMode()
+                == com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.DraftMode.MAY_CAST_WITHOUT_PAYING_MANA_COST_TO_CONTROLLER) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     drafted,
                     player.getId(),

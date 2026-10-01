@@ -1,23 +1,24 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
+import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RimeTransfusion.class, KrovikanScoundrel.class, RimeboundDead.class, SnowCoveredSwamp.class})
 class RimeTransfusionTest extends BaseCardTest {
 
     @Test
@@ -27,7 +28,38 @@ class RimeTransfusionTest extends BaseCardTest {
         attachAura(creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting Rime Transfusion attaches it to the target creature")
+    void castingAuraAttachesToTargetCreature() {
+        Permanent creature = addCreatureReady(player2);
+        harness.setHand(player1, List.of(new RimeTransfusion()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(aura -> aura.isAttached() && aura.getAttachedTo().equals(creature.getId()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Rime Transfusion cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SnowCoveredSwamp());
+        harness.setHand(player1, List.of(new RimeTransfusion()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test
@@ -36,10 +68,10 @@ class RimeTransfusionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1);
         attachAura(attacker);
         activateEvasion(attacker);
-        attacker.setAttacking(true);
 
         Permanent nonsnowBlocker = addCreatureReady(player2);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(nonsnowBlocker),
@@ -54,10 +86,10 @@ class RimeTransfusionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1);
         attachAura(attacker);
         activateEvasion(attacker);
-        attacker.setAttacking(true);
 
         Permanent snowBlocker = addSnowCreature(player2);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(snowBlocker),
@@ -73,14 +105,14 @@ class RimeTransfusionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1);
         attachAura(attacker);
         activateEvasion(attacker);
-        attacker.setAttacking(true);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent blocker = addCreatureReady(player2);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -103,13 +135,11 @@ class RimeTransfusionTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new KrovikanScoundrel());
     }
 
     private Permanent addSnowCreature(Player player) {
-        Permanent creature = addCreatureReady(player);
-        TestCards.mutableCard(creature).setSupertypes(EnumSet.of(CardSupertype.SNOW));
-        return creature;
+        return addCreatureReady(player, new RimeboundDead());
     }
 
     private Permanent attachAura(Permanent creature) {

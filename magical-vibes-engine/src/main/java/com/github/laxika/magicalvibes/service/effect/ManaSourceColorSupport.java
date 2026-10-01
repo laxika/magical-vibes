@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEf
 import com.github.laxika.magicalvibes.model.effect.AwardTwoDifferentColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
@@ -73,8 +74,15 @@ public class ManaSourceColorSupport {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
                 add(colors, mana.color());
-            } else if (effect instanceof AwardAnyColorManaEffect
-                    || effect instanceof AwardTwoDifferentColorManaEffect) {
+            } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
+                if (anyColor.restriction() == ManaSpendRestriction.CHOSEN_COLORS) {
+                    source.getChosenColors().stream()
+                            .map(color -> ManaColor.valueOf(color.name()))
+                            .forEach(colors::add);
+                } else {
+                    colors.addAll(ManaColor.COLORS);
+                }
+            } else if (effect instanceof AwardTwoDifferentColorManaEffect) {
                 colors.addAll(ManaColor.COLORS);
             } else if (effect instanceof AwardManaOfColorsEffect mana) {
                 colors.addAll(mana.colors());

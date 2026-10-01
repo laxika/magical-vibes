@@ -16,6 +16,9 @@ import java.util.List;
 @CardRegistration(set = "TLE", collectorNumber = "58")
 @CardRegistration(set = "ACR", collectorNumber = "111")
 @CardRegistration(set = "WHO", collectorNumber = "309")
+@CardRegistration(set = "WHO", collectorNumber = "519")
+@CardRegistration(set = "WHO", collectorNumber = "900")
+@CardRegistration(set = "WHO", collectorNumber = "1110")
 public class SunbakedCanyon extends Card {
 
     public SunbakedCanyon() {

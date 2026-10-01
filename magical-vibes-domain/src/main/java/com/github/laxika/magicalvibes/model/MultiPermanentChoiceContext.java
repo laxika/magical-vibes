@@ -1292,6 +1292,21 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Human—Time Lord Meta-Crisis: each player chooses one or two creatures for an ordered copy. */
+    record EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice(
+            java.util.List<UUID> playerIds, int playerIndex,
+            java.util.Map<UUID, java.util.List<UUID>> chosenByPlayer,
+            Card sourceCard, UUID controllerId)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            java.util.Map<UUID, java.util.List<UUID>> copiedChoices = new java.util.LinkedHashMap<>();
+            chosenByPlayer.forEach((playerId, chosenIds) ->
+                    copiedChoices.put(playerId, java.util.List.copyOf(chosenIds)));
+            chosenByPlayer = java.util.Collections.unmodifiableMap(copiedChoices);
+        }
+    }
+
     /** The effect controller chooses a land controlled by each player to receive a counter. */
     record EachPlayerChoosesLandAndPutCounterChoice(
             java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
@@ -1313,13 +1328,22 @@ public sealed interface MultiPermanentChoiceContext {
                                   java.util.List<UUID> remainingPlayerIds,
                                   java.util.Map<UUID, Integer> votes,
                                   String sourceName,
-                                  boolean graveyardCards)
+                                  boolean graveyardCards,
+                                  boolean creaturesOnly)
             implements MultiPermanentChoiceContext {
         public WillOfTheCouncilChoice(UUID effectControllerId,
                                       java.util.List<UUID> remainingPlayerIds,
                                       java.util.Map<UUID, Integer> votes,
                                       String sourceName) {
-            this(effectControllerId, remainingPlayerIds, votes, sourceName, false);
+            this(effectControllerId, remainingPlayerIds, votes, sourceName, false, false);
+        }
+
+        public WillOfTheCouncilChoice(UUID effectControllerId,
+                                      java.util.List<UUID> remainingPlayerIds,
+                                      java.util.Map<UUID, Integer> votes,
+                                      String sourceName,
+                                      boolean graveyardCards) {
+            this(effectControllerId, remainingPlayerIds, votes, sourceName, graveyardCards, false);
         }
 
         public WillOfTheCouncilChoice {

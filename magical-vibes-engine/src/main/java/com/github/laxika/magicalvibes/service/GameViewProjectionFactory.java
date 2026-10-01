@@ -486,6 +486,9 @@ public class GameViewProjectionFactory {
         }
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
+            if (pid.equals(viewerId) && castingPermissionService.mayLookAtOwnLibraryTop(data, pid)) {
+                revealedPlayerIds.add(pid);
+            }
             if (pid.equals(viewerId)
                     && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
                 revealedPlayerIds.add(pid);

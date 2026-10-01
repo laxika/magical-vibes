@@ -86,7 +86,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                     gameData.pendingGraveyardReturnQueue.add(
                             new PendingGraveyardReturnChoice(playerId, e.maxCount(), e.filter(),
                                     GraveyardChoiceDestination.BATTLEFIELD, true,
-                                    false, e.fromBattlefieldThisTurn()));
+                                    e.mandatory(), e.fromBattlefieldThisTurn()));
                 }
             }
         } finally {

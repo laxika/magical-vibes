@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "86")
+@CardRegistration(set = "WHO", collectorNumber = "691")
 public class TheFlux extends Card {
 
     private static final PermanentPredicate OPPONENT_CREATURE = new PermanentAllOfPredicate(List.of(

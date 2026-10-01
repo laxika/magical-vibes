@@ -13,6 +13,7 @@ import java.util.List;
 
 /** Gallifrey Falls // No More, a split spell with fuse. */
 @CardRegistration(set = "WHO", collectorNumber = "131")
+@CardRegistration(set = "WHO", collectorNumber = "736")
 public class GallifreyFallsNoMore extends Card {
 
     public GallifreyFallsNoMore() {

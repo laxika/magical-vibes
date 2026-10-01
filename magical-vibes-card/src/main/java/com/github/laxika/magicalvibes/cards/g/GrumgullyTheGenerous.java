@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "192")
+@CardRegistration(set = "BLC", collectorNumber = "253")
 @CardRegistration(set = "NEC", collectorNumber = "138")
 public class GrumgullyTheGenerous extends Card {
 

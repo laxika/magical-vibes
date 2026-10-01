@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
+import com.github.laxika.magicalvibes.cards.s.StalkingYeti;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,31 +16,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FieldMarshal.class, KjeldoranOutrider.class, StalkingYeti.class})
 class FieldMarshalTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Field Marshal puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        FieldMarshal marshal = new FieldMarshal();
+        harness.castFromHand(player1, marshal, "{1}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Field Marshal");
+        assertThat(entry.getCard()).isSameAs(marshal);
     }
 
     @Test
     @DisplayName("Resolving puts Field Marshal onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FieldMarshal(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -50,38 +44,28 @@ class FieldMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("Field Marshal enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FieldMarshal(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Field Marshal");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
-    // ===== Static effect: buffs other Soldiers =====
-
     @Test
     @DisplayName("Other Soldier creatures get +1/+1 and first strike")
     void buffsOtherSoldiers() {
-        // Aven Cloudchaser is a Bird Soldier (2/2 flying)
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
         harness.addToBattlefield(player1, new FieldMarshal());
 
-        Permanent cloudchaser = findPermanent(player1, "Aven Cloudchaser");
-
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("Field Marshal does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new FieldMarshal());
-
-        Permanent marshal = findPermanent(player1, "Field Marshal");
+        Permanent marshal = harness.addToBattlefieldAndReturn(player1, new FieldMarshal());
 
         assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(2);
@@ -91,30 +75,24 @@ class FieldMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Soldier creatures")
     void doesNotBuffNonSoldiers() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent yeti = harness.addToBattlefieldAndReturn(player1, new StalkingYeti());
         harness.addToBattlefield(player1, new FieldMarshal());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, yeti)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, yeti, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
     @DisplayName("Buffs opponent's Soldier creatures too")
     void buffsOpponentSoldiers() {
         harness.addToBattlefield(player1, new FieldMarshal());
-        harness.addToBattlefield(player2, new AvenCloudchaser());
-
-        Permanent opponentSoldier = findPermanent(player2, "Aven Cloudchaser");
+        Permanent opponentSoldier = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
 
         assertThat(gqs.getEffectivePower(gd, opponentSoldier)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, opponentSoldier, Keyword.FIRST_STRIKE)).isTrue();
     }
-
-    // ===== Multiple sources =====
 
     @Test
     @DisplayName("Two Field Marshals buff each other")
@@ -126,7 +104,6 @@ class FieldMarshalTest extends BaseCardTest {
 
         assertThat(marshals).hasSize(2);
         for (Permanent marshal : marshals) {
-            // Each gets +1/+1 from the other → 3/3 with first strike
             assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isTrue();
@@ -138,86 +115,54 @@ class FieldMarshalTest extends BaseCardTest {
     void twoMarshalsStackBonuses() {
         harness.addToBattlefield(player1, new FieldMarshal());
         harness.addToBattlefield(player1, new FieldMarshal());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
 
-        Permanent cloudchaser = findPermanent(player1, "Aven Cloudchaser");
-
-        // 2/2 base + 2/2 from two sources = 4/4
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
     }
-
-    // ===== Bonus gone when source leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Field Marshal leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new FieldMarshal());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent marshal = harness.addToBattlefieldAndReturn(player1, new FieldMarshal());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
 
-        Permanent cloudchaser = findPermanent(player1, "Aven Cloudchaser");
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
 
-        // Verify buff is applied
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
+        gd.playerBattlefields.get(player1.getId()).remove(marshal);
 
-        // Remove Field Marshal from battlefield
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Field Marshal"));
-
-        // Bonus should be gone immediately (computed on the fly)
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isFalse();
     }
-
-    // ===== Bonus applied on resolve =====
 
     @Test
     @DisplayName("Bonus applies when Field Marshal resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-        harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
 
-        Permanent cloudchaser = findPermanent(player1, "Aven Cloudchaser");
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
 
-        // Before casting, no bonus
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
-
-        // Cast and resolve Field Marshal
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FieldMarshal(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        // After resolving, Aven Cloudchaser should be buffed
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
     }
-
-    // ===== Combat with static buff =====
 
     @Test
     @DisplayName("Soldier with static buff uses boosted stats in combat")
     void soldierUsesBoostedStatsInCombat() {
-        // Aven Cloudchaser (2/2 base) buffed by Field Marshal → 3/3 with first strike
-        // Attacks into a 3/3 blocker → first strike kills blocker, Cloudchaser survives
         harness.addToBattlefield(player1, new FieldMarshal());
 
-        AvenCloudchaser aven = new AvenCloudchaser();
-        Permanent attacker = new Permanent(aven);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new KjeldoranOutrider());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        GrizzlyBears big = new GrizzlyBears();
-        big.setPower(3);
-        big.setToughness(3);
-        Permanent blocker = new Permanent(big);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new StalkingYeti());
         blocker.setBlocking(true);
-        blocker.addBlockingTarget(1); // Cloudchaser is at index 1 (Marshal is 0)
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        blocker.addBlockingTarget(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -225,33 +170,23 @@ class FieldMarshalTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Cloudchaser (3/3 with first strike) deals 3 first strike damage → kills 3/3 blocker
-        // Blocker dies before dealing regular damage → Cloudchaser survives
-        harness.assertOnBattlefield(player1, "Aven Cloudchaser");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Kjeldoran Outrider");
+        harness.assertInGraveyard(player2, "Stalking Yeti");
     }
-
-    // ===== Static bonus survives end-of-turn reset =====
 
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new FieldMarshal());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
 
-        Permanent cloudchaser = findPermanent(player1, "Aven Cloudchaser");
+        soldier.setPowerModifier(soldier.getPowerModifier() + 7);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(10);
 
-        // Simulate a temporary spell boost
-        cloudchaser.setPowerModifier(cloudchaser.getPowerModifier() + 7);
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(10); // 2 base + 7 spell + 1 static
+        soldier.resetModifiers();
 
-        // Reset end-of-turn modifiers (simulates cleanup step)
-        cloudchaser.resetModifiers();
-
-        // Spell bonus gone, static bonus still computed
-        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
-

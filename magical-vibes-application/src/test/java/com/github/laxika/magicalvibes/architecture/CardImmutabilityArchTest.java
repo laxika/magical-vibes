@@ -110,6 +110,8 @@ class CardImmutabilityArchTest {
             "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
+            "ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffectHandler", // decorates a fresh conjured duplicate
+            "DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler", // grants effects on a fresh runtime copy
             "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
             "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
             "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
@@ -139,7 +141,10 @@ class CardImmutabilityArchTest {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
                 .withImportOption(location -> !location.contains("test-fixtures")
-                        && !location.contains("testFixtures"))
+                        && !location.contains("testFixtures")
+                        && !location.contains("/classes/java/test/"))
+                // Card classes are exempt from this rule; importing their bytecode adds no coverage.
+                .withImportOption(location -> !location.contains("/com/github/laxika/magicalvibes/cards/"))
                 .importPackages("com.github.laxika.magicalvibes");
 
         noClasses()

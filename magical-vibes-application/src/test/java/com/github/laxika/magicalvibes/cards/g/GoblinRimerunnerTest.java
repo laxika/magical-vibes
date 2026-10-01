@@ -1,24 +1,28 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinRimerunner.class, SnowCoveredMountain.class})
 class GoblinRimerunnerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tap ability makes the target creature unable to block this turn")
     void tapAbilityPreventsBlocking() {
         Permanent rimerunner = addCreatureReady(player1, new GoblinRimerunner());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GoblinRimerunner());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -31,7 +35,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
     @DisplayName("Tap ability cannot target a noncreature permanent")
     void tapAbilityCannotTargetNoncreature() {
         addCreatureReady(player1, new GoblinRimerunner());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SnowCoveredMountain());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -47,11 +51,50 @@ class GoblinRimerunnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(rimerunner.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isTrue();
+        assertThat(rimerunner.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
 
+        gd.expireEndOfTurnFloatingEffects();
         rimerunner.resetModifiers();
-        assertThat(rimerunner.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Haste lets the source use its tap ability while summoning sick")
+    void hasteAllowsImmediateTapAbility() {
+        Permanent rimerunner = harness.addToBattlefieldAndReturn(player1, new GoblinRimerunner());
+        Permanent target = addCreatureReady(player2, new GoblinRimerunner());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rimerunner.isSummoningSick()).isTrue();
+        assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isTrue();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(rimerunner.isTapped()).isTrue();
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tap ability prevents the target from being declared as a blocker")
+    void tapAbilityPreventsBlockDeclaration() {
+        addCreatureReady(player1, new GoblinRimerunner());
+        addCreatureReady(player1, new GoblinRimerunner());
+        Permanent target = addCreatureReady(player2, new GoblinRimerunner());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

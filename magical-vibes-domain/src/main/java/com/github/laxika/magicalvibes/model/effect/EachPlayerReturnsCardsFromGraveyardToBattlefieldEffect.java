@@ -27,8 +27,20 @@ public record EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
         CounterType enterWithCounter,
         boolean fromBattlefieldThisTurn,
         boolean enterTapped,
-        boolean underOwnersControl
+        boolean underOwnersControl,
+        boolean mandatory
 ) implements CardEffect {
+
+    public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
+            CounterType enterWithCounter, boolean fromBattlefieldThisTurn, boolean enterTapped,
+            boolean underOwnersControl) {
+        this(maxCount, filter, enterWithCounter, fromBattlefieldThisTurn, enterTapped, underOwnersControl, false);
+    }
+
+    public static EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect mandatory(int count, CardPredicate filter) {
+        return new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(count, filter, null,
+                false, false, false, true);
+    }
 
     public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
             CounterType enterWithCounter, boolean fromBattlefieldThisTurn, boolean enterTapped) {

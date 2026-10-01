@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "140")
+@CardRegistration(set = "WHO", collectorNumber = "423")
+@CardRegistration(set = "WHO", collectorNumber = "745")
+@CardRegistration(set = "WHO", collectorNumber = "1014")
 public class LastNightTogether extends Card {
 
     public LastNightTogether() {

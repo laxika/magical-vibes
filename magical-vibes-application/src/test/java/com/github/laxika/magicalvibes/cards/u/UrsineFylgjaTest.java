@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
+import com.github.laxika.magicalvibes.cards.l.LightningStorm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UrsineFylgja.class, LightningStorm.class, KrovikanScoundrel.class})
 class UrsineFylgjaTest extends BaseCardTest {
 
     @Test
@@ -42,16 +44,34 @@ class UrsineFylgjaTest extends BaseCardTest {
     @DisplayName("Prevents the next 1 noncombat damage to itself")
     void preventsNoncombatDamage() {
         Permanent creature = castUrsineFylgja();
-        Permanent pyromancer = new Permanent(new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+        harness.setHand(player1, List.of(new LightningStorm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, indexOf(pyromancer), null, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(creature.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple prevention activations stack")
+    void multiplePreventionActivationsStack() {
+        Permanent creature = castUrsineFylgja();
+        harness.setHand(player1, List.of(new LightningStorm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, indexOf(creature), 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(creature), 0, null, null);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(2);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.getDamagePreventionShield()).isZero();
     }
 
@@ -59,7 +79,7 @@ class UrsineFylgjaTest extends BaseCardTest {
     @DisplayName("Only the next 1 damage is prevented")
     void preventsOnlyOneCombatDamage() {
         Permanent creature = castUrsineFylgja();
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new KrovikanScoundrel());
 
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
         harness.passBothPriorities();
@@ -115,9 +135,7 @@ class UrsineFylgjaTest extends BaseCardTest {
     }
 
     private Permanent castUrsineFylgja() {
-        harness.setHand(player1, List.of(new UrsineFylgja()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UrsineFylgja(), "{4}{W}");
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof UrsineFylgja)

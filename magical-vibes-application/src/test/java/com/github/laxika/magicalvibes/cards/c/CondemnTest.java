@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Condemn.class, GrizzlyBears.class})
 class CondemnTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -26,11 +28,8 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Condemn targeting an attacking creature puts it on the stack")
     void castingPutsOnStack() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -52,10 +51,8 @@ class CondemnTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         // Add an attacking creature as valid target so spell is playable
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
@@ -75,10 +72,8 @@ class CondemnTest extends BaseCardTest {
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
         // Add an attacking creature as valid target so spell is playable
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -96,11 +91,8 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts creature on bottom of owner's library")
     void resolvingPutsCreatureOnBottomOfLibrary() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
@@ -110,8 +102,7 @@ class CondemnTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield
@@ -129,11 +120,8 @@ class CondemnTest extends BaseCardTest {
     void controllerGainsLifeEqualToToughness() {
         harness.setLife(player1, 15);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -141,8 +129,7 @@ class CondemnTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         // Grizzly Bears has 2 toughness → controller gains 2 life (15 + 2 = 17)
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -153,12 +140,9 @@ class CondemnTest extends BaseCardTest {
     void lifeGainAccountsForToughnessModifiers() {
         harness.setLife(player1, 10);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         attacker.setToughnessModifier(3); // 2 + 3 = 5 effective toughness
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -166,8 +150,7 @@ class CondemnTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         // Effective toughness is 5 → controller gains 5 life (10 + 5 = 15)
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(15);
@@ -176,11 +159,8 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Condemn goes to graveyard after resolving")
     void condemnGoesToGraveyardAfterResolving() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -201,11 +181,8 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Condemn fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.setLife(player1, 20);
 

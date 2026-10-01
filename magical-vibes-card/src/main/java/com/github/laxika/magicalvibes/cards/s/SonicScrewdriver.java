@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "WHO", collectorNumber = "184")
 @CardRegistration(set = "WHO", collectorNumber = "185")
 @CardRegistration(set = "WHO", collectorNumber = "186")
+@CardRegistration(set = "WHO", collectorNumber = "789")
+@CardRegistration(set = "WHO", collectorNumber = "790")
+@CardRegistration(set = "WHO", collectorNumber = "791")
 public class SonicScrewdriver extends Card {
 
     public SonicScrewdriver() {

@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "114")
+@CardRegistration(set = "WHO", collectorNumber = "403")
+@CardRegistration(set = "WHO", collectorNumber = "719")
+@CardRegistration(set = "WHO", collectorNumber = "994")
 public class TheBeastDeathlessPrince extends Card {
 
     public TheBeastDeathlessPrince() {

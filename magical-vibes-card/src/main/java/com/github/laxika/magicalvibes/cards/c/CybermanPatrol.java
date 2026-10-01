@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "174")
+@CardRegistration(set = "WHO", collectorNumber = "550")
+@CardRegistration(set = "WHO", collectorNumber = "779")
+@CardRegistration(set = "WHO", collectorNumber = "1141")
 public class CybermanPatrol extends Card {
 
     public CybermanPatrol() {

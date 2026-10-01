@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * "instant and sorcery spells have rebound" ability.
  * <p>
  * Only abilities with engine support are accepted: a grant nothing consults would be silently
- * inert, so widening this set means wiring a new gate at the same time.
+ * inert, so widening this set means wiring a new gate at the same time. Split second is stamped
+ * onto the spell's stack entry by the spell-casting flow.
  */
 public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
                                                      Zone sourceZone, int abilityValue,
@@ -51,17 +52,17 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
         if (grantedAbility != Keyword.DEMONSTRATE
                 && grantedAbility != Keyword.CONSPIRE
                 && grantedAbility != Keyword.CONVOKE
-                && grantedAbility != Keyword.DEMONSTRATE
                 && grantedAbility != Keyword.IMPROVISE
                 && grantedAbility != Keyword.REBOUND
                 && grantedAbility != Keyword.DELVE
                 && grantedAbility != Keyword.JUMP_START
                 && grantedAbility != Keyword.CASUALTY
                 && grantedAbility != Keyword.REPLICATE
-                && grantedAbility != Keyword.RETRACE) {
+                && grantedAbility != Keyword.RETRACE
+                && grantedAbility != Keyword.SPLIT_SECOND) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, DEMONSTRATE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, and RETRACE do");
+                            + "; only DEMONSTRATE, CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, RETRACE, and SPLIT_SECOND do");
         }
     }
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {

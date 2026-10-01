@@ -20,35 +20,49 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * @param tapped              {@code true} to have it enter the battlefield tapped
  * @param losesAllAbilities   {@code true} to make the returned permanent lose all abilities indefinitely
  * @param overriddenCardTypes non-empty to replace the returned permanent's card types indefinitely
+ * @param perpetuallyLosesThisAbility {@code true} to make this triggered ability stop triggering
+ *                                    for this card identity after resolution
  */
 public record ReturnSourceCardFromGraveyardToBattlefieldEffect(
         boolean tapped,
         boolean losesAllAbilities,
-        Set<CardType> overriddenCardTypes, CounterType enterWithCounter)
+        Set<CardType> overriddenCardTypes, CounterType enterWithCounter,
+        boolean perpetuallyLosesThisAbility)
         implements CardEffect {
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect {
         overriddenCardTypes = Set.copyOf(overriddenCardTypes);
     }
 
+    public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities,
+                                                             Set<CardType> overriddenCardTypes,
+                                                             CounterType enterWithCounter) {
+        this(tapped, losesAllAbilities, overriddenCardTypes, enterWithCounter, false);
+    }
+
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped) {
-        this(tapped, false, Set.of(), null);
+        this(tapped, false, Set.of(), null, false);
     }
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities) {
-        this(tapped, losesAllAbilities, Set.of(), null);
+        this(tapped, losesAllAbilities, Set.of(), null, false);
+    }
+
+    public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities,
+                                                             boolean perpetuallyLosesThisAbility) {
+        this(tapped, losesAllAbilities, Set.of(), null, perpetuallyLosesThisAbility);
     }
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped,
                                                              Set<CardType> overriddenCardTypes) {
-        this(tapped, false, overriddenCardTypes, null);
+        this(tapped, false, overriddenCardTypes, null, false);
     }
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, CounterType enterWithCounter) {
-        this(tapped, false, Set.of(), enterWithCounter);
+        this(tapped, false, Set.of(), enterWithCounter, false);
     }
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities, CounterType enterWithCounter) {
-        this(tapped, losesAllAbilities, Set.of(), enterWithCounter);
+        this(tapped, losesAllAbilities, Set.of(), enterWithCounter, false);
     }
 }

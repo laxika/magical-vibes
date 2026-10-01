@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "54")
 @CardRegistration(set = "WHO", collectorNumber = "369")
+@CardRegistration(set = "WHO", collectorNumber = "659")
+@CardRegistration(set = "WHO", collectorNumber = "960")
 public class ReverseThePolarity extends Card {
 
     public ReverseThePolarity() {

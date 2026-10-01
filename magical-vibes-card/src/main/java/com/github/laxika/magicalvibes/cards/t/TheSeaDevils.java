@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "108")
+@CardRegistration(set = "WHO", collectorNumber = "713")
 public class TheSeaDevils extends Card {
 
     private static final CreateTokenEffect SALAMANDER_TOKEN = new CreateTokenEffect(
