@@ -2324,7 +2324,8 @@ public sealed interface ChoiceContext {
                                 UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,
                                 UUID triggeringCardId, UUID attackedTargetId,
-                                UUID triggeringPermanentId) implements ChoiceContext {
+                                UUID triggeringPermanentId,
+                                boolean rememberLastChosenMode) implements ChoiceContext {
 
         public TriggeredModalChoice {
             chosenModes = List.copyOf(chosenModes);
@@ -2332,26 +2333,26 @@ public sealed interface ChoiceContext {
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null, null, null, false);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null, null, null, false);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                     List<ChooseOneEffect.ChooseOneOption> chosenModes) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
-                    chosenModes, null, null, null);
+                    chosenModes, null, null, null, false);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn,
                                     List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false,
-                    chosenModes, triggeringCardId, null, null);
+                    chosenModes, triggeringCardId, null, null, false);
         }
 
     }

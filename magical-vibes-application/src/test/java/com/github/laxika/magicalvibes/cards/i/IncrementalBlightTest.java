@@ -1,20 +1,24 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MossbridgeTroll;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IncrementalBlight.class, SerraAngel.class, GrizzlyBears.class, MossbridgeTroll.class,
+        Forest.class})
 class IncrementalBlightTest extends BaseCardTest {
 
     private void addMana(int amount) {
@@ -24,41 +28,31 @@ class IncrementalBlightTest extends BaseCardTest {
     @Test
     @DisplayName("Places 1, 2 and 3 -1/-1 counters on the three targets respectively")
     void placesCountersOnEachTarget() {
-        harness.addToBattlefield(player1, new SerraAngel());
-        harness.addToBattlefield(player2, new SerraAngel());
-        harness.addToBattlefield(player2, new SerraAngel());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         harness.setHand(player1, List.of(new IncrementalBlight()));
         addMana(5);
 
-        List<Permanent> enemy = gd.playerBattlefields.get(player2.getId());
-        UUID firstId = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
-        UUID secondId = enemy.get(0).getId();
-        UUID thirdId = enemy.get(1).getId();
-
-        harness.castSorcery(player1, 0, List.of(firstId, secondId, thirdId));
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 
-        Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(enemy.get(0).getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(enemy.get(1).getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Enough -1/-1 counters destroy a creature")
     void countersDestroyCreature() {
-        harness.addToBattlefield(player1, new SerraAngel());
-        harness.addToBattlefield(player2, new SerraAngel());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new IncrementalBlight()));
         addMana(5);
 
-        UUID firstId = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
-        UUID angelId = harness.getPermanentId(player2, "Serra Angel");
-        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-
         // 2 counters on the Serra Angel (survives), 3 counters on the 2/2 Grizzly Bears (dies).
-        harness.castSorcery(player1, 0, List.of(firstId, angelId, bearId));
+        harness.castSorcery(player1, 0, List.of(first.getId(), angel.getId(), bear.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Serra Angel");
@@ -69,16 +63,46 @@ class IncrementalBlightTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target the same creature more than once")
     void cannotTargetSameCreatureTwice() {
-        harness.addToBattlefield(player1, new SerraAngel());
-        harness.addToBattlefield(player2, new SerraAngel());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         harness.setHand(player1, List.of(new IncrementalBlight()));
         addMana(5);
 
-        UUID firstId = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
-        UUID secondId = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(firstId, secondId, firstId)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId(), first.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("different");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new IncrementalBlight()));
+        addMana(5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(forest.getId(), firstCreature.getId(), secondCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Still affects legal targets when one target leaves before resolution")
+    void resolvesRemainingLegalTargetsWhenOneLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new IncrementalBlight()));
+        addMana(5);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 }

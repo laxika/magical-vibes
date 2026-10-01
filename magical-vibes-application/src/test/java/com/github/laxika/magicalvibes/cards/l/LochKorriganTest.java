@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LochKorrigan.class})
 class LochKorriganTest extends BaseCardTest {
 
     @Test
@@ -88,11 +89,18 @@ class LochKorriganTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Cannot activate ability with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addKorriganReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
     private Permanent addKorriganReady(Player player) {
-        LochKorrigan card = new LochKorrigan();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LochKorrigan());
     }
 }

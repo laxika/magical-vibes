@@ -6,15 +6,16 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrypticCommand.class, GrizzlyBears.class, HillGiant.class, Spellbook.class})
 class CrypticCommandTest extends BaseCardTest {
 
     // Mode indices: 0 = counter, 1 = return permanent, 2 = tap opponents' creatures, 3 = draw.
@@ -44,6 +45,26 @@ class CrypticCommandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counter + tap: counters target spell and taps opponents' creatures")
+    void counterAndTap() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Permanent toTap = addCreatureReady(player1, new HillGiant());
+
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{0, 2}, bears.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(toTap.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Return + tap: bounces target permanent and taps opponents' other creatures")
     void returnAndTap() {
         Permanent toBounce = addCreatureReady(player1, new GrizzlyBears());
@@ -64,21 +85,37 @@ class CrypticCommandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Return + draw: returns target permanent and draws a card")
+    void returnAndDraw() {
+        Permanent toBounce = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{1, 3}, toBounce.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Counter + return: counters a spell and bounces a permanent (both targets)")
     void counterAndReturn() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.addToBattlefield(player1, new Spellbook());
-        UUID spellbookId = harness.getPermanentId(player1, "Spellbook");
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         harness.setHand(player2, List.of(new CrypticCommand()));
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castModalInstantWithModes(player2, 0, 2, new int[]{0, 1}, bears.getId(), List.of(spellbookId));
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{0, 1}, bears.getId(), List.of(spellbook.getId()));
         harness.passBothPriorities();
 
         // Spell countered
@@ -102,6 +139,26 @@ class CrypticCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(toTap.isTapped()).isTrue();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Tap + draw: taps only creatures controlled by opponents")
+    void tapAndDrawOnlyAffectsOpponentsCreatures() {
+        Permanent opponentCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player2, new HillGiant());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{2, 3}, null, List.of());
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(opponentArtifact.isTapped()).isFalse();
         harness.assertInHand(player2, "Grizzly Bears");
     }
 

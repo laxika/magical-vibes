@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CorrosiveMentor.class, AshenmoorCohort.class, SafeholdSentry.class})
 class CorrosiveMentorTest extends BaseCardTest {
 
     // ===== Grant: "Black creatures you control have wither" =====
@@ -40,9 +42,9 @@ class CorrosiveMentorTest extends BaseCardTest {
     @DisplayName("Does not grant wither to a non-black creature")
     void doesNotGrantToNonBlackCreature() {
         addCreatureReady(player1, new CorrosiveMentor());
-        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonBlackCreature = addCreatureReady(player1, new SafeholdSentry());
 
-        assertThat(gqs.hasKeyword(gd, greenCreature, Keyword.WITHER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonBlackCreature, Keyword.WITHER)).isFalse();
     }
 
     @Test
@@ -62,7 +64,7 @@ class CorrosiveMentorTest extends BaseCardTest {
         Permanent mentor = addCreatureReady(player1, new CorrosiveMentor()); // 1/3, black → has wither
         mentor.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears()); // 2/2
+        Permanent blocker = addCreatureReady(player2, new SafeholdSentry()); // 2/2
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

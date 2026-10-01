@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MerrowHarbinger.class, CoralMerfolk.class, GrizzlyBears.class, Island.class})
+@CardUsed({MerrowHarbinger.class, DeeptreadMerrow.class, GoldmeadowStalwart.class, Plains.class, Island.class})
 class MerrowHarbingerTest extends BaseCardTest {
 
     @Test
@@ -45,8 +45,12 @@ class MerrowHarbingerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
+        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+        assertThat(search.params().cards())
                 .isNotEmpty()
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.MERFOLK));
     }
@@ -65,7 +69,7 @@ class MerrowHarbingerTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).isNotEmpty();
@@ -87,13 +91,32 @@ class MerrowHarbingerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Accepting the may ability with no Merfolk finds no card")
+    void acceptingMayWithNoMerfolkFindsNoCard() {
+        setupAndCast();
+        setupLibraryWithoutMerfolk();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Goldmeadow Stalwart", "Plains", "Island");
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new MerrowHarbinger()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MerrowHarbinger(), "{3}{U}");
     }
 
     private void setupLibraryWithMerfolk() {
-        harness.setLibrary(player1, List.of(new CoralMerfolk(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new DeeptreadMerrow(), new GoldmeadowStalwart(), new Island()));
+    }
+
+    private void setupLibraryWithoutMerfolk() {
+        harness.setLibrary(player1, List.of(new GoldmeadowStalwart(), new Plains(), new Island()));
     }
 }

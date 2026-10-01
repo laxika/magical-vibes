@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagusOfTheJar.class, Forest.class, Island.class, LlanowarElves.class})
+@CardUsed({MagusOfTheJar.class, Forest.class, Island.class})
 class MagusOfTheJarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activation exiles both hands face down and gives each player seven cards")
     void activationExilesHandsAndDrawsSeven() {
-        List<Card> player1Hand = List.of(new MagusOfTheJar(), new LlanowarElves());
+        List<Card> player1Hand = List.of(new MagusOfTheJar(), new Forest());
         List<Card> player2Hand = List.of(new Forest(), new Island(), new Forest());
         setDeck(player1, 7);
         setDeck(player2, 7);
@@ -46,7 +45,7 @@ class MagusOfTheJarTest extends BaseCardTest {
     @Test
     @DisplayName("The next end step discards current hands and returns the remembered cards")
     void nextEndStepReturnsRememberedCardsAfterDiscardingHands() {
-        List<Card> player1Hand = List.of(new MagusOfTheJar(), new LlanowarElves());
+        List<Card> player1Hand = List.of(new MagusOfTheJar(), new Forest());
         List<Card> player2Hand = List.of(new Forest(), new Island());
         setDeck(player1, 7);
         setDeck(player2, 7);
@@ -79,6 +78,24 @@ class MagusOfTheJarTest extends BaseCardTest {
                 .containsExactlyInAnyOrderElementsOf(replacementHand2);
     }
 
+    @Test
+    @DisplayName("Empty hands still draw seven cards and exile nothing")
+    void emptyHandsStillDrawSevenCardsAndExileNothing() {
+        setDeck(player1, 7);
+        setDeck(player2, 7);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        addReadyMagus();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertInGraveyard(player1, "Magus of the Jar");
+    }
+
     private void addReadyMagus() {
         Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheJar());
         magus.setSummoningSick(false);
@@ -88,7 +105,7 @@ class MagusOfTheJarTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 

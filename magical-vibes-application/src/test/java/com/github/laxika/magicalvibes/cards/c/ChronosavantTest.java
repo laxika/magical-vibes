@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Chronosavant.class)
+@CardUsed({Chronosavant.class})
 @DisplayName("Chronosavant")
 class ChronosavantTest extends BaseCardTest {
 
@@ -28,6 +28,21 @@ class ChronosavantTest extends BaseCardTest {
         Permanent chronosavant = findPermanent(player1, "Chronosavant");
         assertThat(chronosavant.isTapped()).isTrue();
         harness.assertNotInGraveyard(player1, "Chronosavant");
+    }
+
+    @Test
+    @DisplayName("Returns only the card whose graveyard ability was activated")
+    void returnsOnlyTheActivatedCard() {
+        Chronosavant activatedCard = new Chronosavant();
+        Chronosavant otherCard = new Chronosavant();
+        harness.setGraveyard(player1, List.of(activatedCard, otherCard));
+        addActivationMana();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Chronosavant").getCard()).isSameAs(activatedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCard);
     }
 
     @Test
@@ -67,7 +82,6 @@ class ChronosavantTest extends BaseCardTest {
 
     private void endTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
     }
 }

@@ -1,69 +1,43 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.k.KithkinShielddare;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Whimwader.class, BriarberryCohort.class, KithkinShielddare.class})
 class WhimwaderTest extends BaseCardTest {
 
     private Permanent addWhimwaderReadyToAttack() {
-        Permanent perm = new Permanent(new Whimwader());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
-    }
-
-    private void beginAttackDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
-
-    /** A clearly non-blue permanent: the loader treats basic lands as their mana color, so use a white creature. */
-    private void addNonBluePermanentTo(com.github.laxika.magicalvibes.model.Player owner) {
-        Card white = new Card();
-        white.setName("Test White Bear");
-        white.setType(CardType.CREATURE);
-        white.setColor(CardColor.WHITE);
-        white.setColors(List.of(CardColor.WHITE));
-        gd.playerBattlefields.get(owner.getId()).add(new Permanent(white));
+        return addCreatureReady(player1, new Whimwader());
     }
 
     @Test
     @DisplayName("Whimwader can attack when defending player controls a blue permanent")
     void canAttackWhenDefenderControlsBluePermanent() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new BriarberryCohort());
         addWhimwaderReadyToAttack();
 
-        beginAttackDeclaration();
+        declareAttackers(List.of(0));
 
-        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .doesNotThrowAnyException();
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
     }
 
     @Test
     @DisplayName("Whimwader cannot attack when defending player controls only a non-blue permanent")
     void cannotAttackWhenDefenderControlsOnlyNonBluePermanent() {
-        addNonBluePermanentTo(player2);
+        harness.addToBattlefield(player2, new KithkinShielddare());
         addWhimwaderReadyToAttack();
 
-        beginAttackDeclaration();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -72,9 +46,17 @@ class WhimwaderTest extends BaseCardTest {
     void cannotAttackWhenDefenderControlsNothing() {
         addWhimwaderReadyToAttack();
 
-        beginAttackDeclaration();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Whimwader cannot attack when only its controller controls a blue permanent")
+    void cannotAttackWhenOnlyAttackerControlsBluePermanent() {
+        harness.addToBattlefield(player1, new BriarberryCohort());
+        addWhimwaderReadyToAttack();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

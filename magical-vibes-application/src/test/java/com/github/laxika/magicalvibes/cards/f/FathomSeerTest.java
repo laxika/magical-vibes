@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,28 +9,26 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FathomSeer.class, Island.class, GrizzlyBears.class})
+@CardUsed({FathomSeer.class, Island.class})
 class FathomSeerTest extends BaseCardTest {
 
     @Test
     void returnsTwoIslandsAndDrawsTwoCardsWhenTurnedFaceUp() {
         Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        Card firstDraw = new GrizzlyBears();
-        Card secondDraw = new GrizzlyBears();
+        Card firstDraw = new FathomSeer();
+        Card secondDraw = new FathomSeer();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
-        harness.setHand(player1, List.of(new FathomSeer()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Permanent fathomSeer = castFaceDown();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(firstDraw, secondDraw);
 
-        Permanent fathomSeer = findPermanent(player1, "Fathom Seer");
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(fathomSeer),
                 List.of(firstIsland.getId(), secondIsland.getId()));
         harness.passBothPriorities();
@@ -40,6 +37,58 @@ class FathomSeerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .doesNotContain(firstIsland, secondIsland);
         assertThat(gd.playerHands.get(player1.getId()))
-                .contains(firstIsland.getCard(), secondIsland.getCard(), firstDraw, secondDraw);
+                .containsExactlyInAnyOrder(firstIsland.getCard(), secondIsland.getCard(), firstDraw, secondDraw);
+    }
+
+    @Test
+    void cannotTurnFaceUpByReturningNonIslandPermanent() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent nonIsland = harness.addToBattlefieldAndReturn(player1, new FathomSeer());
+        Permanent fathomSeer = castFaceDown();
+
+        assertThatThrownBy(() -> turnFaceUp(fathomSeer, List.of(island.getId(), nonIsland.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(fathomSeer.isFaceDown()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(island, nonIsland, fathomSeer);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .doesNotContain(island.getCard(), nonIsland.getCard());
+    }
+
+    @Test
+    void cannotTurnFaceUpByReturningOpponentControlledIsland() {
+        Permanent ownIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent opponentIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent fathomSeer = castFaceDown();
+
+        assertThatThrownBy(() -> turnFaceUp(fathomSeer, List.of(ownIsland.getId(), opponentIsland.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(fathomSeer.isFaceDown()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(ownIsland, fathomSeer);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(opponentIsland);
+    }
+
+    private Permanent castFaceDown() {
+        harness.setHand(player1, List.of(new FathomSeer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private void turnFaceUp(Permanent fathomSeer, List<UUID> additionalCostPermanentIds) {
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(fathomSeer),
+                additionalCostPermanentIds);
     }
 }

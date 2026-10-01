@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.f.FurySliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MightSliver.class, BonescytheSliver.class, GrizzlyBears.class})
+@CardUsed({MightSliver.class, FurySliver.class, AshcoatBear.class})
 class MightSliverTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,7 @@ class MightSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts another Sliver you control")
     void boostsOtherSliver() {
-        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
+        Permanent otherSliver = addCreatureReady(player1, new FurySliver());
         int basePower = gqs.getEffectivePower(gd, otherSliver);
         int baseToughness = gqs.getEffectiveToughness(gd, otherSliver);
 
@@ -38,7 +38,7 @@ class MightSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts an opponent's Sliver too")
     void boostsOpponentSliver() {
-        Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new FurySliver());
         int basePower = gqs.getEffectivePower(gd, opponentSliver);
         int baseToughness = gqs.getEffectiveToughness(gd, opponentSliver);
 
@@ -49,12 +49,24 @@ class MightSliverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Might Slivers stack")
+    void multipleCopiesStack() {
+        Permanent sliver = addCreatureReady(player2, new FurySliver());
+
+        addCreatureReady(player1, new MightSliver());
+        addCreatureReady(player1, new MightSliver());
+
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(7);
+    }
+
+    @Test
     @DisplayName("Does not boost a non-Sliver creature")
     void doesNotBoostNonSliver() {
         addCreatureReady(player1, new MightSliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

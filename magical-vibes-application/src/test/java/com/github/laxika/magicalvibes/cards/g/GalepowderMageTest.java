@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GalepowderMage.class, HillcomberGiant.class})
 class GalepowderMageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking queues the attack trigger for target selection")
     void attackQueuesTargetSelection() {
-        addReadyMage(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GalepowderMage());
+        harness.addToBattlefield(player2, new HillcomberGiant());
 
         declareAttackers(List.of(0));
 
@@ -31,65 +33,70 @@ class GalepowderMageTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the attack trigger exiles the target creature")
     void attackTriggerExilesTarget() {
-        addReadyMage(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        addCreatureReady(player1, new GalepowderMage());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities(); // resolve attack trigger
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Hillcomber Giant"));
     }
 
     @Test
     @DisplayName("Exiled creature returns at the next end step under its owner's control")
     void exiledCreatureReturnsAtEndStep() {
-        addReadyMage(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        addCreatureReady(player1, new GalepowderMage());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities(); // resolve attack trigger
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
 
         advanceToEndStep();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hillcomber Giant");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Hillcomber Giant"));
     }
 
     @Test
     @DisplayName("Can exile another creature its own controller controls")
     void canExileOwnOtherCreature() {
-        addReadyMage(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        addCreatureReady(player1, new GalepowderMage());
+        harness.addToBattlefield(player1, new HillcomberGiant());
+        Permanent giant = findPermanent(player1, "Hillcomber Giant");
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities(); // resolve attack trigger
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Hillcomber Giant"));
 
         advanceToEndStep();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hillcomber Giant");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot target itself")
+    void cannotTargetItself() {
+        Permanent mage = addCreatureReady(player1, new GalepowderMage());
+        Permanent giant = addCreatureReady(player1, new HillcomberGiant());
 
-    private Permanent addReadyMage(Player player) {
-        Permanent perm = new Permanent(new GalepowderMage());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(List.of(0));
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validPermanentIds()).containsExactly(giant.getId());
+        assertThat(targetChoice.validPermanentIds()).doesNotContain(mage.getId());
     }
 
     private void advanceToEndStep() {

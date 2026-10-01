@@ -1,18 +1,24 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImpelledGiant.class, HillGiant.class, RagingGoblin.class, GrizzlyBears.class, GiantGrowth.class})
 class ImpelledGiantTest extends BaseCardTest {
 
     private int index(Permanent permanent) {
@@ -53,6 +59,25 @@ class ImpelledGiantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the tapped creature's power when the ability resolves")
+    void usesTappedCreaturePowerAtResolution() {
+        Permanent giant = addCreatureReady(player1, new ImpelledGiant());
+        Permanent hillGiant = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, index(giant), null, null);
+        harness.castInstant(player1, 0, hillGiant.getId());
+        harness.passBothPriorities();
+
+        assertThat(hillGiant.getEffectivePower()).isEqualTo(6);
+
+        harness.passBothPriorities();
+
+        assertThat(giant.getEffectivePower()).isEqualTo(9);
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOff() {
         Permanent giant = addCreatureReady(player1, new ImpelledGiant());
@@ -75,6 +100,27 @@ class ImpelledGiantTest extends BaseCardTest {
     void cannotTapSelfOrNonRed() {
         Permanent giant = addCreatureReady(player1, new ImpelledGiant());
         addCreatureReady(player1, new GrizzlyBears()); // green, not a legal tap; self is excluded
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index(giant), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot tap an already-tapped red creature")
+    void cannotTapTappedRedCreature() {
+        Permanent giant = addCreatureReady(player1, new ImpelledGiant());
+        Permanent hillGiant = addCreatureReady(player1, new HillGiant());
+        hillGiant.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index(giant), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot tap a red creature controlled by an opponent")
+    void cannotTapOpponentsRedCreature() {
+        Permanent giant = addCreatureReady(player1, new ImpelledGiant());
+        addCreatureReady(player2, new HillGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index(giant), null, null))
                 .isInstanceOf(IllegalStateException.class);

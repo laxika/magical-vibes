@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
+import com.github.laxika.magicalvibes.cards.l.LeafGilder;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OakenBrawler.class, LeafGilder.class, GoldmeadowDodger.class})
 class OakenBrawlerTest extends BaseCardTest {
 
     private Permanent castOakenBrawler() {
@@ -35,9 +37,9 @@ class OakenBrawlerTest extends BaseCardTest {
     @Test
     @DisplayName("Winning the clash puts a +1/+1 counter on Oaken Brawler")
     void wonClashAddsCounter() {
-        // Higher mana value on top for player1 (Grizzly Bears MV 2 > Forest MV 0) → player1 wins.
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new Forest());
+        // Higher mana value on top for player1 (Leaf Gilder MV 2 > Goldmeadow Dodger MV 1) → player1 wins.
+        harness.setLibrary(player1, List.of(new LeafGilder()));
+        harness.setLibrary(player2, List.of(new GoldmeadowDodger()));
 
         Permanent brawler = castOakenBrawler();
 
@@ -51,9 +53,9 @@ class OakenBrawlerTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the clash leaves Oaken Brawler without a counter")
     void lostClashAddsNoCounter() {
-        // Lower mana value on top for player1 (Forest MV 0 < Grizzly Bears MV 2) → player1 loses.
-        gd.playerDecks.get(player1.getId()).addFirst(new Forest());
-        gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
+        // Lower mana value on top for player1 (Goldmeadow Dodger MV 1 < Leaf Gilder MV 2) → player1 loses.
+        harness.setLibrary(player1, List.of(new GoldmeadowDodger()));
+        harness.setLibrary(player2, List.of(new LeafGilder()));
 
         Permanent brawler = castOakenBrawler();
 
@@ -62,14 +64,14 @@ class OakenBrawlerTest extends BaseCardTest {
         assertThat(brawler.getEffectiveToughness()).isEqualTo(4);
     }
 
-    // ===== Tie — a clash is only won on a strictly greater mana value (CR 701.29c) =====
+    // ===== Tie — a clash is only won on a strictly greater mana value =====
 
     @Test
     @DisplayName("An equal mana value tie is not a win, so no counter is added")
     void tiedClashAddsNoCounter() {
-        // Equal mana values (both Grizzly Bears MV 2) → no one wins the clash.
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
+        // Equal mana values (both Leaf Gilders MV 2) → no one wins the clash.
+        harness.setLibrary(player1, List.of(new LeafGilder()));
+        harness.setLibrary(player2, List.of(new LeafGilder()));
 
         Permanent brawler = castOakenBrawler();
 

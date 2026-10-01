@@ -3,14 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +36,19 @@ class ManaSkimmerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability resolves without a choice when the damaged player controls no lands")
+    void resolvesWithoutChoiceWhenDamagedPlayerControlsNoLand() {
+        Permanent skimmer = addCreatureReady(player1, new ManaSkimmer());
+        skimmer.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("The chosen land stays tapped through its next untap step")
     void chosenLandStaysTappedThroughNextUntapStep() {
         Permanent skimmer = addCreatureReady(player1, new ManaSkimmer());
@@ -50,20 +59,8 @@ class ManaSkimmerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, damagedLand.getId());
         harness.passBothPriorities();
 
-        advanceToNextTurn(player1);
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player2);
         assertThat(damagedLand.isTapped()).isTrue();
         assertThat(damagedLand.getSkipUntapCount()).isZero();
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 }

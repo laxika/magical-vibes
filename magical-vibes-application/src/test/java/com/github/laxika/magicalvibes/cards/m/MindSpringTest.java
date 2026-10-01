@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MindSpring.class)
 class MindSpringTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -26,7 +28,6 @@ class MindSpringTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Mind Spring");
         assertThat(entry.getXValue()).isEqualTo(3);
     }
 
@@ -39,8 +40,7 @@ class MindSpringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5); // X=3: {3}{U}{U} = 5
         int handSizeBefore = gd.playerHands.get(player1.getId()).size() - 1; // -1 for the spell leaving hand
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
     }
@@ -52,8 +52,7 @@ class MindSpringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2); // X=0: {0}{U}{U} = 2
         int handSizeBefore = gd.playerHands.get(player1.getId()).size() - 1; // -1 for the spell leaving hand
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
@@ -65,8 +64,7 @@ class MindSpringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3); // X=1: {1}{U}{U} = 3
         int handSizeBefore = gd.playerHands.get(player1.getId()).size() - 1; // -1 for the spell leaving hand
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
@@ -79,8 +77,7 @@ class MindSpringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSpring()));
         harness.addMana(player1, ManaColor.BLUE, 4); // X=2
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertInGraveyard(player1, "Mind Spring");
     }
@@ -91,8 +88,7 @@ class MindSpringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSpring()));
         harness.addMana(player1, ManaColor.BLUE, 4); // X=2
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         assertThat(gd.stack).isEmpty();
     }

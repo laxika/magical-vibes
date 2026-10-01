@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MaralenOfTheMornsong.class, ElvishWarrior.class, IndomitableAncients.class})
 class MaralenOfTheMornsongTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -23,7 +23,7 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         gd.turnNumber = 2; // avoid the starting player's first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -31,8 +31,8 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
     void normalDrawIsPrevented() {
         harness.addToBattlefield(player1, new MaralenOfTheMornsong());
 
-        Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        Card topCard = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(topCard));
 
         advanceToDraw(player1);
 
@@ -44,7 +44,8 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
     void activePlayerLosesLifeAndTutors() {
         harness.addToBattlefield(player1, new MaralenOfTheMornsong());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(
+                new IndomitableAncients(), new ElvishWarrior(), new IndomitableAncients()));
         int lifeBefore = gd.getLife(player1.getId());
 
         advanceToDraw(player1);
@@ -59,7 +60,7 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         assertThat(search.params().cards()).hasSize(3);
 
         String chosen = search.params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosen));
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -70,10 +71,11 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
     void triggersOnOpponentDrawStep() {
         harness.addToBattlefield(player1, new MaralenOfTheMornsong());
         harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of(new Plains(), new Swamp()));
+        harness.setLibrary(player2, List.of(new ElvishWarrior(), new IndomitableAncients()));
         int lifeBefore = gd.getLife(player2.getId());
 
         advanceToDraw(player2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.passBothPriorities(); // resolve the draw-step trigger
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
@@ -81,8 +83,9 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
+        assertThat(search.params().cards()).hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -90,7 +93,7 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
     @DisplayName("Life is still lost even when the library is empty (search does nothing)")
     void emptyLibraryStillLosesLife() {
         harness.addToBattlefield(player1, new MaralenOfTheMornsong());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         int lifeBefore = gd.getLife(player1.getId());
 
         advanceToDraw(player1);

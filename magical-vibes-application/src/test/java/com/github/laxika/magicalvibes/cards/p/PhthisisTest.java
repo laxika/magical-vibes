@@ -27,8 +27,7 @@ class PhthisisTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID targetId = harness.getPermanentId(player2, "Giant Spider");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -41,16 +40,34 @@ class PhthisisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WringFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.setHand(player1, List.of(new Phthisis()));
         harness.addMana(player1, ManaColor.BLACK, 7);
         harness.setLife(player2, 20);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Causes no life loss when power plus toughness is negative")
+    void causesNoLifeLossWhenPowerPlusToughnessIsNegative() {
+        harness.addToBattlefield(player2, new GiantSpider());
+        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
+
+        harness.setHand(player1, List.of(new WringFlesh(), new WringFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.setHand(player1, List.of(new Phthisis()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.setLife(player2, 20);
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -62,14 +79,12 @@ class PhthisisTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WithstandDeath()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.setHand(player1, List.of(new Phthisis()));
         harness.addMana(player1, ManaColor.BLACK, 7);
         harness.setLife(player2, 20);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Giant Spider");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -95,21 +110,12 @@ class PhthisisTest extends BaseCardTest {
     void suspendOffersFreeCast() {
         harness.addToBattlefield(player2, new GiantSpider());
         UUID targetId = harness.getPermanentId(player2, "Giant Spider");
-        Phthisis card = new Phthisis();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateHandAbility(player1, 0, null);
+        Phthisis card = suspendPhthisis();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
 
-        for (int i = 0; i < 4; i++) {
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
-        }
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        advanceThroughSuspendCounters();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -118,6 +124,46 @@ class PhthisisTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player1, "Phthisis");
+    }
+
+    @Test
+    @DisplayName("Suspend counters are removed only during Phthisis's owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        Phthisis card = suspendPhthisis();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Phthisis in exile without time counters")
+    void decliningSuspendCastLeavesCardInExile() {
+        Phthisis card = suspendPhthisis();
+
+        advanceThroughSuspendCounters();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    private Phthisis suspendPhthisis() {
+        Phthisis card = new Phthisis();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateHandAbility(player1, 0, null);
+        return card;
+    }
+
+    private void advanceThroughSuspendCounters() {
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
     }
 
     private void castPhthisis() {

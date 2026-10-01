@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.SkirkProspector;
+import com.github.laxika.magicalvibes.cards.m.Mulldrifter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoggartHarbinger.class, BoggartMob.class, BoggartSpriteChaser.class, Mulldrifter.class, Island.class})
 class BoggartHarbingerTest extends BaseCardTest {
 
     @Test
@@ -25,10 +23,8 @@ class BoggartHarbingerTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveMayPrompt();
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Boggart Harbinger");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -39,13 +35,16 @@ class BoggartHarbingerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithGoblins();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
+        resolveMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
+        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+        assertThat(search.params().shuffleAfterSelection()).isTrue();
+        assertThat(search.params().cards())
                 .isNotEmpty()
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.GOBLIN));
     }
@@ -56,15 +55,13 @@ class BoggartHarbingerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithGoblins();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).isNotEmpty();
@@ -73,28 +70,45 @@ class BoggartHarbingerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting the may ability with no Goblins finds no card")
+    void acceptingMayWithNoGoblinsFindsNoCard() {
+        setupAndCast();
+        setupLibraryWithoutGoblins();
+
+        resolveMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Mulldrifter", "Island");
+    }
+
+    @Test
     @DisplayName("Declining the may ability skips the library search")
     void decliningMaySkipsSearch() {
         setupAndCast();
         setupLibraryWithGoblins();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveMayPrompt();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new BoggartHarbinger()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BoggartHarbinger(), "{2}{B}");
+    }
+
+    private void resolveMayPrompt() {
+        resolveAllTriggers();
     }
 
     private void setupLibraryWithGoblins() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new SkirkProspector(), new GoblinChieftain(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new BoggartMob(), new BoggartSpriteChaser(), new Mulldrifter(), new Island()));
+    }
+
+    private void setupLibraryWithoutGoblins() {
+        harness.setLibrary(player1, List.of(new Mulldrifter(), new Island()));
     }
 }

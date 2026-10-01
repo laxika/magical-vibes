@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,14 +12,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TelekineticSliver.class, BonescytheSliver.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TelekineticSliver.class, BonesplitterSliver.class, Forest.class, AshcoatBear.class})
 class TelekineticSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Telekinetic Sliver grants itself the ability to tap any permanent")
     void grantsAbilityToItself() {
         Permanent telekineticSliver = addCreatureReady(player1, new TelekineticSliver());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -32,7 +32,7 @@ class TelekineticSliverTest extends BaseCardTest {
     @DisplayName("Another Sliver gains the ability and can tap a land")
     void grantsAbilityToAnotherSliver() {
         addCreatureReady(player1, new TelekineticSliver());
-        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
+        Permanent otherSliver = addCreatureReady(player1, new BonesplitterSliver());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.activateAbility(player1, 1, null, target.getId());
@@ -46,7 +46,7 @@ class TelekineticSliverTest extends BaseCardTest {
     @DisplayName("An opponent's Sliver also gains the ability")
     void grantsAbilityToOpposingSliver() {
         addCreatureReady(player1, new TelekineticSliver());
-        Permanent opposingSliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new BonesplitterSliver());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.activateAbility(player2, 0, null, target.getId());
@@ -60,8 +60,8 @@ class TelekineticSliverTest extends BaseCardTest {
     @DisplayName("Non-Sliver creatures do not gain the ability")
     void doesNotGrantAbilityToNonSliver() {
         addCreatureReady(player1, new TelekineticSliver());
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AshcoatBear());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

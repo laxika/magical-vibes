@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +11,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EtherealWhiskergill.class, Island.class})
 class EtherealWhiskergillTest extends BaseCardTest {
 
     @Test
@@ -20,16 +20,9 @@ class EtherealWhiskergillTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent perm = new Permanent(new EtherealWhiskergill());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
+        addCreatureReady(player1, new EtherealWhiskergill());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -37,16 +30,19 @@ class EtherealWhiskergillTest extends BaseCardTest {
     @Test
     @DisplayName("Ethereal Whiskergill cannot attack when defending player does not control an Island")
     void cannotAttackWhenDefenderDoesNotControlIsland() {
-        Permanent perm = new Permanent(new EtherealWhiskergill());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
+        addCreatureReady(player1, new EtherealWhiskergill());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Ethereal Whiskergill cannot attack when only attacking player controls an Island")
+    void cannotAttackWhenOnlyAttackingPlayerControlsIsland() {
+        addCreatureReady(player1, new EtherealWhiskergill());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

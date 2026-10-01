@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,18 +14,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HallowedBurial.class, GrizzlyBears.class, LlanowarElves.class, Forest.class})
 class HallowedBurialTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts all creatures on the bottom of their owners' libraries")
     void bottomsAllCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        GrizzlyBears bears = new GrizzlyBears();
+        LlanowarElves elves = new LlanowarElves();
+        Forest player1LibraryCard = new Forest();
+        Forest player2LibraryCard = new Forest();
+        harness.addToBattlefield(player1, bears);
+        harness.addToBattlefield(player2, elves);
+        harness.setLibrary(player1, List.of(player1LibraryCard));
+        harness.setLibrary(player2, List.of(player2LibraryCard));
 
-        harness.setHand(player1, List.of(new HallowedBurial()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -34,9 +39,9 @@ class HallowedBurialTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Llanowar Elves");
         assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .containsExactly(player1LibraryCard, bears);
         assertThat(gd.playerDecks.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+                .containsExactly(player2LibraryCard, elves);
     }
 
     @Test
@@ -47,10 +52,7 @@ class HallowedBurialTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
-        harness.setHand(player1, List.of(new HallowedBurial()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         // Not a destroy effect — indestructible is irrelevant
@@ -60,12 +62,43 @@ class HallowedBurialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaves noncreature permanents on the battlefield")
+    void leavesNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Puts a controlled creature on the bottom of its owner's library")
+    void usesCreatureOwnerLibrary() {
+        GrizzlyBears opponentOwnedBears = new GrizzlyBears();
+        opponentOwnedBears.setOwnerId(player2.getId());
+        Forest player1LibraryCard = new Forest();
+        Forest player2LibraryCard = new Forest();
+        harness.addToBattlefield(player1, opponentOwnedBears);
+        harness.setLibrary(player1, List.of(player1LibraryCard));
+        harness.setLibrary(player2, List.of(player2LibraryCard));
+
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(player1LibraryCard);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(player2LibraryCard, opponentOwnedBears);
+    }
+
+    @Test
     @DisplayName("Does nothing when no creatures are on the battlefield")
     void doesNothingWhenNoCreatures() {
-        harness.setHand(player1, List.of(new HallowedBurial()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.f.FathomSeer;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,17 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagusOfTheScroll.class, GrizzlyBears.class})
+@CardUsed({MagusOfTheScroll.class, FathomSeer.class})
 class MagusOfTheScrollTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability prompts the controller to name a card")
     void resolvingPromptsController() {
-        addReadyMagus(player1);
+        Permanent magus = addReadyMagus(player1);
+        Permanent seer = harness.addToBattlefieldAndReturn(player2, new FathomSeer());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(createNamedCard("Lightning Bolt")));
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
 
-        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, seer.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -36,6 +34,11 @@ class MagusOfTheScrollTest extends BaseCardTest {
         assertThat(interaction.playerId()).isEqualTo(player1.getId());
         assertThat(interaction.context())
                 .isInstanceOf(ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice.class);
+        var context = (ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice) interaction.context();
+        assertThat(context.targetId()).isEqualTo(seer.getId());
+        assertThat(context.sourcePermanentId()).isEqualTo(magus.getId());
+        assertThat(interaction.options()).contains("Magus of the Scroll", "Fathom Seer");
+        assertThat(magus.isTapped()).isTrue();
     }
 
     @Test
@@ -44,13 +47,13 @@ class MagusOfTheScrollTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addReadyMagus(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(createNamedCard("Lightning Bolt")));
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player1, "Magus of the Scroll");
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -60,13 +63,14 @@ class MagusOfTheScrollTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addReadyMagus(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(createNamedCard("Grizzly Bears")));
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
+        harness.setHand(player2, List.of(new FathomSeer()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player1, "Fathom Seer");
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -75,31 +79,69 @@ class MagusOfTheScrollTest extends BaseCardTest {
     void matchingRevealDamagesTargetCreature() {
         addReadyMagus(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(createNamedCard("Lightning Bolt")));
-        Permanent bears = harness.addToBattlefieldAndReturn(player2,
-                new GrizzlyBears());
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
+        Permanent seer = harness.addToBattlefieldAndReturn(player2, new FathomSeer());
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, seer.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player1, "Magus of the Scroll");
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(seer.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An empty hand reveals nothing and deals no damage")
+    void emptyHandDealsNoDamage() {
+        harness.setLife(player2, 20);
+        addReadyMagus(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Magus of the Scroll");
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The random reveal comes from the ability controller's hand")
+    void revealUsesControllerHand() {
+        harness.setLife(player2, 20);
+        addReadyMagus(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
+        harness.setHand(player2, List.of(new FathomSeer()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Fathom Seer");
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An illegal target makes the ability fizzle before the name choice")
+    void illegalTargetFizzlesBeforeNameChoice() {
+        harness.setLife(player2, 20);
+        addReadyMagus(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new MagusOfTheScroll()));
+        Permanent seer = harness.addToBattlefieldAndReturn(player2, new FathomSeer());
+
+        harness.activateAbility(player1, 0, null, seer.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(seer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addReadyMagus(Player player) {
-        Permanent perm = new Permanent(new MagusOfTheScroll());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MagusOfTheScroll());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private static Card createNamedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.RED);
-        return card;
     }
 }

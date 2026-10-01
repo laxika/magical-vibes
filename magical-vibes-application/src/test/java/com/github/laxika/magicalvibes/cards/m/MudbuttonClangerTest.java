@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MudbuttonClanger.class, InkDissolver.class})
 class MudbuttonClangerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Kinship prompts to reveal when the top card shares a creature type")
     void kinshipPromptsWhenSharedType() {
         addCreatureReady(player1, new MudbuttonClanger());
-        setLibraryTop(new MudbuttonClanger()); // Goblin Warrior — shares a type
+        harness.setLibrary(player1, List.of(new MudbuttonClanger())); // Goblin Warrior — shares a type
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -33,7 +34,7 @@ class MudbuttonClangerTest extends BaseCardTest {
     @DisplayName("Revealing the shared-type card gives +1/+1")
     void revealBuffsSelf() {
         Permanent clanger = addCreatureReady(player1, new MudbuttonClanger());
-        setLibraryTop(new MudbuttonClanger());
+        harness.setLibrary(player1, List.of(new MudbuttonClanger()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -44,10 +45,24 @@ class MudbuttonClangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Revealing the shared-type card leaves it on top of the library")
+    void revealingLeavesCardOnTop() {
+        addCreatureReady(player1, new MudbuttonClanger());
+        MudbuttonClanger topCard = new MudbuttonClanger();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
     @DisplayName("The Kinship boost wears off at cleanup")
     void buffWearsOffAtEndOfTurn() {
         Permanent clanger = addCreatureReady(player1, new MudbuttonClanger());
-        setLibraryTop(new MudbuttonClanger());
+        harness.setLibrary(player1, List.of(new MudbuttonClanger()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -65,7 +80,7 @@ class MudbuttonClangerTest extends BaseCardTest {
     @DisplayName("Declining to reveal leaves the creature unbuffed")
     void decliningDoesNothing() {
         Permanent clanger = addCreatureReady(player1, new MudbuttonClanger());
-        setLibraryTop(new MudbuttonClanger());
+        harness.setLibrary(player1, List.of(new MudbuttonClanger()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -79,7 +94,7 @@ class MudbuttonClangerTest extends BaseCardTest {
     @DisplayName("No reveal prompt when the top card shares no creature type")
     void noSharedTypeNoPrompt() {
         addCreatureReady(player1, new MudbuttonClanger());
-        setLibraryTop(new GrizzlyBears()); // Bear — no shared type
+        harness.setLibrary(player1, List.of(new InkDissolver())); // Merfolk Wizard — no shared type
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -97,11 +112,5 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-    }
-
-    private void setLibraryTop(Card card) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(card);
     }
 }

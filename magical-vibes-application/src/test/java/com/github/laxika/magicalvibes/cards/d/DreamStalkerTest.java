@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,19 +10,18 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreamStalker.class, GrizzlyBears.class, Island.class})
+@CardUsed({DreamStalker.class, BenalishCavalry.class, PrismaticLens.class})
 class DreamStalkerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB prompts a non-targeting choice among all permanents you control")
     void etbPromptsBounceAmongOwnPermanents() {
-        UUID islandId = harness.addToBattlefieldAndReturn(player1, new Island()).getId();
-        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        UUID lensId = harness.addToBattlefieldAndReturn(player1, new PrismaticLens()).getId();
+        UUID cavalryId = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry()).getId();
         castAndResolveSpell();
 
         UUID dreamStalkerId = harness.getPermanentId(player1, "Dream Stalker");
@@ -32,7 +30,7 @@ class DreamStalkerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactlyInAnyOrder(islandId, bearsId, dreamStalkerId);
+                .containsExactlyInAnyOrder(lensId, cavalryId, dreamStalkerId);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
     }
@@ -40,14 +38,14 @@ class DreamStalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a permanent returns it to its owner's hand")
     void bounceOtherPermanent() {
-        UUID islandId = harness.addToBattlefieldAndReturn(player1, new Island()).getId();
+        UUID lensId = harness.addToBattlefieldAndReturn(player1, new PrismaticLens()).getId();
         castAndResolveSpell();
         resolveTriggerToChoice();
 
-        harness.handlePermanentChosen(player1, islandId);
+        harness.handlePermanentChosen(player1, lensId);
 
-        harness.assertNotOnBattlefield(player1, "Island");
-        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Prismatic Lens");
+        harness.assertInHand(player1, "Prismatic Lens");
         harness.assertOnBattlefield(player1, "Dream Stalker");
     }
 
@@ -71,7 +69,7 @@ class DreamStalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent permanents are not valid choices")
     void opponentPermanentsExcluded() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BenalishCavalry());
         castAndResolveSpell();
         UUID dreamStalkerId = harness.getPermanentId(player1, "Dream Stalker");
         resolveTriggerToChoice();
@@ -79,14 +77,11 @@ class DreamStalkerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(dreamStalkerId);
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Benalish Cavalry");
     }
 
     private void castAndResolveSpell() {
-        harness.setHand(player1, List.of(new DreamStalker()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DreamStalker(), "{1}{U}");
         harness.passBothPriorities();
     }
 

@@ -1,4 +1,5 @@
 # PREDICATES_REFERENCE
+| `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate` | `()` | opponent-controlled creatures with least effective toughness among all creatures controlled by opponents of the source controller (ties allowed) | `gameData` + `sourceControllerId` |
 | `CardManaValueGreaterThanSourceManaValuePredicate` | `()` | a card whose mana value is strictly greater than the source card's mana value; needs `GameData` and `sourceCardId` (Kami of Mourning) |
 
 `PermanentBlockingSourcePredicate` resolves an attached Equipment's equipped creature as the source, just as it resolves an attached Aura's enchanted creature.
@@ -469,6 +470,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardManaValueAtMostSourceCountersPredicate` | `(CounterType)` | a card whose mana value is <= the number of the specified counters on the source permanent; needs `GameData`, `sourceCardId`, and the source permanent's identity when available |
+| `CardManaValueEqualsSourceIntensityPredicate` | `()` | a card whose mana value equals the source card's current persistent intensity; needs `GameData` and `sourceCardId` |
 | `CardManaValueLessThanSourcePowerPredicate` | `()` | a card whose mana value is strictly less than the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardManaValueLessThanSourceCountersPredicate` | `(CounterType)` | a card whose mana value is strictly less than the number of the specified counters on the source permanent; needs `GameData`, `sourceCardId`, and the source permanent's identity when available |
 | `CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate` | `()` | a card whose mana value is <= the number of permanent cards in the perspective player's graveyard; used by Squirming Emergence |

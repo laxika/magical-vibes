@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +16,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DewdropSpy.class, MothdustChangeling.class})
 class DewdropSpyTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB begins a private look at the top card of target player's library")
     void etbLooksAtTopCard() {
-        Card topCard = setTopCard(player2.getId(), new Island());
+        Card topCard = setTopCard(player2.getId(), new MothdustChangeling());
         castDewdropSpy(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -36,7 +37,7 @@ class DewdropSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Card stays on top of the library after the look")
     void cardStaysOnTop() {
-        Card topCard = setTopCard(player2.getId(), new Island());
+        Card topCard = setTopCard(player2.getId(), new MothdustChangeling());
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         castDewdropSpy(player2.getId());
 
@@ -44,7 +45,7 @@ class DewdropSpyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Close the private look without moving anything.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter).hasSize(deckSizeBefore);
@@ -54,7 +55,7 @@ class DewdropSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Can target self to look at own library")
     void canTargetSelf() {
-        setTopCard(player1.getId(), new Island());
+        setTopCard(player1.getId(), new MothdustChangeling());
         castDewdropSpy(player1.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -86,6 +87,6 @@ class DewdropSpyTest extends BaseCardTest {
     private void castDewdropSpy(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new DewdropSpy()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 }

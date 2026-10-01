@@ -1,34 +1,36 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MothdustChangeling.class, ElvishWarrior.class, Mutavault.class})
 class MothdustChangelingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps another creature to gain flying until end of turn")
     void tapsAnotherCreatureToGainFlying() {
         Permanent changeling = addCreatureReady(player1, new MothdustChangeling());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
         harness.activateAbility(player1, idx, null, null);
 
         // Two untapped creatures -> choose which to tap
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, warrior.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(warrior.isTapped()).isTrue();
         assertThat(changeling.isTapped()).isFalse();
         assertThat(changeling.getGrantedKeywords()).contains(Keyword.FLYING);
     }
@@ -72,5 +74,31 @@ class MothdustChangelingTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot tap an untapped noncreature permanent as the cost")
+    void cannotTapNoncreaturePermanent() {
+        Permanent changeling = addCreatureReady(player1, new MothdustChangeling());
+        changeling.tap();
+        harness.addToBattlefieldAndReturn(player1, new Mutavault());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's creature as the cost")
+    void cannotTapOpponentsCreature() {
+        Permanent changeling = addCreatureReady(player1, new MothdustChangeling());
+        changeling.tap();
+        addCreatureReady(player2, new ElvishWarrior());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
     }
 }

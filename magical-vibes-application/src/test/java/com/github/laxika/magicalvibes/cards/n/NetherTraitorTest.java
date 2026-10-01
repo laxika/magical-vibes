@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NetherTraitor.class, GrizzlyBears.class})
+@CardUsed({NetherTraitor.class, AshcoatBear.class})
 class NetherTraitorTest extends BaseCardTest {
 
     @Test
@@ -22,19 +22,21 @@ class NetherTraitorTest extends BaseCardTest {
     void payingBlackReturnsNetherTraitor() {
         Card traitor = new NetherTraitor();
         harness.setGraveyard(player1, List.of(traitor));
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(traitor.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(traitor.getId()));
+        Permanent returnedTraitor = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(traitor.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(returnedTraitor.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Nether Traitor");
     }
 
     @Test
@@ -42,31 +44,82 @@ class NetherTraitorTest extends BaseCardTest {
     void decliningKeepsNetherTraitorInGraveyard() {
         Card traitor = new NetherTraitor();
         harness.setGraveyard(player1, List.of(traitor));
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(traitor);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(traitor.getId()));
+        harness.assertInGraveyard(player1, "Nether Traitor");
+        harness.assertNotOnBattlefield(player1, "Nether Traitor");
     }
 
     @Test
-    @DisplayName("A creature an opponent owns dying does not trigger Nether Traitor")
+    @DisplayName("A creature put into an opponent's graveyard does not trigger Nether Traitor")
     void opponentCreatureDoesNotTrigger() {
         Card traitor = new NetherTraitor();
         harness.setGraveyard(player1, List.of(traitor));
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(traitor);
+        harness.assertInGraveyard(player1, "Nether Traitor");
+    }
+
+    @Test
+    @DisplayName("Accepting without {B} does not return Nether Traitor")
+    void cannotReturnWithoutBlackMana() {
+        Card traitor = new NetherTraitor();
+        harness.setGraveyard(player1, List.of(traitor));
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Nether Traitor");
+        harness.assertNotOnBattlefield(player1, "Nether Traitor");
+    }
+
+    @Test
+    @DisplayName("Nether Traitor does not trigger when it dies with another creature")
+    void simultaneousDeathDoesNotTriggerItself() {
+        Permanent traitor = harness.addToBattlefieldAndReturn(player1, new NetherTraitor());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        traitor.setMarkedDamage(1);
+        bear.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Nether Traitor");
+    }
+
+    @Test
+    @DisplayName("A creature you do not control still triggers it when it enters your graveyard")
+    void creatureOwnedByControllerButControlledByOpponentTriggers() {
+        Card traitor = new NetherTraitor();
+        harness.setGraveyard(player1, List.of(traitor));
+        Card bearCard = new AshcoatBear();
+        bearCard.setOwnerId(player1.getId());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, bearCard);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Nether Traitor");
+        harness.assertNotInGraveyard(player1, "Nether Traitor");
     }
 }

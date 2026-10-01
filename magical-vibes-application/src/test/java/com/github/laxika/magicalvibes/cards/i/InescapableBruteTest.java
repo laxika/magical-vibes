@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CrabappleCohort;
+import com.github.laxika.magicalvibes.cards.w.WaspLancer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,17 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InescapableBrute.class, WaspLancer.class, CrabappleCohort.class})
 class InescapableBruteTest extends BaseCardTest {
 
     @Test
     @DisplayName("At least one creature must block Inescapable Brute if able")
     void mustBeBlockedByAtLeastOne() {
-        Permanent brute = attackingCreature(new InescapableBrute());
-        gd.playerBattlefields.get(player1.getId()).add(brute);
+        addCreatureReady(player1, new InescapableBrute());
+        addCreatureReady(player2, new WaspLancer());
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -33,43 +34,39 @@ class InescapableBruteTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking with one creature satisfies the requirement")
     void oneBlockerSuffices() {
-        Permanent brute = attackingCreature(new InescapableBrute());
-        gd.playerBattlefields.get(player1.getId()).add(brute);
+        addCreatureReady(player1, new InescapableBrute());
+        Permanent blocker = addCreatureReady(player2, new WaspLancer());
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Tapped creatures are not forced to block Inescapable Brute")
     void tappedCreaturesNotForcedToBlock() {
-        Permanent brute = attackingCreature(new InescapableBrute());
-        gd.playerBattlefields.get(player1.getId()).add(brute);
-
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        addCreatureReady(player1, new InescapableBrute());
+        Permanent tapped = addCreatureReady(player2, new WaspLancer());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of());
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Inescapable Brute deals combat damage as -1/-1 counters")
+    void witherDealsMinusOneMinusOneCounters() {
+        Permanent blocker = addCreatureReady(player2, new CrabappleCohort());
+        addCreatureReady(player1, new InescapableBrute());
 
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 }

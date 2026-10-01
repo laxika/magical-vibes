@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FeralThallid;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SavageThallid.class, FeralThallid.class, GrizzlyBears.class})
+@CardUsed({SavageThallid.class, HavenwoodWurm.class})
 class SavageThallidTest extends BaseCardTest {
 
     @Test
@@ -21,13 +22,21 @@ class SavageThallidTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent thallid = addThallid();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does not fire during an opponent's upkeep")
+    void upkeepTriggerOnlyFiresDuringControllerUpkeep() {
+        Permanent thallid = addThallid();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
     }
 
     @Test
@@ -40,6 +49,27 @@ class SavageThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling"))
+                .singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+                    assertThat(token.getCard().getPower()).isEqualTo(1);
+                    assertThat(token.getCard().getToughness()).isEqualTo(1);
+                    assertThat(token.getCard().getColors()).containsExactly(CardColor.GREEN);
+                    assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
+                });
+    }
+
+    @Test
+    @DisplayName("Removing three spore counters leaves additional counters")
+    void removesExactlyThreeSporeCounters() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isOne();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -48,7 +78,7 @@ class SavageThallidTest extends BaseCardTest {
     void sacrificingSaprolingRegeneratesTargetFungus() {
         Permanent thallid = addThallid();
         thallid.setCounterCount(CounterType.FUNGUS, 3);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FeralThallid());
+        Permanent target = addCreatureReady(player2, new SavageThallid());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -73,7 +103,7 @@ class SavageThallidTest extends BaseCardTest {
     void regenerationAbilityRequiresFungusTarget() {
         Permanent thallid = addThallid();
         thallid.setCounterCount(CounterType.FUNGUS, 3);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new HavenwoodWurm());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -81,11 +111,20 @@ class SavageThallidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Fungus");
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The regeneration ability requires a Saproling to sacrifice")
+    void regenerationAbilityRequiresSaprolingSacrifice() {
+        addThallid();
+        Permanent target = addCreatureReady(player2, new SavageThallid());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addThallid() {
-        Permanent thallid = harness.addToBattlefieldAndReturn(player1, new SavageThallid());
-        thallid.setSummoningSick(false);
-        return thallid;
+        return addCreatureReady(player1, new SavageThallid());
     }
 }
