@@ -66,10 +66,10 @@ function ConvertTo-ReviewProcessArgument {
     return '"' + $escaped + '"'
 }
 
-function Invoke-ReviewCodex {
-    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath)
+function Get-ReviewCodexPrompt {
+    param($Task, [string] $ValidationFeedback)
     $instructions = Get-CardReviewInstructions
-    $prompt = @"
+    return @"
 /review-card $($Task.setCode) $($Task.collectorNumber)
 
 $instructions
@@ -77,9 +77,15 @@ $instructions
 Review run $($Task.runId): $($Task.runName).
 The shared implementation is $($Task.className), at $($Task.sourcePath). Review the full shared implementation and related card faces even if the context helper calls this printing a reprint. A registration-only check is insufficient.
 Do not stage, commit, push, or switch branches. The worker publishes your permitted card-test changes. Production implementations, effects, predicates, docs, and test harness code are read-only.
-Run the focused tests for any card test classes you change and use their results to inform your review. Never run the full test suite.
+Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and permitted test edits, then return your structured review result. The worker runs scripts/run-card-test.ps1 for each changed test class with an exact fully-qualified class filter and a 7200-second (two-hour) timeout before publishing. Only edit test classes belonging to the card under review (including its related faces); never run other cards' tests, package filters, wildcards, module-wide tests, or the full suite. Compilation may legitimately compile more than 30,000 card/test classes even for one filtered test class. Pending compilation is not a test failure or executionError; do not return ERROR just because tests have not run yet. The worker handles validation and reports actual build/tool failures separately.
 Your final response MUST follow the provided JSON schema. outcome is PASS when there are no real findings, otherwise FINDINGS. findings is an array of individual bug descriptions: explain what is wrong and why it matters, like the current text reports. Include no test code, test names, test output, patches, or coverage commentary in findings or the text report. Return the actual oracle card name as cardName. Do not report tool failures as card bugs: if the review cannot be completed, return ERROR with an empty findings array and an executionError description. For completed reviews, executionError must be null.
+$ValidationFeedback
 "@
+}
+
+function Invoke-ReviewCodex {
+    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath, [string] $ValidationFeedback)
+    $prompt = Get-ReviewCodexPrompt $Task $ValidationFeedback
     $arguments = @('--search', '--ask-for-approval', 'never', 'exec', '--ephemeral', '--json', '--model', [string] $Task.model,
         '--config', ('model_reasoning_effort="' + $Task.reasoningEffort + '"'), '--cd', $Root,
         '--output-schema', $SchemaPath, '--output-last-message', $OutputPath, '-')
@@ -149,19 +155,22 @@ function Invoke-ReviewFocusedTests {
         $package = [regex]::Match($source, '\bpackage\s+([\w.]+)\s*;')
         if (-not $package.Success) { throw "Cannot resolve test package: $path" }
         $className = $package.Groups[1].Value + '.' + [System.IO.Path]::GetFileNameWithoutExtension($file)
+        $testLog = Join-Path $LogDirectory ([System.IO.Path]::GetFileNameWithoutExtension($file) + '.log')
+        Write-Host "Validating $className only; compilation and tests may take up to two hours. Log: $testLog"
         $startTime = Get-Date
         $savedPreference = $ErrorActionPreference
         Push-Location -LiteralPath $Root
         try {
             $ErrorActionPreference = 'Continue'
-            & powershell.exe -NoProfile -File (Join-Path $Root 'scripts/run-card-test.ps1') $className *> (Join-Path $LogDirectory ([System.IO.Path]::GetFileNameWithoutExtension($file) + '.log'))
+            & powershell.exe -NoProfile -File (Join-Path $Root 'scripts/run-card-test.ps1') $className -TimeoutSeconds 7200 *> $testLog
             $testExit = $LASTEXITCODE
         }
         finally { $ErrorActionPreference = $savedPreference; Pop-Location }
+        if ($testExit -eq 124) { throw "Focused compilation/test execution exceeded the two-hour (7200-second) timeout: $className. Log: $testLog. Changes were preserved." }
         if ($testExit -ne 0) {
             $xmlPath = Join-Path $Root "magical-vibes-application/build/test-results/test/TEST-$className.xml"
             if (-not (Test-Path -LiteralPath $xmlPath) -or (Get-Item -LiteralPath $xmlPath).LastWriteTime -lt $startTime) {
-                throw "Focused tests did not run successfully (build or tooling failure): $className. Changes were preserved."
+                throw "Focused tests did not run successfully (build or tooling failure): $className. Log: $testLog. Changes were preserved."
             }
             $suite = ([xml](Get-Content -LiteralPath $xmlPath -Raw -Encoding UTF8)).testsuite
             if ([int] $suite.failures + [int] $suite.errors -eq 0) { throw "Focused test execution failed without a behavioral test failure: $className" }
@@ -222,7 +231,26 @@ function Invoke-ReviewTask {
         $result.findings = @($review.findings)
         try {
             $testsFailed = Invoke-ReviewFocusedTests $Root $changes $Directory
-            if ($testsFailed -and $review.outcome -eq 'PASS') { throw 'Focused tests failed although the review reported PASS. Test changes were preserved for recovery.' }
+            if ($testsFailed -and $review.outcome -eq 'PASS') {
+                # Let the reviewer interpret behavioral failures after the worker
+                # finishes the slow build, without repeating compilation.
+                $validatedHashes = @{}
+                $testLogs = foreach ($path in $changes) {
+                    $validatedHashes[$path] = (Get-FileHash -LiteralPath (Join-Path $Root $path) -Algorithm SHA256).Hash
+                    Join-Path $Directory ([System.IO.Path]::GetFileNameWithoutExtension($path) + '.log')
+                }
+                $feedback = "The worker has now finished focused validation: compilation succeeded, but behavioral tests failed after your initial PASS. Read these validation logs: $($testLogs -join ', '). Reconcile the verdict with the oracle and failing behavior; return FINDINGS describing actual card bugs when confirmed. This follow-up is entirely read-only: do not edit any files or run any tests. If the tests themselves are invalid or no card bug can be confirmed, return ERROR with an explanation for recovery."
+                $validatedOutput = Join-Path $Directory 'validated-result.json'
+                Invoke-ReviewCodex $Root $Task $validatedOutput $schemaPath (Join-Path $Directory 'validated-codex.jsonl') $feedback
+                $validatedReview = Read-ReviewOutput $validatedOutput
+                foreach ($path in $changes) {
+                    if ((Get-FileHash -LiteralPath (Join-Path $Root $path) -Algorithm SHA256).Hash -ne $validatedHashes[$path]) { throw 'The validation follow-up changed tested files; changes were preserved for recovery.' }
+                }
+                if ($validatedReview.outcome -ne 'FINDINGS') { throw "Focused tests failed without a confirmed card finding. Changes were preserved for recovery. $($validatedReview.executionError)" }
+                $result.outcome = $validatedReview.outcome
+                $result.cardName = $validatedReview.cardName
+                $result.findings = @($validatedReview.findings)
+            }
             $published = Publish-ReviewTests $Root $Task $changes $reviewedCommit $Directory
             if ($published) { $result.publicationStatus = 'PUSHED'; $result.publishedCommit = $published }
         }
@@ -243,5 +271,8 @@ function Send-ReviewPendingResult {
     $body = $pending.result | ConvertTo-Json -Depth 12 -Compress
     Invoke-RestMethod -Uri "$($pending.serverUrl)/api/tasks/$($pending.taskId)/result" -Method Post -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 30 | Out-Null
     Remove-Item -LiteralPath $PendingPath
-    if ($pending.stop) { throw 'The result was saved to the server. Resolve the preserved checkout or publication failure before restarting.' }
+    if ($pending.stop) {
+        $reason = @($pending.result.executionError, $pending.result.publicationError) | Where-Object { $_ }
+        throw "The result was saved to the server. Worker stopped with changes preserved: $($reason -join '; '). Resolve the checkout or publication failure before restarting."
+    }
 }
