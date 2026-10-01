@@ -89,6 +89,18 @@ try {
     Assert-ReviewTest ($decoded.cardName -eq $unicodeName -and $decoded.findings[0] -eq $unicodeFinding) 'UTF-8 names or bug descriptions were corrupted'
     Write-Host 'PASS Unicode names and findings survive structured output'
 
+    $checkout = New-ReviewTestCheckout 'line endings'
+    Get-ReviewGitText $checkout @('config', 'core.autocrlf', 'true') | Out-Null
+    Get-ReviewGitText $checkout @('config', 'core.safecrlf', 'warn') | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $checkout $script:taskTestPath), "package example.cards.a; public class FirstCardTest {}`n// LF regression`n")
+    $diff = Invoke-ReviewGit $checkout @('-c', 'core.quotepath=false', 'diff', '--name-only', 'HEAD')
+    Assert-ReviewTest ($diff.ExitCode -eq 0 -and $diff.Output -match 'LF will be replaced by CRLF') 'The line-ending regression did not produce a Git warning'
+    $changedPaths = @(Get-ReviewChangedPaths $checkout)
+    Assert-ReviewTest ($changedPaths.Count -eq 1 -and $changedPaths[0] -eq $script:taskTestPath) 'Git warnings were treated as changed paths'
+    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-line-endings')
+    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Permitted card tests with line-ending warnings were not published'
+    Write-Host 'PASS Git line-ending warnings do not reject permitted card tests'
+
     $checkout = New-ReviewTestCheckout 'publish'
     $databasePath = Join-Path $checkout 'magical-vibes-review-server/review.sqlite'
     Add-Content -LiteralPath $databasePath -Value 'uncommitted database change'

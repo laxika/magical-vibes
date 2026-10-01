@@ -2,21 +2,40 @@
 
 function Invoke-ReviewGit {
     param([string] $Root, [string[]] $Arguments)
-    $savedPreference = $ErrorActionPreference
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = (Get-Command git -ErrorAction Stop).Source
+    $startInfo.Arguments = (@('-C', $Root) + $Arguments | ForEach-Object { ConvertTo-ReviewProcessArgument $_ }) -join ' '
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $startInfo.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
+    $startInfo.CreateNoWindow = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
     try {
-        $ErrorActionPreference = 'Continue'
-        $output = @(& git -C $Root @Arguments 2>&1 | ForEach-Object { $_.ToString() })
-        $code = $LASTEXITCODE
-        return [pscustomobject] @{ ExitCode = $code; Output = ($output -join "`n") }
+        if (-not $process.Start()) { throw 'Could not start Git.' }
+        # Drain both streams concurrently so a full diagnostic pipe cannot block Git.
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
+        return [pscustomobject] @{
+            ExitCode = $process.ExitCode
+            StandardOutput = $stdout
+            Output = (@($stdout, $stderr) | Where-Object { $_ } | ForEach-Object { $_.TrimEnd() }) -join "`n"
+        }
     }
-    finally { $ErrorActionPreference = $savedPreference }
+    finally { $process.Dispose() }
 }
 
 function Get-ReviewGitText {
     param([string] $Root, [string[]] $Arguments)
     $result = Invoke-ReviewGit $Root $Arguments
     if ($result.ExitCode -ne 0) { throw "Git $($Arguments -join ' ') failed: $($result.Output)" }
-    return $result.Output.Trim()
+    # Successful machine-readable output must never include stderr warnings.
+    return $result.StandardOutput.Trim()
 }
 
 function Get-ReviewChangedPaths {
