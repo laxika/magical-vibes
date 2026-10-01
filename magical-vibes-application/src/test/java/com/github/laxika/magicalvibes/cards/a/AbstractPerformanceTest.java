@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbstractPerformance.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({AbstractPerformance.class, GrizzlyBears.class, LlanowarElves.class, AltarsReap.class})
 class AbstractPerformanceTest extends BaseCardTest {
 
     @Test
@@ -76,13 +75,57 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     private void cast(List<Card> faceDown, List<Card> faceUp) {
-        harness.setLibrary(player1, List.of(
-                faceDown.get(0), faceDown.get(1), faceDown.get(2), faceDown.get(3),
-                faceUp.get(0), faceUp.get(1), faceUp.get(2), faceUp.get(3)));
-        harness.setHand(player1, List.of(new AbstractPerformance()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castSorcery(player1, 0);
+        harness.setLibrary(player1, java.util.stream.Stream.concat(faceDown.stream(), faceUp.stream()).toList());
+        harness.castFromHand(player1, new AbstractPerformance(), "{5}{U}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void shortLibraryStillAllowsOpponentToChooseEmptyFaceUpPile() {
+        List<Card> cards = List.of(new GrizzlyBears(), new LlanowarElves());
+        cast(cards, List.of());
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(cards);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void choosingOnlyNonemptyPileLeavesNoFreeCastChoice() {
+        List<Card> cards = List.of(new GrizzlyBears(), new LlanowarElves());
+        cast(cards, List.of());
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(cards);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryFinishesWithoutAChoice() {
+        cast(List.of(), List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AbstractPerformance);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotCastSpellWhoseMandatorySacrificeCannotBePaid() {
+        List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        Card reap = new AltarsReap();
+        List<Card> faceUp = List.of(reap, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        cast(faceDown, faceUp);
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(reap.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsAll(faceUp);
     }
 }
