@@ -47,6 +47,81 @@ class AbominationWorldRavagerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void mayhemCannotBeCastOutsideMainPhase() {
+        AbominationWorldRavager card = new AbominationWorldRavager();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayhemCannotBeCastOnOpponentsTurn() {
+        AbominationWorldRavager card = new AbominationWorldRavager();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayhemRequiresFiveManaIncludingRed() {
+        AbominationWorldRavager card = new AbominationWorldRavager();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayhemCannotBePaidWithOnlyColorlessMana() {
+        AbominationWorldRavager card = new AbominationWorldRavager();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void discardingAnotherCopyDoesNotEnableMayhem() {
+        AbominationWorldRavager card = new AbominationWorldRavager();
+        AbominationWorldRavager discardedCopy = new AbominationWorldRavager();
+        harness.setGraveyard(player1, List.of(card, discardedCopy));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discardedCopy.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card, discardedCopy);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepareMainPhase() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
