@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,14 +10,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StreambedAquitects.class, DeeptreadMerrow.class, Forest.class,
+        GoldmeadowDodger.class})
 class StreambedAquitectsTest extends BaseCardTest {
 
     // ===== Ability 1: pump a Merfolk =====
@@ -72,9 +73,9 @@ class StreambedAquitectsTest extends BaseCardTest {
     @DisplayName("Pump ability cannot target a non-Merfolk creature")
     void pumpCannotTargetNonMerfolk() {
         addCreatureReady(player1, new StreambedAquitects());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dodger = addCreatureReady(player1, new GoldmeadowDodger());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, dodger.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -84,41 +85,50 @@ class StreambedAquitectsTest extends BaseCardTest {
     @DisplayName("Resolving the second ability makes the target land an Island")
     void landBecomesIsland() {
         addCreatureReady(player1, new StreambedAquitects());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.activateAbility(player1, 0, 1, null, forestId);
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
         harness.passBothPriorities();
 
-        Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).contains(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("Resolving the second ability replaces the land's existing basic land types")
+    void landBecomesOnlyIsland() {
+        addCreatureReady(player1, new StreambedAquitects());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsOnly(CardSubtype.ISLAND);
     }
 
     @Test
     @DisplayName("Granted Island type wears off at end of turn")
     void islandTypeWearsOff() {
         addCreatureReady(player1, new StreambedAquitects());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.activateAbility(player1, 0, 1, null, forestId);
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getTransientSubtypes()).doesNotContain(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactly(CardSubtype.FOREST);
     }
 
     @Test
     @DisplayName("Second ability cannot target a creature")
     void landAbilityCannotTargetCreature() {
         addCreatureReady(player1, new StreambedAquitects());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dodger = addCreatureReady(player1, new GoldmeadowDodger());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, dodger.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

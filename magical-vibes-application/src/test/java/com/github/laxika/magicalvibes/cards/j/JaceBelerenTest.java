@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,60 +17,35 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed(JaceBeleren.class)
 class JaceBelerenTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        JaceBeleren card = new JaceBeleren();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new JaceBeleren()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new JaceBeleren(), "{1}{U}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Jace Beleren");
+        assertThat(entry.getCard()).isInstanceOf(JaceBeleren.class);
     }
 
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with initial loyalty 3")
     void resolvingEntersBattlefieldWithLoyalty() {
-        harness.setHand(player1, List.of(new JaceBeleren()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new JaceBeleren(), "{1}{U}{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Jace Beleren"));
-        Permanent jace = bf.stream().filter(p -> p.getCard().getName().equals("Jace Beleren")).findFirst().orElseThrow();
+        assertThat(bf).anyMatch(p -> p.getCard() instanceof JaceBeleren);
+        Permanent jace = bf.stream().filter(p -> p.getCard() instanceof JaceBeleren).findFirst().orElseThrow();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(jace.isSummoningSick()).isFalse();
     }
-
-    // ===== +2 ability: Each player draws a card =====
 
     @Test
     @DisplayName("+2 ability makes each player draw a card and increases loyalty")
@@ -87,8 +63,6 @@ class JaceBelerenTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore + 1);
     }
-
-    // ===== -1 ability: Target player draws a card =====
 
     @Test
     @DisplayName("-1 ability makes target player draw a card and decreases loyalty")
@@ -120,8 +94,6 @@ class JaceBelerenTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
     }
 
-    // ===== -10 ability: Target player mills twenty cards =====
-
     @Test
     @DisplayName("-10 ability mills twenty cards from target player's library")
     void minusTenMillsTwentyCards() {
@@ -129,10 +101,8 @@ class JaceBelerenTest extends BaseCardTest {
         jace.setCounterCount(CounterType.LOYALTY, 10);
 
         List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        while (deck.size() > 25) {
-            deck.removeFirst();
-        }
-        int deckSizeBefore = deck.size();
+        harness.setLibrary(player2, deck.subList(deck.size() - 25, deck.size()));
+        int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
         int graveyardBefore = harness.getGameData().playerGraveyards.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
@@ -145,6 +115,22 @@ class JaceBelerenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-10 ability mills only the cards available in a short library")
+    void minusTenMillsOnlyAvailableCards() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
+        harness.setLibrary(player2, List.of(
+                new JaceBeleren(), new JaceBeleren(), new JaceBeleren(), new JaceBeleren(), new JaceBeleren()));
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
     @DisplayName("-10 ability: Jace goes to graveyard at 0 loyalty")
     void minusTenJaceGoesToGraveyardAtZeroLoyalty() {
         Permanent jace = addReadyJace(player1);
@@ -153,7 +139,8 @@ class JaceBelerenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof JaceBeleren);
     }
 
     @Test
@@ -165,8 +152,6 @@ class JaceBelerenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough loyalty");
     }
-
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
@@ -192,14 +177,10 @@ class JaceBelerenTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyJace(Player player) {
-        JaceBeleren card = new JaceBeleren();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

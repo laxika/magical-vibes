@@ -55,6 +55,31 @@ class SageOfEpityrTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sage of Epityr leaves cards below the top four in place")
+    void leavesCardsBelowTopFourUntouched() {
+        harness.setHand(player1, List.of(new SageOfEpityr()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        Card cardA = new SageOfEpityr();
+        Card cardB = new SageOfEpityr();
+        Card cardC = new SageOfEpityr();
+        Card cardD = new SageOfEpityr();
+        Card cardE = new SageOfEpityr();
+        deck.addAll(List.of(cardA, cardB, cardC, cardD, cardE));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.getGameService().handleInteractionAnswer(
+                gd, player1, new InteractionAnswer.CardOrder(List.of(3, 0, 1, 2)));
+
+        assertThat(deck).containsExactly(cardD, cardA, cardB, cardC, cardE);
+    }
+
+    @Test
     @DisplayName("Sage of Epityr reorders all cards when the library has fewer than four")
     void reordersAllCardsInShortLibrary() {
         harness.setHand(player1, List.of(new SageOfEpityr()));

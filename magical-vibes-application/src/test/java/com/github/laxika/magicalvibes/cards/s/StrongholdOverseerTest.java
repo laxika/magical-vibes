@@ -16,7 +16,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(StrongholdOverseer.class)
+@CardUsed({StrongholdOverseer.class})
 class StrongholdOverseerTest extends BaseCardTest {
 
     @Test
@@ -58,6 +58,21 @@ class StrongholdOverseerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, nonShadow)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The ability does not affect creatures entering after it resolves")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent source = addCreatureReady(player1, new StrongholdOverseer());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent lateShadow = harness.enterBattlefieldAndReturn(player2, new StrongholdOverseer());
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, lateShadow)).isEqualTo(5);
     }
 
     private Card shadowCreature(int power, int toughness) {

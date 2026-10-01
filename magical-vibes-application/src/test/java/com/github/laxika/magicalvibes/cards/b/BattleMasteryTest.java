@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
+import com.github.laxika.magicalvibes.cards.d.DolmenGate;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BattleMastery.class, DeeptreadMerrow.class, DolmenGate.class})
 class BattleMasteryTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -23,14 +24,12 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Battle Mastery puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
 
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -40,21 +39,19 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Battle Mastery attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
 
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Battle Mastery")
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                        && p.getAttachedTo().equals(creature.getId()));
     }
 
     // ===== Grants double strike =====
@@ -62,15 +59,11 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has double strike")
     void enchantedCreatureHasDoubleStrike() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
 
-        Permanent battleMasteryPerm = new Permanent(new BattleMastery());
-        battleMasteryPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(battleMasteryPerm);
+        attachBattleMastery(creature);
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -78,21 +71,14 @@ class BattleMasteryTest extends BaseCardTest {
     void doubleStrikeDealsDamageInBothPhases() {
         harness.setLife(player2, 20);
 
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        bearsPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
+        creature.setAttacking(true);
 
-        Permanent battleMasteryPerm = new Permanent(new BattleMastery());
-        battleMasteryPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(battleMasteryPerm);
+        attachBattleMastery(creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
-        // Grizzly Bears (2/2) with double strike deals 2 + 2 = 4 damage
+        // Deeptread Merrow (2/1) with double strike deals 2 + 2 = 4 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
@@ -101,19 +87,15 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses double strike when Battle Mastery is removed")
     void effectsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
 
-        Permanent battleMasteryPerm = new Permanent(new BattleMastery());
-        battleMasteryPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(battleMasteryPerm);
+        Permanent battleMasteryPerm = attachBattleMastery(creature);
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(battleMasteryPerm);
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     // ===== Does not affect other creatures =====
@@ -121,19 +103,12 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Battle Mastery does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
+        Permanent otherCreature = addCreatureReady(player1, new DeeptreadMerrow());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        attachBattleMastery(creature);
 
-        Permanent battleMasteryPerm = new Permanent(new BattleMastery());
-        battleMasteryPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(battleMasteryPerm);
-
-        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     // ===== Fizzle =====
@@ -141,16 +116,14 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Battle Mastery fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
 
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(bearsPerm);
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
 
         harness.passBothPriorities();
 
@@ -163,28 +136,50 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Battle Mastery")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = addCreatureReady(player1, new DeeptreadMerrow());
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature permanent with Battle Mastery")
-    void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+    @DisplayName("Battle Mastery can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new DeeptreadMerrow());
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Battle Mastery")
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(creature.getId()));
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Battle Mastery")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new DolmenGate());
+        harness.setHand(player1, List.of(new BattleMastery()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        Permanent artifact = findPermanent(player1, "Dolmen Gate");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    private Permanent attachBattleMastery(Permanent creature) {
+        Permanent battleMastery = harness.addToBattlefieldAndReturn(player1, new BattleMastery());
+        battleMastery.setAttachedTo(creature.getId());
+        return battleMastery;
     }
 }

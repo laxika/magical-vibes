@@ -5,8 +5,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,10 +56,40 @@ class SengirNosferatuTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Bat returns a controlled Nosferatu to its owner's battlefield")
+    void returnsToOwnerWhenControllerDiffers() {
+        SengirNosferatu card = new SengirNosferatu();
+        card.setOwnerId(player1.getId());
+        Permanent nosferatu = addCreatureReady(player1, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), nosferatu,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
+
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        int nosferatuIndex = gd.playerBattlefields.get(player2.getId()).indexOf(nosferatu);
+        harness.activateAbility(player2, nosferatuIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Sengir Nosferatu");
+
+        Permanent bat = findPermanent(player2, "Bat");
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(bat), 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sengir Nosferatu");
+        harness.assertNotOnBattlefield(player2, "Sengir Nosferatu");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Choosing among multiple exiled Sengir Nosferatus returns only the chosen card")
     void choosesOneOfMultipleExiledNosferatus() {
-        addReadyNosferatu();
-        addReadyNosferatu();
+        addCreatureReady(player1, new SengirNosferatu());
+        addCreatureReady(player1, new SengirNosferatu());
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -88,14 +123,8 @@ class SengirNosferatuTest extends BaseCardTest {
                 .containsExactly("Sengir Nosferatu");
     }
 
-    private void addReadyNosferatu() {
-        Permanent permanent = new Permanent(new SengirNosferatu());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-    }
-
     private void activateNosferatu() {
-        addReadyNosferatu();
+        addCreatureReady(player1, new SengirNosferatu());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.m.MurmuringBosk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DailyRegimen.class, ElvishWarrior.class, MurmuringBosk.class})
 class DailyRegimenTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -20,19 +24,32 @@ class DailyRegimenTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Daily Regimen attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new ElvishWarrior());
 
         harness.setHand(player1, List.of(new DailyRegimen()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.castEnchantment(player1, 0, creaturePerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Daily Regimen")
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                        && p.getAttachedTo().equals(creaturePerm.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
+
+        harness.setHand(player1, List.of(new DailyRegimen()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Activated ability: +1/+1 counter on enchanted creature =====
@@ -40,11 +57,10 @@ class DailyRegimenTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts a +1/+1 counter on the enchanted creature")
     void activatingAbilityAddsCounter() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new ElvishWarrior());
 
-        Permanent auraPerm = new Permanent(new DailyRegimen());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -53,17 +69,16 @@ class DailyRegimenTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creaturePerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Activating ability puts it on the stack as an activated ability")
     void activatingAbilityPutsOnStack() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new ElvishWarrior());
 
-        Permanent auraPerm = new Permanent(new DailyRegimen());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -78,11 +93,10 @@ class DailyRegimenTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate over multiple activations")
     void countersAccumulate() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new ElvishWarrior());
 
-        Permanent auraPerm = new Permanent(new DailyRegimen());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -93,7 +107,7 @@ class DailyRegimenTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(creaturePerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Can enchant opponent's creature =====
@@ -101,11 +115,10 @@ class DailyRegimenTest extends BaseCardTest {
     @Test
     @DisplayName("Can enchant opponent's creature and boost it")
     void canEnchantOpponentCreature() {
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new ElvishWarrior());
 
-        Permanent auraPerm = new Permanent(new DailyRegimen());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
         auraPerm.setAttachedTo(opponentCreature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

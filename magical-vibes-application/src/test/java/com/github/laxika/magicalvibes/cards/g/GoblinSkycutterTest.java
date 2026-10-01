@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
+import com.github.laxika.magicalvibes.cards.s.SerraAvenger;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinSkycutter.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({GoblinSkycutter.class, DurkwoodBaloth.class, SerraAvenger.class})
 class GoblinSkycutterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrifices itself, deals 2 damage, and removes flying until end of turn")
     void sacrificesDealsDamageAndRemovesFlying() {
         harness.addToBattlefield(player1, new GoblinSkycutter());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAvenger());
 
         harness.activateAbility(player1, 0, null, target.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -32,8 +32,7 @@ class GoblinSkycutterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
@@ -42,7 +41,7 @@ class GoblinSkycutterTest extends BaseCardTest {
     @DisplayName("Cannot target a creature without flying")
     void cannotTargetCreatureWithoutFlying() {
         harness.addToBattlefield(player1, new GoblinSkycutter());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DurkwoodBaloth());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Cancel.class, GaeasHerald.class, GrizzlyBears.class, MightOfOaks.class})
 class CancelTest extends BaseCardTest {
@@ -65,6 +66,23 @@ class CancelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry cancelEntry = gd.stack.getLast();
         assertThat(cancelEntry.getTargetId()).isEqualTo(might.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, bears);
+
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(
+                player2, 0, harness.getPermanentId(player1, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Cancel");
     }
 
     // ===== Resolving =====

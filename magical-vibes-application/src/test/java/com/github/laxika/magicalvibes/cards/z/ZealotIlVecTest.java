@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,29 +14,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZealotIlVec.class, GrizzlyBears.class, SoltariFootSoldier.class})
+@CardUsed({ZealotIlVec.class, AshcoatBear.class})
 class ZealotIlVecTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new ZealotIlVec());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ZealotIlVec());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addDefenderCreature() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+        return addCreatureReady(player2, new AshcoatBear());
     }
 
     private void advanceToUnblockedMay(Permanent target) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -66,6 +57,19 @@ class ZealotIlVecTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target may be a creature controlled by the attacking player")
+    void canTargetOwnCreature() {
+        Permanent attacker = addAttacker();
+        Permanent victim = addCreatureReady(player1, new AshcoatBear());
+
+        advanceToUnblockedMay(victim);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
     @DisplayName("Declining leaves the creature undamaged and preserves combat damage")
     void declineDoesNothing() {
         Permanent attacker = addAttacker();
@@ -82,14 +86,9 @@ class ZealotIlVecTest extends BaseCardTest {
     @DisplayName("A shadow creature can block and prevents the unblocked trigger")
     void blockedAttackerDoesNotTrigger() {
         Permanent attacker = addAttacker();
-        Permanent blocker = new Permanent(new SoltariFootSoldier());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new ZealotIlVec());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

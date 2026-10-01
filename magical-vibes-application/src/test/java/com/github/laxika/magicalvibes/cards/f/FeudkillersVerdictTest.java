@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(FeudkillersVerdict.class)
 class FeudkillersVerdictTest extends BaseCardTest {
 
     private long giantTokenCount() {
@@ -20,9 +20,7 @@ class FeudkillersVerdictTest extends BaseCardTest {
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new FeudkillersVerdict()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new FeudkillersVerdict(), "{4}{W}{W}");
         harness.passBothPriorities();
     }
 
@@ -40,6 +38,8 @@ class FeudkillersVerdictTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.GIANT))
                 .findFirst().orElseThrow();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, token)).isEqualTo(5);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, token)).isEqualTo(5);
     }

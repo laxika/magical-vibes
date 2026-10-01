@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoaringHope.class, GrizzlyBears.class, FountainOfYouth.class})
 class SoaringHopeTest extends BaseCardTest {
 
     // ===== ETB life gain =====
@@ -22,9 +24,7 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger causes controller to gain 3 life")
     void etbGainsLife() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -33,8 +33,8 @@ class SoaringHopeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura spell — ETB trigger goes on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 
     // ===== Flying =====
@@ -42,9 +42,7 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
@@ -58,9 +56,7 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating {W} ability puts Soaring Hope on top of its owner's library")
     void activateAbilityPutsOnTopOfLibrary() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
@@ -83,11 +79,30 @@ class SoaringHopeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Controlled Soaring Hope goes to its owner's library")
+    void activateAbilityUsesOwnerLibraryWhenControlledByOpponent() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        SoaringHope auraCard = new SoaringHope();
+        auraCard.setOwnerId(player1.getId());
+        Permanent auraPerm = new Permanent(auraCard);
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player2.getId()).add(auraPerm);
+
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(auraCard.getId());
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(auraCard.getId()));
+    }
+
+    @Test
     @DisplayName("Creature loses flying after Soaring Hope is put on top of library")
     void creatureLosesFlyingAfterTuck() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoaringHope());
         auraPerm.setAttachedTo(bearsPerm.getId());
@@ -107,7 +122,7 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -124,9 +139,7 @@ class SoaringHopeTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SoaringHope()));
         harness.addMana(player1, ManaColor.WHITE, 5);

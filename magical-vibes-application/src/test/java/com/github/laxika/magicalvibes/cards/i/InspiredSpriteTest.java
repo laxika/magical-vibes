@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.Forfend;
+import com.github.laxika.magicalvibes.cards.s.StonybrookBanneret;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InspiredSprite.class, StonybrookBanneret.class, Forfend.class})
 class InspiredSpriteTest extends BaseCardTest {
 
     private Permanent addTappedSprite() {
@@ -29,14 +31,13 @@ class InspiredSpriteTest extends BaseCardTest {
     @DisplayName("Accepting the trigger untaps Inspired Sprite when a Wizard spell is cast")
     void acceptUntaps() {
         Permanent sprite = addTappedSprite();
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new StonybrookBanneret()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(sprite.isTapped()).isFalse();
     }
@@ -45,14 +46,13 @@ class InspiredSpriteTest extends BaseCardTest {
     @DisplayName("Declining the trigger leaves Inspired Sprite tapped")
     void declineStaysTapped() {
         Permanent sprite = addTappedSprite();
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new StonybrookBanneret()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(sprite.isTapped()).isTrue();
     }
@@ -60,13 +60,30 @@ class InspiredSpriteTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a non-Wizard spell does not trigger")
     void nonWizardDoesNotTrigger() {
-        addTappedSprite();
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Permanent sprite = addTappedSprite();
+        harness.setHand(player1, List.of(new Forfend()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(sprite.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting a Wizard spell by an opponent does not trigger")
+    void opponentWizardDoesNotTrigger() {
+        Permanent sprite = addTappedSprite();
+        harness.setHand(player2, List.of(new StonybrookBanneret()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(sprite.isTapped()).isTrue();
     }
 
     // ===== {T}: Draw a card, then discard a card =====
@@ -76,13 +93,13 @@ class InspiredSpriteTest extends BaseCardTest {
     void lootAbility() {
         Permanent sprite = harness.addToBattlefieldAndReturn(player1, new InspiredSprite());
         sprite.setSummoningSick(false);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setHand(player1, List.of(new StonybrookBanneret()));
+        harness.setLibrary(player1, List.of(new Forfend()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Drew a card, now awaiting a discard choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);

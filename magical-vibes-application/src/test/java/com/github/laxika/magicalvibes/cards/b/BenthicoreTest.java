@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
+import com.github.laxika.magicalvibes.cards.t.Tarfire;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Benthicore.class, DeeptreadMerrow.class, Tarfire.class})
 class BenthicoreTest extends BaseCardTest {
 
     // ===== ETB: creates two Merfolk Wizard tokens =====
@@ -41,6 +44,8 @@ class BenthicoreTest extends BaseCardTest {
         Permanent token = findMerfolkWizardToken(player1);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.MERFOLK, CardSubtype.WIZARD);
     }
@@ -54,14 +59,14 @@ class BenthicoreTest extends BaseCardTest {
         @Test
         @DisplayName("Activating ability puts it on the stack")
         void activatingPutsOnStack() {
-            addBenthicoreReady(player1);
+            Permanent benthicore = addBenthicoreReady(player1);
             addMerfolk(player1, 2);
 
-            harness.activateAbility(player1, 0, null, null);
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Benthicore");
+            assertThat(gd.stack.getFirst().getCard()).isSameAs(benthicore.getCard());
         }
 
         @Test
@@ -71,8 +76,8 @@ class BenthicoreTest extends BaseCardTest {
             benthicore.tap();
             addMerfolk(player1, 2);
 
-            harness.activateAbility(player1, 0, null, null);
-            harness.passBothPriorities();
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
 
             assertThat(benthicore.isTapped()).isFalse();
             assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isTrue();
@@ -84,8 +89,8 @@ class BenthicoreTest extends BaseCardTest {
             Permanent benthicore = addBenthicoreReady(player1);
             addMerfolk(player1, 2);
 
-            harness.activateAbility(player1, 0, null, null);
-            harness.passBothPriorities();
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
             assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isTrue();
 
             harness.forceStep(TurnStep.END_STEP);
@@ -98,10 +103,10 @@ class BenthicoreTest extends BaseCardTest {
         @Test
         @DisplayName("Tapping two Merfolk taps them as cost")
         void tapsMerfolkAsCost() {
-            addBenthicoreReady(player1);
+            Permanent benthicore = addBenthicoreReady(player1);
             addMerfolk(player1, 3);
 
-            harness.activateAbility(player1, 0, null, null);
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
             tapMerfolk(player1, 2);
 
             long tappedMerfolk = gd.playerBattlefields.get(player1.getId()).stream()
@@ -120,24 +125,61 @@ class BenthicoreTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate with fewer than two untapped Merfolk")
         void cannotActivateWithFewerThanTwoMerfolk() {
-            addBenthicoreReady(player1);
+            Permanent benthicore = addBenthicoreReady(player1);
             addMerfolk(player1, 1);
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+            assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(benthicore), null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Tapped Merfolk cannot pay the activation cost")
+        void tappedMerfolkCannotPayCost() {
+            Permanent benthicore = addBenthicoreReady(player1);
+            Permanent firstMerfolk = addCreatureReady(player1, new DeeptreadMerrow());
+            Permanent secondMerfolk = addCreatureReady(player1, new DeeptreadMerrow());
+            firstMerfolk.tap();
+
+            assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(benthicore), null, null))
+                    .isInstanceOf(IllegalStateException.class);
+            assertThat(secondMerfolk.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Only Merfolk controlled by the activating player can pay the cost")
+        void opponentMerfolkCannotPayCost() {
+            Permanent benthicore = addBenthicoreReady(player1);
+            addCreatureReady(player1, new DeeptreadMerrow());
+            addCreatureReady(player2, new DeeptreadMerrow());
+
+            assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(benthicore), null, null))
                     .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
         @DisplayName("Non-Merfolk creatures cannot be tapped to pay the cost")
         void nonMerfolkCannotBeUsed() {
-            addBenthicoreReady(player1);
+            Permanent benthicore = addBenthicoreReady(player1);
             addMerfolk(player1, 1);
+            addBenthicoreReady(player1);
 
-            Permanent bears = new Permanent(new GrizzlyBears());
-            bears.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(bears);
+            assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(benthicore), null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        @Test
+        @DisplayName("Shroud prevents a targeted spell from targeting Benthicore")
+        void shroudPreventsTargeting() {
+            Permanent benthicore = addBenthicoreReady(player1);
+            addMerfolk(player1, 2);
+
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
+
+            harness.setHand(player1, List.of(new Tarfire()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, benthicore.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -145,37 +187,18 @@ class BenthicoreTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void castAndResolveBenthicore() {
-        harness.setHand(player1, List.of(new Benthicore()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new Benthicore(), "{6}{U}");
+        resolveAllTriggers();
     }
 
     private Permanent addBenthicoreReady(Player player) {
-        Permanent benthicore = new Permanent(new Benthicore());
-        benthicore.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(benthicore);
-        return benthicore;
+        return addCreatureReady(player, new Benthicore());
     }
 
     private void addMerfolk(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent merfolk = new Permanent(createMerfolkCard("Test Merfolk " + i));
-            merfolk.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(merfolk);
+            addCreatureReady(player, new DeeptreadMerrow());
         }
-    }
-
-    private Card createMerfolkCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.MERFOLK));
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
     }
 
     private int countMerfolkWizardTokens(Player player) {
@@ -202,5 +225,9 @@ class BenthicoreTest extends BaseCardTest {
         for (Permanent merfolk : untappedMerfolk) {
             harness.handlePermanentChosen(player, merfolk.getId());
         }
+    }
+
+    private int battlefieldIndex(Permanent permanent) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 }
