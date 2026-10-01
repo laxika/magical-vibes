@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SimicGrowthChamber;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,30 +13,28 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AzoriusChancery.class, Island.class})
+@CardUsed({AzoriusChancery.class, SimicGrowthChamber.class, AzoriusGuildmage.class})
 class AzoriusChanceryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and returns a chosen land to its owner's hand")
     void entersTappedAndReturnsChosenLand() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent growthChamber = harness.addToBattlefieldAndReturn(player1, new SimicGrowthChamber());
         harness.setHand(player1, List.of(new AzoriusChancery()));
 
         harness.playLand(player1, 0);
 
-        Permanent chancery = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AzoriusChancery)
-                .findFirst().orElseThrow();
+        Permanent chancery = findPermanent(player1, "Azorius Chancery");
         assertThat(chancery.isTapped()).isTrue();
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, island.getId());
+        harness.handlePermanentChosen(player1, growthChamber.getId());
 
         harness.assertOnBattlefield(player1, "Azorius Chancery");
-        harness.assertInHand(player1, "Island");
-        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInHand(player1, "Simic Growth Chamber");
+        harness.assertNotOnBattlefield(player1, "Simic Growth Chamber");
     }
 
     @Test
@@ -47,13 +45,32 @@ class AzoriusChanceryTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent chancery = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent chancery = findPermanent(player1, "Azorius Chancery");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactly(chancery.getId());
         harness.handlePermanentChosen(player1, chancery.getId());
 
         harness.assertNotOnBattlefield(player1, "Azorius Chancery");
         harness.assertInHand(player1, "Azorius Chancery");
+    }
+
+    @Test
+    @DisplayName("Only offers lands controlled by its controller")
+    void onlyOffersControlledLands() {
+        Permanent growthChamber = harness.addToBattlefieldAndReturn(player1, new SimicGrowthChamber());
+        Permanent opponentGrowthChamber = harness.addToBattlefieldAndReturn(player2, new SimicGrowthChamber());
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildmage());
+        harness.setHand(player1, List.of(new AzoriusChancery()));
+
+        harness.playLand(player1, 0);
+        Permanent chancery = findPermanent(player1, "Azorius Chancery");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(growthChamber.getId(), chancery.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(opponentGrowthChamber.getId(), guildmage.getId());
+
+        harness.handlePermanentChosen(player1, growthChamber.getId());
     }
 
     @Test

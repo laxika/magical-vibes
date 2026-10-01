@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TribalFlames.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class,
-        RagingKavu.class})
+        RagingKavu.class, JaceBeleren.class})
 class TribalFlamesTest extends BaseCardTest {
 
     @Test
@@ -106,6 +108,23 @@ class TribalFlamesTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Raging Kavu");
         harness.assertInGraveyard(player2, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Can target a planeswalker")
+    void canTargetPlaneswalker() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+
+        harness.setHand(player1, List.of(new TribalFlames()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test

@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "129")
+@CardRegistration(set = "WHO", collectorNumber = "416")
+@CardRegistration(set = "WHO", collectorNumber = "734")
+@CardRegistration(set = "WHO", collectorNumber = "1007")
 public class FrostFairLureFish extends Card {
 
     public FrostFairLureFish() {

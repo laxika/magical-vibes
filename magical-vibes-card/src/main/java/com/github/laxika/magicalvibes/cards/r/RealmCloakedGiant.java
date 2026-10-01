@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "26")
 @CardRegistration(set = "AFC", collectorNumber = "70")
+@CardRegistration(set = "BLC", collectorNumber = "149")
 public class RealmCloakedGiant extends Card {
 
     public RealmCloakedGiant() {

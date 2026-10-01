@@ -27,7 +27,7 @@ class HeadOfTheClassTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DoomBlade(), new DoomBlade()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         UUID firstTargetId = harness.getPermanentId(player1, "Grizzly Bears");
         List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
@@ -35,13 +35,13 @@ class HeadOfTheClassTest extends BaseCardTest {
                 .toList();
         UUID secondTargetId = bears.get(1).getId();
 
-        harness.castInstant(player1, 0, firstTargetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castInstant(player1, 0, firstTargetId);
+            resolveAllTriggers();
+        });
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, secondTargetId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

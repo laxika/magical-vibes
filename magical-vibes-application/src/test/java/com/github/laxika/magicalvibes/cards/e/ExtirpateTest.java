@@ -38,8 +38,7 @@ class ExtirpateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Extirpate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMultipleCardsChosen(player1, List.of(target.getId(), handCopy.getId(), libraryCopy.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -51,6 +50,33 @@ class ExtirpateTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Grizzly Bears"));
         assertThat(gd.playerDecks.get(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Plains"));
+    }
+
+    @Test
+    @DisplayName("Must exile all graveyard copies but may leave matching cards in hidden zones")
+    void exilesAllPublicCopiesWhileAllowingHiddenCopiesToRemain() {
+        Card target = new GrizzlyBears();
+        Card graveyardCopy = new GrizzlyBears();
+        Card handCopy = new GrizzlyBears();
+        Card libraryCopy = new GrizzlyBears();
+
+        harness.setGraveyard(player2, new ArrayList<>(List.of(target, graveyardCopy)));
+        harness.setHand(player2, List.of(handCopy));
+        gd.playerDecks.get(player2.getId()).clear();
+        gd.playerDecks.get(player2.getId()).add(libraryCopy);
+
+        harness.setHand(player1, List.of(new Extirpate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(libraryCopy);
     }
 
     @Test

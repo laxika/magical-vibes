@@ -20,6 +20,7 @@ class TheMysticalArchiveTest extends BaseCardTest {
     @Test
     void draftsFaceDownCardWithSourceAndReturnsItToHand() {
         Permanent archive = harness.enterBattlefieldAndReturn(player1, new TheMysticalArchive());
+        resolveAllTriggers();
 
         PendingInteraction.SpellbookDraftToExileChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);
@@ -33,7 +34,8 @@ class TheMysticalArchiveTest extends BaseCardTest {
                 && entry.faceDown());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 2, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(drafted.getId()));
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(drafted.getId()));
@@ -45,13 +47,17 @@ class TheMysticalArchiveTest extends BaseCardTest {
         archive.setSummoningSick(false);
         Card startingDeckCard = new GrizzlyBears();
         harness.setHand(player1, List.of(startingDeckCard));
+        assertThat(gd.startingDeckCardIds.get(player1.getId())).contains(startingDeckCard.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
         harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getOutsideStartingDeckSpellOnlyMana(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -65,7 +71,8 @@ class TheMysticalArchiveTest extends BaseCardTest {
         harness.setHand(player1, List.of(outsideStartingDeckCard));
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
         harness.handleListChoice(player1, ManaColor.GREEN.name());
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

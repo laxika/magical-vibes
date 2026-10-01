@@ -26,7 +26,7 @@ class GhiredConclaveExileTest extends BaseCardTest {
         addGhiredMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent rhino = findPermanents(player1, "Rhino").getFirst();
         assertThat(rhino.getCard().isToken()).isTrue();
@@ -41,8 +41,11 @@ class GhiredConclaveExileTest extends BaseCardTest {
         Permanent ghired = addCreatureReady(player1, new GhiredConclaveExile());
         harness.addToBattlefield(player1, rhinoToken());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> {
+                    declareAttackers(List.of(0));
+                    resolveAllTriggers();
+                });
 
         List<Permanent> rhinos = findPermanents(player1, "Rhino");
         assertThat(rhinos).hasSize(2);

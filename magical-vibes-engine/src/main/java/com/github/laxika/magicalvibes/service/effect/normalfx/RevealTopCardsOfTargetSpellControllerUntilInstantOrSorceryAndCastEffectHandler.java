@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -27,6 +28,7 @@ public class RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEf
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final CounterSpellEffectHandler counterSpellEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +43,7 @@ public class RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEf
         }
 
         UUID targetControllerId = targetSpell.getControllerId();
+        counterSpellEffectHandler.resolve(gameData, entry, new CounterSpellEffect());
         List<Card> library = gameData.playerDecks.get(targetControllerId);
         if (library == null || library.isEmpty()) {
             return;

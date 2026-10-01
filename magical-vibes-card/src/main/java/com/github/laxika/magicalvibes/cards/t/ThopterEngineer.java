@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "2XM", collectorNumber = "147")
 @CardRegistration(set = "PIO", collectorNumber = "344")
 @CardRegistration(set = "C21", collectorNumber = "181")
+@CardRegistration(set = "BLC", collectorNumber = "204")
 public class ThopterEngineer extends Card {
 
     public ThopterEngineer() {

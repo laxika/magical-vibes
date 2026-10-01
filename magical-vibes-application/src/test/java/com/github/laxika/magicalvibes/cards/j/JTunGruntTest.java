@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JTunGrunt.class, SnowCoveredForest.class})
 class JTunGruntTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying cumulative upkeep puts two cards from one graveyard on library bottoms")
     void paysCumulativeUpkeep() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
-        Card first = new GrizzlyBears();
-        Card second = new Forest();
-        Card libraryCard = new GrizzlyBears();
+        Card first = new SnowCoveredForest();
+        Card second = new SnowCoveredForest();
+        Card libraryCard = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(first, second));
         harness.setLibrary(player1, new ArrayList<>(List.of(libraryCard)));
 
@@ -46,12 +48,12 @@ class JTunGruntTest extends BaseCardTest {
     void choosesOneGraveyardPerPayment() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
         grunt.setCounterCount(CounterType.AGE, 1);
-        Card ownFirst = new GrizzlyBears();
-        Card ownSecond = new Forest();
-        Card ownUnused = new GrizzlyBears();
-        Card ownUnusedSecond = new Forest();
-        Card opponentFirst = new GrizzlyBears();
-        Card opponentSecond = new Forest();
+        Card ownFirst = new SnowCoveredForest();
+        Card ownSecond = new SnowCoveredForest();
+        Card ownUnused = new SnowCoveredForest();
+        Card ownUnusedSecond = new SnowCoveredForest();
+        Card opponentFirst = new SnowCoveredForest();
+        Card opponentSecond = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(ownFirst, ownSecond, ownUnused, ownUnusedSecond));
         harness.setGraveyard(player2, List.of(opponentFirst, opponentSecond));
         harness.setLibrary(player1, new ArrayList<>());
@@ -76,8 +78,8 @@ class JTunGruntTest extends BaseCardTest {
     @DisplayName("Declining cumulative upkeep sacrifices the creature")
     void declineSacrifices() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
-        Card first = new GrizzlyBears();
-        Card second = new Forest();
+        Card first = new SnowCoveredForest();
+        Card second = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(first, second));
 
         advanceToUpkeep(player1);
@@ -89,11 +91,11 @@ class JTunGruntTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cards from different graveyards cannot be combined for one payment")
-    void cannotCombineGraveyardsForOnePayment() {
+    @DisplayName("Cumulative upkeep cannot be paid when no single graveyard has two cards")
+    void cannotPayWhenNoSingleGraveyardHasEnoughCards() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
-        Card ownCard = new GrizzlyBears();
-        Card opponentCard = new Forest();
+        Card ownCard = new SnowCoveredForest();
+        Card opponentCard = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of(opponentCard));
 
@@ -103,5 +105,38 @@ class JTunGruntTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(grunt);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard, grunt.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("A cumulative upkeep payment cannot combine cards from different graveyards")
+    void rejectsCombiningGraveyardsForOnePayment() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
+        Card ownFirst = new SnowCoveredForest();
+        Card ownSecond = new SnowCoveredForest();
+        Card opponentFirst = new SnowCoveredForest();
+        Card opponentSecond = new SnowCoveredForest();
+        harness.setGraveyard(player1, List.of(ownFirst, ownSecond));
+        harness.setGraveyard(player2, List.of(opponentFirst, opponentSecond));
+        harness.setLibrary(player1, new ArrayList<>());
+        harness.setLibrary(player2, new ArrayList<>());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(ownFirst.getId(), opponentFirst.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownFirst, ownSecond);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentFirst, opponentSecond);
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownFirst.getId(), ownSecond.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(grunt);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentFirst, opponentSecond);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownFirst, ownSecond);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 }

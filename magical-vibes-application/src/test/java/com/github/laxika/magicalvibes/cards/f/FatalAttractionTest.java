@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.t.TolariaWest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalAttraction.class, AncientBrontodon.class, FountainOfYouth.class})
+@CardUsed({FatalAttraction.class, AncientBrontodon.class, TolariaWest.class})
 class FatalAttractionTest extends BaseCardTest {
 
     @Test
@@ -44,13 +44,27 @@ class FatalAttractionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fatal Attraction's upkeep trigger still deals damage after the Aura leaves")
+    void upkeepTriggerDealsDamageAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new AncientBrontodon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FatalAttraction());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Fatal Attraction cannot enchant a noncreature permanent")
     void cannotEnchantNoncreaturePermanent() {
-        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TolariaWest());
         harness.setHand(player1, List.of(new FatalAttraction()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

@@ -31,21 +31,21 @@ public class MyojinOfBloomingDawn extends Card {
     public MyojinOfBloomingDawn() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastFromZone(Zone.HAND),
-                new EnterWithCountersEffect(CounterType.DIVINITY, new Fixed(1))));
+                new EnterWithCountersEffect(CounterType.INDESTRUCTIBLE, new Fixed(1))));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.DIVINITY),
+                new SourceCounterThreshold(1, CounterType.INDESTRUCTIBLE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(1, CounterType.DIVINITY),
+                        new RemoveCounterFromSourceCost(1, CounterType.INDESTRUCTIBLE),
                         new CreateTokenEffect(
                                 new PermanentCount(new PermanentTruePredicate(), CountScope.CONTROLLER),
                                 "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of())
                 ),
-                "Remove a divinity counter from Myojin of Blooming Dawn: Create a 1/1 colorless Spirit creature token for each permanent you control."
+                "Remove an indestructible counter from Myojin of Blooming Dawn: Create a 1/1 colorless Spirit creature token for each permanent you control."
         ));
     }
 }

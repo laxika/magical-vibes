@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.m.ManaTithe;
+import com.github.laxika.magicalvibes.cards.r.RecklessWurm;
+import com.github.laxika.magicalvibes.cards.w.WhitemaneLion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,35 +16,35 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SulfurElemental.class, WhiteKnight.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SulfurElemental.class, WhitemaneLion.class, RecklessWurm.class, ManaTithe.class})
 class SulfurElementalTest extends BaseCardTest {
 
     @Test
     @DisplayName("White creatures get +1/-1")
     void buffsAndDebuffsWhiteCreatures() {
         harness.addToBattlefield(player1, new SulfurElemental());
-        harness.addToBattlefield(player1, new WhiteKnight());
-        harness.addToBattlefield(player2, new WhiteKnight());
+        harness.addToBattlefield(player1, new WhitemaneLion());
+        harness.addToBattlefield(player2, new WhitemaneLion());
 
-        Permanent whiteKnight = findPermanent(player1, "White Knight");
-        Permanent opponentWhiteKnight = findPermanent(player2, "White Knight");
+        Permanent whiteCreature = findPermanent(player1, "Whitemane Lion");
+        Permanent opponentWhiteCreature = findPermanent(player2, "Whitemane Lion");
 
-        assertThat(gqs.getEffectivePower(gd, whiteKnight)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, whiteKnight)).isEqualTo(1);
-        assertThat(gqs.getEffectivePower(gd, opponentWhiteKnight)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opponentWhiteKnight)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentWhiteCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentWhiteCreature)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Nonwhite creatures are unaffected")
     void ignoresNonwhiteCreatures() {
         harness.addToBattlefield(player1, new SulfurElemental());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RecklessWurm());
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent nonwhiteCreature = findPermanent(player2, "Reckless Wurm");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonwhiteCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nonwhiteCreature)).isEqualTo(4);
     }
 
     @Test
@@ -55,7 +56,7 @@ class SulfurElementalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SulfurElemental()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
         harness.castCreature(player1, 0);
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -64,14 +65,15 @@ class SulfurElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Split second prevents an opponent's spell response")
     void splitSecondPreventsSpellResponse() {
-        harness.setHand(player1, List.of(new SulfurElemental()));
+        SulfurElemental sulfurElemental = new SulfurElemental();
+        harness.setHand(player1, List.of(sulfurElemental));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new ManaTithe()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, sulfurElemental.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

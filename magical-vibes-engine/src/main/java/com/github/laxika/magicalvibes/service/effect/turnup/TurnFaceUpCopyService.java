@@ -13,11 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpAttachAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -50,6 +52,7 @@ public class TurnFaceUpCopyService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
 
     public void turnFaceUpWithoutCost(GameData gameData, Permanent permanent) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -79,6 +82,24 @@ public class TurnFaceUpCopyService {
     }
 
     public boolean prepareChoice(GameData gameData, Permanent source, UUID controllerId) {
+        if (source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .anyMatch(TurnFaceUpAttachAuraEffect.class::isInstance)) {
+            List<UUID> hosts = new ArrayList<>();
+            gameData.forEachPermanent((ignored, permanent) -> {
+                if (!permanent.getId().equals(source.getId())
+                        && auraAttachmentService.canEnchant(gameData, source.getCard(), controllerId, permanent)) {
+                    hosts.add(permanent.getId());
+                }
+            });
+            if (hosts.isEmpty()) {
+                return false;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.TurnFaceUpCopy(source.getId(), controllerId));
+            playerInputService.beginAnyTargetChoice(gameData, controllerId, hosts, List.of(controllerId),
+                    "Choose a creature to enchant, or choose yourself not to attach this Aura.");
+            return true;
+        }
         TurnFaceUpCopyEffect effect = findCopyEffect(source.getCard());
         if (effect == null) {
             return preparePowerToughnessChoice(gameData, source, controllerId);
@@ -112,6 +133,13 @@ public class TurnFaceUpCopyService {
 
         if (controllerId != null && !controllerId.equals(chosenId)) {
             Permanent target = gameQueryService.findPermanentById(gameData, chosenId);
+            if (target != null && source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                    .anyMatch(TurnFaceUpAttachAuraEffect.class::isInstance)
+                    && auraAttachmentService.canEnchant(gameData, source.getCard(), controllerId, target)) {
+                source.setAttachedTo(target.getId());
+                source.setTimestamp(gameData.nextTimestamp());
+                triggerCollectionService.checkAuraAttachedTriggers(gameData, source, target.getId());
+            }
             TurnFaceUpCopyEffect effect = findCopyEffect(source.getCard());
             if (target != null && effect != null && gameQueryService.isCreature(gameData, target)) {
                 permanentCopierService.applyCloneCopy(source, target, null, null);

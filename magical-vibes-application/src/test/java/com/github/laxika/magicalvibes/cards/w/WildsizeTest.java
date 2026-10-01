@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GruulNodorog;
+import com.github.laxika.magicalvibes.cards.g.GruulSignet;
+import com.github.laxika.magicalvibes.cards.h.HatchingPlans;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,20 +17,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Wildsize.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({Wildsize.class, GruulNodorog.class, GruulSignet.class, HatchingPlans.class})
 class WildsizeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts target creature, grants trample, and draws a card")
     void boostsGrantsTrampleAndDraws() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        harness.setLibrary(player1, List.of(new HatchingPlans()));
         harness.setHand(player1, List.of(new Wildsize()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
@@ -41,14 +40,13 @@ class WildsizeTest extends BaseCardTest {
     @Test
     @DisplayName("The boost and trample wear off at cleanup")
     void temporaryEffectsWearOffAtCleanup() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        harness.setLibrary(player1, List.of(new HatchingPlans()));
         harness.setHand(player1, List.of(new Wildsize()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -61,8 +59,8 @@ class WildsizeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw when the target is illegal on resolution")
     void fizzlesWithoutDrawingWhenTargetLeaves() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        harness.setLibrary(player1, List.of(new HatchingPlans()));
         harness.setHand(player1, List.of(new Wildsize()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -78,13 +76,30 @@ class WildsizeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
         harness.setHand(player1, List.of(new Wildsize()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by an opponent")
+    void canTargetOpponentsCreature() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GruulNodorog());
+        harness.setLibrary(player1, List.of(new HatchingPlans()));
+        harness.setHand(player1, List.of(new Wildsize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, opponentCreature.getId());
+
+        assertThat(opponentCreature.getPowerModifier()).isEqualTo(2);
+        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(opponentCreature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

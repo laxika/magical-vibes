@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Drekavac;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,44 +14,31 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GnatAlleyCreeper.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({GnatAlleyCreeper.class, MistralCharger.class, Drekavac.class})
 class GnatAlleyCreeperTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Can't be blocked by a creature with flying")
-    void cannotBeBlockedByCreatureWithFlying() {
-        Permanent blocker = addCreatureReady(player2, new AirElemental());
-        Permanent creeper = addCreatureReady(player1, new GnatAlleyCreeper());
-        prepareBlockers(creeper);
+    @DisplayName("Gnat Alley Creeper can't be blocked by a creature with flying")
+    void cannotBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new GnatAlleyCreeper());
+        addCreatureReady(player2, new MistralCharger());
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Can be blocked by a creature without flying")
-    void canBeBlockedByCreatureWithoutFlying() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent creeper = addCreatureReady(player1, new GnatAlleyCreeper());
-        prepareBlockers(creeper);
+    @DisplayName("Gnat Alley Creeper can be blocked by a creature without flying")
+    void canBeBlockedByNonFlyingCreature() {
+        addCreatureReady(player1, new GnatAlleyCreeper());
+        Permanent blocker = addCreatureReady(player2, new Drekavac());
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
-    }
-
-    private void prepareBlockers(Permanent creeper) {
-        creeper.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

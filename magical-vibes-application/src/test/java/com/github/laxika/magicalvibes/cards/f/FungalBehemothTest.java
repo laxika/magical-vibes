@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedgeTroll;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,15 +17,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FungalBehemoth.class, GrizzlyBears.class})
+@CardUsed({FungalBehemoth.class, HedgeTroll.class, UrborgTombOfYawgmoth.class})
 class FungalBehemothTest extends BaseCardTest {
 
     @Test
     void powerAndToughnessEqualPlusOneCountersOnCreaturesYouControl() {
         Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new FungalBehemoth());
-        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
         ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(
+                player1, new UrborgTombOfYawgmoth());
+        noncreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
         opposingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
@@ -56,7 +61,7 @@ class FungalBehemothTest extends BaseCardTest {
     @Test
     void removingTimeCounterMayPutCounterOnTargetCreature() {
         suspendCard(2);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
         UUID targetId = target.getId();
 
         advanceToUpkeep(player1);
@@ -76,7 +81,7 @@ class FungalBehemothTest extends BaseCardTest {
     @Test
     void removingTimeCounterMayBeDeclined() {
         suspendCard(2);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -90,6 +95,33 @@ class FungalBehemothTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.exiledCardTimeCounters).containsValue(1);
+    }
+
+    @Test
+    void lastTimeCounterMayCastFungalBehemothWithHaste() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
+        ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
+        FungalBehemoth card = suspendCard(1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        Permanent behemoth = findPermanent(player1, "Fungal Behemoth");
+        assertThat(gqs.hasKeyword(gd, behemoth, Keyword.HASTE)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private FungalBehemoth suspendCard(int xValue) {

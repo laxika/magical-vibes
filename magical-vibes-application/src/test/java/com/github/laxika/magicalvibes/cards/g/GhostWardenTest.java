@@ -1,0 +1,97 @@
+package com.github.laxika.magicalvibes.cards.g;
+
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed(GhostWarden.class)
+class GhostWardenTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Tap ability gives a target creature +1/+1 until end of turn")
+    void boostsTargetCreature() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player1, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(source.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Tap ability can target a creature controlled by an opponent")
+    void boostsOpponentsCreature() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost wears off at cleanup")
+    void boostWearsOff() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player1, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new GhostWarden());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent source = findPermanent(player1, "Ghost Warden");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    private void prepareAbility(Permanent source) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        assertThat(source.isTapped()).isFalse();
+    }
+}

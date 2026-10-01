@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StealArtifact;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheRack.class, GrizzlyBears.class})
+@CardUsed({TheRack.class, GrizzlyBears.class, StealArtifact.class})
 class TheRackTest extends BaseCardTest {
 
     @Test
@@ -91,5 +94,26 @@ class TheRackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Still damages the chosen opponent after control changes")
+    void chosenOpponentRemainsAffectedAfterControlChange() {
+        var rack = harness.addToBattlefieldAndReturn(player1, new TheRack());
+        harness.setHand(player2, List.of(new StealArtifact()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player2, 0, rack.getId());
+        harness.passBothPriorities();
+
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 3);
     }
 }

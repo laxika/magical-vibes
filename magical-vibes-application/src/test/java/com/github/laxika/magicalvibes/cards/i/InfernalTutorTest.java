@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.a.AethermagesTouch;
+import com.github.laxika.magicalvibes.cards.a.AzoriusHerald;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InfernalTutor.class, Forest.class})
+@CardUsed({InfernalTutor.class, AethermagesTouch.class, AzoriusHerald.class})
 class InfernalTutorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Reveals a card from hand and searches for a card with the same name")
     void searchesForSameNameAsCardInHand() {
-        harness.setHand(player1, List.of(new InfernalTutor(), new Forest()));
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new InfernalTutor(), new AethermagesTouch()));
+        harness.setLibrary(player1, List.of(new AzoriusHerald(), new AethermagesTouch()));
         addManaForInfernalTutor();
 
         harness.castSorcery(player1, 0, 0);
@@ -28,19 +29,20 @@ class InfernalTutorTest extends BaseCardTest {
 
         PendingInteraction.ColorChoice handChoice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(handChoice.options()).containsExactly("Forest");
+        assertThat(handChoice.options()).containsExactly("Aethermage's Touch");
 
-        harness.handleListChoice(player1, "Forest");
+        harness.handleListChoice(player1, "Aethermage's Touch");
 
         PendingInteraction.LibrarySearch search =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Forest");
+        assertThat(search.params().cards()).extracting(Card::getName)
+                .containsExactly("Aethermage's Touch");
         assertThat(search.params().reveals()).isTrue();
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .containsExactly("Forest", "Forest");
+                .containsExactly("Aethermage's Touch", "Aethermage's Touch");
         assertThat(gd.pendingEffectResolutionEntry).isNull();
         assertThat(gd.deferPlayerLossCheck).isFalse();
     }
@@ -48,23 +50,42 @@ class InfernalTutorTest extends BaseCardTest {
     @Test
     @DisplayName("Searches for any card when the controller has no cards in hand")
     void searchesForAnyCardWithEmptyHand() {
-        harness.setHand(player1, List.of(new InfernalTutor()));
-        harness.setLibrary(player1, List.of(new Forest()));
-        addManaForInfernalTutor();
+        harness.setLibrary(player1, List.of(new AethermagesTouch()));
+        harness.castFromHand(player1, new InfernalTutor(), "{1}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Forest");
+        assertThat(search.params().cards()).extracting(Card::getName)
+                .containsExactly("Aethermage's Touch");
         assertThat(search.params().reveals()).isFalse();
         assertThat(search.params().canFailToFind()).isFalse();
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .containsExactly("Forest");
+                .containsExactly("Aethermage's Touch");
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
+    @Test
+    @DisplayName("Completes without finding a card when the chosen name is absent from the library")
+    void completesWhenSameNameCardIsAbsent() {
+        harness.setHand(player1, List.of(new InfernalTutor(), new AethermagesTouch()));
+        harness.setLibrary(player1, List.of(new AzoriusHerald()));
+        addManaForInfernalTutor();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Aethermage's Touch");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Aethermage's Touch");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Azorius Herald");
         assertThat(gd.pendingEffectResolutionEntry).isNull();
         assertThat(gd.deferPlayerLossCheck).isFalse();
     }

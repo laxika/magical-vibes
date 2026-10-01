@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "166")
 @CardRegistration(set = "MM2", collectorNumber = "139")
+@CardRegistration(set = "BLC", collectorNumber = "80")
 public class AntQueen extends Card {
 
     public AntQueen() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HideousEnd.class, BottleGnomes.class, GrizzlyBears.class, MassOfGhouls.class})
 class HideousEndTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a nonblack creature and its controller loses 2 life")
     void destroysNonblackCreatureAndLosesLife() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new HideousEnd()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -39,8 +40,7 @@ class HideousEndTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an artifact creature if it is nonblack")
     void canTargetNonblackArtifactCreature() {
-        Permanent artifactCreature = new Permanent(new BottleGnomes());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(artifactCreature);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
 
         harness.setHand(player1, List.of(new HideousEnd()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -56,9 +56,8 @@ class HideousEndTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
-        Permanent blackCreature = new Permanent(new MassOfGhouls());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blackCreature);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
 
         harness.setHand(player1, List.of(new HideousEnd()));
         harness.addMana(player1, ManaColor.BLACK, 2);

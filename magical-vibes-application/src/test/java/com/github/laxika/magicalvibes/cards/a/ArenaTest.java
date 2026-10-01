@@ -40,6 +40,25 @@ class ArenaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taps the opponent's target and applies fight damage to a surviving creature")
+    void tapsOpponentTargetAndAppliesFightDamage() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player1, new Arena());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(arena.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
     @DisplayName("Taps the remaining target but does not fight when one target is gone")
     void tapsRemainingTargetWhenOpponentTargetIsGone() {
         Permanent arena = harness.addToBattlefieldAndReturn(player1, new Arena());

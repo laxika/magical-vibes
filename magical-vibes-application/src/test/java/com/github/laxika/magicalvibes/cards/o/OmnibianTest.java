@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusChancery;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Omnibian.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Omnibian.class, MistralCharger.class, AzoriusChancery.class})
 class OmnibianTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes a target creature a 3/3 Frog until end of turn")
     void makesTargetCreatureAThreeThreeFrog() {
         addReadyOmnibian();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new MistralCharger());
 
         activateOmnibian(target);
 
@@ -34,26 +34,36 @@ class OmnibianTest extends BaseCardTest {
     @DisplayName("The Frog and base power and toughness changes expire at end of turn")
     void changesExpireAtEndOfTurn() {
         addReadyOmnibian();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new MistralCharger());
 
         activateOmnibian(target);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.BEAR);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.PEGASUS);
+    }
+
+    @Test
+    @DisplayName("Pays the tap cost when activated")
+    void paysTapCostWhenActivated() {
+        Permanent omnibian = addReadyOmnibian();
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+
+        activateOmnibian(target);
+
+        assertThat(omnibian.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addReadyOmnibian();
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AzoriusChancery());
         addManaForAbility();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }

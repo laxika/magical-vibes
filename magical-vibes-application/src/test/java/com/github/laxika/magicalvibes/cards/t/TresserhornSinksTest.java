@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(TresserhornSinks.class)
 class TresserhornSinksTest extends BaseCardTest {
 
     @Test
@@ -63,9 +65,8 @@ class TresserhornSinksTest extends BaseCardTest {
     }
 
     private Permanent addSinksReady(Player player) {
-        Permanent permanent = new Permanent(new TresserhornSinks());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TresserhornSinks());
         permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C14", collectorNumber = "250")
 @CardRegistration(set = "C15", collectorNumber = "259")
 @CardRegistration(set = "WHO", collectorNumber = "244")
+@CardRegistration(set = "WHO", collectorNumber = "835")
 @CardRegistration(set = "PIP", collectorNumber = "235")
 @CardRegistration(set = "PIP", collectorNumber = "763")
 @CardRegistration(set = "MOC", collectorNumber = "364")
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MKC", collectorNumber = "232")
 @CardRegistration(set = "AFC", collectorNumber = "211")
 @CardRegistration(set = "LCC", collectorNumber = "309")
+@CardRegistration(set = "BLC", collectorNumber = "280")
 public class MindStone extends Card {
 
     public MindStone() {

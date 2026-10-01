@@ -63,6 +63,7 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> !p.isTapped())
+                .filter(p -> !p.isTapRestrictedUnlessAttacking())
                 .filter(p -> !cost.excludeSource() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                 .map(Permanent::getId)
@@ -73,6 +74,9 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (chosen.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
+        }
+        if (chosen.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Permanent can't become tapped unless it is attacking");
         }
         if (cost.excludeSource() && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("Cannot tap the source permanent for this cost");

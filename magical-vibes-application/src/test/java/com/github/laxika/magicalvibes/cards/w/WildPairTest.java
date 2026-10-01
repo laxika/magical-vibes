@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BruteForce;
+import com.github.laxika.magicalvibes.cards.c.Calciderm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.cards.z.Zombify;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WildPair.class, GrizzlyBears.class, WallOfEssence.class, HillGiant.class, Zombify.class})
+@CardUsed({WildPair.class, GrizzlyBears.class, WallOfEssence.class, HillGiant.class, Zombify.class,
+        BruteForce.class, Calciderm.class})
 class WildPairTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,7 @@ class WildPairTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(matchingCreature, new HillGiant()));
         castGrizzlyBears();
 
-        resolveWildPairMayPrompt();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -37,9 +39,36 @@ class WildPairTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(matchingCreature);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(player1, "Wall of Essence")).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Uses the entering creature's current size when the trigger resolves")
+    void usesCurrentPowerAndToughnessAtResolution() {
+        castWildPair();
+        Card matchingCreature = new Calciderm();
+        harness.setLibrary(player1, List.of(matchingCreature));
+        castGrizzlyBears();
+        harness.passBothPriorities();
+
+        Permanent grizzlyBears = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new BruteForce()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, grizzlyBears.getId());
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(matchingCreature);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Calciderm")).isNotNull();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -51,7 +80,7 @@ class WildPairTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(matchingCreature));
         castGrizzlyBears();
 
-        resolveWildPairMayPrompt();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -91,8 +120,4 @@ class WildPairTest extends BaseCardTest {
         harness.castCreature(player1, 0);
     }
 
-    private void resolveWildPairMayPrompt() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }

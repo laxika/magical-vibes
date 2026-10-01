@@ -1,25 +1,44 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.p.PoulticeSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed(SerraSphinx.class)
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({SerraSphinx.class, PoulticeSliver.class})
 class SerraSphinxTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has flying and vigilance on the battlefield")
-    void hasFlyingAndVigilance() {
-        harness.addToBattlefield(player1, new SerraSphinx());
+    @DisplayName("Remains untapped after attacking because of vigilance")
+    void remainsUntappedAfterAttacking() {
+        Permanent sphinx = addCreatureReady(player1, new SerraSphinx());
 
-        Permanent sphinx = findPermanent(player1, "Serra Sphinx");
+        declareAttackers(List.of(0));
 
-        assertThat(gqs.hasKeyword(gd, sphinx, Keyword.FLYING)).isTrue();
-        assertThat(gqs.hasKeyword(gd, sphinx, Keyword.VIGILANCE)).isTrue();
+        assertThat(sphinx.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying prevents a nonflying creature from blocking")
+    void cannotBeBlockedByNonflyingCreature() {
+        Permanent sphinx = addCreatureReady(player1, new SerraSphinx());
+        Permanent blocker = addCreatureReady(player2, new PoulticeSliver());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sphinx);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

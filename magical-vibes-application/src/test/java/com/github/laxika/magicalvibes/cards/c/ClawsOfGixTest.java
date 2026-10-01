@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClawsOfGix.class, Forest.class})
+@CardUsed({ClawsOfGix.class, TormodsCrypt.class})
 class ClawsOfGixTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another permanent gains 1 life")
     void sacrificeAnotherPermanentGainsOneLife() {
         harness.addToBattlefield(player1, new ClawsOfGix());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
@@ -30,11 +30,11 @@ class ClawsOfGixTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handlePermanentChosen(player1, crypt.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Tormod's Crypt");
         harness.assertOnBattlefield(player1, "Claws of Gix");
     }
 
@@ -74,8 +74,8 @@ class ClawsOfGixTest extends BaseCardTest {
     @DisplayName("Only the controller's permanents can be sacrificed")
     void onlyControllerPermanentsCanBeSacrificed() {
         harness.addToBattlefield(player1, new ClawsOfGix());
-        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownCrypt = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt());
+        Permanent opponentCrypt = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
@@ -86,13 +86,13 @@ class ClawsOfGixTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validPermanentIds())
-                .contains(ownForest.getId())
-                .doesNotContain(opponentForest.getId());
+                .contains(ownCrypt.getId())
+                .doesNotContain(opponentCrypt.getId());
 
-        harness.handlePermanentChosen(player1, ownForest.getId());
+        harness.handlePermanentChosen(player1, ownCrypt.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Forest");
-        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Tormod's Crypt");
+        harness.assertOnBattlefield(player2, "Tormod's Crypt");
     }
 }

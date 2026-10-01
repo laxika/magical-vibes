@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MuragandaPetroglyphs.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({MuragandaPetroglyphs.class, GrizzlyBears.class, GiantSpider.class, LlanowarElves.class})
 class MuragandaPetroglyphsTest extends BaseCardTest {
 
     @Test
@@ -25,5 +26,14 @@ class MuragandaPetroglyphsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotBoostCreaturesWithKeywordAbilities() {
+        harness.addToBattlefield(player1, new MuragandaPetroglyphs());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
     }
 }

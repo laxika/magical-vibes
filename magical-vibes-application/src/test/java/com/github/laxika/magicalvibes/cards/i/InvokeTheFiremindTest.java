@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VertigoSpawn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InvokeTheFiremind.class, GrizzlyBears.class, Forest.class})
+@CardUsed({InvokeTheFiremind.class, VertigoSpawn.class, IzzetSignet.class})
 class InvokeTheFiremindTest extends BaseCardTest {
 
     @Test
@@ -22,7 +21,7 @@ class InvokeTheFiremindTest extends BaseCardTest {
     void drawsXCards() {
         harness.setHand(player1, List.of(new InvokeTheFiremind()));
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new VertigoSpawn(), new VertigoSpawn(), new VertigoSpawn(), new VertigoSpawn()));
         addMana(3);
 
         harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 3, List.of());
@@ -35,7 +34,7 @@ class InvokeTheFiremindTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to any target in damage mode")
     void dealsXDamageToCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VertigoSpawn());
         harness.setHand(player1, List.of(new InvokeTheFiremind()));
         addMana(1);
 
@@ -46,9 +45,22 @@ class InvokeTheFiremindTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Damage mode cannot target a card in hand")
-    void damageModeRejectsCardInHand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+    @DisplayName("Deals X damage to a player in damage mode")
+    void dealsXDamageToPlayer() {
+        harness.setHand(player1, List.of(new InvokeTheFiremind()));
+        int lifeBefore = gd.getLife(player2.getId());
+        addMana(2);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{1}, 2, player2.getId(), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Damage mode cannot target an artifact")
+    void damageModeRejectsArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
         harness.setHand(player1, List.of(new InvokeTheFiremind()));
         addMana(1);
 

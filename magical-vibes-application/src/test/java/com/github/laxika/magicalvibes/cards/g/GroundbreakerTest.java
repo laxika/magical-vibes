@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.m.MireBoa;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Groundbreaker.class, GrizzlyBears.class})
+@CardUsed({Groundbreaker.class, MireBoa.class})
 class GroundbreakerTest extends BaseCardTest {
 
     @Test
@@ -24,16 +25,10 @@ class GroundbreakerTest extends BaseCardTest {
     void canAttackImmediatelyDueToHaste() {
         harness.setLife(player2, 20);
 
-        Permanent groundbreaker = new Permanent(new Groundbreaker());
+        Permanent groundbreaker = addCreatureReady(player1, new Groundbreaker());
         groundbreaker.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(groundbreaker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -43,43 +38,58 @@ class GroundbreakerTest extends BaseCardTest {
     void trampleAssignsExcessCombatDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent groundbreaker = new Permanent(new Groundbreaker());
-        groundbreaker.setSummoningSick(false);
+        Permanent groundbreaker = addCreatureReady(player1, new Groundbreaker());
         groundbreaker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(groundbreaker);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent mireBoa = addCreatureReady(player2, new MireBoa());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                bears.getId(), 2,
+                mireBoa.getId(), 2,
                 player2.getId(), 4
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.assertInGraveyard(player1, "Groundbreaker");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Mire Boa");
     }
 
     @Test
     @DisplayName("Sacrifices itself at end step")
     void sacrificesItselfAtEndStep() {
-        Permanent groundbreaker = new Permanent(new Groundbreaker());
-        gd.playerBattlefields.get(player1.getId()).add(groundbreaker);
+        Permanent groundbreaker = addCreatureReady(player1, new Groundbreaker());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        StackEntry trigger = gd.stack.getFirst();
+        assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(trigger.getCard().getName()).isEqualTo("Groundbreaker");
+        assertThat(trigger.getSourcePermanentId()).isEqualTo(groundbreaker.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Groundbreaker");
+        harness.assertInGraveyard(player1, "Groundbreaker");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself at the beginning of an opponent's end step")
+    void sacrificesItselfAtBeginningOfOpponentsEndStep() {
+        Permanent groundbreaker = addCreatureReady(player1, new Groundbreaker());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);

@@ -44,9 +44,13 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         UUID libraryOwnerId = switch (e.owner()) {
             case TARGET_PLAYER -> entry.getTargetId() != null ? entry.getTargetId() : controllerId;
             case OPPONENT -> gameQueryService.getOpponentId(gameData, controllerId);
+            case DYING_CREATURE_CONTROLLER -> entry.getTriggeringPermanentControllerId() != null
+                    ? entry.getTriggeringPermanentControllerId() : controllerId;
             default -> controllerId;
         };
-        UUID scryingPlayerId = e.owner() == LibraryOwner.OPPONENT ? libraryOwnerId : controllerId;
+        UUID scryingPlayerId = e.owner() == LibraryOwner.OPPONENT
+                || e.owner() == LibraryOwner.DYING_CREATURE_CONTROLLER
+                ? libraryOwnerId : controllerId;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         Permanent source = entry.getSourcePermanentId() != null

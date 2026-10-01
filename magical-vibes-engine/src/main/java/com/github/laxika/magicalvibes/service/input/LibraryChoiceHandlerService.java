@@ -430,7 +430,8 @@ public class LibraryChoiceHandlerService {
                     if (returnToHandAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
-                                librarySearch.returnToHandAtControllerEndStepId()));
+                                false, null, librarySearch.returnToHandAtControllerEndStepId(), null,
+                                librarySearch.returnToHandAtControllerEndStepId() != null));
                     } else if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
                     }

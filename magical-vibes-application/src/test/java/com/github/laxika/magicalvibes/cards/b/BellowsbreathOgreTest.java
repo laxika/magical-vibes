@@ -22,9 +22,10 @@ class BellowsbreathOgreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ogre.getCounterCount(CounterType.INTENSITY)).isEqualTo(1);
+        ogre.setSummoningSick(false);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            declareAttackers(List.of(1));
+            declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, target.getId());
             harness.passBothPriorities();
         });

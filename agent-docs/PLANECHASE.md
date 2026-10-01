@@ -20,6 +20,9 @@ Rolling the die by special action requires the active player's main phase, prior
 - `EffectDuration.UNTIL_PLANESWALK` expires on a planeswalk.
 - `PhaseOutCreaturesUntilPlaneswalkEffect()` holds phased-out creatures and their attachments until the next planeswalk, when `PhasingService` phases them back in.
 - `AllowPlayFromAnyLibraryTopEffect` is a controller-scoped static permission for playing lands and casting spells from any player's library top; it uses the normal costs, timing, and land-play allowance.
+- `AllowPlayCardsExiledWithPlanarSourceEffect` is a controller-scoped static permission for playing cards tracked with the current face-up planar object during that player's turn. Planar exile effects use the `PlanarObject` ID in the existing exile-source field, so the permission ends when that object leaves play.
+- Filtered graveyard-casting permissions such as `GrantEscapeToGraveyardCardsEffect` apply to the planar controller while their source plane is face up; the regular graveyard-cast path supplies their alternate costs and additional exile costs.
+- `ExileTopCardOfEachPlayersLibraryWithPlanarSourceEffect` tracks each arrival-exiled card with the resolving planar object; `PlayedCardExiledWithPlanarSourceTriggerEffect` covers both spell casts and land plays from that tracked exile and preserves the planar source snapshot on the follow-up trigger.
 - `PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED`, and `ENCOUNTER_TRIGGERED` provide planar event slots. Reuse ordinary effects inside them.
 - `PlaneswalkIfPlanarSourceHasCountersEffect` is the resolution-time threshold rider for planes whose own counters cause a planeswalk (Aretopolis); it checks the live face-up `PlanarObject` rather than a battlefield permanent.
 - Upkeep, draw-step and end-step slots are collected from face-up planar objects for the planar controller. Panopticon reuses `DrawCardEffect` for its arrival, draw-step and chaos abilities.

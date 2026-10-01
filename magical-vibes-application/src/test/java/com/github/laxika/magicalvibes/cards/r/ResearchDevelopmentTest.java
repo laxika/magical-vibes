@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PillarOfTheParuns;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,14 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ResearchDevelopment.class, GrizzlyBears.class})
+@CardUsed({ResearchDevelopment.class, PillarOfTheParuns.class})
 class ResearchDevelopmentTest extends BaseCardTest {
 
     @Test
     @DisplayName("Research shuffles up to four chosen outside-the-game cards into the library")
     void researchShufflesUpToFourCards() {
         List<Card> sideboard = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new PillarOfTheParuns(), new PillarOfTheParuns(), new PillarOfTheParuns(),
+                new PillarOfTheParuns(), new PillarOfTheParuns());
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(sideboard));
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new ResearchDevelopment()));
@@ -41,6 +42,27 @@ class ResearchDevelopmentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Research can shuffle fewer than four chosen outside-the-game cards")
+    void researchShufflesOnlyTheCardsChosen() {
+        List<Card> sideboard = List.of(
+                new PillarOfTheParuns(), new PillarOfTheParuns(), new PillarOfTheParuns());
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(sideboard));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ResearchDevelopment()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(sideboard.get(1).getId()));
+
+        assertThat(gd.playerSideboards.get(player1.getId()))
+                .containsExactly(sideboard.get(0), sideboard.get(2));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(sideboard.get(1));
+    }
+
+    @Test
     @DisplayName("Development creates three tokens when every opponent declines")
     void developmentCreatesThreeTokensWhenEveryOpponentDeclines() {
         castDevelopment();
@@ -56,8 +78,8 @@ class ResearchDevelopmentTest extends BaseCardTest {
     @Test
     @DisplayName("Development draws only once when an opponent accepts, and repeats twice more")
     void developmentDrawsOnceAndSuppressesOnlyThatIterationToken() {
-        Card firstDraw = new GrizzlyBears();
-        Card secondDraw = new GrizzlyBears();
+        Card firstDraw = new PillarOfTheParuns();
+        Card secondDraw = new PillarOfTheParuns();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
         castDevelopment();
 

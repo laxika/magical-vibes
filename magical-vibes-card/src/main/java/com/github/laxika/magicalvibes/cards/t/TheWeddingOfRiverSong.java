@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "31")
 @CardRegistration(set = "WHO", collectorNumber = "349")
+@CardRegistration(set = "WHO", collectorNumber = "636")
+@CardRegistration(set = "WHO", collectorNumber = "940")
 public class TheWeddingOfRiverSong extends Card {
 
     public TheWeddingOfRiverSong() {

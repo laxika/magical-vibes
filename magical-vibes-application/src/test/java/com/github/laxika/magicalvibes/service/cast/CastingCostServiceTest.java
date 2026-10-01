@@ -1875,7 +1875,7 @@ class CastingCostServiceTest {
         ManaPool pool = new ManaPool();
         pool.add(ManaColor.RED);
         pool.add(ManaColor.COLORLESS, 2);
-        when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), eq(gd), eq(player1Id))).thenReturn(true);
 
         var handSelection = svc.findAffordableAlternativeCostSelection(
                 gd, player1Id, spell, pool, 0, Zone.HAND);

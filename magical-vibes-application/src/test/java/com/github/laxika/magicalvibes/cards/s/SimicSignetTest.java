@@ -16,7 +16,7 @@ class SimicSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Paying one and tapping Simic Signet adds green and blue mana")
     void addsGreenAndBlueMana() {
-        Permanent signet = addReadySignet();
+        Permanent signet = addCreatureReady(player1, new SimicSignet());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +31,7 @@ class SimicSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Simic Signet without paying one")
     void cannotActivateWithoutMana() {
-        addReadySignet();
+        addCreatureReady(player1, new SimicSignet());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -40,7 +40,7 @@ class SimicSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Simic Signet while tapped")
     void cannotActivateWhileTapped() {
-        addReadySignet();
+        addCreatureReady(player1, new SimicSignet());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -48,12 +48,5 @@ class SimicSignetTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
-    }
-
-    private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new SimicSignet());
-        signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
-        return signet;
     }
 }

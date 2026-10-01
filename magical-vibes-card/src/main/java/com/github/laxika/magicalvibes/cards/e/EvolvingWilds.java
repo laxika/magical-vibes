@@ -56,6 +56,7 @@ import java.util.List;
 @CardRegistration(set = "DBL", collectorNumber = "261")
 @CardRegistration(set = "DBL", collectorNumber = "530")
 @CardRegistration(set = "WHO", collectorNumber = "275")
+@CardRegistration(set = "WHO", collectorNumber = "866")
 @CardRegistration(set = "PIP", collectorNumber = "263")
 @CardRegistration(set = "PIP", collectorNumber = "791")
 @CardRegistration(set = "40K", collectorNumber = "277")
@@ -64,6 +65,7 @@ import java.util.List;
 @CardRegistration(set = "M3C", collectorNumber = "340")
 @CardRegistration(set = "OTC", collectorNumber = "292")
 @CardRegistration(set = "LCC", collectorNumber = "328")
+@CardRegistration(set = "BLC", collectorNumber = "302")
 public class EvolvingWilds extends Card {
 
     public EvolvingWilds() {

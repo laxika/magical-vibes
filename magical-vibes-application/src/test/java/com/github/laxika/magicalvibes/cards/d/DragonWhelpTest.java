@@ -63,6 +63,37 @@ class DragonWhelpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activation count resets at the start of the next turn")
+    void activationCountResetsAtStartOfNextTurn() {
+        addCreatureReady(player1, new DragonWhelp());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        harness.handleCardChosen(player2, 0);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Dragon Whelp");
+    }
+
+    @Test
     @DisplayName("Sacrificed at end step when activated four or more times")
     void sacrificedWhenActivatedFourOrMoreTimes() {
         addCreatureReady(player1, new DragonWhelp());

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,31 @@ class ShaperParasiteTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, parasite)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, parasite)).isEqualTo(5);
+    }
+
+    @Test
+    void turningFaceUpCanTargetAnOpponentsCreatureAndTheBoostExpires() {
+        Permanent target = addCreatureReady(player2, new ShaperParasite());
+        Permanent parasite = castFaceDownAndTurnFaceUp();
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Gets +2/-2");
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, parasite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, parasite)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     private Permanent castFaceDownAndTurnFaceUp() {

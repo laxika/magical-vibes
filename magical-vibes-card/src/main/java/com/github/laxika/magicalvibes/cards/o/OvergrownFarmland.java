@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "MID", collectorNumber = "265")
 @CardRegistration(set = "DBL", collectorNumber = "265")
 @CardRegistration(set = "WHO", collectorNumber = "292")
+@CardRegistration(set = "WHO", collectorNumber = "506")
+@CardRegistration(set = "WHO", collectorNumber = "883")
+@CardRegistration(set = "WHO", collectorNumber = "1097")
 public class OvergrownFarmland extends Card {
 
     public OvergrownFarmland() {

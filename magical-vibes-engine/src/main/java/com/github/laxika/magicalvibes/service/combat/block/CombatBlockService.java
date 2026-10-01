@@ -692,6 +692,7 @@ public class CombatBlockService {
                 blockTrigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
                 blockTrigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, attacker));
                 blockTrigger.setNonTargeting(true);
+                blockTrigger.setSourcePermanentSnapshot(new Permanent(blocker));
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                         "'s block ability triggers."));

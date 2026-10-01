@@ -123,7 +123,29 @@ public class PermanentChoiceSpellHandlerService {
         if (targetSpell == null) {
             log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
         } else {
-            if (retarget.targetIndex() != null) {
+            if (retarget.replacementTargets() != null) {
+                List<UUID> replacements = new ArrayList<>(retarget.replacementTargets());
+                replacements.add(permanentId);
+                int targetCount = targetSpell.getDeclaredTargetIds().size();
+                if (replacements.size() < targetCount) {
+                    List<UUID> candidates = psychicBattleSupport.collectLegalAlternatives(
+                            gameData, targetSpell, replacements.size()).stream()
+                            .filter(id -> !replacements.contains(id)).toList();
+                    if (!candidates.isEmpty()) {
+                        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(
+                                retarget.spellCardId(), replacements.size(), List.copyOf(replacements),
+                                retarget.chooserId()));
+                        playerInputService.beginPermanentChoice(gameData, retarget.chooserId(), candidates,
+                                "Choose the next new target for " + targetSpell.getCard().getName() + ".");
+                        return;
+                    }
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                for (int i = 0; i < replacements.size(); i++) {
+                    psychicBattleSupport.replaceTarget(targetSpell, i, replacements.get(i));
+                }
+            } else if (retarget.targetIndex() != null) {
                 psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
             } else {
                 targetSpell.setTargetId(permanentId);

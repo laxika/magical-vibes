@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.PutTopCardsOfDamagedPlayerLib
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "177")
+@CardRegistration(set = "WHO", collectorNumber = "458")
+@CardRegistration(set = "WHO", collectorNumber = "782")
+@CardRegistration(set = "WHO", collectorNumber = "1049")
 public class Cybership extends Card {
 
     public Cybership() {

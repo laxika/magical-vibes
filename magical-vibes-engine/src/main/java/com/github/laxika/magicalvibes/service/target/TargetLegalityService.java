@@ -718,6 +718,9 @@ public class TargetLegalityService {
                 .findFirst()
                 .orElse(null);
         Card sourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
+        if (sourceCard == null && sourceCardId != null) {
+            sourceCard = gameQueryService.findCardInGraveyardById(gameData, sourceCardId);
+        }
         int effectiveXValue = xValue == null ? 0 : xValue;
         for (UUID targetCardId : targetCardIds) {
             String rejection = null;
@@ -4042,6 +4045,9 @@ public class TargetLegalityService {
                     : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
             if (targetPosition < consumed + Math.max(declaredSize, 0)) {
+                if (group.getFilter(entry.isKicked()) instanceof StackEntryPredicateTargetFilter) {
+                    return true;
+                }
                 return entry.getEffectsToResolve().stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
@@ -4216,6 +4222,11 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
+            return target.getCard().getName() + (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)
+                    ? " has hexproof and can't be targeted"
+                    : " can't be targeted by this player's spells or abilities");
+        }
         if (gameQueryService.cantBeAffectedByOwnEffects(gameData, target, sourcePlayerId)) {
             return target.getCard().getName()
                     + " can't be targeted by its controller's spells or abilities";
@@ -4225,8 +4236,7 @@ public class TargetLegalityService {
                 || (gameQueryService.isCreature(gameData, target)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId));
         if (targetController != null && !targetController.equals(sourcePlayerId)) {
-            if ((!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF))
-                    || gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
+            if (!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
             }
         }
@@ -4492,6 +4502,9 @@ public class TargetLegalityService {
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
+        }
+        if (gameQueryService.hasProtectionFromSource(gameData, target, card, sourcePlayerId)) {
+            return target.getCard().getName() + " has protection from this source";
         }
         if (sourcePlayerId != null) {
             String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
@@ -4884,7 +4897,10 @@ public class TargetLegalityService {
             return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
-            return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
+            return manaValue == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
             int manaValue = stackEntry.getCard().getManaValue()

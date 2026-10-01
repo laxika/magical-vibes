@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "33")
+@CardRegistration(set = "WHO", collectorNumber = "638")
 @CardRegistration(set = "WHO", collectorNumber = "351")
+@CardRegistration(set = "WHO", collectorNumber = "942")
 public class AdricMathematicalGenius extends Card {
 
     public AdricMathematicalGenius() {

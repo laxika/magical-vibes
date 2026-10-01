@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.j;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.r.RiverOfTears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,16 +19,19 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({JudgeUnworthy.class, Forest.class, GrizzlyBears.class})
+@CardUsed({JudgeUnworthy.class, BladeOfTheSixthPride.class, BlindPhantasm.class, RiverOfTears.class})
 class JudgeUnworthyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Scries 3, then deals damage equal to the revealed card's mana value")
     void scriesThenDamagesAttackingCreature() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
         attacker.setAttacking(true);
-        Card topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), topCard));
+        Card bottomCard1 = new RiverOfTears();
+        Card bottomCard2 = new RiverOfTears();
+        Card bottomCard3 = new RiverOfTears();
+        Card topCard = new BladeOfTheSixthPride();
+        harness.setLibrary(player1, List.of(bottomCard1, bottomCard2, bottomCard3, topCard));
 
         castJudgeUnworthy(attacker);
 
@@ -35,30 +39,44 @@ class JudgeUnworthyTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2)));
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(topCard, bottomCard1, bottomCard2, bottomCard3);
     }
 
     @Test
     @DisplayName("Can target a blocking creature")
     void canTargetBlockingCreature() {
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
         blocker.setBlocking(true);
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new RiverOfTears()));
 
         castJudgeUnworthy(blocker);
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Blind Phantasm");
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An empty library reveals no card and deals no damage")
+    void emptyLibraryDealsNoDamage() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        attacker.setAttacking(true);
+        harness.setLibrary(player1, List.of());
+
+        castJudgeUnworthy(attacker);
+
+        harness.assertOnBattlefield(player2, "Blind Phantasm");
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new JudgeUnworthy()));
-        addJudgeUnworthyMana();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        prepareJudgeUnworthy();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -66,12 +84,16 @@ class JudgeUnworthyTest extends BaseCardTest {
     }
 
     private void castJudgeUnworthy(Permanent target) {
+        prepareJudgeUnworthy();
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+    }
+
+    private void prepareJudgeUnworthy() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new JudgeUnworthy()));
         addJudgeUnworthyMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
     }
 
     private void addJudgeUnworthyMana() {

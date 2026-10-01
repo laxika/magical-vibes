@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "1")
 @CardRegistration(set = "EMA", collectorNumber = "1")
@@ -18,7 +18,7 @@ public class AvenRiftwatcher extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new RemoveCounterOrSacrificeSelfEffect(CounterType.TIME));
+                new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new GainLifeEffect(2));
     }

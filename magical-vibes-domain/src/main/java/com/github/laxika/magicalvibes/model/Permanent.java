@@ -35,6 +35,8 @@ public class Permanent {
     /** The creature card exiled by Werewhat and linked to its dynamic back face. */
     @Setter private Card werewhatCompanionCard;
     private boolean tapped;
+    /** Floating restrictions that prevent this permanent from becoming tapped except while attacking. */
+    private final Set<UUID> tapRestrictionEffectIds = new HashSet<>();
     /** Whether this permanent was untapped before its controller's most recent untap step. */
     @Setter private boolean untappedAtTurnStart;
     private int untapSequence;
@@ -172,6 +174,8 @@ public class Permanent {
      * distinct colors (Tablet of the Guilds) write here directly and leave {@code chosenColor} null.
      */
     private final Set<CardColor> chosenColors = EnumSet.noneOf(CardColor.class);
+    /** Whether an as-enters color choice has been completed, including an optional empty choice. */
+    @Setter private boolean chosenColorChoiceMade;
     @Setter private String chosenName;
     /** Second card name chosen "as this enters" when two players each name a card
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
@@ -632,6 +636,8 @@ public class Permanent {
     @Setter private Zone castFromZone;
     /** Zone this permanent entered the battlefield from, when known. */
     @Setter private Zone enteredFromZone;
+    /** Source permanent whose ability put this permanent onto the battlefield, when applicable. */
+    @Setter private UUID putOntoBattlefieldWithAbilitySourcePermanentId;
     /** Whether this permanent entered the battlefield by resolving as a spell its controller cast
      *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
      *  NOT cleared by {@link #resetModifiers()}. */
@@ -757,6 +763,7 @@ public class Permanent {
         this.fullTextCopyBaseCard = source.fullTextCopyBaseCard;
         this.werewhatCompanionCard = source.werewhatCompanionCard;
         this.tapped = source.tapped;
+        this.tapRestrictionEffectIds.addAll(source.tapRestrictionEffectIds);
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
@@ -810,6 +817,7 @@ public class Permanent {
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
+        this.chosenColorChoiceMade = source.chosenColorChoiceMade;
         this.chosenName = source.chosenName;
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
@@ -987,6 +995,7 @@ public class Permanent {
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.enteredFromZone = source.enteredFromZone;
+        this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
@@ -1124,12 +1133,36 @@ public class Permanent {
         return false;
     }
 
-    public void tap() {
+    public boolean tap() {
+        if (!tapped && !attacking && !tapRestrictionEffectIds.isEmpty()) {
+            return false;
+        }
         if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
             turnFaceUp();
             pendingAutomaticTurnFaceUp = true;
         }
+        boolean becameTapped = !this.tapped;
         this.tapped = true;
+        return becameTapped;
+    }
+
+    /** Adds one floating tap restriction to this permanent. */
+    public void addTapRestriction(UUID effectId) {
+        if (effectId != null) {
+            tapRestrictionEffectIds.add(effectId);
+        }
+    }
+
+    /** Removes one expired floating tap restriction from this permanent. */
+    public void removeTapRestriction(UUID effectId) {
+        if (effectId != null) {
+            tapRestrictionEffectIds.remove(effectId);
+        }
+    }
+
+    /** Whether this permanent is currently prevented from becoming tapped except while attacking. */
+    public boolean isTapRestrictedUnlessAttacking() {
+        return !tapRestrictionEffectIds.isEmpty();
     }
 
     private boolean hasTemporaryStaticEffect(Class<? extends CardEffect> effectType) {

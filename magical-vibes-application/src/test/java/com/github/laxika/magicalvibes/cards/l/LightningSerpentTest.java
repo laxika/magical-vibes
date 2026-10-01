@@ -4,15 +4,30 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightningSerpent.class})
 class LightningSerpentTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can attack immediately because of haste")
+    void canAttackImmediatelyBecauseOfHaste() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LightningSerpent());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
 
     @Test
     @DisplayName("Casting with X=3 enters with three +1/+0 counters")
@@ -45,12 +60,53 @@ class LightningSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningSerpent()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player2, new LightningSerpent());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 4
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player2, "Lightning Serpent");
+    }
+
+    @Test
     @DisplayName("Sacrifices itself at the end step")
     void sacrificesItselfAtEndStep() {
-        Permanent serpent = new Permanent(new LightningSerpent());
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        harness.addToBattlefield(player1, new LightningSerpent());
 
         harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lightning Serpent");
+        harness.assertInGraveyard(player1, "Lightning Serpent");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself at the beginning of an opponent's end step")
+    void sacrificesItselfAtBeginningOfOpponentsEndStep() {
+        harness.addToBattlefield(player1, new LightningSerpent());
+
+        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

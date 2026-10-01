@@ -29,6 +29,18 @@ class LeviathanTest extends BaseCardTest {
 
         assertThat(leviathan.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Does not untap during its controller's untap step")
+    void doesNotUntapDuringUntapStep() {
+        Permanent leviathan = addCreatureReady(player1, new Leviathan());
+        leviathan.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(leviathan.isTapped()).isTrue();
+    }
+
     @Test
     @DisplayName("Upkeep: sacrificing two Islands untaps Leviathan")
     void upkeepSacrificeTwoIslandsUntaps() {
@@ -188,8 +200,7 @@ class LeviathanTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

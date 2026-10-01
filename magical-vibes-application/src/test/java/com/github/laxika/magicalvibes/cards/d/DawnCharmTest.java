@@ -42,6 +42,23 @@ class DawnCharmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mode 0 does not prevent noncombat damage")
+    void doesNotPreventNoncombatDamage() {
+        harness.setHand(player1, List.of(new DawnCharm()));
+        addWhiteMana();
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
     @DisplayName("Mode 1 grants a regeneration shield to the target creature")
     void regeneratesTargetCreature() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
@@ -56,6 +73,27 @@ class DawnCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mode 1 can regenerate an opponent's creature")
+    void regeneratesOpponentsCreature() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new DawnCharm()));
+        addWhiteMana();
+
+        harness.castModalInstant(player1, 0, 1, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(bear.isTapped()).isTrue();
         assertThat(bear.getMarkedDamage()).isZero();
     }
@@ -106,6 +144,24 @@ class DawnCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 2, shock.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("targets you");
+    }
+
+    @Test
+    @DisplayName("Mode 2 cannot target a spell targeting a creature you control")
+    void counterModeRejectsSpellTargetingYourCreature() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.setHand(player2, List.of(new DawnCharm()));
+        addWhiteMana(player2);
+
+        harness.castInstant(player1, 0, bear.getId());
+
+        assertThatThrownBy(() -> harness.castModalInstant(player2, 0, 2, List.of(shock.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("targets you");
     }

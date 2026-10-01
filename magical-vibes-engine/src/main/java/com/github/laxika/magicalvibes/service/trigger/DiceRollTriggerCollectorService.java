@@ -43,7 +43,8 @@ public class DiceRollTriggerCollectorService {
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
                 match.permanent() == null
                         ? ConditionContext.forCard(match.sourceCard(), match.controllerId())
-                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()),
+                context instanceof TriggerContext.DiceRoll diceRoll ? diceRoll.result() : 0)) {
             return false;
         }
 
@@ -87,7 +88,7 @@ public class DiceRollTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 sourcePermanentId);
-        if (context instanceof TriggerContext.DiceRoll diceRoll && !diceRoll.planar()) {
+        if (context instanceof TriggerContext.DiceRoll diceRoll) {
             entry.setEventValue(diceRoll.result());
         }
         if (match.sourcePlanarObject() != null) {

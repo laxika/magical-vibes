@@ -37,6 +37,21 @@ class TidewalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Dies as a 0/0 when its controller controls no Islands")
+    void diesAsZeroToughnessWithoutIslands() {
+        harness.setHand(player1, List.of(new Tidewalker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tidewalker");
+        harness.assertInGraveyard(player1, "Tidewalker");
+    }
+
+    @Test
     @DisplayName("Power and toughness track its time counters")
     void powerAndToughnessTrackTimeCounters() {
         Permanent tidewalker = addCreatureReady(player1, new Tidewalker());
@@ -51,6 +66,17 @@ class TidewalkerTest extends BaseCardTest {
         assertThat(tidewalker.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, tidewalker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, tidewalker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Vanishing triggers only during its controller's upkeep")
+    void doesNotRemoveCounterDuringOpponentsUpkeep() {
+        Permanent tidewalker = addCreatureReady(player1, new Tidewalker());
+        tidewalker.setCounterCount(CounterType.TIME, 2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(tidewalker.getCounterCount(CounterType.TIME)).isEqualTo(2);
     }
 
     @Test

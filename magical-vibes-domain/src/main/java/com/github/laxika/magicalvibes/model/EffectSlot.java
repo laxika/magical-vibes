@@ -809,6 +809,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller casts a spell while this card is in exile. */
     EXILE_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the card's owner sacrifices a token while this card is face up in exile. */
+    EXILE_ON_CONTROLLER_TOKEN_SACRIFICED,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
@@ -1286,6 +1288,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */
     GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
+    /** Marker slot: "Enchantment spells you cast from your hand have cascade." Holds a
+     *  {@code CascadeEffect}; detected by {@code TriggerCollectionService.checkSpellCastTriggers}
+     *  when an enchantment is cast from hand. */
+    GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND,
     /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
      *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
     GRANT_CASCADE_TO_SLIVER_SPELL,

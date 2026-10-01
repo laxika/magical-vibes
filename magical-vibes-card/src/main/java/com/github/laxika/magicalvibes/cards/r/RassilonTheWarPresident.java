@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "150")
+@CardRegistration(set = "WHO", collectorNumber = "434")
+@CardRegistration(set = "WHO", collectorNumber = "755")
+@CardRegistration(set = "WHO", collectorNumber = "1025")
 public class RassilonTheWarPresident extends Card {
 
     public RassilonTheWarPresident() {

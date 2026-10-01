@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,20 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
         }
 
         switch (doesntUntap.condition()) {
+            case WHILE_SOURCE_CONTROLLED -> {
+                if (!entry.getControllerId().equals(
+                        gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
+                    return;
+                }
+                for (UUID targetId : targetIds) {
+                    if (gameQueryService.findPermanentById(gameData, targetId) != null) {
+                        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                                UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
+                                entry.getControllerId(), doesntUntap, targetId, null, null,
+                                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    }
+                }
+            }
             case WHILE_SOURCE_ON_BATTLEFIELD -> {
                 for (UUID targetId : targetIds) {
                     Permanent target = gameQueryService.findPermanentById(gameData, targetId);

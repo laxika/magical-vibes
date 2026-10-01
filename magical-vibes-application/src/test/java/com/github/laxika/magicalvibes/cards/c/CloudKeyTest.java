@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
+import com.github.laxika.magicalvibes.cards.f.Foresee;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CloudKey.class, GrizzlyBears.class, Divination.class})
+@CardUsed({CloudKey.class, BladeOfTheSixthPride.class, Foresee.class})
 class CloudKeyTest extends BaseCardTest {
 
     @Test
@@ -35,8 +35,8 @@ class CloudKeyTest extends BaseCardTest {
         castCloudKey();
         harness.handleListChoice(player1, CardType.CREATURE.name());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
@@ -47,9 +47,9 @@ class CloudKeyTest extends BaseCardTest {
         castCloudKey();
         harness.handleListChoice(player1, CardType.CREATURE.name());
 
-        harness.setHand(player1, List.of(new Divination()));
+        harness.setHand(player1, List.of(new Foresee()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -60,8 +60,8 @@ class CloudKeyTest extends BaseCardTest {
         castCloudKey();
         harness.handleListChoice(player1, CardType.CREATURE.name());
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new BladeOfTheSixthPride()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceActivePlayer(player2);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
@@ -69,9 +69,7 @@ class CloudKeyTest extends BaseCardTest {
     }
 
     private void castCloudKey() {
-        harness.setHand(player1, List.of(new CloudKey()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new CloudKey(), "{3}");
         harness.passBothPriorities();
     }
 }

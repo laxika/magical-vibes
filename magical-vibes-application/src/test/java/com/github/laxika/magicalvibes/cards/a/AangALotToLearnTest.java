@@ -46,8 +46,7 @@ class AangALotToLearnTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,9 +60,39 @@ class AangALotToLearnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningStrike()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnDeath() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangALotToLearn());
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, aang.getId());
+
+        harness.assertInGraveyard(player1, "Aang, A Lot to Learn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggersForEachAlliedDeathAndAddsCountersOnlyOnResolution() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangALotToLearn());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightningStrike(), new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

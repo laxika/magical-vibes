@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KarplusanMinotaur.class})
 class KarplusanMinotaurTest extends BaseCardTest {
 
     @Test
@@ -21,6 +24,32 @@ class KarplusanMinotaurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Karplusan Minotaur");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep flips one coin for each age counter")
+    void cumulativeUpkeepFlipsOncePerAgeCounter() {
+        var minotaur = harness.addToBattlefieldAndReturn(player1, new KarplusanMinotaur());
+        minotaur.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(minotaur.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        for (int i = 0; i < 2; i++) {
+            var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).as("coin-flip trigger %s", i + 1).isNotNull();
+            var chooser = choice.playerId().equals(player1.getId()) ? player1 : player2;
+            harness.handlePermanentChosen(chooser, player2.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("coin flip for Karplusan Minotaur")))
+                .hasSize(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     @Test

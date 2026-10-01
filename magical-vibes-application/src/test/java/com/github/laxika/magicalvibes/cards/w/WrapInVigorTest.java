@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.Ghostfire;
+import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,41 +14,43 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WrapInVigor.class, GrizzlyBears.class, Shock.class})
+@CardUsed({WrapInVigor.class, NessianCourser.class, Ghostfire.class, HorizonCanopy.class})
 class WrapInVigorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives regeneration shields to each creature you control only")
     void regeneratesEachCreatureYouControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new NessianCourser());
+        harness.addToBattlefield(player1, new NessianCourser());
+        harness.addToBattlefield(player2, new NessianCourser());
+        Permanent canopy = harness.addToBattlefieldAndReturn(player1, new HorizonCanopy());
         harness.setHand(player1, List.of(new WrapInVigor()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        assertThat(findPermanents(player1, "Grizzly Bears"))
+        assertThat(findPermanents(player1, "Nessian Courser"))
                 .allMatch(permanent -> permanent.getRegenerationShield() == 1);
-        assertThat(findPermanent(player2, "Grizzly Bears").getRegenerationShield()).isZero();
+        assertThat(findPermanent(player2, "Nessian Courser").getRegenerationShield()).isZero();
+        assertThat(canopy.getRegenerationShield()).isZero();
     }
 
     @Test
     @DisplayName("Regeneration shields prevent lethal damage and are spent")
     void regenerationPreventsLethalDamage() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new WrapInVigor(), new Shock()));
+        Permanent courser = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
+        harness.setHand(player1, List.of(new WrapInVigor(), new Ghostfire()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, courser.getId());
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isSameAs(bears);
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(findPermanent(player1, "Nessian Courser")).isSameAs(courser);
+        assertThat(courser.getRegenerationShield()).isZero();
+        assertThat(courser.isTapped()).isTrue();
+        assertThat(courser.getMarkedDamage()).isZero();
     }
 }
