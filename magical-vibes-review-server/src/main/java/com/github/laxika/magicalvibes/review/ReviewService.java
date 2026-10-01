@@ -34,12 +34,17 @@ public class ReviewService {
                    COALESCE(SUM(t.status='FAILED'),0) AS failed,
                    COALESCE(SUM(t.status='COMPLETED' AND a.outcome='FINDINGS'),0) AS cardsWithFindings,
                    COALESCE(SUM(CASE WHEN t.status='COMPLETED' THEN f.total ELSE 0 END),0) AS findingCount,
-                   COALESCE(SUM(a.publication_status='FAILED'),0) AS publicationFailures
+                   COALESCE(SUM(a.publication_status='FAILED'),0) AS publicationFailures,
+                   SUM(costs.estimatedCostUsd) AS estimatedCostUsd,
+                   COALESCE(SUM(costs.missingCostCount),0) AS missingCostCount
             FROM review_run r
             LEFT JOIN review_task t ON t.run_id=r.id
             LEFT JOIN review_attempt a ON a.token=t.current_attempt
             LEFT JOIN (SELECT attempt_token,COUNT(*) AS total FROM review_finding GROUP BY attempt_token) f
                    ON f.attempt_token=a.token
+            LEFT JOIN (SELECT task_id,SUM(estimated_cost_usd) AS estimatedCostUsd,
+                              SUM(finished_at IS NOT NULL AND estimated_cost_usd IS NULL) AS missingCostCount
+                       FROM review_attempt GROUP BY task_id) costs ON costs.task_id=t.id
             """;
     private static final String TASKS = """
             SELECT t.id,t.card_id AS cardId,t.class_name AS className,c.display_name AS cardName,
