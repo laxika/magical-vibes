@@ -281,6 +281,8 @@ public class GameData {
     public final Set<UUID> oncePerTurnGraveyardSpellPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
+    /** Snapshot of the actual spells cast during the previous turn for filtered history queries. */
+    public final Map<UUID, List<Card>> spellsCastLastTurnCards = new ConcurrentHashMap<>();
     /** The game's current day/night designation. */
     public DayNight dayNight = DayNight.NEITHER;
     /** The player who currently is the monarch, or {@code null} when no player is monarch. */
@@ -2698,6 +2700,9 @@ public class GameData {
      *  created when the card leaves and returns can evaluate again. */
     public final Set<UUID> survivalTriggersEvaluated = ConcurrentHashMap.newKeySet();
 
+    /** Tracks source permanent object IDs whose one-shot triggered ability has fired. */
+    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
+
     /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
      *  this turn. Cleared at start of new turn. */
     public final Map<UUID, Set<UUID>> oncePerCreatureTriggersFiredThisTurn = new ConcurrentHashMap<>();
@@ -4931,6 +4936,11 @@ public class GameData {
         return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
     }
 
+    /** Returns an unmodifiable view of the spells the given player cast during the previous turn. */
+    public List<Card> getSpellsCastLastTurn(UUID playerId) {
+        return Collections.unmodifiableList(spellsCastLastTurnCards.getOrDefault(playerId, List.of()));
+    }
+
     public boolean hasSpellCastTargetingCreatureThisTurn(UUID playerId) {
         return !spellsCastTargetingCreatureThisTurn.getOrDefault(playerId, Set.of()).isEmpty();
     }
@@ -4990,7 +5000,9 @@ public class GameData {
      */
     public void snapshotSpellCountsAndClear(Map<UUID, Integer> target) {
         target.clear();
+        spellsCastLastTurnCards.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
+        spellsCastThisTurn.forEach((id, spells) -> spellsCastLastTurnCards.put(id, new ArrayList<>(spells)));
         spellsCastThisTurn.clear();
         spellsCastTargetingCreatureThisTurn.clear();
         spellsCastUsingTreasureManaThisTurn.clear();
@@ -6934,6 +6946,8 @@ public class GameData {
         this.cardNameCycleCountsThisGame.forEach((k, v) ->
                 copy.cardNameCycleCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
+        this.spellsCastLastTurnCards.forEach((k, v) ->
+                copy.spellsCastLastTurnCards.put(k, new ArrayList<>(v)));
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;

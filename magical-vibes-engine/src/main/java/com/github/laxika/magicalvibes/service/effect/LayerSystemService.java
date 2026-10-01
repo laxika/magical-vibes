@@ -789,6 +789,7 @@ public class LayerSystemService {
         h = mix(h, flags);
         h = mix(h, p.getAttackTarget() == null ? 0 : p.getAttackTarget().hashCode());
         h = mix(h, p.getAttacksThisTurn());
+        h = mix(h, p.getAttacksThisGame());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
         }

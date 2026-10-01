@@ -204,6 +204,7 @@ public sealed interface DynamicAmount permits
         SourcePower,
         SourceToughness,
         SpellsCastThisTurn,
+        SpellsCastSinceBeginningOfLastTurn,
         SpellsCastFromOutsideHandThisTurn,
         Sum,
         TargetPlayerLifeTotal,

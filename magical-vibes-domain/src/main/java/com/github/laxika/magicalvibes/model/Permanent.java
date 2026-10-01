@@ -52,6 +52,8 @@ public class Permanent {
     private boolean attackedThisTurn;
     /** Number of times this permanent has been declared as an attacker this turn. */
     @Setter private int attacksThisTurn;
+    /** Number of times this permanent has attacked during this game. */
+    @Setter private int attacksThisGame;
     private boolean attackedThisCombat;
     /** Player or permanent IDs this creature attacked during the current combat. */
     private final Set<UUID> playersAttackedThisCombat = new HashSet<>();
@@ -731,6 +733,7 @@ public class Permanent {
         this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
         this.attacksThisTurn = 0;
+        this.attacksThisGame = 0;
         this.attackedThisCombat = false;
         this.summoningSick = true;
     }
@@ -764,6 +767,7 @@ public class Permanent {
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
         this.attacksThisTurn = source.attacksThisTurn;
+        this.attacksThisGame = source.attacksThisGame;
         this.attackedThisCombat = source.attackedThisCombat;
         this.playersAttackedThisCombat.addAll(source.playersAttackedThisCombat);
         this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
@@ -1161,6 +1165,7 @@ public class Permanent {
         if (attacking) {
             this.attackedThisTurn = true;
             this.attacksThisTurn++;
+            this.attacksThisGame++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
             if (attackTarget != null) {
