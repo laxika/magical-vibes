@@ -1,28 +1,32 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(DuergarCaveGuard.class)
 class DuergarCaveGuardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving ability gives +1/+0, payable with red mana")
     void resolvingBoostsWithRed() {
-        addGuardReady(player1);
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(guard.getEffectivePower()).isEqualTo(2);
         assertThat(guard.getEffectiveToughness()).isEqualTo(3);
     }
@@ -30,20 +34,19 @@ class DuergarCaveGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Ability is also payable with white mana (hybrid cost)")
     void payableWithWhite() {
-        addGuardReady(player1);
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(guard.getEffectivePower()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Can activate multiple times, stacking the boost")
     void stacksMultipleActivations() {
-        addGuardReady(player1);
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -51,7 +54,6 @@ class DuergarCaveGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(guard.getEffectivePower()).isEqualTo(3);
         assertThat(guard.getEffectiveToughness()).isEqualTo(3);
     }
@@ -59,13 +61,12 @@ class DuergarCaveGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addGuardReady(player1);
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(guard.getEffectivePower()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -77,20 +78,43 @@ class DuergarCaveGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wither deals combat damage to creatures as -1/-1 counters")
+    void witherPutsMinusOneMinusOneCountersOnCombatCreatures() {
+        Permanent attacker = addCreatureReady(player1, new DuergarCaveGuard());
+        Permanent blocker = addCreatureReady(player2, new DuergarCaveGuard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+    }
+
+    @Test
+    @DisplayName("Wither deals normal combat damage to players")
+    void witherDealsNormalDamageToPlayers() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new DuergarCaveGuard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without mana")
     void cannotActivateWithoutMana() {
-        addGuardReady(player1);
+        addCreatureReady(player1, new DuergarCaveGuard());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addGuardReady(Player player) {
-        DuergarCaveGuard card = new DuergarCaveGuard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

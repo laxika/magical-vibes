@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EndlessHorizons.class, Plains.class, Forest.class})
 class EndlessHorizonsTest extends BaseCardTest {
 
     // ===== ETB — search library for any number of Plains, exile them tracked with the source =====
@@ -87,11 +89,11 @@ class EndlessHorizonsTest extends BaseCardTest {
 
     // ===== Upkeep — you may put an exiled card into your hand =====
 
-    private UUID setupWithExiledPlains(int plainsCount) {
+    private UUID setupWithExiledCards(List<? extends Card> cards) {
         harness.addToBattlefield(player1, new EndlessHorizons());
         UUID permId = harness.getPermanentId(player1, "Endless Horizons");
-        for (int i = 0; i < plainsCount; i++) {
-            gd.addToExile(player1.getId(), new Plains(), permId);
+        for (Card card : cards) {
+            gd.addToExile(player1.getId(), card, permId);
         }
         return permId;
     }
@@ -104,7 +106,7 @@ class EndlessHorizonsTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep trigger returns a single exiled Plains to hand")
     void upkeepReturnsSingleExiledPlainsToHand() {
-        UUID permId = setupWithExiledPlains(1);
+        UUID permId = setupWithExiledCards(List.of(new Plains()));
         UUID exiledId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
         advanceToSecondTurnUpkeep(player1);
@@ -118,7 +120,7 @@ class EndlessHorizonsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the upkeep trigger leaves the card exiled")
     void upkeepDeclineLeavesCardExiled() {
-        UUID permId = setupWithExiledPlains(1);
+        UUID permId = setupWithExiledCards(List.of(new Plains()));
 
         UUID exiledId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
@@ -135,7 +137,7 @@ class EndlessHorizonsTest extends BaseCardTest {
     @Test
     @DisplayName("With several exiled cards, the controller chooses one to return")
     void upkeepChoosesOneOfSeveral() {
-        UUID permId = setupWithExiledPlains(3);
+        UUID permId = setupWithExiledCards(List.of(new Plains(), new Plains(), new Plains()));
         UUID chosen = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
         advanceToSecondTurnUpkeep(player1);
@@ -148,5 +150,37 @@ class EndlessHorizonsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(chosen));
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(2);
         assertThat(gd.getCardsExiledByPermanent(permId)).noneMatch(c -> c.getId().equals(chosen));
+    }
+
+    @Test
+    @DisplayName("Accepting the upkeep trigger returns any card exiled with the enchantment")
+    void upkeepReturnsAnyOwnedCardExiledWithSource() {
+        UUID permId = setupWithExiledCards(List.of(new Forest()));
+        UUID exiledId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(exiledId));
+        assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability returns only cards the controller owns")
+    void upkeepReturnsOnlyCardsOwnedByController() {
+        UUID permId = setupWithExiledCards(List.of(new Plains()));
+        UUID ownedCardId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
+        Forest opponentOwnedCard = new Forest();
+        gd.addToExile(player2.getId(), opponentOwnedCard, permId);
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(ownedCardId));
+        assertThat(gd.getCardsExiledByPermanent(permId))
+                .hasSize(1)
+                .anyMatch(c -> c.getId().equals(opponentOwnedCard.getId()));
     }
 }

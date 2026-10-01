@@ -1,33 +1,21 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuskdaleWurm;
+import com.github.laxika.magicalvibes.cards.l.LightFromWithin;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KithkinSpellduster.class, LightFromWithin.class, DuskdaleWurm.class})
 class KithkinSpelldusterTest extends BaseCardTest {
-
-    /** Resolves the stack (ability + Persist trigger) until it empties or the game pauses for input. */
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            GameData g = harness.getGameData();
-            if (g.interaction.isAwaitingInput() || g.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
 
     @Test
     @DisplayName("Ability destroys target enchantment when it resolves")
@@ -37,10 +25,10 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Light from Within");
+        harness.assertInGraveyard(player2, "Light from Within");
     }
 
     @Test
@@ -51,12 +39,9 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kithkin Spellduster"))
-                .findFirst().orElse(null);
-        assertThat(returned).isNotNull();
+        Permanent returned = findPermanent(player1, "Kithkin Spellduster");
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Kithkin Spellduster");
     }
@@ -69,9 +54,24 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player1, "Light from Within");
+    }
+
+    @Test
+    @DisplayName("Persist does not return Spellduster if it already had a -1/-1 counter")
+    void persistDoesNotReturnWithExistingMinusCounter() {
+        Permanent duster = addReadyDuster(player1);
+        duster.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent target = addEnchantment(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kithkin Spellduster");
+        harness.assertInGraveyard(player1, "Kithkin Spellduster");
     }
 
     @Test
@@ -105,34 +105,23 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Glorious Anthem"));
+                .removeIf(p -> p.getId().equals(target.getId()));
 
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     private Permanent addReadyDuster(Player player) {
-        KithkinSpellduster card = new KithkinSpellduster();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new KithkinSpellduster());
     }
 
     private Permanent addEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new LightFromWithin());
     }
 
     private Permanent addCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DuskdaleWurm());
     }
 }
