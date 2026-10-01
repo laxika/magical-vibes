@@ -2,20 +2,22 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(ParapetWatchers.class)
 class ParapetWatchersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability with white mana gives +0/+1")
     void activatingWithWhiteBoostsToughness() {
-        Permanent watchers = addReadyWatchers(player1);
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -28,7 +30,7 @@ class ParapetWatchersTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can also be paid with blue mana (hybrid)")
     void activatingWithBlueBoostsToughness() {
-        Permanent watchers = addReadyWatchers(player1);
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -40,7 +42,7 @@ class ParapetWatchersTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate multiple times — each gives +0/+1")
     void canActivateMultipleTimes() {
-        Permanent watchers = addReadyWatchers(player1);
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         for (int i = 0; i < 3; i++) {
@@ -54,7 +56,7 @@ class ParapetWatchersTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        Permanent watchers = addReadyWatchers(player1);
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -70,11 +72,12 @@ class ParapetWatchersTest extends BaseCardTest {
         assertThat(watchers.getToughnessModifier()).isEqualTo(0);
     }
 
-    private Permanent addReadyWatchers(Player player) {
-        ParapetWatchers card = new ParapetWatchers();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot activate without white or blue mana")
+    void cannotActivateWithoutHybridMana() {
+        addCreatureReady(player1, new ParapetWatchers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

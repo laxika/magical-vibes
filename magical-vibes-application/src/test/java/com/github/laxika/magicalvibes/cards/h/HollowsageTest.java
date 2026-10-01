@@ -1,26 +1,27 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Hollowsage.class, SafeholdSentry.class})
 class HollowsageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untapping Hollowsage lets its controller make a target opponent discard")
     void untapMakesTargetOpponentDiscard() {
         Permanent hollowsage = addHollowsageTapped(player1);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new SafeholdSentry()));
 
         runUntapStep(player1);
         assertThat(hollowsage.isTapped()).isFalse();
@@ -36,14 +37,14 @@ class HollowsageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
     @Test
     @DisplayName("Declining the trigger makes no one discard")
     void decliningDoesNothing() {
         addHollowsageTapped(player1);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new SafeholdSentry()));
 
         runUntapStep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -61,7 +62,7 @@ class HollowsageTest extends BaseCardTest {
     @DisplayName("The controller may target themselves with the discard")
     void mayTargetSelf() {
         addHollowsageTapped(player1);
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new SafeholdSentry()));
 
         runUntapStep(player1);
         harness.handlePermanentChosen(player1, player1.getId());
@@ -72,14 +73,26 @@ class HollowsageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Safehold Sentry");
+    }
+
+    @Test
+    @DisplayName("An already untapped Hollowsage does not trigger")
+    void alreadyUntappedDoesNotTrigger() {
+        Permanent hollowsage = addCreatureReady(player1, new Hollowsage());
+        harness.setHand(player2, List.of(new SafeholdSentry()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(hollowsage.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private Permanent addHollowsageTapped(Player player) {
-        Permanent perm = new Permanent(new Hollowsage());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new Hollowsage());
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
