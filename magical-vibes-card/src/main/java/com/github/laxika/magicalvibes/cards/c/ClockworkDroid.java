@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "WHO", collectorNumber = "172")
+@CardRegistration(set = "WHO", collectorNumber = "777")
 public class ClockworkDroid extends Card {
 
     public ClockworkDroid() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -52,6 +53,8 @@ class SiegeOfTowersTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
@@ -67,7 +70,7 @@ class SiegeOfTowersTest extends BaseCardTest {
         castSiegeOfTowers(originalTarget, List.of("{1}{R}"));
 
         harness.passBothPriorities();
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();

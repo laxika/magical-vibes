@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
-import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "122")
@@ -17,9 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 public class StormEntity extends Card {
 
     public StormEntity() {
-        var otherSpellsCastThisTurn = new Max(
-                new Fixed(0),
-                new Sum(new SpellsCastThisTurn(CountScope.ANY_PLAYER), new Fixed(-1)));
+        var otherSpellsCastThisTurn = new SpellsCastThisTurn(
+                new CardNotPredicate(new CardIsSelfPredicate()), CountScope.ANY_PLAYER);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, otherSpellsCastThisTurn));
     }

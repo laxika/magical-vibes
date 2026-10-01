@@ -55,7 +55,7 @@ public class VitasporeThallid extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
                                 )),
-                                "a Saproling"
+                                "a Saproling", false
                         ),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
                 ),

@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "155")
+@CardRegistration(set = "WHO", collectorNumber = "439")
+@CardRegistration(set = "WHO", collectorNumber = "760")
+@CardRegistration(set = "WHO", collectorNumber = "1030")
 public class SallySparrow extends Card {
 
     public SallySparrow() {

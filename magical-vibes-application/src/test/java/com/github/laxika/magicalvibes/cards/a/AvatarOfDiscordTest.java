@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvatarOfDiscord.class, GrizzlyBears.class})
+@CardUsed({AvatarOfDiscord.class, SealOfDoom.class})
 class AvatarOfDiscordTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding two cards keeps Avatar of Discord")
     void discardingTwoCardsKeepsAvatar() {
-        castAvatar(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        castAvatar(List.of(new SealOfDoom(), new SealOfDoom()));
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -43,9 +43,29 @@ class AvatarOfDiscordTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discarding two of three cards keeps the remaining card")
+    void discardingTwoOfThreeCardsKeepsRemainingCard() {
+        castAvatar(List.of(new SealOfDoom(), new SealOfDoom(), new SealOfDoom()));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice.remainingCount()).isEqualTo(2);
+        assertThat(choice.validIndices()).containsExactly(0, 1, 2);
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Avatar of Discord");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Declining the discard sacrifices Avatar of Discord")
     void decliningDiscardSacrificesAvatar() {
-        castAvatar(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        castAvatar(List.of(new SealOfDoom(), new SealOfDoom()));
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -57,12 +77,12 @@ class AvatarOfDiscordTest extends BaseCardTest {
     @Test
     @DisplayName("Fewer than two cards automatically sacrifices Avatar of Discord")
     void fewerThanTwoCardsAutomaticallySacrificesAvatar() {
-        castAvatar(List.of(new GrizzlyBears()));
+        castAvatar(List.of(new SealOfDoom()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Avatar of Discord");
         harness.assertInGraveyard(player1, "Avatar of Discord");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Seal of Doom");
     }
 
     private void castAvatar(List<Card> hand) {
@@ -70,7 +90,6 @@ class AvatarOfDiscordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castCreature(player1, 0);
         harness.setHand(player1, hand);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

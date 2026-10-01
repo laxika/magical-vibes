@@ -27,6 +27,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "501")
 @CardRegistration(set = "MB2", collectorNumber = "3")
 @CardRegistration(set = "RVR", collectorNumber = "1")
+@CardRegistration(set = "BLC", collectorNumber = "73")
 public class KarnTheGreatCreator extends Card {
 
     public KarnTheGreatCreator() {

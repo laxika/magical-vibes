@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "260")
+@CardRegistration(set = "BLC", collectorNumber = "353")
 public class WoodedRidgeline extends Card {
 
     public WoodedRidgeline() {

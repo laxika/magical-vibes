@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOrBlockingAlonePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "111")
+@CardRegistration(set = "WHO", collectorNumber = "716")
 public class ThijarianWitness extends Card {
 
     public ThijarianWitness() {

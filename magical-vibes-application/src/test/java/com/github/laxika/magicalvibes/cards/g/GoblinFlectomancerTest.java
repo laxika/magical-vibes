@@ -151,10 +151,41 @@ class GoblinFlectomancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+                .isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Both divided-damage targets change together when legal replacements exist")
+    void changesAllDividedDamageTargetsTogether() {
+        addCreatureReady(player2, new GoblinFlectomancer());
+        Permanent first = addCreatureReady(player1, new GhorClanBloodscale());
+        Permanent second = addCreatureReady(player1, new GhorClanBloodscale());
+        Electrolyze electrolyze = new Electrolyze();
+        harness.setHand(player1, List.of(electrolyze));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Map<java.util.UUID, Integer> originalAssignments = Map.of(player1.getId(), 1, player2.getId(), 1);
+        harness.castInstant(player1, 0, originalAssignments);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, electrolyze.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, first.getId());
+
+        StackEntry spell = gd.stack.stream().filter(entry -> entry.getCard().getId().equals(electrolyze.getId()))
+                .findFirst().orElseThrow();
+        assertThat(spell.getDamageAssignments()).containsExactlyInAnyOrderEntriesOf(originalAssignments);
+
+        harness.handlePermanentChosen(player2, second.getId());
+        resolveAllTriggers();
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

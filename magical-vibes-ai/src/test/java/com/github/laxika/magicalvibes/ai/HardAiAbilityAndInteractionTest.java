@@ -279,7 +279,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates Shivan Dragon pump ability only during combat")
     void activatesShivanDragonPumpOnlyDuringCombat() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
 
         // Declare blockers step A?€�t good timing for pump
         harness.forceActivePlayer(player1);
@@ -817,7 +818,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI activates targeted +N loyalty ability against opponent")
     void activatesTargetedPlusLoyaltyAbility() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
         giveAiPriority(player1);
 
         // Chandra Bold Pyromancer: +1 deal 2 damage to target player
@@ -1086,7 +1088,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @DisplayName("Hard AI skips variable loyalty cost abilities (-X)")
     void skipsVariableLoyaltyCostAbility() {
         pinLibrariesAndHands();
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
         giveAiPriority(player1);
 
         // Chandra Nalaar: +1 (targeted, damage to player/PW), -X (variable), -8 (ultimate)

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "190")
+@CardRegistration(set = "BLC", collectorNumber = "232")
 public class PrimevalBounty extends Card {
 
     public PrimevalBounty() {

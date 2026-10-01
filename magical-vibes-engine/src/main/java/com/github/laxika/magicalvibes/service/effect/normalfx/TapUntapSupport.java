@@ -62,7 +62,9 @@ public class TapUntapSupport {
      */
     public boolean tapPermanent(GameData gameData, Permanent permanent, UUID tappingPlayerId) {
         boolean wasTapped = permanent.isTapped();
-        permanent.tap();
+        if (!permanent.tap()) {
+            return false;
+        }
         if (!wasTapped) {
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, tappingPlayerId);
             return true;

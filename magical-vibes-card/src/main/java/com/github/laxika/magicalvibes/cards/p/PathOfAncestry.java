@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ECC", collectorNumber = "158")
 @CardRegistration(set = "TMC", collectorNumber = "70")
 @CardRegistration(set = "WHO", collectorNumber = "293")
+@CardRegistration(set = "WHO", collectorNumber = "884")
 @CardRegistration(set = "PIP", collectorNumber = "279")
 @CardRegistration(set = "PIP", collectorNumber = "807")
 @CardRegistration(set = "40K", collectorNumber = "287")
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "AFC", collectorNumber = "254")
 @CardRegistration(set = "LCC", collectorNumber = "346")
 @CardRegistration(set = "C20", collectorNumber = "298")
+@CardRegistration(set = "BLC", collectorNumber = "322")
 @CardRegistration(set = "MIC", collectorNumber = "178")
 public class PathOfAncestry extends Card {
 

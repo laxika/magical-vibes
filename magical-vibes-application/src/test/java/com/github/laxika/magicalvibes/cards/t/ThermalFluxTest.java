@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThermalFlux.class, SnowCoveredIsland.class})
 class ThermalFluxTest extends BaseCardTest {
 
     @Test
@@ -59,10 +60,23 @@ class ThermalFluxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fizzles without drawing if the target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent target = addPermanent(false);
+        prepareThermalFlux();
+        harness.castInstant(player1, 0, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Draws a card at the next upkeep")
     void drawsAtNextUpkeep() {
         Permanent target = addPermanent(false);
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).add(new SnowCoveredIsland());
 
         castThermalFlux(0, target);
 
@@ -77,19 +91,21 @@ class ThermalFluxTest extends BaseCardTest {
     }
 
     private void castThermalFlux(int mode, Permanent target) {
-        harness.setHand(player1, List.of(new ThermalFlux()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        prepareThermalFlux();
         harness.castInstant(player1, 0, mode, target.getId());
         harness.passBothPriorities();
     }
 
+    private void prepareThermalFlux() {
+        harness.setHand(player1, List.of(new ThermalFlux()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+    }
+
     private Permanent addPermanent(boolean snow) {
-        Permanent permanent = new Permanent(new Island());
-        if (snow) {
-            TestCards.mutableCard(permanent).setSupertypes(
-                    EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        if (!snow) {
+            TestCards.mutableCard(permanent).setSupertypes(EnumSet.of(CardSupertype.BASIC));
         }
-        gd.playerBattlefields.get(player2.getId()).add(permanent);
         return permanent;
     }
 }

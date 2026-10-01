@@ -202,12 +202,15 @@ public class PermanentControlSupport {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
         }
 
-        for (CreateTokenEffect tokenBlueprint : tokenBlueprints) {
+        for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
+            boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
+            CreateTokenEffect tokenBlueprint = TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
+                    gameData, controllerId, originalTokenBlueprint);
             boolean blueprintIsCreature = tokenBlueprint.primaryType() == CardType.CREATURE;
             int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
             int blueprintToughness = fixedStat(tokenBlueprint.toughness(), tokenBlueprint);
             Card tokenCard = TokenCardFactory.create(tokenBlueprint, blueprintPower, blueprintToughness, sourceSetCode);
-            if (tokenBlueprint == evaluatedToken && additionalEffects != null) {
+            if (originalBlueprint && additionalEffects != null) {
                 for (var additional : additionalEffects.entrySet()) {
                     for (var registration : additional.getValue()) {
                         tokenCard.addEffect(additional.getKey(), registration.effect(), registration.triggerMode());

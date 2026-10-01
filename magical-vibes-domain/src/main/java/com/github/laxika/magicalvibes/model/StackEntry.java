@@ -252,10 +252,13 @@ public class StackEntry {
     @Setter private CardSubtype chosenCreatureType;
     private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
+    /** Carries Demonfire's replacement through redirected damage during this resolution. */
+    @Setter private boolean exilesCreaturesDamaged;
     /** Whether a continuation entry still deals damage as part of resolving its source spell. */
     @Setter private boolean spellDamageContinuation;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
+    @Setter private UUID defendingPlayerId;
     /** Whether this spell or ability has already been counted for a pile grouping or guess this turn. */
     @Setter private boolean causedPileGroupingOrGuessThisTurn;
     /**
@@ -790,11 +793,13 @@ public class StackEntry {
         this.chosenCreatureType = source.chosenCreatureType;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
+        this.exilesCreaturesDamaged = source.exilesCreaturesDamaged;
         this.planarAbilityId = source.planarAbilityId;
         this.sourcePlanarObject = source.sourcePlanarObject == null ? null : source.sourcePlanarObject.copy();
         this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
+        this.defendingPlayerId = source.defendingPlayerId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
         this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
@@ -1071,9 +1076,11 @@ public class StackEntry {
         this.beholdChosenSubtype = null;
         this.chosenCreatureType = null;
         this.damageSourceCard = null;
+        this.exilesCreaturesDamaged = false;
         this.spellDamageContinuation = false;
         this.stateTriggerEffectIndex = -1;
         this.attackedTargetId = null;
+        this.defendingPlayerId = null;
         this.ownerIdOverride = null;
         this.sourceZone = Zone.HAND;
         this.spellDispositionHandled = false;

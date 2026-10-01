@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "52")
+@CardRegistration(set = "WHO", collectorNumber = "959")
+@CardRegistration(set = "WHO", collectorNumber = "657")
 @CardRegistration(set = "WHO", collectorNumber = "368")
 @CardRegistration(set = "MSC", collectorNumber = "152")
 @CardRegistration(set = "MSC", collectorNumber = "339")

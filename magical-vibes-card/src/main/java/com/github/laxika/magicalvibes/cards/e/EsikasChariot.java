@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "169")
 @CardRegistration(set = "SLD", collectorNumber = "1894")
+@CardRegistration(set = "BLC", collectorNumber = "215")
 public class EsikasChariot extends Card {
 
     public EsikasChariot() {

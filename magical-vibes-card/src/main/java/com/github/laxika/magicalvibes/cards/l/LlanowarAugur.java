@@ -19,13 +19,13 @@ public class LlanowarAugur extends Card {
     public LlanowarAugur() {
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{G}",
+                null,
                 List.of(
                         new SacrificeSelfCost(),
                         new BoostTargetCreatureEffect(3, 3),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
                 ),
-                "{G}, Sacrifice this creature: Target creature gets +3/+3 and gains trample until end of turn. "
+                "Sacrifice this creature: Target creature gets +3/+3 and gains trample until end of turn. "
                         + "Activate only during your upkeep.",
                 TargetFilters.creature(),
                 null,

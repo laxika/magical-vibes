@@ -425,9 +425,11 @@ public class AsEntersInteractionService {
         if (colorChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
-                    colorChoice);
-            return;
+            if (!colorChoice.choiceComplete(justEntered)) {
+                playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
+                        colorChoice);
+                return;
+            }
         }
 
         ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

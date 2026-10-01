@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "DMR", collectorNumber = "177")
 @CardRegistration(set = "PIP", collectorNumber = "206")
 @CardRegistration(set = "PIP", collectorNumber = "734")
+@CardRegistration(set = "BLC", collectorNumber = "239")
 public class SquirrelNest extends Card {
 
     public SquirrelNest() {

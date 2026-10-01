@@ -24,8 +24,7 @@ class KindleTheCarnageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KindleTheCarnage(), new HillGiant()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -39,8 +38,7 @@ class KindleTheCarnageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KindleTheCarnage(), new Ornithopter()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -55,8 +53,7 @@ class KindleTheCarnageTest extends BaseCardTest {
                 new KindleTheCarnage(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -74,12 +71,24 @@ class KindleTheCarnageTest extends BaseCardTest {
                 new KindleTheCarnage(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does nothing when there is no card left to discard")
+    void noCardsToDiscardDealsNoDamage() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new KindleTheCarnage()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

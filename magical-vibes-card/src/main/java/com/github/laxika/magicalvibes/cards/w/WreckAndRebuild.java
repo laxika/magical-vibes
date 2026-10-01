@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "169")
+@CardRegistration(set = "WHO", collectorNumber = "774")
 @CardRegistration(set = "OTC", collectorNumber = "250")
 public class WreckAndRebuild extends Card {
 

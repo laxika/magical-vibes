@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -128,6 +129,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAdjacentToSourcePred
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
@@ -152,6 +154,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerDirectionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
@@ -221,6 +224,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentO
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingRememberedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
@@ -1486,6 +1490,10 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && rememberedPlayerId != null
                         && rememberedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingDefendingPlayerPredicate ignored ->
+                    permanent.isAttacking() && filterContext != null
+                            && filterContext.defendingPlayerId() != null
+                            && filterContext.defendingPlayerId().equals(permanent.getAttackTarget());
             case PermanentIsAttackingMonarchPredicate ignored ->
                     permanent.isAttacking() && gameData != null
                             && gameData.monarchPlayerId != null
@@ -1711,6 +1719,19 @@ public class PredicateEvaluationService {
                         ? bonus.basePowerOverride()
                         : permanent.getBasePower();
                 yield basePower == basePowerEqualsPredicate.basePower();
+            }
+            case PermanentBaseToughnessEqualsPredicate baseToughnessEqualsPredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield layered.getBaseToughness() == baseToughnessEqualsPredicate.baseToughness();
+                }
+                if (gameData == null) {
+                    yield permanent.getBaseToughness() == baseToughnessEqualsPredicate.baseToughness();
+                }
+                GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                int baseToughness = bonus.basePTOverridden()
+                        ? bonus.baseToughnessOverride() : permanent.getBaseToughness();
+                yield baseToughness == baseToughnessEqualsPredicate.baseToughness();
             }
             case PermanentPowerAtMostControlledSubtypeCountPredicate subtypeCountPredicate -> {
                 if (gameData == null || sourceControllerId == null) {
@@ -2170,6 +2191,19 @@ public class PredicateEvaluationService {
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
                             && p.playerId().equals(gameData.findControllerOf(permanent));
+            case PermanentControlledByPlayerDirectionPredicate p -> {
+                if (gameData == null || sourceControllerId == null || p.direction() == null
+                        || gameData.orderedPlayerIds.size() < 2) {
+                    yield false;
+                }
+                int sourceControllerIndex = gameData.orderedPlayerIds.indexOf(sourceControllerId);
+                int permanentControllerIndex = gameData.orderedPlayerIds.indexOf(
+                        gameData.findControllerOf(permanent));
+                yield sourceControllerIndex >= 0 && permanentControllerIndex >= 0
+                        && permanentControllerIndex == Math.floorMod(
+                        sourceControllerIndex + p.direction().turnOrderOffset(),
+                        gameData.orderedPlayerIds.size());
+            }
             case PermanentControlledBySourceChosenPlayerPredicate ignored -> {
                 UUID chosenPlayerId = sourceChosenPlayerId(filterContext);
                 yield gameData != null && chosenPlayerId != null
@@ -3221,6 +3255,11 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && rememberedPlayerId != null
                         && rememberedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingDefendingPlayerPredicate ignored -> {
+                UUID defendingPlayerId = context == null ? null : context.defendingPlayerId();
+                yield permanent.isAttacking() && defendingPlayerId != null
+                        && defendingPlayerId.equals(permanent.getAttackTarget());
+            }
             case PermanentIsAttackingMonarchPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield permanent.isAttacking() && gameData != null
@@ -3388,6 +3427,7 @@ public class PredicateEvaluationService {
             case PermanentBasePowerToughnessPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBaseToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBasePowerEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentBaseToughnessEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -4642,7 +4682,9 @@ public class PredicateEvaluationService {
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
+                    entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount()) == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
                     entry.getCard().getManaValue() + entry.getXValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0

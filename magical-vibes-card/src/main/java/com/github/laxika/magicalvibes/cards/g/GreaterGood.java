@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "174")
 @CardRegistration(set = "MSC", collectorNumber = "380")
 @CardRegistration(set = "AFC", collectorNumber = "160")
+@CardRegistration(set = "BLC", collectorNumber = "223")
 public class GreaterGood extends Card {
 
     public GreaterGood() {

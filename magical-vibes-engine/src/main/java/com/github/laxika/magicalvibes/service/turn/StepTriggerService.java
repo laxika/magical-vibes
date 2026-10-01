@@ -3564,6 +3564,10 @@ public class StepTriggerService {
                 && gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             processNextEndStepTriggerTarget(gameData);
         }
+        if (gameData.planechase != null) {
+            planechaseService.step(gameData, EffectSlot.POSTCOMBAT_MAIN_TRIGGERED);
+        }
+
     }
 
     private boolean isOptionalGraveyardTarget(CardEffect effect) {

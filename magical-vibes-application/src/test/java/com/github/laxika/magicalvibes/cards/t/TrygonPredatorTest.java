@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.c.Cindervines;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TrygonPredator.class, FountainOfYouth.class, Cindervines.class, GrizzlyBears.class})
+@CardUsed({TrygonPredator.class, AzoriusSignet.class, SealOfDoom.class, MistralCharger.class})
 class TrygonPredatorTest extends BaseCardTest {
 
     @Test
@@ -20,10 +20,10 @@ class TrygonPredatorTest extends BaseCardTest {
     void acceptingTriggerDestroysArtifactOrEnchantment() {
         Permanent predator = addCreatureReady(player1, new TrygonPredator());
         predator.setAttacking(true);
-        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        Permanent enemyArtifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        Permanent enemyEnchantment = harness.addToBattlefieldAndReturn(player2, new Cindervines());
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new AzoriusSignet());
+        Permanent enemyArtifact = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        Permanent enemyEnchantment = harness.addToBattlefieldAndReturn(player2, new SealOfDoom());
+        Permanent enemyCreature = addCreatureReady(player2, new MistralCharger());
 
         resolveCombat();
 
@@ -39,9 +39,9 @@ class TrygonPredatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player2, "Cindervines");
-        harness.assertInGraveyard(player2, "Cindervines");
-        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Seal of Doom");
+        harness.assertInGraveyard(player2, "Seal of Doom");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
     }
 
     @Test
@@ -49,7 +49,7 @@ class TrygonPredatorTest extends BaseCardTest {
     void decliningTriggerDestroysNothing() {
         Permanent predator = addCreatureReady(player1, new TrygonPredator());
         predator.setAttacking(true);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
 
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
@@ -58,7 +58,7 @@ class TrygonPredatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
     }
 
     @Test
@@ -66,12 +66,12 @@ class TrygonPredatorTest extends BaseCardTest {
     void noMatchingPermanentMeansNoTrigger() {
         Permanent predator = addCreatureReady(player1, new TrygonPredator());
         predator.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new MistralCharger());
 
         resolveCombat();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Mistral Charger");
     }
 }

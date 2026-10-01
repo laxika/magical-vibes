@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +31,7 @@ class RatcatcherTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(rat);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(rat);
         assertThat(gd.playerDecks.get(player1.getId())).contains(nonRat).doesNotContain(rat);
@@ -51,6 +50,22 @@ class RatcatcherTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(rat);
         assertThat(gd.playerDecks.get(player1.getId())).contains(rat);
+    }
+
+    @Test
+    @DisplayName("Searching may fail to find a Rat")
+    void findsNoRatWhenLibraryHasNoRat() {
+        harness.addToBattlefield(player1, new Ratcatcher());
+        GrizzlyBears nonRat = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonRat));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonRat);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonRat);
     }
 
     @Test

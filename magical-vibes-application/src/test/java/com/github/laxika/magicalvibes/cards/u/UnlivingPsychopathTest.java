@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.m.MinisterOfImpediments;
+import com.github.laxika.magicalvibes.cards.s.SlitheringShade;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnlivingPsychopath.class, GrizzlyBears.class, LlanowarElves.class, Ornithopter.class})
+@CardUsed({UnlivingPsychopath.class, SlitheringShade.class, MinisterOfImpediments.class, AzoriusSignet.class})
 class UnlivingPsychopathTest extends BaseCardTest {
 
     @Test
@@ -42,7 +42,7 @@ class UnlivingPsychopathTest extends BaseCardTest {
     @DisplayName("The second ability destroys a creature with less power")
     void destroysCreatureWithLessPower() {
         Permanent psychopath = addReadyPsychopath(player1);
-        Permanent target = addCreatureReady(player2, new Ornithopter());
+        Permanent target = addCreatureReady(player2, new SlitheringShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -50,7 +50,8 @@ class UnlivingPsychopathTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertNotOnBattlefield(player2, "Slithering Shade");
+        harness.assertInGraveyard(player2, "Slithering Shade");
         assertThat(psychopath.isTapped()).isTrue();
     }
 
@@ -58,7 +59,7 @@ class UnlivingPsychopathTest extends BaseCardTest {
     @DisplayName("The second ability cannot target a creature with equal power")
     void requiresStrictlyLowerPower() {
         addReadyPsychopath(player1);
-        Permanent target = addCreatureReady(player2, new LlanowarElves());
+        Permanent target = addCreatureReady(player2, new MinisterOfImpediments());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -67,7 +68,40 @@ class UnlivingPsychopathTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power less than");
-        assertThat(target).isIn(gd.playerBattlefields.get(player2.getId()));
+        harness.assertOnBattlefield(player2, "Minister of Impediments");
+    }
+
+    @Test
+    @DisplayName("The second ability cannot target a noncreature permanent")
+    void onlyTargetsCreatures() {
+        addReadyPsychopath(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
+    }
+
+    @Test
+    @DisplayName("The second ability rechecks the target's power when it resolves")
+    void rechecksTargetPowerOnResolution() {
+        Permanent psychopath = addReadyPsychopath(player1);
+        Permanent target = addCreatureReady(player2, new SlitheringShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Slithering Shade");
+        assertThat(psychopath.isTapped()).isTrue();
     }
 
     private Permanent addReadyPsychopath(Player player) {

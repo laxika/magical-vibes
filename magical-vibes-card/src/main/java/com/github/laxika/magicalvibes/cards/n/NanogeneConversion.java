@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "49")
 @CardRegistration(set = "WHO", collectorNumber = "364")
+@CardRegistration(set = "WHO", collectorNumber = "654")
+@CardRegistration(set = "WHO", collectorNumber = "955")
 public class NanogeneConversion extends Card {
 
     public NanogeneConversion() {

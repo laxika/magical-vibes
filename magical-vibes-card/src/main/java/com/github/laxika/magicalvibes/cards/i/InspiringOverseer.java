@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "SNC", collectorNumber = "18")
 @CardRegistration(set = "FDN", collectorNumber = "496")
 @CardRegistration(set = "SLD", collectorNumber = "1523")
+@CardRegistration(set = "BLC", collectorNumber = "141")
 public class InspiringOverseer extends Card {
 
     public InspiringOverseer() {
