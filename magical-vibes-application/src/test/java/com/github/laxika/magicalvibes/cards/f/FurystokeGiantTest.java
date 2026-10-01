@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FurystokeGiant.class, GrizzlyBears.class})
 class FurystokeGiantTest extends BaseCardTest {
 
     @Test
@@ -60,14 +60,39 @@ class FurystokeGiantTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    @DisplayName("Persist returns the Giant with a -1/-1 counter and its ETB grants the ability again")
+    void persistReturnsGiantAndTriggersEtbAgain() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new GrizzlyBears()); // index 0
+        addCreatureReady(player1, new GrizzlyBears()); // index 1
+        addCreatureReady(player1, new GrizzlyBears()); // index 2
+
+        castFurystokeGiant();
+        Permanent giant = findPermanent(player1, "Furystoke Giant");
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent returnedGiant = findPermanent(player1, "Furystoke Giant");
+        assertThat(returnedGiant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, returnedGiant)).isEqualTo(2);
+
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
     private void castFurystokeGiant() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new FurystokeGiant()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FurystokeGiant(), "{3}{R}{R}");
         harness.passBothPriorities(); // resolve the Giant → ETB trigger goes on the stack
         harness.passBothPriorities(); // resolve the ETB trigger → grant the ability
     }

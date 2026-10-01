@@ -1,20 +1,26 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.b.BurnTrail;
+import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RunedHalo.class, BurnTrail.class, BriarberryCohort.class,
+        WheelOfSunAndMoon.class, DrownerInitiate.class})
 class RunedHaloTest extends BaseCardTest {
 
     // ===== Card name choice on enter =====
@@ -27,10 +33,10 @@ class RunedHaloTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Shock");
+        harness.handleListChoice(player1, "Burn Trail");
 
         Permanent halo = findPermanent(player1, "Runed Halo");
-        assertThat(halo.getChosenName()).isEqualTo("Shock");
+        assertThat(halo.getChosenName()).isEqualTo("Burn Trail");
     }
 
     // ===== Protection from targeting =====
@@ -38,15 +44,15 @@ class RunedHaloTest extends BaseCardTest {
     @Test
     @DisplayName("A spell with the chosen name can't target the protected player")
     void chosenNameSpellCannotTargetPlayer() {
-        addReadyRunedHalo(player1, "Shock");
+        addReadyRunedHalo(player1, "Burn Trail");
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new BurnTrail()));
+        harness.addMana(player2, ManaColor.RED, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }
@@ -54,17 +60,16 @@ class RunedHaloTest extends BaseCardTest {
     @Test
     @DisplayName("Protection is player-scoped: the named spell can still target a permanent the player controls")
     void chosenNameSpellCanStillTargetPlayersPermanent() {
-        addReadyRunedHalo(player1, "Shock");
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addReadyRunedHalo(player1, "Burn Trail");
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new BurnTrail()));
+        harness.addMana(player2, ManaColor.RED, 4);
 
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castSorcery(player2, 0, cohort.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -78,13 +83,67 @@ class RunedHaloTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new BurnTrail()));
+        harness.addMana(player2, ManaColor.RED, 4);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("An Aura with the chosen name can't enchant the protected player")
+    void chosenNameAuraCannotEnchantPlayer() {
+        addReadyRunedHalo(player1, "Wheel of Sun and Moon");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new WheelOfSunAndMoon()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection ends when Runed Halo loses all abilities")
+    void protectionEndsWhenHaloLosesAbilities() {
+        Permanent halo = addReadyRunedHalo(player1, "Burn Trail");
+        halo.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BurnTrail()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        assertThatCode(() -> harness.castAndResolveSorcery(player2, 0, player1.getId()))
+                .doesNotThrowAnyException();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("An ability from a source with the chosen name can't target the protected player")
+    void chosenNameAbilityCannotTargetPlayer() {
+        addReadyRunedHalo(player1, "Drowner Initiate");
+        harness.addToBattlefield(player2, new DrownerInitiate());
+        harness.setLibrary(player1, List.of(new BriarberryCohort(), new BriarberryCohort()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BriarberryCohort()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player2, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 
     // ===== Protection from combat damage =====
@@ -92,18 +151,13 @@ class RunedHaloTest extends BaseCardTest {
     @Test
     @DisplayName("A creature with the chosen name deals no combat damage to the protected player")
     void chosenNameAttackerDealsNoCombatDamage() {
-        addReadyRunedHalo(player1, "Grizzly Bears");
+        addReadyRunedHalo(player1, "Briarberry Cohort");
         harness.setLife(player1, 20);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new BriarberryCohort());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
 
         gs.declareBlockers(gd, player1, List.of());
         harness.passBothPriorities();
@@ -114,31 +168,25 @@ class RunedHaloTest extends BaseCardTest {
     @Test
     @DisplayName("A creature with a different name still deals combat damage to the protected player")
     void differentNameAttackerDealsCombatDamage() {
-        addReadyRunedHalo(player1, "Hill Giant");
+        addReadyRunedHalo(player1, "Burn Trail");
         harness.setLife(player1, 20);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new BriarberryCohort());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
 
         gs.declareBlockers(gd, player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
     // ===== Helpers =====
 
     private Permanent addReadyRunedHalo(Player player, String chosenName) {
-        Permanent perm = new Permanent(new RunedHalo());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RunedHalo());
         perm.setChosenName(chosenName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

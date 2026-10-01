@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,35 +10,32 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PaleWayfarer.class, SafeholdElite.class, Forest.class})
 class PaleWayfarerTest extends BaseCardTest {
 
     @Test
     @DisplayName("{2}{W}{W}, {Q}: target creature gains protection from the chosen color and the source untaps")
     void grantsProtectionAndUntaps() {
         Permanent wayfarer = addTapped(player1, new PaleWayfarer());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new SafeholdElite());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         enterMainWithPriority(player1);
 
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId)).findFirst().orElseThrow();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
         // Paying {Q} untapped the source.
         assertThat(wayfarer.isTapped()).isFalse();
     }
@@ -46,7 +44,7 @@ class PaleWayfarerTest extends BaseCardTest {
     @DisplayName("When targeting an opponent's creature, that creature's controller chooses the color")
     void targetControllerChoosesColor() {
         addTapped(player1, new PaleWayfarer());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new SafeholdElite());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         enterMainWithPriority(player1);
@@ -65,40 +63,50 @@ class PaleWayfarerTest extends BaseCardTest {
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
         addCreatureReady(player1, new PaleWayfarer());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new SafeholdElite());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         enterMainWithPriority(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        addTapped(player1, new PaleWayfarer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test
     @DisplayName("Protection wears off at end of turn")
     void protectionClearedAtEndOfTurn() {
         addTapped(player1, new PaleWayfarer());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new SafeholdElite());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         enterMainWithPriority(player1);
 
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId)).findFirst().orElseThrow();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
     }
 
     private Permanent addTapped(Player player, Card card) {

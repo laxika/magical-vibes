@@ -5,18 +5,20 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SafeholdSentry.class)
 class SafeholdSentryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {2}{W} and untapping gives +0/+2 until end of turn")
     void pumpsToughnessAndUntapsSource() {
-        Permanent sentry = addTapped(player1, new SafeholdSentry());
+        Permanent sentry = addTappedSentry();
         harness.addMana(player1, ManaColor.WHITE, 3);
         enterMainWithPriority(player1);
 
@@ -32,7 +34,7 @@ class SafeholdSentryTest extends BaseCardTest {
     @Test
     @DisplayName("The +0/+2 boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent sentry = addTapped(player1, new SafeholdSentry());
+        Permanent sentry = addTappedSentry();
         harness.addMana(player1, ManaColor.WHITE, 3);
         enterMainWithPriority(player1);
 
@@ -50,7 +52,7 @@ class SafeholdSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new SafeholdSentry());
+        addCreatureReady(player1, new SafeholdSentry());
         harness.addMana(player1, ManaColor.WHITE, 3);
         enterMainWithPriority(player1);
 
@@ -58,17 +60,40 @@ class SafeholdSentryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot activate without the full {2}{W} cost")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent sentry = addTappedSentry();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sentry.isTapped()).isTrue();
+        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addTapped(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = addReady(player, card);
-        perm.tap();
-        return perm;
+    @Test
+    @DisplayName("Cannot activate while summoning sick even when tapped")
+    void cannotActivateWhileSummoningSick() {
+        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        sentry.tap();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sentry.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addTappedSentry() {
+        Permanent sentry = addCreatureReady(player1, new SafeholdSentry());
+        sentry.tap();
+        return sentry;
     }
 
     private void enterMainWithPriority(Player player) {
