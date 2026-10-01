@@ -40,10 +40,12 @@ class PyreswipeHawkTest extends BaseCardTest {
         Permanent lotus = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
         castShocks(5);
 
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, lotus.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.findPermanentController(gd, lotus.getId())).isEqualTo(player1.getId());
 

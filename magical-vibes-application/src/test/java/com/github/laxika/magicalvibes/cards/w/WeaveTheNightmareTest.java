@@ -36,7 +36,8 @@ class WeaveTheNightmareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeaveTheNightmare()));
         addMana(player1);
 
-        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0}, List.of(player2.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.HeistCardChoice choice =
@@ -59,7 +60,8 @@ class WeaveTheNightmareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeaveTheNightmare()));
         addMana(player1);
 
-        harness.castInstant(player1, 0, 1, creature.getId());
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{1}, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -76,7 +78,8 @@ class WeaveTheNightmareTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WeaveTheNightmare()));
         addMana(player1);
-        harness.castInstant(player1, 0, 2, shock.getId());
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{2}, shock.getId(), List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
@@ -108,7 +111,7 @@ class WeaveTheNightmareTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeaveTheNightmare()));
         addMana(player1);
         harness.castModalInstantWithModes(
-                player1, 0, 1, new int[]{1, 2}, shock.getId(), List.of(stolenCreature.getId()));
+                player1, 0, 1, 2, new int[]{1, 2}, shock.getId(), List.of(stolenCreature.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");

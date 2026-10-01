@@ -31,7 +31,7 @@ class OctomancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithGift(player1, 0, null, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent octopus = findPermanent(player2, "Octopus");
         assertThat(octopus.getCard().getColor()).isEqualTo(CardColor.BLUE);
@@ -60,6 +60,7 @@ class OctomancerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Octomancer());
         Permanent token = addEnteredCreatureToken(player1);
         advanceToEndStep(player1);
+        resolveAllTriggers();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

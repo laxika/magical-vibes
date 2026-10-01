@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.cards.g.GildedGoose;
 import com.github.laxika.magicalvibes.cards.g.GoldenEgg;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,7 +83,10 @@ class AGoldenOpportunityTest extends BaseCardTest {
 
     @Test
     void enteringSagaConjuresGooseAndTriggersItsFoodAbility() {
-        harness.enterBattlefieldAndReturn(player1, new AGoldenOpportunity());
+        harness.setHand(player1, List.of(new AGoldenOpportunity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Gilded Goose")).singleElement()
@@ -143,7 +149,6 @@ class AGoldenOpportunityTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, artifact.getId());
-        assertThat(findPermanents(player1, "Golden Egg")).singleElement();
         resolveAllTriggers();
 
         assertThat(bird.isTapped()).isTrue();

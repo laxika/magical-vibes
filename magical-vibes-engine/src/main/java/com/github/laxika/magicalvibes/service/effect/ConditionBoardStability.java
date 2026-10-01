@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
@@ -56,6 +57,7 @@ public final class ConditionBoardStability {
             // fingerprint, so creature-card thresholds can safely participate in layer 4.
             case GraveyardCardThreshold ignored -> true;
             case NotControllerTurn ignored -> true;
+            case ControllerTurn ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());
             case AllConditions c -> allStable(c.conditions());
             case AllOf c -> allStable(c.conditions());

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -2948,6 +2949,16 @@ public class SpellCastTriggerCollectorService {
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
         if (triggeringSpell != null) {
+            if (match.permanent() != null) {
+                resolved = resolved.stream()
+                        .map(effect -> OnceOnlyTriggerSupport.unwrapIfAvailable(
+                                match.gameData(), match.permanent(), effect))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                if (resolved.isEmpty()) {
+                    return false;
+                }
+            }
             StackEntry spellSnapshot = new StackEntry(triggeringSpell);
             resolved = resolved.stream()
                     .map(effect -> snapshotTriggeringSpell(effect, spellSnapshot, castingPlayerId,
@@ -3125,6 +3136,10 @@ public class SpellCastTriggerCollectorService {
             }
             preservePlanarSource(entry, match);
             match.gameData().stack.add(entry);
+        }
+        if (match.permanent() != null) {
+            trigger.resolvedEffects().forEach(effect -> OnceOnlyTriggerSupport.markIfNeeded(
+                    match.gameData(), match.permanent(), effect));
         }
         return true;
     }

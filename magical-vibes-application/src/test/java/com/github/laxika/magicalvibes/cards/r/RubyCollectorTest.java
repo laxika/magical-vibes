@@ -47,19 +47,21 @@ class RubyCollectorTest extends BaseCardTest {
     @Test
     @DisplayName("The conjure trigger works only once for the permanent")
     void conjureTriggersOnlyOnce() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyRubyCollector();
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
-        int handSizeAfterFirstAttack = gd.playerHands.get(player1.getId()).size();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterFirstAttack);
+        assertThat(gd.playerHands.get(player1.getId())).filteredOn(Card::getName, "Mox Ruby").hasSize(1);
     }
 
     @Test
