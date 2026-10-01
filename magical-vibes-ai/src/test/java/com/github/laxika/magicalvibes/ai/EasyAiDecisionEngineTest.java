@@ -731,6 +731,7 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @CardUsed({CrypticCommand.class, GrizzlyBears.class, Island.class})
         @DisplayName("Easy AI casts Cryptic Command with its choose-two target")
         void castsCrypticCommandWithChooseTwoTarget() {
             giveAiPriority();

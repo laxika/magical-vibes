@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.c.CennsHeir;
+import com.github.laxika.magicalvibes.cards.s.SpringleafDrum;
+import com.github.laxika.magicalvibes.cards.t.TurtleshellChangeling;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,98 +17,95 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZephyrNet.class, CennsHeir.class, TurtleshellChangeling.class, SpringleafDrum.class})
 class ZephyrNetTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Zephyr Net attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent target = addCreatureReady(player1, new CennsHeir());
+        ZephyrNet net = new ZephyrNet();
 
-        harness.setHand(player1, List.of(new ZephyrNet()));
+        harness.setHand(player1, List.of(net));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, target.getId());
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zephyr Net")
+                .anyMatch(p -> p.getCard() == net
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                        && p.getAttachedTo().equals(target.getId()));
     }
 
     @Test
     @DisplayName("Enchanted creature has defender and flying")
     void enchantedCreatureHasDefenderAndFlying() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent target = addCreatureReady(player1, new CennsHeir());
 
-        Permanent netPerm = new Permanent(new ZephyrNet());
-        netPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(netPerm);
+        Permanent netPerm = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        netPerm.setAttachedTo(target.getId());
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DEFENDER)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enchanted opponent's creature has defender and flying")
+    void enchantedOpponentsCreatureHasDefenderAndFlying() {
+        Permanent target = addCreatureReady(player2, new TurtleshellChangeling());
+
+        Permanent netPerm = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        netPerm.setAttachedTo(target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Zephyr Net does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent target = addCreatureReady(player1, new CennsHeir());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherCreature = addCreatureReady(player1, new TurtleshellChangeling());
 
-        Permanent netPerm = new Permanent(new ZephyrNet());
-        netPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(netPerm);
+        Permanent netPerm = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        netPerm.setAttachedTo(target.getId());
 
-        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.DEFENDER)).isFalse();
-        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isFalse();
     }
 
     @Test
     @DisplayName("Creature loses defender and flying when Zephyr Net leaves")
     void creatureLosesKeywordsWhenAuraLeaves() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent target = addCreatureReady(player1, new CennsHeir());
 
-        Permanent netPerm = new Permanent(new ZephyrNet());
-        netPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(netPerm);
+        Permanent netPerm = harness.addToBattlefieldAndReturn(player1, new ZephyrNet());
+        netPerm.setAttachedTo(target.getId());
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(netPerm);
 
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.DEFENDER)).isFalse();
-        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
-    @DisplayName("Cannot enchant a land")
-    void cannotEnchantALand() {
-        // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantANoncreaturePermanent() {
+        addCreatureReady(player2, new CennsHeir());
+        Permanent drum = harness.addToBattlefieldAndReturn(player1, new SpringleafDrum());
         harness.setHand(player1, List.of(new ZephyrNet()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, drum.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

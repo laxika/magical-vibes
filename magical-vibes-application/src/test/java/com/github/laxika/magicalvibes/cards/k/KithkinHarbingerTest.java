@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KithkinHarbinger.class, GoldmeadowStalwart.class, HillcomberGiant.class, Plains.class, Island.class})
 class KithkinHarbingerTest extends BaseCardTest {
 
     @Test
@@ -64,12 +64,29 @@ class KithkinHarbingerTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).isNotEmpty();
         assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the may ability with no Kithkin finds no card")
+    void acceptingMayWithNoKithkinFindsNoCard() {
+        setupAndCast();
+        setupLibraryWithoutKithkin();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Hillcomber Giant", "Plains", "Island");
     }
 
     @Test
@@ -87,14 +104,14 @@ class KithkinHarbingerTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new KithkinHarbinger()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KithkinHarbinger(), "{2}{W}");
     }
 
     private void setupLibraryWithKithkin() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GoldmeadowStalwart(), new GrizzlyBears(), new Plains(), new Island()));
+        harness.setLibrary(player1, List.of(new GoldmeadowStalwart(), new HillcomberGiant(), new Plains(), new Island()));
+    }
+
+    private void setupLibraryWithoutKithkin() {
+        harness.setLibrary(player1, List.of(new HillcomberGiant(), new Plains(), new Island()));
     }
 }
