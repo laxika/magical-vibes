@@ -1,23 +1,25 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.d.DevotedDruid;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.i.InescapableBrute;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Gloomlance.class, DevotedDruid.class, SafeholdSentry.class, InescapableBrute.class,
+        Forest.class, Swamp.class})
 class GloomlanceTest extends BaseCardTest {
 
     // ===== Green creature: destroyed + controller discards =====
@@ -25,8 +27,8 @@ class GloomlanceTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature is destroyed and its controller discards a card")
     void greenCreatureDestroyedAndDiscards() {
-        UUID target = addCreature(player2, new GrizzlyBears()); // green
-        harness.setHand(player2, new ArrayList<>(List.of(new Peek(), new Forest())));
+        UUID target = addCreatureReady(player2, new DevotedDruid()).getId();
+        harness.setHand(player2, List.of(new Swamp(), new Forest()));
         castGloomlance(target);
 
         // Discard runs first while the creature is still on the battlefield.
@@ -34,13 +36,13 @@ class GloomlanceTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
 
-        harness.handleCardChosen(player2, 0); // player2 discards Peek
+        harness.handleCardChosen(player2, 0); // player2 discards Swamp
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        harness.assertInGraveyard(player2, "Peek");
+        harness.assertInGraveyard(player2, "Swamp");
         // ...and the creature is destroyed after the discard resolves.
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Devoted Druid");
     }
 
     // ===== White creature: destroyed + controller discards =====
@@ -48,15 +50,15 @@ class GloomlanceTest extends BaseCardTest {
     @Test
     @DisplayName("White creature is destroyed and its controller discards a card")
     void whiteCreatureDestroyedAndDiscards() {
-        UUID target = addCreature(player2, new EliteVanguard()); // white
-        harness.setHand(player2, new ArrayList<>(List.of(new Peek())));
+        UUID target = addCreatureReady(player2, new SafeholdSentry()).getId();
+        harness.setHand(player2, List.of(new Swamp()));
         castGloomlance(target);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
     // ===== Non-green-non-white creature: destroyed, no discard =====
@@ -64,14 +66,14 @@ class GloomlanceTest extends BaseCardTest {
     @Test
     @DisplayName("Red creature is destroyed but its controller does not discard")
     void redCreatureDestroyedNoDiscard() {
-        UUID target = addCreature(player2, new HillGiant()); // red
-        harness.setHand(player2, new ArrayList<>(List.of(new Peek(), new Forest())));
+        UUID target = addCreatureReady(player2, new InescapableBrute()).getId();
+        harness.setHand(player2, List.of(new Swamp(), new Forest()));
         castGloomlance(target);
 
         // No discard prompt — the creature was neither green nor white.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Inescapable Brute");
     }
 
     // ===== Green creature but empty hand: destroyed, nothing to discard =====
@@ -79,12 +81,12 @@ class GloomlanceTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature with empty-handed controller is still destroyed")
     void greenCreatureEmptyHandStillDestroyed() {
-        UUID target = addCreature(player2, new GrizzlyBears());
-        harness.setHand(player2, new ArrayList<>(List.of()));
+        UUID target = addCreatureReady(player2, new DevotedDruid()).getId();
+        harness.setHand(player2, List.of());
         castGloomlance(target);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Devoted Druid");
     }
 
     // ===== Targeting =====
@@ -92,8 +94,7 @@ class GloomlanceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID land = harness.getPermanentId(player2, "Forest");
+        UUID land = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
         harness.setHand(player1, List.of(new Gloomlance()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
@@ -102,11 +103,6 @@ class GloomlanceTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private UUID addCreature(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(owner, card);
-        return harness.getPermanentId(owner, card.getName());
-    }
 
     private void castGloomlance(UUID targetId) {
         harness.setHand(player1, List.of(new Gloomlance()));

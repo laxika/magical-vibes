@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlightSickle;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +16,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElementalMastery.class, SafeholdElite.class, BlightSickle.class})
 class ElementalMasteryTest extends BaseCardTest {
 
     private Permanent setupEnchantedCreature() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent enchantedCreature = addCreatureReady(player1, new SafeholdElite());
 
         Permanent auraPerm = new Permanent(new ElementalMastery());
-        auraPerm.setAttachedTo(bearsPerm.getId());
+        auraPerm.setAttachedTo(enchantedCreature.getId());
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
-        return bearsPerm;
+        return enchantedCreature;
     }
 
     private long elementalCount() {
@@ -35,14 +35,13 @@ class ElementalMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Granted ability creates Elemental tokens equal to the creature's power")
     void createsTokensEqualToPower() {
-        Permanent bearsPerm = setupEnchantedCreature();
+        Permanent enchantedCreature = setupEnchantedCreature();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Grizzly Bears is 2/2 -> two 1/1 Elemental tokens
         assertThat(elementalCount()).isEqualTo(2);
-        assertThat(bearsPerm.isTapped()).isTrue();
+        assertThat(enchantedCreature.isTapped()).isTrue();
 
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
@@ -51,8 +50,8 @@ class ElementalMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Token count scales with the enchanted creature's effective power")
     void tokenCountScalesWithPower() {
-        Permanent bearsPerm = setupEnchantedCreature();
-        bearsPerm.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3); // 2/2 -> 5/5
+        Permanent enchantedCreature = setupEnchantedCreature();
+        enchantedCreature.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -79,7 +78,7 @@ class ElementalMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the granted ability when Elemental Mastery is removed")
     void abilityLostWhenRemoved() {
-        Permanent bearsPerm = setupEnchantedCreature();
+        setupEnchantedCreature();
 
         Permanent auraPerm = findPermanent(player1, "Elemental Mastery");
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
@@ -92,15 +91,29 @@ class ElementalMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new BlightSickle());
         harness.setHand(player1, List.of(new ElementalMastery()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Blight Sickle");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The controller of the enchanted creature controls the granted ability")
+    void grantedAbilityUsesEnchantedCreatureController() {
+        Permanent enchantedCreature = addCreatureReady(player2, new SafeholdElite());
+        Permanent auraPerm = new Permanent(new ElementalMastery());
+        auraPerm.setAttachedTo(enchantedCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Elemental")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
     }
 }

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.ObsidianBattleAxe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,24 +17,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TwilightShepherd.class, ObsidianBattleAxe.class, Naturalize.class, GrizzlyBears.class,
+        DoomBlade.class})
 class TwilightShepherdTest extends BaseCardTest {
-
-    /** Resolves the stack until the game pauses for input or the stack empties. */
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            GameData g = harness.getGameData();
-            if (g.interaction.isAwaitingInput() || g.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
-
-    private Permanent shepherdOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Twilight Shepherd"))
-                .findFirst().orElse(null);
-    }
 
     // ===== ETB: return cards put into your graveyard from the battlefield this turn =====
 
@@ -54,10 +39,8 @@ class TwilightShepherdTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(axe.getId()));
 
         // Cast Twilight Shepherd; its ETB should return the axe to hand.
-        harness.setHand(player1, List.of(new TwilightShepherd()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        harness.castFromHand(player1, new TwilightShepherd(), "{3}{W}{W}{W}");
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(axe.getId()));
@@ -71,15 +54,43 @@ class TwilightShepherdTest extends BaseCardTest {
         Card alreadyInGraveyard = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(alreadyInGraveyard));
 
-        harness.setHand(player1, List.of(new TwilightShepherd()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        harness.castFromHand(player1, new TwilightShepherd(), "{3}{W}{W}{W}");
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(alreadyInGraveyard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(alreadyInGraveyard.getId()));
+    }
+
+    @Test
+    @DisplayName("ETB returns all qualifying cards from its controller's graveyard only")
+    void etbReturnsAllQualifyingCardsFromControllerGraveyardOnly() {
+        Card firstAxe = new ObsidianBattleAxe();
+        Card secondAxe = new ObsidianBattleAxe();
+        Card opposingAxe = new ObsidianBattleAxe();
+        Permanent firstAxePermanent = harness.addToBattlefieldAndReturn(player1, firstAxe);
+        Permanent secondAxePermanent = harness.addToBattlefieldAndReturn(player1, secondAxe);
+        Permanent opposingAxePermanent = harness.addToBattlefieldAndReturn(player2, opposingAxe);
+
+        harness.setHand(player1, List.of(new Naturalize(), new Naturalize(), new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castInstant(player1, 0, firstAxePermanent.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, secondAxePermanent.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, opposingAxePermanent.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new TwilightShepherd(), "{3}{W}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(firstAxe.getId(), secondAxe.getId())
+                .doesNotContain(opposingAxe.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(opposingAxe.getId()));
     }
 
     // ===== Persist =====
@@ -92,10 +103,9 @@ class TwilightShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Twilight Shepherd"));
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
-        Permanent shepherd = shepherdOnBattlefield();
-        assertThat(shepherd).isNotNull();
+        Permanent shepherd = findPermanent(player1, "Twilight Shepherd");
         assertThat(shepherd.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(shepherd.getEffectivePower()).isEqualTo(4);
     }
@@ -109,7 +119,7 @@ class TwilightShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, shepherd.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Twilight Shepherd");

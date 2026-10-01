@@ -43,6 +43,19 @@ function table(headers, rows) { return node('div', {class: 'panel table-wrap'}, 
 function empty(text) { return node('div', {class: 'panel empty'}, text); }
 function date(value) { return value ? new Date(value).toLocaleString() : '—'; }
 function cost(value) { return value == null ? 'Unavailable' : new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6}).format(value); }
+function sumCosts(items) {
+  const priced = items.filter(item => item.estimatedCostUsd != null);
+  return {
+    estimatedCostUsd: priced.length ? priced.reduce((total, item) => total + item.estimatedCostUsd, 0) : null,
+    missingCostCount: items.reduce((total, item) => total + (item.missingCostCount ?? (item.finishedAt && item.estimatedCostUsd == null ? 1 : 0)), 0)
+  };
+}
+function costSummary(summary) {
+  return node('span', {class: 'cost', title: 'Estimated USD token cost, including previous attempts; actual billing may differ.'},
+    cost(summary.estimatedCostUsd), summary.estimatedCostUsd != null && summary.missingCostCount ? ' (partial)' : null,
+    summary.missingCostCount ? node('span', {class: 'subline'}, `${summary.missingCostCount} finished attempt${summary.missingCostCount === 1 ? '' : 's'} without cost data`) : null);
+}
+function totalCost(label, summary) { return node('p', {class: 'cost-total'}, node('span', {}, label), costSummary(summary)); }
 function route() { const [path, query] = location.hash.slice(1).split('?'); return {path: path || 'runs', params: new URLSearchParams(query)}; }
 function pagination(result, path, params) {
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
@@ -58,12 +71,12 @@ function progress(run) {
 async function home() {
   const data = await api('/overview');
   const active = data.runs.find(run => run.active);
-  const result = [heading('Review runs', 'Compare what each model finds across the card catalog.', action('Create run', () => { dialog.showModal(); }, 'primary'))];
+  const result = [heading('Review runs', 'Compare what each model finds across the card catalog.', action('Create run', () => { dialog.showModal(); }, 'primary')), totalCost('Total estimated cost across runs', sumCosts(data.runs))];
   result.push(node('div', {class: 'section-heading'}, node('h2', {}, active ? `Workers are reviewing ${active.name}` : 'Workers are waiting'), active ? action('Pause new claims', () => api('/active-run', 'PUT', {runId: null})) : node('span', {class: 'muted'}, 'Create a run or make one active to start.')));
   if (!data.runs.length) result.push(empty('Create your first run to queue all implemented cards. Reprints share one review.'));
-  else result.push(table(['Run', 'Model / level', 'Progress', 'Findings', 'Cards with findings', ''], data.runs.map(run => [
+  else result.push(table(['Run', 'Model / level', 'Progress', 'Findings', 'Cards with findings', 'Estimated cost', ''], data.runs.map(run => [
     node('div', {}, link(run.name, `runs/${run.id}`, 'run-title'), node('span', {class: 'subline'}, date(run.createdAt)), run.active ? badge('Active') : null),
-    node('div', {}, run.model, node('span', {class: 'subline'}, run.reasoningEffort)), progress(run), node('span', {class: 'number'}, run.findingCount), run.cardsWithFindings,
+    node('div', {}, run.model, node('span', {class: 'subline'}, run.reasoningEffort)), progress(run), node('span', {class: 'number'}, run.findingCount), run.cardsWithFindings, costSummary(run),
     run.active ? null : action('Make active', () => api('/active-run', 'PUT', {runId: run.id}))
   ])));
   if (data.models.length) {
@@ -92,7 +105,7 @@ function filters(path, params, statuses = false) {
 async function runPage(id, params) {
   const [run, tasks] = await Promise.all([api(`/runs/${id}`), api(`/runs/${id}/tasks?${params}`)]);
   const controls = run.active ? badge('Active') : action('Make active', () => api('/active-run', 'PUT', {runId: run.id}));
-  const result = [link('All runs', 'runs', 'back-link'), heading(run.name, `${run.model} / ${run.reasoningEffort}`, controls), progress(run), node('p', {class: 'muted'}, `${run.findingCount} findings in ${run.cardsWithFindings} cards. Catalog commit: ${run.catalogCommit || 'unavailable'}.`)];
+  const result = [link('All runs', 'runs', 'back-link'), heading(run.name, `${run.model} / ${run.reasoningEffort}`, controls), totalCost('Total estimated cost', run), progress(run), node('p', {class: 'muted'}, `${run.findingCount} findings in ${run.cardsWithFindings} cards. Catalog commit: ${run.catalogCommit || 'unavailable'}.`)];
   result.push(node('div', {class: 'section-heading'}, filters(`runs/${id}`, params, true), node('div', {class: 'controls'}, action('Requeue failed', () => api(`/runs/${id}/requeue`, 'POST', {status: 'FAILED'})), action('Requeue running', () => {
     if (confirm('Requeue all running tasks? Results from their current workers will be rejected.')) return api(`/runs/${id}/requeue`, 'POST', {status: 'RUNNING'});
   }))));
@@ -125,11 +138,12 @@ function attemptBody(attempt) {
 
 async function cardPage(id) {
   const card = await api(`/cards/${id}`);
-  return [link('Card catalog', 'cards', 'back-link'), heading(card.cardName, card.className), node('div', {class: 'badges'}, card.printings.map(printing => node('span', {class: 'printing'}, `${printing.setCode} ${printing.collectorNumber}`))),
+  return [link('Card catalog', 'cards', 'back-link'), heading(card.cardName, card.className), totalCost('Total estimated cost for this card', sumCosts(card.reviews.flatMap(review => review.attempts))), node('div', {class: 'badges'}, card.printings.map(printing => node('span', {class: 'printing'}, `${printing.setCode} ${printing.collectorNumber}`))),
     node('div', {class: 'comparison'}, card.reviews.map(review => {
       const current = review.attempts.find(attempt => attempt.current);
       const history = review.attempts.filter(attempt => !attempt.current);
       return node('article', {class: 'review'}, node('div', {class: 'review-heading'}, node('div', {}, node('h3', {}, link(review.run.name, `runs/${review.run.id}`)), node('p', {class: 'muted'}, `${review.run.model} / ${review.run.reasoningEffort}`)), badge(current?.outcome || review.status)),
+        totalCost('Estimated review cost', sumCosts(review.attempts)),
         current ? attemptBody(current) : node('p', {class: 'muted'}, 'This card is waiting to be claimed.'),
         history.length ? node('details', {}, node('summary', {}, `${history.length} previous attempts`), history.map(attempt => node('div', {class: 'history-item'}, badge(attempt.outcome || 'Requeued'), attemptBody(attempt)))) : null,
         action('Requeue review', () => {
