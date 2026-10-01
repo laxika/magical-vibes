@@ -28,7 +28,12 @@ class ReviewPersistenceTest {
         String payload;
         try (var context = start("classpath:review-db/changelog/001-review-schema.sql")) {
             var service = context.getBean(ReviewService.class);
-            service.createRun(new ReviewService.NewRun("Before costs", "sol", "high"));
+            // Seed the old schema directly; current run queries require the cost migration.
+            var jdbc = context.getBean(JdbcTemplate.class);
+            jdbc.update("INSERT INTO review_run(id,name,model,reasoning_effort,created_at) VALUES (1,'Before costs','sol','high',?)", "2026-01-01T00:00:00Z");
+            jdbc.update("INSERT INTO review_card(id,class_name,display_name) VALUES (1,'example.Alpha','Alpha')");
+            jdbc.update("INSERT INTO review_task(id,run_id,card_id,class_name,source_path,set_code,collector_number) VALUES (1,1,1,'example.Alpha',?,'SOS','1')", directory.resolve("Alpha.java").toString());
+            jdbc.update("UPDATE review_settings SET active_run_id=1 WHERE id=1");
             var task = service.claim(new ReviewService.Claim("legacy-worker"));
             taskId = ((Number) task.get("id")).longValue();
             cardId = ((Number) task.get("cardId")).longValue();
@@ -37,8 +42,7 @@ class ReviewPersistenceTest {
                      "reviewedCommit":"%s","publicationStatus":"NOT_REQUIRED","publishedCommit":null,
                      "executionError":null,"publicationError":null}
                     """.formatted(task.get("attemptToken"), "a".repeat(40));
-            var jdbc = context.getBean(JdbcTemplate.class);
-            jdbc.update("UPDATE review_attempt SET outcome='FINDINGS',publication_status='NOT_REQUIRED',result_json=? WHERE token=?", payload, task.get("attemptToken"));
+            jdbc.update("UPDATE review_attempt SET outcome='FINDINGS',publication_status='NOT_REQUIRED',finished_at=?,result_json=? WHERE token=?", "2026-01-01T00:01:00Z", payload, task.get("attemptToken"));
             jdbc.update("INSERT INTO review_finding(attempt_token,description) VALUES (?,?)", task.get("attemptToken"), "Missing trigger.");
             jdbc.update("UPDATE review_task SET status='COMPLETED' WHERE id=?", taskId);
         }
@@ -47,6 +51,7 @@ class ReviewPersistenceTest {
             assertThat(service.task(taskId)).containsEntry("estimatedCostUsd", null).containsEntry("inputTokens", null)
                     .containsEntry("outcome", "FINDINGS");
             assertThat((List<?>) service.card(cardId).get("reviews")).hasSize(1);
+            assertThat(service.run(1)).containsEntry("estimatedCostUsd", null).containsEntry("missingCostCount", 1);
             var legacy = context.getBean(ObjectMapper.class).readValue(payload, ReviewService.Result.class);
             service.submit(taskId, legacy);
             assertThat(context.getBean(JdbcTemplate.class).queryForObject("SELECT COUNT(*) FROM review_finding", Integer.class)).isEqualTo(1);
