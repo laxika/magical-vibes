@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
+import com.github.laxika.magicalvibes.cards.w.WarSpikeChangeling;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DistantMelody.class, BallyrushBanneret.class, Bitterblossom.class, WarSpikeChangeling.class})
 class DistantMelodyTest extends BaseCardTest {
 
     private void payAndCast(Player player) {
@@ -27,9 +29,9 @@ class DistantMelodyTest extends BaseCardTest {
     }
 
     private void stockLibrary(Player player, int count) {
-        List<Card> deck = new ArrayList<>();
+        List<DistantMelody> deck = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            deck.add(new Shock());
+            deck.add(new DistantMelody());
         }
         harness.setLibrary(player, deck);
     }
@@ -37,12 +39,12 @@ class DistantMelodyTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card for each permanent of the chosen type you control")
     void drawsPerChosenTypeCount() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.addToBattlefield(player1, new BallyrushBanneret());
         stockLibrary(player1, 5);
 
         payAndCast(player1);
-        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -52,11 +54,11 @@ class DistantMelodyTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a type you control none of draws no cards")
     void chosenTypeYouControlNoneDrawsZero() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BallyrushBanneret());
         stockLibrary(player1, 5);
 
         payAndCast(player1);
-        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -66,11 +68,11 @@ class DistantMelodyTest extends BaseCardTest {
     @Test
     @DisplayName("A Changeling you control counts as the chosen type")
     void changelingCountsAsChosenType() {
-        harness.addToBattlefield(player1, new AvianChangeling());
+        harness.addToBattlefield(player1, new WarSpikeChangeling());
         stockLibrary(player1, 5);
 
         payAndCast(player1);
-        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -80,15 +82,29 @@ class DistantMelodyTest extends BaseCardTest {
     @Test
     @DisplayName("Only the caster's permanents of the chosen type are counted")
     void onlyControllerPermanentsCounted() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.addToBattlefield(player2, new BallyrushBanneret());
+        harness.addToBattlefield(player2, new BallyrushBanneret());
         stockLibrary(player1, 5);
 
         payAndCast(player1);
-        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counts a noncreature Kindred permanent of the chosen type")
+    void countsNoncreatureKindredPermanent() {
+        harness.addToBattlefield(player1, new Bitterblossom());
+        stockLibrary(player1, 5);
+
+        payAndCast(player1);
+        harness.handleListChoice(player1, CardSubtype.FAERIE.name());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 }

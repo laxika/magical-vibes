@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EarwigSquad.class, PricklyBoggart.class})
 class EarwigSquadTest extends BaseCardTest {
 
     @Test
@@ -32,9 +30,9 @@ class EarwigSquadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger -> library search
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
@@ -53,6 +51,26 @@ class EarwigSquadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Prowl search exiles all available cards when the target library has fewer than three")
+    void prowlExilesAllAvailableCardsFromShortLibrary() {
+        setupProwl(CardSubtype.GOBLIN);
+        harness.setLibrary(player2, List.of(new PricklyBoggart(), new PricklyBoggart()));
+
+        harness.setHand(player1, List.of(new EarwigSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castWithProwl(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -110,11 +128,7 @@ class EarwigSquadTest extends BaseCardTest {
     }
 
     private void stockOpponentLibrary() {
-        Card bears = new GrizzlyBears();
-        Card shock = new Shock();
-        Card swamp = new Swamp();
-        Card bears2 = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears, shock, swamp, bears2));
+        harness.setLibrary(player2, List.of(
+                new PricklyBoggart(), new PricklyBoggart(), new PricklyBoggart(), new PricklyBoggart()));
     }
 }

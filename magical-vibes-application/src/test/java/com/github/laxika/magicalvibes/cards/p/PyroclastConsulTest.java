@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.k.KinsbaileCavalier;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,55 +12,70 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PyroclastConsul.class, KinsbaileCavalier.class})
 class PyroclastConsulTest extends BaseCardTest {
 
     @Test
     @DisplayName("Revealing the shared-type card deals 2 damage to each creature on both sides")
     void revealDealsDamageToEachCreature() {
-        addCreatureReady(player1, new PyroclastConsul());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        setLibraryTop(new PyroclastConsul()); // Elemental Shaman — shares a type
+        Permanent consul = addCreatureReady(player1, new PyroclastConsul());
+        harness.addToBattlefield(player1, new KinsbaileCavalier());
+        harness.addToBattlefield(player2, new KinsbaileCavalier());
+        PyroclastConsul topCard = new PyroclastConsul(); // Elemental Shaman — shares a type
+        harness.setLibrary(player1, List.of(topCard));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // 2/2 Grizzly Bears die on both sides; the 3/3 Consul survives.
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // 2/2 Kinsbaile Cavaliers die on both sides; the 3/3 Consul survives with 2 damage.
+        harness.assertNotOnBattlefield(player1, "Kinsbaile Cavalier");
+        harness.assertNotOnBattlefield(player2, "Kinsbaile Cavalier");
         harness.assertOnBattlefield(player1, "Pyroclast Consul");
+        assertThat(consul.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
     @DisplayName("Declining to reveal deals no damage")
     void decliningDealsNoDamage() {
         addCreatureReady(player1, new PyroclastConsul());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        setLibraryTop(new PyroclastConsul());
+        Permanent creature = addCreatureReady(player2, new KinsbaileCavalier());
+        PyroclastConsul topCard = new PyroclastConsul();
+        harness.setLibrary(player1, List.of(topCard));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Kinsbaile Cavalier");
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
     @DisplayName("No reveal prompt when the top card shares no creature type")
     void noSharedTypeNoPrompt() {
-        addCreatureReady(player1, new PyroclastConsul());
-        setLibraryTop(new GrizzlyBears()); // Bear — no shared type
+        Permanent consul = addCreatureReady(player1, new PyroclastConsul());
+        harness.setLibrary(player1, List.of(new KinsbaileCavalier())); // Kithkin Knight — no shared type
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(consul.getMarkedDamage()).isZero();
     }
 
-    private void setLibraryTop(Card card) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(card);
+    @Test
+    @DisplayName("The kinship trigger does nothing with an empty library")
+    void emptyLibraryDoesNothing() {
+        Permanent consul = addCreatureReady(player1, new PyroclastConsul());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(consul.getMarkedDamage()).isZero();
     }
 }

@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
+import com.github.laxika.magicalvibes.cards.m.Mutavault;
+import com.github.laxika.magicalvibes.cards.s.ShardVolley;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,105 +16,77 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Forfend.class, BallyrushBanneret.class, ShardVolley.class, Mutavault.class})
 class ForfendTest extends BaseCardTest {
 
-    private static Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
     private void castForfend() {
-        harness.setHand(player1, List.of(new Forfend()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Forfend(), "{1}{W}");
         harness.passBothPriorities();
-    }
-
-    @Test
-    @DisplayName("Resolving Forfend sets preventAllDamageToAllCreatures flag")
-    void resolvingSetsPreventionFlag() {
-        castForfend();
-
-        assertThat(harness.getGameData().preventAllDamageToAllCreatures).isTrue();
     }
 
     @Test
     @DisplayName("Prevents combat damage to both players' creatures")
     void preventsCombatDamageToBothCreatures() {
-        harness.getGameData().preventAllDamageToAllCreatures = true;
+        castForfend();
+        Permanent attacker = addCreatureReady(player1, new BallyrushBanneret());
+        Permanent blocker = addCreatureReady(player2, new BallyrushBanneret());
 
-        Permanent attacker = new Permanent(createCreature("Big Bear", 5, 5));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Big Bear");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Ballyrush Banneret");
+        harness.assertOnBattlefield(player2, "Ballyrush Banneret");
     }
 
     @Test
     @DisplayName("Does not prevent combat damage to players")
     void doesNotPreventCombatDamageToPlayers() {
+        castForfend();
         harness.setLife(player2, 20);
-        harness.getGameData().preventAllDamageToAllCreatures = true;
+        addCreatureReady(player1, new BallyrushBanneret());
 
-        Permanent attacker = new Permanent(createCreature("Bear", 3, 3));
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
+        declareAttackers(List.of(0));
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 18);
     }
 
     @Test
     @DisplayName("Prevents spell damage to a creature")
     void preventsSpellDamageToCreature() {
-        harness.getGameData().preventAllDamageToAllCreatures = true;
+        Permanent creature = addCreatureReady(player2, new BallyrushBanneret());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mutavault());
+        castForfend();
 
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(creature);
-
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, creature.getId());
+        harness.castInstantWithSacrifice(player1, 0, creature.getId(), land.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Ballyrush Banneret");
     }
 
     @Test
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
-        harness.getGameData().preventAllDamageToAllCreatures = true;
+        Permanent creature = addCreatureReady(player2, new BallyrushBanneret());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mutavault());
+        castForfend();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().preventAllDamageToAllCreatures).isFalse();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstantWithSacrifice(player1, 0, creature.getId(), land.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ballyrush Banneret");
     }
 }

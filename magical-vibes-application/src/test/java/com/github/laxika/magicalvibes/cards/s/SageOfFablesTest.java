@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurrentonBombardier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SageOfFables.class, StonybrookSchoolmaster.class, BurrentonBombardier.class})
 class SageOfFablesTest extends BaseCardTest {
 
     // ===== Static: other Wizards you control enter with an additional +1/+1 counter =====
@@ -25,13 +26,13 @@ class SageOfFablesTest extends BaseCardTest {
     void wizardEntersWithCounter() {
         addReadySage(player1);
 
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new StonybrookSchoolmaster()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent wizard = wizardOnBattlefield(player1);
+        Permanent wizard = schoolmasterOnBattlefield(player1);
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -40,14 +41,14 @@ class SageOfFablesTest extends BaseCardTest {
     void nonWizardDoesNotGetCounter() {
         addReadySage(player1);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BurrentonBombardier()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent bombardier = findPermanent(player1, "Burrenton Bombardier");
+        assertThat(bombardier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -59,13 +60,13 @@ class SageOfFablesTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new FugitiveWizard()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new StonybrookSchoolmaster()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent wizard = wizardOnBattlefield(player2);
+        Permanent wizard = schoolmasterOnBattlefield(player2);
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -75,27 +76,41 @@ class SageOfFablesTest extends BaseCardTest {
         addReadySage(player1);
         addReadySage(player1);
 
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new StonybrookSchoolmaster()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent wizard = wizardOnBattlefield(player1);
+        Permanent wizard = schoolmasterOnBattlefield(player1);
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("A Wizard entering with no other Sage present gets no counter from its own static")
     void loneWizardGetsNoCounter() {
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new StonybrookSchoolmaster()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent wizard = wizardOnBattlefield(player1);
+        Permanent wizard = schoolmasterOnBattlefield(player1);
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sage of Fables does not put a counter on itself as it enters")
+    void sageDoesNotBenefitFromItsOwnStaticAbility() {
+        harness.setHand(player1, List.of(new SageOfFables()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent sage = findPermanent(player1, "Sage of Fables");
+        assertThat(sage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== Activated ability: {2}, Remove a +1/+1 counter from a creature you control: Draw a card =====
@@ -116,6 +131,26 @@ class SageOfFablesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Ability may remove a +1/+1 counter from another creature you control")
+    void abilityRemovesCounterFromAnotherControlledCreature() {
+        addReadySage(player1);
+        Permanent schoolmaster = addCreatureReady(player1, new StonybrookSchoolmaster());
+        schoolmaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(schoolmaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
@@ -150,14 +185,10 @@ class SageOfFablesTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadySage(Player player) {
-        SageOfFables card = new SageOfFables();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SageOfFables());
     }
 
-    private Permanent wizardOnBattlefield(Player player) {
-        return findPermanent(player, "Fugitive Wizard");
+    private Permanent schoolmasterOnBattlefield(Player player) {
+        return findPermanent(player, "Stonybrook Schoolmaster");
     }
 }
