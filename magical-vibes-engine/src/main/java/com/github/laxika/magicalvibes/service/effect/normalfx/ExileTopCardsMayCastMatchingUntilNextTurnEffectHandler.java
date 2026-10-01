@@ -72,6 +72,10 @@ public class ExileTopCardsMayCastMatchingUntilNextTurnEffectHandler implements N
 
             if (predicateEvaluationService.matchesCardPredicate(topCard, exileEffect.filter(), null)) {
                 exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
+                if (exileEffect.expireAtTurnBeginning()) {
+                    int expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId());
+                    gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(), expiryTurn);
+                }
                 castableNames.add(topCard.getName());
             }
         }
@@ -85,7 +89,8 @@ public class ExileTopCardsMayCastMatchingUntilNextTurnEffectHandler implements N
         }
         String castNote = castableNames.isEmpty()
                 ? ""
-                : " (may cast until end of next turn: " + String.join(", ", castableNames) + ")";
+                : " (may cast until " + (exileEffect.expireAtTurnBeginning() ? "the beginning" : "the end")
+                        + " of next turn: " + String.join(", ", castableNames) + ")";
         gameLogService.append(gameData,
                 logEntry.text(" from the top of their library" + castNote + ".").build());
         log.info("Game {} - {} exiles {} cards from library top ({} castable until next turn)",

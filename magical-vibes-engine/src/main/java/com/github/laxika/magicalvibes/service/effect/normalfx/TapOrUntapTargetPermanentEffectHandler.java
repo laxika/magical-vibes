@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,6 +30,7 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final TapUntapSupport tapUntapSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,6 +39,14 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (((TapOrUntapTargetPermanentEffect) effect).chooseAction()) {
+            playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
+                    new ChooseOneEffect(List.of(
+                            new ChooseOneEffect.ChooseOneOption("Tap", new TapPermanentsEffect(TapUntapScope.TARGET)),
+                            new ChooseOneEffect.ChooseOneOption("Untap", new UntapPermanentsEffect(TapUntapScope.TARGET)))),
+                    false, entry.getSourcePermanentId());
+            return;
+        }
         // Multi-target: an unbound effect reads the whole flat target list, so a single instance
         // covers both of Hidden Strings' "target permanent … another target permanent" groups.
         List<UUID> targetIds = entry.targetsForEffect(effect);

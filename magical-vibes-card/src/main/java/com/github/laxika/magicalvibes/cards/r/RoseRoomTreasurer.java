@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "51")
 @CardRegistration(set = "NCC", collectorNumber = "151")
+@CardRegistration(set = "BLC", collectorNumber = "201")
 public class RoseRoomTreasurer extends Card {
 
     public RoseRoomTreasurer() {

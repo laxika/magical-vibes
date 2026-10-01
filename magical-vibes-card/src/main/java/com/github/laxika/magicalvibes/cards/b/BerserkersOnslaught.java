@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "130")
+@CardRegistration(set = "BLC", collectorNumber = "192")
 public class BerserkersOnslaught extends Card {
 
     public BerserkersOnslaught() {

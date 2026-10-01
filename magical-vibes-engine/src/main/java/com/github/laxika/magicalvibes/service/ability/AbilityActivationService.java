@@ -283,6 +283,9 @@ public class AbilityActivationService {
         if (permanent.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
         }
+        if (permanent.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Permanent can't become tapped unless it is attacking");
+        }
         // Printed ON_TAP mana is an ability: a continuous "loses all abilities" strips it
         // (Imprisoned in the Moon / Deep Freeze). Granted mana abilities use activateAbility.
         if (gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
@@ -902,6 +905,9 @@ public class AbilityActivationService {
         }
         if (permanent.isTapped()) {
             throw new IllegalStateException("Land is already tapped");
+        }
+        if (permanent.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Land can't become tapped unless it is attacking");
         }
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
         ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
@@ -6357,6 +6363,9 @@ public class AbilityActivationService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
+            if (permanent.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException("Permanent can't become tapped unless it is attacking");
+            }
             if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
@@ -8067,6 +8076,7 @@ public class AbilityActivationService {
                                      ActivatedAbility ability, int amount, boolean sourceMustBeTapped) {
         List<Permanent> eligible = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> !permanent.isTapRestrictedUnlessAttacking())
                 .filter(permanent -> !sourceMustBeTapped || !permanent.getId().equals(source.getId()))
                 .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
                         || gameQueryService.isCreature(gameData, permanent))
@@ -8174,6 +8184,7 @@ public class AbilityActivationService {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Permanent> eligibleCreatures = battlefield.stream()
                 .filter(creature -> !creature.isTapped())
+                .filter(creature -> !creature.isTapRestrictedUnlessAttacking())
                 .filter(creature -> !ability.isRequiresTap() || !creature.getId().equals(source.getId()))
                 .filter(creature -> gameQueryService.isCreature(gameData, creature))
                 .toList();
@@ -8199,6 +8210,9 @@ public class AbilityActivationService {
             if (creature.isTapped()) {
                 throw new IllegalStateException("Selected creature is already tapped");
             }
+            if (creature.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException("Selected creature can't become tapped unless it is attacking");
+            }
             if (ability.isRequiresTap() && creature.getId().equals(source.getId())) {
                 throw new IllegalStateException("The source cannot pay both tap costs");
             }
@@ -8212,7 +8226,9 @@ public class AbilityActivationService {
             if (creature == null) {
                 throw new IllegalStateException("Selected creature is no longer on the battlefield");
             }
-            creature.tap();
+            if (!creature.tap()) {
+                throw new IllegalStateException("Selected creature can't become tapped unless it is attacking");
+            }
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " taps ", creature.getCard(), " as a cost."));

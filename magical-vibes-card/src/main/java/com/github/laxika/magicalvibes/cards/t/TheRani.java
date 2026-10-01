@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "149")
+@CardRegistration(set = "WHO", collectorNumber = "433")
+@CardRegistration(set = "WHO", collectorNumber = "754")
+@CardRegistration(set = "WHO", collectorNumber = "1024")
 public class TheRani extends Card {
 
     private static final PermanentPredicate ANOTHER_CREATURE = new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -15,7 +17,8 @@ public class DrownedRusalka extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new SacrificeCreatureCost(), new DiscardAndDrawCardEffect()),
+                List.of(new SacrificeCreatureCost(), new DiscardEffect(1, DiscardRecipient.CONTROLLER, false),
+                        new DrawCardEffect()),
                 "{U}, Sacrifice a creature: Discard a card, then draw a card."
         ));
     }

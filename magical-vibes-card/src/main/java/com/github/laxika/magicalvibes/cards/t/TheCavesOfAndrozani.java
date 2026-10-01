@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "15")
+@CardRegistration(set = "WHO", collectorNumber = "620")
 public class TheCavesOfAndrozani extends Card {
 
     public TheCavesOfAndrozani() {

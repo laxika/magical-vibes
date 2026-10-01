@@ -17,11 +17,14 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #ENCHANTED_PERMANENT_CONTROLLER} — the library of the player baked into the
  *       stack entry by an enchanted-permanent-controller trigger. Read from {@code targetId}, but
  *       does not declare an additional target because the trigger already identifies that player.</li>
+ *   <li>{@link #DYING_CREATURE_CONTROLLER} - the library of the creature's controller baked into
+ *       a creature-death trigger.</li>
  * </ul>
  */
 public enum LibraryOwner {
     CONTROLLER,
     TARGET_PLAYER,
     OPPONENT,
-    ENCHANTED_PERMANENT_CONTROLLER
+    ENCHANTED_PERMANENT_CONTROLLER,
+    DYING_CREATURE_CONTROLLER
 }

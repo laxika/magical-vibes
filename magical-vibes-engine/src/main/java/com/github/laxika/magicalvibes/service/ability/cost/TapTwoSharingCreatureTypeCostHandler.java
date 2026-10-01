@@ -84,6 +84,9 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
         if (chosen.isTapped()) {
             throw new IllegalStateException("Creature is already tapped");
         }
+        if (chosen.isTapRestrictedUnlessAttacking()) {
+            throw new IllegalStateException("Creature can't become tapped unless it is attacking");
+        }
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must tap a creature");
         }
@@ -116,6 +119,7 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> !p.isTapped())
+                .filter(p -> !p.isTapRestrictedUnlessAttacking())
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .toList();
     }

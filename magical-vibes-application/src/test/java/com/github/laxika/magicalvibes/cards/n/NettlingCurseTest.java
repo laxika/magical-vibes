@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NettlingCurse.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({NettlingCurse.class, AssaultZeppelid.class, AzoriusSignet.class})
 class NettlingCurseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature attacking makes its controller lose 3 life")
     void attackingLosesThreeLife() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
         attachCurse(player1, creature);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -36,8 +36,8 @@ class NettlingCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature blocking makes its controller lose 3 life")
     void blockingLosesThreeLife() {
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AssaultZeppelid());
+        Permanent blocker = addCreatureReady(player2, new AssaultZeppelid());
         attachCurse(player2, blocker);
 
         int lifeBefore = gd.getLife(player2.getId());
@@ -54,7 +54,7 @@ class NettlingCurseTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability makes the enchanted creature attack this turn if able")
     void activatedAbilityMakesEnchantedCreatureAttack() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
         Permanent aura = attachCurse(player1, creature);
 
         harness.addMana(player1, ManaColor.RED, 1);
@@ -62,7 +62,6 @@ class NettlingCurseTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
         harness.passBothPriorities();
 
-        creature.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -76,7 +75,7 @@ class NettlingCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Nettling Curse can enchant only a creature")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AzoriusSignet());
         harness.setHand(player1, List.of(new NettlingCurse()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -85,10 +84,24 @@ class NettlingCurseTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The enchanted creature's controller loses life even when an opponent controls the Aura")
+    void attackingCreatureControllerLosesLifeWhenAuraIsOpponentControlled() {
+        Permanent creature = addCreatureReady(player2, new AssaultZeppelid());
+        attachCurse(player1, creature);
+
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0)));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
     private Permanent attachCurse(com.github.laxika.magicalvibes.model.Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new NettlingCurse());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new NettlingCurse());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }

@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "173")
+@CardRegistration(set = "WHO", collectorNumber = "456")
+@CardRegistration(set = "WHO", collectorNumber = "778")
+@CardRegistration(set = "WHO", collectorNumber = "1047")
 public class ConfessionDial extends Card {
 
     public ConfessionDial() {

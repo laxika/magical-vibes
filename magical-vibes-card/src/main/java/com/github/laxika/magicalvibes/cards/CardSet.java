@@ -66,6 +66,7 @@ public enum CardSet {
     SET_BNG("BNG"),
     SET_JOU("JOU"),
     SET_BLB("BLB"),
+    SET_BLC("BLC"),
     SET_YBLB("YBLB"),
     SET_DSK("DSK"),
     SET_YDSK("YDSK"),
@@ -244,6 +245,7 @@ public enum CardSet {
     SET_UMA("UMA"),
     SET_DFT("DFT"),
     SET_OTJ("OTJ"),
+    SET_YOTJ("YOTJ"),
     SET_OTC("OTC"),
     SET_OTP("OTP"),
     SET_PLS("PLS"),
@@ -351,7 +353,8 @@ public enum CardSet {
     SET_CN2("CN2"),
     SET_PZA("PZA"),
     SET_YDFT("YDFT"),
-    SET_YSOS("YSOS");
+    SET_YSOS("YSOS"),
+    SET_YTDM("YTDM");
 
     @Getter
     private final String code;

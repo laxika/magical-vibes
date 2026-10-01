@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "44")
 @CardRegistration(set = "WHO", collectorNumber = "359")
+@CardRegistration(set = "WHO", collectorNumber = "649")
+@CardRegistration(set = "WHO", collectorNumber = "950")
 public class FleshDuplicate extends Card {
 
     public FleshDuplicate() {

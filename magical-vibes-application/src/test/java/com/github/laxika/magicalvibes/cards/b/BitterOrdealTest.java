@@ -80,7 +80,9 @@ class BitterOrdealTest extends BaseCardTest {
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        // Each copy shuffles the library, so find the intended second card in its new order.
+        int secondCardIndex = gd.playerDecks.get(player2.getId()).indexOf(secondCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(secondCardIndex));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstCard, secondCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(thirdCard);

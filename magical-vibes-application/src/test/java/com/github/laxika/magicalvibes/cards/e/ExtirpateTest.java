@@ -53,13 +53,14 @@ class ExtirpateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Must exile every matching card rather than a chosen subset")
-    void exilesEveryMatchingCard() {
+    @DisplayName("Must exile all graveyard copies but may leave matching cards in hidden zones")
+    void exilesAllPublicCopiesWhileAllowingHiddenCopiesToRemain() {
         Card target = new GrizzlyBears();
+        Card graveyardCopy = new GrizzlyBears();
         Card handCopy = new GrizzlyBears();
         Card libraryCopy = new GrizzlyBears();
 
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, new ArrayList<>(List.of(target, graveyardCopy)));
         harness.setHand(player2, List.of(handCopy));
         gd.playerDecks.get(player2.getId()).clear();
         gd.playerDecks.get(player2.getId()).add(libraryCopy);
@@ -72,7 +73,10 @@ class ExtirpateTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Grizzly Bears"))
-                .hasSize(3);
+                .hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(libraryCopy);
     }
 
     @Test

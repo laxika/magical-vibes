@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkullmeadCauldron.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SkullmeadCauldron.class, MistralCharger.class})
 class SkullmeadCauldronTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping gains 1 life")
     void tappingGainsOneLife() {
-        harness.addToBattlefield(player1, new SkullmeadCauldron());
+        Permanent cauldron = harness.addToBattlefieldAndReturn(player1, new SkullmeadCauldron());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -30,13 +30,14 @@ class SkullmeadCauldronTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
+        assertThat(cauldron.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Discarding a card and tapping gains 3 life")
     void discardingCardAndTappingGainsThreeLife() {
         harness.addToBattlefield(player1, new SkullmeadCauldron());
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MistralCharger(), new MistralCharger()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -48,9 +49,9 @@ class SkullmeadCauldronTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mistral Charger");
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Mistral Charger");
     }
 
     @Test

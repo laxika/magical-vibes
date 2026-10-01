@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "189")
+@CardRegistration(set = "WHO", collectorNumber = "794")
 public class OminousCemetery extends Card {
 
     public OminousCemetery() {

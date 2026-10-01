@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFr
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "126")
+@CardRegistration(set = "WHO", collectorNumber = "412")
+@CardRegistration(set = "WHO", collectorNumber = "731")
+@CardRegistration(set = "WHO", collectorNumber = "1003")
 public class TheFaceOfBoe extends Card {
 
     public TheFaceOfBoe() {

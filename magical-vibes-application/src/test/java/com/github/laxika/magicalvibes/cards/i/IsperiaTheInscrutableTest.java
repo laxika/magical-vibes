@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,44 +14,52 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IsperiaTheInscrutable.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({IsperiaTheInscrutable.class, MistralCharger.class, SimicInitiate.class})
 class IsperiaTheInscrutableTest extends BaseCardTest {
 
     @Test
     @DisplayName("A matching name reveals the hand and searches for a creature with flying")
     void matchingNameSearchesForFlyingCreature() {
-        Card flyingCreature = new AirElemental();
-        Card nonFlyingCreature = new GrizzlyBears();
+        Card flyingCreature = new MistralCharger();
+        Card nonFlyingCreature = new SimicInitiate();
         harness.setLibrary(player1, List.of(flyingCreature, nonFlyingCreature));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Card revealedCard = new SimicInitiate();
+        harness.setHand(player2, List.of(revealedCard));
         dealCombatDamageWithIsperia();
 
-        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Simic Initiate");
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(flyingCreature);
+        assertThat(search.params().reveals()).isTrue();
 
         harness.handleCardChosen(player1, 0);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(flyingCreature);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(findCardInHand(player2, "Grizzly Bears"));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonFlyingCreature);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealedCard);
     }
 
     @Test
-    @DisplayName("A name absent from the revealed hand does not search")
-    void absentNameDoesNotSearch() {
-        Card flyingCreature = new AirElemental();
+    @DisplayName("A name present only in the controller's hand does not search")
+    void nameAbsentFromDamagedPlayersHandDoesNotSearch() {
+        Card flyingCreature = new MistralCharger();
         harness.setLibrary(player1, List.of(flyingCreature));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Card controllerHandCard = new MistralCharger();
+        Card damagedPlayerHandCard = new SimicInitiate();
+        harness.setHand(player1, List.of(controllerHandCard));
+        harness.setHand(player2, List.of(damagedPlayerHandCard));
         dealCombatDamageWithIsperia();
 
-        harness.handleListChoice(player1, "Air Elemental");
+        harness.handleListChoice(player1, "Mistral Charger");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(flyingCreature);
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerHandCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(damagedPlayerHandCard);
     }
 
     private void dealCombatDamageWithIsperia() {
@@ -63,12 +71,5 @@ class IsperiaTheInscrutableTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOf(ChoiceContext.ChooseCardNameRevealHandThenChoice.class);
-    }
-
-    private Card findCardInHand(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        return gd.playerHands.get(player.getId()).stream()
-                .filter(card -> card.getName().equals(cardName))
-                .findFirst()
-                .orElseThrow();
     }
 }

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "LTC", collectorNumber = "235")
 @CardRegistration(set = "MSC", collectorNumber = "170")
 @CardRegistration(set = "MSC", collectorNumber = "377")
+@CardRegistration(set = "BLC", collectorNumber = "81")
 public class BirdsOfParadise extends Card {
 
     public BirdsOfParadise() {

@@ -1,0 +1,66 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardGreatestManaValueCardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+/** Resolves a targeted discard restricted to tied greatest-mana-value cards. */
+@Component
+@RequiredArgsConstructor
+public class DiscardGreatestManaValueCardEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
+    private final PlayerInteractionSupport playerInteractionSupport;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return DiscardGreatestManaValueCardEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID playerId = entry.getTargetId();
+        if (((DiscardGreatestManaValueCardEffect) effect).targetPermanentController()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target == null) {
+                return;
+            }
+            playerId = gameQueryService.findPermanentController(gameData, target.getId());
+        }
+        if (playerId == null) {
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        int greatestManaValue = hand.stream()
+                .mapToInt(Card::getManaValue)
+                .max()
+                .orElse(Integer.MIN_VALUE);
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getManaValue() == greatestManaValue) {
+                validIndices.add(i);
+            }
+        }
+        if (validIndices.isEmpty()) {
+            return;
+        }
+
+        gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
+        gameData.lastDiscardedCardManaValue = 0;
+        gameData.greatestDiscardedCardManaValue = 0;
+        gameData.lastDiscardedCardTypes = Set.of();
+        playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, validIndices);
+    }
+}

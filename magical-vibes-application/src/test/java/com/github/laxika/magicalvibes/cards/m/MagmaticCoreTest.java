@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MagmaticCore.class, BorealCentaur.class})
 class MagmaticCoreTest extends BaseCardTest {
 
     @Test
@@ -20,8 +22,8 @@ class MagmaticCoreTest extends BaseCardTest {
     void distributesDamageAmongTargetCreatures() {
         Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
         core.setCounterCount(CounterType.AGE, 3);
-        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
 
         advanceToEndStep(player1);
 
@@ -49,7 +51,7 @@ class MagmaticCoreTest extends BaseCardTest {
     void doesNotTriggerAtOpponentEndStep() {
         Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
         core.setCounterCount(CounterType.AGE, 2);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
 
         advanceToEndStep(player2);
 
@@ -72,11 +74,78 @@ class MagmaticCoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(core);
     }
 
+    @Test
+    @DisplayName("Cumulative upkeep costs one mana for each age counter")
+    void cumulativeUpkeepCostScalesWithAgeCounters() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(core.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(core);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining cumulative upkeep sacrifices Magmatic Core")
+    void decliningCumulativeUpkeepSacrificesCore() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(core.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Magmatic Core");
+        harness.assertInGraveyard(player1, "Magmatic Core");
+    }
+
+    @Test
+    @DisplayName("End-step damage can target creatures but not noncreature permanents")
+    void endStepTargetsOnlyCreatures() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new MagmaticCore());
+
+        advanceToEndStep(player1);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(creature.getId()).doesNotContain(noncreature.getId());
+
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("End-step damage may choose no target creatures")
+    void endStepMayChooseNoTargets() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 3);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(core);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
     }
 }

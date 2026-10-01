@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "16")
 @CardRegistration(set = "WHO", collectorNumber = "336")
+@CardRegistration(set = "WHO", collectorNumber = "621")
+@CardRegistration(set = "WHO", collectorNumber = "927")
 public class CrackInTime extends Card {
 
     public CrackInTime() {

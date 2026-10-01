@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PanglacialWurm.class, Forest.class, RampantGrowth.class})
 class PanglacialWurmTest extends BaseCardTest {
 
     @Test
@@ -28,16 +29,14 @@ class PanglacialWurmTest extends BaseCardTest {
         GameData gameData = harness.getGameData();
         PendingInteraction.LibrarySearch search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int wurmIndex = indexOfCard(search.params().cards(), wurm);
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(wurmIndex));
+        harness.handleCardChosen(player1, wurmIndex);
 
         assertThat(gameData.playerDecks.get(player1.getId())).noneMatch(card -> card.getId().equals(wurm.getId()));
         assertThat(gameData.stack).anyMatch(entry -> entry.getCard().getId().equals(wurm.getId()));
 
         search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int forestIndex = indexOfCard(search.params().cards(), forest);
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(forestIndex));
+        harness.handleCardChosen(player1, forestIndex);
         harness.passBothPriorities();
 
         assertThat(gameData.playerBattlefields.get(player1.getId()))
@@ -55,8 +54,7 @@ class PanglacialWurmTest extends BaseCardTest {
         GameData gameData = harness.getGameData();
         PendingInteraction.LibrarySearch search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int forestIndex = indexOfCard(search.params().cards(), forest);
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(forestIndex));
+        harness.handleCardChosen(player1, forestIndex);
 
         assertThat(gameData.playerDecks.get(player1.getId())).anyMatch(card -> card.getId().equals(wurm.getId()));
         assertThat(gameData.stack).noneMatch(entry -> entry.getCard().getId().equals(wurm.getId()));
@@ -74,8 +72,7 @@ class PanglacialWurmTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int wurmIndex = indexOfCard(search.params().cards(), wurm);
 
-        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(wurmIndex)))
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, wurmIndex))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         assertThat(gameData.playerDecks.get(player1.getId())).anyMatch(card -> card.getId().equals(wurm.getId()));

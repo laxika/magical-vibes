@@ -133,23 +133,23 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         UUID damageSourceId = damageEntry.getSourcePermanentId() != null
                 ? damageEntry.getSourcePermanentId() : damageEntry.getEffectiveDamageSourceCard().getId();
         int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
-        if (unpreventable) {
-            boolean previous = gameData.damageCantBePreventedThisTurn;
-            gameData.damageCantBePreventedThisTurn = true;
-            try {
-                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
-                        e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
-            } finally {
-                gameData.damageCantBePreventedThisTurn = previous;
+        boolean previousExilesCreaturesDamaged = damageEntry.isExilesCreaturesDamaged();
+        damageEntry.setExilesCreaturesDamaged(e.exileInsteadOfDie());
+        try {
+            if (unpreventable) {
+                boolean previous = gameData.damageCantBePreventedThisTurn;
+                gameData.damageCantBePreventedThisTurn = true;
+                try {
+                    damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
+                            e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
+                } finally {
+                    gameData.damageCantBePreventedThisTurn = previous;
+                }
+            } else {
+                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
             }
-        } else {
-            damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
-        }
-        if (e.exileInsteadOfDie() && damageDealt > 0 && !gameData.playerIds.contains(targetId)) {
-            Permanent damagedCreature = gameQueryService.findPermanentById(gameData, targetId);
-            if (damagedCreature != null && gameQueryService.isCreature(gameData, damagedCreature)) {
-                damagedCreature.setExileInsteadOfDieThisTurn(true);
-            }
+        } finally {
+            damageEntry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);
         }
         if (e.recordDamageDealt()) {
             entry.setEventValue(gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) - damageBefore);

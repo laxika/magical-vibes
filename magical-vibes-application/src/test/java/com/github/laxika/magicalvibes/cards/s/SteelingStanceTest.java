@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,14 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SteelingStance.class, GrizzlyBears.class, Forest.class})
+@CardUsed({SteelingStance.class, MistralCharger.class, StoicEphemera.class, AzoriusSignet.class})
 class SteelingStanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("The spell boosts creatures you control until end of turn")
     void spellBoostsOwnCreaturesOnly() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
         harness.setHand(player1, List.of(new SteelingStance()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -45,12 +45,10 @@ class SteelingStanceTest extends BaseCardTest {
     @Test
     @DisplayName("Forecast boosts the target creature and keeps the card in hand")
     void forecastBoostsTargetAndKeepsSourceInHand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
         SteelingStance stance = new SteelingStance();
         harness.setHand(player1, List.of(stance));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateHandAbility(player1, 0, target.getId());
@@ -66,12 +64,10 @@ class SteelingStanceTest extends BaseCardTest {
     @Test
     @DisplayName("Forecast can be activated only once during its controller's upkeep")
     void forecastIsLimitedToOncePerTurn() {
-        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
         harness.setHand(player1, List.of(new SteelingStance()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateHandAbility(player1, 0, firstTarget.getId());
@@ -82,18 +78,79 @@ class SteelingStanceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Forecast requires a creature target and the controller's upkeep")
-    void forecastRequiresCreatureTargetAndUpkeep() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+    @DisplayName("Forecast requires the controller's upkeep")
+    void forecastRequiresUpkeep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
         SteelingStance stance = new SteelingStance();
         harness.setHand(player1, List.of(stance));
-        harness.forceActivePlayer(player1);
+        advanceToUpkeep(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, forest.getId()))
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(stance);
+    }
+
+    @Test
+    @DisplayName("Forecast requires a creature target during its controller's upkeep")
+    void forecastRequiresCreatureTarget() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        SteelingStance stance = new SteelingStance();
+        harness.setHand(player1, List.of(stance));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, signet.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(stance);
+    }
+
+    @Test
+    @DisplayName("Forecast's boost lasts only until end of turn")
+    void forecastBoostExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
+        harness.setHand(player1, List.of(new SteelingStance()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Forecast can be activated again during the next upkeep")
+    void forecastActivationLimitResetsOnNextTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoicEphemera());
+        harness.setHand(player1, List.of(new SteelingStance()));
+        harness.setHand(player2, List.of());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
     }
 }

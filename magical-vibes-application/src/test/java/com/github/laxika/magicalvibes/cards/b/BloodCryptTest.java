@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BloodCrypt.class)
 class BloodCryptTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,18 @@ class BloodCryptTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying exactly 2 life lets Blood Crypt enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playBloodCrypt(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findCrypt(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Blood Crypt produces black mana")
     void producesBlackMana() {
         Permanent crypt = addCryptReady(player1);
@@ -78,9 +92,8 @@ class BloodCryptTest extends BaseCardTest {
     }
 
     private Permanent addCryptReady(Player player) {
-        Permanent crypt = new Permanent(new BloodCrypt());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player, new BloodCrypt());
         crypt.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(crypt);
         return crypt;
     }
 

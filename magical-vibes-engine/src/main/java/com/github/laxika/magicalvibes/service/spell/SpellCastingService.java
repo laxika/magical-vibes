@@ -3543,6 +3543,11 @@ public class SpellCastingService {
                 targetingSpellEffects, chosenCreatureType);
         boolean unwrappedNeedsSpellTarget = targetingSpellEffects.stream()
                 .anyMatch(EffectResolution::targetsSpellOnStack);
+        if (wasModal && unwrappedNeedsSpellTarget && targetId == null && targetIds.size() == 1
+                && card.getSpellTargets().isEmpty() && card.getMaxTargets() <= 1) {
+            targetId = targetIds.getFirst();
+            targetIds = List.of();
+        }
         // ETB triggered abilities choose targets after a permanent enters; this helper only sees
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean modalHasBattlefieldOrPlayerTarget = wasModal && card.getSelectedRoomDoor() == null
@@ -4351,6 +4356,20 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
 
+        if (hasModalEtb && targetId != null) {
+            for (CardEffect etbEffect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+                if (etbEffect instanceof ChooseOneEffect choice
+                        && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
+                    Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE
+                            : gameQueryService.findGraveyardOwnerById(gameData, targetId) != null ? Zone.GRAVEYARD
+                            : Zone.BATTLEFIELD;
+                    targetLegalityService.validateEffectTargetInZone(gameData, card,
+                            choice.options().get(effectiveXValue).effects(), targetId, etbTargetZone,
+                            effectiveXValue, playerId);
+                }
+            }
+        }
+
         // Validate and apply convoke or improvise
         List<ManaColor> convokeContributions = List.of();
         boolean hasConvoke = card.getKeywords().contains(Keyword.CONVOKE)
@@ -4416,6 +4435,10 @@ public class SpellCastingService {
                 }
                 if (creature.isTapped()) {
                     throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+                }
+                if (creature.isTapRestrictedUnlessAttacking()) {
+                    throw new IllegalStateException(creature.getCard().getName()
+                            + " can't become tapped unless it is attacking");
                 }
                 if (spellColors != null && !spellColors.isEmpty()) {
                     Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
@@ -11362,6 +11385,10 @@ public class SpellCastingService {
             if (creature.isTapped()) {
                 throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
             }
+            if (creature.isTapRestrictedUnlessAttacking()) {
+                throw new IllegalStateException(creature.getCard().getName()
+                        + " can't become tapped unless it is attacking");
+            }
             if (hasImprovise && isArtifact && (!hasConvoke || !isCreature)) {
                 contributions.add(null);
                 continue;
@@ -14471,6 +14498,10 @@ public class SpellCastingService {
             }
         }
         if (castEntry != null && gameQueryService.hasArtifactManaSplitSecond(gameData, playerId, card.getId())) {
+            castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
+        }
+        if (castEntry != null && gameQueryService.hasSpellCastingAbilityGrant(
+                gameData, playerId, card, Keyword.SPLIT_SECOND, castEntry.getSourceZone())) {
             castEntry.getGrantedKeywordsWhileOnStack().add(Keyword.SPLIT_SECOND);
         }
 

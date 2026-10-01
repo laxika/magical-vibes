@@ -71,7 +71,8 @@ public class EquipSupport {
                                       boolean permitsNonCreatureTarget,
                                       boolean permitsCreatureEquipment) {
         if (!gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)
-                || (!permitsCreatureEquipment && gameQueryService.isCreature(gameData, equipment))
+                || (!permitsCreatureEquipment && gameQueryService.isCreature(gameData, equipment)
+                && !gameQueryService.hasReconfigure(gameData, equipment))
                 || (!permitsNonCreatureTarget && !gameQueryService.isCreature(gameData, host))
                 || gameQueryService.cantBeEquipped(gameData, host)
                 || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {

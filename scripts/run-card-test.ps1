@@ -3,30 +3,28 @@ param(
     # fully-qualified class name. Bare names resolve to
     # com.github.laxika.magicalvibes.cards.{letter}.{Name}.
     [Parameter(Mandatory = $true, Position = 0)]
-    [string] $TestClass
+    [ValidatePattern('^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$')]
+    [string] $TestClass,
+
+    # Includes Gradle startup, compilation and execution of this one class.
+    [ValidateRange(1, 86400)][int] $TimeoutSeconds = 7200
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'card-test-functions.ps1')
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
 if ($TestClass -notmatch '\.') {
     $letter = $TestClass.Substring(0, 1).ToLowerInvariant()
     $TestClass = "com.github.laxika.magicalvibes.cards.$letter.$TestClass"
 }
 
-$buildDir = "magical-vibes-application/build"
+$buildDir = Join-Path $repositoryRoot 'magical-vibes-application/build'
 if (-not (Test-Path $buildDir)) {
     New-Item -ItemType Directory -Force $buildDir | Out-Null
 }
 $log = Join-Path $buildDir "card-test.log"
 $xmlPath = "$buildDir/test-results/test/TEST-$TestClass.xml"
-
-function Invoke-GradleTest {
-    $gradleArgs = ":magical-vibes-application:test --tests $TestClass --console=plain"
-    # Redirect inside cmd so PowerShell 5.1 does not wrap stderr lines in
-    # NativeCommandError records.
-    & cmd /c ".\gradlew.bat $gradleArgs > `"$log`" 2>&1"
-    return $LASTEXITCODE
-}
 
 function Test-XmlFresh {
     param([datetime] $Since)
@@ -34,7 +32,12 @@ function Test-XmlFresh {
 }
 
 $startTime = Get-Date
-$exitCode = Invoke-GradleTest
+$exitCode = Invoke-CardTestGradle -Root $repositoryRoot -TestClass $TestClass -LogPath $log -TimeoutSeconds $TimeoutSeconds
+
+if ($exitCode -eq 124) {
+    Write-Host "Full log: $log"
+    exit 124
+}
 
 if ($exitCode -eq 0) {
     $summary = ""

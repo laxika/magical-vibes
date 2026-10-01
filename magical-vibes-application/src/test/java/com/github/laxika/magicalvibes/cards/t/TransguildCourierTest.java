@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusHerald;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TransguildCourier.class, GrizzlyBears.class})
+@CardUsed({TransguildCourier.class, AzoriusHerald.class})
 class TransguildCourierTest extends BaseCardTest {
 
     @Test
@@ -27,9 +27,9 @@ class TransguildCourierTest extends BaseCardTest {
     @DisplayName("Transguild Courier does not affect other permanents")
     void onlyAffectsItself() {
         Permanent courier = harness.addToBattlefieldAndReturn(player1, new TransguildCourier());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new AzoriusHerald());
 
         assertThat(gqs.getEffectiveColors(gd, courier)).hasSize(5);
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, herald)).containsExactly(CardColor.WHITE);
     }
 }

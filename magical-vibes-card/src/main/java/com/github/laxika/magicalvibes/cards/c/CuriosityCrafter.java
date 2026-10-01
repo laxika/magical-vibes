@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "191")
 @CardRegistration(set = "C21", collectorNumber = "24")
+@CardRegistration(set = "BLC", collectorNumber = "165")
 public class CuriosityCrafter extends Card {
 
     public CuriosityCrafter() {

@@ -72,8 +72,8 @@ class GlaringSpotlightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Glaring Spotlight");
-        assertThat(bears.isCantBeBlocked()).isTrue();
-        assertThat(opponentBears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentBears)).isFalse();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

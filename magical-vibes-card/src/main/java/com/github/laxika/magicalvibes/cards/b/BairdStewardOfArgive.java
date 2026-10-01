@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "4")
 @CardRegistration(set = "CMM", collectorNumber = "15")
+@CardRegistration(set = "BLC", collectorNumber = "135")
 public class BairdStewardOfArgive extends Card {
 
     public BairdStewardOfArgive() {

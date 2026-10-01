@@ -39,6 +39,7 @@ class ProclamationOfRebirthTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.maxCount()).isEqualTo(3);
+        assertThat(choice.minCount()).isZero();
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
@@ -51,6 +52,30 @@ class ProclamationOfRebirthTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(tooExpensive.getId(), evenMoreExpensive.getId(),
                         proclamation.getId());
+    }
+
+    @Test
+    @DisplayName("Can choose fewer than three eligible creature cards")
+    void canChooseFewerThanThreeEligibleCreatures() {
+        Card first = new LlanowarElves();
+        Card second = new LlanowarElves();
+        Card tooExpensive = new HillGiant();
+        ProclamationOfRebirth proclamation = new ProclamationOfRebirth();
+        harness.setGraveyard(player1, List.of(first, second, tooExpensive));
+        harness.setHand(player1, List.of(proclamation));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(first.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(second.getId(), tooExpensive.getId(), proclamation.getId());
     }
 
     @Test
@@ -78,9 +103,7 @@ class ProclamationOfRebirthTest extends BaseCardTest {
         ProclamationOfRebirth proclamation = new ProclamationOfRebirth();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(proclamation));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
@@ -90,6 +113,7 @@ class ProclamationOfRebirthTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(proclamation);
     }
 
     @Test
@@ -99,9 +123,7 @@ class ProclamationOfRebirthTest extends BaseCardTest {
         Card second = new LlanowarElves();
         harness.setGraveyard(player1, List.of(first, second));
         harness.setHand(player1, List.of(new ProclamationOfRebirth()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
@@ -131,5 +153,41 @@ class ProclamationOfRebirthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your upkeep");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(proclamation);
+    }
+
+    @Test
+    @DisplayName("Forecast cannot be activated during an opponent's upkeep")
+    void forecastRequiresYourUpkeep() {
+        Card creature = new LlanowarElves();
+        ProclamationOfRebirth proclamation = new ProclamationOfRebirth();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(proclamation));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(proclamation);
+    }
+
+    @Test
+    @DisplayName("Forecast requires a legal graveyard target")
+    void forecastRequiresLegalGraveyardTarget() {
+        Card ineligible = new HillGiant();
+        ProclamationOfRebirth proclamation = new ProclamationOfRebirth();
+        harness.setGraveyard(player1, List.of(ineligible));
+        harness.setHand(player1, List.of(proclamation));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must select graveyard targets");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(proclamation);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ineligible);
     }
 }

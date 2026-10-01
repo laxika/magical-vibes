@@ -9,10 +9,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "223")
 @CardRegistration(set = "WHO", collectorNumber = "238")
+@CardRegistration(set = "WHO", collectorNumber = "478")
+@CardRegistration(set = "WHO", collectorNumber = "829")
+@CardRegistration(set = "WHO", collectorNumber = "1069")
 @CardRegistration(set = "MOC", collectorNumber = "340")
 @CardRegistration(set = "DSC", collectorNumber = "237")
 @CardRegistration(set = "TDC", collectorNumber = "308")
 @CardRegistration(set = "DMC", collectorNumber = "173")
+@CardRegistration(set = "BLC", collectorNumber = "262")
 public class TimeWipe extends Card {
 
     public TimeWipe() {

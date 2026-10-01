@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.g.GoblinFurrier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,20 +15,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FuryOfTheHorde.class, GoblinFurrier.class, BorealDruid.class})
 class FuryOfTheHordeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untaps creatures that attacked this turn and grants an additional combat and main phase")
     void untapsAttackedCreaturesAndGrantsAdditionalCombatAndMainPhase() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GoblinFurrier());
+        harness.addToBattlefield(player1, new GoblinFurrier());
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         battlefield.forEach(permanent -> permanent.setSummoningSick(false));
 
-        markAttacking(player1, List.of(0));
-        Permanent attackedBear = battlefield.get(0);
-        Permanent nonAttackedBear = battlefield.get(1);
-        nonAttackedBear.tap();
+        declareAttackers(List.of(0));
+        Permanent attackedFurrier = battlefield.get(0);
+        Permanent nonAttackedFurrier = battlefield.get(1);
+        nonAttackedFurrier.tap();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -38,29 +39,29 @@ class FuryOfTheHordeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(attackedBear.isTapped()).isFalse();
-        assertThat(nonAttackedBear.isTapped()).isTrue();
+        assertThat(attackedFurrier.isTapped()).isFalse();
+        assertThat(nonAttackedFurrier.isTapped()).isTrue();
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Can be cast by exiling two red cards from hand instead of paying mana")
     void castsByExilingTwoRedCardsFromHand() {
-        harness.setHand(player1, List.of(new FuryOfTheHorde(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new FuryOfTheHorde(), new GoblinFurrier(), new GoblinFurrier()));
 
         harness.castInstantWithAlternateExileFromHand(player1, 0, null, List.of(1, 2));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
-                .containsExactly("Shock", "Shock");
+                .containsExactly("Goblin Furrier", "Goblin Furrier");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     @Test
     @DisplayName("Alternate cost requires two red cards from hand")
     void alternateCostRequiresTwoRedCards() {
-        harness.setHand(player1, List.of(new FuryOfTheHorde(), new Shock(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FuryOfTheHorde(), new GoblinFurrier(), new BorealDruid()));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
                 player1, 0, null, List.of(1, 2)))
@@ -91,11 +92,4 @@ class FuryOfTheHordeTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
-    private void markAttacking(Player attacker, List<Integer> attackers) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        harness.getGameService().declareAttackers(gd, attacker, attackers);
-    }
 }

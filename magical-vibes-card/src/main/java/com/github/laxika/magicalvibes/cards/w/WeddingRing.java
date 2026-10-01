@@ -26,6 +26,9 @@ import java.util.List;
 @CardRegistration(set = "MAR", collectorNumber = "7")
 @CardRegistration(set = "OMB", collectorNumber = "7")
 @CardRegistration(set = "WHO", collectorNumber = "213")
+@CardRegistration(set = "WHO", collectorNumber = "468")
+@CardRegistration(set = "WHO", collectorNumber = "804")
+@CardRegistration(set = "WHO", collectorNumber = "1059")
 @CardRegistration(set = "LCC", collectorNumber = "102")
 public class WeddingRing extends Card {
 

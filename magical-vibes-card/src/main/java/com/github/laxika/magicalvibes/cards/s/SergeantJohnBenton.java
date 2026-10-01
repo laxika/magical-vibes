@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "157")
+@CardRegistration(set = "WHO", collectorNumber = "441")
+@CardRegistration(set = "WHO", collectorNumber = "762")
+@CardRegistration(set = "WHO", collectorNumber = "1032")
 public class SergeantJohnBenton extends Card {
 
     public SergeantJohnBenton() {

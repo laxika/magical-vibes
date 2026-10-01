@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 /** Creates a generic cost reduction for the controller's next matching spell this turn. */
 public record ReduceCastCostForNextMatchingSpellEffect(CardPredicate predicate, DynamicAmount amount,
                                                        boolean faceDownOnly)
-        implements CardEffect {
+        implements NextMatchingSpellCostEffect {
 
     public ReduceCastCostForNextMatchingSpellEffect(CardPredicate predicate, DynamicAmount amount) {
         this(predicate, amount, false);
@@ -20,5 +20,10 @@ public record ReduceCastCostForNextMatchingSpellEffect(CardPredicate predicate, 
     public ReduceCastCostForNextMatchingSpellEffect(CardPredicate predicate, int amount,
                                                     boolean faceDownOnly) {
         this(predicate, new Fixed(amount), faceDownOnly);
+    }
+
+    @Override
+    public boolean appliesToFaceDownCast(boolean castFaceDown) {
+        return !faceDownOnly || castFaceDown;
     }
 }

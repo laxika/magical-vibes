@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
+import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FrostwebSpider.class, BorealGriffin.class, BorealCentaur.class})
 class FrostwebSpiderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Blocking a creature with flying puts a +1/+1 counter on Frostweb Spider at end of combat")
     void blockingFlyingCreaturePutsCounterAtEndOfCombat() {
-        Permanent attacker = addCreatureReady(player1, new Ornithopter());
+        Permanent attacker = addCreatureReady(player1, new BorealGriffin());
         attacker.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
 
@@ -36,7 +38,7 @@ class FrostwebSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature without flying does not put a +1/+1 counter on Frostweb Spider")
     void blockingNonFlyingCreatureDoesNotPutCounter() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BorealCentaur());
         attacker.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
 
@@ -48,10 +50,7 @@ class FrostwebSpiderTest extends BaseCardTest {
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

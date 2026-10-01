@@ -64,6 +64,7 @@ class MimeofactureTest extends BaseCardTest {
 
         castMimeofacture(target, List.of("{3}{U}"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
@@ -89,7 +90,7 @@ class MimeofactureTest extends BaseCardTest {
         castMimeofacture(originalTarget, List.of("{3}{U}"));
         harness.passBothPriorities();
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
 

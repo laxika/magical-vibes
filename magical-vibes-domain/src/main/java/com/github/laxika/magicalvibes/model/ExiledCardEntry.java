@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.model;
 import java.util.UUID;
 
 /**
- * Tracks a single exiled card with its owner and the permanent that exiled it.
+ * Tracks a single exiled card with its owner and the permanent or planar object that exiled it.
  *
  * @param card              the exiled card
  * @param ownerId           the player whose exile zone this card belongs to
- * @param sourcePermanentId the permanent that caused the exile (for imprint/tracking),
+ * @param sourcePermanentId the permanent or planar object that caused the exile (for tracking),
  *                          or {@code null} if not tracked with a specific source
  * @param faceDown          whether the card is exiled face down (CR 406.3 — hideaway,
  *                          Grimoire Thief, Necropotence, ...); hidden from opponents

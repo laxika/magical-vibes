@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CacklingFlames;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AzoriusPloy.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({AzoriusPloy.class, AzoriusFirstWing.class, CacklingFlames.class, AzoriusSignet.class})
 class AzoriusPloyTest extends BaseCardTest {
 
     @Test
@@ -38,35 +36,47 @@ class AzoriusPloyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents combat damage dealt by the target creature to a player")
+    void preventsCombatDamageDealtByTargetCreatureToPlayer() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+
+        castAzoriusPloy(attacker);
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(attacker.getId()));
+    }
+
+    @Test
     @DisplayName("Does not prevent noncombat damage to the target creature")
     void doesNotPreventNoncombatDamage() {
-        Permanent target = addCreature(player1, 3, 3);
+        Permanent target = addCreature(player1, 4, 4);
         castAzoriusPloy(target);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new CacklingFlames(), new AzoriusSignet()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
-        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
         harness.setHand(player1, List.of(new AzoriusPloy()));
         addAzoriusPloyMana(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void castAzoriusPloy(Permanent target) {
         harness.setHand(player1, List.of(new AzoriusPloy()));
         addAzoriusPloyMana(player1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addAzoriusPloyMana(Player player) {
@@ -76,10 +86,10 @@ class AzoriusPloyTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player owner, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        return addCreatureReady(owner, bears);
+        Card creature = new AzoriusFirstWing();
+        creature.setPower(power);
+        creature.setToughness(toughness);
+        return addCreatureReady(owner, creature);
     }
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {

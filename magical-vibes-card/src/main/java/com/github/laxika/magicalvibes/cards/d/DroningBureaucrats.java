@@ -22,7 +22,7 @@ public class DroningBureaucrats extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentManaValueEqualsXPredicate())),
-                        true, true, false, EffectDuration.UNTIL_END_OF_TURN)),
+                        true, true, false, EffectDuration.UNTIL_END_OF_TURN, true)),
                 "{X}, {T}: Each creature with mana value X can't attack or block this turn."));
     }
 }

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCreatureThenOwne
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "70")
+@CardRegistration(set = "WHO", collectorNumber = "373")
+@CardRegistration(set = "WHO", collectorNumber = "675")
+@CardRegistration(set = "WHO", collectorNumber = "964")
 public class ThisIsHowItEnds extends Card {
 
     public ThisIsHowItEnds() {
