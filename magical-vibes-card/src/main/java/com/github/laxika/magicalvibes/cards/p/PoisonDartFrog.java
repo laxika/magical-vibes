@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "207")
+@CardRegistration(set = "M3C", collectorNumber = "238")
 public class PoisonDartFrog extends Card {
 
     public PoisonDartFrog() {

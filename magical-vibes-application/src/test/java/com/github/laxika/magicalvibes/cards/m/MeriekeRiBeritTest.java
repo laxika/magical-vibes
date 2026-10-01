@@ -74,6 +74,28 @@ class MeriekeRiBeritTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Merieke's destruction cannot be stopped by a regeneration shield")
+    void leavingDestructionCannotBeRegenerated() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        activateSteal(merieke, bears);
+        bears.setRegenerationShield(1);
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, merieke.getId());
+        harness.passBothPriorities(); // Incinerate resolves, Merieke dies, trigger goes on the stack.
+        harness.passBothPriorities(); // Trigger resolves.
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
     @DisplayName("Merieke becoming untapped destroys the stolen creature")
     void untappingDestroysStolenCreature() {
         Permanent merieke = addReadyMerieke(player1);
@@ -184,6 +206,35 @@ class MeriekeRiBeritTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Losing control of Merieke does not cancel the later untap destruction trigger")
+    void losingControlDoesNotCancelUntapDestruction() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        activateSteal(merieke, bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BindingGrasp()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player2, 0, merieke.getId());
+        harness.passBothPriorities();
+
+        Permanent brownie = addCreatureReady(player2, new FyndhornBrownie());
+        addBrownieMana(player2);
+        int brownieIndex = gd.playerBattlefields.get(player2.getId()).indexOf(brownie);
+        harness.activateAbility(player2, brownieIndex, null, merieke.getId());
+        harness.passBothPriorities(); // Brownie untaps Merieke and triggers the delayed destruction.
+        harness.passBothPriorities(); // Resolve the delayed trigger from the original activation.
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
     }
 
     private Permanent addReadyMerieke(Player player) {

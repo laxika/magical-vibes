@@ -30,6 +30,12 @@ public class DiceRollTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT)
+    private boolean handleControllerRollsHighestNaturalResult(TriggerMatchContext match, CardEffect effect,
+                                                              TriggerContext context) {
+        return handleControllerRollsDice(match, effect, context);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
     private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext context) {
@@ -37,7 +43,8 @@ public class DiceRollTriggerCollectorService {
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
                 match.permanent() == null
                         ? ConditionContext.forCard(match.sourceCard(), match.controllerId())
-                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()),
+                context instanceof TriggerContext.DiceRoll diceRoll ? diceRoll.result() : 0)) {
             return false;
         }
 
@@ -81,7 +88,7 @@ public class DiceRollTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 sourcePermanentId);
-        if (context instanceof TriggerContext.DiceRoll diceRoll && !diceRoll.planar()) {
+        if (context instanceof TriggerContext.DiceRoll diceRoll) {
             entry.setEventValue(diceRoll.result());
         }
         if (match.sourcePlanarObject() != null) {

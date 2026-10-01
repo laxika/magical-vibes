@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "111")
 @CardRegistration(set = "TSR", collectorNumber = "117")
+@CardRegistration(set = "C19", collectorNumber = "116")
 public class GorgonRecluse extends Card {
 
     public GorgonRecluse() {

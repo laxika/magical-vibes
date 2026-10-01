@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.s.ShieldingPlax;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FreewindEquenaut.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({FreewindEquenaut.class, AssaultZeppelid.class, ShieldingPlax.class})
 class FreewindEquenautTest extends BaseCardTest {
 
     @Test
@@ -57,25 +57,65 @@ class FreewindEquenautTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addEquenautWithAura();
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new AssaultZeppelid());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("Can target an attacking creature controlled by its controller")
+    void canTargetOwnAttackingCreature() {
+        Permanent equenaut = addEquenautWithAura();
+        Permanent attacker = addCombatCreature(player1, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(equenaut.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not gain the ability when the Aura enchants another creature")
+    void cannotActivateWhenAuraIsAttachedElsewhere() {
+        Permanent equenaut = addCreatureReady(player1, new FreewindEquenaut());
+        Permanent otherCreature = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShieldingPlax());
+        aura.setAttachedTo(otherCreature.getId());
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(equenaut.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not deal damage if the target stops attacking before resolution")
+    void targetMustStillBeAttackingWhenAbilityResolves() {
+        Permanent equenaut = addEquenautWithAura();
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(equenaut.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
     private Permanent addEquenautWithAura() {
-        Permanent equenaut = harness.addToBattlefieldAndReturn(player1, new FreewindEquenaut());
-        equenaut.setSummoningSick(false);
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        Permanent equenaut = addCreatureReady(player1, new FreewindEquenaut());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShieldingPlax());
         aura.setAttachedTo(equenaut.getId());
         return equenaut;
     }
 
     private Permanent addCombatCreature(com.github.laxika.magicalvibes.model.Player player,
                                         boolean attacking, boolean blocking) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player, new AssaultZeppelid());
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
         harness.forceStep(attacking ? TurnStep.DECLARE_ATTACKERS : TurnStep.DECLARE_BLOCKERS);

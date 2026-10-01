@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.d.DryadSophisticate;
+import com.github.laxika.magicalvibes.cards.i.IzzetSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,14 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HypervoltGrasp.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({HypervoltGrasp.class, DryadSophisticate.class, IzzetSignet.class})
 class HypervoltGraspTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature can tap to deal 1 damage to any target")
     void enchantedCreatureDealsDamageToAnyTarget() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
         aura.setAttachedTo(creature.getId());
         harness.setLife(player2, 20);
@@ -34,10 +33,24 @@ class HypervoltGraspTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enchanted creature can deal damage to an opposing creature")
+    void enchantedCreatureDealsDamageToCreature() {
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
+        aura.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new DryadSophisticate());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Activating the Aura's ability returns it to its owner's hand")
     void returnsAuraToHand() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
         aura.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -54,17 +67,14 @@ class HypervoltGraspTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot enchant a land")
-    void cannotEnchantALand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantANoncreaturePermanent() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new IzzetSignet());
         harness.setHand(player1, List.of(new HypervoltGrasp()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

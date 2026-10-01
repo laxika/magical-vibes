@@ -23,6 +23,6 @@ public class ShriekTreblemaker extends Card {
                 "Discard a card to have target creature unable to block this turn?"));
 
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

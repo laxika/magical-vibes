@@ -14,11 +14,14 @@ import java.util.List;
 @CardRegistration(set = "TDM", collectorNumber = "262")
 @CardRegistration(set = "DDN", collectorNumber = "73")
 @CardRegistration(set = "WHO", collectorNumber = "291")
+@CardRegistration(set = "WHO", collectorNumber = "882")
 @CardRegistration(set = "PIP", collectorNumber = "275")
 @CardRegistration(set = "PIP", collectorNumber = "803")
 @CardRegistration(set = "MSC", collectorNumber = "253")
+@CardRegistration(set = "M3C", collectorNumber = "360")
 @CardRegistration(set = "C20", collectorNumber = "293")
 @CardRegistration(set = "BLC", collectorNumber = "318")
+@CardRegistration(set = "C19", collectorNumber = "262")
 public class MysticMonastery extends Card {
 
     public MysticMonastery() {

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "140")
 @CardRegistration(set = "2XM", collectorNumber = "88")
 @CardRegistration(set = "AFC", collectorNumber = "98")
+@CardRegistration(set = "C19", collectorNumber = "111")
 public class DoomedNecromancer extends Card {
 
     public DoomedNecromancer() {

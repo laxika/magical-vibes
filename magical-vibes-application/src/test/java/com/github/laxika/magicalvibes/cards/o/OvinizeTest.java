@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
+import com.github.laxika.magicalvibes.cards.g.GaeasAnthem;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,48 +19,73 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Ovinize.class, FountainOfYouth.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({Ovinize.class, AvenRiftwatcher.class, GaeasAnthem.class, ProdigalPyromancer.class})
 class OvinizeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Makes the target creature 0/1 and removes its abilities")
     void makesTargetZeroOneWithoutAbilities() {
-        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        Permanent riftwatcher = harness.addToBattlefieldAndReturn(player2, new AvenRiftwatcher());
+        assertThat(gqs.hasKeyword(gd, riftwatcher, Keyword.FLYING)).isTrue();
 
-        castOvinize(angel.getId());
+        castOvinize(riftwatcher.getId());
 
-        assertThat(angel.getEffectivePower()).isZero();
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
-        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
+        assertThat(riftwatcher.getEffectivePower()).isZero();
+        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, riftwatcher, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sets base power and toughness without removing other modifiers")
+    void preservesOtherPowerAndToughnessModifiers() {
+        Permanent riftwatcher = harness.addToBattlefieldAndReturn(player2, new AvenRiftwatcher());
+        riftwatcher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(riftwatcher.getEffectivePower()).isEqualTo(3);
+        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(4);
+
+        castOvinize(riftwatcher.getId());
+
+        assertThat(riftwatcher.getEffectivePower()).isEqualTo(1);
+        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removes activated abilities as well as keyword abilities")
+    void removesActivatedAbilities() {
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+
+        castOvinize(pyromancer.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Effects wear off at end of turn")
     void effectsWearOffAtCleanup() {
-        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        castOvinize(angel.getId());
+        Permanent riftwatcher = harness.addToBattlefieldAndReturn(player2, new AvenRiftwatcher());
+        castOvinize(riftwatcher.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        assertThat(riftwatcher.getEffectivePower()).isEqualTo(2);
+        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, riftwatcher, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GaeasAnthem());
+        harness.addToBattlefield(player1, new AvenRiftwatcher());
         harness.setHand(player1, List.of(new Ovinize()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID fountainId = fountain.getId();
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, fountainId))
+        UUID anthemId = anthem.getId();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, anthemId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -68,7 +94,6 @@ class OvinizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ovinize()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

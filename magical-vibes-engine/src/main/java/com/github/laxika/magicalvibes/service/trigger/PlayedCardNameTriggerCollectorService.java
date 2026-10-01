@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDrawAndTransformTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithPlanarSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -82,6 +83,34 @@ public class PlayedCardNameTriggerCollectorService {
                 lp.landCard(), trigger.followUpEffect());
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    })
+    private boolean handleControllerCastsCardExiledWithPlanarSource(
+            TriggerMatchContext match, PlayedCardExiledWithPlanarSourceTriggerEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return match.sourcePlanarObject() != null
+                && sc.castZone() == Zone.EXILE
+                && match.sourcePlanarObject().getId().equals(sc.exiledSourcePermanentId())
+                && enqueuePlanarFollowUp(match, sc.castingPlayerId(), sc.spellCard(), trigger.followUpEffect());
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    })
+    private boolean handleControllerPlaysCardExiledWithPlanarSource(
+            TriggerMatchContext match, PlayedCardExiledWithPlanarSourceTriggerEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        return match.sourcePlanarObject() != null
+                && lp.fromExile()
+                && match.sourcePlanarObject().getId().equals(lp.exiledSourcePermanentId())
+                && enqueuePlanarFollowUp(match, lp.playingPlayerId(), lp.landCard(), trigger.followUpEffect());
+    }
+
     @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
             slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerCastsExiledCard(TriggerMatchContext match,
@@ -128,7 +157,7 @@ public class PlayedCardNameTriggerCollectorService {
         if (!lp.fromExile()) {
             return false;
         }
-        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
+        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId(), lp.landCard().getId());
     }
 
     @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
@@ -249,6 +278,12 @@ public class PlayedCardNameTriggerCollectorService {
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
                                            LandPlayFromExileTriggerEffect trigger, UUID playingPlayerId) {
+        return enqueueLandPlayTrigger(match, trigger, playingPlayerId, null);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
+                                           LandPlayFromExileTriggerEffect trigger,
+                                           UUID playingPlayerId, UUID triggeringCardId) {
         boolean needsPlayerTarget = trigger.resolvedEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = trigger.resolvedEffects().stream()
@@ -263,10 +298,15 @@ public class PlayedCardNameTriggerCollectorService {
                     "'s triggered ability triggers — choose a target."));
             return true;
         }
-        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId);
+        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId, triggeringCardId);
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects, UUID playingPlayerId) {
+        return enqueueLandPlayTrigger(match, effects, playingPlayerId, null);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects,
+                                           UUID playingPlayerId, UUID triggeringCardId) {
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -277,6 +317,9 @@ public class PlayedCardNameTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setTargetId(playingPlayerId);
+        if (triggeringCardId != null) {
+            entry.setTriggeringCardId(triggeringCardId);
+        }
         entry.setNonTargeting(true);
         if (effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
@@ -308,6 +351,30 @@ public class PlayedCardNameTriggerCollectorService {
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when {} is played from exile",
+                match.gameData().id, sourceCard.getName(), playedCard.getName());
+        return true;
+    }
+
+    private boolean enqueuePlanarFollowUp(TriggerMatchContext match, UUID playingPlayerId,
+                                          Card playedCard, CardEffect followUpEffect) {
+        Card sourceCard = match.sourceCard();
+        if (sourceCard == null || match.sourcePlanarObject() == null) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(followUpEffect)));
+        UUID ownerId = playedCard.getOwnerId() != null ? playedCard.getOwnerId() : playingPlayerId;
+        entry.setTargetId(ownerId);
+        entry.setNonTargeting(true);
+        entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers when {} is played from planar exile",
                 match.gameData().id, sourceCard.getName(), playedCard.getName());
         return true;
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -63,9 +64,12 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
 
         String originalName = source.getCard().getName();
         String targetName = target.getCard().getName();
-        permanentCopierService.applyCloneCopy(source, target,
+        List<ActivatedAbility> retainedAbilities = copyEffect.retainSourceActivatedAbilities()
+                ? List.copyOf(source.getOriginalCard().getActivatedAbilities())
+                : List.of();
+        permanentCopierService.applyCloneCopy(source, target.getCard(),
                 copyEffect.powerOverride(), copyEffect.toughnessOverride(),
-                copyEffect.additionalTypesOverride());
+                copyEffect.additionalTypesOverride(), retainedAbilities);
 
         if (copyEffect.nameOverride() != null) {
             source.getCard().setName(copyEffect.nameOverride());

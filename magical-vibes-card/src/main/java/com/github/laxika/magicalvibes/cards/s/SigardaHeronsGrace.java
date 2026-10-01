@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "250")
 @CardRegistration(set = "SIR", collectorNumber = "242")
+@CardRegistration(set = "MIC", collectorNumber = "155")
 public class SigardaHeronsGrace extends Card {
 
     public SigardaHeronsGrace() {

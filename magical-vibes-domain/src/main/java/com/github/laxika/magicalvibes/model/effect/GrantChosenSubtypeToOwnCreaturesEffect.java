@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Static effect: the permanents selected by {@code scope} are the chosen type in addition to their
- * other types. Reads the chosen subtype from the source permanent's {@code chosenSubtype} field.
+ * Static effect: the permanents selected by {@code scope} gain the chosen creature type, replacing
+ * their other creature types when {@code overriding} is true (Conspiracy). Reads the chosen
+ * subtype from the source permanent's {@code chosenSubtype} field.
  * Used by Xenograft, Arcane Adaptation ({@link GrantScope#OWN_CREATURES}) and Adaptive Automaton
  * ({@link GrantScope#SELF} — "this creature is the chosen type in addition to its other types").
  *
@@ -14,10 +15,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope           which permanents receive the subtype; only {@link GrantScope#OWN_CREATURES}
  *                        and {@link GrantScope#SELF} are supported.
  * @param filter          optional predicate restricting the affected creatures.
+ * @param overriding      replaces existing creature types instead of adding to them.
  */
 public record GrantChosenSubtypeToOwnCreaturesEffect(boolean affectsAllZones,
                                                      GrantScope scope,
-                                                     PermanentPredicate filter) implements CardEffect {
+                                                     PermanentPredicate filter,
+                                                     boolean overriding) implements CardEffect {
+
+    public GrantChosenSubtypeToOwnCreaturesEffect(boolean affectsAllZones, GrantScope scope,
+                                                  PermanentPredicate filter) {
+        this(affectsAllZones, scope, filter, false);
+    }
+
+    public static GrantChosenSubtypeToOwnCreaturesEffect replacingInAllZones() {
+        return new GrantChosenSubtypeToOwnCreaturesEffect(true, GrantScope.OWN_CREATURES, null, true);
+    }
 
     /** Battlefield-only variant granting to each creature you control (e.g. Xenograft). */
     public GrantChosenSubtypeToOwnCreaturesEffect() {

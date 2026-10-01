@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GruulSignet;
+import com.github.laxika.magicalvibes.cards.i.IzzetChronarch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkarrgTheRagePits.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({SkarrgTheRagePits.class, IzzetChronarch.class, GruulSignet.class})
 class SkarrgTheRagePitsTest extends BaseCardTest {
 
     @Test
@@ -34,7 +34,7 @@ class SkarrgTheRagePitsTest extends BaseCardTest {
     @DisplayName("The second ability gives a target creature +1/+1 and trample")
     void boostsTargetCreatureAndGrantsTrample() {
         harness.addToBattlefield(player1, new SkarrgTheRagePits());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetChronarch());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -51,7 +51,7 @@ class SkarrgTheRagePitsTest extends BaseCardTest {
     @DisplayName("The boost and trample wear off at end of turn")
     void boostAndTrampleWearOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new SkarrgTheRagePits());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetChronarch());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -67,10 +67,26 @@ class SkarrgTheRagePitsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The second ability can target a creature an opponent controls")
+    void boostsOpponentsCreature() {
+        harness.addToBattlefield(player1, new SkarrgTheRagePits());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new IzzetChronarch());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("The second ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         harness.addToBattlefield(player1, new SkarrgTheRagePits());
-        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

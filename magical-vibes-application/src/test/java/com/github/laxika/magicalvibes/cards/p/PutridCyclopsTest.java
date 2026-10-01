@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,19 +16,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PutridCyclops.class, Forest.class, GrizzlyBears.class})
+@CardUsed({PutridCyclops.class, DryadArbor.class, Tarmogoyf.class})
 class PutridCyclopsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Scrying keeps the top card and gives Putrid Cyclops -X/-X by its mana value")
     void keepsTopCardAndGetsMinusByItsManaValue() {
         Card cyclopsCard = new PutridCyclops();
-        Card topCard = new GrizzlyBears();
-        harness.setHand(player1, List.of(cyclopsCard));
-        harness.setLibrary(player1, List.of(topCard, new Forest()));
-        addCyclopsMana();
-
-        harness.castCreature(player1, 0);
+        Card topCard = new Tarmogoyf();
+        harness.setLibrary(player1, List.of(topCard, new DryadArbor()));
+        harness.castFromHand(player1, cyclopsCard, "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -38,7 +34,7 @@ class PutridCyclopsTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        Permanent cyclops = findCyclops(cyclopsCard);
+        Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
         assertThat(cyclops.getEffectivePower()).isEqualTo(1);
         assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
         assertThat(cyclops.getPowerModifier()).isEqualTo(-2);
@@ -50,19 +46,16 @@ class PutridCyclopsTest extends BaseCardTest {
     @DisplayName("The card left on top after scry determines the penalty")
     void bottomedCardIsNotUsedForPenalty() {
         Card cyclopsCard = new PutridCyclops();
-        Card scriedCard = new Forest();
-        Card revealedCard = new GrizzlyBears();
-        harness.setHand(player1, List.of(cyclopsCard));
+        Card scriedCard = new DryadArbor();
+        Card revealedCard = new Tarmogoyf();
         harness.setLibrary(player1, List.of(scriedCard, revealedCard));
-        addCyclopsMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, cyclopsCard, "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
-        Permanent cyclops = findCyclops(cyclopsCard);
+        Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
         assertThat(cyclops.getEffectivePower()).isEqualTo(1);
         assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(revealedCard);
@@ -73,17 +66,14 @@ class PutridCyclopsTest extends BaseCardTest {
     @DisplayName("The temporary penalty wears off at end of turn")
     void penaltyWearsOffAtEndOfTurn() {
         Card cyclopsCard = new PutridCyclops();
-        harness.setHand(player1, List.of(cyclopsCard));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        addCyclopsMana();
-
-        harness.castCreature(player1, 0);
+        harness.setLibrary(player1, List.of(new Tarmogoyf()));
+        harness.castFromHand(player1, cyclopsCard, "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        Permanent cyclops = findCyclops(cyclopsCard);
+        Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
         assertThat(cyclops.getEffectivePower()).isEqualTo(1);
         assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
 
@@ -95,15 +85,23 @@ class PutridCyclopsTest extends BaseCardTest {
         assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
     }
 
-    private void addCyclopsMana() {
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-    }
+    @Test
+    @DisplayName("A land left on top gives no penalty")
+    void landOnTopGivesNoPenalty() {
+        Card cyclopsCard = new PutridCyclops();
+        Card topCard = new DryadArbor();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.castFromHand(player1, cyclopsCard, "{2}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.getGameService().handleInteractionAnswer(
+                gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-    private Permanent findCyclops(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == card)
-                .findFirst()
-                .orElseThrow();
+        Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
+        assertThat(cyclops.getEffectivePower()).isEqualTo(3);
+        assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
+        assertThat(cyclops.getPowerModifier()).isZero();
+        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 }

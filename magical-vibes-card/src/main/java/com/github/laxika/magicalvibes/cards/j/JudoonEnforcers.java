@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "138")
+@CardRegistration(set = "WHO", collectorNumber = "743")
 public class JudoonEnforcers extends Card {
 
     public JudoonEnforcers() {

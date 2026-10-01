@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -23,7 +27,10 @@ public class DaybreakCoronet extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsEnchantedPredicate()
+                        new PermanentHasAttachedPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.AURA),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                        )))
                 )),
                 "Target must be an enchanted creature"
         )).addEffect(EffectSlot.STATIC, new StaticBoostEffect(

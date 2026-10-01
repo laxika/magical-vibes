@@ -13,11 +13,15 @@ import java.util.Set;
 @CardRegistration(set = "SOI", collectorNumber = "276")
 @CardRegistration(set = "SIR", collectorNumber = "269")
 @CardRegistration(set = "WHO", collectorNumber = "284")
+@CardRegistration(set = "WHO", collectorNumber = "500")
+@CardRegistration(set = "WHO", collectorNumber = "875")
+@CardRegistration(set = "WHO", collectorNumber = "1091")
 @CardRegistration(set = "LCC", collectorNumber = "334")
 @CardRegistration(set = "40K", collectorNumber = "282")
 @CardRegistration(set = "MKC", collectorNumber = "264")
 @CardRegistration(set = "AFC", collectorNumber = "240")
 @CardRegistration(set = "BLC", collectorNumber = "306")
+@CardRegistration(set = "NEC", collectorNumber = "169")
 public class GameTrail extends Card {
 
     public GameTrail() {

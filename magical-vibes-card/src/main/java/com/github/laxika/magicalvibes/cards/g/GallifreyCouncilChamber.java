@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "188")
+@CardRegistration(set = "WHO", collectorNumber = "462")
+@CardRegistration(set = "WHO", collectorNumber = "793")
+@CardRegistration(set = "WHO", collectorNumber = "1053")
 public class GallifreyCouncilChamber extends Card {
 
     public GallifreyCouncilChamber() {

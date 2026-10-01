@@ -14,6 +14,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       sacrifices permanents" (Nicol Bolas, Planeswalker).</li>
  *   <li>{@link #EACH_PLAYER} — every player sacrifices, in APNAP order (CR 101.4 simultaneous).</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller sacrifices, in APNAP order.</li>
+ *   <li>{@link #PLAYERS_WITH_MOST_LANDS} — each player tied for controlling the most lands
+ *       sacrifices, in APNAP order.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked (or the controller of the attacked
  *       planeswalker) sacrifices; the effect does not target (it reads the {@code ON_ATTACK}
  *       trigger's {@code attackedTargetId}). Used by "Whenever this creature attacks, defending
@@ -32,5 +34,6 @@ public enum SacrificeRecipient {
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
     EACH_PLAYER,
     EACH_OPPONENT,
+    PLAYERS_WITH_MOST_LANDS,
     DEFENDING_PLAYER
 }

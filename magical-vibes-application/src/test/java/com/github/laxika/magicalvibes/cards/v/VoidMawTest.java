@@ -1,35 +1,40 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SacredArmory;
+import com.github.laxika.magicalvibes.cards.g.GristleGrinner;
+import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
+import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VoidMaw.class, KrovikanScoundrel.class, MishrasBauble.class, GristleGrinner.class})
 class VoidMawTest extends BaseCardTest {
 
     @Test
     @DisplayName("Another creature is exiled with Void Maw instead of entering a graveyard")
     void exilesAnotherCreatureWithSource() {
         Permanent maw = addMaw();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent armory = harness.addToBattlefieldAndReturn(player1, new SacredArmory());
+        Permanent scoundrel = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        Permanent bauble = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
 
-        removeToGraveyard(bears);
-        removeToGraveyard(armory);
+        removeToGraveyard(scoundrel);
+        removeToGraveyard(bauble);
 
         assertThat(gd.getCardsExiledByPermanent(maw.getId()))
-                .extracting(Card::getId).containsExactly(bears.getCard().getId());
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Sacred Armory");
+                .extracting(Card::getId).containsExactly(scoundrel.getCard().getId());
+        harness.assertNotInGraveyard(player1, "Krovikan Scoundrel");
+        harness.assertInGraveyard(player1, "Mishra's Bauble");
     }
 
     @Test
@@ -47,8 +52,8 @@ class VoidMawTest extends BaseCardTest {
     @DisplayName("Putting an exiled card into its owner's graveyard pays for the self-boost")
     void paysWithExiledCardAndBoostsUntilEndOfTurn() {
         Permanent maw = addMaw();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        removeToGraveyard(bears);
+        Permanent scoundrel = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        removeToGraveyard(scoundrel);
         UUID exiledCardId = gd.getCardsExiledByPermanent(maw.getId()).getFirst().getId();
 
         int mawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(maw);
@@ -58,7 +63,7 @@ class VoidMawTest extends BaseCardTest {
         harness.activateAbility(player1, mawIndex, 0, exiledCardId, Zone.EXILE);
 
         assertThat(gd.findExiledCard(exiledCardId)).isNull();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Krovikan Scoundrel");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(6);
@@ -80,20 +85,69 @@ class VoidMawTest extends BaseCardTest {
         assertThat(gs.canActivateAbility(gd, player1.getId(), maw, 0,
                 gd.playerManaPools.get(player1.getId()))).isFalse();
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        removeToGraveyard(bears);
+        Permanent scoundrel = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        removeToGraveyard(scoundrel);
 
         assertThat(gs.canActivateAbility(gd, player1.getId(), maw, 0,
                 gd.playerManaPools.get(player1.getId()))).isTrue();
         assertThat(gd.getCardsExiledByPermanent(maw.getId()))
                 .extracting(Card::getId)
-                .containsExactly(bears.getCard().getId());
+                .containsExactly(scoundrel.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Chooses one of multiple cards exiled with Void Maw and returns it to its owner's graveyard")
+    void choosesOneOfMultipleExiledCards() {
+        Permanent maw = addMaw();
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        removeToGraveyard(first);
+        removeToGraveyard(second);
+
+        int mawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(maw);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, mawIndex, 0, null, null);
+
+        PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                first.getCard().getId(), second.getCard().getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getCard().getId()));
+
+        assertThat(gd.findExiledCard(first.getCard().getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).contains(first.getCard().getId());
+        assertThat(gd.getCardsExiledByPermanent(maw.getId()))
+                .extracting(Card::getId).containsExactly(second.getCard().getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Exiling a creature instead of letting it die does not trigger dies abilities")
+    void exileReplacementDoesNotTriggerCreatureDiesAbilities() {
+        Permanent maw = addMaw();
+        Permanent grinner = harness.addToBattlefieldAndReturn(player1, new GristleGrinner());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        int grinnerPower = gqs.getEffectivePower(gd, grinner);
+
+        removeToGraveyard(victim);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, grinner)).isEqualTo(grinnerPower);
+        assertThat(gd.getCardsExiledByPermanent(maw.getId()))
+                .extracting(Card::getId).containsExactly(victim.getCard().getId());
     }
 
     private Permanent addMaw() {
-        Permanent maw = harness.addToBattlefieldAndReturn(player1, new VoidMaw());
-        maw.setSummoningSick(false);
-        return maw;
+        return addCreatureReady(player1, new VoidMaw());
     }
 
     private void removeToGraveyard(Permanent permanent) {

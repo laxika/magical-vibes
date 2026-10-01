@@ -53,6 +53,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Marath deals X damage to any target");
+        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

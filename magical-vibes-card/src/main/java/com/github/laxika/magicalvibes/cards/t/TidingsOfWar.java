@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "115")
+@CardRegistration(set = "HOC", collectorNumber = "115")
 public class TidingsOfWar extends Card {
 
     public TidingsOfWar() {

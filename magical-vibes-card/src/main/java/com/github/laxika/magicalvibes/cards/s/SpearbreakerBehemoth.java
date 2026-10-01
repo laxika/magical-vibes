@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "150")
+@CardRegistration(set = "NEC", collectorNumber = "132")
 public class SpearbreakerBehemoth extends Card {
 
     public SpearbreakerBehemoth() {

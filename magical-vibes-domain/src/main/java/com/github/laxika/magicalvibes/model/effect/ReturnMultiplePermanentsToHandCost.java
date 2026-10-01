@@ -7,5 +7,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * the battlefield to their owner's hand. Used by cards like Multani, Yavimaya's
  * Avatar ("{1}{G}, Return two lands you control to their owner's hand: ...").
  */
-public record ReturnMultiplePermanentsToHandCost(int count, PermanentPredicate filter) implements CostEffect {
+public record ReturnMultiplePermanentsToHandCost(int count, PermanentPredicate filter,
+                                                 boolean tracksReturnedPermanentCard) implements CostEffect {
+
+    public ReturnMultiplePermanentsToHandCost(int count, PermanentPredicate filter) {
+        this(count, filter, false);
+    }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "198")
 @CardRegistration(set = "TSR", collectorNumber = "385")
+@CardRegistration(set = "C19", collectorNumber = "201")
 public class SecretPlans extends Card {
 
     public SecretPlans() {

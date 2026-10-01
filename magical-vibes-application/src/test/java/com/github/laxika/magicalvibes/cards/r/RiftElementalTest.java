@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AncestralVision;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArcBlade;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiftElemental.class, AncestralVision.class, GrizzlyBears.class})
+@CardUsed({RiftElemental.class, ArcBlade.class, BlindPhantasm.class})
 class RiftElementalTest extends BaseCardTest {
 
     @Test
     void removesTimeCounterFromControlledPermanentAndBoostsSelf() {
         Permanent source = readySource();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
         target.setCounterCount(CounterType.TIME, 1);
         addActivationMana();
 
@@ -36,7 +36,7 @@ class RiftElementalTest extends BaseCardTest {
     @Test
     void removesTimeCounterFromOwnedSuspendedCard() {
         Permanent source = readySource();
-        AncestralVision target = suspendedCard(player1, 2);
+        ArcBlade target = suspendedCard(player1, 2);
         addActivationMana();
 
         activate(source);
@@ -48,9 +48,9 @@ class RiftElementalTest extends BaseCardTest {
     @Test
     void choosesBetweenControlledPermanentAndSuspendedCard() {
         Permanent source = readySource();
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
         permanent.setCounterCount(CounterType.TIME, 1);
-        AncestralVision suspended = suspendedCard(player1, 2);
+        ArcBlade suspended = suspendedCard(player1, 2);
         addActivationMana();
 
         harness.activateAbility(player1, battlefieldIndex(source), null, null);
@@ -69,7 +69,7 @@ class RiftElementalTest extends BaseCardTest {
     @Test
     void removingLastSuspendedTimeCounterOffersItsCast() {
         Permanent source = readySource();
-        AncestralVision target = suspendedCard(player1, 1);
+        ArcBlade target = suspendedCard(player1, 1);
         addActivationMana();
 
         harness.activateAbility(player1, battlefieldIndex(source), null, null);
@@ -90,6 +90,47 @@ class RiftElementalTest extends BaseCardTest {
                 .hasMessageContaining("time counter");
     }
 
+    @Test
+    void cannotActivateUsingOpponentControlledPermanent() {
+        Permanent source = readySource();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        target.setCounterCount(CounterType.TIME, 1);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(source), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("time counter");
+        assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateUsingOpponentOwnedSuspendedCard() {
+        Permanent source = readySource();
+        ArcBlade target = suspendedCard(player2, 1);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(source), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("time counter");
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+    }
+
+    @Test
+    void cannotActivateUsingNonSuspendTimeCounterOnExiledCard() {
+        Permanent source = readySource();
+        ArcBlade target = suspendedCard(player1, 1);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(source), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("time counter");
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+    }
+
     private Permanent readySource() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RiftElemental());
         source.setSummoningSick(false);
@@ -106,8 +147,8 @@ class RiftElementalTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private AncestralVision suspendedCard(Player owner, int timeCounters) {
-        AncestralVision target = new AncestralVision();
+    private ArcBlade suspendedCard(Player owner, int timeCounters) {
+        ArcBlade target = new ArcBlade();
         harness.setExile(owner, List.of(target));
         gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
         return target;

@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "168")
+@CardRegistration(set = "WHO", collectorNumber = "453")
+@CardRegistration(set = "WHO", collectorNumber = "549")
+@CardRegistration(set = "WHO", collectorNumber = "773")
+@CardRegistration(set = "WHO", collectorNumber = "1044")
+@CardRegistration(set = "WHO", collectorNumber = "1140")
 public class WeepingAngel extends Card {
 
     public WeepingAngel() {

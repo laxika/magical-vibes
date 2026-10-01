@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +51,35 @@ class NumotTheDevastatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can target a land controlled by Numot's controller")
+    void canTargetAndDestroyOwnLand() {
+        addAttackingNumot();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    @DisplayName("Accepting the payment without enough mana does not destroy the lands")
+    void cannotPayAcceptedPayment() {
+        addAttackingNumot();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+    }
+
+    @Test
     @DisplayName("A nonland permanent is not a legal target")
     void cannotTargetNonlandPermanent() {
         addAttackingNumot();
@@ -88,10 +116,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
     }
 
     private void resolveCombatToTargetChoice() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 

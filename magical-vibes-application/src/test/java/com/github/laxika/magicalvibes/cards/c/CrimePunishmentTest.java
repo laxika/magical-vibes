@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FavorableWinds;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.j.Juggernaut;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.b.BloodCrypt;
+import com.github.laxika.magicalvibes.cards.m.MagewrightsStone;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.r.RainOfGore;
+import com.github.laxika.magicalvibes.cards.s.SkullmeadCauldron;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,8 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrimePunishment.class, GrizzlyBears.class, FavorableWinds.class, Millstone.class,
-        Juggernaut.class, SolRing.class})
+@CardUsed({CrimePunishment.class, MistralCharger.class, RainOfGore.class, MagewrightsStone.class,
+        SkullmeadCauldron.class, BloodCrypt.class})
 class CrimePunishmentTest extends BaseCardTest {
 
     private static final int CRIME = 0;
@@ -28,7 +28,7 @@ class CrimePunishmentTest extends BaseCardTest {
     @Test
     @DisplayName("Crime puts a creature from an opponent's graveyard onto the battlefield under your control")
     void crimeReturnsCreatureFromOpponentGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new MistralCharger();
         harness.setGraveyard(player2, List.of(creature));
         harness.setHand(player1, List.of(new CrimePunishment()));
         addCrimeMana();
@@ -46,7 +46,7 @@ class CrimePunishmentTest extends BaseCardTest {
     @Test
     @DisplayName("Crime can put an enchantment from an opponent's graveyard onto the battlefield")
     void crimeReturnsEnchantmentFromOpponentGraveyard() {
-        Card enchantment = new FavorableWinds();
+        Card enchantment = new RainOfGore();
         harness.setGraveyard(player2, List.of(enchantment));
         harness.setHand(player1, List.of(new CrimePunishment()));
         addCrimeMana();
@@ -63,7 +63,7 @@ class CrimePunishmentTest extends BaseCardTest {
     @Test
     @DisplayName("Crime cannot target a card that is neither a creature nor an enchantment")
     void crimeCannotTargetArtifactCard() {
-        Card artifact = new Millstone();
+        Card artifact = new MagewrightsStone();
         harness.setGraveyard(player2, List.of(artifact));
         harness.setHand(player1, List.of(new CrimePunishment()));
         addCrimeMana();
@@ -73,13 +73,25 @@ class CrimePunishmentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Punishment destroys artifacts, creatures, and enchantments with mana value X")
+    @DisplayName("Crime cannot target a card in your own graveyard")
+    void crimeCannotTargetOwnGraveyard() {
+        Card creature = new MistralCharger();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new CrimePunishment()));
+        addCrimeMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, CRIME, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Punishment destroys matching artifacts, creatures, and enchantments and leaves other permanents")
     void punishmentDestroysMatchingPermanents() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new FavorableWinds());
-        Permanent differentManaValue = harness.addToBattlefieldAndReturn(player2, new Juggernaut());
-        Permanent differentType = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MagewrightsStone());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new RainOfGore());
+        Permanent differentManaValue = harness.addToBattlefieldAndReturn(player2, new SkullmeadCauldron());
+        Permanent differentType = harness.addToBattlefieldAndReturn(player2, new BloodCrypt());
 
         harness.setHand(player1, List.of(new CrimePunishment()));
         harness.addMana(player1, ManaColor.BLACK, 1);

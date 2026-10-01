@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 public class Extirpate extends Card {
 
     public Extirpate() {
-        addEffect(EffectSlot.SPELL, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
+        addEffect(EffectSlot.SPELL, new ExileTargetGraveyardCardAndSameNameFromZonesEffect(true));
     }
 }

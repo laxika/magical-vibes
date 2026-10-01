@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,7 +20,7 @@ class GruulNodorogTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability puts it on the stack")
     void activatingAbilityPutsOnStack() {
-        Permanent nodorog = addNodorogReady(player1);
+        Permanent nodorog = addCreatureReady(player1, new GruulNodorog());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -36,7 +35,7 @@ class GruulNodorogTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability grants menace until end of turn")
     void resolvingAbilityGrantsMenace() {
-        Permanent nodorog = addNodorogReady(player1);
+        Permanent nodorog = addCreatureReady(player1, new GruulNodorog());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -49,7 +48,7 @@ class GruulNodorogTest extends BaseCardTest {
     @Test
     @DisplayName("Menace granted by the ability wears off at end of turn")
     void menaceWearsOffAtEndOfTurn() {
-        Permanent nodorog = addNodorogReady(player1);
+        Permanent nodorog = addCreatureReady(player1, new GruulNodorog());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -66,7 +65,18 @@ class GruulNodorogTest extends BaseCardTest {
     @Test
     @DisplayName("The ability requires one red mana")
     void requiresRedMana() {
-        addNodorogReady(player1);
+        addCreatureReady(player1, new GruulNodorog());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be paid with mana of another color")
+    void cannotUseOtherManaColor() {
+        addCreatureReady(player1, new GruulNodorog());
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -76,7 +86,7 @@ class GruulNodorogTest extends BaseCardTest {
     @Test
     @DisplayName("The ability does not tap Gruul Nodorog and can be activated while tapped")
     void doesNotTapAndWorksWhileTapped() {
-        Permanent nodorog = addNodorogReady(player1);
+        Permanent nodorog = addCreatureReady(player1, new GruulNodorog());
         nodorog.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -87,9 +97,9 @@ class GruulNodorogTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability fizzles if Gruul Nodorog leaves before resolution")
-    void abilityFizzlesIfSourceLeaves() {
-        addNodorogReady(player1);
+    @DisplayName("The ability resolves without effect if Gruul Nodorog leaves before resolution")
+    void abilityHasNoEffectIfSourceLeaves() {
+        addCreatureReady(player1, new GruulNodorog());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -98,12 +108,5 @@ class GruulNodorogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-    }
-
-    private Permanent addNodorogReady(Player player) {
-        Permanent perm = new Permanent(new GruulNodorog());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

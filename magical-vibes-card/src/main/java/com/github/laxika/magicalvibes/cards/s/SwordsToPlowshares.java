@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MSC", collectorNumber = "143")
 @CardRegistration(set = "ME4", collectorNumber = "30")
 @CardRegistration(set = "WHO", collectorNumber = "212")
+@CardRegistration(set = "WHO", collectorNumber = "803")
 @CardRegistration(set = "PIP", collectorNumber = "173")
 @CardRegistration(set = "PIP", collectorNumber = "701")
 @CardRegistration(set = "MB2", collectorNumber = "153")
@@ -45,10 +46,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DSC", collectorNumber = "106")
 @CardRegistration(set = "LTC", collectorNumber = "178")
 @CardRegistration(set = "TDC", collectorNumber = "134")
+@CardRegistration(set = "M3C", collectorNumber = "173")
 @CardRegistration(set = "MKC", collectorNumber = "88")
 @CardRegistration(set = "AFC", collectorNumber = "75")
 @CardRegistration(set = "LCC", collectorNumber = "137")
 @CardRegistration(set = "BLC", collectorNumber = "109")
+@CardRegistration(set = "MIC", collectorNumber = "94")
+@CardRegistration(set = "NEC", collectorNumber = "89")
 public class SwordsToPlowshares extends Card {
 
     public SwordsToPlowshares() {

@@ -51,7 +51,8 @@ public class ExileTargetValidators {
             throw new IllegalStateException("Target card must be face up in exile");
         }
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (timeCounters == null || timeCounters <= 0) {
+        if (timeCounters == null || timeCounters <= 0
+                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be suspended");
         }
         if (effect.suspendedCardOwnedOnly()) {
@@ -107,7 +108,8 @@ public class ExileTargetValidators {
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0
+                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be suspended");
         }
     }
@@ -169,6 +171,12 @@ public class ExileTargetValidators {
     public void validateAdjustTimeCountersOnTarget(TargetValidationContext ctx,
                                                    AdjustTimeCountersOnTargetEffect effect) {
         if (ctx.targetZone() != Zone.EXILE) {
+            if (effect.add()) {
+                var target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
+                if (target == null || target.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.TIME) == 0) {
+                    throw new IllegalStateException("Target permanent must have a time counter");
+                }
+            }
             return;
         }
         if (ctx.targetId() == null) {
@@ -176,7 +184,8 @@ public class ExileTargetValidators {
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0
+                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be suspended");
         }
     }

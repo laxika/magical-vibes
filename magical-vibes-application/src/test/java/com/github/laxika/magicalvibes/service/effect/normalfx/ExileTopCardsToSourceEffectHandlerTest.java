@@ -257,19 +257,20 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("Fizzles when the source permanent has left the battlefield")
-    void fizzlesWhenSourceGone() {
+    @DisplayName("Still exiles cards linked to the source after it leaves the battlefield")
+    void resolvesWhenSourceGone() {
         UUID sourceId = UUID.randomUUID();
         Card sourceCard = card("Knowledge Pool");
         gd.playerDecks.get(player1Id).add(card("A"));
 
         var effect = new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER);
         when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
+        stubExileFaceUp();
 
         handler.resolve(gd, entry(sourceCard, effect, null, sourceId), effect);
 
-        assertThat(gd.exiledCards.stream().anyMatch(e -> e.sourcePermanentId() != null)).isFalse();
-        assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).hasSize(1);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
     }
 
     @Test

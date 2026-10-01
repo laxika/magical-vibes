@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "MID", collectorNumber = "266")
 @CardRegistration(set = "DBL", collectorNumber = "266")
 @CardRegistration(set = "WHO", collectorNumber = "298")
+@CardRegistration(set = "WHO", collectorNumber = "510")
+@CardRegistration(set = "WHO", collectorNumber = "889")
+@CardRegistration(set = "WHO", collectorNumber = "1101")
 public class RockfallVale extends Card {
 
     public RockfallVale() {

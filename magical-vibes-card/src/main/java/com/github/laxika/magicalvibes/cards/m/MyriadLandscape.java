@@ -17,14 +17,18 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "421")
 @CardRegistration(set = "CMM", collectorNumber = "660")
 @CardRegistration(set = "WHO", collectorNumber = "290")
+@CardRegistration(set = "WHO", collectorNumber = "881")
 @CardRegistration(set = "PIP", collectorNumber = "274")
 @CardRegistration(set = "PIP", collectorNumber = "802")
 @CardRegistration(set = "C21", collectorNumber = "304")
 @CardRegistration(set = "40K", collectorNumber = "285")
 @CardRegistration(set = "DSC", collectorNumber = "289")
+@CardRegistration(set = "M3C", collectorNumber = "358")
 @CardRegistration(set = "MKC", collectorNumber = "276")
 @CardRegistration(set = "LCC", collectorNumber = "343")
 @CardRegistration(set = "C20", collectorNumber = "292")
+@CardRegistration(set = "MIC", collectorNumber = "177")
+@CardRegistration(set = "C19", collectorNumber = "261")
 public class MyriadLandscape extends Card {
 
     public MyriadLandscape() {

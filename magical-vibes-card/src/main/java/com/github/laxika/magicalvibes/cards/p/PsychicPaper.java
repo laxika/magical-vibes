@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "181")
+@CardRegistration(set = "WHO", collectorNumber = "786")
 public class PsychicPaper extends Card {
 
     public PsychicPaper() {

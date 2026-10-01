@@ -79,8 +79,7 @@ class ThriveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thrive()));
         harness.addMana(player1, ManaColor.GREEN, 1); // X=0: {0}{G}
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(boa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
+import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
+import com.github.laxika.magicalvibes.cards.s.SimicGrowthChamber;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,21 +13,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoilingOracle.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CoilingOracle.class, GhostQuarter.class, SimicInitiate.class, SimicGrowthChamber.class})
 class CoilingOracleTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB puts a revealed land onto the battlefield")
     void landEntersBattlefield() {
         Card oracle = new CoilingOracle();
-        Card land = new Forest();
-        harness.setHand(player1, List.of(oracle));
-        harness.setLibrary(player1, List.of(land, new GrizzlyBears()));
-        addManaForOracle();
+        Card land = new GhostQuarter();
+        harness.setLibrary(player1, List.of(land, new SimicInitiate()));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == oracle)
@@ -39,14 +36,11 @@ class CoilingOracleTest extends BaseCardTest {
     @DisplayName("ETB puts a revealed nonland card into its controller's hand")
     void nonlandEntersHand() {
         Card oracle = new CoilingOracle();
-        Card nonland = new GrizzlyBears();
-        harness.setHand(player1, List.of(oracle));
-        harness.setLibrary(player1, List.of(nonland, new Forest()));
-        addManaForOracle();
+        Card nonland = new SimicInitiate();
+        harness.setLibrary(player1, List.of(nonland, new GhostQuarter()));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonland);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(nonland);
@@ -58,13 +52,10 @@ class CoilingOracleTest extends BaseCardTest {
     @DisplayName("ETB does nothing when its controller's library is empty")
     void emptyLibraryDoesNothing() {
         Card oracle = new CoilingOracle();
-        harness.setHand(player1, List.of(oracle));
         harness.setLibrary(player1, List.of());
-        addManaForOracle();
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == oracle);
@@ -72,8 +63,22 @@ class CoilingOracleTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
-    private void addManaForOracle() {
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+    @Test
+    @DisplayName("ETB resolves for a land put onto the battlefield")
+    void revealedLandEtbResolves() {
+        Card oracle = new CoilingOracle();
+        Card chamber = new SimicGrowthChamber();
+        harness.setLibrary(player1, List.of(chamber));
+
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, findPermanent(player1, chamber.getName()).getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == chamber)
+                .anyMatch(permanent -> permanent.getCard() == oracle);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chamber);
     }
 }

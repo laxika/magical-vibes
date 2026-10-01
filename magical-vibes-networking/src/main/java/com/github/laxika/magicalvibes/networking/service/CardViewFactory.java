@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -445,6 +446,7 @@ public class CardViewFactory {
                         .orElse(null),
                 ability.isRequiresXValue(),
                 ability.isXValueFromControlledCreatureCounters(),
+                ability.getEffects().stream().anyMatch(PayXEnergyCost.class::isInstance),
                 ability.getXValueFromCardsInHandColor(),
                 ability.getEffects().stream()
                         .filter(WaterbendCost.class::isInstance)

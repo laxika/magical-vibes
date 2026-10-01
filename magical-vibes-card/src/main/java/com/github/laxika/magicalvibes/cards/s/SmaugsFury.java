@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "111")
+@CardRegistration(set = "HOC", collectorNumber = "111")
 public class SmaugsFury extends Card {
 
     public SmaugsFury() {

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.b.BreedingPool;
+import com.github.laxika.magicalvibes.cards.o.OcularHalo;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,15 +20,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SimicGuildmage.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({SimicGuildmage.class, AssaultZeppelid.class, OcularHalo.class, BreedingPool.class})
 class SimicGuildmageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Moves a +1/+1 counter between creatures with the same controller")
     void movesPlusOneCounter() {
-        addReadyGuildmage(player1);
-        Permanent source = addCreature(player1);
-        Permanent destination = addCreature(player1);
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player1, new AssaultZeppelid());
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         activateCounterAbility(source, destination);
@@ -37,11 +38,43 @@ class SimicGuildmageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The counter ability moves only a +1/+1 counter")
+    void movesOnlyPlusOnePlusOneCounter() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player1, new AssaultZeppelid());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        source.setCounterCount(CounterType.CHARGE, 2);
+
+        activateCounterAbility(source, destination);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(destination.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter ability requires another creature as its second target")
+    void counterAbilityRejectsSameCreatureForBothTargets() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareAbilityActivation(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("The counter ability rejects creatures controlled by different players")
     void counterAbilityRejectsDifferentControllers() {
-        addReadyGuildmage(player1);
-        Permanent source = addCreature(player1);
-        Permanent opponentCreature = addCreature(player2);
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent opponentCreature = addCreatureReady(player2, new AssaultZeppelid());
         prepareAbilityActivation(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -55,9 +88,9 @@ class SimicGuildmageTest extends BaseCardTest {
     @Test
     @DisplayName("The counter ability does nothing when the controllers differ at resolution")
     void counterAbilityChecksControllersAtResolution() {
-        addReadyGuildmage(player1);
-        Permanent source = addCreature(player1);
-        Permanent destination = addCreature(player1);
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player1, new AssaultZeppelid());
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         prepareAbilityActivation(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -75,11 +108,12 @@ class SimicGuildmageTest extends BaseCardTest {
     @Test
     @DisplayName("Moves a target Aura to a permanent controlled by its host's controller")
     void movesAuraToSameControllerPermanent() {
-        addReadyGuildmage(player1);
-        Permanent host = addCreature(player2);
-        Permanent recipient = addCreature(player2);
-        Permanent secondRecipient = addCreature(player2);
-        Permanent aura = addAura(player1, new Pacifism(), host);
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent host = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent recipient = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent secondRecipient = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent invalidRecipient = harness.addToBattlefieldAndReturn(player2, new BreedingPool());
+        Permanent aura = addAura(player1, new OcularHalo(), host);
 
         prepareAbilityActivation(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -92,7 +126,8 @@ class SimicGuildmageTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIds())
                 .contains(recipient.getId(), secondRecipient.getId())
-                .doesNotContain(host.getId(), gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+                .doesNotContain(host.getId(), invalidRecipient.getId(),
+                        gd.playerBattlefields.get(player1.getId()).getFirst().getId());
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.AttachTargetAuraToAnotherPermanentWithSameController.class);
 
@@ -104,8 +139,8 @@ class SimicGuildmageTest extends BaseCardTest {
     @Test
     @DisplayName("The Aura ability rejects a target that is not an attached Aura")
     void auraAbilityRejectsNonAuraTarget() {
-        addReadyGuildmage(player1);
-        Permanent creature = addCreature(player1);
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
         prepareAbilityActivation(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -115,24 +150,9 @@ class SimicGuildmageTest extends BaseCardTest {
                 .hasMessageContaining("Aura attached to a permanent");
     }
 
-    private Permanent addReadyGuildmage(Player player) {
-        Permanent guildmage = new Permanent(new SimicGuildmage());
-        guildmage.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(guildmage);
-        return guildmage;
-    }
-
-    private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private Permanent addAura(Player player, com.github.laxika.magicalvibes.model.Card auraCard, Permanent host) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player, auraCard);
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 

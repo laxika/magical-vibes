@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -190,6 +192,7 @@ class CastingPermissionServiceTest {
         Card island = new Card();
         island.setType(CardType.LAND);
         island.setSubtypes(List.of(CardSubtype.ISLAND));
+        when(gameQueryService.findGraveyardOwnerById(gd, forest.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesCardPredicate(
                 eq(island), eq(filter), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(false);
 
@@ -209,7 +212,8 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
         when(conditionEvaluationService.isMet(eq(gd), eq(controllerTurn), any())).thenReturn(false);
         assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
@@ -234,6 +238,31 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    void planarControllerGetsFilteredGraveyardSpellPermission() {
+        Card plane = new Card();
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        plane.addEffect(EffectSlot.STATIC, new GrantEscapeToGraveyardCardsEffect(filter));
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1Id;
+        PlanarObject planar = new PlanarObject(plane, gd.nextTimestamp());
+        gd.planechase.faceUp.add(planar);
+
+        Card spell = new Card();
+        spell.setType(CardType.CREATURE);
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null, gd, player1Id))
+                .thenReturn(true);
+
+        var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
+
+        assertThat(permission.sourcePermanentId()).isEqualTo(planar.getId());
+        assertThat(permission.permission().additionalGraveyardExileCount()).isEqualTo(3);
+
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player2Id);
+        assertThat(svc.findFilteredGraveyardPermission(gd, player1Id, spell)).isEmpty();
+    }
+
+    @Test
     @DisplayName("controller-turn graveyard-spell permission does not apply on another player's turn")
     void controllerTurnGraveyardSpellPermission() {
         Card source = new Card();
@@ -243,7 +272,8 @@ class CastingPermissionServiceTest {
 
         Card spell = new Card();
         spell.setType(CardType.INSTANT);
-        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null, gd, player1Id))
+        when(gameQueryService.findGraveyardOwnerById(gd, spell.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), source.getId(), gd, player1Id))
                 .thenReturn(true);
 
         gd.activePlayerId = player2Id;

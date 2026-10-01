@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopTwoPlanarCardsThenPlaneswalkReplacementEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "110")
+@CardRegistration(set = "WHO", collectorNumber = "400")
+@CardRegistration(set = "WHO", collectorNumber = "715")
+@CardRegistration(set = "WHO", collectorNumber = "991")
 public class SusanForeman extends Card {
 
     public SusanForeman() {

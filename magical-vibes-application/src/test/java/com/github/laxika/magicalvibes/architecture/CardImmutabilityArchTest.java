@@ -98,7 +98,26 @@ class CardImmutabilityArchTest {
             "CardChoiceHandlerService", // applies perpetual changes to fresh runtime copies
             "LibraryChoiceHandlerService", // marks a fresh runtime copy for end-step sacrifice before casting
             "ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler", // stamps owner on a fresh runtime copy when missing
+            "HandCastCardCharacteristicsService", // assembles a fresh hand-casting face and adventure copy
+            "BecomeCopyOfExiledCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card
+            "CreateModalDoubleFacedCardFromTopTwoEffectHandler", // combines two fresh runtime copies
+            "DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandler", // decorates a conjured copy
+            "EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // removes legendary from fresh clone-copy cards
+            "SeekLibraryAndConjureDuplicatesInGraveyardEffectHandler", // stamps newly conjured copies
+            "TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler", // stamps a conjured copy
+            "UnspecializeLukaminaEffectHandler", // restores a fresh runtime copy of the base face
+            "WerewhatSupport", // assembles fresh front and back face runtime copies
+            "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
+            "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
+            "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
+            "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
+            "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
+            "ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler", // decorates a fresh conjured duplicate
+            "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
+            "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
+            "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
+            "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {
@@ -108,6 +127,7 @@ class CardImmutabilityArchTest {
                 || simpleName.startsWith("CreateToken")
                 || simpleName.startsWith("CreateLifeTotal")
                 || simpleName.startsWith("Conjure") // assembles new cards or copies
+                || simpleName.startsWith("Specialize") // builds a fresh runtime copy for the chosen face
                 || simpleName.startsWith("Draft") // assembles new spellbook cards
                 || simpleName.startsWith("Perpetually") // replaces live cards with altered runtime copies
                 || javaClass.getPackageName().contains(".cards");
@@ -118,7 +138,11 @@ class CardImmutabilityArchTest {
     void onlyCardAssemblyClassesMutateCards() {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
-                .withImportOption(location -> !location.contains("test-fixtures"))
+                .withImportOption(location -> !location.contains("test-fixtures")
+                        && !location.contains("testFixtures")
+                        && !location.contains("/classes/java/test/"))
+                // Card classes are exempt from this rule; importing their bytecode adds no coverage.
+                .withImportOption(location -> !location.contains("/com/github/laxika/magicalvibes/cards/"))
                 .importPackages("com.github.laxika.magicalvibes");
 
         noClasses()

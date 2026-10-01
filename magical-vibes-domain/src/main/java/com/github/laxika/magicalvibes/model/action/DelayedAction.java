@@ -74,6 +74,7 @@ public sealed interface DelayedAction permits
         DelayedGraveyardToBattlefieldUnderControl,
         DelayedGraveyardCardsToBattlefieldUnderControl,
         DelayedReturnAuraAttachedToPermanent,
+        DelayedReturnCurseAttachedToPlayer,
         DelayedReturnSourceAuraToCreature,
         DelayedCombatDamageEffect,
         DelayedCombatDamageDraw,

@@ -150,6 +150,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurn
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.HasAllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
@@ -283,6 +284,7 @@ public final class LayerClassifier {
         // Layer 3 — text-changing effects (CR 613.2c / CR 612).
         map.put(ChangeColorTextEffect.class, fixed(Layer.L3_TEXT));
         map.put(SetNameEffect.class, fixed(Layer.L3_TEXT));
+        map.put(HasAllCardNamesEffect.class, fixedCharacteristicDefining(Layer.L3_TEXT));
         map.put(SetChosenNameAndCreatureTypeEffect.class, fixed(Layer.L3_TEXT, Layer.L4_TYPE));
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
@@ -548,7 +550,17 @@ public final class LayerClassifier {
         map.put(BoostEnchantedCreatureByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostCreaturesOfChosenPlayerModeEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostCreaturesOfChosenPlayerModeEffect.class,
+                new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT), (effect, fromOwnStaticSlot) -> {
+                    var boost = (BoostCreaturesOfChosenPlayerModeEffect) effect;
+                    boolean grantsKeywords = boost.grantedKeywords() != null
+                            && !boost.grantedKeywords().isEmpty();
+                    return new LayerClassification(
+                            grantsKeywords
+                                    ? Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT)
+                                    : Set.of(Layer.L7C_MODIFY_PT),
+                            false, false);
+                }));
         map.put(BoostCreaturesSharingColorWithTopCardEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
 

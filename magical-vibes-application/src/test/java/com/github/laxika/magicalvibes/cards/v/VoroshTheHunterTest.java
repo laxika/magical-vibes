@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(VoroshTheHunter.class)
+@CardUsed({VoroshTheHunter.class, GossamerPhantasm.class})
 class VoroshTheHunterTest extends BaseCardTest {
 
     @Test
@@ -42,6 +45,22 @@ class VoroshTheHunterTest extends BaseCardTest {
         assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("A blocked Vorosh does not trigger its combat-damage ability")
+    void blockedVoroshDoesNotTrigger() {
+        Permanent vorosh = addAttackingVorosh();
+        Permanent blocker = addCreatureReady(player2, new GossamerPhantasm());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(vorosh))));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(vorosh.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addAttackingVorosh() {
         Permanent vorosh = addCreatureReady(player1, new VoroshTheHunter());
         vorosh.setAttacking(true);
@@ -49,10 +68,7 @@ class VoroshTheHunterTest extends BaseCardTest {
     }
 
     private void resolveCombatToMayPrompt() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
     }
 }

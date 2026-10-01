@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "CMD", collectorNumber = "1")
 @CardRegistration(set = "C14", collectorNumber = "62")
 @CardRegistration(set = "NCC", collectorNumber = "191")
+@CardRegistration(set = "M3C", collectorNumber = "153")
 public class ArtisanOfKozilek extends Card {
 
     public ArtisanOfKozilek() {

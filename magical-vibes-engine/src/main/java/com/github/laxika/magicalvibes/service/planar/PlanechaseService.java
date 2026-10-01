@@ -155,7 +155,8 @@ public class PlanechaseService {
         state.rollSequence++;
         logs.append(game, GameLogEntry.text(game.playerIdToName.get(playerId)
                 + " rolls the planar die: " + state.lastRoll.name().toLowerCase(Locale.ROOT) + "."));
-        triggers.checkControllerRollsPlanarDieTriggers(game, playerId);
+        triggers.checkControllerRollsPlanarDieTriggers(game, playerId,
+                state.lastRoll == PlanarDieResult.BLANK ? 0 : 1);
         switch (state.lastRoll) {
             case BLANK -> {
                 if (state.faceUp.stream().anyMatch(object -> state.blankRollChaosSources.contains(object.getId()))) {
@@ -163,8 +164,22 @@ public class PlanechaseService {
                 }
             }
             case CHAOS -> chaos(game);
-            case PLANESWALKER -> game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
+            case PLANESWALKER -> {
+                if (planarDiePlaneswalkIsReplaced(game)) {
+                    chaos(game);
+                } else {
+                    game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
+                }
+            }
+        }
+    }
+
+    private boolean planarDiePlaneswalkIsReplaced(GameData game) {
+        synchronized (game.floatingEffects) {
+            return game.floatingEffects.stream()
+                    .filter(effect -> effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN)
+                    .anyMatch(effect -> effect.effect() instanceof PlanarDiePlaneswalkToChaosReplacementEffect);
         }
     }
 
@@ -364,7 +379,12 @@ public class PlanechaseService {
             if (effect.targetSpec().targetPredicate() != null) {
                 boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                TargetFilter targetFilter = playerTargetOnly ? null : card.getTargetFilter();
+                int targetGroupIndex = card.getEffectTargetIndex(effect);
+                TargetFilter targetFilter = targetGroupIndex >= 0
+                        ? card.getSpellTargets().get(targetGroupIndex).getFilter()
+                        : card.getSpellTargets().stream()
+                                .noneMatch(target -> card.bindsEffectToTargetGroup(target.getIndex()))
+                                ? card.getTargetFilter() : null;
                 game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         card, controller, List.of(effect), playerTargetOnly, targetFilter,
                         0, null, null, false, null, null, controller, object.copy()));
@@ -383,6 +403,12 @@ public class PlanechaseService {
         }
         int targetGroupIndex = card.getEffectTargetIndex(effect);
         if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
+            return false;
+        }
+        // A bare positional group directly before this effect's bound group belongs to the
+        // same ability (for example, the dealing creature before its victim). Earlier groups
+        // completed by another bound effect belong to a different ability on the plane.
+        if (targetGroupIndex > 0 && !card.bindsEffectToTargetGroup(targetGroupIndex - 1)) {
             return false;
         }
         SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);

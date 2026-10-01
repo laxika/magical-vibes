@@ -605,7 +605,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
 | `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
-| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
+| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - | Defaults to permanents entering under the controller's control; pass `CountScope.ANY_PLAYER` for an unqualified "a permanent entered" condition |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new ControllerMainPhase(), wrapped)` | - | yes | - | source/controller is the active player during precombat or postcombat main |
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |

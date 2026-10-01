@@ -34,6 +34,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum ControlDuration {
     PERMANENT,
     END_OF_TURN,
+    END_OF_COMBAT,
     UNTIL_END_OF_YOUR_NEXT_TURN,
     WHILE_SOURCE_ON_BATTLEFIELD,
     WHILE_SOURCE_REMAINS,
@@ -56,6 +57,7 @@ public enum ControlDuration {
         return switch (this) {
             case PERMANENT -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
             case UNTIL_END_OF_YOUR_NEXT_TURN -> EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
             case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;

@@ -30,6 +30,7 @@ import java.util.List;
  */
 @CardRegistration(set = "DOM", collectorNumber = "90")
 @CardRegistration(set = "DSC", collectorNumber = "139")
+@CardRegistration(set = "C19", collectorNumber = "131")
 public class TheEldestReborn extends Card {
 
     public TheEldestReborn() {

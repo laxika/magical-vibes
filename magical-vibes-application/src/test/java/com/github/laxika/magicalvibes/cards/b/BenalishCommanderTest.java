@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DustElemental;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishCommander.class})
+@CardUsed({BenalishCommander.class, DustElemental.class})
 class BenalishCommanderTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,15 @@ class BenalishCommanderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BenalishCommander());
         assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(2);
+    }
+
+    @Test
+    void powerAndToughnessIgnoreNonSoldiersYouControl() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new BenalishCommander());
+        harness.addToBattlefield(player1, new DustElemental());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +65,7 @@ class BenalishCommanderTest extends BaseCardTest {
         BenalishCommander card = suspendCard(2);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
         assertThat(soldierTokenCount()).isEqualTo(1);

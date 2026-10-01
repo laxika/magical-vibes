@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "58")
+@CardRegistration(set = "WHO", collectorNumber = "663")
 public class TimeBeetle extends Card {
 
     public TimeBeetle() {

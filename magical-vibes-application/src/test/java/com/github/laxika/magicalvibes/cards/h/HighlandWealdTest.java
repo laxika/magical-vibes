@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(HighlandWeald.class)
 class HighlandWealdTest extends BaseCardTest {
 
     @Test
@@ -27,26 +27,30 @@ class HighlandWealdTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Highland Weald adds the chosen red or green mana")
-    void addsChosenMana() {
-        for (String color : new String[]{"RED", "GREEN"}) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    @DisplayName("Highland Weald adds one red mana when red is chosen")
+    void addsRedMana() {
+        addsChosenMana(ManaColor.RED, ManaColor.GREEN);
+    }
 
-            Permanent weald = new Permanent(new HighlandWeald());
-            weald.setSummoningSick(false);
-            GameData gameData = harness.getGameData();
-            gameData.playerBattlefields.get(player1.getId()).add(weald);
+    @Test
+    @DisplayName("Highland Weald adds one green mana when green is chosen")
+    void addsGreenMana() {
+        addsChosenMana(ManaColor.GREEN, ManaColor.RED);
+    }
 
-            harness.activateAbility(player1, 0, 0, null, null);
+    private void addsChosenMana(ManaColor chosenColor, ManaColor otherColor) {
+        Permanent weald = harness.addToBattlefieldAndReturn(player1, new HighlandWeald());
+        weald.setSummoningSick(false);
 
-            PendingInteraction.ColorChoice choice = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-            assertThat(choice).isNotNull();
-            harness.handleListChoice(player1, color);
+        harness.activateAbility(player1, 0, 0, null, null);
 
-            assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.valueOf(color))).isEqualTo(1);
-            assertThat(weald.isTapped()).isTrue();
-        }
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("RED", "GREEN");
+        harness.handleListChoice(player1, chosenColor.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(chosenColor)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(otherColor)).isZero();
+        assertThat(weald.isTapped()).isTrue();
     }
 }

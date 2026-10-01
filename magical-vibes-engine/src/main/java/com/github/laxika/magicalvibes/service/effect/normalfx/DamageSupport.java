@@ -285,7 +285,7 @@ public class DamageSupport {
         if (!cantBeRedirected) {
             if (targetControllerId != null && sourcePermId != null) {
                 rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, entry);
             }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             UUID chosenSourceId = damageSourceKey(entry, damageSource);
@@ -296,22 +296,22 @@ public class DamageSupport {
                 // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
                 rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
                         gameData, chosenSourceId, target.getId(), rawDamage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, entry);
                 if (rawDamage <= 0) return 0;
             }
             // Saving Grace: redirect all damage this turn to a permanent you control onto the enchanted creature.
             if (targetControllerId != null) {
                 rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), rawDamage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, entry);
             }
             // Palisade Giant: damage to other permanents its controller controls is dealt to it instead.
             if (targetControllerId != null) {
                 rawDamage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), rawDamage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, entry);
             }
             rawDamage = damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
                     gameData, targetControllerId, target, sourcePermId, rawDamage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, entry);
             if (!gameData.resolvingDeclinedAllCreatureDamageRedirect
                     && rawDamage > 0 && !gameData.playersRedirectingAllCreatureDamage.isEmpty()) {
                 UUID redirectControllerId = gameData.playersRedirectingAllCreatureDamage.stream()
@@ -332,15 +332,15 @@ public class DamageSupport {
             if (!gameData.resolvingDeclinedAllCreatureDamageRedirect) {
                 rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
                         gameData, target, sourcePermId, rawDamage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, entry);
             }
             rawDamage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
                     gameData, target, sourcePermId, rawDamage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, entry);
             if (rawDamage <= 0) return 0;
             rawDamage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
                     gameData, target.getId(), sourcePermId, rawDamage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, entry);
             if (rawDamage <= 0) return 0;
             // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
             // a chosen source to the protected creature onto another permanent.
@@ -348,7 +348,7 @@ public class DamageSupport {
                     : entry.getEffectiveDamageSourceCard() == null ? null : entry.getEffectiveDamageSourceCard().getId();
             rawDamage = damagePreventionService.applyCreatureRedirectShields(
                     gameData, target.getId(), redirectSourceId, rawDamage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, entry);
         }
         if (applyDralnuReplacement(gameData, target, rawDamage) > 0) {
             return 0;
@@ -777,7 +777,7 @@ public class DamageSupport {
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn()) {
             damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
                     gameData, target, entry.getSourcePermanentId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, entry);
         }
         if (damage <= 0) return;
 
@@ -892,6 +892,9 @@ public class DamageSupport {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
+            if (amount > 0 && entry != null && entry.isExilesCreaturesDamaged()) {
+                target.setExileInsteadOfDieThisTurn(true);
+            }
         }
     }
 
@@ -1091,7 +1094,7 @@ public class DamageSupport {
                     UUID sourcePermanentId = entry.getSourcePermanentId();
                     rawDamage = damagePreventionService.applyCreatureRedirectShields(
                             gameData, targetPermanent.getId(), sourcePermanentId, rawDamage);
-                    processSourceRedirectDamage(gameData);
+                    processSourceRedirectDamage(gameData, entry);
                     if (rawDamage <= 0) {
                         return 0;
                     }
@@ -1521,10 +1524,10 @@ public class DamageSupport {
         }
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, damageSourceId, rawDamage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         rawDamage = damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                 gameData, playerId, damageSourceId, rawDamage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(
                 gameData, damageSourceId, rawDamage);
@@ -1532,18 +1535,18 @@ public class DamageSupport {
         // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
         rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
                 gameData, damageSourceId, null, rawDamage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(
                 gameData, playerId, null, damageSourceId, rawDamage, false);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         rawDamage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
                 gameData, playerId, damageSourceId, rawDamage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         // Martyrdom: redirect the next N damage to the player onto the creature carrying the ability.
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(
                 gameData, playerId, entry == null ? null : entry.getSourcePermanentId(), rawDamage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, entry);
         if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
@@ -1974,6 +1977,10 @@ public class DamageSupport {
      * The prevented damage is dealt to the redirect target, which can be a player or permanent.
      */
     public void processSourceRedirectDamage(GameData gameData) {
+        processSourceRedirectDamage(gameData, null);
+    }
+
+    private void processSourceRedirectDamage(GameData gameData, StackEntry entry) {
         if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
 
         List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
@@ -2024,6 +2031,10 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
+                    if (entry != null && entry.isExilesCreaturesDamaged()
+                            && gameQueryService.isCreature(gameData, targetPerm)) {
+                        targetPerm.setExileInsteadOfDieThisTurn(true);
+                    }
                     gameData.recordDamageDealtBySource(redirect.damageSourceId(), effectiveDamage);
                     damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle

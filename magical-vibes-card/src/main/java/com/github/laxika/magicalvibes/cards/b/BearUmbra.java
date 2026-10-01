@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "177")
 @CardRegistration(set = "SLD", collectorNumber = "1723")
+@CardRegistration(set = "NEC", collectorNumber = "113")
 public class BearUmbra extends Card {
 
     public BearUmbra() {

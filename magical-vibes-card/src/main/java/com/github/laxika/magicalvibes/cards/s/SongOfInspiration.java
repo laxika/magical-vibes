@@ -17,7 +17,8 @@ public class SongOfInspiration extends Card {
 
     public SongOfInspiration() {
         ReturnTargetCardsFromGraveyardToHandEffect returnCards =
-                new ReturnTargetCardsFromGraveyardToHandEffect(new CardIsPermanentPredicate(), 2);
+                new ReturnTargetCardsFromGraveyardToHandEffect(new CardIsPermanentPredicate(), 2)
+                        .withDeclaredGraveyardTarget();
 
         target(new GraveyardCardPredicateTargetFilter(
                 new CardIsPermanentPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 2)

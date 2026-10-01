@@ -22,17 +22,23 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "146")
 @CardRegistration(set = "TMC", collectorNumber = "61")
 @CardRegistration(set = "WHO", collectorNumber = "262")
+@CardRegistration(set = "WHO", collectorNumber = "485")
+@CardRegistration(set = "WHO", collectorNumber = "853")
+@CardRegistration(set = "WHO", collectorNumber = "1076")
 @CardRegistration(set = "PIP", collectorNumber = "257")
 @CardRegistration(set = "PIP", collectorNumber = "490")
 @CardRegistration(set = "PIP", collectorNumber = "785")
 @CardRegistration(set = "PIP", collectorNumber = "1018")
 @CardRegistration(set = "40K", collectorNumber = "269")
 @CardRegistration(set = "TDC", collectorNumber = "350")
+@CardRegistration(set = "M3C", collectorNumber = "329")
 @CardRegistration(set = "MKC", collectorNumber = "255")
 @CardRegistration(set = "AFC", collectorNumber = "229")
 @CardRegistration(set = "LCC", collectorNumber = "323")
 @CardRegistration(set = "C20", collectorNumber = "263")
 @CardRegistration(set = "BLC", collectorNumber = "299")
+@CardRegistration(set = "C19", collectorNumber = "236")
+@CardRegistration(set = "NEC", collectorNumber = "166")
 public class CinderGlade extends Card {
 
     public CinderGlade() {

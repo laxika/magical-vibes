@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "246")
+@CardRegistration(set = "C19", collectorNumber = "223")
 public class SoulFoundry extends Card {
 
     public SoulFoundry() {

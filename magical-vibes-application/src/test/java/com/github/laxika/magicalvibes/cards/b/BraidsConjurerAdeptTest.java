@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DawnCharm;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BraidsConjurerAdept.class, FountainOfYouth.class, Forest.class, GrizzlyBears.class, Opt.class})
+@CardUsed({BraidsConjurerAdept.class, DawnCharm.class, FountainOfYouth.class,
+        GossamerPhantasm.class, UrborgTombOfYawgmoth.class})
 class BraidsConjurerAdeptTest extends BaseCardTest {
 
     @Test
@@ -23,9 +24,9 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
     void activePlayerMayPutEligibleCardFromHandOntoBattlefield() {
         harness.addToBattlefield(player1, new BraidsConjurerAdept());
         Card artifact = new FountainOfYouth();
-        Card creature = new GrizzlyBears();
-        Card land = new Forest();
-        Card instant = new Opt();
+        Card creature = new GossamerPhantasm();
+        Card land = new UrborgTombOfYawgmoth();
+        Card instant = new DawnCharm();
         harness.setHand(player2, List.of(artifact, creature, land, instant));
 
         advanceToUpkeep(player2);
@@ -49,7 +50,7 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
     @DisplayName("Declining the upkeep choice leaves the active player's hand unchanged")
     void decliningLeavesHandUnchanged() {
         harness.addToBattlefield(player1, new BraidsConjurerAdept());
-        Card creature = new GrizzlyBears();
+        Card creature = new GossamerPhantasm();
         harness.setHand(player2, List.of(creature));
 
         advanceToUpkeep(player2);

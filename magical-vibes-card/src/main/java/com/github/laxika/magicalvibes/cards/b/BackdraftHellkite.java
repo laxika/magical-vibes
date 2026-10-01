@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCard
 import java.util.Set;
 
 @CardRegistration(set = "2X2", collectorNumber = "103")
+@CardRegistration(set = "C19", collectorNumber = "23")
 public class BackdraftHellkite extends Card {
 
     public BackdraftHellkite() {

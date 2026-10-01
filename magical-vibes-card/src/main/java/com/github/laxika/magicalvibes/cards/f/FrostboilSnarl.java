@@ -12,10 +12,14 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "265")
 @CardRegistration(set = "WHO", collectorNumber = "282")
+@CardRegistration(set = "WHO", collectorNumber = "498")
+@CardRegistration(set = "WHO", collectorNumber = "873")
+@CardRegistration(set = "WHO", collectorNumber = "1089")
 @CardRegistration(set = "LTC", collectorNumber = "312")
 @CardRegistration(set = "SOC", collectorNumber = "374")
 @CardRegistration(set = "MSC", collectorNumber = "246")
 @CardRegistration(set = "MSC", collectorNumber = "475")
+@CardRegistration(set = "M3C", collectorNumber = "344")
 @CardRegistration(set = "OTC", collectorNumber = "298")
 @CardRegistration(set = "LCC", collectorNumber = "332")
 public class FrostboilSnarl extends Card {

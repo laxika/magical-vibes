@@ -17,6 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "162")
+@CardRegistration(set = "WHO", collectorNumber = "447")
+@CardRegistration(set = "WHO", collectorNumber = "554")
+@CardRegistration(set = "WHO", collectorNumber = "767")
+@CardRegistration(set = "WHO", collectorNumber = "1038")
+@CardRegistration(set = "WHO", collectorNumber = "1145")
 public class TheThirdDoctor extends Card {
 
     public TheThirdDoctor() {

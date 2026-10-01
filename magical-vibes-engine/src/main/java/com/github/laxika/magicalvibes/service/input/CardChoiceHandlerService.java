@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -223,6 +224,38 @@ public class CardChoiceHandlerService {
         copy.setKeywords(Set.copyOf(keywords));
         copy.freeze();
         hand.set(cardIndex, copy);
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** Records a perpetual activated ability on a chosen card in the controller's hand. */
+    public void handlePerpetualActivatedAbilityCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualActivatedAbilityCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualActivatedAbilityCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card selectedCard = hand.get(cardIndex);
+        ActivatedAbility ability = choice.ability();
+        gameData.interaction.clearAwaitingInput();
+        gameData.perpetualActivatedAbilities.compute(selectedCard.getId(), (ignored, existing) -> {
+            List<ActivatedAbility> updated = new ArrayList<>(existing == null ? List.of() : existing);
+            if (!updated.contains(ability)) {
+                updated.add(ability);
+            }
+            return List.copyOf(updated);
+        });
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains " + ability.getDescription() + "."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -1818,7 +1851,7 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (choice.grantHaste()) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {

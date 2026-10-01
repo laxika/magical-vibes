@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "139")
+@CardRegistration(set = "WHO", collectorNumber = "422")
+@CardRegistration(set = "WHO", collectorNumber = "744")
+@CardRegistration(set = "WHO", collectorNumber = "1013")
 public class KateStewart extends Card {
 
     public KateStewart() {

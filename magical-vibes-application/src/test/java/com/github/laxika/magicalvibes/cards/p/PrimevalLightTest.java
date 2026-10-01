@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.e.EarthSurge;
+import com.github.laxika.magicalvibes.cards.g.Gristleback;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheMeek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,51 +14,53 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrimevalLight.class, AngelicChorus.class, GrizzlyBears.class, RuleOfLaw.class})
+@CardUsed({PrimevalLight.class, EarthSurge.class, LeylineOfTheMeek.class, Gristleback.class})
 class PrimevalLightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys only enchantments controlled by the target player")
     void destroysOnlyTargetPlayersEnchantments() {
-        harness.addToBattlefield(player1, new AngelicChorus());
-        harness.addToBattlefield(player2, new RuleOfLaw());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new EarthSurge());
+        harness.addToBattlefield(player2, new EarthSurge());
+        harness.addToBattlefield(player2, new LeylineOfTheMeek());
+        harness.addToBattlefield(player2, new Gristleback());
 
         harness.setHand(player1, List.of(new PrimevalLight()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        harness.assertOnBattlefield(player1, "Angelic Chorus");
-        harness.assertNotOnBattlefield(player2, "Rule of Law");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Earth Surge");
+        harness.assertNotOnBattlefield(player2, "Earth Surge");
+        harness.assertNotOnBattlefield(player2, "Leyline of the Meek");
+        harness.assertOnBattlefield(player2, "Gristleback");
     }
 
     @Test
     @DisplayName("Can target the caster")
     void canTargetCaster() {
-        harness.addToBattlefield(player1, new AngelicChorus());
-        harness.addToBattlefield(player2, new RuleOfLaw());
+        harness.addToBattlefield(player1, new EarthSurge());
+        harness.addToBattlefield(player1, new LeylineOfTheMeek());
+        harness.addToBattlefield(player2, new EarthSurge());
 
         harness.setHand(player1, List.of(new PrimevalLight()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
-        harness.assertOnBattlefield(player2, "Rule of Law");
+        harness.assertNotOnBattlefield(player1, "Earth Surge");
+        harness.assertNotOnBattlefield(player1, "Leyline of the Meek");
+        harness.assertOnBattlefield(player2, "Earth Surge");
     }
 
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Gristleback());
         harness.setHand(player1, List.of(new PrimevalLight()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        var permanentId = findPermanent(player2, "Grizzly Bears").getId();
+        var permanentId = findPermanent(player2, "Gristleback").getId();
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanentId))
                 .isInstanceOf(IllegalStateException.class);
     }

@@ -11,11 +11,13 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "691")
 @CardRegistration(set = "TSR", collectorNumber = "395")
+@CardRegistration(set = "M3C", collectorNumber = "295")
 @CardRegistration(set = "MOC", collectorNumber = "359")
 @CardRegistration(set = "C21", collectorNumber = "244")
 @CardRegistration(set = "40K", collectorNumber = "240")
 @CardRegistration(set = "DMC", collectorNumber = "184")
 @CardRegistration(set = "BLC", collectorNumber = "275")
+@CardRegistration(set = "C19", collectorNumber = "214")
 public class HedronArchive extends Card {
 
     public HedronArchive() {

@@ -40,6 +40,8 @@ class SuperComboTest extends BaseCardTest {
         castSuperCombo(source, target, List.of("{2}", "{2}"));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Hill Giant");

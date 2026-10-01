@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
  */
 @CardRegistration(set = "HOU", collectorNumber = "156")
 @CardRegistration(set = "AKR", collectorNumber = "255")
+@CardRegistration(set = "C19", collectorNumber = "199")
 public class RefuseCooperate extends Card {
 
     public RefuseCooperate() {

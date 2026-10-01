@@ -32,6 +32,20 @@ class WhispersOfTheMuseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Buyback remains optional when its cost can be paid")
+    void buybackIsOptional() {
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
+        harness.setHand(player1, List.of(new WhispersOfTheMuse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(handNames(player1)).containsExactly("Horned Turtle");
+        assertThat(graveyardNames(player1)).containsExactly("Whispers of the Muse");
+    }
+
+    @Test
     @DisplayName("Paying buyback draws a card and returns the spell to hand")
     void buybackReturnsToHand() {
         harness.setLibrary(player1, List.of(new HornedTurtle()));

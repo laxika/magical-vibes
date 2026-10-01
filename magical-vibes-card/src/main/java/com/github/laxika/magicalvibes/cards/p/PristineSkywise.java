@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "228")
+@CardRegistration(set = "C19", collectorNumber = "196")
 public class PristineSkywise extends Card {
 
     public PristineSkywise() {

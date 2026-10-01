@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarAugur;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SproutSwarm.class, GrizzlyBears.class})
+@CardUsed({SproutSwarm.class, LlanowarAugur.class})
 class SproutSwarmTest extends BaseCardTest {
 
     @Test
@@ -24,8 +25,7 @@ class SproutSwarmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(findPermanents(player1, "Saproling")).singleElement().satisfies(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
@@ -53,11 +53,41 @@ class SproutSwarmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without buyback, Sprout Swarm goes to the graveyard after resolving")
+    void withoutBuybackGoesToGraveyard() {
+        SproutSwarm spell = new SproutSwarm();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Buyback requires all three additional mana")
+    void buybackRequiresThreeAdditionalMana() {
+        SproutSwarm spell = new SproutSwarm();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Convoke taps a creature to help cast Sprout Swarm")
     void convokeTapsCreature() {
-        Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent convokeCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarAugur());
         harness.setHand(player1, List.of(new SproutSwarm()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convokeCreature.getId()));
 

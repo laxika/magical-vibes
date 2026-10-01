@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "223")
 @CardRegistration(set = "WHO", collectorNumber = "238")
+@CardRegistration(set = "WHO", collectorNumber = "478")
+@CardRegistration(set = "WHO", collectorNumber = "829")
+@CardRegistration(set = "WHO", collectorNumber = "1069")
 @CardRegistration(set = "MOC", collectorNumber = "340")
 @CardRegistration(set = "DSC", collectorNumber = "237")
 @CardRegistration(set = "TDC", collectorNumber = "308")

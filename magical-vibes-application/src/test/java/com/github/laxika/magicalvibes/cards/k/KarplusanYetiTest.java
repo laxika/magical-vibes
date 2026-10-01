@@ -136,8 +136,8 @@ class KarplusanYetiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Source leaving before resolution prevents both creatures from fighting")
-    void sourceLeavingBeforeResolutionPreventsFight() {
+    @DisplayName("Source leaving before resolution still deals lethal damage to a small target")
+    void sourceLeavingBeforeResolutionStillDamagesSmallTarget() {
         Permanent yeti = addCreatureReady(player1, new KarplusanYeti());
         Permanent target = addCreatureReady(player2, new KarplusanGiant());
 
@@ -146,7 +146,6 @@ class KarplusanYetiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.getMarkedDamage()).isZero();
+                .noneMatch(p -> p.getId().equals(target.getId()));
     }
 }

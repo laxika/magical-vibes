@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -140,6 +141,7 @@ public class DrawService {
     private final EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler;
     private final DamageSupport damageSupport;
     private final PermanentControlSupport permanentControlSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
@@ -164,7 +166,8 @@ public class DrawService {
                        @Lazy PermanentControlSupport permanentControlSupport,
                        GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport,
-                       ExileBottomRandomSupport exileBottomRandomSupport) {
+                       ExileBottomRandomSupport exileBottomRandomSupport,
+                       @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -182,6 +185,7 @@ public class DrawService {
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
         this.exileBottomRandomSupport = exileBottomRandomSupport;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -1950,6 +1954,8 @@ public class DrawService {
 
     private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
         gameData.addCardToHand(playerId, drawn);
+        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                gameData, playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
         gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);
@@ -2250,6 +2256,7 @@ public class DrawService {
 
     private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
                                                          EffectSlot slot) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
         if (graveyard == null) return;
 
@@ -2274,6 +2281,7 @@ public class DrawService {
     }
 
     private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         if (cardsDrawnThisTurn != 2) return;
 

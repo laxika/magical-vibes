@@ -40,6 +40,9 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
         var e = (ExileTriggeringCreatureAndTrackWithSourceEffect) effect;
         UUID dyingCardId = e.dyingCardId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null && entry.getSourcePlanarObject() != null && entry.getCard() != null) {
+            sourcePermanentId = entry.getCard().getId();
+        }
         if (dyingCardId == null || sourcePermanentId == null) {
             return;
         }

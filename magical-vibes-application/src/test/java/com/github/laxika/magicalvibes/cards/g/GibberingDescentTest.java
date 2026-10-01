@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
-import com.github.laxika.magicalvibes.cards.r.RavensCrime;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AugurOfSkulls;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,15 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GibberingDescent.class, GrizzlyBears.class, AngelOfMercy.class, RavensCrime.class})
+@CardUsed({GibberingDescent.class, AugurOfSkulls.class, BlindPhantasm.class})
 class GibberingDescentTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each player's upkeep makes that player lose 1 life and discard a card")
     void eachPlayersUpkeepCausesLifeLossAndDiscard() {
         harness.addToBattlefield(player1, new GibberingDescent());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new AngelOfMercy()));
+        harness.setHand(player1, List.of(new BlindPhantasm()));
+        harness.setHand(player2, List.of(new BlindPhantasm()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -31,7 +30,7 @@ class GibberingDescentTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Blind Phantasm");
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -39,7 +38,7 @@ class GibberingDescentTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Angel of Mercy");
+        harness.assertInGraveyard(player2, "Blind Phantasm");
     }
 
     @Test
@@ -67,16 +66,7 @@ class GibberingDescentTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding Gibbering Descent offers its madness cost")
     void discardOffersMadnessCast() {
-        GibberingDescent descent = new GibberingDescent();
-        harness.setHand(player1, List.of(descent));
-        harness.setHand(player2, List.of(new RavensCrime()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        GibberingDescent descent = discardViaAugurOfSkulls();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(descent.getId()));
@@ -86,5 +76,48 @@ class GibberingDescentTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Declining the madness cast puts Gibbering Descent into its owner's graveyard")
+    void decliningMadnessCastPutsCardIntoGraveyard() {
+        GibberingDescent descent = discardViaAugurOfSkulls();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(descent.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(descent.getId()));
+    }
+
+    @Test
+    @DisplayName("Accepting madness casts Gibbering Descent for {2}{B}{B}")
+    void acceptingMadnessCastPaysTheMadnessCost() {
+        GibberingDescent descent = discardViaAugurOfSkulls();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(descent.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    private GibberingDescent discardViaAugurOfSkulls() {
+        GibberingDescent descent = new GibberingDescent();
+        harness.addToBattlefield(player2, new AugurOfSkulls());
+        harness.setHand(player1, List.of(descent, new BlindPhantasm()));
+
+        advanceToUpkeep(player2);
+        harness.activateAbility(player2, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        return descent;
     }
 }

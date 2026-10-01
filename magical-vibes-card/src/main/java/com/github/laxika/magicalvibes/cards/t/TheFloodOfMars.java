@@ -23,6 +23,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "45")
 @CardRegistration(set = "WHO", collectorNumber = "360")
+@CardRegistration(set = "WHO", collectorNumber = "650")
+@CardRegistration(set = "WHO", collectorNumber = "951")
 public class TheFloodOfMars extends Card {
 
     public TheFloodOfMars() {

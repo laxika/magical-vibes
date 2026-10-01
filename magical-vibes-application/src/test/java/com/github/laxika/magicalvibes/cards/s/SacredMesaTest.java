@@ -107,6 +107,18 @@ class SacredMesaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacred Mesa triggers only during its controller's upkeep")
+    void triggersOnlyDuringControllersUpkeep() {
+        harness.addToBattlefield(player1, new SacredMesa());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sacred Mesa");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("A Pegasus token created by Sacred Mesa can pay its own upkeep cost")
     void pegasusTokenPaysUpkeepCost() {
         harness.addToBattlefield(player1, new SacredMesa());

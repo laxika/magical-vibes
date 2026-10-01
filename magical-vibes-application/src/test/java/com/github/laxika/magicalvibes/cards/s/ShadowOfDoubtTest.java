@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,7 @@ class ShadowOfDoubtTest extends BaseCardTest {
     void restrictionExpiresAtEndOfTurn() {
         gd.playersCantSearchLibrariesThisTurn = true;
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersCantSearchLibrariesThisTurn).isFalse();
     }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "100")
+@CardRegistration(set = "WHO", collectorNumber = "705")
 public class DisplacedDinosaurs extends Card {
 
     public DisplacedDinosaurs() {

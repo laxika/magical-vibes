@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "134")
+@CardRegistration(set = "WHO", collectorNumber = "739")
 public class HeavenSent extends Card {
 
     public HeavenSent() {

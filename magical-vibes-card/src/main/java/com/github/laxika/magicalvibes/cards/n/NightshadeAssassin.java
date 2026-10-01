@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "121")
 @CardRegistration(set = "TSR", collectorNumber = "128")
+@CardRegistration(set = "C19", collectorNumber = "123")
 public class NightshadeAssassin extends Card {
 
     public NightshadeAssassin() {

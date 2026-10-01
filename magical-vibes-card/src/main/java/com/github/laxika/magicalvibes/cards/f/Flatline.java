@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "43")
 @CardRegistration(set = "WHO", collectorNumber = "358")
+@CardRegistration(set = "WHO", collectorNumber = "648")
+@CardRegistration(set = "WHO", collectorNumber = "949")
 public class Flatline extends Card {
 
     public Flatline() {

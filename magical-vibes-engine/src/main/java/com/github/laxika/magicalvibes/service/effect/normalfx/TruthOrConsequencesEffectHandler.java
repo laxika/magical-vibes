@@ -105,7 +105,7 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
         if (consequencesVotes > 0) {
             results.add(new DealDamageToRandomOpponentEffect(3 * consequencesVotes));
         }
-        pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);
+        pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex + 1, results);
         state.reset();
     }
 

@@ -34,7 +34,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 Permanent zombie2 = new Permanent(zombie2Card);
                 gd.playerBattlefields.get(player1Id).addAll(List.of(zombie1, zombie2));
 
-                when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -68,7 +68,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 Permanent zombie = new Permanent(zombieCard);
                 gd.playerBattlefields.get(player1Id).add(zombie);
 
-                when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(false);
+                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 

@@ -7,14 +7,15 @@
     SetList, and writes one static HTML file. The file is rewritten from scratch on every run, so
     deleting it and re-running restores it completely.
 
-    Set totals start from MTGJSON's baseSetSize rather than Scryfall's card_count: Scryfall counts
-    every printing including foil variants, which triples the denominator for sets like 9ED (710
-    vs 350 real cards). When MTGJSON set card data is available, that size is refined to English
-    playable printings (digits with an optional a-d art letter), which drops foreign-language
-    alt-arts that Portal folds into baseSetSize and skips demo-game lettered alternatives that
-    duplicate a digit-only sibling. Where the project registers printings beyond the base set
-    (XLN, DOM ship planeswalker-deck and buy-a-box cards above the base numbering) the
-    denominator widens to the implemented count so completion caps at 100% instead of exceeding it.
+    Set progress counts distinct English collector numbers in MTGJSON set card data, including
+    alternate-art and foil printings. It accepts digits with an optional a-d art letter, so
+    serialized suffixes such as WHO's 552z are excluded. When card data is unavailable, the
+    denominator falls back to MTGJSON's totalSetSize (or baseSetSize if necessary). The
+    denominator also includes any registered printings absent from the card data so completion
+    cannot exceed 100%.
+
+    The Missing column counts eligible cards in the set whose name has no implemented printing
+    anywhere yet — entirely new cards, not unimplemented reprints of cards the engine already has.
 
     Everything the page needs is inlined except web fonts and the Keyrune set-symbol font, which
     load from CDNs.
@@ -75,20 +76,24 @@ if (-not $CachePath) {
 }
 
 $setCacheDir = Join-Path $PSScriptRoot ".cache/sets"
+$uniqueCardCountCachePath = Join-Path $PSScriptRoot ".cache/UniqueCardCount.json"
 $userAgent = "magical-vibes-set-progress/1.0"
 
 # Same lettered art range the card browser keeps (Homelands 10a/10b, Fallen Empires a-d).
 $script:BaseCollectorNumberPattern = [regex]'^\d+[a-d]?$'
 $script:LetteredCollectorNumberPattern = [regex]'^(\d+)[a-d]$'
+# Avoid re-reading the same MTGJSON set document when resolving names and set sizes.
+$script:SetCardsCache = @{}
 
 function Read-ImplementedPrintings {
     <#
         .SYNOPSIS
-            Returns per-set printing counts plus the implemented card and printing totals.
+            Returns per-set printing counts, (set, number) pairs, and implemented totals.
 
         Card classes live in single-letter directories under cards/; the infrastructure types
         (CardSet, CardScanner, ...) sit alongside them and carry no registrations, so only the
-        letter directories are scanned.
+        letter directories are scanned. Printings is the flat list of registered (set, collector
+        number) pairs used later to resolve implemented card names via MTGJSON.
     #>
     param([string] $CardRoot)
 
@@ -99,6 +104,7 @@ function Read-ImplementedPrintings {
     $pattern = [regex] '@CardRegistration\(\s*set\s*=\s*"([^"]+)"\s*,\s*collectorNumber\s*=\s*"([^"]+)"\s*\)'
 
     $setCounts = @{}
+    $printings = [System.Collections.Generic.List[object]]::new()
     $uniqueCards = 0
     $totalPrintings = 0
     $faceOnlyClasses = 0
@@ -122,11 +128,16 @@ function Read-ImplementedPrintings {
 
         foreach ($registration in $registrations) {
             $code = $registration.Groups[1].Value.ToUpperInvariant()
+            $number = $registration.Groups[2].Value
             if ($setCounts.ContainsKey($code)) {
                 $setCounts[$code]++
             } else {
                 $setCounts[$code] = 1
             }
+            $printings.Add([pscustomobject]@{
+                Code   = $code
+                Number = $number
+            })
         }
     }
 
@@ -136,6 +147,7 @@ function Read-ImplementedPrintings {
 
     return [pscustomobject]@{
         SetCounts        = $setCounts
+        Printings        = $printings
         TotalPrintings   = $totalPrintings
         UniqueCards      = $uniqueCards
         FaceOnlyClasses  = $faceOnlyClasses
@@ -240,14 +252,38 @@ function Get-UniqueCardCount {
         catalog counts card *names* including funny and extra cards, so subtracting one from the
         other does not reconcile.
     #>
+    param([string] $CachePath)
+
     $query = "-is:funny -t:vanguard (game:paper OR game:mtgo OR game:arena)"
     $url = "https://api.scryfall.com/cards/search?q=$([uri]::EscapeDataString($query))&unique=cards"
     try {
         Write-Host "Fetching unique card count from Scryfall ..."
         $result = Invoke-RestMethod -Uri $url -UserAgent $userAgent -Headers @{ Accept = "application/json" }
-        return [int] $result.total_cards
+        $count = [int] $result.total_cards
+        if ($count -le 0) {
+            throw "Scryfall returned no unique card count."
+        }
+        $cacheDir = Split-Path -Parent $CachePath
+        if (-not (Test-Path -LiteralPath $cacheDir)) {
+            New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+        }
+        $cache = @{ query = $query; total_cards = $count; fetched = (Get-Date).ToUniversalTime().ToString("o") }
+        [System.IO.File]::WriteAllText($CachePath, ($cache | ConvertTo-Json -Compress),
+            [System.Text.UTF8Encoding]::new($false))
+        return $count
     } catch {
         Write-Warning "Could not read the Scryfall card count: $($_.Exception.Message)"
+        if (Test-Path -LiteralPath $CachePath) {
+            try {
+                $cached = [System.IO.File]::ReadAllText($CachePath) | ConvertFrom-Json
+                if ($cached.query -eq $query -and [int] $cached.total_cards -gt 0) {
+                    Write-Warning "Using cached Scryfall unique card count from $($cached.fetched)."
+                    return [int] $cached.total_cards
+                }
+            } catch {
+                Write-Warning "Could not read cached Scryfall card count: $($_.Exception.Message)"
+            }
+        }
         return 0
     }
 }
@@ -294,9 +330,14 @@ function Get-MtgJsonSetCards {
     )
 
     $lower = $SetCode.ToLowerInvariant()
+    if ($script:SetCardsCache.ContainsKey($lower)) {
+        return $script:SetCardsCache[$lower]
+    }
+
     $localPath = Join-Path $RepoRoot "magical-vibes-card-data/card-data-cache/mtgjson-$lower.json"
     $cards = Read-MtgJsonSetCardsFromFile -Path $localPath
     if ($null -ne $cards) {
+        $script:SetCardsCache[$lower] = $cards
         return $cards
     }
 
@@ -309,20 +350,25 @@ function Get-MtgJsonSetCards {
     if ($null -ne $cacheAge -and -not $Refresh -and $cacheAge.TotalHours -lt $MaxAgeHours) {
         $cards = Read-MtgJsonSetCardsFromFile -Path $cachePath
         if ($null -ne $cards) {
+            $script:SetCardsCache[$lower] = $cards
             return $cards
         }
     }
 
     if (-not $AllowFetch) {
         if ($null -ne $cacheAge) {
-            return Read-MtgJsonSetCardsFromFile -Path $cachePath
+            $cards = Read-MtgJsonSetCardsFromFile -Path $cachePath
+            if ($null -ne $cards) {
+                $script:SetCardsCache[$lower] = $cards
+            }
+            return $cards
         }
         return $null
     }
 
     $url = "https://mtgjson.com/api/v5/$($SetCode.ToUpperInvariant()).json"
     try {
-        Write-Host "Downloading MTGJSON set $SetCode for English base-size refinement ..."
+        Write-Host "Downloading MTGJSON set $SetCode ..."
         $response = Invoke-WebRequest -Uri $url -UseBasicParsing -UserAgent $userAgent
         $raw = [System.Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
         $parsed = $raw | ConvertFrom-Json
@@ -335,32 +381,72 @@ function Get-MtgJsonSetCards {
             New-Item -ItemType Directory -Path $SetCacheDir -Force | Out-Null
         }
         [System.IO.File]::WriteAllText($cachePath, $raw, [System.Text.UTF8Encoding]::new($false))
-        return @($parsed.data.cards)
+        $cards = @($parsed.data.cards)
+        $script:SetCardsCache[$lower] = $cards
+        return $cards
     } catch {
         Write-Warning "Could not download MTGJSON set ${SetCode}: $($_.Exception.Message)"
         if ($null -ne $cacheAge) {
-            return Read-MtgJsonSetCardsFromFile -Path $cachePath
+            $cards = Read-MtgJsonSetCardsFromFile -Path $cachePath
+            if ($null -ne $cards) {
+                $script:SetCardsCache[$lower] = $cards
+            }
+            return $cards
         }
         return $null
     }
 }
 
-function Get-EnglishPlayableBaseSize {
+function Test-IsSkippedLetteredAlternative {
     <#
         .SYNOPSIS
-            English playable base printing count for a set, or the SetList fallback.
+            True when a lettered isAlternative printing duplicates a digit-only English sibling.
+    #>
+    param(
+        [string] $Number,
+        [object] $Card,
+        [System.Collections.Generic.HashSet[string]] $EnglishNumbers
+    )
+
+    $lettered = $script:LetteredCollectorNumberPattern.Match($Number)
+    if (-not $lettered.Success) {
+        return $false
+    }
+
+    $isAlternative = $false
+    if ($Card.PSObject.Properties.Name -contains "isAlternative" -and $Card.isAlternative) {
+        $isAlternative = [bool] $Card.isAlternative
+    }
+    $digitSibling = $lettered.Groups[1].Value
+    return ($isAlternative -and $EnglishNumbers.Contains($digitSibling))
+}
+
+function Get-EnglishPlayableEligible {
+    <#
+        .SYNOPSIS
+            English playable card names and printing count for a set, or the SetList fallback.
 
         Counts distinct English (or language-less) collector numbers that are digits with an
-        optional a-d art letter. Distinct numbers matter because MTGJSON stores each face of a
-        DFC as its own row sharing one collector number (DKA would otherwise read 171 instead of
-        158). Lettered isAlternative printings that share a digit-only sibling are skipped so
-        Portal demo-game 6d drops out while Homelands 10b (no plain 10) stays. Foreign-language
-        alt-arts such as Portal's Simplified Chinese 30s are excluded by the language filter.
-        Falls back to MTGJSON baseSetSize when set card data is unavailable.
+        optional a-d art letter. Numbers whose numeric part is within MTGJSON baseSetSize
+        ($Fallback) form the core total. Distinct numbers matter because MTGJSON stores each
+        face of a DFC as its own row sharing one collector number (DKA would otherwise read 171
+        instead of 158). Lettered isAlternative printings that share a digit-only sibling are
+        skipped so Portal demo-game 6d drops out while Homelands 10b (no plain 10) stays.
+        Foreign-language alt-arts such as Portal's Simplified Chinese 30s are excluded by the
+        language filter.
+
+        Printings numbered above baseSetSize count only when their card name does not already
+        appear among the in-base English printings — planeswalker-deck and buy-a-box exclusives
+        widen the total; same-set alternate arts that reprint a base name (Godzilla, showcase,
+        borderless twins with a new number) do not enter the eligible names. PrintingCount counts
+        every distinct English collector number accepted by the number pattern, including those
+        alternate printings. When set card data is unavailable, Count and PrintingCount fall back
+        to SetList sizes and Names is empty.
     #>
     param(
         [string] $SetCode,
         [int] $Fallback,
+        [int] $PrintingFallback,
         [string] $RepoRoot,
         [string] $SetCacheDir,
         [int] $MaxAgeHours,
@@ -368,15 +454,26 @@ function Get-EnglishPlayableBaseSize {
         [switch] $AllowFetch
     )
 
+    $emptyNames = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+
     $cards = Get-MtgJsonSetCards -SetCode $SetCode -RepoRoot $RepoRoot -SetCacheDir $SetCacheDir `
         -MaxAgeHours $MaxAgeHours -Refresh:$Refresh -AllowFetch:$AllowFetch
     if ($null -eq $cards) {
-        return $Fallback
+        return [pscustomobject]@{
+            Count         = $Fallback
+            PrintingCount = $PrintingFallback
+            Names         = $emptyNames
+        }
     }
 
+    $baseLimit = $Fallback
     $englishNumbers = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::Ordinal)
-    $candidates = [System.Collections.Generic.List[object]]::new()
+    $inBaseCandidates = [System.Collections.Generic.List[object]]::new()
+    $aboveCandidates = [System.Collections.Generic.List[object]]::new()
+    $inBaseNames = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
 
     foreach ($card in $cards) {
         $lang = $null
@@ -393,29 +490,135 @@ function Get-EnglishPlayableBaseSize {
         }
 
         [void] $englishNumbers.Add($number)
-        $candidates.Add($card)
+
+        $letteredNum = $script:LetteredCollectorNumberPattern.Match($number)
+        $numericPart = if ($letteredNum.Success) {
+            [int] $letteredNum.Groups[1].Value
+        } else {
+            [int] $number
+        }
+
+        if ($numericPart -le $baseLimit) {
+            $inBaseCandidates.Add($card)
+            if ($card.PSObject.Properties.Name -contains "name" -and $card.name) {
+                [void] $inBaseNames.Add([string] $card.name)
+            }
+        } else {
+            $aboveCandidates.Add($card)
+        }
     }
 
     # Unique collector numbers: DFC front/back share a number and must count once.
     $eligibleNumbers = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::Ordinal)
-    foreach ($card in $candidates) {
+    $numberNames = @{}
+
+    foreach ($card in $inBaseCandidates) {
         $number = [string] $card.number
-        $lettered = $script:LetteredCollectorNumberPattern.Match($number)
-        if ($lettered.Success) {
-            $isAlternative = $false
-            if ($card.PSObject.Properties.Name -contains "isAlternative" -and $card.isAlternative) {
-                $isAlternative = [bool] $card.isAlternative
-            }
-            $digitSibling = $lettered.Groups[1].Value
-            if ($isAlternative -and $englishNumbers.Contains($digitSibling)) {
-                continue
-            }
+        if (Test-IsSkippedLetteredAlternative -Number $number -Card $card -EnglishNumbers $englishNumbers) {
+            continue
         }
         [void] $eligibleNumbers.Add($number)
+        if (-not $numberNames.ContainsKey($number) -and
+            $card.PSObject.Properties.Name -contains "name" -and $card.name) {
+            $numberNames[$number] = [string] $card.name
+        }
     }
 
-    return $eligibleNumbers.Count
+    foreach ($card in $aboveCandidates) {
+        $name = $null
+        if ($card.PSObject.Properties.Name -contains "name") {
+            $name = [string] $card.name
+        }
+        if ($name -and $inBaseNames.Contains($name)) {
+            continue
+        }
+
+        $number = [string] $card.number
+        if (Test-IsSkippedLetteredAlternative -Number $number -Card $card -EnglishNumbers $englishNumbers) {
+            continue
+        }
+        [void] $eligibleNumbers.Add($number)
+        if (-not $numberNames.ContainsKey($number) -and $name) {
+            $numberNames[$number] = $name
+        }
+    }
+
+    $names = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($number in $eligibleNumbers) {
+        if ($numberNames.ContainsKey($number)) {
+            [void] $names.Add($numberNames[$number])
+        }
+    }
+
+    return [pscustomobject]@{
+        Count         = $eligibleNumbers.Count
+        PrintingCount = $englishNumbers.Count
+        Names         = $names
+    }
+}
+
+function Get-ImplementedCardNames {
+    <#
+        .SYNOPSIS
+            Card names that already have at least one implemented printing, resolved via MTGJSON.
+
+        Groups registrations by set, loads each set once, and maps collector numbers to the
+        MTGJSON name field (DFC faces share one "Front // Back" name). Sets with registrations
+        are fetched when not cached so reprint detection stays accurate.
+    #>
+    param(
+        [System.Collections.IEnumerable] $Printings,
+        [string] $RepoRoot,
+        [string] $SetCacheDir,
+        [int] $MaxAgeHours,
+        [switch] $Refresh
+    )
+
+    $bySet = @{}
+    foreach ($printing in $Printings) {
+        $code = $printing.Code
+        if (-not $bySet.ContainsKey($code)) {
+            $bySet[$code] = [System.Collections.Generic.HashSet[string]]::new(
+                [System.StringComparer]::Ordinal)
+        }
+        [void] $bySet[$code].Add([string] $printing.Number)
+    }
+
+    $names = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+    $unresolved = 0
+
+    foreach ($code in ($bySet.Keys | Sort-Object)) {
+        $cards = Get-MtgJsonSetCards -SetCode $code -RepoRoot $RepoRoot -SetCacheDir $SetCacheDir `
+            -MaxAgeHours $MaxAgeHours -Refresh:$Refresh -AllowFetch
+        if ($null -eq $cards) {
+            $unresolved += $bySet[$code].Count
+            continue
+        }
+
+        $wanted = $bySet[$code]
+        $found = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::Ordinal)
+        foreach ($card in $cards) {
+            $number = [string] $card.number
+            if (-not $wanted.Contains($number)) {
+                continue
+            }
+            if ($card.PSObject.Properties.Name -contains "name" -and $card.name) {
+                [void] $names.Add([string] $card.name)
+                [void] $found.Add($number)
+            }
+        }
+        $unresolved += ($wanted.Count - $found.Count)
+    }
+
+    if ($unresolved -gt 0) {
+        Write-Warning ("Could not resolve card names for {0} implemented printing(s); those cards will not reduce the Missing column." -f $unresolved)
+    }
+
+    return $names
 }
 
 Write-Host "Scanning card sources in $cardRoot ..."
@@ -431,9 +634,15 @@ $setList = Get-MtgJsonSetList -LocalPath $SetListPath -CachePath $CachePath `
     -MaxAgeHours $CacheMaxAgeHours -Refresh:$RefreshCache
 Write-Host "Set list contains $($setList.Count) sets."
 
+Write-Host "Resolving implemented card names via MTGJSON ..."
+$implementedNames = Get-ImplementedCardNames -Printings $implemented.Printings `
+    -RepoRoot $repoRoot -SetCacheDir $setCacheDir -MaxAgeHours $CacheMaxAgeHours `
+    -Refresh:$RefreshCache
+Write-Host ("Resolved {0} implemented card names." -f $implementedNames.Count)
+
 $uniqueCardNamesInMagic = 0
 if (-not $SkipCardNameCatalog) {
-    $uniqueCardNamesInMagic = Get-UniqueCardCount
+    $uniqueCardNamesInMagic = Get-UniqueCardCount -CachePath $uniqueCardCountCachePath
 }
 
 # Set types holding nothing this engine would implement. "memorabilia" already covers the
@@ -482,13 +691,33 @@ foreach ($set in $setList) {
         Write-Warning "Set '$code' is excluded from progress totals but has $implementedCount implemented printings; keeping it."
     }
 
-    $baseSize = Get-EnglishPlayableBaseSize -SetCode $code -Fallback ([int] $set.baseSetSize) `
+    $printingFallback = if ($set.PSObject.Properties.Name -contains "totalSetSize") {
+        [int] $set.totalSetSize
+    } else {
+        [int] $set.baseSetSize
+    }
+    $eligible = Get-EnglishPlayableEligible -SetCode $code -Fallback ([int] $set.baseSetSize) `
+        -PrintingFallback $printingFallback `
         -RepoRoot $repoRoot -SetCacheDir $setCacheDir -MaxAgeHours $CacheMaxAgeHours `
-        -Refresh:$RefreshCache -AllowFetch:($supportedLookup.ContainsKey($code))
-    # XLN/DOM register printings numbered above the base set (planeswalker decks, buy-a-box), so
-    # the honest denominator is whichever is larger.
-    $total = [Math]::Max($baseSize, $implementedCount)
+        -Refresh:$RefreshCache -AllowFetch
+    $baseSize = $eligible.Count
+    # Registrations with non-numeric collector numbers can still push the denominator up.
+    $total = [Math]::Max($eligible.PrintingCount, $implementedCount)
     if ($total -le 0) { $total = 0 }
+
+    # Missing = eligible cards with no implemented printing of that name anywhere (entirely new
+    # work). When set card data was unavailable Names is empty; fall back to unimplemented
+    # printings so the column is still populated.
+    if ($eligible.Names.Count -gt 0) {
+        $missing = 0
+        foreach ($name in $eligible.Names) {
+            if (-not $implementedNames.Contains($name)) {
+                $missing++
+            }
+        }
+    } else {
+        $missing = [Math]::Max(0, $total - $implementedCount)
+    }
 
     $keyrune = ""
     if ($set.PSObject.Properties.Name -contains "keyruneCode" -and $set.keyruneCode) {
@@ -504,7 +733,7 @@ foreach ($set in $setList) {
         base       = $baseSize
         total      = $total
         impl       = $implementedCount
-        missing    = [Math]::Max(0, $total - $implementedCount)
+        missing    = $missing
         supported  = [bool] $supportedLookup.ContainsKey($code)
         onlineOnly = [bool] $set.isOnlineOnly
     })
@@ -1019,7 +1248,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
           <th class="col-type" scope="col">Type</th>
           <th class="col-rel" scope="col">Released</th>
           <th class="col-meter" scope="col">Progress</th>
-          <th class="col-count num" scope="col">Cards</th>
+          <th class="col-count num" scope="col">Printings</th>
           <th class="col-missing num" scope="col">Missing</th>
           <th class="col-pct num" scope="col">%</th>
         </tr>
@@ -1031,10 +1260,12 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
 
   <footer>
     <div>
-      Set totals start from <strong>MTGJSON</strong>&rsquo;s base set size and, when set card data is
-      available, keep only English playable printings (so Portal&rsquo;s Simplified Chinese alt-arts
-      do not inflate the denominator). A handful of sets ship printings numbered above the base set,
-      so their denominator widens to the implemented count.
+      <strong>Printings</strong> counts distinct English collector numbers in MTGJSON, including
+      alternate art and foil variants. Numbered suffixes a&ndash;d are included; other suffixes,
+      such as serialized WHO cards, are excluded. Where set card data is unavailable, the total
+      falls back to MTGJSON&rsquo;s published set size. The
+      <strong>Missing</strong> column counts cards in the set with no implemented printing of
+      that name anywhere yet (entirely new cards), not unimplemented reprints.
       <strong>Promos, tokens, art cards, oversized cards, memorabilia, Un-sets, Vanguard sets,
       standalone-game cards, The List and the foreign-border and European reprint series are left
       out entirely</strong> &mdash; each is either not a regular deck card or already counted
@@ -1125,7 +1356,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
         part: T.supportedImpl,
         whole: T.supportedTotal,
         note: "of " + fmt(T.supportedTotal) + " printings \u00b7 " +
-              fmt(T.missingInSupported) + " missing"
+              fmt(T.missingInSupported) + " new cards missing"
       },
       {
         label: "Sets covered",
@@ -1200,9 +1431,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
   }
 
   function matches(set) {
-    // "Fully supported" means both halves of the promise: the engine can build decks from the
-    // set *and* every card in it exists. A complete set the engine cannot use, or a supported
-    // set with holes in it, fails the filter.
+    // "Fully supported" requires engine set support and every counted printing registered.
     if (state.filter === "full" && !(set.supported && isComplete(set))) { return false; }
     // Started but not finished: at least one printing implemented, and the set is not complete.
     if (state.filter === "started" && (set.impl === 0 || isComplete(set))) { return false; }
@@ -1259,7 +1488,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     var missing = visible.reduce(function (acc, set) { return acc + set.missing; }, 0);
     document.getElementById("table-caption").textContent =
       fmt(visible.length) + " sets shown \u00b7 " + fmt(shown) +
-      " implemented printings \u00b7 " + fmt(missing) + " missing";
+      " implemented printings \u00b7 " + fmt(missing) + " new cards missing";
   }
 
   document.getElementById("search").addEventListener("input", function (event) {
@@ -1317,4 +1546,4 @@ if ($null -ne $missingUniqueCards) {
 Write-Host ("  {0}/{1} printings across {2} supported sets ({3:N1}%)" -f `
     $supportedImpl, $supportedTotal, $supportedSets.Count,
     $(if ($supportedTotal) { ($supportedImpl / $supportedTotal) * 100 } else { 0 }))
-Write-Host ("  {0} printings still missing in supported sets" -f $missingInSupported)
+Write-Host ("  {0} new cards still missing in supported sets" -f $missingInSupported)

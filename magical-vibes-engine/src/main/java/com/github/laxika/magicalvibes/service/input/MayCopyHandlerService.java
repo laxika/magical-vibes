@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
@@ -413,7 +414,9 @@ public class MayCopyHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
+        Integer targetIndex = copyEntry.getTargetId() == null
+                && !copyEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId, targetIndex));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
     }
@@ -659,8 +662,12 @@ public class MayCopyHandlerService {
             }
         }
 
-        if (validTargets.isEmpty()) {
-            
+        boolean mustChangeAllTargets = ability.effects().stream()
+                .anyMatch(effect -> effect instanceof ChooseNewTargetsForTargetSpellEffect retarget
+                        && retarget.mustChangeAllTargets());
+        if (validTargets.isEmpty() || (mustChangeAllTargets
+                && validTargets.size() < targetSpellEntry.getDeclaredTargetIds().size())) {
+
             gameLogService.append(gameData, GameLog.textCardText("No valid new targets for ", spellCard, "."));
             log.info("Game {} - No valid targets for redirect retarget", gameData.id);
 
@@ -671,7 +678,9 @@ public class MayCopyHandlerService {
         Integer targetIndex = targetSpellEntry.getTargetId() == null
                 && !targetSpellEntry.getDeclaredTargetIds().isEmpty() ? 0 : null;
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex));
+                new PermanentChoiceContext.SpellRetarget(spellCardId, targetIndex,
+                        mustChangeAllTargets && targetIndex != null ? List.of() : null,
+                        ability.controllerId()));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for " + spellCard.getName() + ".");
     }

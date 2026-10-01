@@ -572,7 +572,7 @@ public class ActivatedAbilityExecutionService {
                         throw new IllegalStateException("Not enough energy to pay");
                     }
                     int updated = current - cost.amount();
-                    gameData.playerEnergyCounters.put(playerId, updated);
+                    gameData.setPlayerEnergyCounters(playerId, updated);
                     String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
                     gameLogService.append(gameData,
                             GameLog.text(playerName + " pays " + cost.amount() + " energy counter(s)."));
@@ -583,13 +583,15 @@ public class ActivatedAbilityExecutionService {
                 .filter(PayXEnergyCost.class::isInstance)
                 .findFirst()
                 .ifPresent(cost -> {
+                    if (xEnergyCost < 0) {
+                        throw new IllegalStateException("Invalid energy cost");
+                    }
                     if (xEnergyCost > 0) {
                         int current = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
                         if (current < xEnergyCost) {
                             throw new IllegalStateException("Not enough energy to pay");
                         }
-                        int updated = current - xEnergyCost;
-                        gameData.playerEnergyCounters.put(playerId, updated);
+                        gameData.setPlayerEnergyCounters(playerId, current - xEnergyCost);
                         String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
                         gameLogService.append(gameData,
                                 GameLog.text(playerName + " pays " + xEnergyCost + " energy counter(s)."));
@@ -749,6 +751,7 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
         if (isManaAbility) {
+            triggerCollectionService.consumeManaLinkedCopyOnManaAbility(gameData, playerId);
             int stackBeforeCopyTriggers = gameData.stack.size();
             StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
                     gameData, permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
@@ -898,6 +901,7 @@ public class ActivatedAbilityExecutionService {
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
+        triggerCollectionService.checkManaLinkedAbilityCopyTrigger(gameData, playerId, abilityEntry, ability);
         triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
                 gameData, playerId, abilityEntry, ability, permanent,
                 preCostActivationTriggers.effects());

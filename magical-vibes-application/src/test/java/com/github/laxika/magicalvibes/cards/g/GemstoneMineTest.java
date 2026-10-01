@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(GemstoneMine.class)
 class GemstoneMineTest extends BaseCardTest {
@@ -73,10 +74,24 @@ class GemstoneMineTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Cannot activate without a mining counter to remove")
+    void cannotActivateWithoutMiningCounters() {
+        Permanent mine = addReadyMine(player1);
+        mine.setCounterCount(CounterType.MINING, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters to remove");
+
+        assertThat(mine.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player1, "Gemstone Mine");
+    }
+
     private Permanent addReadyMine(Player player) {
-        Permanent mine = harness.addToBattlefieldAndReturn(player, new GemstoneMine());
+        Permanent mine = harness.enterBattlefieldAndReturn(player, new GemstoneMine());
         mine.setSummoningSick(false);
-        mine.setCounterCount(CounterType.MINING, 3);
         return mine;
     }
 }

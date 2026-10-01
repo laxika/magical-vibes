@@ -38,10 +38,10 @@ class InfestingRadroachTest extends BaseCardTest {
         InfestingRadroach roach = new InfestingRadroach();
         harness.setGraveyard(player1, List.of(roach));
         harness.addToBattlefield(player2, new Millstone());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -58,10 +58,10 @@ class InfestingRadroachTest extends BaseCardTest {
         InfestingRadroach roach = new InfestingRadroach();
         harness.setGraveyard(player1, List.of(roach));
         harness.addToBattlefield(player2, new Millstone());
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

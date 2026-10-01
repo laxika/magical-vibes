@@ -23,5 +23,11 @@ public record LockMatchingPermanentsEffect(
         boolean locksAttacking,
         boolean locksBlocking,
         boolean locksActivatedAbilities,
-        EffectDuration duration) implements CardEffect {
+        EffectDuration duration,
+        boolean affectsLaterPermanents) implements CardEffect {
+
+    public LockMatchingPermanentsEffect(PermanentPredicate predicate, boolean locksAttacking,
+            boolean locksBlocking, boolean locksActivatedAbilities, EffectDuration duration) {
+        this(predicate, locksAttacking, locksBlocking, locksActivatedAbilities, duration, false);
+    }
 }

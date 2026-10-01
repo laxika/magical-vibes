@@ -281,6 +281,15 @@ public class BattlefieldPlacementService {
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
             applyAllPermanentsEnterUntapped(gameData, permanent);
+            // Lands bypass planeswalker spell resolution, which normally supplies starting loyalty.
+            if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.LAND)
+                    && permanent.getCard().hasType(CardType.PLANESWALKER)
+                    && permanent.getCard().getLoyalty() != null
+                    && permanent.getCounterCount(CounterType.LOYALTY) == 0) {
+                int loyalty = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                        CounterType.LOYALTY, permanent.getCard().getLoyalty(), controllerId);
+                permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+            }
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters(),
                     request.sourceStackEntry());
@@ -1027,6 +1036,13 @@ public class BattlefieldPlacementService {
                 enterTappedTypes.addAll(enterTapped.cardTypes());
             }
         });
+        if (gameData.planechase != null) {
+            gameData.planechase.faceUp.forEach(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
+                    .map(EnterPermanentsOfTypesTappedEffect.class::cast)
+                    .filter(enterTapped -> !enterTapped.opponentsOnly() && !enterTapped.castOnly())
+                    .forEach(enterTapped -> enterTappedTypes.addAll(enterTapped.cardTypes())));
+        }
         return enterTappedTypes;
     }
 
@@ -1961,7 +1977,15 @@ public class BattlefieldPlacementService {
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId());
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
+                CardEffect activeEffect = effect;
+                if (effect instanceof ConditionalEffect conditional) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(source, controllerId))) {
+                        continue;
+                    }
+                    activeEffect = conditional.wrapped();
+                }
+                if (!(activeEffect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
                     DynamicAmount dynamicAmount = replacement.additionalCounterAmount();

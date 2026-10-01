@@ -23,9 +23,9 @@ public class AkromasMemorial extends Card {
     public AkromasMemorial() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE),
-                GrantScope.OWN_CREATURES));
+                GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)),
-                GrantScope.OWN_CREATURES));
+                GrantScope.ALL_OWN_CREATURES));
     }
 }

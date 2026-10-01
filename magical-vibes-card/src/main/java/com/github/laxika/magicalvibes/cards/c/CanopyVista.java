@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "EXP", collectorNumber = "5")
 @CardRegistration(set = "EA3", collectorNumber = "20")
+@CardRegistration(set = "WHO", collectorNumber = "1072")
 @CardRegistration(set = "WHO", collectorNumber = "258")
+@CardRegistration(set = "WHO", collectorNumber = "481")
+@CardRegistration(set = "WHO", collectorNumber = "849")
 @CardRegistration(set = "AFC", collectorNumber = "227")
 @CardRegistration(set = "C20", collectorNumber = "261")
 @CardRegistration(set = "PIP", collectorNumber = "255")
@@ -27,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "MKC", collectorNumber = "252")
 @CardRegistration(set = "LCC", collectorNumber = "321")
 @CardRegistration(set = "BLC", collectorNumber = "296")
+@CardRegistration(set = "MIC", collectorNumber = "168")
 public class CanopyVista extends Card {
 
     public CanopyVista() {

@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -69,6 +72,26 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
         if (interaction.noncombatDamageBonus() != 0) {
             gameData.perpetualNoncombatDamageBonuses.merge(
                     chosenCard.getId(), interaction.noncombatDamageBonus(), Integer::sum);
+        }
+        if (interaction.perpetualManaCostIncrease() != null) {
+            gameData.perpetualManaCostIncreases.merge(
+                    chosenCard.getId(), new ManaCost(interaction.perpetualManaCostIncrease()),
+                    ManaCost::increasedBy);
+        }
+        if (interaction.selfCastAbility() != null) {
+            gameData.perpetualTriggeredAbilityGrants.compute(chosenCard.getId(), (ignored, existing) -> {
+                java.util.Map<EffectSlot, List<CardEffect>> updated = new java.util.EnumMap<>(EffectSlot.class);
+                if (existing != null) {
+                    existing.forEach((slot, effects) -> updated.put(slot, new java.util.ArrayList<>(effects)));
+                }
+                List<CardEffect> selfCastEffects = updated.computeIfAbsent(
+                        EffectSlot.ON_SELF_CAST, ignoredSlot -> new java.util.ArrayList<>());
+                if (!selfCastEffects.contains(interaction.selfCastAbility())) {
+                    selfCastEffects.add(interaction.selfCastAbility());
+                }
+                updated.replaceAll((slot, effects) -> List.copyOf(effects));
+                return java.util.Map.copyOf(updated);
+            });
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

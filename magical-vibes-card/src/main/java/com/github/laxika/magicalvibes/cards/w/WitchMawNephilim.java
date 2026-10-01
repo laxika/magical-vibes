@@ -25,6 +25,6 @@ public class WitchMawNephilim extends Card {
                 "Put two +1/+1 counters on this creature?"));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new SourcePowerAtLeast(10),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF), false));
     }
 }

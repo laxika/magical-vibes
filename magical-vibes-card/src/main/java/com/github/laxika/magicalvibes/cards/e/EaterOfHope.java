@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "66")
 @CardRegistration(set = "C15", collectorNumber = "123")
+@CardRegistration(set = "MIC", collectorNumber = "115")
 public class EaterOfHope extends Card {
 
     public EaterOfHope() {

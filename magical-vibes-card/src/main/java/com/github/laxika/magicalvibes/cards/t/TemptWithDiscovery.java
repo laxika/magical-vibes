@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TemptingOfferSearchLibraryFor
 
 @CardRegistration(set = "C13", collectorNumber = "174")
 @CardRegistration(set = "BLC", collectorNumber = "124")
+@CardRegistration(set = "C19", collectorNumber = "183")
 public class TemptWithDiscovery extends Card {
 
     public TemptWithDiscovery() {

@@ -31,11 +31,16 @@ class RuleWithAnEvenHandTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0, 1));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        });
     }
 
     @Test

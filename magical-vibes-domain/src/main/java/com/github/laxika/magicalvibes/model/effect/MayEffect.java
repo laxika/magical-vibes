@@ -127,6 +127,9 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         CardEffect boundElse = elseEffect instanceof DyingCreaturePermanentAwareEffect aware
                 ? aware.boundToDyingCreature(dyingCreature)
                 : elseEffect;
+        if (boundWrapped == wrapped && boundElse == elseEffect) {
+            return this;
+        }
         return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
     }
 }

@@ -19,6 +19,6 @@ public class Stonecloaker extends Card {
                 new ReturnPermanentControlledByPlayerToHandEffect(
                         new PermanentIsCreaturePredicate(), "creature"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD));
+                ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false));
     }
 }

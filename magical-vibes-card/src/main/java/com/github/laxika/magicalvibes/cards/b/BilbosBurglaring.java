@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOC", collectorNumber = "10")
+@CardRegistration(set = "HOC", collectorNumber = "112")
 public class BilbosBurglaring extends Card {
 
     public BilbosBurglaring() {

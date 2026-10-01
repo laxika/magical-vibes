@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +19,7 @@ class BorealGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Snow mana grants first strike until end of turn")
     void snowManaGrantsFirstStrike() {
-        Permanent griffin = addGriffinReady(player1);
+        Permanent griffin = addCreatureReady(player1, new BorealGriffin());
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -44,7 +43,7 @@ class BorealGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Regular mana cannot pay the snow activation cost")
     void regularManaCannotPaySnowCost() {
-        addGriffinReady(player1);
+        addCreatureReady(player1, new BorealGriffin());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -55,7 +54,7 @@ class BorealGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOff() {
-        Permanent griffin = addGriffinReady(player1);
+        Permanent griffin = addCreatureReady(player1, new BorealGriffin());
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -66,12 +65,5 @@ class BorealGriffinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isFalse();
-    }
-
-    private Permanent addGriffinReady(Player player) {
-        Permanent permanent = new Permanent(new BorealGriffin());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

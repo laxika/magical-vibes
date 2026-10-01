@@ -21,14 +21,16 @@ class StanggEchoWarriorTest extends BaseCardTest {
     void attackingCreatesTwin() {
         addCreatureReady(player1, new StanggEchoWarrior());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
 
-        Permanent twin = findPermanents(player1, "Stangg Twin").getFirst();
-        assertThat(twin.getCard().getPower()).isEqualTo(3);
-        assertThat(twin.getCard().getToughness()).isEqualTo(4);
-        assertThat(twin.isTapped()).isTrue();
-        assertThat(twin.isAttacking()).isTrue();
+            Permanent twin = findPermanents(player1, "Stangg Twin").getFirst();
+            assertThat(twin.getCard().getPower()).isEqualTo(3);
+            assertThat(twin.getCard().getToughness()).isEqualTo(4);
+            assertThat(twin.isTapped()).isTrue();
+            assertThat(twin.isAttacking()).isTrue();
+        });
     }
 
     @Test

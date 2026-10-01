@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "231")
 @CardRegistration(set = "LCC", collectorNumber = "307")
 @CardRegistration(set = "C20", collectorNumber = "244")
+@CardRegistration(set = "MIC", collectorNumber = "160")
 public class LifecraftersBestiary extends Card {
 
     public LifecraftersBestiary() {

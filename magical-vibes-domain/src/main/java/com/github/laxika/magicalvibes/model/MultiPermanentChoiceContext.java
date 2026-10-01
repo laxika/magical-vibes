@@ -110,10 +110,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Selects up to a mutation-count number of creature targets for a mutation trigger. */
+    /** Selects creature or graveyard-card targets for a self-triggered ability. */
     record SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        String eventDescription, UUID sourcePermanentId,
-                                       Integer eventValue) implements MultiPermanentChoiceContext {
+                                       Integer eventValue, int minTargets) implements MultiPermanentChoiceContext {
+
+        public SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId, Integer eventValue) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, eventValue, 0);
+        }
 
         public SelfTriggeredAbilityTargets {
             effects = List.copyOf(effects);
@@ -560,6 +565,20 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each opponent chooses a matching permanent before the chosen permanents are sacrificed together. */
+    record EachOpponentSacrificesPermanentCreateTokens(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachOpponentSacrificesPermanentCreateTokens {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** Each opponent chooses a nontoken creature to sacrifice for Replicating Terror. */
     record EachOpponentSacrificesNontokenCreatureConjuresDuplicates(
             java.util.List<PendingForcedSacrifice> remainingChoosers,
@@ -768,6 +787,14 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** The controller chooses any number of creatures that must block this combat if able. */
     record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of creatures with different powers. */
+    record ChooseCreaturesWithDifferentPowersGrantDoubleStrike() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of creatures with different powers to boost and grant vigilance. */
+    record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance() implements MultiPermanentChoiceContext {
     }
 
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
@@ -1265,6 +1292,21 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Human—Time Lord Meta-Crisis: each player chooses one or two creatures for an ordered copy. */
+    record EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice(
+            java.util.List<UUID> playerIds, int playerIndex,
+            java.util.Map<UUID, java.util.List<UUID>> chosenByPlayer,
+            Card sourceCard, UUID controllerId)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            java.util.Map<UUID, java.util.List<UUID>> copiedChoices = new java.util.LinkedHashMap<>();
+            chosenByPlayer.forEach((playerId, chosenIds) ->
+                    copiedChoices.put(playerId, java.util.List.copyOf(chosenIds)));
+            chosenByPlayer = java.util.Collections.unmodifiableMap(copiedChoices);
+        }
+    }
+
     /** The effect controller chooses a land controlled by each player to receive a counter. */
     record EachPlayerChoosesLandAndPutCounterChoice(
             java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
@@ -1286,13 +1328,22 @@ public sealed interface MultiPermanentChoiceContext {
                                   java.util.List<UUID> remainingPlayerIds,
                                   java.util.Map<UUID, Integer> votes,
                                   String sourceName,
-                                  boolean graveyardCards)
+                                  boolean graveyardCards,
+                                  boolean creaturesOnly)
             implements MultiPermanentChoiceContext {
         public WillOfTheCouncilChoice(UUID effectControllerId,
                                       java.util.List<UUID> remainingPlayerIds,
                                       java.util.Map<UUID, Integer> votes,
                                       String sourceName) {
-            this(effectControllerId, remainingPlayerIds, votes, sourceName, false);
+            this(effectControllerId, remainingPlayerIds, votes, sourceName, false, false);
+        }
+
+        public WillOfTheCouncilChoice(UUID effectControllerId,
+                                      java.util.List<UUID> remainingPlayerIds,
+                                      java.util.Map<UUID, Integer> votes,
+                                      String sourceName,
+                                      boolean graveyardCards) {
+            this(effectControllerId, remainingPlayerIds, votes, sourceName, graveyardCards, false);
         }
 
         public WillOfTheCouncilChoice {

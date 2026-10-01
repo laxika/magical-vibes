@@ -16,7 +16,7 @@ class RakdosSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Paying one and tapping Rakdos Signet adds black and red mana")
     void addsBlackAndRedMana() {
-        Permanent signet = addReadySignet();
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new RakdosSignet());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +31,7 @@ class RakdosSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Rakdos Signet without paying one")
     void cannotActivateWithoutMana() {
-        addReadySignet();
+        harness.addToBattlefieldAndReturn(player1, new RakdosSignet());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -40,7 +40,7 @@ class RakdosSignetTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Rakdos Signet while tapped")
     void cannotActivateWhileTapped() {
-        addReadySignet();
+        harness.addToBattlefieldAndReturn(player1, new RakdosSignet());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -48,12 +48,5 @@ class RakdosSignetTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
-    }
-
-    private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new RakdosSignet());
-        signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
-        return signet;
     }
 }

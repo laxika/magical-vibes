@@ -34,7 +34,7 @@ class StraxSontaranNurseTest extends BaseCardTest {
 
         Permanent selected = choice.validIds().contains(ownCreature.getId()) ? ownCreature : opposingCreature;
         harness.handlePermanentChosen(player1, selected.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(selected == ownCreature ? player1.getId() : player2.getId()))
                 .doesNotContain(selected);

@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlay
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "7")
+@CardRegistration(set = "WHO", collectorNumber = "392")
+@CardRegistration(set = "WHO", collectorNumber = "539")
+@CardRegistration(set = "WHO", collectorNumber = "612")
+@CardRegistration(set = "WHO", collectorNumber = "983")
+@CardRegistration(set = "WHO", collectorNumber = "1130")
 public class YasminKhan extends Card {
 
     public YasminKhan() {

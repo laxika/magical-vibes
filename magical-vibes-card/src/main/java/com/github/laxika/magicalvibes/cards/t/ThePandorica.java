@@ -21,6 +21,8 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "25")
 @CardRegistration(set = "WHO", collectorNumber = "343")
+@CardRegistration(set = "WHO", collectorNumber = "630")
+@CardRegistration(set = "WHO", collectorNumber = "934")
 public class ThePandorica extends Card {
 
     private static final PermanentPredicate ANOTHER_NONLAND_PERMANENT = new PermanentAllOfPredicate(List.of(

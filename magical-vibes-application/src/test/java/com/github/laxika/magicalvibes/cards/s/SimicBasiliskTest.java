@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SimicBasilisk.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({SimicBasilisk.class, GrizzlyBears.class, GiantSpider.class, AzoriusSignet.class})
 class SimicBasiliskTest extends BaseCardTest {
 
     @Test
@@ -34,9 +34,7 @@ class SimicBasiliskTest extends BaseCardTest {
     @DisplayName("Graft may move a +1/+1 counter onto another creature that enters")
     void graftMovesCounterOntoEnteringCreature() {
         Permanent basilisk = harness.enterBattlefieldAndReturn(player1, new SimicBasilisk());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -48,19 +46,60 @@ class SimicBasiliskTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Graft may be declined")
+    void graftMayBeDeclined() {
+        Permanent basilisk = harness.enterBattlefieldAndReturn(player1, new SimicBasilisk());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft may move a counter onto an opponent's creature that enters")
+    void graftMovesCounterOntoOpponentsEnteringCreature() {
+        Permanent basilisk = harness.enterBattlefieldAndReturn(player1, new SimicBasilisk());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft does not trigger when a noncreature enters")
+    void graftDoesNotTriggerForNoncreatureEntering() {
+        Permanent basilisk = harness.enterBattlefieldAndReturn(player1, new SimicBasilisk());
+        Permanent signet = harness.enterBattlefieldAndReturn(player1, new AzoriusSignet());
+
+        assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(signet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Grants the targeted creature its combat-damage destruction ability until end of turn")
     void grantsCombatDamageDestructionUntilEndOfTurn() {
-        Permanent basilisk = addReadyCreature(player1, new SimicBasilisk());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         activateAbility(basilisk, attacker);
 
-        attacker.setAttacking(true);
-        addReadyCreature(player2, new GiantSpider());
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, attacker, player2, blocker);
 
         harness.assertInGraveyard(player2, "Giant Spider");
     }
@@ -68,8 +107,8 @@ class SimicBasiliskTest extends BaseCardTest {
     @Test
     @DisplayName("The granted destruction ability expires at end of turn")
     void grantedAbilityExpiresAtEndOfTurn() {
-        Permanent basilisk = addReadyCreature(player1, new SimicBasilisk());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         activateAbility(basilisk, attacker);
@@ -77,11 +116,39 @@ class SimicBasiliskTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        addReadyCreature(player2, new GiantSpider());
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, attacker, player2, blocker);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("The activated ability can target an opponent's creature with a +1/+1 counter")
+    void grantsCombatDamageDestructionToOpponentCreature() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent blocker = addCreatureReady(player1, new GiantSpider());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        activateAbility(basilisk, attacker);
+        resolveBlockedCombat(player2, attacker, player1, blocker);
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("The activated ability does nothing if its target loses its counter before resolution")
+    void targetMustStillHaveCounterOnResolution() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        activateAbilityWithoutResolution(basilisk, attacker);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, attacker, player2, blocker);
 
         harness.assertOnBattlefield(player2, "Giant Spider");
     }
@@ -89,8 +156,8 @@ class SimicBasiliskTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature without a +1/+1 counter")
     void cannotTargetCreatureWithoutCounter() {
-        Permanent basilisk = addReadyCreature(player1, new SimicBasilisk());
-        Permanent target = addReadyCreature(player1, new GrizzlyBears());
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -104,7 +171,44 @@ class SimicBasiliskTest extends BaseCardTest {
                 .hasMessageContaining("counter");
     }
 
-    private void activateAbility(Permanent basilisk, Permanent target) {
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with a +1/+1 counter")
+    void cannotTargetNoncreatureWithCounter() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        signet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int basiliskIndex = gd.playerBattlefields.get(player1.getId()).indexOf(basilisk);
+        assertThatThrownBy(() -> harness.activateAbility(player1, basiliskIndex, null, signet.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    private Permanent addReadyBasilisk(Player player) {
+        Permanent basilisk = harness.enterBattlefieldAndReturn(player, new SimicBasilisk());
+        basilisk.setSummoningSick(false);
+        return basilisk;
+    }
+
+    private void resolveBlockedCombat(Player activePlayer, Permanent attacker,
+                                      Player defendingPlayer, Permanent blocker) {
+        int attackerIndex = gd.playerBattlefields.get(activePlayer.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(defendingPlayer.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(activePlayer, List.of(attackerIndex));
+        gs.declareBlockers(gd, defendingPlayer,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        resolveCombat(activePlayer);
+        resolveAllTriggers();
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    private void activateAbilityWithoutResolution(Permanent basilisk, Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -112,12 +216,10 @@ class SimicBasiliskTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int basiliskIndex = gd.playerBattlefields.get(player1.getId()).indexOf(basilisk);
         harness.activateAbility(player1, basiliskIndex, null, target.getId());
-        harness.passBothPriorities();
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
+    private void activateAbility(Permanent basilisk, Permanent target) {
+        activateAbilityWithoutResolution(basilisk, target);
+        harness.passBothPriorities();
     }
 }

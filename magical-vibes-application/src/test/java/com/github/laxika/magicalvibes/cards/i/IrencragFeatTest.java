@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,7 +64,7 @@ class IrencragFeatTest extends BaseCardTest {
     void restrictionIsClearedAtEndOfTurn() {
         gd.playersMaxSpellsThisTurn.put(player1.getId(), 2);
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
     }
