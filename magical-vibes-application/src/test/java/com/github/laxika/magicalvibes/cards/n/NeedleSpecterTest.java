@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CreakwoodGhoul;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NeedleSpecter.class, CreakwoodGhoul.class})
 class NeedleSpecterTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,7 @@ class NeedleSpecterTest extends BaseCardTest {
         // Two +1/+1 counters make the 1/1 Specter deal 3 combat damage.
         Permanent specter = addAttackingSpecter(player1);
         specter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest(), new Forest())));
+        harness.setHand(player2, List.of(new CreakwoodGhoul(), new CreakwoodGhoul(), new CreakwoodGhoul()));
 
         resolveCombatAndTrigger();
 
@@ -45,7 +45,7 @@ class NeedleSpecterTest extends BaseCardTest {
     void discardsLimitedByHandSize() {
         Permanent specter = addAttackingSpecter(player1);
         specter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // deals 3
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new CreakwoodGhoul()));
 
         resolveCombatAndTrigger();
 
@@ -61,10 +61,10 @@ class NeedleSpecterTest extends BaseCardTest {
     @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         addAttackingSpecter(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CreakwoodGhoul());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player2, List.of(new CreakwoodGhoul()));
 
         resolveCombatAndTrigger();
 
@@ -82,6 +82,6 @@ class NeedleSpecterTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities(); // resolve what combat damage triggered
+        resolveAllTriggers();
     }
 }
