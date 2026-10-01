@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      file: review-db/changelog/001-review-schema.sql
