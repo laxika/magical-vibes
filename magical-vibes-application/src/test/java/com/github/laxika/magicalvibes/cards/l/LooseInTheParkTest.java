@@ -56,7 +56,7 @@ class LooseInTheParkTest extends BaseCardTest {
         gd.addToExile(player1.getId(), drafted, aura.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
         harness.passBothPriorities();
 
         assertThat(forest.getCard().getName()).isEqualTo("Exuberant Wolfbear");
