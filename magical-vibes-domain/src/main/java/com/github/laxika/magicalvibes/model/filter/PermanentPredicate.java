@@ -86,6 +86,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasProtectionFromColorPredicate,
         PermanentHasLeastPowerAmongAllCreaturesPredicate,
         PermanentHasLeastPowerAmongControllerCreaturesPredicate,
+        PermanentHasLeastToughnessAmongOpponentCreaturesPredicate,
         PermanentHasSameNameAsSourcePredicate,
         PermanentHasSourceChosenNamePredicate,
         PermanentHasSourceChosenColorPredicate,

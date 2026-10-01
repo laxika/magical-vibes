@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.s.SuddenDeath;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Evangelize.class, GrizzlyBears.class})
+@CardUsed({Evangelize.class, BenalishCavalry.class, SuddenDeath.class})
 class EvangelizeTest extends BaseCardTest {
 
     private void addEvangelizeMana() {
@@ -25,8 +26,10 @@ class EvangelizeTest extends BaseCardTest {
     @Test
     @DisplayName("The caster chooses an opponent, then that opponent chooses the creature")
     void opponentChoosesCreatureTarget() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        Permanent otherOpponentCreature =
+                harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         harness.setHand(player1, List.of(new Evangelize()));
         addEvangelizeMana();
 
@@ -42,7 +45,8 @@ class EvangelizeTest extends BaseCardTest {
         PendingInteraction.PermanentChoice creatureChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(creatureChoice.playerId()).isEqualTo(player2.getId());
-        assertThat(creatureChoice.validIds()).containsExactly(opponentCreature.getId());
+        assertThat(creatureChoice.validIds()).containsExactly(
+                opponentCreature.getId(), otherOpponentCreature.getId());
 
         harness.handlePermanentChosen(player2, opponentCreature.getId());
 
@@ -51,13 +55,43 @@ class EvangelizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentCreature).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(opponentCreature)
+                .contains(otherOpponentCreature);
+        harness.assertInGraveyard(player1, "Evangelize");
+    }
+
+    @Test
+    @DisplayName("Evangelize fizzles if the chosen creature leaves before resolution")
+    void chosenCreatureLeavingBeforeResolutionFizzles() {
+        Permanent opponentCreature =
+                harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        harness.setHand(player1, List.of(new Evangelize()));
+        addEvangelizeMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player2, opponentCreature.getId());
+
+        harness.setHand(player2, List.of(new SuddenDeath()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, opponentCreature.getId());
+        harness.passBothPriorities();
+
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(opponentCreature);
+        harness.assertInGraveyard(player1, "Evangelize");
     }
 
     @Test
     @DisplayName("Buyback returns Evangelize after it resolves")
     void buybackReturnsToHand() {
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentCreature =
+                harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         harness.setHand(player1, List.of(new Evangelize()));
         addEvangelizeMana();
 

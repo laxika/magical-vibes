@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OakgnarlWarrior;
 import com.github.laxika.magicalvibes.cards.p.PloverKnights;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({QuillSlingerBoggart.class, PloverKnights.class, OakgnarlWarrior.class})
 class QuillSlingerBoggartTest extends BaseCardTest {
 
     private void giveKithkinSpell(com.github.laxika.magicalvibes.model.Player caster) {
@@ -46,9 +48,7 @@ class QuillSlingerBoggartTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
@@ -64,9 +64,7 @@ class QuillSlingerBoggartTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
@@ -75,8 +73,8 @@ class QuillSlingerBoggartTest extends BaseCardTest {
     @DisplayName("Casting a non-Kithkin spell does not trigger the ability")
     void nonKithkinDoesNotTrigger() {
         harness.addToBattlefield(player1, new QuillSlingerBoggart());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new OakgnarlWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
 

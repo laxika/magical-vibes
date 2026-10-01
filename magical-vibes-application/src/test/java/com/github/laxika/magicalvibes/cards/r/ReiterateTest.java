@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.o.OrcishCannonade;
+import com.github.laxika.magicalvibes.cards.r.RiftBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,69 +11,91 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reiterate.class, CounselOfTheSoratami.class, GrizzlyBears.class})
+@CardUsed({Reiterate.class, RiftBolt.class, BenalishCavalry.class, OrcishCannonade.class})
 class ReiterateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Copies a target instant or sorcery spell")
     void copiesTargetInstantOrSorcerySpell() {
-        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        Reiterate reiterate = new Reiterate();
-        harness.setHand(player1, List.of(counsel, reiterate));
+        RiftBolt riftBolt = new RiftBolt();
+        harness.setHand(player1, List.of(riftBolt, new Reiterate()));
         addReiterateMana(false);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.castInstant(player1, 0, counsel.getId());
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, riftBolt.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(reiterate.getId()));
+        harness.assertInGraveyard(player1, "Reiterate");
     }
 
     @Test
     @DisplayName("Buyback returns Reiterate to its owner's hand when it resolves")
     void buybackReturnsToHand() {
-        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        Reiterate reiterate = new Reiterate();
-        harness.setHand(player1, List.of(counsel, reiterate));
+        RiftBolt riftBolt = new RiftBolt();
+        harness.setHand(player1, List.of(riftBolt, new Reiterate()));
         addReiterateMana(true);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.castInstantWithBuyback(player1, 0, counsel.getId());
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.castInstantWithBuyback(player1, 0, riftBolt.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(reiterate.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(reiterate.getId()));
+        harness.assertInHand(player1, "Reiterate");
+        harness.assertNotInGraveyard(player1, "Reiterate");
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
     }
 
     @Test
     @DisplayName("Cannot target a creature spell")
     void cannotTargetCreatureSpell() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears, new Reiterate()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        BenalishCavalry cavalry = new BenalishCavalry();
+        harness.setHand(player1, List.of(cavalry, new Reiterate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, cavalry.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A copy may choose a new target and resolve independently")
+    void copyMayChooseNewTarget() {
+        OrcishCannonade cannonade = new OrcishCannonade();
+        harness.setHand(player1, List.of(cannonade, new Reiterate()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, cannonade.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        StackEntry copy = gd.stack.stream().filter(StackEntry::isCopy).findFirst().orElseThrow();
+        assertThat(copy.getTargetId()).isEqualTo(player1.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addReiterateMana(boolean buyback) {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.COLORLESS, buyback ? 6 : 3);
     }
 }

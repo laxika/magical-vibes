@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeafGilder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ColfenorsPlans.class, Forest.class, LeafGilder.class})
 class ColfenorsPlansTest extends BaseCardTest {
 
     // ===== ETB — exile top 7 of controller's library =====
@@ -23,10 +25,9 @@ class ColfenorsPlansTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles the top 7 cards of the controller's library (only) to itself")
     void etbExilesTopSevenOfControllersLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < 8; i++) library.add(new Forest());
-        gd.playerDecks.get(player1.getId()).addAll(library);
+        harness.setLibrary(player1, library);
 
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -74,7 +75,7 @@ class ColfenorsPlansTest extends BaseCardTest {
     @DisplayName("Controller can't cast a second spell in a turn")
     void controllerLimitedToOneSpell() {
         harness.addToBattlefield(player1, new ColfenorsPlans());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LeafGilder(), new LeafGilder()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.forceActivePlayer(player1);
@@ -93,7 +94,7 @@ class ColfenorsPlansTest extends BaseCardTest {
     @DisplayName("Opponent is not restricted by Colfenor's Plans")
     void opponentNotRestricted() {
         harness.addToBattlefield(player1, new ColfenorsPlans());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new LeafGilder(), new LeafGilder()));
         harness.addMana(player2, ManaColor.GREEN, 4);
 
         harness.forceActivePlayer(player2);
@@ -117,7 +118,7 @@ class ColfenorsPlansTest extends BaseCardTest {
         UUID permId = harness.getPermanentId(player1, "Colfenor's Plans");
 
         Card exiledLand = new Forest();
-        Card exiledCreature = new GrizzlyBears();
+        Card exiledCreature = new LeafGilder();
         gd.addToExile(player1.getId(), exiledLand, permId);
         gd.addToExile(player1.getId(), exiledCreature, permId);
 
@@ -126,15 +127,34 @@ class ColfenorsPlansTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Play the land from exile — no longer in exile, now on battlefield.
-        gs.playCardFromExile(gd, player1, exiledLand.getId(), null, null);
+        harness.castFromExile(player1, exiledLand.getId());
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.getCardsExiledByPermanent(permId))
                 .noneMatch(c -> c.getId().equals(exiledLand.getId()));
 
         // Cast the creature from exile — put it on the stack and resolve it.
         harness.addMana(player1, ManaColor.GREEN, 2);
-        gs.playCardFromExile(gd, player1, exiledCreature.getId(), null, null);
+        harness.castFromExile(player1, exiledCreature.getId());
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Leaf Gilder");
+    }
+
+    @Test
+    @DisplayName("Controller may cast a face-down spell exiled with Colfenor's Plans")
+    void castsFaceDownSpellExiledWithPlans() {
+        harness.addToBattlefield(player1, new ColfenorsPlans());
+        UUID permId = harness.getPermanentId(player1, "Colfenor's Plans");
+        Card exiledCreature = new LeafGilder();
+        gd.addToExile(player1.getId(), exiledCreature, permId, true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castFromExile(player1, exiledCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Leaf Gilder");
     }
 }

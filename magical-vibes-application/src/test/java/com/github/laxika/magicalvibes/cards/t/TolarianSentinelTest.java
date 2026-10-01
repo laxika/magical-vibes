@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,17 +11,18 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TolarianSentinel.class, GrizzlyBears.class, Island.class})
+@CardUsed({TolarianSentinel.class, AshcoatBear.class, Island.class})
 class TolarianSentinelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {U}, tapping, and discarding a card returns a permanent you control to its owner's hand")
     void returnsOwnPermanentToHand() {
-        addReadySentinel();
+        addCreatureReady(player1, new TolarianSentinel());
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AshcoatBear()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Island"));
@@ -29,16 +30,99 @@ class TolarianSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Island");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
         harness.assertOnBattlefield(player1, "Tolarian Sentinel");
+    }
+
+    @Test
+    @DisplayName("Activation pays blue mana, taps Tolarian Sentinel, and discards the chosen card")
+    void paysActivationCost() {
+        Permanent sentinel = addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(sentinel.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without blue mana")
+    void cannotActivateWithoutBlueMana() {
+        Permanent sentinel = addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(sentinel.isTapped()).isFalse();
+        harness.assertInHand(player1, "Ashcoat Bear");
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Tolarian Sentinel is tapped")
+    void cannotActivateWhenTapped() {
+        Permanent sentinel = addCreatureReady(player1, new TolarianSentinel());
+        sentinel.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertInHand(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Tolarian Sentinel has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new TolarianSentinel());
+        sentinel.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
+
+        assertThat(sentinel.isTapped()).isFalse();
+        harness.assertInHand(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Can return Tolarian Sentinel itself to its owner's hand")
+    void canReturnItselfToHand() {
+        Permanent sentinel = addCreatureReady(player1, new TolarianSentinel());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, sentinel.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tolarian Sentinel");
+        harness.assertNotOnBattlefield(player1, "Tolarian Sentinel");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
     }
 
     @Test
     @DisplayName("Cannot target a permanent an opponent controls")
     void cannotTargetOpponentsPermanent() {
-        addReadySentinel();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new AshcoatBear()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -49,7 +133,7 @@ class TolarianSentinelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a card to discard")
     void cannotActivateWithoutCardToDiscard() {
-        addReadySentinel();
+        addCreatureReady(player1, new TolarianSentinel());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -58,9 +142,25 @@ class TolarianSentinelTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addReadySentinel() {
-        Permanent sentinel = new Permanent(new TolarianSentinel());
-        sentinel.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sentinel);
+    @Test
+    @DisplayName("Ability fizzles if the target is no longer controlled by its controller")
+    void fizzlesIfTargetChangesController() {
+        addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
+
 }

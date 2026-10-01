@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DrownerInitiate.class, BriarberryCohort.class, SafeholdSentry.class})
 class DrownerInitiateTest extends BaseCardTest {
 
     private static void trimDeck(List<Card> deck) {
@@ -28,15 +30,12 @@ class DrownerInitiateTest extends BaseCardTest {
     @DisplayName("Blue spell cast, pay {1}, target opponent mills two cards")
     void blueSpellPayMillsOpponent() {
         harness.addToBattlefield(player1, new DrownerInitiate());
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);      // Fugitive Wizard's {U}
         harness.addMana(player1, ManaColor.COLORLESS, 1); // the {1} to pay
+        harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         trimDeck(deck);
         int deckSizeBefore = deck.size();
-
-        harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -53,11 +52,9 @@ class DrownerInitiateTest extends BaseCardTest {
     @DisplayName("Declining the payment mills nothing")
     void declineNoMill() {
         harness.addToBattlefield(player1, new DrownerInitiate());
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
 
-        harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -77,14 +74,11 @@ class DrownerInitiateTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new FugitiveWizard()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castFromHand(player2, new BriarberryCohort(), "{1}{U}");
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         trimDeck(deck);
         int deckSizeBefore = deck.size();
-
-        harness.castCreature(player2, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -101,14 +95,28 @@ class DrownerInitiateTest extends BaseCardTest {
     @DisplayName("Non-blue spell does not trigger")
     void nonBlueSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new DrownerInitiate());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SafeholdSentry(), "{1}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana mills nothing")
+    void insufficientManaNoMill() {
+        harness.addToBattlefield(player1, new DrownerInitiate());
+        List<Card> deck = gd.playerDecks.get(player2.getId());
+        int deckSizeBefore = deck.size();
+
+        harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

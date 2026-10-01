@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SigilTracer.class, Boomerang.class, CounselOfTheSoratami.class,
+        FugitiveWizard.class, GrizzlyBears.class})
 class SigilTracerTest extends BaseCardTest {
 
     private int prepareTracer(int extraWizards) {
-        Permanent tracer = new Permanent(new SigilTracer());
-        tracer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(tracer);
+        Permanent tracer = addCreatureReady(player2, new SigilTracer());
         for (int i = 0; i < extraWizards; i++) {
-            Permanent wiz = new Permanent(new FugitiveWizard());
-            wiz.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(wiz);
+            addCreatureReady(player2, new FugitiveWizard());
         }
         harness.addMana(player2, ManaColor.BLUE, 2);
         return gd.playerBattlefields.get(player2.getId()).indexOf(tracer);
@@ -47,12 +47,10 @@ class SigilTracerTest extends BaseCardTest {
     @DisplayName("Copies target sorcery onto the stack and taps two Wizards")
     void copiesTargetSorcery() {
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        harness.setHand(player1, List.of(counsel));
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int tracerIdx = prepareTracer(1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, counsel, "{2}{U}");
         harness.passPriority(player1);
 
         harness.activateAbility(player2, tracerIdx, null, counsel.getId());
@@ -80,12 +78,10 @@ class SigilTracerTest extends BaseCardTest {
     @DisplayName("Copy of a draw sorcery makes the ability's controller draw")
     void copyDrawsForController() {
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        harness.setHand(player1, List.of(counsel));
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int tracerIdx = prepareTracer(1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, counsel, "{2}{U}");
         harness.passPriority(player1);
 
         int p2HandBefore = gd.playerHands.get(player2.getId()).size();
@@ -105,12 +101,10 @@ class SigilTracerTest extends BaseCardTest {
     @DisplayName("Cannot target a creature spell")
     void cannotTargetCreatureSpell() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         int tracerIdx = prepareTracer(1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, tracerIdx, null, bears.getId()))
@@ -121,15 +115,43 @@ class SigilTracerTest extends BaseCardTest {
     @DisplayName("Cannot activate without a second untapped Wizard")
     void cannotActivateWithOnlyOneWizard() {
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        harness.setHand(player1, List.of(counsel));
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int tracerIdx = prepareTracer(0);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, counsel, "{2}{U}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, tracerIdx, null, counsel.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Copies an instant and can retarget the copy")
+    void copiesAndRetargetsInstant() {
+        Permanent originalTarget = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newTarget = addCreatureReady(player1, new GrizzlyBears());
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        int tracerIdx = prepareTracer(1);
+
+        harness.castInstant(player1, 0, originalTarget.getId());
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, tracerIdx, null, boomerang.getId());
+        tapWizards(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, newTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(originalTarget.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(newTarget.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(newTarget.getCard().getId()));
     }
 }

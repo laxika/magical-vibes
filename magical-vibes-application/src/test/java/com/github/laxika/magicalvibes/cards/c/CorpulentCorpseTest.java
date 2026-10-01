@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
+import com.github.laxika.magicalvibes.cards.s.StuffyDoll;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CorpulentCorpse.class, GrizzlyBears.class})
+@CardUsed({CorpulentCorpse.class, HavenwoodWurm.class, StuffyDoll.class})
 class CorpulentCorpseTest extends BaseCardTest {
 
     @Test
@@ -51,25 +51,55 @@ class CorpulentCorpseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the suspend cast leaves Corpulent Corpse in exile")
+    void decliningLastCounterCastLeavesCardExiled() {
+        CorpulentCorpse card = suspendCard();
+
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
+                permanent -> permanent.getCard() == card);
+    }
+
+    @Test
     @DisplayName("Fear prevents a nonblack nonartifact creature from blocking Corpulent Corpse")
     void fearPreventsNonblackNonartifactBlocker() {
-        Permanent attacker = new Permanent(new CorpulentCorpse());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CorpulentCorpse());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new HavenwoodWurm());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(fear)");
+    }
+
+    @Test
+    @DisplayName("Fear allows black and artifact creatures to block Corpulent Corpse")
+    void fearAllowsBlackAndArtifactBlockers() {
+        Permanent attacker = addCreatureReady(player1, new CorpulentCorpse());
+        attacker.setAttacking(true);
+
+        Permanent blackBlocker = addCreatureReady(player2, new CorpulentCorpse());
+        Permanent artifactBlocker = addCreatureReady(player2, new StuffyDoll());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(blackBlocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(artifactBlocker.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
 
     private CorpulentCorpse suspendCard() {

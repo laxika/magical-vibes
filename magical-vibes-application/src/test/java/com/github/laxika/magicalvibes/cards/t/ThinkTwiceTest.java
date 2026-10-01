@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThinkTwice.class})
 class ThinkTwiceTest extends BaseCardTest {
 
     // ===== Card properties =====
@@ -35,11 +37,7 @@ class ThinkTwiceTest extends BaseCardTest {
     @Test
     @DisplayName("Casting draws one card")
     void castingDrawsOneCard() {
-        harness.setHand(player1, List.of(new ThinkTwice()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ThinkTwice(), "{1}{U}");
         harness.passBothPriorities();
 
         // Hand had 1 card (Think Twice), cast it (0 cards), drew 1 card from effect
@@ -49,11 +47,7 @@ class ThinkTwiceTest extends BaseCardTest {
     @Test
     @DisplayName("Goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new ThinkTwice()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ThinkTwice(), "{1}{U}");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Think Twice");
@@ -70,8 +64,7 @@ class ThinkTwiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
@@ -83,8 +76,7 @@ class ThinkTwiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertNotInGraveyard(player1, "Think Twice");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

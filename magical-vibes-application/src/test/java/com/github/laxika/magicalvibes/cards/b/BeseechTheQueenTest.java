@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GoldenglowMoth;
+import com.github.laxika.magicalvibes.cards.k.KulrathKnight;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,6 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BeseechTheQueen.class, Plains.class, GoldenglowMoth.class,
+        BriarberryCohort.class, KulrathKnight.class})
 class BeseechTheQueenTest extends BaseCardTest {
 
     // ===== Mana-value bound driven by lands controlled =====
@@ -34,11 +35,11 @@ class BeseechTheQueenTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        // Library: Plains (MV 0), LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5).
-        // 2 lands controlled → MV <= 2: Plains, Llanowar Elves, Grizzly Bears. The land IS eligible
+        // Library: Plains (MV 0), Goldenglow Moth (MV 1), Briarberry Cohort (MV 2), Kulrath Knight (MV 5).
+        // 2 lands controlled → MV <= 2: Plains, Goldenglow Moth, Briarberry Cohort. The land IS eligible
         // (null filter = any card), unlike Citanul Flute / Green Sun's Zenith which filter by type.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Plains", "Llanowar Elves", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Plains", "Goldenglow Moth", "Briarberry Cohort");
     }
 
     @Test
@@ -51,7 +52,7 @@ class BeseechTheQueenTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Plains", "Llanowar Elves", "Grizzly Bears", "Air Elemental");
+                .containsExactlyInAnyOrder("Plains", "Goldenglow Moth", "Briarberry Cohort", "Kulrath Knight");
     }
 
     @Test
@@ -66,6 +67,24 @@ class BeseechTheQueenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName())
                 .isEqualTo("Plains");
+    }
+
+    @Test
+    @DisplayName("Only the caster's lands count toward the bound")
+    void countsOnlyLandsControlledByCaster() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new Plains());
+        }
+        harness.addToBattlefield(player1, new BriarberryCohort());
+        castBeseech(0);
+        harness.setLibrary(player1, List.of(new GoldenglowMoth()));
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("finds no card with mana value"));
     }
 
     // ===== Choosing / revealing =====
@@ -85,7 +104,7 @@ class BeseechTheQueenTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -107,7 +126,7 @@ class BeseechTheQueenTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
@@ -123,7 +142,7 @@ class BeseechTheQueenTest extends BaseCardTest {
 
         List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears())); // lowest MV is 1
+        deck.addAll(List.of(new GoldenglowMoth(), new BriarberryCohort())); // lowest MV is 1
 
         harness.passBothPriorities();
 
@@ -146,7 +165,7 @@ class BeseechTheQueenTest extends BaseCardTest {
     private void setupLibrary() {
         List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
         deck.clear();
-        // Plains: MV 0 (land), LlanowarElves: MV 1, GrizzlyBears: MV 2, AirElemental: MV 5
-        deck.addAll(List.of(new Plains(), new LlanowarElves(), new GrizzlyBears(), new AirElemental()));
+        // Plains: MV 0 (land), Goldenglow Moth: MV 1, Briarberry Cohort: MV 2, Kulrath Knight: MV 5
+        deck.addAll(List.of(new Plains(), new GoldenglowMoth(), new BriarberryCohort(), new KulrathKnight()));
     }
 }

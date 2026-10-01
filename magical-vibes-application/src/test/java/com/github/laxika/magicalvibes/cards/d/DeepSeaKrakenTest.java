@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.w.WipeAway;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,20 +18,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeepSeaKraken.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DeepSeaKraken.class, AshcoatBear.class, WipeAway.class})
 class DeepSeaKrakenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deep-Sea Kraken cannot be blocked")
     void cannotBeBlocked() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
 
-        Permanent attacker = new Permanent(new DeepSeaKraken());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DeepSeaKraken());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -43,6 +41,28 @@ class DeepSeaKrakenTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("After the last time counter, Deep-Sea Kraken may be cast for free with haste")
+    void lastTimeCounterOffersFreeHastyCast() {
+        DeepSeaKraken card = suspendCard();
+
+        for (int i = 0; i < 9; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent kraken = findPermanent(player1, "Deep-Sea Kraken");
+        assertThat(kraken.getCard()).isSameAs(card);
+        assertThat(kraken.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -64,14 +84,15 @@ class DeepSeaKrakenTest extends BaseCardTest {
     @DisplayName("An opponent casting a spell removes a time counter while Deep-Sea Kraken is suspended")
     void opponentSpellRemovesTimeCounter() {
         DeepSeaKraken card = suspendCard();
+        Permanent target = addCreatureReady(player1, new AshcoatBear());
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new WipeAway()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 8);
     }
@@ -80,14 +101,15 @@ class DeepSeaKrakenTest extends BaseCardTest {
     @DisplayName("Deep-Sea Kraken does not trigger when its owner casts a spell")
     void ownerSpellDoesNotRemoveTimeCounter() {
         DeepSeaKraken card = suspendCard();
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new WipeAway()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
     }

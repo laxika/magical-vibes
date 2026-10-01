@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GustcloakCavalier.class, GrizzlyBears.class})
+@CardUsed({GustcloakCavalier.class, AshcoatBear.class, BenalishCavalry.class})
 class GustcloakCavalierTest extends BaseCardTest {
 
     @Test
@@ -54,8 +55,7 @@ class GustcloakCavalierTest extends BaseCardTest {
         cavalier.setAttackTarget(player2.getId());
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(cavalier.isTapped()).isFalse();
@@ -75,8 +75,7 @@ class GustcloakCavalierTest extends BaseCardTest {
         cavalier.setAttackTarget(player2.getId());
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(cavalier.isTapped()).isTrue();
@@ -84,11 +83,68 @@ class GustcloakCavalierTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Flanking gives a non-flanking blocker -1/-1 until end of turn")
+    void flankingWeakensNonFlankingBlocker() {
+        Permanent cavalier = addCavalier();
+        cavalier.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flanking does not weaken a blocker that also has flanking")
+    void flankingLeavesFlankingBlockerUntouched() {
+        Permanent cavalier = addCavalier();
+        cavalier.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BenalishCavalry());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Becoming blocked by multiple creatures still creates one may choice")
+    void multipleBlockersCreateOneBecomesBlockedChoice() {
+        Permanent cavalier = addCavalier();
+        cavalier.tap();
+        cavalier.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new BenalishCavalry());
+        Permanent secondBlocker = addCreatureReady(player2, new BenalishCavalry());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cavalier.isTapped()).isFalse();
+        assertThat(cavalier.isAttacking()).isFalse();
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
     private Permanent addCavalier() {
         return addCreatureReady(player1, new GustcloakCavalier());
     }
 
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new AshcoatBear());
     }
 }

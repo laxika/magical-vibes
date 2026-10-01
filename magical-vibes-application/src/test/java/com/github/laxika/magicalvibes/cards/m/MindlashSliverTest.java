@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,15 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MindlashSliver.class, BonescytheSliver.class, GrizzlyBears.class})
+@CardUsed({MindlashSliver.class, BonesplitterSliver.class, BenalishCavalry.class})
 class MindlashSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Mindlash Sliver's ability sacrifices itself and makes each player discard")
     void sacrificesItselfAndEachPlayerDiscards() {
         Permanent mindlash = addCreatureReady(player1, new MindlashSliver());
-        GrizzlyBears player1Card = new GrizzlyBears();
-        GrizzlyBears player2Card = new GrizzlyBears();
+        BenalishCavalry player1Card = new BenalishCavalry();
+        BenalishCavalry player2Card = new BenalishCavalry();
         harness.setHand(player1, List.of(player1Card));
         harness.setHand(player2, List.of(player2Card));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -45,9 +45,9 @@ class MindlashSliverTest extends BaseCardTest {
     @DisplayName("Mindlash Sliver grants the ability to another Sliver")
     void grantsAbilityToAnotherSliver() {
         harness.addToBattlefield(player1, new MindlashSliver());
-        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent otherSliver = addCreatureReady(player1, new BonesplitterSliver());
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.setHand(player2, List.of(new BenalishCavalry()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 1, null, null);
@@ -64,9 +64,9 @@ class MindlashSliverTest extends BaseCardTest {
     @DisplayName("Mindlash Sliver grants the ability to an opposing Sliver")
     void grantsAbilityToOpposingSliver() {
         harness.addToBattlefield(player1, new MindlashSliver());
-        Permanent opposingSliver = addCreatureReady(player2, new BonescytheSliver());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent opposingSliver = addCreatureReady(player2, new BonesplitterSliver());
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.setHand(player2, List.of(new BenalishCavalry()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
 
@@ -84,7 +84,7 @@ class MindlashSliverTest extends BaseCardTest {
     @DisplayName("Mindlash Sliver does not grant the ability to non-Sliver creatures")
     void doesNotGrantAbilityToNonSlivers() {
         harness.addToBattlefield(player1, new MindlashSliver());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BenalishCavalry());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

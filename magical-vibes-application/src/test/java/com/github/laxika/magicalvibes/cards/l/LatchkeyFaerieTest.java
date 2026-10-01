@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(LatchkeyFaerie.class)
 class LatchkeyFaerieTest extends BaseCardTest {
 
     @Test
@@ -29,7 +30,7 @@ class LatchkeyFaerieTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Latchkey Faerie");
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Latchkey Faerie");
     }
 
     @Test
@@ -44,7 +45,7 @@ class LatchkeyFaerieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Latchkey Faerie");
     }
 
     @Test
@@ -52,8 +53,7 @@ class LatchkeyFaerieTest extends BaseCardTest {
     void normalCastDoesNotDraw() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new LatchkeyFaerie()));
 
         harness.setHand(player1, List.of(new LatchkeyFaerie()));
         harness.addMana(player1, ManaColor.BLUE, 4); // normal {3}{U}
@@ -63,7 +63,7 @@ class LatchkeyFaerieTest extends BaseCardTest {
         // No prowl cost paid — the intervening-if ETB trigger never goes on the stack.
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Latchkey Faerie");
-        harness.assertNotInHand(player1, "Forest");
+        harness.assertNotInHand(player1, "Latchkey Faerie");
     }
 
     @Test
@@ -85,7 +85,6 @@ class LatchkeyFaerieTest extends BaseCardTest {
         gd.combatDamageToPlayerControllerSubtypesThisTurn
                 .computeIfAbsent(player1.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(subtype);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new LatchkeyFaerie()));
     }
 }

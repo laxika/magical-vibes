@@ -1,35 +1,38 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.o.OneEyedScarecrow;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BoggartArsonists.class, BlazethornScarecrow.class, Plains.class, Island.class})
 class BoggartArsonistsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing to destroy a target Scarecrow removes both permanents")
     void destroysTargetScarecrow() {
         Permanent arsonists = addReadyArsonists(player1);
-        Permanent scarecrow = addCreatureReady(player2, new OneEyedScarecrow());
+        Permanent scarecrow = addCreatureReady(player2, new BlazethornScarecrow());
         addManaForAbility(player1);
 
         harness.activateAbility(player1, 0, null, scarecrow.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arsonists);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(scarecrow);
         harness.assertInGraveyard(player1, "Boggart Arsonists");
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(scarecrow);
-        harness.assertInGraveyard(player2, "One-Eyed Scarecrow");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Blazethorn Scarecrow");
+        harness.assertInGraveyard(player2, "Blazethorn Scarecrow");
     }
 
     @Test
@@ -50,10 +53,10 @@ class BoggartArsonistsTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Scarecrow creature")
     void cannotTargetNonScarecrowCreature() {
         addReadyArsonists(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent arsonists = addReadyArsonists(player2);
         addManaForAbility(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, arsonists.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

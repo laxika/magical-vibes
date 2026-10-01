@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,20 @@ class IgniteMemoriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals no damage when the target player's hand is empty")
+    void dealsNoDamageWhenTargetPlayersHandIsEmpty() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new IgniteMemories()));
+        harness.setHand(player2, List.of());
+        addIgniteMemoriesMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveSpellAndStorm();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Storm copies Ignite Memories for each spell cast before it")
     void stormCopiesSpellForEachPriorSpell() {
         harness.setLife(player2, 20);
@@ -43,6 +58,28 @@ class IgniteMemoriesTest extends BaseCardTest {
         resolveSpellAndStorm();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Storm copies may choose a new target player")
+    void stormCopyMayChooseNewTargetPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new IgniteMemories(), new IgniteMemories()));
+        harness.setHand(player2, List.of(new IgniteMemories()));
+        gd.recordSpellCast(player1.getId(), new IgniteMemories());
+        addIgniteMemoriesMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
     @Test
@@ -63,11 +100,11 @@ class IgniteMemoriesTest extends BaseCardTest {
     }
 
     private void resolveSpellAndStorm() {
-        for (int i = 0; i < 10 && !gd.stack.isEmpty(); i++) {
+        while (!gd.stack.isEmpty()) {
             if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
                 harness.handleMayAbilityChosen(player1, false);
             } else {
-                harness.passBothPriorities();
+                resolveAllTriggers();
             }
         }
     }

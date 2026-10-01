@@ -14,7 +14,8 @@ public record CastCardFromGraveyardEffect(
         GraveyardSearchScope scope,
         CardPredicate exileInsteadOfGraveyardFilter,
         boolean allowAdventure,
-        boolean withoutPayingManaCost
+        boolean withoutPayingManaCost,
+        CardEffect afterSuccessfulCastEffect
 ) implements CardEffect {
 
     public CastCardFromGraveyardEffect(
@@ -22,7 +23,16 @@ public record CastCardFromGraveyardEffect(
             GraveyardSearchScope scope,
             CardPredicate exileInsteadOfGraveyardFilter,
             boolean allowAdventure) {
-        this(filter, scope, exileInsteadOfGraveyardFilter, allowAdventure, false);
+        this(filter, scope, exileInsteadOfGraveyardFilter, allowAdventure, false, null);
+    }
+
+    public CastCardFromGraveyardEffect(
+            CardPredicate filter,
+            GraveyardSearchScope scope,
+            CardPredicate exileInsteadOfGraveyardFilter,
+            boolean allowAdventure,
+            boolean withoutPayingManaCost) {
+        this(filter, scope, exileInsteadOfGraveyardFilter, allowAdventure, withoutPayingManaCost, null);
     }
 
     public CastCardFromGraveyardEffect {

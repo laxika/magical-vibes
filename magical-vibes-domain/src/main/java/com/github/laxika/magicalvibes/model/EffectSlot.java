@@ -79,6 +79,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,
     /** Triggers at the beginning of its owner's upkeep while this card is exiled with scream counters. */
     EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of its owner's upkeep while this card is exiled. */
+    EXILED_UPKEEP_TRIGGERED,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
     OPPONENT_UPKEEP_TRIGGERED,
@@ -722,6 +724,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  zone is {@code Zone.BATTLEFIELD}. Fires as a triggered ability (the card enters the graveyard
      *  first). Used by Spreading Algae ("return it to its owner's hand"). */
     ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers when this card is put into a graveyard from its owner's hand. Checked in
+     *  {@code GraveyardService.addCardToGraveyard} only when the source zone is {@code Zone.HAND}.
+     *  Fires as a triggered ability after the card enters the graveyard. */
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,

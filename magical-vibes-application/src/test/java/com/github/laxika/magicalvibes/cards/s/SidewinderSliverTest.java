@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SidewinderSliver.class, BonescytheSliver.class, GrizzlyBears.class})
+@CardUsed({SidewinderSliver.class, BonesplitterSliver.class, AshcoatBear.class})
 class SidewinderSliverTest extends BaseCardTest {
 
     @Test
@@ -26,7 +29,7 @@ class SidewinderSliverTest extends BaseCardTest {
     @DisplayName("Grants flanking to another Sliver you control")
     void grantsFlankingToOtherSliver() {
         addCreatureReady(player1, new SidewinderSliver());
-        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
+        Permanent otherSliver = addCreatureReady(player1, new BonesplitterSliver());
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.FLANKING)).isTrue();
     }
@@ -35,7 +38,7 @@ class SidewinderSliverTest extends BaseCardTest {
     @DisplayName("Grants flanking to an opponent's Sliver too")
     void grantsFlankingToOpponentSliver() {
         addCreatureReady(player1, new SidewinderSliver());
-        Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new BonesplitterSliver());
 
         assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.FLANKING)).isTrue();
     }
@@ -44,8 +47,24 @@ class SidewinderSliverTest extends BaseCardTest {
     @DisplayName("Does not grant flanking to a non-Sliver creature")
     void doesNotGrantToNonSliver() {
         addCreatureReady(player1, new SidewinderSliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLANKING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLANKING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted flanking gives a non-flanking blocker -1/-1")
+    void grantedFlankingShrinksNonFlankingBlocker() {
+        Permanent attacker = addCreatureReady(player1, new SidewinderSliver());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        harness.passBothPriorities();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
     }
 }

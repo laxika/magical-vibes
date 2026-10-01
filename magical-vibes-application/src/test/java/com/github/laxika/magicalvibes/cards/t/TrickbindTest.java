@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,6 +41,36 @@ class TrickbindTest extends BaseCardTest {
         findPermanent(player2, "Rod of Ruin").untap();
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The source lock expires at end of turn")
+    void sourceLockExpiresAtEndOfTurn() {
+        RodOfRuin rod = new RodOfRuin();
+        harness.addToBattlefield(player2, rod);
+        harness.setHand(player1, List.of(new Trickbind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passPriority(player2);
+
+        harness.castInstant(player1, 0, rod.getId());
+        harness.passBothPriorities();
+
+        findPermanent(player2, "Rod of Ruin").untap();
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -79,6 +110,27 @@ class TrickbindTest extends BaseCardTest {
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, gd.stack.getLast().getCard().getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Split second prevents a spell response")
+    void splitSecondPreventsSpellResponse() {
+        RodOfRuin rod = new RodOfRuin();
+        harness.addToBattlefield(player2, rod);
+        harness.setHand(player1, List.of(new Trickbind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, rod.getId());
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

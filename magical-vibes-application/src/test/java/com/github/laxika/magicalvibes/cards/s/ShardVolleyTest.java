@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.c.ChandraAblaze;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.m.MurmuringBosk;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShardVolley.class, MurmuringBosk.class, ElvishWarrior.class, ChandraAblaze.class})
 class ShardVolleyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting sacrifices a land and puts spell on the stack")
     void castSacrificesLand() {
-        Permanent land = new Permanent(new Mountain());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
 
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -29,15 +32,14 @@ class ShardVolleyTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        harness.assertNotOnBattlefield(player1, "Mountain");
-        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Murmuring Bosk");
+        harness.assertInGraveyard(player1, "Murmuring Bosk");
     }
 
     @Test
     @DisplayName("Resolving deals 3 damage to any target player")
     void resolvingDeals3DamageToPlayer() {
-        Permanent land = new Permanent(new Mountain());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
 
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -51,11 +53,9 @@ class ShardVolleyTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving deals 3 damage to a target creature")
     void resolvingDeals3DamageToCreature() {
-        Permanent land = new Permanent(new Mountain());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
 
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
 
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -63,8 +63,24 @@ class ShardVolleyTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, creature.getId(), land.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Resolving deals 3 damage to a target planeswalker")
+    void resolvingDeals3DamageToPlaneswalker() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraAblaze());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, planeswalker.getId(), land.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test
@@ -81,8 +97,7 @@ class ShardVolleyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-land permanent")
     void cannotSacrificeNonLand() {
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
 
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);

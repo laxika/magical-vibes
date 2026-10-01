@@ -1377,50 +1377,59 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,
-                                 UUID attackedTargetId, UUID triggeringPermanentId) implements PermanentChoiceContext {
+                                 UUID attackedTargetId, UUID triggeringPermanentId,
+                                 boolean rememberLastChosenMode) implements PermanentChoiceContext {
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes, UUID triggeringCardId,
                                      UUID attackedTargetId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, triggeringCardId, attackedTargetId, null);
+                    consumeModes, triggeringCardId, attackedTargetId, null, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, null, null, null, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, null, null, null, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, UUID triggeringCardId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId, null, null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, triggeringCardId, null, null, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, null, null, null);
+                    consumeModes, null, null, null, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes, UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    consumeModes, triggeringCardId, null, null);
+                    consumeModes, triggeringCardId, null, null, false);
+        }
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn,
+                                     boolean consumeModes, UUID triggeringCardId,
+                                     UUID attackedTargetId, UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                    consumeModes, triggeringCardId, attackedTargetId, triggeringPermanentId, false);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      UUID triggeringCardId) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                    false, triggeringCardId, null, null);
+                    false, triggeringCardId, null, null, false);
         }
     }
 

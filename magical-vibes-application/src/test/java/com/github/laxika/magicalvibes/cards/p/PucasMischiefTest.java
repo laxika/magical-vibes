@@ -1,23 +1,28 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
+import com.github.laxika.magicalvibes.cards.d.DeepchannelMentor;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PucasMischief.class, BriarberryCohort.class, Cursecatcher.class,
+        DeepchannelMentor.class, Forest.class})
 class PucasMischiefTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exchanges control of both permanents when accepted")
     void exchangesControlWhenAccepted() {
         harness.addToBattlefield(player1, new PucasMischief());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());   // MV 2
-        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());  // MV 1
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort()); // MV 2
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());      // MV 1
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, own.getId());  // nonland permanent you control
@@ -25,18 +30,18 @@ class PucasMischiefTest extends BaseCardTest {
         harness.passBothPriorities();                         // resolve trigger to the "may" prompt
         harness.handleMayAbilityChosen(player1, true);        // accept the exchange
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Llanowar Elves");
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Briarberry Cohort");
+        harness.assertNotOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertOnBattlefield(player1, "Cursecatcher");
+        harness.assertNotOnBattlefield(player2, "Cursecatcher");
     }
 
     @Test
     @DisplayName("No exchange when the controller declines the may ability")
     void noExchangeWhenDeclined() {
         harness.addToBattlefield(player1, new PucasMischief());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, own.getId());
@@ -44,32 +49,33 @@ class PucasMischiefTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);       // decline
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertOnBattlefield(player2, "Cursecatcher");
     }
 
     @Test
     @DisplayName("Does not trigger a choice when no legal target pair exists")
     void noLegalPairDoesNothing() {
-        // Player1's nonland permanents (Puca's Mischief MV 4, Grizzly Bears MV 2) are all below the
-        // only opponent permanent's mana value (Air Elemental MV 5), so no legal pair can be chosen.
+        // Player1's nonland permanents (Puca's Mischief MV 4, Briarberry Cohort MV 2) are all below
+        // the only opponent permanent's mana value (Deepchannel Mentor MV 6), so no legal pair can
+        // be chosen.
         harness.addToBattlefield(player1, new PucasMischief());
-        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        harness.addToBattlefieldAndReturn(player2, new DeepchannelMentor());
 
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertOnBattlefield(player2, "Deepchannel Mentor");
     }
 
     @Test
     @DisplayName("Exchange fizzles when a target leaves the battlefield before resolution")
     void exchangeFizzlesWhenTargetGone() {
         harness.addToBattlefield(player1, new PucasMischief());
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, own.getId());
@@ -80,7 +86,71 @@ class PucasMischiefTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // No exchange happened — the controller keeps their permanent.
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertNotOnBattlefield(player2, "Briarberry Cohort");
+    }
+
+    @Test
+    @DisplayName("Allows an exchange with an opponent permanent of equal mana value")
+    void exchangesEqualManaValuePermanents() {
+        harness.addToBattlefield(player1, new PucasMischief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new BriarberryCohort());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opp.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(opp.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(own.getId());
+    }
+
+    @Test
+    @DisplayName("Only offers nonland opponent permanents as the second target")
+    void onlyOffersNonlandOpponentPermanents() {
+        harness.addToBattlefield(player1, new PucasMischief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, own.getId());
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.validPermanentIds()).containsExactly(opponent.getId());
+        assertThat(opponentChoice.validPermanentIds()).doesNotContain(land.getId());
+
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(opponent.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(land.getId(), own.getId());
+    }
+
+    @Test
+    @DisplayName("Can exchange control of Puca's Mischief itself")
+    void canExchangeSourcePermanent() {
+        Permanent puca = harness.addToBattlefieldAndReturn(player1, new PucasMischief());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, puca.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(opponent.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(puca.getId());
     }
 }

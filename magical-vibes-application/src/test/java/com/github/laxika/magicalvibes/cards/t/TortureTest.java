@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
-import com.github.laxika.magicalvibes.cards.r.RysorianBadger;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.OldGhastbark;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,52 +16,52 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Torture.class, RysorianBadger.class, AysenAbbey.class})
+@CardUsed({Torture.class, OldGhastbark.class, Forest.class})
 class TortureTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Torture attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
 
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castEnchantment(player1, 0, badgerPerm.getId());
+        harness.castEnchantment(player1, 0, creaturePerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof Torture
                         && p.isAttached()
-                        && p.getAttachedTo().equals(badgerPerm.getId()));
+                        && p.getAttachedTo().equals(creaturePerm.getId()));
     }
 
     @Test
     @DisplayName("Activating ability puts a -1/-1 counter on the enchanted creature")
     void activatingPutsMinusCounter() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
-        auraPerm.setAttachedTo(badgerPerm.getId());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // Aura at index 1 (badger at 0, aura at 1)
+        // Aura at index 1 (creature at 0, aura at 1)
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(creaturePerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
-        auraPerm.setAttachedTo(badgerPerm.getId());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -76,10 +76,10 @@ class TortureTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated multiple times, stacking -1/-1 counters")
     void abilityStacksCounters() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
-        auraPerm.setAttachedTo(badgerPerm.getId());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -89,13 +89,13 @@ class TortureTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(creaturePerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Can enchant an opponent's creature and shrink it")
     void canEnchantOpponentCreature() {
-        Permanent opponentCreature = addCreatureReady(player2, new RysorianBadger());
+        Permanent opponentCreature = addCreatureReady(player2, new OldGhastbark());
 
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -105,10 +105,7 @@ class TortureTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof Torture)
-                .findFirst()
-                .orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "Torture");
         int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(auraPerm);
         harness.activateAbility(player1, auraIndex, null, null);
         harness.passBothPriorities();
@@ -119,7 +116,7 @@ class TortureTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotEnchantNoncreature() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -132,9 +129,9 @@ class TortureTest extends BaseCardTest {
     @Test
     @DisplayName("Ability does nothing when Torture is no longer attached")
     void abilityDoesNothingWhenAuraBecomesUnattached() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
-        auraPerm.setAttachedTo(badgerPerm.getId());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -142,15 +139,15 @@ class TortureTest extends BaseCardTest {
         auraPerm.setAttachedTo(null);
         harness.passBothPriorities();
 
-        assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(creaturePerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("Ability uses the last enchanted creature if Torture leaves before resolution")
     void abilityUsesLastEnchantedCreatureWhenAuraLeaves() {
-        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent creaturePerm = addCreatureReady(player1, new OldGhastbark());
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
-        auraPerm.setAttachedTo(badgerPerm.getId());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -159,6 +156,24 @@ class TortureTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
         harness.passBothPriorities();
 
-        assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(creaturePerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability affects Torture's current enchanted creature when reattached before resolution")
+    void abilityUsesCurrentEnchantedCreatureWhenAuraIsReattached() {
+        Permanent originalCreature = addCreatureReady(player1, new OldGhastbark());
+        Permanent newCreature = addCreatureReady(player1, new OldGhastbark());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
+        auraPerm.setAttachedTo(originalCreature.getId());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 2, null, null);
+        auraPerm.setAttachedTo(newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(originalCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(newCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 }
