@@ -30,6 +30,43 @@ class AbandonedCampgroundTest extends BaseCardTest {
     }
 
     @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playCampground();
+
+        assertThat(campground().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playCampground();
+
+        assertThat(campground().isTapped()).isFalse();
+    }
+
+    @Test
+    void remainsTappedWhenLifeDropsAfterEntering() {
+        playCampground();
+        assertThat(campground().isTapped()).isTrue();
+
+        harness.setLife(player2, 13);
+
+        assertThat(campground().isTapped()).isTrue();
+    }
+
+    @Test
+    void remainsUntappedWhenLifeRisesAfterEntering() {
+        harness.setLife(player1, 13);
+        playCampground();
+        assertThat(campground().isTapped()).isFalse();
+
+        harness.setLife(player1, 14);
+
+        assertThat(campground().isTapped()).isFalse();
+    }
+
+    @Test
     void entersTappedWhenNoPlayerHas13OrLessLife() {
         harness.setLife(player1, 14);
         harness.setLife(player2, 14);
@@ -64,9 +101,8 @@ class AbandonedCampgroundTest extends BaseCardTest {
     }
 
     private Permanent addReadyCampground() {
-        Permanent campground = new Permanent(new AbandonedCampground());
+        Permanent campground = harness.addToBattlefieldAndReturn(player1, new AbandonedCampground());
         campground.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(campground);
         return campground;
     }
 
