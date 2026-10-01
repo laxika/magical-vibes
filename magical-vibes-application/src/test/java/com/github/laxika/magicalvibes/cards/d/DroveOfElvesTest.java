@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
+import com.github.laxika.magicalvibes.cards.s.SilkbindFaerie;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DroveOfElves.class, DevotedDruid.class, SafeholdElite.class, SilkbindFaerie.class,
+        ManaReflection.class})
 class DroveOfElvesTest extends BaseCardTest {
 
     @Test
@@ -26,10 +29,10 @@ class DroveOfElvesTest extends BaseCardTest {
     @DisplayName("P/T equals the number of green permanents you control")
     void ptEqualsGreenPermanentCount() {
         Permanent drove = addDrove(player1);
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DevotedDruid());
+        addCreatureReady(player1, new SafeholdElite());
 
-        // itself + Llanowar Elves + Grizzly Bears = 3
+        // itself + Devoted Druid + Safehold Elite = 3
         assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, drove)).isEqualTo(3);
     }
@@ -38,7 +41,7 @@ class DroveOfElvesTest extends BaseCardTest {
     @DisplayName("Non-green permanents you control are not counted")
     void ignoresNonGreenPermanents() {
         Permanent drove = addDrove(player1);
-        harness.addToBattlefield(player1, new SuntailHawk()); // white
+        harness.addToBattlefield(player1, new SilkbindFaerie()); // blue and white
 
         assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drove)).isEqualTo(1);
@@ -48,7 +51,7 @@ class DroveOfElvesTest extends BaseCardTest {
     @DisplayName("Counts only your green permanents, not the opponent's")
     void ignoresOpponentGreenPermanents() {
         Permanent drove = addDrove(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new DevotedDruid());
 
         assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drove)).isEqualTo(1);
@@ -58,19 +61,25 @@ class DroveOfElvesTest extends BaseCardTest {
     @DisplayName("P/T updates when green permanents change")
     void ptUpdatesWhenGreenPermanentsChange() {
         Permanent drove = addDrove(player1);
-        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent devotedDruid = addCreatureReady(player1, new DevotedDruid());
         assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Llanowar Elves"));
+        gd.playerBattlefields.get(player1.getId()).remove(devotedDruid);
         assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drove)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Counts a green noncreature permanent")
+    void countsGreenNoncreaturePermanent() {
+        Permanent drove = addDrove(player1);
+        harness.addToBattlefield(player1, new ManaReflection());
+
+        assertThat(gqs.getEffectivePower(gd, drove)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, drove)).isEqualTo(2);
+    }
+
     private Permanent addDrove(Player player) {
-        Permanent permanent = new Permanent(new DroveOfElves());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new DroveOfElves());
     }
 }

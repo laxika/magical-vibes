@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.IntimidatorInitiate;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodmarkMentor.class, IntimidatorInitiate.class, SafeholdSentry.class})
 class BloodmarkMentorTest extends BaseCardTest {
 
     // ===== Grant: "Red creatures you control have first strike" =====
@@ -26,7 +28,7 @@ class BloodmarkMentorTest extends BaseCardTest {
     @DisplayName("Grants first strike to another red creature you control, and revokes it when it leaves")
     void grantsFirstStrikeToOtherRedCreature() {
         Permanent mentor = addCreatureReady(player1, new BloodmarkMentor());
-        Permanent redCreature = addCreatureReady(player1, new HillGiant());
+        Permanent redCreature = addCreatureReady(player1, new IntimidatorInitiate());
 
         assertThat(gqs.hasKeyword(gd, redCreature, Keyword.FIRST_STRIKE)).isTrue();
 
@@ -39,16 +41,16 @@ class BloodmarkMentorTest extends BaseCardTest {
     @DisplayName("Does not grant first strike to a non-red creature")
     void doesNotGrantToNonRedCreature() {
         addCreatureReady(player1, new BloodmarkMentor());
-        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonRedCreature = addCreatureReady(player1, new SafeholdSentry());
 
-        assertThat(gqs.hasKeyword(gd, greenCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonRedCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
     @DisplayName("Does not grant first strike to an opponent's red creature")
     void doesNotGrantToOpponentRedCreature() {
         addCreatureReady(player1, new BloodmarkMentor());
-        Permanent opponentRed = addCreatureReady(player2, new HillGiant());
+        Permanent opponentRed = addCreatureReady(player2, new IntimidatorInitiate());
 
         assertThat(gqs.hasKeyword(gd, opponentRed, Keyword.FIRST_STRIKE)).isFalse();
     }

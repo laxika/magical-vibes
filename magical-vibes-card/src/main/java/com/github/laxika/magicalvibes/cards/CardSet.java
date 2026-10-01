@@ -73,6 +73,7 @@ public enum CardSet {
     SET_DMU("DMU"),
     SET_YDMU("YDMU"),
     SET_BRO("BRO"),
+    SET_YBRO("YBRO"),
     SET_BRR("BRR"),
     SET_MOM("MOM"),
     SET_MAT("MAT"),

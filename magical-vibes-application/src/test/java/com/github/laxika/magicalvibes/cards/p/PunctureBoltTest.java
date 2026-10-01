@@ -1,65 +1,76 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
+import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PunctureBolt.class, BoggartRamGang.class, SafeholdSentry.class, Mountain.class,
+        Tatterkite.class})
 class PunctureBoltTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage and puts a -1/-1 counter on the target creature")
     void dealsDamageAndPutsCounter() {
-        harness.addToBattlefield(player2, new HillGiant()); // 3/3
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BoggartRamGang()); // 3/3
         harness.setHand(player1, List.of(new PunctureBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(giant.getEffectivePower()).isEqualTo(2);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(2);
-        assertThat(giant.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Kills a 2/2: -1/-1 counter plus 1 damage is lethal")
     void killsTwoTwo() {
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 -> 1/1 with 1 damage
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry()); // 2/2 -> 1/1 with 1 damage
         harness.setHand(player1, List.of(new PunctureBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Safehold Sentry");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setHand(player1, List.of(new PunctureBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID spellbookId = harness.getPermanentId(player2, "Spellbook");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, spellbookId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot put a -1/-1 counter on Tatterkite")
+    void respectsCantHaveCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tatterkite()); // 2/1
+        harness.setHand(player1, List.of(new PunctureBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Tatterkite");
     }
 }

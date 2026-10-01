@@ -178,6 +178,28 @@ class SearchLibraryEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Limits a top-third search to the rounded-up top portion of the library")
+    void limitsSearchToTopThird() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        Card fourth = createCard("Fourth");
+        gd.playerDecks.get(player1Id).addAll(List.of(first, second, third, fourth));
+        stubCardViewFactory();
+
+        SearchLibraryEffect effect = SearchLibraryEffect.topThirdOfLibraryToHand();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Assemble the Team"),
+                player1Id, "Assemble the Team", List.of(effect));
+
+        searchLibraryHandler.resolve(gd, entry, effect);
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(first, second);
+        assertThat(search.params().topLibraryCardLimit()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Deferred-shuffle search leaves the shuffle for a later effect")
     void deferredShuffleSearchLeavesShuffleForLaterEffect() {
         Card card = createCard("Any Card");
