@@ -3368,6 +3368,19 @@ public class SpellCastingService {
         boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
+        if (hasModalEtb && targetId != null) {
+            for (CardEffect etbEffect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+                if (etbEffect instanceof ChooseOneEffect choice
+                        && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
+                    Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE
+                            : gameQueryService.findGraveyardOwnerById(gameData, targetId) != null ? Zone.GRAVEYARD
+                            : Zone.BATTLEFIELD;
+                    targetLegalityService.validateEffectTargetInZone(gameData, card,
+                            choice.options().get(effectiveXValue).effects(), targetId, etbTargetZone,
+                            effectiveXValue, playerId);
+                }
+            }
+        }
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         if (!fromGraveyard) {
             filteredSpellEffects.removeIf(effect -> effect instanceof ExileNCardsFromGraveyardCost cost
@@ -3543,6 +3556,11 @@ public class SpellCastingService {
                 targetingSpellEffects, chosenCreatureType);
         boolean unwrappedNeedsSpellTarget = targetingSpellEffects.stream()
                 .anyMatch(EffectResolution::targetsSpellOnStack);
+        if (wasModal && unwrappedNeedsSpellTarget && targetId == null && targetIds.size() == 1
+                && card.getSpellTargets().isEmpty() && card.getMaxTargets() <= 1) {
+            targetId = targetIds.getFirst();
+            targetIds = List.of();
+        }
         // ETB triggered abilities choose targets after a permanent enters; this helper only sees
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean modalHasBattlefieldOrPlayerTarget = wasModal && card.getSelectedRoomDoor() == null

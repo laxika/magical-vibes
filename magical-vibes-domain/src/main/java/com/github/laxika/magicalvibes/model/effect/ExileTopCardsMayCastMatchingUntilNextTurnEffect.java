@@ -6,13 +6,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Exiles cards from the top of the controller's library and grants permission to cast the cards
- * matching {@code filter} until the end of the controller's next turn.
+ * matching {@code filter} until the controller's next turn ends, or begins when requested.
  */
 public record ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount count,
-                                                               CardPredicate filter)
+                                                               CardPredicate filter,
+                                                               boolean expireAtTurnBeginning)
         implements CardEffect {
+
+    public ExileTopCardsMayCastMatchingUntilNextTurnEffect(DynamicAmount count, CardPredicate filter) {
+        this(count, filter, false);
+    }
 
     public ExileTopCardsMayCastMatchingUntilNextTurnEffect(int count, CardPredicate filter) {
         this(new Fixed(count), filter);
+    }
+
+    public ExileTopCardsMayCastMatchingUntilNextTurnEffect(int count, CardPredicate filter,
+                                                         boolean expireAtTurnBeginning) {
+        this(new Fixed(count), filter, expireAtTurnBeginning);
     }
 }

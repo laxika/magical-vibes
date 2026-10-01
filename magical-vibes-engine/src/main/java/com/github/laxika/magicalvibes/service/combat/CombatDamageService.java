@@ -3651,6 +3651,7 @@ public class CombatDamageService {
                             damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource));
                     if (gameQueryService.isCreature(gameData, perm)) {
                         gameData.recordDamageDealtToCreatureBySource(sourceId, perm.getId());
+                        graveyardService.recordCreatureDamagedByPermanent(gameData, sourceId, perm, amount);
                     }
                 });
                 damageTakenBySource.getOrDefault(idx, Map.of()).keySet()
@@ -4821,6 +4822,7 @@ public class CombatDamageService {
                         gameQueryService.getEffectiveName(gameData, source));
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, afterShield);
                 recordQualifyingCombatDamage(gameData, source, target);
+                graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, afterShield);
             }
             // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks
             // the creature for the CR 704.5h destruction check directly — it never reaches the
@@ -4879,7 +4881,6 @@ public class CombatDamageService {
                     .computeIfAbsent(source, ignored -> new HashSet<>())
                     .add(targetControllerId);
         }
-        graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
         triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                 gameData, source, target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);

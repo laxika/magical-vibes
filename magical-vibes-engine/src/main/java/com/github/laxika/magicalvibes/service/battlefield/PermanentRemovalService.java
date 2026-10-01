@@ -1194,7 +1194,11 @@ public class PermanentRemovalService {
         List<DelayedPermanentAction> actions =
                 gameData.drainDelayedActions(DelayedPermanentAction.class,
                         a -> a.kind() == kind
-                                && (a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
+                                && (a.followsPermanentController()
+                                ? gameQueryService.findPermanentById(gameData, a.permanentId()) == null
+                                    || gameData.activePlayerId.equals(gameQueryService.findPermanentController(
+                                            gameData, a.permanentId()))
+                                : a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
         for (DelayedPermanentAction action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
             if (perm == null) {

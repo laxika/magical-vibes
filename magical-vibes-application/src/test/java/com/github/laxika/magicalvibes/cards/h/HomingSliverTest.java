@@ -77,13 +77,21 @@ class HomingSliverTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Homing Sliver does not have ordinary cycling in hand")
-    void doesNotHaveOrdinaryCyclingInHand() {
+    @DisplayName("Homing Sliver has its own Slivercycling while in hand")
+    void hasPrintedSlivercyclingInHand() {
         harness.setHand(player1, List.of(new HomingSliver()));
+        FrenzySliver sliver = new FrenzySliver();
+        harness.setLibrary(player1, List.of(new BlindPhantasm(), sliver));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card has no hand-activated ability");
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(sliver);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sliver);
+        harness.assertInGraveyard(player1, "Homing Sliver");
     }
 }

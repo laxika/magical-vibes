@@ -83,13 +83,8 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
 
         // Present matching cards for "any number" selection
         UUID sourcePermanentId = exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null;
-        if (sourcePermanentId == null) {
-            playerInputService.beginMultiZoneExileChoice(
-                    gameData, controllerId, matchingCards, targetPlayerId, cardName);
-        } else {
-            playerInputService.beginMultiZoneExileChoice(
-                    gameData, controllerId, matchingCards, targetPlayerId, cardName, false, sourcePermanentId);
-        }
+        playerInputService.beginMultiZoneExileChoice(
+                gameData, controllerId, matchingCards, targetPlayerId, cardName, false, sourcePermanentId, true);
     
     }
 }

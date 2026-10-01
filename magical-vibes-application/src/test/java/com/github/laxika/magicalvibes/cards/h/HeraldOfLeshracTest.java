@@ -4,8 +4,13 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,10 +66,15 @@ class HeraldOfLeshracTest extends BaseCardTest {
     @DisplayName("When Herald of Leshrac leaves, only lands it controlled return to their owners")
     void returnsOnlyControlledOwnedLandsWhenItLeaves() {
         harness.addToBattlefield(player1, new HeraldOfLeshrac());
-        Permanent landOwnedByPlayer2 = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());
-        gd.stolenCreatures.put(landOwnedByPlayer2.getId(), player2.getId());
-        Permanent landOwnedByPlayer1 = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
-        gd.stolenCreatures.put(landOwnedByPlayer1.getId(), player1.getId());
+        Permanent landOwnedByPlayer2 = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent landOwnedByPlayer1 = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());
+        CreatureControlService control = GameTestEngineContext.get().getBean(CreatureControlService.class);
+        harness.inMutationScope(() -> {
+            control.applyControlEffect(gd, player1.getId(), landOwnedByPlayer2,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null, "Test");
+            control.applyControlEffect(gd, player2.getId(), landOwnedByPlayer1,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null, "Test");
+        });
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

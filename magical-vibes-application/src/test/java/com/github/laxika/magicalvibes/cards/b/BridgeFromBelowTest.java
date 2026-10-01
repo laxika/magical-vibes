@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -99,6 +101,11 @@ class BridgeFromBelowTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+        // Both triggers belong to player1, who can put the Zombie trigger on top.
+        assertThat(gd.stack).hasSize(2);
+        gd.stack.sort(java.util.Comparator.comparingInt(entry ->
+                entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof ExileSourceCardFromGraveyardEffect ? 0 : 1));
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);

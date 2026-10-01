@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LockMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -44,6 +49,15 @@ public class LockMatchingPermanentsEffectHandler implements NormalEffectHandlerB
         LockTargetPermanentEffect lock = new LockTargetPermanentEffect(
                 e.locksAttacking(), e.locksBlocking(), e.locksActivatedAbilities(), e.duration());
 
+        if (e.affectsLaterPermanents()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    entry.getControllerId(), lock, null, null, resolveManaValueX(e.predicate(), entry.getXValue()),
+                    lock.duration(), 0));
+            gameLogService.append(gameData, GameLog.text("Matching permanents can't attack or block this turn."));
+            return;
+        }
+
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
@@ -65,5 +79,17 @@ public class LockMatchingPermanentsEffectHandler implements NormalEffectHandlerB
             log.info("Game {} - {} locked by {}", gameData.id, permanent.getCard().getName(),
                     entry.getCard().getName());
         }
+    }
+
+    private PermanentPredicate resolveManaValueX(PermanentPredicate predicate, int xValue) {
+        if (predicate instanceof PermanentManaValueEqualsXPredicate) {
+            return new PermanentAllOfPredicate(List.of(
+                    new PermanentMinManaValuePredicate(xValue), new PermanentMaxManaValuePredicate(xValue)));
+        }
+        if (predicate instanceof PermanentAllOfPredicate all) {
+            return new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(part -> resolveManaValueX(part, xValue)).toList());
+        }
+        return predicate;
     }
 }

@@ -191,7 +191,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
         var exiled = gameData.findExiledCard(targetId);
         Integer timeCounters = gameData.exiledCardTimeCounters.get(targetId);
-        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0
+                || gameData.exiledCardsWithNonSuspendTimeCounters.contains(targetId)) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription()
                     + " fizzles (target card is no longer suspended)."));
             return;

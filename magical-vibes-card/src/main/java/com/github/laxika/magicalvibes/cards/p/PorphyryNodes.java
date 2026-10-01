@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureWithLeastPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -22,10 +22,8 @@ public class PorphyryNodes extends Card {
     public PorphyryNodes() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DestroyCreatureWithLeastPowerEffect(true));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> gameData.playerBattlefields.values().stream()
-                        .flatMap(List::stream)
-                        .noneMatch(permanent -> permanent.getCard().hasType(CardType.CREATURE)),
+        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(
+                0, new PermanentIsCreaturePredicate(),
                 List.of(new SacrificeSelfEffect()),
                 "Porphyry Nodes's state-triggered ability"
         ));

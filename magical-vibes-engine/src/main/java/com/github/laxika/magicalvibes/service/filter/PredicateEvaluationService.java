@@ -4657,7 +4657,9 @@ public class PredicateEvaluationService {
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
+                    entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount()) == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
                     entry.getCard().getManaValue() + entry.getXValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0

@@ -56,7 +56,7 @@ class ShieldingPlaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
+                .hasMessageContaining("can't be targeted");
     }
 
     @Test
@@ -72,7 +72,7 @@ class ShieldingPlaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
+                .hasMessageContaining("can't be targeted");
         assertThat(omnibian.isTapped()).isFalse();
     }
 
@@ -101,7 +101,7 @@ class ShieldingPlaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
+                .hasMessageContaining("can't be targeted");
     }
 
     @Test
@@ -134,7 +134,7 @@ class ShieldingPlaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hexproof");
+                .hasMessageContaining("can't be targeted");
     }
 
     private Permanent addShieldingPlax(Player creatureController, Player auraController) {

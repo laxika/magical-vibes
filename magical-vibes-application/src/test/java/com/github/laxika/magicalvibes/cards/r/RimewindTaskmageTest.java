@@ -26,6 +26,7 @@ class RimewindTaskmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap");
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -43,6 +44,7 @@ class RimewindTaskmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Untap");
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
@@ -76,6 +78,8 @@ class RimewindTaskmageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        harness.handleListChoice(player1, "Untap");
         assertThat(target.isTapped()).isFalse();
     }
 

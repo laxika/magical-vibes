@@ -20,7 +20,7 @@ public class Phantasmagorian extends Card {
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
-                "{B}",
+                null,
                 List.of(
                         new DiscardCardTypeCost(null, null, 3),
                         ReturnCardFromGraveyardEffect.builder()

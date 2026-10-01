@@ -2256,6 +2256,7 @@ public class DrawService {
 
     private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
                                                          EffectSlot slot) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
         if (graveyard == null) return;
 
@@ -2280,6 +2281,7 @@ public class DrawService {
     }
 
     private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         if (cardsDrawnThisTurn != 2) return;
 

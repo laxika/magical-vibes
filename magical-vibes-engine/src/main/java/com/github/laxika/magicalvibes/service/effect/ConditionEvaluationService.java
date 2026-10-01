@@ -1563,6 +1563,11 @@ public class ConditionEvaluationService {
                 if (targetSpell == null) {
                     yield false;
                 }
+                if (c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate) {
+                    // A card paid from exile is no longer linked to its source; the cost snapshot survives it.
+                    yield ctx.triggeringCard() != null
+                            && ctx.triggeringCard().getName().equals(targetSpell.getCard().getName());
+                }
                 if (c.filter() instanceof StackEntryColorInPredicate colorIn) {
                     yield gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard()).stream()
                             .anyMatch(colorIn.colors()::contains);
@@ -3511,6 +3516,7 @@ public class ConditionEvaluationService {
     private boolean enchantedCreaturePowerAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
         Permanent aura = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (aura == null) aura = ctx.sourcePermanent();
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;

@@ -7418,6 +7418,11 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
+        if (ctx.exileAllMatchingGraveyardCards()) {
+            gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
+                    .filter(card -> cardName.equals(card.getName()) && validIds.contains(card.getId()))
+                    .map(Card::getId).forEach(selectedIds::add);
+        }
         int exiledCount = 0;
         int handExiledCount = 0;
 

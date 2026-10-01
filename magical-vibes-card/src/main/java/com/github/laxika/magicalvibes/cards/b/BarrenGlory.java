@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
-import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -21,7 +20,6 @@ public class BarrenGlory extends Card {
         // and have no cards in hand, you win the game.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new AllOf(List.of(
-                        new SourceIsOnBattlefield(),
                         new NoOtherPermanent(new PermanentTruePredicate()),
                         new ControllerHandEmpty())),
                 new WinGameEffect()));

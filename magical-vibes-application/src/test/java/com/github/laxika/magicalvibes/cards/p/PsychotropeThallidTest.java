@@ -106,7 +106,8 @@ class PsychotropeThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
-        harness.assertInGraveyard(player1, "Saproling");
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        harness.assertNotInGraveyard(player1, "Saproling");
     }
 
     @Test

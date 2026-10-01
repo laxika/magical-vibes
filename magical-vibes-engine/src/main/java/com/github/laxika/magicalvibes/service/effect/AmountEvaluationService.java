@@ -2731,12 +2731,14 @@ public class AmountEvaluationService {
 
     private int countSpellsCastThisTurn(GameData gameData, SpellsCastThisTurn count, AmountContext ctx) {
         int total = 0;
+        UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId()
+                : ctx.stackEntry() != null ? ctx.stackEntry().getCard().getId() : null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
                     .filter(spell -> count.filter() == null
                             || predicateEvaluationService.matchesCardPredicate(
-                            spell, count.filter(), null, gameData, playerId))
+                            spell, count.filter(), sourceCardId, gameData, playerId))
                     .count();
         }
         return total;
@@ -3348,6 +3350,9 @@ public class AmountEvaluationService {
      * not attacking or has no attack target. See {@link CountScope#DEFENDING_PLAYER}.
      */
     private UUID defendingPlayerId(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() != null && ctx.stackEntry().getDefendingPlayerId() != null) {
+            return ctx.stackEntry().getDefendingPlayerId();
+        }
         if (ctx.stackEntry() != null && ctx.stackEntry().getAttackedTargetId() != null) {
             UUID attackedTarget = ctx.stackEntry().getAttackedTargetId();
             return gameData.playerIds.contains(attackedTarget) ? attackedTarget

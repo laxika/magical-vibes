@@ -19,7 +19,7 @@ public class RimewindTaskmage extends Card {
                 true,
                 "{1}",
                 List.of(new MayEffect(
-                        new TapOrUntapTargetPermanentEffect(),
+                        new TapOrUntapTargetPermanentEffect(null, true),
                         "You may tap or untap target permanent?")),
                 "{1}, {T}: You may tap or untap target permanent. Activate only if you control four or more snow permanents.",
                 TargetFilters.permanent()

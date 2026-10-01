@@ -976,6 +976,14 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.exilePlayPermissionsExpireAtTurnBeginning.entrySet().removeIf(permission -> {
+            if (permission.getValue() > gameData.turnNumber) {
+                return false;
+            }
+            gameData.exilePlayPermissions.remove(permission.getKey());
+            gameData.clearExilePlayPermissionGroup(permission.getKey());
+            return true;
+        });
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 watcher.untilNextTurn()
                         && nextActive.equals(watcher.expirationPlayerId() != null

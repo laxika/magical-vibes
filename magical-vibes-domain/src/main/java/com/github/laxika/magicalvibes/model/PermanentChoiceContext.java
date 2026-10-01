@@ -229,7 +229,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID targetCardId
     ) implements PermanentChoiceContext {}
 
-    record SpellRetarget(UUID spellCardId, Integer targetIndex) implements PermanentChoiceContext {
+    record SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets,
+                        UUID chooserId) implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId, Integer targetIndex) {
+            this(spellCardId, targetIndex, null, null);
+        }
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }
 

@@ -51,6 +51,7 @@ class VacuumeltTest extends BaseCardTest {
     @Test
     @DisplayName("Replicate creates one copy for each replicate payment")
     void replicateCreatesOneCopyForEachPayment() {
+        harness.setHand(player2, List.of());
         Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
         Permanent firstCopyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
         Permanent secondCopyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());

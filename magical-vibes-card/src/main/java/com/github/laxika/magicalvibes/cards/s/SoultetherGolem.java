@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 
 @CardRegistration(set = "FUT", collectorNumber = "164")
 public class SoultetherGolem extends Card {
@@ -16,7 +18,8 @@ public class SoultetherGolem extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
+                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
+                        new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.TIME));
     }

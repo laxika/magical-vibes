@@ -4218,6 +4218,9 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
+            return target.getCard().getName() + " can't be targeted by this player's spells or abilities";
+        }
         if (gameQueryService.cantBeAffectedByOwnEffects(gameData, target, sourcePlayerId)) {
             return target.getCard().getName()
                     + " can't be targeted by its controller's spells or abilities";
@@ -4227,8 +4230,7 @@ public class TargetLegalityService {
                 || (gameQueryService.isCreature(gameData, target)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId));
         if (targetController != null && !targetController.equals(sourcePlayerId)) {
-            if ((!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF))
-                    || gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
+            if (!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
             }
         }
@@ -4494,6 +4496,9 @@ public class TargetLegalityService {
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
+        }
+        if (gameQueryService.hasProtectionFromSource(gameData, target, card, sourcePlayerId)) {
+            return target.getCard().getName() + " has protection from this source";
         }
         if (sourcePlayerId != null) {
             String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
@@ -4886,7 +4891,10 @@ public class TargetLegalityService {
             return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
-            return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
+                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
+            return manaValue == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
             int manaValue = stackEntry.getCard().getManaValue()

@@ -39,9 +39,11 @@ class DarkDepthsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(darkDepths.getCounterCount(CounterType.ICE)).isZero();
+        assertThat(darkDepths.getCounterCount(CounterType.ICE)).isEqualTo(1);
 
         harness.passBothPriorities();
+        assertThat(darkDepths.getCounterCount(CounterType.ICE)).isZero();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Dark Depths");
         Permanent maritLage = findPermanent(player1, "Marit Lage");
@@ -56,15 +58,16 @@ class DarkDepthsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability cannot remove an ice counter when none remain")
-    void cannotRemoveIceCounterWhenNoneRemain() {
+    @DisplayName("The ability still costs three mana when no ice counters remain")
+    void canActivateWithNoIceCounters() {
         Permanent darkDepths = addDarkDepths();
         darkDepths.setCounterCount(CounterType.ICE, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        resolveAllTriggers();
+        assertThat(darkDepths.getCounterCount(CounterType.ICE)).isZero();
     }
 
     @Test

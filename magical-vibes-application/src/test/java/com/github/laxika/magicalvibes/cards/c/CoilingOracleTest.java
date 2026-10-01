@@ -74,7 +74,7 @@ class CoilingOracleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, chamber.getId());
+        harness.handlePermanentChosen(player1, findPermanent(player1, chamber.getName()).getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == chamber)

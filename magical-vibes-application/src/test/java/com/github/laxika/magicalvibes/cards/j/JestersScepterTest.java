@@ -199,7 +199,6 @@ class JestersScepterTest extends BaseCardTest {
         harness.castInstant(player2, 0, creature.getId());
 
         harness.activateAbility(player1, 0, null, giantGrowth.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(exiledShock.getId()));
         resolveAllTriggers();
 
         assertThat(scepter.isTapped()).isTrue();
