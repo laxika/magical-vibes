@@ -65,7 +65,12 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
                 continue;
             }
             for (int i = 0; i < amount; i++) {
+                List<com.github.laxika.magicalvibes.model.Card> handBeforeDraw =
+                        List.copyOf(gameData.playerHands.getOrDefault(targetPlayerId, List.of()));
                 drawService.resolveDrawCard(gameData, targetPlayerId);
+                gameData.playerHands.getOrDefault(targetPlayerId, List.of()).stream()
+                        .filter(card -> handBeforeDraw.stream().noneMatch(previous -> previous.getId().equals(card.getId())))
+                        .forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
             }
         }
     }

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "116")
+@CardRegistration(set = "WHO", collectorNumber = "721")
 public class Blink extends Card {
 
     public Blink() {

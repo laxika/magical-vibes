@@ -22,7 +22,7 @@ public class GoblinFlectomancer extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets for the spell?")
+                        new MayEffect(new ChooseNewTargetsForTargetSpellEffect(true), "Choose new targets for the spell?")
                 ),
                 "Sacrifice this creature: You may change the targets of target instant or sorcery spell.",
                 new StackEntryPredicateTargetFilter(

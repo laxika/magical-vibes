@@ -352,10 +352,9 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            // Shared untargetable core checks controller before the granted-hexproof effect, so for an
-            // own permanent it is never consulted; keep the stub lenient.
-            lenient().when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
-                    gameData, perm, player1Id)).thenReturn(true);
+            // The query accounts for ownership: granted hexproof permits the controller's targets.
+            when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, perm, player1Id)).thenReturn(false);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player1Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -1871,10 +1870,9 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            // Shared untargetable core checks controller before the granted-hexproof effect, so for a
-            // null controller it is never consulted; keep the stub lenient.
-            lenient().when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
-                    gameData, perm, player1Id)).thenReturn(true);
+            // Granted hexproof does not restrict targeting without a known opposing controller.
+            when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, perm, player1Id)).thenReturn(false);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(null);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);

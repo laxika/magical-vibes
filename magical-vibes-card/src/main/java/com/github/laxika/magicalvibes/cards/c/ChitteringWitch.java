@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TDC", collectorNumber = "175")
 @CardRegistration(set = "AFC", collectorNumber = "95")
+@CardRegistration(set = "BLC", collectorNumber = "180")
 public class ChitteringWitch extends Card {
 
     public ChitteringWitch() {

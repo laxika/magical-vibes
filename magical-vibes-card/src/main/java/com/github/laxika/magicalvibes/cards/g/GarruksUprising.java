@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 @CardRegistration(set = "NCC", collectorNumber = "292")
 @CardRegistration(set = "M3C", collectorNumber = "229")
 @CardRegistration(set = "AFC", collectorNumber = "159")
+@CardRegistration(set = "BLC", collectorNumber = "219")
 public class GarruksUprising extends Card {
 
     public GarruksUprising() {

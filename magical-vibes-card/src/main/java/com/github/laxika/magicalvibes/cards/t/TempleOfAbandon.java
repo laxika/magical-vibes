@@ -11,12 +11,16 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "THS", collectorNumber = "224")
 @CardRegistration(set = "THB", collectorNumber = "244")
 @CardRegistration(set = "WHO", collectorNumber = "313")
+@CardRegistration(set = "WHO", collectorNumber = "523")
+@CardRegistration(set = "WHO", collectorNumber = "904")
+@CardRegistration(set = "WHO", collectorNumber = "1114")
 @CardRegistration(set = "PIP", collectorNumber = "302")
 @CardRegistration(set = "PIP", collectorNumber = "516")
 @CardRegistration(set = "PIP", collectorNumber = "830")
 @CardRegistration(set = "PIP", collectorNumber = "1044")
 @CardRegistration(set = "40K", collectorNumber = "297")
 @CardRegistration(set = "MKC", collectorNumber = "301")
+@CardRegistration(set = "BLC", collectorNumber = "338")
 @CardRegistration(set = "NEC", collectorNumber = "179")
 public class TempleOfAbandon extends Card {
 

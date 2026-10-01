@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "175")
 @CardRegistration(set = "CMM", collectorNumber = "641")
+@CardRegistration(set = "BLC", collectorNumber = "184")
 public class NadiersNightblade extends Card {
 
     public NadiersNightblade() {

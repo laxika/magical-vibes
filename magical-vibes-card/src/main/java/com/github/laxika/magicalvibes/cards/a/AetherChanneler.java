@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DMU", collectorNumber = "42")
+@CardRegistration(set = "BLC", collectorNumber = "160")
 public class AetherChanneler extends Card {
 
     public AetherChanneler() {

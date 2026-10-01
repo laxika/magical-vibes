@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.Demonfire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,28 +12,28 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnthemOfRakdos.class, GrizzlyBears.class, Shock.class})
+@CardUsed({AnthemOfRakdos.class, AssaultZeppelid.class, Demonfire.class})
 class AnthemOfRakdosTest extends BaseCardTest {
 
     @Test
     void boostsAttackingCreatureAndDamagesController() {
         harness.addToBattlefield(player1, new AnthemOfRakdos());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Shock()));
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new Demonfire()));
         harness.setLife(player1, 20);
 
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
     @Test
     void hellbentDoublesCombatDamageAndAnthemDamage() {
         harness.addToBattlefield(player1, new AnthemOfRakdos());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new AssaultZeppelid());
         harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -44,36 +43,48 @@ class AnthemOfRakdosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
 
     @Test
     void hellbentDoublesDamageFromControllerSpell() {
         harness.addToBattlefield(player1, new AnthemOfRakdos());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Demonfire()));
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
+    void hellbentDoublesDamageToPermanent() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        Permanent target = addCreatureReady(player2, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new Demonfire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+    }
+
+    @Test
     void attackBoostWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new AnthemOfRakdos());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
 
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 }

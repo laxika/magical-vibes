@@ -27,6 +27,9 @@ import java.util.Set;
 @CardRegistration(set = "EOS", collectorNumber = "112")
 @CardRegistration(set = "EOS", collectorNumber = "157")
 @CardRegistration(set = "WHO", collectorNumber = "289")
+@CardRegistration(set = "WHO", collectorNumber = "505")
+@CardRegistration(set = "WHO", collectorNumber = "880")
+@CardRegistration(set = "WHO", collectorNumber = "1096")
 public class LavaclawReaches extends Card {
 
     public LavaclawReaches() {

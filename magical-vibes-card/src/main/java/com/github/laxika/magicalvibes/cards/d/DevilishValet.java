@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 
 @CardRegistration(set = "SNC", collectorNumber = "105")
+@CardRegistration(set = "BLC", collectorNumber = "195")
 public class DevilishValet extends Card {
 
     public DevilishValet() {

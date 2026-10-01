@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.Counterspell;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
+import com.github.laxika.magicalvibes.cards.r.RimewindCryomancer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,25 +15,27 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MartyrOfFrost.class, RimewindCryomancer.class, BorealDruid.class})
 class MartyrOfFrostTest extends BaseCardTest {
 
     @Test
     @DisplayName("Reveals blue cards, counters an unpaid spell, and sacrifices itself")
     void countersWhenOpponentCannotPay() {
-        Counterspell firstBlueCard = new Counterspell();
-        Unsummon secondBlueCard = new Unsummon();
-        harness.setHand(player1, List.of(firstBlueCard, secondBlueCard));
+        RimewindCryomancer firstBlueCard = new RimewindCryomancer();
+        RimewindCryomancer secondBlueCard = new RimewindCryomancer();
+        BorealDruid nonBlueCard = new BorealDruid();
+        harness.setHand(player1, List.of(firstBlueCard, secondBlueCard, nonBlueCard));
         Permanent martyr = addCreatureReady(player1, new MartyrOfFrost());
 
         harness.forceActivePlayer(player2);
-        RagingGoblin goblin = new RagingGoblin();
-        harness.setHand(player2, List.of(goblin));
-        harness.addMana(player2, ManaColor.RED, 1);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 0, 2, goblin.getId());
+        harness.activateAbility(player1, 0, 2, druid.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -43,28 +45,28 @@ class MartyrOfFrostTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstBlueCard.getId(), secondBlueCard.getId()));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Raging Goblin");
+        harness.assertInGraveyard(player2, "Boreal Druid");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstBlueCard, secondBlueCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstBlueCard, secondBlueCard, nonBlueCard);
     }
 
     @Test
     @DisplayName("Opponent can pay X and the targeted spell resolves")
     void leavesSpellUncounteredWhenOpponentPays() {
-        Counterspell blueCard = new Counterspell();
+        RimewindCryomancer blueCard = new RimewindCryomancer();
         harness.setHand(player1, List.of(blueCard));
         Permanent martyr = addCreatureReady(player1, new MartyrOfFrost());
 
         harness.forceActivePlayer(player2);
-        RagingGoblin goblin = new RagingGoblin();
-        harness.setHand(player2, List.of(goblin));
-        harness.addMana(player2, ManaColor.RED, 2);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 0, 1, goblin.getId());
+        harness.activateAbility(player1, 0, 1, druid.getId());
         harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
         harness.passBothPriorities();
 
@@ -72,14 +74,14 @@ class MartyrOfFrostTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Raging Goblin");
+        harness.assertOnBattlefield(player2, "Boreal Druid");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
     }
 
     @Test
     @DisplayName("Cannot activate without enough blue cards to reveal")
     void cannotRevealMoreBlueCardsThanAreInHand() {
-        harness.setHand(player1, List.of(new RagingGoblin()));
+        harness.setHand(player1, List.of(new BorealDruid()));
         Permanent martyr = addCreatureReady(player1, new MartyrOfFrost());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -88,5 +90,31 @@ class MartyrOfFrostTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can reveal zero blue cards and does not counter the targeted spell")
+    void canRevealZeroBlueCards() {
+        Permanent martyr = addCreatureReady(player1, new MartyrOfFrost());
+        harness.setHand(player1, List.of());
+
+        harness.forceActivePlayer(player2);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, druid.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Boreal Druid");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
     }
 }

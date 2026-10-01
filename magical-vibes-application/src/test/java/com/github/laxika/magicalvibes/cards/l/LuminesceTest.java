@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,18 +23,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Luminesce.class, DuskImp.class, GoblinPiker.class, GrizzlyBears.class,
+        Hurricane.class, MassOfGhouls.class, Shock.class, SuntailHawk.class, YouthfulKnight.class})
 class LuminesceTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
 
     // ===== Casting =====
 
@@ -41,7 +37,6 @@ class LuminesceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Luminesce");
@@ -65,10 +60,8 @@ class LuminesceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Luminesce()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.preventDamageFromColors).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 
@@ -78,8 +71,7 @@ class LuminesceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Luminesce()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertInGraveyard(player1, "Luminesce");
     }
@@ -93,18 +85,11 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        Permanent attacker = new Permanent(createCreature("Black Knight", 2, 2, CardColor.BLACK));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -114,27 +99,19 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        Permanent attacker = new Permanent(createCreature("Black Knight", 3, 3, CardColor.BLACK));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MassOfGhouls());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Black attacker's 3 damage is prevented, so blocker (2/2) survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        // Blocker still deals 2 damage to attacker (green is not prevented), but 2 < 3 toughness → survives
-        harness.assertOnBattlefield(player1, "Black Knight");
+        // Black attacker's 5 damage is prevented, so the blocker survives.
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        // The blocker still deals 1 damage to the attacker, but the attacker survives.
+        harness.assertOnBattlefield(player1, "Mass of Ghouls");
     }
 
     // ===== Combat damage prevention - red source =====
@@ -146,18 +123,11 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        Permanent attacker = new Permanent(createCreature("Goblin Raider", 2, 1, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GoblinPiker());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -170,18 +140,11 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
         // Green creature's 2 damage goes through
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -193,18 +156,11 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        Permanent attacker = new Permanent(createCreature("White Knight", 2, 2, CardColor.WHITE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -214,28 +170,20 @@ class LuminesceTest extends BaseCardTest {
     @DisplayName("In mixed combat, only prevents damage from black/red attackers")
     void mixedCombatOnlyPreventsBlackRedDamage() {
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        harness.setHand(player1, List.of(new Luminesce()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
 
         // Black attacker (prevented)
-        Permanent blackAttacker = new Permanent(createCreature("Black Knight", 2, 2, CardColor.BLACK));
-        blackAttacker.setSummoningSick(false);
+        Permanent blackAttacker = addCreatureReady(player1, new DuskImp());
         blackAttacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(blackAttacker);
 
         // Green attacker (not prevented)
-        Permanent greenAttacker = new Permanent(new GrizzlyBears());
-        greenAttacker.setSummoningSick(false);
+        Permanent greenAttacker = addCreatureReady(player1, new GrizzlyBears());
         greenAttacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(greenAttacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
         // Only green's 2 damage goes through, black's 2 is prevented
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -250,17 +198,30 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.h.Hurricane()));
+        harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
-        GameData gd = harness.getGameData();
         // Hurricane is green, so damage is not prevented
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents red noncombat damage after Luminesce resolves")
+    void preventsRedSpellDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Luminesce()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     // ===== End of turn cleanup =====
@@ -275,7 +236,6 @@ class LuminesceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.preventDamageFromColors).isEmpty();
     }
 }

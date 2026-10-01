@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "13")
+@CardRegistration(set = "WHO", collectorNumber = "618")
 public class BanishToAnotherUniverse extends Card {
 
     public BanishToAnotherUniverse() {

@@ -1,23 +1,20 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,9 +24,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GhostQuarter.class, Forest.class, Island.class, Mountain.class, Plains.class,
+        GrizzlyBears.class})
 class GhostQuarterTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating destroy ability sacrifices Ghost Quarter and puts ability on stack")
@@ -86,7 +83,7 @@ class GhostQuarterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
         // The chosen land enters untapped
@@ -108,7 +105,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player2, -1);
 
         // No new land on battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -139,6 +136,20 @@ class GhostQuarterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a nonland permanent")
+    void cannotTargetNonlandPermanent() {
+        harness.addToBattlefield(player1, new GhostQuarter());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Ghost Quarter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("No search prompt when land controller's library has no basic lands")
     void noBasicLandsNoPrompt() {
         harness.addToBattlefield(player1, new GhostQuarter());
@@ -146,16 +157,14 @@ class GhostQuarterTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Forest");
 
         // Set up library with no basic lands
-        List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 1, null, targetId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no basic land cards"));
+        assertThat(gameLogContains("finds no basic land cards")).isTrue();
     }
 
     @Test
@@ -165,7 +174,8 @@ class GhostQuarterTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         UUID targetId = harness.getPermanentId(player2, "Forest");
         GameData gd = harness.getGameData();
-        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
@@ -184,9 +194,7 @@ class GhostQuarterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
     }
 
-    private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Island(), new Mountain(), new GrizzlyBears()));
+    private void setupLibrary(Player player) {
+        harness.setLibrary(player, List.of(new Plains(), new Island(), new Mountain(), new GrizzlyBears()));
     }
 }

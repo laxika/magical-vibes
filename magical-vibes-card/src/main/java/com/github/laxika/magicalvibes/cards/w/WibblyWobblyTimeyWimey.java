@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "62")
+@CardRegistration(set = "WHO", collectorNumber = "667")
 public class WibblyWobblyTimeyWimey extends Card {
 
     public WibblyWobblyTimeyWimey() {

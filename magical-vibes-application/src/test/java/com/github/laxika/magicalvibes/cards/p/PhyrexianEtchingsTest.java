@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
+import com.github.laxika.magicalvibes.cards.s.SurgingAether;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianEtchings.class, SurgingAether.class, SnowCoveredMountain.class})
 class PhyrexianEtchingsTest extends BaseCardTest {
 
     @Test
@@ -21,7 +24,8 @@ class PhyrexianEtchingsTest extends BaseCardTest {
     void drawsForAgeCountersAtEndStep() {
         Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
         etchings.setCounterCount(CounterType.AGE, 2);
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(
+                new SnowCoveredMountain(), new SnowCoveredMountain(), new SnowCoveredMountain()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.forceActivePlayer(player1);
@@ -30,6 +34,41 @@ class PhyrexianEtchingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Paying cumulative upkeep scales with age counters and keeps it on the battlefield")
+    void payingCumulativeUpkeepKeepsItOnBattlefield() {
+        Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
+        etchings.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(etchings.getCounterCount(CounterType.AGE)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(etchings);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void cumulativeUpkeepTriggersOnlyDuringControllersUpkeep() {
+        Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(etchings.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(etchings);
     }
 
     @Test
@@ -57,10 +96,13 @@ class PhyrexianEtchingsTest extends BaseCardTest {
         Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
         etchings.setCounterCount(CounterType.AGE, 2);
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new Boomerang()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new SurgingAether()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castInstant(player2, 0, etchings.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(etchings);

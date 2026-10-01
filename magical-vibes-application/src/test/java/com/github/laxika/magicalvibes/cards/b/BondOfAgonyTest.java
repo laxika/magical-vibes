@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,11 +23,10 @@ class BondOfAgonyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BondOfAgony()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, 5);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -37,11 +37,10 @@ class BondOfAgonyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BondOfAgony()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -53,6 +52,21 @@ class BondOfAgonyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 4))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(3);
+        harness.assertLife(player1, 3);
+    }
+
+    @Test
+    @DisplayName("Paying all life ends the game before the spell resolves")
+    void payingAllLifeEndsGameBeforeResolution() {
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BondOfAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 5);
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }

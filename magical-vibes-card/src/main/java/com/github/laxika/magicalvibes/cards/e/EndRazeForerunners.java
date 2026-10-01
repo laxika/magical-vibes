@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "124")
 @CardRegistration(set = "GN3", collectorNumber = "97")
+@CardRegistration(set = "BLC", collectorNumber = "214")
 public class EndRazeForerunners extends Card {
 
     public EndRazeForerunners() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "ODY", collectorNumber = "273")
 @CardRegistration(set = "SLD", collectorNumber = "197")
 @CardRegistration(set = "MH2", collectorNumber = "286")
+@CardRegistration(set = "BLC", collectorNumber = "85")
 public class SquirrelMob extends Card {
 
     public SquirrelMob() {

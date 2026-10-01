@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "29")
+@CardRegistration(set = "WHO", collectorNumber = "634")
 public class TrialOfATimeLord extends Card {
 
     private static final PermanentPredicate OPPONENT_NONTOKEN_CREATURE = new PermanentAllOfPredicate(List.of(

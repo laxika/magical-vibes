@@ -28,7 +28,8 @@ class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandlerTest extends Abst
 
                 resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
-                verify(playerInputService, never()).beginMultiZoneExileChoice(any(), any(), any(), any(), any());
+                verify(playerInputService, never()).beginMultiZoneExileChoice(
+                        any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean());
             }
 
             @Test
@@ -51,7 +52,9 @@ class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandlerTest extends Abst
 
                 resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
-                verify(playerInputService).beginMultiZoneExileChoice(eq(gd), eq(player1Id), any(), eq(player2Id), eq("Lightning Bolt"));
+                verify(playerInputService).beginMultiZoneExileChoice(
+                        eq(gd), eq(player1Id), any(), eq(player2Id), eq("Lightning Bolt"),
+                        eq(false), isNull(), eq(false));
             }
 
             @Test

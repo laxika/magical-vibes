@@ -186,7 +186,7 @@ public class EtbTriggerService {
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenColor() == null && colorChoice != null) {
+        if (enteringPermanent != null && colorChoice != null && !colorChoice.choiceComplete(enteringPermanent)) {
             playerInputService.beginColorChoice(gameData, controllerId, enteringPermanent.getId(), null, colorChoice);
             return;
         }

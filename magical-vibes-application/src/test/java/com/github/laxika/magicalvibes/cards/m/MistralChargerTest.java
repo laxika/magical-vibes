@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,16 +10,17 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistralCharger.class, GrizzlyBears.class})
+@CardUsed({MistralCharger.class, SimicRagworm.class})
 class MistralChargerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         Permanent charger = addCreatureReady(player1, new MistralCharger());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SimicRagworm());
 
         declareAttackersAndPrepareBlockers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(charger)));
 
@@ -30,5 +31,20 @@ class MistralChargerTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Flying allows another flying creature to block Mistral Charger")
+    void flyingAllowsAnotherFlyingCreatureToBlock() {
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        Permanent blocker = addCreatureReady(player2, new MistralCharger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(charger))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

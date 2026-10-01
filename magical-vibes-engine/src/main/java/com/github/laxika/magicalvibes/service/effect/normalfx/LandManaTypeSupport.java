@@ -108,6 +108,10 @@ public class LandManaTypeSupport {
                         || mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
                     types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
                             gameQueryService.findPermanentController(gameData, source.getId())));
+                } else if (mana.restriction() == ManaSpendRestriction.CHOSEN_COLORS) {
+                    source.getChosenColors().stream()
+                            .map(color -> ManaColor.valueOf(color.name()))
+                            .forEach(types::add);
                 } else {
                     types.addAll(ManaColor.COLORS);
                 }

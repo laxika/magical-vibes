@@ -243,6 +243,7 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
+            case CHOSEN_COLORS -> chosenPermanentColors(gameData, sourcePermanentId);
             case COMMANDER_COLOR_IDENTITY, COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS, PATH_OF_ANCESTRY,
                     COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId);
@@ -255,6 +256,7 @@ public final class AnyColorManaChoiceSupport {
                 && (effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.EXILED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
+                || effect.restriction() == ManaSpendRestriction.CHOSEN_COLORS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY
@@ -449,6 +451,13 @@ public final class AnyColorManaChoiceSupport {
                         : ChoiceContext.ManaColorChoice.fixedColorCombination(
                                 playerId, fromCreature, amount, colors);
             }
+            case CHOSEN_COLORS -> {
+                List<ManaColor> colors = chosenPermanentColors(gameData, sourcePermanentId);
+                yield colors.isEmpty()
+                        ? null
+                        : ChoiceContext.ManaColorChoice.fixedColorCombination(
+                                playerId, fromCreature, amount, colors);
+            }
             case LEGENDARY_SPELLS ->
                     new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
                             effect.allowedColors(), new ManaRestriction.LegendarySpells());
@@ -555,6 +564,20 @@ public final class AnyColorManaChoiceSupport {
                 .toList();
     }
 
+    private static List<ManaColor> chosenPermanentColors(GameData gameData, UUID sourcePermanentId) {
+        if (sourcePermanentId == null) {
+            return List.of();
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> permanent.getId().equals(sourcePermanentId))
+                .findFirst()
+                .map(permanent -> ManaColor.COLORS.stream()
+                        .filter(color -> permanent.getChosenColors().contains(CardColor.valueOf(color.name())))
+                        .toList())
+                .orElseGet(List::of);
+    }
+
     private static List<ManaColor> commanderColorIdentity(GameData gameData, UUID playerId) {
         List<Card> commandZone = gameData.playerCommandZones.getOrDefault(playerId, List.of());
         return ManaColor.COLORS.stream()
@@ -591,6 +614,7 @@ public final class AnyColorManaChoiceSupport {
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
                     "Choose a color of mana to add (qualifying creature spells only).";
             case SOURCE_PERMANENT_COLORS -> "Choose a color of mana to add from this creature's colors.";
+            case CHOSEN_COLORS -> "Choose a color of mana to add from this land's chosen colors.";
             case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";
             case KICKED_SPELLS -> "Choose a color of mana to add (kicked spells only).";
             default -> "Choose a color of mana to add.";

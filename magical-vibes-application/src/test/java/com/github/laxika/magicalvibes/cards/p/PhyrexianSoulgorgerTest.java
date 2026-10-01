@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
+import com.github.laxika.magicalvibes.cards.b.BorealShelf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianSoulgorger.class, BorealCentaur.class, BorealShelf.class})
 class PhyrexianSoulgorgerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying cumulative upkeep sacrifices a creature and keeps Phyrexian Soulgorger")
     void paysCumulativeUpkeep() {
         Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -28,10 +31,10 @@ class PhyrexianSoulgorgerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(centaur.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soulgorger).doesNotContain(bears);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soulgorger).doesNotContain(centaur);
+        harness.assertInGraveyard(player1, "Boreal Centaur");
     }
 
     @Test
@@ -65,18 +68,18 @@ class PhyrexianSoulgorgerTest extends BaseCardTest {
     @DisplayName("Second upkeep requires sacrificing two creatures")
     void secondUpkeepSacrificesTwoCreatures() {
         Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
-        Permanent firstBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstCentaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstBears.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstCentaur.getId()));
 
         assertThat(soulgorger.getCounterCount(CounterType.AGE)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstBears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstCentaur);
 
-        Permanent secondBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent thirdBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondCentaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        Permanent thirdCentaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -89,9 +92,46 @@ class PhyrexianSoulgorgerTest extends BaseCardTest {
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
-                soulgorger.getId(), secondBears.getId(), thirdBears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(secondBears.getId(), thirdBears.getId()));
+                soulgorger.getId(), secondCentaur.getId(), thirdCentaur.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondCentaur.getId(), thirdCentaur.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soulgorger).doesNotContain(secondBears, thirdBears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(soulgorger)
+                .doesNotContain(secondCentaur, thirdCentaur);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during Phyrexian Soulgorger's controller's upkeep")
+    void triggersOnlyDuringControllersUpkeep() {
+        Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(soulgorger.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soulgorger);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep can sacrifice only creatures")
+    void onlyCreaturesCanBeSacrificed() {
+        Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        Permanent shelf = harness.addToBattlefieldAndReturn(player1, new BorealShelf());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(soulgorger.getId(), centaur.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(centaur.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(soulgorger, shelf)
+                .doesNotContain(centaur);
     }
 }

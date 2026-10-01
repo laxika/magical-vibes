@@ -7,9 +7,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CastCreatureCardsAsNamedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdventureToCreatureCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantOffspringToCreatureSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -29,11 +34,14 @@ public final class HandCastCardCharacteristicsService {
 
         Card namedCopyFace = null;
         boolean grantsAdventure = false;
+        String offspringCost = null;
         for (Permanent source : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
             boolean hasNamedCopyEffect = gameQueryService.hasActiveStaticEffect(
                     gameData, source, CastCreatureCardsAsNamedCardEffect.class);
             boolean hasAdventureEffect = gameQueryService.hasActiveStaticEffect(
                     gameData, source, GrantAdventureToCreatureCardsInHandEffect.class);
+            boolean hasOffspringEffect = gameQueryService.hasActiveStaticEffect(
+                    gameData, source, GrantOffspringToCreatureSpellsEffect.class);
             for (var effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (hasNamedCopyEffect && effect instanceof CastCreatureCardsAsNamedCardEffect castAs
                         && namedCopyFace == null) {
@@ -41,6 +49,10 @@ public final class HandCastCardCharacteristicsService {
                 }
                 if (hasAdventureEffect && effect instanceof GrantAdventureToCreatureCardsInHandEffect) {
                     grantsAdventure = true;
+                }
+                if (hasOffspringEffect && effect instanceof GrantOffspringToCreatureSpellsEffect offspring
+                        && offspringCost == null) {
+                    offspringCost = offspring.offspringCost();
                 }
             }
         }
@@ -50,6 +62,14 @@ public final class HandCastCardCharacteristicsService {
             Card copy = effective.createRuntimeCopy();
             copy.setBackFaceCard(fetchHerbsFace());
             copy.addCastingOption(new AdventureCast("{1}{G}"));
+            effective = copy;
+        }
+        if (offspringCost != null && effective.getEffects(EffectSlot.STATIC).stream()
+                .noneMatch(KickerEffect.class::isInstance)) {
+            Card copy = effective.createRuntimeCopy();
+            copy.addEffect(EffectSlot.STATIC, new KickerEffect(offspringCost));
+            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+                    new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
             effective = copy;
         }
         if (effective != card) {

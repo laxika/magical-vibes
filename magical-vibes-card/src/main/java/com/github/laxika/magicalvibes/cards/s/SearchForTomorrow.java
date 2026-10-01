@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "185")
 @CardRegistration(set = "TSR", collectorNumber = "229")
 @CardRegistration(set = "WHO", collectorNumber = "234")
+@CardRegistration(set = "WHO", collectorNumber = "825")
 @CardRegistration(set = "DMC", collectorNumber = "137")
 public class SearchForTomorrow extends Card {
 

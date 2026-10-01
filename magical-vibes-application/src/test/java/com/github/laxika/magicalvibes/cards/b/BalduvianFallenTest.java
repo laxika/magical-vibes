@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BalduvianFallen.class)
 class BalduvianFallenTest extends BaseCardTest {
 
     @Test
@@ -53,6 +55,17 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fallen.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during Balduvian Fallen's controller's upkeep")
+    void cumulativeUpkeepTriggersOnlyDuringControllersUpkeep() {
+        Permanent fallen = harness.addToBattlefieldAndReturn(player1, new BalduvianFallen());
+
+        advanceToUpkeep(player2);
+
+        assertThat(fallen.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fallen);
     }
 
     @Test

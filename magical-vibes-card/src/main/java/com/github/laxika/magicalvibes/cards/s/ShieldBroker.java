@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "29")
 @CardRegistration(set = "NCC", collectorNumber = "130")
+@CardRegistration(set = "BLC", collectorNumber = "174")
 public class ShieldBroker extends Card {
 
     public ShieldBroker() {

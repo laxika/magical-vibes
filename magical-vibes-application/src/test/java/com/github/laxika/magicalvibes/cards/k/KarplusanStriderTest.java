@@ -41,6 +41,20 @@ class KarplusanStriderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blue spells controlled by Karplusan Strider's controller cannot target it")
+    void ownBlueSpellsCannotTarget() {
+        harness.addToBattlefield(player1, new KarplusanStrider());
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Karplusan Strider")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of blue spells");
+    }
+
+    @Test
     @DisplayName("Black spells cannot target Karplusan Strider")
     void blackSpellsCannotTarget() {
         harness.addToBattlefield(player2, new KarplusanStrider());
@@ -74,14 +88,10 @@ class KarplusanStriderTest extends BaseCardTest {
     @Test
     @DisplayName("Black activated abilities can still target Karplusan Strider")
     void blackActivatedAbilitiesCanTarget() {
-        Permanent strider = new Permanent(new KarplusanStrider());
-        strider.setSummoningSick(false);
+        Permanent strider = addCreatureReady(player1, new KarplusanStrider());
         strider.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(strider);
 
-        Permanent assassin = new Permanent(new RoyalAssassin());
-        assassin.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(assassin);
+        addCreatureReady(player2, new RoyalAssassin());
 
         harness.activateAbility(player2, 0, null, strider.getId());
         harness.passBothPriorities();

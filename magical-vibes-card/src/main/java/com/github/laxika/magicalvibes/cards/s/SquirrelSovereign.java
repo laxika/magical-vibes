@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MH2", collectorNumber = "175")
+@CardRegistration(set = "BLC", collectorNumber = "240")
 public class SquirrelSovereign extends Card {
 
     public SquirrelSovereign() {

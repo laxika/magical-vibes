@@ -3027,7 +3027,7 @@ public class DeathTriggerCollectorService {
                     null, new Permanent(match.permanent())
             ));
         } else {
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
@@ -3035,7 +3035,20 @@ public class DeathTriggerCollectorService {
                     new ArrayList<>(List.of(effect)),
                     null,
                     match.permanent().getId()
-            ));
+            );
+            if (ctx instanceof TriggerContext.CreatureDeath death) {
+                if (death.dyingCard() != null) {
+                    entry.setTriggeringCardId(death.dyingCard().getId());
+                    if (death.dyingPermanentId() != null) {
+                        entry.rememberLastKnownPermanentCard(death.dyingPermanentId(), death.dyingCard());
+                    }
+                }
+                entry.setTriggeringPermanentId(death.dyingPermanentId());
+                entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
+                entry.setTriggeringPermanentPowerAtTrigger(death.dyingCreaturePower());
+                entry.setEventValue(death.dyingCreaturePower());
+            }
+            gameData.stack.add(entry);
         }
         logAnyCreatureDeath(match);
         return true;

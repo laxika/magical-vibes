@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { CardInfoError, ScryfallSetCache } from './card-cache.mjs';
 
 const SERVER_NAME = 'magical-vibes-card-info';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = '1.1.0';
 const LATEST_PROTOCOL_VERSION = '2025-11-25';
 const SUPPORTED_PROTOCOL_VERSIONS = new Set([
   '2024-11-05',
@@ -15,9 +15,9 @@ const SUPPORTED_PROTOCOL_VERSIONS = new Set([
 
 const GET_CARD_TOOL = {
   name: 'get_card',
-  title: 'Get compact Scryfall card data',
+  title: 'Get compact card Oracle data',
   description:
-    'Get implementation-relevant Scryfall data for one printing.',
+    'Get compact Oracle data for one printing, using Scryfall with automatic MTGJSON fallback. The source field identifies the provider; source_date identifies the MTGJSON dataset date when available.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -59,7 +59,7 @@ export function createRequestHandler(cache = new ScryfallSetCache()) {
           version: SERVER_VERSION,
         },
         instructions:
-          'Use get_card for card implementation and review. It returns only useful oracle fields; do not fetch raw Scryfall card JSON.',
+          'Use get_card for card implementation and review. Scryfall failures automatically fall back to MTGJSON; either source can verify Oracle text and support-card parameters. It returns only useful oracle fields and identifies the source; do not fetch raw card JSON.',
       };
     }
 
@@ -159,7 +159,7 @@ async function runCli(arguments_) {
       JSON.stringify(
         command === 'get-set'
           ? set
-          : { set: set.set, cards: set.cards.length, downloaded_at: set.downloaded_at },
+          : { set: set.set, source: set.source || 'scryfall', source_date: set.source_date, cards: set.cards.length, downloaded_at: set.downloaded_at },
       ),
     );
     return;

@@ -51,6 +51,13 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 && entry.getSourcePermanentSnapshot().getOriginalCard() != null
                 ? entry.getSourcePermanentSnapshot().getOriginalCard()
                 : entry.getCard();
+        if (e.perpetuallyLosesThisAbility()) {
+            gameData.perpetuallyRemovedTriggeredAbilities.compute(card.getId(), (ignored, existing) -> {
+                Set<CardEffect> updated = new java.util.HashSet<>(existing == null ? Set.of() : existing);
+                updated.add(e);
+                return Set.copyOf(updated);
+            });
+        }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
             log.info("Game {} - {} graveyard return fizzles (no longer in a graveyard)", gameData.id, card.getName());

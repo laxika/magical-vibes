@@ -1,23 +1,21 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.b.BroodingSaurian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Skred.class, SnowCoveredMountain.class, BroodingSaurian.class})
 class SkredTest extends BaseCardTest {
 
     @Test
@@ -25,12 +23,22 @@ class SkredTest extends BaseCardTest {
     void dealsDamageEqualToControlledSnowPermanents() {
         addSnowPermanent(player1);
         addSnowPermanent(player1);
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BroodingSaurian());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BroodingSaurian());
 
-        castSkred(harness.getPermanentId(player2, "Grizzly Bears"));
+        castSkred(target.getId());
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Skred deals no damage when its controller controls no snow permanents")
+    void dealsNoDamageWithoutSnowPermanents() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BroodingSaurian());
+
+        castSkred(target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -39,11 +47,11 @@ class SkredTest extends BaseCardTest {
         addSnowPermanent(player1);
         addSnowPermanent(player2);
         addSnowPermanent(player2);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BroodingSaurian());
 
-        castSkred(harness.getPermanentId(player2, "Grizzly Bears"));
+        castSkred(target.getId());
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -51,40 +59,37 @@ class SkredTest extends BaseCardTest {
     void countsSnowPermanentsAtResolution() {
         Permanent firstSnowPermanent = addSnowPermanent(player1);
         addSnowPermanent(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BroodingSaurian());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.setHand(player1, List.of(new Skred()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, targetId);
         gd.playerBattlefields.get(player1.getId()).remove(firstSnowPermanent);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Skred cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new SnowCoveredMountain());
         harness.setHand(player1, List.of(new Skred()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Forest");
+        UUID targetId = harness.getPermanentId(player2, "Snow-Covered Mountain");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addSnowPermanent(Player owner) {
-        Permanent snowPermanent = harness.addToBattlefieldAndReturn(owner, new Forest());
-        TestCards.mutableCard(snowPermanent).setSupertypes(EnumSet.of(CardSupertype.SNOW));
-        return snowPermanent;
+        return harness.addToBattlefieldAndReturn(owner, new SnowCoveredMountain());
     }
 
     private void castSkred(UUID targetId) {
         harness.setHand(player1, List.of(new Skred()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

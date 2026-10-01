@@ -62,6 +62,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualActivatedAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class));
         register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());

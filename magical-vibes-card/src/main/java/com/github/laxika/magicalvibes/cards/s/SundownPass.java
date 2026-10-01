@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "VOW", collectorNumber = "266")
 @CardRegistration(set = "DBL", collectorNumber = "533")
 @CardRegistration(set = "WHO", collectorNumber = "310")
+@CardRegistration(set = "WHO", collectorNumber = "520")
+@CardRegistration(set = "WHO", collectorNumber = "901")
+@CardRegistration(set = "WHO", collectorNumber = "1111")
 public class SundownPass extends Card {
 
     public SundownPass() {

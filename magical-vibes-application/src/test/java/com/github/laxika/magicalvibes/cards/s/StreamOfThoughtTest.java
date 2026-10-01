@@ -68,6 +68,7 @@ class StreamOfThoughtTest extends BaseCardTest {
 
         assertThat(gd.stack.stream().filter(entry -> entry.isCopy())).hasSize(1);
 
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(8);

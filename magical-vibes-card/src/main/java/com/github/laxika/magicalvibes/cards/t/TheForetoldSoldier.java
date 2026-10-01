@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndBecomeForetoldEff
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "102")
+@CardRegistration(set = "WHO", collectorNumber = "395")
+@CardRegistration(set = "WHO", collectorNumber = "707")
+@CardRegistration(set = "WHO", collectorNumber = "986")
 public class TheForetoldSoldier extends Card {
 
     public TheForetoldSoldier() {

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEff
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "104")
+@CardRegistration(set = "WHO", collectorNumber = "396")
+@CardRegistration(set = "WHO", collectorNumber = "709")
+@CardRegistration(set = "WHO", collectorNumber = "987")
 public class GrahamOBrien extends Card {
 
     public GrahamOBrien() {
