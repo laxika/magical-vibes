@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PsychicPossession.class, GrizzlyBears.class})
+@CardUsed({PsychicPossession.class, GuardianOfTheGuildpact.class})
 class PsychicPossessionTest extends BaseCardTest {
 
     @Test
@@ -51,7 +51,7 @@ class PsychicPossessionTest extends BaseCardTest {
     void controllerSkipsDrawStep() {
         attachPossession(player1, player2);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
 
         advanceToDraw(player1);
 
@@ -65,8 +65,8 @@ class PsychicPossessionTest extends BaseCardTest {
         attachPossession(player1, player2);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+        harness.setLibrary(player2, List.of(new GuardianOfTheGuildpact()));
 
         draw(player2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -82,11 +82,28 @@ class PsychicPossessionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining Psychic Possession's optional draw leaves its controller's hand unchanged")
+    void mayDeclineToDrawWhenEnchantedOpponentDraws() {
+        attachPossession(player1, player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GuardianOfTheGuildpact()));
+
+        draw(player2);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Drawing a card by the Aura controller does not trigger Psychic Possession")
     void controllerDrawDoesNotTrigger() {
         attachPossession(player1, player2);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
 
         draw(player1);
 

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BalduvianRage;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,14 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SurvivorOfTheUnseen.class, BalduvianRage.class, BorealDruid.class})
 class SurvivorOfTheUnseenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws two cards, then puts a chosen hand card on top of the library")
     void drawsTwoAndPutsChosenCardOnTop() {
         Permanent survivor = addCreatureReady(player1, new SurvivorOfTheUnseen());
-        Card first = new Shock();
-        Card second = new Forest();
+        Card first = new BalduvianRage();
+        Card second = new BorealDruid();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second));
         harness.forceActivePlayer(player1);
@@ -56,6 +58,27 @@ class SurvivorOfTheUnseenTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep cost scales with age counters")
+    void cumulativeUpkeepCostScalesWithAgeCounters() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SurvivorOfTheUnseen());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(survivor.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test

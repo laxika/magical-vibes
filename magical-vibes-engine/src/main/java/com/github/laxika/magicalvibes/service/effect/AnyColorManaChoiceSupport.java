@@ -243,6 +243,7 @@ public final class AnyColorManaChoiceSupport {
             case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
             case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
+            case CHOSEN_COLORS -> chosenPermanentColors(gameData, sourcePermanentId);
             case COMMANDER_COLOR_IDENTITY, COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS, PATH_OF_ANCESTRY,
                     COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     ManaProductionSupport.commanderColorIdentity(gameData, playerId);
@@ -255,6 +256,7 @@ public final class AnyColorManaChoiceSupport {
                 && (effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.EXILED_CARD_COLORS
                 || effect.restriction() == ManaSpendRestriction.SOURCE_PERMANENT_COLORS
+                || effect.restriction() == ManaSpendRestriction.CHOSEN_COLORS
                 || effect.restriction() == ManaSpendRestriction.CREATURE_COLORS_ABILITIES
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
                 || effect.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY
@@ -384,6 +386,10 @@ public final class AnyColorManaChoiceSupport {
                 return new ChoiceContext.SpellOnlyManaColorChoice(
                         playerId, fromCreature, amount, true);
             }
+            if (effect.restriction() == ManaSpendRestriction.OUTSIDE_STARTING_DECK_SPELL_ONLY) {
+                return new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                        playerId, fromCreature, amount, true);
+            }
             if (effect.restriction() == ManaSpendRestriction.MULTICOLORED_SPELLS) {
                 return new ChoiceContext.MulticoloredSpellManaColorChoice(
                         playerId, fromCreature, amount, true);
@@ -418,6 +424,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.PathOfAncestryManaColorChoice(playerId, sourcePermanentId, amount);
             case SPELL_ONLY ->
                     new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
+            case OUTSIDE_STARTING_DECK_SPELL_ONLY ->
+                    new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                            playerId, fromCreature, amount, false);
             case MULTICOLORED_SPELLS ->
                     new ChoiceContext.MulticoloredSpellManaColorChoice(playerId, fromCreature, amount, false);
             case ABILITIES -> ChoiceContext.ManaColorChoice.abilityOnly(playerId, amount);
@@ -437,6 +446,13 @@ public final class AnyColorManaChoiceSupport {
             }
             case SOURCE_PERMANENT_COLORS -> {
                 List<ManaColor> colors = sourcePermanentColors(sourceColors);
+                yield colors.isEmpty()
+                        ? null
+                        : ChoiceContext.ManaColorChoice.fixedColorCombination(
+                                playerId, fromCreature, amount, colors);
+            }
+            case CHOSEN_COLORS -> {
+                List<ManaColor> colors = chosenPermanentColors(gameData, sourcePermanentId);
                 yield colors.isEmpty()
                         ? null
                         : ChoiceContext.ManaColorChoice.fixedColorCombination(
@@ -484,6 +500,9 @@ public final class AnyColorManaChoiceSupport {
             case CHOSEN_SUBTYPE_CREATURE -> chosenSubtype == null
                     ? null
                     : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, chosenSubtype);
+            case CHOSEN_SUBTYPE_SPELL -> chosenSubtype == null
+                    ? null
+                    : new ChoiceContext.ManaColorSpellChoice(playerId, amount, Set.of(chosenSubtype));
             case CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE -> chosenSubtype == null
                     ? null
                     : ChoiceContext.ManaColorChoice.chosenSubtypeCreatureUncounterable(playerId, amount, chosenSubtype);
@@ -545,6 +564,20 @@ public final class AnyColorManaChoiceSupport {
                 .toList();
     }
 
+    private static List<ManaColor> chosenPermanentColors(GameData gameData, UUID sourcePermanentId) {
+        if (sourcePermanentId == null) {
+            return List.of();
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> permanent.getId().equals(sourcePermanentId))
+                .findFirst()
+                .map(permanent -> ManaColor.COLORS.stream()
+                        .filter(color -> permanent.getChosenColors().contains(CardColor.valueOf(color.name())))
+                        .toList())
+                .orElseGet(List::of);
+    }
+
     private static List<ManaColor> commanderColorIdentity(GameData gameData, UUID playerId) {
         List<Card> commandZone = gameData.playerCommandZones.getOrDefault(playerId, List.of());
         return ManaColor.COLORS.stream()
@@ -573,11 +606,15 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";
+            case OUTSIDE_STARTING_DECK_SPELL_ONLY ->
+                    "Choose a color of mana to add (spells not from your starting deck only).";
             case DEVOID_SPELL -> "Choose a color of mana to add (spells with devoid only).";
+            case CHOSEN_SUBTYPE_SPELL -> "Choose a color of mana to add (spells of the chosen type only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
                     "Choose a color of mana to add (qualifying creature spells only).";
             case SOURCE_PERMANENT_COLORS -> "Choose a color of mana to add from this creature's colors.";
+            case CHOSEN_COLORS -> "Choose a color of mana to add from this land's chosen colors.";
             case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";
             case KICKED_SPELLS -> "Choose a color of mana to add (kicked spells only).";
             default -> "Choose a color of mana to add.";

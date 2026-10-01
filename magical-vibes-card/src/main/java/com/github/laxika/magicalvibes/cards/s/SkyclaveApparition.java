@@ -23,6 +23,8 @@ import java.util.Set;
 @CardRegistration(set = "ZNR", collectorNumber = "39")
 @CardRegistration(set = "MB2", collectorNumber = "18")
 @CardRegistration(set = "SOC", collectorNumber = "173")
+@CardRegistration(set = "BLC", collectorNumber = "154")
+@CardRegistration(set = "M3C", collectorNumber = "172")
 public class SkyclaveApparition extends Card {
 
     public SkyclaveApparition() {

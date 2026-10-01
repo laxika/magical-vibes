@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Conviction;
 import com.github.laxika.magicalvibes.cards.h.HornetCannon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpikeFeeder.class, HornetCannon.class})
+@CardUsed({SpikeFeeder.class, HornetCannon.class, Conviction.class})
 class SpikeFeederTest extends BaseCardTest {
 
     @Test
@@ -113,6 +114,15 @@ class SpikeFeederTest extends BaseCardTest {
     @DisplayName("Cannot activate either ability without a +1/+1 counter")
     void cannotActivateWithoutCounter() {
         Permanent feeder = addReadyFeeder(player1);
+
+        harness.setHand(player1, List.of(new Conviction()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player1, 0, feeder.getId());
+        harness.passBothPriorities();
+
         feeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

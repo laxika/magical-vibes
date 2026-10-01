@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.FightingDrake;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MoorishCavalry;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VhatiIlDal.class, FightingDrake.class, Forest.class})
+@CardUsed({VhatiIlDal.class, MoorishCavalry.class, TormodsCrypt.class})
 class VhatiIlDalTest extends BaseCardTest {
 
     private static final String POWER_MODE = "It has base power 1";
@@ -23,7 +23,7 @@ class VhatiIlDalTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addCreatureReady(player1, new VhatiIlDal());
-        return harness.addToBattlefieldAndReturn(player1, new FightingDrake());
+        return harness.addToBattlefieldAndReturn(player1, new MoorishCavalry());
     }
 
     private void activate(Permanent target, String mode) {
@@ -40,7 +40,7 @@ class VhatiIlDalTest extends BaseCardTest {
         activate(drake, POWER_MODE);
 
         assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(3);
     }
 
     @Test
@@ -50,7 +50,7 @@ class VhatiIlDalTest extends BaseCardTest {
 
         activate(drake, TOUGHNESS_MODE);
 
-        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(1);
     }
 
@@ -66,7 +66,7 @@ class VhatiIlDalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(3);
     }
 
     @Test
@@ -76,12 +76,12 @@ class VhatiIlDalTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addCreatureReady(player1, new VhatiIlDal());
-        Permanent drake = addCreatureReady(player2, new FightingDrake());
+        Permanent drake = addCreatureReady(player2, new MoorishCavalry());
 
         activate(drake, POWER_MODE);
 
         assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(3);
     }
 
     @Test
@@ -91,10 +91,32 @@ class VhatiIlDalTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addCreatureReady(player1, new VhatiIlDal());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, crypt.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Activating the ability taps Vhati il-Dal")
+    void activationTapsVhati() {
+        Permanent drake = setUpVhati();
+
+        activate(drake, POWER_MODE);
+
+        assertThat(findPermanent(player1, "Vhati il-Dal").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated while Vhati il-Dal is tapped")
+    void cannotActivateWhenTapped() {
+        Permanent drake = setUpVhati();
+        Permanent vhati = findPermanent(player1, "Vhati il-Dal");
+        vhati.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, drake.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }

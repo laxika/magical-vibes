@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WalkingArchive.class, GrizzlyBears.class})
+@CardUsed(WalkingArchive.class)
 class WalkingArchiveTest extends BaseCardTest {
 
     @Test
@@ -47,21 +45,42 @@ class WalkingArchiveTest extends BaseCardTest {
         archive.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new WalkingArchive(), new WalkingArchive()));
+        harness.setLibrary(player2, List.of(new WalkingArchive(), new WalkingArchive()));
 
-        advanceArchiveToUpkeep(player2);
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 
-    private void advanceArchiveToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Upkeep trigger draws nothing when Walking Archive has no +1/+1 counters")
+    void upkeepDrawsNothingWithoutCounters() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new WalkingArchive());
+        archive.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new WalkingArchive()));
+
+        advanceToUpkeep(player2);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger still draws while Walking Archive is tapped")
+    void upkeepDrawsWhileTapped() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new WalkingArchive());
+        archive.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        archive.tap();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new WalkingArchive()));
+
+        advanceToUpkeep(player2);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 }

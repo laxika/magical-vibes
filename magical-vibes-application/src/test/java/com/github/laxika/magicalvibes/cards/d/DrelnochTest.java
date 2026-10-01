@@ -1,31 +1,29 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.k.KarplusanStrider;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Drelnoch.class, KarplusanStrider.class})
 class DrelnochTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Drelnoch becomes blocked, its controller may draw two cards")
     void drawsTwoCardsWhenAccepted() {
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KarplusanStrider(), new KarplusanStrider()));
 
-        Permanent drelnoch = addDrelnoch(player1);
-        drelnoch.setAttacking(true);
-        addReadyCreature(player2);
+        addCreatureReady(player1, new Drelnoch());
+        addCreatureReady(player2, new KarplusanStrider());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -37,14 +35,13 @@ class DrelnochTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Drelnoch's ability does not draw cards")
     void doesNotDrawWhenDeclined() {
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KarplusanStrider(), new KarplusanStrider()));
 
-        Permanent drelnoch = addDrelnoch(player1);
-        drelnoch.setAttacking(true);
-        addReadyCreature(player2);
+        addCreatureReady(player1, new Drelnoch());
+        addCreatureReady(player2, new KarplusanStrider());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -55,15 +52,14 @@ class DrelnochTest extends BaseCardTest {
     @Test
     @DisplayName("Drelnoch's ability triggers once when multiple creatures block it")
     void triggersOnceForMultipleBlockers() {
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KarplusanStrider(), new KarplusanStrider()));
 
-        Permanent drelnoch = addDrelnoch(player1);
-        drelnoch.setAttacking(true);
-        addReadyCreature(player2);
-        addReadyCreature(player2);
+        addCreatureReady(player1, new Drelnoch());
+        addCreatureReady(player2, new KarplusanStrider());
+        addCreatureReady(player2, new KarplusanStrider());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -73,35 +69,45 @@ class DrelnochTest extends BaseCardTest {
                 .filter(stackEntry -> stackEntry.getCard().getName().equals("Drelnoch"))
                 .count();
         assertThat(triggers).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     @Test
     @DisplayName("Drelnoch's ability does not trigger when it is unblocked")
     void doesNotTriggerWhenUnblocked() {
-        harness.setHand(player1, new ArrayList<>());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KarplusanStrider(), new KarplusanStrider()));
 
-        Permanent drelnoch = addDrelnoch(player1);
-        drelnoch.setAttacking(true);
+        addCreatureReady(player1, new Drelnoch());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    private Permanent addDrelnoch(Player player) {
-        Permanent permanent = new Permanent(new Drelnoch());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("Drelnoch's controller draws when an opponent blocks it")
+    void controllerDrawsWhenOpponentBlocksIt() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new KarplusanStrider(), new KarplusanStrider()));
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        addCreatureReady(player2, new Drelnoch());
+        addCreatureReady(player1, new KarplusanStrider());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

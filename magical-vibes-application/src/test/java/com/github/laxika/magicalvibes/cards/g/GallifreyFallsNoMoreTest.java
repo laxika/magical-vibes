@@ -47,7 +47,7 @@ class GallifreyFallsNoMoreTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new GallifreyFallsNoMore()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castModalInstant(player1, 0, NO_MORE, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();

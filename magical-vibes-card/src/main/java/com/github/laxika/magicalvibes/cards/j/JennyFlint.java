@@ -19,16 +19,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "136")
+@CardRegistration(set = "WHO", collectorNumber = "420")
+@CardRegistration(set = "WHO", collectorNumber = "741")
+@CardRegistration(set = "WHO", collectorNumber = "1011")
 public class JennyFlint extends Card {
 
     private static final String PARTNER_NAME = "Madame Vastra";
 
     public JennyFlint() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player")).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                 "Have target player put Madame Vastra into their hand from their library?",
                 null,

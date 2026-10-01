@@ -18,9 +18,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "UMA", collectorNumber = "78")
 @CardRegistration(set = "TSR", collectorNumber = "92")
 @CardRegistration(set = "WHO", collectorNumber = "220")
+@CardRegistration(set = "WHO", collectorNumber = "811")
 @CardRegistration(set = "MSC", collectorNumber = "787")
 @CardRegistration(set = "TDC", collectorNumber = "168")
 @CardRegistration(set = "OTC", collectorNumber = "119")
+@CardRegistration(set = "C19", collectorNumber = "99")
 public class ThinkTwice extends Card {
 
     public ThinkTwice() {

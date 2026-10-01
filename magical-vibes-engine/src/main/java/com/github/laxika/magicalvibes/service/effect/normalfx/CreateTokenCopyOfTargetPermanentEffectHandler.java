@@ -93,8 +93,14 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
             return;
         }
+        UUID attackTargetId = effect.tappedAndAttacking()
+                ? entry.getAttackedTargetId() != null
+                ? entry.getAttackedTargetId()
+                : targetPermanent.getAttackTarget()
+                : null;
+        List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, targetPermanent.getCard()),
-                sourcePermanent, tokenControllerId, effect);
+                sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         List<CardSubtype> subtypes =

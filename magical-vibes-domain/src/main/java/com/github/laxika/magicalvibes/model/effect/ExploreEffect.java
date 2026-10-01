@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
 
@@ -16,50 +17,59 @@ import java.util.UUID;
  * optional amount repeats the explore process that many times.
  */
 public record ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount,
-                            boolean replacementApplied, UUID permanentId)
+                            boolean replacementApplied, UUID permanentId, PermanentPredicate targetPredicate)
         implements CombatDamageTriggerContextEffect {
 
     public ExploreEffect() {
-        this(false, null, null, false, null);
+        this(false, null, null, false, null, null);
     }
 
     public ExploreEffect(boolean targeted) {
-        this(targeted, null, null, false, null);
+        this(targeted, null, null, false, null, null);
+    }
+
+    public ExploreEffect(boolean targeted, PermanentPredicate targetPredicate) {
+        this(targeted, null, null, false, null, targetPredicate);
     }
 
     public ExploreEffect(PermanentReference reference) {
-        this(false, reference, null, false, null);
+        this(false, reference, null, false, null, null);
     }
 
     public ExploreEffect(boolean targeted, PermanentReference reference) {
-        this(targeted, reference, null, false, null);
+        this(targeted, reference, null, false, null, null);
     }
 
     public ExploreEffect(DynamicAmount amount) {
-        this(false, null, amount, false, null);
+        this(false, null, amount, false, null, null);
     }
 
     public ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount) {
-        this(targeted, reference, amount, false, null);
+        this(targeted, reference, amount, false, null, null);
     }
 
     public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference) {
-        return new ExploreEffect(targeted, reference, null, true, null);
+        return afterReplacement(targeted, reference, null, null);
     }
 
     public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference,
                                                  UUID permanentId) {
-        return new ExploreEffect(targeted, reference, null, true, permanentId);
+        return afterReplacement(targeted, reference, permanentId, null);
+    }
+
+    public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference,
+                                                 UUID permanentId, PermanentPredicate targetPredicate) {
+        return new ExploreEffect(targeted, reference, null, true, permanentId, targetPredicate);
     }
 
     /** Creates an untargeted explore instruction for a specific permanent in a mass effect. */
     public static ExploreEffect forPermanent(UUID permanentId) {
-        return new ExploreEffect(false, null, null, false, permanentId);
+        return new ExploreEffect(false, null, null, false, permanentId, null);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return targeted ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
+        return targeted ? TargetSpec.benign(TargetPredicates.creature(), targetPredicate) : TargetSpec.NONE;
     }
 
     @Override

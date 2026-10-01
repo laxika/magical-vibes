@@ -1,0 +1,111 @@
+package com.github.laxika.magicalvibes.cards.r;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({RuthlessTechnomancer.class, GrizzlyBears.class, LeoninScimitar.class,
+        SerraAngel.class, Spellbook.class})
+class RuthlessTechnomancerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Sacrifices another creature and creates Treasures equal to its power")
+    void sacrificesAnotherCreatureAndCreatesTreasuresEqualToPower() {
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        fodder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castTechnomancer();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Declining the sacrifice creates no Treasures")
+    void decliningTheSacrificeCreatesNoTreasures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castTechnomancer();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifices X artifacts and returns a creature with power X or less")
+    void sacrificesArtifactsAndReturnsCreatureWithinPowerLimit() {
+        Permanent technomancer = harness.addToBattlefieldAndReturn(player1, new RuthlessTechnomancer());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, new SerraAngel()));
+        addReanimationMana();
+
+        harness.activateAbility(player1, indexOf(technomancer), 0, 2, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Rejects zero X and creatures whose power exceeds X")
+    void rejectsZeroXAndTooPowerfulTargets() {
+        Permanent technomancer = harness.addToBattlefieldAndReturn(player1, new RuthlessTechnomancer());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        Card target = new SerraAngel();
+        harness.setGraveyard(player1, List.of(target));
+        addReanimationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(technomancer), 0, 2, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(technomancer), 0, 0, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Spellbook")).hasSize(1);
+        assertThat(findPermanents(player1, "Leonin Scimitar")).hasSize(1);
+    }
+
+    private void castTechnomancer() {
+        harness.setHand(player1, List.of(new RuthlessTechnomancer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+    }
+
+    private void addReanimationMana() {
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    private int indexOf(Permanent permanent) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
+}

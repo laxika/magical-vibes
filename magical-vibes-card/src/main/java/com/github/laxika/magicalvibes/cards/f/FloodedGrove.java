@@ -17,7 +17,9 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "373")
 @CardRegistration(set = "DSC", collectorNumber = "276")
 @CardRegistration(set = "TDC", collectorNumber = "364")
+@CardRegistration(set = "M3C", collectorNumber = "342")
 @CardRegistration(set = "OTC", collectorNumber = "297")
+@CardRegistration(set = "BLC", collectorNumber = "304")
 public class FloodedGrove extends Card {
 
     public FloodedGrove() {

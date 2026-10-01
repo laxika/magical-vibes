@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -65,12 +64,9 @@ class ShahOfNaarIsleTest extends BaseCardTest {
     }
 
     private void castShah() {
-        harness.setHand(player1, List.of(new ShahOfNaarIsle()));
         harness.setHand(player2, List.of());
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, new ShahOfNaarIsle(), "{3}{R}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

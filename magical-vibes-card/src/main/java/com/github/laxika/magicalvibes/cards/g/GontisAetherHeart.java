@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "152")
+@CardRegistration(set = "M3C", collectorNumber = "294")
 public class GontisAetherHeart extends Card {
 
     public GontisAetherHeart() {

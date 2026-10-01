@@ -12,10 +12,12 @@ import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "266")
 @CardRegistration(set = "WHO", collectorNumber = "283")
+@CardRegistration(set = "WHO", collectorNumber = "1090")
 @CardRegistration(set = "LTC", collectorNumber = "313")
 @CardRegistration(set = "SOC", collectorNumber = "375")
 @CardRegistration(set = "MSC", collectorNumber = "247")
 @CardRegistration(set = "MSC", collectorNumber = "476")
+@CardRegistration(set = "M3C", collectorNumber = "345")
 @CardRegistration(set = "MKC", collectorNumber = "263")
 @CardRegistration(set = "LCC", collectorNumber = "333")
 public class FurycalmSnarl extends Card {

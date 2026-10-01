@@ -10,6 +10,9 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "319")
 @CardRegistration(set = "WHO", collectorNumber = "269")
+@CardRegistration(set = "WHO", collectorNumber = "487")
+@CardRegistration(set = "WHO", collectorNumber = "860")
+@CardRegistration(set = "WHO", collectorNumber = "1078")
 @CardRegistration(set = "PIP", collectorNumber = "260")
 @CardRegistration(set = "PIP", collectorNumber = "492")
 @CardRegistration(set = "PIP", collectorNumber = "788")
@@ -20,6 +23,8 @@ import java.util.List;
 @CardRegistration(set = "AFC", collectorNumber = "232")
 @CardRegistration(set = "OTC", collectorNumber = "282")
 @CardRegistration(set = "C20", collectorNumber = "265")
+@CardRegistration(set = "MIC", collectorNumber = "171")
+@CardRegistration(set = "C19", collectorNumber = "238")
 public class DarkwaterCatacombs extends Card {
 
     public DarkwaterCatacombs() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 
 @CardRegistration(set = "WHO", collectorNumber = "20")
 @CardRegistration(set = "WHO", collectorNumber = "340")
+@CardRegistration(set = "WHO", collectorNumber = "625")
+@CardRegistration(set = "WHO", collectorNumber = "931")
 public class FourKnocks extends Card {
 
     public FourKnocks() {

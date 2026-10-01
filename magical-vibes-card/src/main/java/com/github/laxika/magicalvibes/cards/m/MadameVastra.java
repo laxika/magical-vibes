@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "142")
+@CardRegistration(set = "WHO", collectorNumber = "425")
+@CardRegistration(set = "WHO", collectorNumber = "747")
+@CardRegistration(set = "WHO", collectorNumber = "1016")
 public class MadameVastra extends Card {
 
     private static final String PARTNER_NAME = "Jenny Flint";

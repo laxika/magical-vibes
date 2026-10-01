@@ -34,6 +34,9 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                         && entry.getSourcePermanentId() != null
                         ? entry.getSourcePermanentId()
                         : entry.getTargetId();
+                if (regenerationTargetId == null && entry.targetsForEffect(effect).size() == 1) {
+                    regenerationTargetId = entry.targetsForEffect(effect).getFirst();
+                }
                 if (entry.getSourcePermanentId() != null) {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (source != null && source.getAttachedTo() != null) {

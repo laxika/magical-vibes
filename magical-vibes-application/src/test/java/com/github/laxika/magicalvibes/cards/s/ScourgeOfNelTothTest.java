@@ -50,7 +50,7 @@ class ScourgeOfNelTothTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyardWithSacrifices(
                 player1, 0, null, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sacrifice exactly 2");
+                .hasMessageContaining("choose exactly 2 permanents");
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         harness.assertInGraveyard(player1, "Scourge of Nel Toth");

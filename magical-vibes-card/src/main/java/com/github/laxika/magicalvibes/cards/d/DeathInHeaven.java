@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "66")
+@CardRegistration(set = "WHO", collectorNumber = "671")
 public class DeathInHeaven extends Card {
 
     public DeathInHeaven() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "JUD", collectorNumber = "18")
+@CardRegistration(set = "C19", collectorNumber = "69")
 public class PrismaticStrands extends Card {
 
     public PrismaticStrands() {

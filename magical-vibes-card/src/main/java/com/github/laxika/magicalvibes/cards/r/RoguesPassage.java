@@ -21,12 +21,15 @@ import java.util.List;
 @CardRegistration(set = "C15", collectorNumber = "302")
 @CardRegistration(set = "CMM", collectorNumber = "426")
 @CardRegistration(set = "WHO", collectorNumber = "299")
+@CardRegistration(set = "WHO", collectorNumber = "890")
 @CardRegistration(set = "PIP", collectorNumber = "283")
 @CardRegistration(set = "PIP", collectorNumber = "811")
 @CardRegistration(set = "C21", collectorNumber = "312")
 @CardRegistration(set = "C20", collectorNumber = "303")
 @CardRegistration(set = "LTC", collectorNumber = "326")
 @CardRegistration(set = "MKC", collectorNumber = "284")
+@CardRegistration(set = "MIC", collectorNumber = "179")
+@CardRegistration(set = "C19", collectorNumber = "270")
 public class RoguesPassage extends Card {
 
     public RoguesPassage() {

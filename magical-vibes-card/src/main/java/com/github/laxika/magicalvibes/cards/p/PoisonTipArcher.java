@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "M19", collectorNumber = "220")
 @CardRegistration(set = "SLD", collectorNumber = "788")
+@CardRegistration(set = "BLC", collectorNumber = "256")
 public class PoisonTipArcher extends Card {
 
     public PoisonTipArcher() {

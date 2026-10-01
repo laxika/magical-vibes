@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,7 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(defendingCreature.getToughnessModifier()).isEqualTo(-1);
 
-        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(defendingCreature.getPowerModifier()).isZero();
         assertThat(defendingCreature.getToughnessModifier()).isZero();

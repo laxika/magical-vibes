@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "89")
+@CardRegistration(set = "WHO", collectorNumber = "694")
 public class IraxxaEmpressOfMars extends Card {
 
     public IraxxaEmpressOfMars() {

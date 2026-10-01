@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class HeraldOfLeshrac extends Card {
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER),
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER), GrantScope.SELF));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(new PermanentIsLandPredicate()));
+                new EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsLandPredicate(), new PermanentControlledBySourceControllerPredicate()))));
     }
 }

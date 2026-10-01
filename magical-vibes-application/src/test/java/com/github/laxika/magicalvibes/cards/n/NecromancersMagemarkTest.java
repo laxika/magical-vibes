@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.g.GuardiansMagemark;
+import com.github.laxika.magicalvibes.cards.m.Mortify;
+import com.github.laxika.magicalvibes.cards.o.OstiaryThrull;
+import com.github.laxika.magicalvibes.cards.p.PilloryOfTheSleepless;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,18 +17,51 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NecromancersMagemark.class, Pacifism.class, GrizzlyBears.class, DoomBlade.class})
+@CardUsed({NecromancersMagemark.class, PilloryOfTheSleepless.class, OstiaryThrull.class,
+        Mortify.class, GuardiansMagemark.class})
 class NecromancersMagemarkTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Attaches to a creature when cast")
+    void resolvesAttachedToTargetCreature() {
+        Permanent creature = addCreatureReady(player1, new OstiaryThrull());
+        harness.setHand(player1, List.of(new NecromancersMagemark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof NecromancersMagemark
+                        && creature.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuardiansMagemark());
+        harness.setHand(player1, List.of(new NecromancersMagemark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
 
     @Test
     @DisplayName("Boosts each enchanted creature its controller controls")
     void boostsEnchantedCreaturesYouControl() {
-        Permanent first = addCreature(player1);
-        Permanent second = addCreature(player1);
-        Permanent unenchanted = addCreature(player1);
+        Permanent first = addCreatureReady(player1, new OstiaryThrull());
+        Permanent second = addCreatureReady(player1, new OstiaryThrull());
+        Permanent unenchanted = addCreatureReady(player1, new OstiaryThrull());
+        Permanent opponentEnchanted = addCreatureReady(player2, new OstiaryThrull());
         attach(new NecromancersMagemark(), first, player1);
-        attach(new Pacifism(), second, player1);
+        attach(new PilloryOfTheSleepless(), second, player1);
+        attach(new PilloryOfTheSleepless(), opponentEnchanted, player1);
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
@@ -35,18 +69,20 @@ class NecromancersMagemarkTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, unenchanted)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, unenchanted)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentEnchanted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentEnchanted)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Returns any enchanted creature you control to its owner's hand instead of letting it die")
     void returnsEnchantedCreatureYouControlToHand() {
-        Permanent protectedCreature = addCreature(player1);
-        Permanent dyingCreature = addCreature(player1);
+        Permanent protectedCreature = addCreatureReady(player1, new OstiaryThrull());
+        Permanent dyingCreature = addCreatureReady(player1, new OstiaryThrull());
         attach(new NecromancersMagemark(), protectedCreature, player1);
-        attach(new Pacifism(), dyingCreature, player1);
+        attach(new PilloryOfTheSleepless(), dyingCreature, player1);
         Card dyingCard = dyingCreature.getCard();
 
-        destroyWithDoomBlade(dyingCreature);
+        destroyWithMortify(dyingCreature);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(dyingCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(dyingCard.getId()));
@@ -55,12 +91,12 @@ class NecromancersMagemarkTest extends BaseCardTest {
     @Test
     @DisplayName("Does not replace the death of an unenchanted creature")
     void doesNotReplaceUnenchantedCreature() {
-        Permanent protectedCreature = addCreature(player1);
-        Permanent dyingCreature = addCreature(player1);
+        Permanent protectedCreature = addCreatureReady(player1, new OstiaryThrull());
+        Permanent dyingCreature = addCreatureReady(player1, new OstiaryThrull());
         attach(new NecromancersMagemark(), protectedCreature, player1);
         Card dyingCard = dyingCreature.getCard();
 
-        destroyWithDoomBlade(dyingCreature);
+        destroyWithMortify(dyingCreature);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(dyingCard.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card.getId().equals(dyingCard.getId()));
@@ -69,36 +105,29 @@ class NecromancersMagemarkTest extends BaseCardTest {
     @Test
     @DisplayName("Does not replace the death of an enchanted creature controlled by an opponent")
     void doesNotReplaceOpponentControlledCreature() {
-        Permanent dyingCreature = addCreature(player2);
+        Permanent dyingCreature = addCreatureReady(player2, new OstiaryThrull());
         attach(new NecromancersMagemark(), dyingCreature, player1);
         Card dyingCard = dyingCreature.getCard();
 
-        destroyWithDoomBlade(dyingCreature);
+        destroyWithMortify(dyingCreature);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card.getId().equals(dyingCard.getId()));
         assertThat(gd.playerHands.get(player2.getId())).noneMatch(card -> card.getId().equals(dyingCard.getId()));
     }
 
-    private Permanent addCreature(Player controller) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(controller.getId()).add(creature);
-        return creature;
-    }
-
     private void attach(Card auraCard, Permanent creature, Player controller) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
-    private void destroyWithDoomBlade(Permanent target) {
+    private void destroyWithMortify(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Mortify()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }

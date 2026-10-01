@@ -186,6 +186,11 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), ManaSpendRestriction.NONE, null, false, false, false, false, false, false, Set.of(), false);
     }
 
+    public AwardAnyColorManaEffect(int amount, List<ManaColor> allowedColors) {
+        this(new Fixed(amount), ManaSpendRestriction.NONE, null, false, false, false, false, false, false,
+                Set.of(), false, allowedColors);
+    }
+
     /** "Add N mana in any combination of colors." */
     public AwardAnyColorManaEffect(int amount, boolean anyColorCombination) {
         this(new Fixed(amount), ManaSpendRestriction.NONE, null, false,
@@ -208,6 +213,12 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     public static AwardAnyColorManaEffect ofDifferentColors(int amount, ManaSpendRestriction restriction) {
         return new AwardAnyColorManaEffect(new Fixed(amount), restriction, null,
                 false, false, false, false, false, false, Set.of(), true);
+    }
+
+    /** "Add one mana of a color chosen for this source permanent." */
+    public static AwardAnyColorManaEffect fromSourceChosenColors() {
+        return new AwardAnyColorManaEffect(new Fixed(1), ManaSpendRestriction.CHOSEN_COLORS,
+                null, false, false, false, false, false, false, Set.of(), false);
     }
 
     /** "Add N mana in any combination of colors" for spells or abilities of any listed subtype. */
@@ -361,13 +372,14 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     @Override
     public int estimatedWildcardMana() {
         return switch (restriction) {
-            case NONE, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
-                 CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
+            case NONE, CHOSEN_COLORS, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
+                 CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_SPELL, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
                  LEGENDARY_SPELLS,
                  INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,
                  FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
+                 OUTSIDE_STARTING_DECK_SPELL_ONLY,
                  MULTICOLORED_SPELLS,
                  CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
                  INSTANT_SORCERY_OR_SUBTYPES,

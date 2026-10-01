@@ -15,6 +15,8 @@ public enum UntapLockCondition {
      * {@code Permanent.untapPreventedWhileSourceOnBattlefieldIds}.
      */
     WHILE_SOURCE_ON_BATTLEFIELD,
+    /** The prevention ends when the ability's controller loses control of the source. */
+    WHILE_SOURCE_CONTROLLED,
     /**
      * The target permanent doesn't untap for as long as the source permanent remains tapped
      * (Rust Tick). Tracked via {@code Permanent.untapPreventedByPermanentIds}.

@@ -100,11 +100,17 @@ class WhirlingDervishTest extends BaseCardTest {
     @DisplayName("Triggers on each end step, including the opponent's, when it dealt damage to an opponent")
     void triggersOnEachEndStep() {
         Permanent dervish = addDervish(player1);
+
+        // Start during the opponent's turn. Player1 can still use the instant-speed granted
+        // ability, so this is a legitimate opponent end step for the "each end step" trigger.
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         dealOneDamageWithFireWhip(dervish, player2.getId());
 
-        // It is player2's (the opponent's) turn.
         advanceToEndStepAndResolve(player2.getId());
 
+        harness.assertLife(player2, 19);
         assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -116,6 +122,21 @@ class WhirlingDervishTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         advanceToEndStepAndResolve(player1.getId());
+
+        assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger on a later turn for damage dealt on an earlier turn")
+    void damageConditionResetsAtTurnBoundary() {
+        Permanent dervish = addDervish(player1);
+        dealOneDamageWithFireWhip(dervish, player2.getId());
+
+        advanceToEndStepAndResolve(player1.getId());
+        assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

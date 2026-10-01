@@ -39,6 +39,7 @@ class TheWarDoctorTest extends BaseCardTest {
         Permanent doctor = addCreatureReady(player1, new TheWarDoctor());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
+        target.setMarkedDamage(1);
         harness.setHand(player1, List.of(new SpikefieldHazard()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, 0, target.getId());

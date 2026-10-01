@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MysticMelting.class, FountainOfYouth.class, AngelicChorus.class, GrizzlyBears.class})
 class MysticMeltingTest extends BaseCardTest {
 
     @Test
@@ -71,7 +73,6 @@ class MysticMeltingTest extends BaseCardTest {
     private void castMysticMelting(UUID targetId) {
         harness.setHand(player1, List.of(new MysticMelting()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

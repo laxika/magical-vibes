@@ -97,7 +97,7 @@ class CelestialDawnTest extends BaseCardTest {
 
     @Test
     @DisplayName("A Mountain you control becomes a Plains and taps for white")
-    void ownNonbasicLandBecomesPlains() {
+    void ownBasicLandBecomesPlains() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.addToBattlefield(player1, new CelestialDawn());
 
@@ -166,6 +166,20 @@ class CelestialDawnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, incinerate.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a red instant or sorcery spell");
+    }
+
+    @Test
+    @DisplayName("A spell controlled by an opponent keeps its printed color")
+    void opponentSpellKeepsColor() {
+        harness.addToBattlefield(player1, new CelestialDawn());
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gqs.getEffectiveCardColors(gd, incinerate)).containsExactly(CardColor.RED);
     }
 
     @Test

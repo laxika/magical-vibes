@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "97")
+@CardRegistration(set = "C19", collectorNumber = "108")
 public class CallToTheNetherworld extends Card {
 
     public CallToTheNetherworld() {

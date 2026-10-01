@@ -135,6 +135,9 @@ public class CastingCostService {
      * player, pre-collected in a single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
+        public boolean containsEffect(Class<? extends CardEffect> effectType) {
+            return modifiers.stream().anyMatch(modifier -> effectType.isInstance(modifier.effect()));
+        }
     }
 
     public record AlternativeCostSelection(String manaCost, boolean castsWithWarp,
@@ -665,8 +668,23 @@ public class CastingCostService {
     public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
                                                    ManaCost cost, CostModifierSnapshot snapshot,
                                                    boolean flashbackCost) {
-        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
-        ManaCost effectiveCost = cost;
+        return applyColoredManaCostReductions(gameData, playerId, card, cost, snapshot,
+                flashbackCost, List.of());
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, List<UUID> targetIds) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), false, targetIds);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, CostModifierSnapshot snapshot,
+                                                   boolean flashbackCost, List<UUID> targetIds) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, flashbackCost, targetIds);
+        ManaCost effectiveCost = cost.increasedBy(
+                gameData.perpetualManaCostIncreases.get(card.getId()));
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
@@ -1266,6 +1284,21 @@ public class CastingCostService {
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (var floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof ActivatedAbilityCostReducingEffect reducer
+                        && java.util.Objects.equals(floating.affectedPlayerId(), activatingPlayerId)
+                        && reducer.appliesTo(ability, floating.sourcePermanentId(), targetId, targetIds)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        sourcePermanent, reducer.affectedPermanents(),
+                        FilterContext.of(gameData).withSourceControllerId(floating.controllerId())
+                                .withSourcePermanentId(floating.sourcePermanentId()))) {
+                    reduction += evaluateActivatedAbilityCostReduction(
+                            gameData, reducer, null, floating.controllerId());
+                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
+                }
+            }
+        }
         return preventsReductionBelowOneMana
                 ? Math.min(reduction, maximumReductionForMinimumOneMana)
                 : reduction;
@@ -1851,13 +1884,18 @@ public class CastingCostService {
                 && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                 && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                 && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
-                && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
             if (altCost.manaValueCapCounter() == null && altCost.manaValueCapAmount() == null) {
                 return true;
             }
             return sourcePermanent != null && manaValueCapSatisfied(gameData, playerId, sourcePermanent, card, altCost);
         }
         return false;
+    }
+
+    private boolean matchesAlternativeCostPredicate(GameData gameData, UUID playerId, Card card,
+                                                    CardPredicate predicate) {
+        return predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, playerId);
     }
 
     private AlternativeCostForSpellsEffect activeAlternativeCost(GameData gameData, CardEffect effect,
@@ -1897,7 +1935,7 @@ public class CastingCostService {
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
                     return new FreeCastSource(null, altCost, null);
                 }
             }
@@ -1969,7 +2007,7 @@ public class CastingCostService {
                         && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                         && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
                         && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
                     if (altCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
@@ -2044,7 +2082,7 @@ public class CastingCostService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect alternative
                         && alternative.nonManaCost() instanceof CollectEvidenceCost collectEvidence
-                        && predicateEvaluationService.matchesCardPredicate(card, alternative.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, alternative.filter())) {
                     return collectEvidence;
                 }
             }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BraidOfFire.class)
 class BraidOfFireTest extends BaseCardTest {
 
     @Test
@@ -30,7 +32,21 @@ class BraidOfFireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(braid);
+        harness.assertOnBattlefield(player1, "Braid of Fire");
+    }
+
+    @Test
+    @DisplayName("Braid of Fire adds its mana to the controller's existing red mana")
+    void addsToExistingRedMana() {
+        harness.addToBattlefield(player1, new BraidOfFire());
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.UPKEEP));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
     }
 
     @Test
@@ -51,13 +67,13 @@ class BraidOfFireTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Braid of Fire's cumulative upkeep sacrifices it")
     void decliningCumulativeUpkeepSacrifices() {
-        Permanent braid = harness.addToBattlefieldAndReturn(player1, new BraidOfFire());
+        harness.addToBattlefield(player1, new BraidOfFire());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(braid);
+        harness.assertNotOnBattlefield(player1, "Braid of Fire");
         harness.assertInGraveyard(player1, "Braid of Fire");
     }
 }

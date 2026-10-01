@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "77")
+@CardRegistration(set = "M3C", collectorNumber = "203")
 public class SifterOfSkulls extends Card {
 
     private static final CreateTokenEffect SCION_TOKEN = new CreateTokenEffect(

@@ -7,10 +7,24 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(EronTheRelentless.class)
 class EronTheRelentlessTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Haste lets Eron attack the turn it enters")
+    void hasteAllowsAttackingTheTurnItEnters() {
+        harness.castFromHand(player1, new EronTheRelentless(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+    }
 
     @Test
     @DisplayName("Resolving the activated ability grants a regeneration shield")

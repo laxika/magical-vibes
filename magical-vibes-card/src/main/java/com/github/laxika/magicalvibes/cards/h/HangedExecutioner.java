@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "22")
+@CardRegistration(set = "BLC", collectorNumber = "139")
 public class HangedExecutioner extends Card {
 
     public HangedExecutioner() {

@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "PCY", collectorNumber = "126")
 @CardRegistration(set = "SLD", collectorNumber = "696")
 @CardRegistration(set = "MH1", collectorNumber = "180")
+@CardRegistration(set = "BLC", collectorNumber = "238")
 public class SporeFrog extends Card {
 
     public SporeFrog() {

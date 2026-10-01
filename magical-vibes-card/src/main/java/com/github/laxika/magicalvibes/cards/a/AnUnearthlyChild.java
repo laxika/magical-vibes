@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "35")
+@CardRegistration(set = "WHO", collectorNumber = "640")
 public class AnUnearthlyChild extends Card {
 
     private static final CardPredicate SEARCH_PREDICATE = new CardAnyOfPredicate(List.of(

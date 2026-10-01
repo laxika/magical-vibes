@@ -25,12 +25,15 @@ public class BoostCreaturesOfChosenPlayerModeEffectHandler implements StaticEffe
         if (!support.matchesCreatureScope(context, boost.scope(), null)) return;
 
         var targetControllerId = context.gameData().findControllerOf(context.target());
-        if (targetControllerId == null
-                || !boost.mode().equals(context.source().getChosenModeByPlayer().get(targetControllerId))) {
+        var chosenModes = context.planarSource() != null
+                ? context.planarSource().getChosenModeByPlayer()
+                : context.source().getChosenModeByPlayer();
+        if (targetControllerId == null || !boost.mode().equals(chosenModes.get(targetControllerId))) {
             return;
         }
 
         accumulator.addPower(boost.powerBoost());
         accumulator.addToughness(boost.toughnessBoost());
+        accumulator.addKeywords(boost.grantedKeywords());
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.PutRandomCardExiledWithSource
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "164")
+@CardRegistration(set = "MIC", collectorNumber = "20")
+@CardRegistration(set = "MIC", collectorNumber = "58")
 public class GorexTheTombshell extends Card {
 
     public GorexTheTombshell() {

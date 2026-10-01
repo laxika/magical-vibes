@@ -20,6 +20,10 @@ import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "47")
 @CardRegistration(set = "WHO", collectorNumber = "362")
+@CardRegistration(set = "WHO", collectorNumber = "537")
+@CardRegistration(set = "WHO", collectorNumber = "652")
+@CardRegistration(set = "WHO", collectorNumber = "953")
+@CardRegistration(set = "WHO", collectorNumber = "1128")
 public class K9MarkI extends Card {
 
     public K9MarkI() {

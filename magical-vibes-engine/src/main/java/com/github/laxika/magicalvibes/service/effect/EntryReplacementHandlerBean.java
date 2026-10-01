@@ -12,7 +12,7 @@ public interface EntryReplacementHandlerBean {
     Class<? extends CardEffect> handledEffect();
 
     default void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent, CardEffect effect) {
-        apply(gameData, controllerId, enteringPermanent, effect, 0);
+        throw new UnsupportedOperationException("Entry replacement does not implement apply()");
     }
 
     /**
@@ -21,6 +21,6 @@ public interface EntryReplacementHandlerBean {
      */
     default void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
                        CardEffect effect, int xValue) {
-        throw new UnsupportedOperationException("Entry replacement does not implement apply()");
+        apply(gameData, controllerId, enteringPermanent, effect);
     }
 }

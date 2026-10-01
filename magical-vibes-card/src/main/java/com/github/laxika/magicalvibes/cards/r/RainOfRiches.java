@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "NCC", collectorNumber = "50")
 @CardRegistration(set = "NCC", collectorNumber = "150")
 @CardRegistration(set = "OTC", collectorNumber = "177")
+@CardRegistration(set = "BLC", collectorNumber = "200")
 public class RainOfRiches extends Card {
 
     public RainOfRiches() {

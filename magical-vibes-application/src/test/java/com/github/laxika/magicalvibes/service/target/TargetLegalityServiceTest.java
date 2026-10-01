@@ -635,6 +635,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -935,6 +936,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -1338,6 +1340,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
@@ -1905,6 +1908,27 @@ class TargetLegalityServiceTest {
                     List.of(), targetSpell.getId(), Zone.STACK);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
+
+        @Test
+        void bareStackTargetGroupRemainsLegalAlongsidePermanentTarget() {
+            Card targetSpell = createTargetingSpell("Target instant", CardColor.BLUE);
+            StackEntry targetEntry = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpell,
+                    player2Id, "Target instant", List.of());
+            gd.stack.add(targetEntry);
+            Permanent permanent = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            spell.target(new StackEntryPredicateTargetFilter(
+                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)), "Target a spell"));
+            spell.target(1, 1).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
+                    "Mixed targets", spell.getEffects(EffectSlot.SPELL), 0,
+                    List.of(targetSpell.getId(), permanent.getId()));
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+            assertThat(entry.targetsForGroup(0)).containsExactly(targetSpell.getId());
+            assertThat(entry.targetsForGroup(1)).containsExactly(permanent.getId());
         }
 
         @Test

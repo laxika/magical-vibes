@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeaconHawk.class, Mountain.class})
+@CardUsed({BeaconHawk.class, AzoriusSignet.class})
 class BeaconHawkTest extends BaseCardTest {
 
     @Test
@@ -54,11 +54,11 @@ class BeaconHawkTest extends BaseCardTest {
     @DisplayName("The combat trigger cannot choose a noncreature permanent")
     void cannotChooseNonCreaturePermanent() {
         Permanent hawk = attackWithBeaconHawk(player1);
-        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
 
         resolveCombatAndTrigger();
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, mountain.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
 
@@ -95,6 +95,6 @@ class BeaconHawkTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

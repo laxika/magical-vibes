@@ -28,11 +28,13 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
@@ -163,6 +165,8 @@ public class Card {
     private Integer power;
     private Integer toughness;
     private Set<Keyword> keywords = Set.of();
+    /** Persistent starting intensity for digital cards that use the intensity mechanic. */
+    private int startingIntensity;
     private Integer loyalty;
     /** Printed defense for Battle permanents (enters with that many defense counters). */
     private Integer defense;
@@ -385,6 +389,7 @@ public class Card {
         this.power = source.power;
         this.toughness = source.toughness;
         this.keywords = source.keywords;
+        this.startingIntensity = source.startingIntensity;
         this.loyalty = source.loyalty;
         this.defense = source.defense;
         this.xColorRestrictions = source.xColorRestrictions == null
@@ -617,6 +622,13 @@ public class Card {
     public void setPower(Integer power) { assertMutable(); this.power = power; }
     public void setToughness(Integer toughness) { assertMutable(); this.toughness = toughness; }
     public void setKeywords(Set<Keyword> keywords) { assertMutable(); this.keywords = keywords; }
+    public void setStartingIntensity(int startingIntensity) {
+        assertMutable();
+        if (startingIntensity < 0) {
+            throw new IllegalArgumentException("Starting intensity cannot be negative");
+        }
+        this.startingIntensity = startingIntensity;
+    }
     public void setLoyalty(Integer loyalty) { assertMutable(); this.loyalty = loyalty; }
     public void setDefense(Integer defense) { assertMutable(); this.defense = defense; }
     /** Restrict X to a single color (Consume Spirit). */
@@ -912,6 +924,14 @@ public class Card {
             case MayPayTapPermanentsEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+            }
+            case MayPayTapAndSacrificePermanentEffect e ->
+                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case ForcedCostOrElseEffect e -> {
+                e.paidEffects().forEach(innerEffect -> registerEffectTargetIndex(innerEffect, targetIndex));
+                if (e.elseEffects() != null) {
+                    e.elseEffects().forEach(innerEffect -> registerEffectTargetIndex(innerEffect, targetIndex));
+                }
             }
             case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;

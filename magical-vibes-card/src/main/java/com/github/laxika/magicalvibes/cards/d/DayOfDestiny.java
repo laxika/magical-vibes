@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "BOK", collectorNumber = "1")
 @CardRegistration(set = "WHO", collectorNumber = "206")
+@CardRegistration(set = "WHO", collectorNumber = "797")
 @CardRegistration(set = "DMC", collectorNumber = "99")
+@CardRegistration(set = "WHO", collectorNumber = "464")
+@CardRegistration(set = "WHO", collectorNumber = "1055")
 public class DayOfDestiny extends Card {
 
     public DayOfDestiny() {

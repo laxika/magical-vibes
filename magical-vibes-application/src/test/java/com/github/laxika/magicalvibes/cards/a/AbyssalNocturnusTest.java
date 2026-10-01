@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.z.ZuranEnchanter;
+import com.github.laxika.magicalvibes.cards.c.Cryptwailing;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,16 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbyssalNocturnus.class, GrizzlyBears.class, ZuranEnchanter.class})
+@CardUsed({AbyssalNocturnus.class, Cryptwailing.class})
 class AbyssalNocturnusTest extends BaseCardTest {
 
     @Test
     @DisplayName("An opponent discarding a card gives it +2/+2 and fear")
     void opponentDiscardBoostsAndGrantsFear() {
         Permanent nocturnus = addCreatureReady(player1, new AbyssalNocturnus());
-        addCreatureReady(player1, new ZuranEnchanter());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
-        readyEnchanterMana();
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player2, new ArrayList<>(List.of(new AbyssalNocturnus())));
+        readyCryptwailingMana(1);
 
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -41,20 +42,26 @@ class AbyssalNocturnusTest extends BaseCardTest {
     @DisplayName("Each opponent discard stacks another boost")
     void opponentDiscardsStack() {
         Permanent nocturnus = addCreatureReady(player1, new AbyssalNocturnus());
-        addCreatureReady(player1, new ZuranEnchanter());
-        addCreatureReady(player1, new ZuranEnchanter());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
-        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        readyCryptwailingMana(2);
 
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        readyCryptwailingMana(0);
         harness.activateAbility(player1, 2, null, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(nocturnus.getPowerModifier()).isEqualTo(4);
         assertThat(nocturnus.getToughnessModifier()).isEqualTo(4);
@@ -64,9 +71,11 @@ class AbyssalNocturnusTest extends BaseCardTest {
     @DisplayName("The boost and fear wear off at end of turn")
     void boostAndFearWearOffAtEndOfTurn() {
         Permanent nocturnus = addCreatureReady(player1, new AbyssalNocturnus());
-        addCreatureReady(player1, new ZuranEnchanter());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
-        readyEnchanterMana();
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player2, new ArrayList<>(List.of(new AbyssalNocturnus())));
+        readyCryptwailingMana(1);
 
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -86,9 +95,11 @@ class AbyssalNocturnusTest extends BaseCardTest {
     @DisplayName("A controller discard does not trigger it")
     void controllerDiscardDoesNotTrigger() {
         Permanent nocturnus = addCreatureReady(player1, new AbyssalNocturnus());
-        addCreatureReady(player1, new ZuranEnchanter());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        readyEnchanterMana();
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(
+                new AbyssalNocturnus(), new AbyssalNocturnus())));
+        harness.setHand(player1, new ArrayList<>(List.of(new AbyssalNocturnus())));
+        readyCryptwailingMana(1);
 
         harness.activateAbility(player1, 1, null, player1.getId());
         harness.passBothPriorities();
@@ -100,8 +111,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isFalse();
     }
 
-    private void readyEnchanterMana() {
-        harness.addMana(player1, ManaColor.BLACK, 3);
+    private void readyCryptwailingMana(int amount) {
+        harness.addMana(player1, ManaColor.COLORLESS, amount);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

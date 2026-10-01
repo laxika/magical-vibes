@@ -20,6 +20,7 @@ import java.util.List;
 
 /** Coward // Killer, a split spell with one mode for each half. */
 @CardRegistration(set = "WHO", collectorNumber = "77")
+@CardRegistration(set = "WHO", collectorNumber = "682")
 public class CowardKiller extends Card {
 
     public CowardKiller() {

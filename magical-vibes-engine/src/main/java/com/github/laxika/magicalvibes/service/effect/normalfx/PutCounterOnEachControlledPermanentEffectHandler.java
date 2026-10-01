@@ -57,6 +57,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         int count = 0;
         int loyaltyCountersPlaced = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
+        Map<Permanent, Integer> previousCounts = new LinkedHashMap<>();
         Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
         for (Permanent p : new ArrayList<>(battlefield)) {
             if (e.excludeTargets()
@@ -75,7 +76,9 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
                     entry.getControllerId());
             if (placed <= 0) continue;
 
-            p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
+            int previousCount = p.getCounterCount(e.counterType());
+            previousCounts.put(p, previousCount);
+            p.setCounterCount(e.counterType(), previousCount + placed);
             permanentCounterSupport.notifyCountersPlaced(
                     gameData, entry, p, placed, e.counterType());
             count++;
@@ -98,6 +101,11 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
+
+        previousCounts.forEach((permanent, previousCount) ->
+                permanentCounterSupport.notifySelfCountersPlaced(gameData, entry, permanent,
+                        e.counterType(), previousCount,
+                        permanent.getCounterCount(e.counterType()) - previousCount));
 
         // Fire +1/+1 counter-placement triggers after all placements.
         // Deferred past the loop since firing pushes triggered abilities onto the stack.

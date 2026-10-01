@@ -15,12 +15,15 @@ import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 @CardRegistration(set = "SLD", collectorNumber = "2327")
 @CardRegistration(set = "TLE", collectorNumber = "259")
 @CardRegistration(set = "WHO", collectorNumber = "231")
+@CardRegistration(set = "WHO", collectorNumber = "822")
 @CardRegistration(set = "40K", collectorNumber = "213")
 @CardRegistration(set = "NCC", collectorNumber = "289")
 @CardRegistration(set = "AFC", collectorNumber = "157")
 @CardRegistration(set = "OTC", collectorNumber = "192")
 @CardRegistration(set = "LCC", collectorNumber = "241")
 @CardRegistration(set = "DMC", collectorNumber = "131")
+@CardRegistration(set = "BLC", collectorNumber = "216")
+@CardRegistration(set = "C19", collectorNumber = "164")
 public class Explore extends Card {
 
     public Explore() {

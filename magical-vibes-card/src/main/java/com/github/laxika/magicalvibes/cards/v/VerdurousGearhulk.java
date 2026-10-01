@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "KLD", collectorNumber = "172")
 @CardRegistration(set = "MPS", collectorNumber = "5")
 @CardRegistration(set = "KLR", collectorNumber = "185")
+@CardRegistration(set = "MIC", collectorNumber = "145")
 public class VerdurousGearhulk extends Card {
 
     public VerdurousGearhulk() {

@@ -269,6 +269,28 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    void perpetualAbilitiesUseTheirGrantedEffectToChooseTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect(
+                        new com.github.laxika.magicalvibes.model.effect.MustAttackEffect()), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect(
+                        new com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect()), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
+                        EffectSlot.EACH_UPKEEP_TRIGGERED,
+                        new com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect(-1, -1)),
+                aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
+    }
+
+    @Test
     void classifiesCloakingAndCombatReassignment() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
@@ -281,6 +303,9 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetSpellAndCreatureEffect(),
+                aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1),
                 aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);

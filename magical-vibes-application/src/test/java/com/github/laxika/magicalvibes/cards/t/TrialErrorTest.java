@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,17 +13,18 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrialError.class, BorosSwiftblade.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({TrialError.class, AzoriusFirstWing.class, MistralCharger.class})
 class TrialErrorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Trial returns creatures blocking or blocked by the target creature")
     void trialReturnsCombatOpponentsOfAttackingTarget() {
-        Permanent attacker = addReadyCreature(player1, new GiantSpider());
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
         attacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new MistralCharger());
         connectBlockerToAttacker(blocker, attacker);
 
         harness.forceActivePlayer(player1);
@@ -38,17 +37,45 @@ class TrialErrorTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, attacker.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Giant Spider");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mistral Charger");
+        harness.assertNotOnBattlefield(player2, "Mistral Charger");
+        harness.assertInHand(player2, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Trial returns every creature blocking the target creature")
+    void trialReturnsAllCreaturesBlockingTarget() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new MistralCharger());
+        Permanent secondBlocker = addCreatureReady(player2, new MistralCharger());
+        connectBlockerToAttacker(firstBlocker, attacker);
+        connectBlockerToAttacker(secondBlocker, attacker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .doesNotContain(firstBlocker.getId(), secondBlocker.getId());
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getId)
+                .contains(firstBlocker.getCard().getId(), secondBlocker.getCard().getId());
     }
 
     @Test
     @DisplayName("Trial returns attackers blocked by the target blocker but not the target")
     void trialReturnsAttackerOfBlockingTarget() {
-        Permanent attacker = addReadyCreature(player2, new GiantSpider());
+        Permanent attacker = addCreatureReady(player2, new MistralCharger());
         attacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player1, new MistralCharger());
         connectBlockerToAttacker(blocker, attacker);
 
         harness.forceActivePlayer(player2);
@@ -62,18 +89,18 @@ class TrialErrorTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, blocker.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Giant Spider");
-        harness.assertInHand(player2, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Mistral Charger");
+        harness.assertNotOnBattlefield(player2, "Mistral Charger");
+        harness.assertInHand(player2, "Mistral Charger");
     }
 
     @Test
     @DisplayName("Error counters a multicolored spell")
     void errorCountersMulticoloredSpell() {
-        BorosSwiftblade spell = new BorosSwiftblade();
+        AzoriusFirstWing spell = new AzoriusFirstWing();
         harness.setHand(player1, List.of(spell));
-        harness.addMana(player1, ManaColor.RED, 5);
         harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.setHand(player2, List.of(new TrialError()));
         harness.addMana(player2, ManaColor.BLUE, 1);
@@ -84,16 +111,17 @@ class TrialErrorTest extends BaseCardTest {
         harness.castInstant(player2, 0, 1, spell.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Boros Swiftblade");
-        harness.assertNotOnBattlefield(player1, "Boros Swiftblade");
+        harness.assertInGraveyard(player1, "Azorius First-Wing");
+        harness.assertNotOnBattlefield(player1, "Azorius First-Wing");
     }
 
     @Test
     @DisplayName("Error cannot target a monocolored spell")
     void errorCannotTargetMonocoloredSpell() {
-        Card spell = new GrizzlyBears();
+        Card spell = new MistralCharger();
         harness.setHand(player1, List.of(spell));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.setHand(player2, List.of(new TrialError()));
         harness.addMana(player2, ManaColor.BLUE, 1);
@@ -105,13 +133,6 @@ class TrialErrorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, spell.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("multicolored");
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void connectBlockerToAttacker(Permanent blocker, Permanent attacker) {

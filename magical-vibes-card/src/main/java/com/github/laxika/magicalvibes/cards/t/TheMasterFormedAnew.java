@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.ExileControlledCreatureWithTa
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "143")
+@CardRegistration(set = "WHO", collectorNumber = "426")
+@CardRegistration(set = "WHO", collectorNumber = "542")
+@CardRegistration(set = "WHO", collectorNumber = "748")
+@CardRegistration(set = "WHO", collectorNumber = "1017")
+@CardRegistration(set = "WHO", collectorNumber = "1133")
 public class TheMasterFormedAnew extends Card {
 
     public TheMasterFormedAnew() {

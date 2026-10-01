@@ -27,7 +27,14 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var grant = (PerpetuallyGrantKeywordToSourceEffect) effect;
         if (entry.getSourcePermanentId() == null) {
+            Card sourceCard = entry.getCard();
+            if (sourceCard != null) {
+                gameData.perpetualCardKeywords
+                        .computeIfAbsent(sourceCard.getId(), ignored -> EnumSet.noneOf(Keyword.class))
+                        .add(grant.keyword());
+            }
             return;
         }
 
@@ -36,7 +43,6 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
             return;
         }
 
-        var grant = (PerpetuallyGrantKeywordToSourceEffect) effect;
         Card modifiedCard = source.getCard().createRuntimeCopy();
         EnumSet<Keyword> keywords = modifiedCard.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)

@@ -25,8 +25,7 @@ class VedalkenPlotterTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Island());
 
         harness.castCreature(player1, 0, List.of(own.getId(), opponent.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -62,6 +61,45 @@ class VedalkenPlotterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(own.getId(), alsoOwn.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("land an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's land as the land you control")
+    void cannotTargetOpponentsLandAsOwnTarget() {
+        harness.setHand(player1, List.of(new VedalkenPlotter()));
+        addMana();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(opponent.getId(), own.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("First target must be a land you control");
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonland permanent as the opponent's land")
+    void cannotTargetNonlandAsOpponentTarget() {
+        harness.setHand(player1, List.of(new VedalkenPlotter()));
+        addMana();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent nonLand = harness.addToBattlefieldAndReturn(player2, new VedalkenPlotter());
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(own.getId(), nonLand.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Second target must be a land an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonland permanent as the land you control")
+    void cannotTargetNonlandAsOwnTarget() {
+        harness.setHand(player1, List.of(new VedalkenPlotter()));
+        addMana();
+        Permanent nonLand = harness.addToBattlefieldAndReturn(player1, new VedalkenPlotter());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(nonLand.getId(), opponent.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("First target must be a land you control");
     }
 
     private void addMana() {

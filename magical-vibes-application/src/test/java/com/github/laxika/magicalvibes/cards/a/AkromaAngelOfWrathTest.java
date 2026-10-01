@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.g.GoblinDynamo;
 import com.github.laxika.magicalvibes.cards.i.ImperialHellkite;
+import com.github.laxika.magicalvibes.cards.p.Pestilence;
 import com.github.laxika.magicalvibes.cards.s.SmokespewInvoker;
 import com.github.laxika.magicalvibes.cards.s.SootfeatherFlock;
 import com.github.laxika.magicalvibes.cards.u.UnstableHulk;
@@ -27,7 +28,6 @@ class AkromaAngelOfWrathTest extends BaseCardTest {
     @DisplayName("Protection from black prevents a black ability from targeting Akroma")
     void blackAbilityCannotTargetAkroma() {
         Permanent akroma = addCreatureReady(player2, new AkromaAngelOfWrath());
-        addCreatureReady(player2, new AvenEnvoy());
         addCreatureReady(player1, new SmokespewInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -41,7 +41,6 @@ class AkromaAngelOfWrathTest extends BaseCardTest {
     @DisplayName("Protection from red prevents a red ability from targeting Akroma")
     void redAbilityCannotTargetAkroma() {
         Permanent akroma = addCreatureReady(player2, new AkromaAngelOfWrath());
-        addCreatureReady(player2, new AvenEnvoy());
         addCreatureReady(player1, new GoblinDynamo());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, akroma.getId()))
@@ -117,6 +116,26 @@ class AkromaAngelOfWrathTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(akroma);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hulk);
+    }
+
+    @Test
+    @CardUsed(Pestilence.class)
+    @DisplayName("Protection from black prevents black damage")
+    void blackDamageIsPrevented() {
+        Permanent akroma = addCreatureReady(player2, new AkromaAngelOfWrath());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        for (int i = 0; i < 6; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(akroma);
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
     }
 
     private Permanent castTurnedUpUnstableHulk() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 @CardRegistration(set = "SLD", collectorNumber = "1415")
 @CardRegistration(set = "NCC", collectorNumber = "293")
 @CardRegistration(set = "DSC", collectorNumber = "179")
+@CardRegistration(set = "C19", collectorNumber = "169")
 public class GiantAdephage extends Card {
 
     public GiantAdephage() {

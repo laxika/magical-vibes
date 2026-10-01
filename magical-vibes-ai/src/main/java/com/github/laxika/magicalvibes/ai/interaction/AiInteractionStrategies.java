@@ -41,6 +41,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PlanarCardChoice.class, 1));
         register(new PlanarDieChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftToExileChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ApplejackToyChoice.class, 1));
@@ -58,8 +59,10 @@ public final class AiInteractionStrategies {
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCastCostHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualEnterExileHandCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualActivatedAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class));
         register(new InvokeCalamityCastChoiceAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
@@ -87,6 +90,13 @@ public final class AiInteractionStrategies {
         register(new HostileNegotiationsFaceUpChoiceAiStrategy());
         register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ReturnExiledCardsToHandChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.WerewhatOnEnterChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class, 0));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class, 1));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class));
+        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class));
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new EachPlayerChoosesOneCardOfEachColorChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());

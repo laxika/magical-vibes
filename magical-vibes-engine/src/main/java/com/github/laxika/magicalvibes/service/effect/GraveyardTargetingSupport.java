@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardByExperienceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -225,6 +226,12 @@ public class GraveyardTargetingSupport {
                             : returnTargets.hasTotalManaValueCap()
                             ? new Fixed(returnTargets.maxTotalManaValue()) : null);
         }
+        if (effect instanceof ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect returnTargets) {
+            return new Target(returnTargets.graveyardChoiceFilter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to the battlefield", returnTargets.graveyardChoiceMaxTargets(),
+                    returnTargets.graveyardChoiceMinTargets(), null, false,
+                    returnTargets.graveyardChoiceMaxTotalPower());
+        }
         if (effect instanceof TargetedGraveyardCardsEffect targetCards) {
             int maxTargets = targetCards.maxTargets() == 0
                     ? Integer.MAX_VALUE : targetCards.maxTargets();
@@ -245,7 +252,7 @@ public class GraveyardTargetingSupport {
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";
                 case DREDGE -> "with dredge";
-                case MAY_ABILITY_TARGET, RANDOM_PLAYER_GRAVEYARD_COPY, COPY_ON_ENTER,
+                case MAY_ABILITY_TARGET, RANDOM_PLAYER_GRAVEYARD_COPY, CONJURE_DUPLICATE_INTO_HAND, COPY_ON_ENTER,
                         COPY_FROM_LEAVING_GRAVEYARD -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
@@ -254,7 +261,7 @@ public class GraveyardTargetingSupport {
         GraveyardSearchScope declaredScope = effect.targetSpec().graveyardScope().orElse(null);
         if (declaredScope != null) {
             return new Target(effect.targetSpec().graveyardCardPredicate().orElse(null), declaredScope,
-                    "to exile", 1, 1);
+                    "to exile", 1, effect.hasOptionalTarget() ? 0 : 1);
         }
         return null;
     }
@@ -268,11 +275,18 @@ public class GraveyardTargetingSupport {
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                          int maxTargets, int minTargets, DynamicAmount maximumManaValue,
-                         boolean singleGraveyard) {
+                         boolean singleGraveyard, Integer maximumTotalPower) {
+
+        public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
+                int maxTargets, int minTargets, DynamicAmount maximumManaValue,
+                boolean singleGraveyard) {
+            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue,
+                    singleGraveyard, null);
+        }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets, DynamicAmount maximumManaValue) {
-            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue, false);
+            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue, false, null);
         }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,

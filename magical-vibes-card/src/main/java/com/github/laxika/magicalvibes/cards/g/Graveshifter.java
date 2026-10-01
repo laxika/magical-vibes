@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "104")
 @CardRegistration(set = "MH1", collectorNumber = "94")
+@CardRegistration(set = "M3C", collectorNumber = "198")
 @CardRegistration(set = "MOC", collectorNumber = "251")
 public class Graveshifter extends Card {
 

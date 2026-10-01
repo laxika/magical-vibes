@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "183")
+@CardRegistration(set = "WHO", collectorNumber = "461")
+@CardRegistration(set = "WHO", collectorNumber = "788")
+@CardRegistration(set = "WHO", collectorNumber = "1052")
 public class RotatingFireplace extends Card {
 
     public RotatingFireplace() {

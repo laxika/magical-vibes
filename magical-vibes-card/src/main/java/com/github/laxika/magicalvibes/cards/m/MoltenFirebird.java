@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -15,8 +16,9 @@ import java.util.List;
 public class MoltenFirebird extends Card {
 
     public MoltenFirebird() {
-        addEffect(EffectSlot.ON_DEATH, new RegisterDelayedSelfReturnFromGraveyardEffect());
-        addEffect(EffectSlot.ON_DEATH, new SkipNextEffect(SkipKind.DRAW_STEP));
+        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+                new RegisterDelayedSelfReturnFromGraveyardEffect(),
+                new SkipNextEffect(SkipKind.DRAW_STEP)));
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{R}",
                 List.of(new ExileSelfEffect()),

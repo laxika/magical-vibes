@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "EXP", collectorNumber = "1")
 @CardRegistration(set = "EA3", collectorNumber = "24")
 @CardRegistration(set = "WHO", collectorNumber = "295")
+@CardRegistration(set = "WHO", collectorNumber = "508")
+@CardRegistration(set = "WHO", collectorNumber = "886")
+@CardRegistration(set = "WHO", collectorNumber = "1099")
 @CardRegistration(set = "PIP", collectorNumber = "280")
 @CardRegistration(set = "PIP", collectorNumber = "503")
 @CardRegistration(set = "PIP", collectorNumber = "808")
@@ -22,9 +25,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "LTC", collectorNumber = "324")
 @CardRegistration(set = "MSC", collectorNumber = "257")
 @CardRegistration(set = "MSC", collectorNumber = "485")
+@CardRegistration(set = "M3C", collectorNumber = "365")
 @CardRegistration(set = "MKC", collectorNumber = "281")
 @CardRegistration(set = "AFC", collectorNumber = "256")
 @CardRegistration(set = "C20", collectorNumber = "299")
+@CardRegistration(set = "BLC", collectorNumber = "323")
+@CardRegistration(set = "C19", collectorNumber = "265")
+@CardRegistration(set = "NEC", collectorNumber = "175")
 public class PrairieStream extends Card {
 
     public PrairieStream() {

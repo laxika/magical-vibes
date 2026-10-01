@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed({PsionicBlast.class, GrizzlyBears.class})
 class PsionicBlastTest extends BaseCardTest {
 
@@ -20,11 +18,10 @@ class PsionicBlastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -34,10 +31,20 @@ class PsionicBlastTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void dealsSixDamageWhenTargetingItsController() {
+        harness.setHand(player1, List.of(new PsionicBlast()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 14);
     }
 }

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DouseInGloom;
+import com.github.laxika.magicalvibes.cards.d.DryadSophisticate;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrderOfTheStars.class, GrizzlyBears.class})
+@CardUsed({OrderOfTheStars.class, DryadSophisticate.class, DouseInGloom.class})
 class OrderOfTheStarsTest extends BaseCardTest {
 
     @Test
@@ -34,48 +35,50 @@ class OrderOfTheStarsTest extends BaseCardTest {
 
     @Test
     void preventsCombatDamageFromTheChosenColor() {
-        Permanent order = new Permanent(new OrderOfTheStars());
-        order.setSummoningSick(false);
+        Permanent order = addCreatureReady(player2, new OrderOfTheStars());
         order.setChosenColor(CardColor.GREEN);
         order.setBlocking(true);
         order.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(order);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DryadSophisticate());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player2, "Order of the Stars");
     }
 
     @Test
     void takesCombatDamageFromOtherColors() {
-        Permanent order = new Permanent(new OrderOfTheStars());
-        order.setSummoningSick(false);
+        Permanent order = addCreatureReady(player2, new OrderOfTheStars());
         order.setChosenColor(CardColor.RED);
         order.setBlocking(true);
         order.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(order);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DryadSophisticate());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Order of the Stars");
         harness.assertInGraveyard(player2, "Order of the Stars");
+    }
+
+    @Test
+    void protectionFromChosenColorPreventsMatchingSpellTargeting() {
+        harness.setHand(player1, List.of(new OrderOfTheStars()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        Permanent order = findPermanent(player1, "Order of the Stars");
+        harness.setHand(player2, List.of(new DouseInGloom()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, order.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
     }
 }

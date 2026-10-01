@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromTargetGraveyardThenManifestEffect;
 
 @CardRegistration(set = "FRF", collectorNumber = "70")
+@CardRegistration(set = "C19", collectorNumber = "115")
 public class GhastlyConscription extends Card {
 
     public GhastlyConscription() {

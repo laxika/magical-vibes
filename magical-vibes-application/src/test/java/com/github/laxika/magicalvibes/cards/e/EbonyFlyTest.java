@@ -39,7 +39,7 @@ class EbonyFlyTest extends BaseCardTest {
     void tapsForColorlessMana() {
         Permanent fly = addReadyFly();
 
-        gs.tapPermanent(gd, player1, gd.playerBattlefields.get(player1.getId()).indexOf(fly));
+        harness.activateAbility(player1, battlefieldIndex(fly), 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }

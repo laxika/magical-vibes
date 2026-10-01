@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,32 +9,28 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MerfolkThaumaturgist.class, GiantSpider.class, Forest.class})
+@CardUsed({MerfolkThaumaturgist.class, CitanulWoodreaders.class, UrborgTombOfYawgmoth.class})
 class MerfolkThaumaturgistTest extends BaseCardTest {
 
-    private void addThaumaturgistReady() {
-        harness.addToBattlefield(player1, new MerfolkThaumaturgist());
-        findPermanent(player1, "Merfolk Thaumaturgist").setSummoningSick(false);
+    private Permanent addThaumaturgistReady() {
+        return addCreatureReady(player1, new MerfolkThaumaturgist());
     }
 
     @Test
     @DisplayName("Switches target creature's power and toughness")
     void switchesTargetPowerAndToughness() {
-        addThaumaturgistReady();
-        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent source = addThaumaturgistReady();
+        Permanent woodreaders = harness.addToBattlefieldAndReturn(player2, new CitanulWoodreaders());
 
-        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, woodreaders.getId());
         harness.passBothPriorities();
 
-        Permanent spider = findPermanent(player2, "Giant Spider");
-        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(1);
     }
 
     @Test
@@ -44,31 +40,42 @@ class MerfolkThaumaturgistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addThaumaturgistReady();
-        harness.addToBattlefield(player1, new GiantSpider());
+        Permanent woodreaders = harness.addToBattlefieldAndReturn(player1, new CitanulWoodreaders());
 
-        UUID targetId = harness.getPermanentId(player1, "Giant Spider");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, woodreaders.getId());
         harness.passBothPriorities();
 
-        Permanent spider = findPermanent(player1, "Giant Spider");
-        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent source = addThaumaturgistReady();
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         addThaumaturgistReady();
-        harness.addToBattlefield(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new UrborgTombOfYawgmoth());
 
-        UUID targetId = harness.getPermanentId(player2, "Forest");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be a creature");
     }

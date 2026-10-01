@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "DDQ", collectorNumber = "68")
 @CardRegistration(set = "SLD", collectorNumber = "858")
 @CardRegistration(set = "SIS", collectorNumber = "59")
+@CardRegistration(set = "MIC", collectorNumber = "148")
 public class DiregrafCaptain extends Card {
 
     public DiregrafCaptain() {

@@ -16,13 +16,11 @@ class MagusOfTheCoffersTest extends BaseCardTest {
     @Test
     @DisplayName("Adds black mana for each Swamp you control")
     void addsBlackManaForEachControlledSwamp() {
-        harness.addToBattlefield(player1, new MagusOfTheCoffers());
+        Permanent magus = addCreatureReady(player1, new MagusOfTheCoffers());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent magus = findPermanent(player1, "Magus of the Coffers");
-        magus.setSummoningSick(false);
         int magusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(magus);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -34,13 +32,23 @@ class MagusOfTheCoffersTest extends BaseCardTest {
     @Test
     @DisplayName("Adds no black mana when you control no Swamps")
     void addsNoManaWithNoControlledSwamps() {
-        harness.addToBattlefield(player1, new MagusOfTheCoffers());
-        Permanent magus = gd.playerBattlefields.get(player1.getId()).getFirst();
-        magus.setSummoningSick(false);
+        Permanent magus = addCreatureReady(player1, new MagusOfTheCoffers());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(magus), 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Pays two generic mana and taps Magus of the Coffers")
+    void paysActivationCostAndTapsSource() {
+        Permanent magus = addCreatureReady(player1, new MagusOfTheCoffers());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(magus), 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(magus.isTapped()).isTrue();
     }
 }

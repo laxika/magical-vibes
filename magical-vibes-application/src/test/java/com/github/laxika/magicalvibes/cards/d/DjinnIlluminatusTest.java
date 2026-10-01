@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BenedictionOfMoons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DjinnIlluminatus.class, Shock.class, GrizzlyBears.class})
+@CardUsed({DjinnIlluminatus.class, Shock.class, GrizzlyBears.class, BenedictionOfMoons.class})
 class DjinnIlluminatusTest extends BaseCardTest {
 
     @Test
@@ -32,6 +33,23 @@ class DjinnIlluminatusTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Grants replicate to a sorcery at its mana cost")
+    void grantsReplicateToSorceryAtItsManaCost() {
+        harness.addToBattlefield(player1, new DjinnIlluminatus());
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new BenedictionOfMoons()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{W}"), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
     }
 
     @Test

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "AA1", collectorNumber = "18")
 @CardRegistration(set = "MH1", collectorNumber = "231")
 @CardRegistration(set = "WHO", collectorNumber = "248")
+@CardRegistration(set = "WHO", collectorNumber = "839")
 @CardRegistration(set = "PIP", collectorNumber = "244")
 @CardRegistration(set = "PIP", collectorNumber = "772")
 @CardRegistration(set = "40K", collectorNumber = "253")
@@ -22,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "218")
 @CardRegistration(set = "C21", collectorNumber = "269")
 @CardRegistration(set = "TDC", collectorNumber = "330")
+@CardRegistration(set = "M3C", collectorNumber = "308")
 public class TalismanOfCreativity extends Card {
 
     public TalismanOfCreativity() {

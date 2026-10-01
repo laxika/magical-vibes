@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -56,12 +57,15 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         boolean singleTarget = snapshot.getTargetId() != null
                 && (snapshot.getTargetIds() == null || snapshot.getTargetIds().size() <= 1)
                 && !snapshot.isNonTargeting()
-                && e.ability() != null && !e.ability().isMultiTarget();
+                && (e.ability() == null || !e.ability().isMultiTarget());
         if (singleTarget) {
+            CardEffect retargetEffect = e.ability() == null
+                    ? new CopyAbilityRetargetEffect()
+                    : new CopyActivatedAbilityRetargetEffect(e.ability(), snapshot.getSourcePermanentId());
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     copyControllerId,
-                    List.of(new CopyActivatedAbilityRetargetEffect(e.ability(), snapshot.getSourcePermanentId())),
+                    List.of(retargetEffect),
                     "Choose a new target for the copy of " + snapshot.getCard().getName() + "'s ability?",
                     copyCard.getId()
             );

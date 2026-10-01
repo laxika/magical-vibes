@@ -58,6 +58,12 @@ public class CopySpellForEachOtherCreatureEffectHandler implements NormalEffectH
             Card copyCard = copySupport.createCopyCard(spellCard);
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, entry.getControllerId(), target.getId());
+            copyEntry.setDeclaredTargetIds(List.of());
+            if (!copyEntry.getDamageAssignments().isEmpty()) {
+                int damage = copyEntry.getDamageAssignments().values().stream().mapToInt(Integer::intValue).sum();
+                copyEntry.getDamageAssignments().clear();
+                copyEntry.getDamageAssignments().put(target.getId(), damage);
+            }
             copySupport.addCopyToStack(gameData, copyEntry);
             gameLogService.append(gameData, GameLog.builder()
                     .text("A copy of ").card(spellCard)

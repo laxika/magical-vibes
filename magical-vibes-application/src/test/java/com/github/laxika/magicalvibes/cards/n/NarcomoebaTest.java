@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.o.OglorDevotedAssistant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Narcomoeba.class, Millstone.class, OglorDevotedAssistant.class})
 class NarcomoebaTest extends BaseCardTest {
 
     @Test
@@ -20,8 +23,7 @@ class NarcomoebaTest extends BaseCardTest {
     void mayReturnItselfFromGraveyardWhenMilled() {
         Card narcomoeba = setUpMillAndReturnCard();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -37,8 +39,7 @@ class NarcomoebaTest extends BaseCardTest {
     void decliningMillTriggerLeavesItInGraveyard() {
         Card narcomoeba = setUpMillAndReturnCard();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -49,10 +50,35 @@ class NarcomoebaTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getId().equals(narcomoeba.getId()));
     }
 
+    @Test
+    @DisplayName("When put into its graveyard from its library without being milled, Narcomoeba may return itself")
+    void mayReturnItselfWhenPutIntoGraveyardFromLibraryWithoutBeingMilled() {
+        Card narcomoeba = new Narcomoeba();
+        harness.addToBattlefield(player1, new OglorDevotedAssistant());
+        harness.setLibrary(player1, List.of(narcomoeba, new Narcomoeba()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(narcomoeba.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(narcomoeba.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(narcomoeba.getId()));
+    }
+
     private Card setUpMillAndReturnCard() {
-        Permanent millstone = new Permanent(new Millstone());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
         millstone.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(millstone);
 
         Card narcomoeba = new Narcomoeba();
         harness.setLibrary(player1, List.of(narcomoeba));

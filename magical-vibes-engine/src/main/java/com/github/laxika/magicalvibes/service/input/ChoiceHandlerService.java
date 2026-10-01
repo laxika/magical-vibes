@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -85,7 +84,9 @@ import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPlanarModeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
@@ -140,6 +141,8 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport bounceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
+    private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
+            eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
@@ -195,6 +198,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
             willOfThePlaneswalkersEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
+    private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
             galadrielElvenQueenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
@@ -342,6 +346,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.GraveyardManaColorChoice ctx) {
             handleGraveyardManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.OutsideStartingDeckSpellManaColorChoice ctx) {
+            handleOutsideStartingDeckSpellManaColorChosen(gameData, player, colorName, ctx);
             return;
         }
 
@@ -594,6 +603,10 @@ public class ChoiceHandlerService {
             handleChooseTwoColorsOnEnterChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseUpToTwoColorsOnEnterChoice ctx) {
+            handleChooseUpToTwoColorsOnEnterChoice(gameData, player, colorName, colorChoice.options(), ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.BuddyListChoice ctx) {
             handleBuddyListChoice(gameData, player, colorName, colorChoice.options(), ctx);
             return;
@@ -610,12 +623,16 @@ public class ChoiceHandlerService {
             handleSpellCreatureTypeChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellNonbasicLandTypeChoice) {
+            handleSpellNonbasicLandTypeChoice(gameData, player, colorName, colorChoice.options());
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
             handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice) {
-            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options());
+        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice ctx) {
+            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options(), ctx.secret());
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
@@ -711,6 +728,11 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesColorThenExileOtherPermanentsChoice ctx) {
+            handleEachPlayerChoosesColorThenExileOtherPermanentsChoice(gameData, player, colorName, ctx,
+                    colorChoice.options());
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
@@ -1099,6 +1121,17 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesPlanarModeChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid planar mode choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerChoosesPlanarModeEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Elrond of the White Council vote: " + colorName);
@@ -1183,10 +1216,12 @@ public class ChoiceHandlerService {
             Permanent snapshot = gameData.pendingEffectResolutionEntry.getSourcePermanentSnapshot();
             if (snapshot != null && snapshot.getId().equals(permanentId)) {
                 snapshot.setChosenColor(color);
+                snapshot.setChosenColorChoiceMade(true);
             }
         }
         if (perm != null) {
             perm.setChosenColor(color);
+            perm.setChosenColorChoiceMade(true);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
@@ -1370,6 +1405,38 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
                 + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
                 + colorName.toLowerCase() + " mana (spells only)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleOutsideStartingDeckSpellManaColorChosen(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.OutsideStartingDeckSpellManaColorChoice ctx) {
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        if (ctx.anyColorCombination()) {
+            manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, 1);
+            int remaining = ctx.amount() - 1;
+            if (remaining > 0) {
+                ChoiceContext.OutsideStartingDeckSpellManaColorChoice nextContext =
+                        new ChoiceContext.OutsideStartingDeckSpellManaColorChoice(
+                                ctx.playerId(), ctx.fromCreature(), remaining, true);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextContext,
+                        List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                        "Choose a color of mana to add (spells not from your starting deck only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+        } else {
+            manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, ctx.amount());
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
+                + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
+                + colorName.toLowerCase() + " mana (spells not from their starting deck only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -3187,8 +3254,7 @@ public class ChoiceHandlerService {
         switch (counterKind) {
             case "POISON" -> gameData.playerPoisonCounters.computeIfPresent(
                     targetId, (id, count) -> Math.max(0, count - amount));
-            case "ENERGY" -> gameData.playerEnergyCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
+            case "ENERGY" -> gameData.removePlayerEnergyCounters(targetId, amount);
             default -> throw new IllegalArgumentException("Unknown player counter kind: " + counterKind);
         }
     }
@@ -3587,22 +3653,40 @@ public class ChoiceHandlerService {
 
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     ChooseOneEffect.ChooseOneOption chosen) {
+        return beginResolvingModalTargetChoice(gameData, ctx, chosen.effects(), chosen.targetFilter());
+    }
+
+    private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
+                                                    List<CardEffect> effects, TargetFilter targetFilter) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        // A combat-damage modal's "that player" effects reuse the damaged player already
+        // carried by the trigger; choosing a mode does not choose a different player.
+        if (pendingEntry != null && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId())
+                && ctx.effect().combatDamageTriggerContext()
+                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
+                && effects.stream().noneMatch(effect -> effect.targetSpec().admits(
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))) {
+            return false;
+        }
         boolean combatContextPlayerTarget = pendingEntry != null
                 && pendingEntry.isNonTargeting()
                 && pendingEntry.getTargetId() != null
                 && gameData.playerIds.contains(pendingEntry.getTargetId())
-                && chosen.effects().stream().anyMatch(effect ->
+                && effects.stream().anyMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))
-                && chosen.effects().stream().noneMatch(effect ->
+                && effects.stream().noneMatch(effect ->
                         effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
+        boolean nonTargetingCombatEntry = pendingEntry != null && pendingEntry.isNonTargeting()
+                && pendingEntry.getTargetId() != null
+                && gameData.playerIds.contains(pendingEntry.getTargetId());
         if (pendingEntry == null
-                || (pendingEntry.getTargetId() != null && !combatContextPlayerTarget)
+                || (pendingEntry.getTargetId() != null && !nonTargetingCombatEntry)
                 || !pendingEntry.getTargetIds().isEmpty()) {
             return false;
         }
 
-        boolean needsTarget = chosen.effects().stream().anyMatch(effect ->
+        boolean needsTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
         if (!needsTarget) {
@@ -3612,10 +3696,9 @@ public class ChoiceHandlerService {
         Permanent source = ctx.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        TargetFilter targetFilter = chosen.targetFilter();
         UUID defendingPlayerId = combatContextPlayerTarget ? pendingEntry.getTargetId() : null;
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                gameData, chosen.effects(), targetFilter, ctx.controllerId(), ctx.sourceCard(),
+                gameData, effects, targetFilter, ctx.controllerId(), ctx.sourceCard(),
                 TriggerTargetCollector.Options.ATTACK, source, defendingPlayerId);
         if (result.validTargets().isEmpty()) {
             return false;
@@ -3717,6 +3800,16 @@ public class ChoiceHandlerService {
         boolean hasTargets = selectedEffects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
+        if (hasTargets && ctx.sourceCard().getSpellTargets().isEmpty()) {
+            TargetFilter targetFilter = ctx.effect().options().stream()
+                    .filter(option -> chosenLabels.contains(option.label()))
+                    .map(ChooseOneEffect.ChooseOneOption::targetFilter)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse(null);
+            if (beginResolvingModalTargetChoice(gameData, ctx, selectedEffects, targetFilter)) {
+                return;
+            }
+        }
         if (hasTargets && !ctx.sourceCard().getSpellTargets().isEmpty()) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),
@@ -4241,6 +4334,10 @@ public class ChoiceHandlerService {
                             .build());
         }
 
+        cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                hand == null ? List.of() : hand);
+
         List<Card> toDiscard = hand == null ? List.of()
                 : new ArrayList<>(hand.stream()
                         .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
@@ -4250,7 +4347,7 @@ public class ChoiceHandlerService {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
+                graveyardService.discardCard(gameData, targetPlayerId, card);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
             triggerCollectionService.finishDiscardEvent(gameData);
@@ -4488,9 +4585,55 @@ public class ChoiceHandlerService {
         if (permanent != null) {
             permanent.getChosenColors().clear();
             permanent.getChosenColors().addAll(chosen);
+            permanent.setChosenColorChoiceMade(true);
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses "
                     + chosen.getFirst().name().toLowerCase() + " and "
                     + chosen.getLast().name().toLowerCase() + " for ", permanent.getCard(), "."));
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), permanent.getCard(),
+                    ctx.etbTargetId(), false);
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseUpToTwoColorsOnEnterChoice(GameData gameData, Player player, String chosenValue,
+            List<String> options, ChoiceContext.ChooseUpToTwoColorsOnEnterChoice ctx) {
+        if (!options.contains(chosenValue)) {
+            throw new IllegalArgumentException("Invalid color choice: " + chosenValue);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        List<CardColor> chosen = new ArrayList<>(ctx.chosen());
+        if (!"DONE".equals(chosenValue)) {
+            CardColor chosenColor = CardColor.valueOf(chosenValue);
+            if (chosen.contains(chosenColor)) {
+                throw new IllegalArgumentException("Color was already chosen");
+            }
+            chosen.add(chosenColor);
+        }
+
+        if (!"DONE".equals(chosenValue) && chosen.size() < 2) {
+            playerInputService.beginUpToTwoColorsOnEnterChoice(gameData, player.getId(), ctx.permanentId(),
+                    ctx.etbTargetId(), ctx.allowedColors(), chosen);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        Permanent permanent = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (permanent != null) {
+            permanent.setChosenColor(null);
+            permanent.getChosenColors().addAll(chosen);
+            if (chosen.size() == 1) {
+                permanent.setChosenColor(chosen.getFirst());
+            }
+            permanent.setChosenColorChoiceMade(true);
+            String chosenText = chosen.isEmpty() ? "no colors" : chosen.stream()
+                    .map(color -> color.name().toLowerCase())
+                    .reduce((first, second) -> first + " and " + second)
+                    .orElseThrow();
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses "
+                    + chosenText + " for ", permanent.getCard(), "."));
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), permanent.getCard(),
                     ctx.etbTargetId(), false);
         }
@@ -5026,6 +5169,24 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleSpellNonbasicLandTypeChoice(GameData gameData, Player player, String subtypeName,
+                                                    List<String> options) {
+        if (!options.contains(subtypeName)) {
+            throw new IllegalArgumentException("Invalid nonbasic land type choice: " + subtypeName);
+        }
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.chosenSpellSubtype = subtype;
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses nonbasic land type {} for a spell",
+                gameData.id, player.getUsername(), subtype);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleSpellCardTypeChoice(GameData gameData, Player player, String typeName) {
         CardType cardType = CardType.valueOf(typeName);
 
@@ -5041,7 +5202,7 @@ public class ChoiceHandlerService {
     }
 
     private void handleSpellLandOrNonlandChoice(GameData gameData, Player player, String choice,
-                                                 List<String> options) {
+                                                 List<String> options, boolean secret) {
         if (!options.contains(choice)) {
             throw new IllegalArgumentException("Invalid land or nonland choice: " + choice);
         }
@@ -5049,8 +5210,10 @@ public class ChoiceHandlerService {
         gameData.chosenSpellLandOrNonland = choice.equals("LAND");
         gameData.interaction.clearAwaitingInput();
 
-        String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
-        gameLogService.append(gameData, GameLog.text(logEntry));
+        if (!secret) {
+            String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+        }
         log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(), choice.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -6034,6 +6197,29 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerChoosesColorThenExileOtherPermanentsChoice(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.EachPlayerChoosesColorThenExileOtherPermanentsChoice ctx,
+            List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid color choice: " + colorName);
+        }
+
+        CardColor color = CardColor.valueOf(colorName);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses " + color.name().toLowerCase() + "."));
+        log.info("Game {} - {} chooses color {} for selective permanent exile",
+                gameData.id, player.getUsername(), color);
+
+        boolean complete = eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler.completeChoice(
+                gameData, ctx, color);
+        if (complete) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else {
+            inputCompletionService.publishStateAfterInput(gameData);
+        }
     }
 
     /**
@@ -7286,6 +7472,11 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
+        if (ctx.exileAllMatchingGraveyardCards()) {
+            gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
+                    .filter(card -> cardName.equals(card.getName()) && validIds.contains(card.getId()))
+                    .map(Card::getId).forEach(selectedIds::add);
+        }
         int exiledCount = 0;
         int handExiledCount = 0;
 

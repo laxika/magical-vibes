@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
@@ -48,6 +49,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
         PendingInteraction.PlanarCardChoice, PendingInteraction.PlanarDieChoice,
         PendingInteraction.SpellbookDraftChoice,
+        PendingInteraction.SpellbookDraftToExileChoice,
         PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
         PendingInteraction.CommanderBattlefieldChoice,
         PendingInteraction.StingingStudyCommanderChoice,
@@ -114,6 +116,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
+        PendingInteraction.ArtifactPermanentOrGraveyardCardChoice,
         PendingInteraction.BeholdChoice,
         PendingInteraction.AttachAurasChoice, PendingInteraction.ReturnAurasFromGraveyardChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
@@ -128,8 +131,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.PutCardFromHandIntoGraveyardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
+        PendingInteraction.PerpetualActivatedAbilityCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.PerpetualEnterExileHandCardChoice,
@@ -746,6 +751,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public SpellbookDraftChoice {
             cards = java.util.List.copyOf(cards);
             chosenCardEffects = java.util.List.copyOf(chosenCardEffects);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** The controller chooses one spellbook card to exile face down with a source permanent. */
+    record SpellbookDraftToExileChoice(UUID playerId, UUID sourcePermanentId,
+                                       java.util.List<Card> cards, String sourceCardName)
+            implements PendingInteraction {
+
+        public SpellbookDraftToExileChoice {
+            cards = java.util.List.copyOf(cards);
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -2322,8 +2351,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                 String sourceSetCode,
                                 UUID sourcePermanentId,
-                                CardEffect followUpEffect)
+                                CardEffect followUpEffect,
+                                boolean exileAllMatchingGraveyardCards)
             implements PendingInteraction {
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName,
+                                    boolean drawForHandExiled,
+                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect, false);
+        }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
@@ -2399,6 +2438,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // Mandatory: exactly count, or everything when the player has fewer objects.
             int required = Math.min(count, validCardIds.size());
             return new InteractionOptions.MultiCardPick(validCardIds, required, required);
+        }
+    }
+
+    /** Resolution-time choice of an artifact permanent you control or an artifact card in your graveyard. */
+    record ArtifactPermanentOrGraveyardCardChoice(
+            UUID playerId, java.util.List<UUID> validCardIds, String prompt,
+            ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect effect)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 
@@ -2518,7 +2574,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds,
-                    0, maxCount);
+                    context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets targets
+                            ? targets.minTargets() : 0, maxCount);
         }
     }
 
@@ -3384,6 +3441,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    && destination != GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
                     && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
@@ -3663,18 +3721,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                          String prompt, int power, int toughness,
                                          java.util.Set<Keyword> grantedKeywords,
                                          int genericCostReduction,
-                                         int noncombatDamageBonus)
+                                         int noncombatDamageBonus,
+                                         String perpetualManaCostIncrease,
+                                         CardEffect selfCastAbility)
             implements PendingInteraction, HandChoice {
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
                                              String prompt, int power, int toughness) {
-            this(playerId, validIndices, prompt, power, toughness, java.util.Set.of(), 0, 0);
+            this(playerId, validIndices, prompt, power, toughness, java.util.Set.of(), 0, 0, null, null);
         }
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
                                              String prompt, int power, int toughness,
                                              java.util.Set<Keyword> grantedKeywords) {
-            this(playerId, validIndices, prompt, power, toughness, grantedKeywords, 0, 0);
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords, 0, 0, null, null);
         }
 
         public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -3682,7 +3742,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              java.util.Set<Keyword> grantedKeywords,
                                              int genericCostReduction) {
             this(playerId, validIndices, prompt, power, toughness, grantedKeywords,
-                    genericCostReduction, 0);
+                    genericCostReduction, 0, null, null);
+        }
+
+        public PerpetualPowerToughnessChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                             String prompt, int power, int toughness,
+                                             java.util.Set<Keyword> grantedKeywords,
+                                             int genericCostReduction, int noncombatDamageBonus) {
+            this(playerId, validIndices, prompt, power, toughness, grantedKeywords,
+                    genericCostReduction, noncombatDamageBonus, null, null);
         }
 
         public PerpetualPowerToughnessChoice {
@@ -3761,6 +3829,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses a card in hand to receive a perpetual activated ability. */
+    record PerpetualActivatedAbilityCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                               String prompt,
+                                               com.github.laxika.magicalvibes.model.ActivatedAbility ability)
+            implements PendingInteraction, HandChoice {
+
+        public PerpetualActivatedAbilityCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /** Chooses a card in a revealed target hand to receive a perpetual triggered ability. */
     record PerpetualTargetCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                      java.util.List<Integer> validIndices, String prompt,
@@ -3804,8 +3893,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           UUID blockingAttackerId, UUID untapSourcePermanentId,
                           java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                           CounterType entryCounterType, int entryCounterCount,
-                          CardPredicate entryCounterCondition)
+                          CardPredicate entryCounterCondition,
+                          boolean markEntryAsPutByTriggeringPermanent)
             implements PendingInteraction, HandChoice {
+    public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                          boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                          String drawAndRepeatLabel, boolean putAnyNumber,
+                          boolean faceDown, int faceDownPower, int faceDownToughness,
+                          java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                          UUID returnSourcePermanentId, CounterType artifactCounterType,
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
+                          CardPredicate enterTappedAndAttackingIf,
+                          UUID blockingAttackerId, UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                          CounterType entryCounterType, int entryCounterCount,
+                          CardPredicate entryCounterCondition) {
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount,
+                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf,
+                blockingAttackerId, untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype,
+                entryCounterType, entryCounterCount, entryCounterCondition, false);
+    }
+
     public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
                           boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
@@ -3950,6 +4064,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, !cloaked);
+        }
+    }
+
+    /** Chooses one of a set of cards in hand to put into its owner's graveyard. */
+    record PutCardFromHandIntoGraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                              String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PutCardFromHandIntoGraveyardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 
@@ -5162,15 +5296,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Chooses exactly one card from the cards currently offered by a spellbook. */
     record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
-                               DraftFromSpellbookEffect.DraftMode draftMode)
+                               DraftFromSpellbookEffect.DraftMode draftMode,
+                               int minCount, int maxCount, CardEffect chosenCardThenEffect)
             implements PendingInteraction {
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt) {
-            this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND);
+            this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND,
+                    1, 1, null);
+        }
+
+        public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
+                                   DraftFromSpellbookEffect.DraftMode draftMode) {
+            this(playerId, cards, prompt, draftMode, 1, 1, null);
         }
 
         public SpellbookCardChoice {
             cards = java.util.List.copyOf(cards);
+            if (minCount < 1 || maxCount < minCount || maxCount > cards.size()) {
+                throw new IllegalArgumentException("Invalid spellbook choice bounds");
+            }
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -5184,7 +5328,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
         }
     }
 

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NovijenHeartOfProgress.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({NovijenHeartOfProgress.class, TransguildCourier.class, MistralCharger.class})
 class NovijenHeartOfProgressTest extends BaseCardTest {
 
     @Test
@@ -32,19 +32,22 @@ class NovijenHeartOfProgressTest extends BaseCardTest {
     @Test
     @DisplayName("Puts counters on every creature that entered the battlefield this turn")
     void putsCountersOnCreaturesThatEnteredThisTurn() {
-        addReadyNovijen();
-        Permanent oldCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent recentOwnCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent recentOpposingCreature = harness.enterBattlefieldAndReturn(player2, new HillGiant());
+        Permanent novijen = addReadyNovijen();
+        Permanent oldCreature = harness.addToBattlefieldAndReturn(player1, new TransguildCourier());
+        Permanent recentOwnCreature = harness.enterBattlefieldAndReturn(player1, new TransguildCourier());
+        Permanent recentOpposingCreature = harness.enterBattlefieldAndReturn(player2, new MistralCharger());
+        Permanent recentLand = harness.enterBattlefieldAndReturn(player2, new NovijenHeartOfProgress());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
+        assertThat(novijen.isTapped()).isTrue();
         assertThat(oldCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(recentOwnCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(recentOpposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(recentLand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addReadyNovijen() {

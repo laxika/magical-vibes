@@ -24,7 +24,9 @@ class CleaverBlowTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new CleaverBlow()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
@@ -46,10 +48,11 @@ class CleaverBlowTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new CleaverBlow()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        harness.castInstant(player1, 0, 63, giant.getId());
+        harness.castInstant(player1, 0, 47, giant.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Hill Giant");
@@ -70,8 +73,9 @@ class CleaverBlowTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new CleaverBlow()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, 16, bears.getId());
         harness.passBothPriorities();

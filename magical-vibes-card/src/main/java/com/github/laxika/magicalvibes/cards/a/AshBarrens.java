@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "TMC", collectorNumber = "60")
 @CardRegistration(set = "CMM", collectorNumber = "419")
 @CardRegistration(set = "WHO", collectorNumber = "257")
+@CardRegistration(set = "WHO", collectorNumber = "848")
 @CardRegistration(set = "PIP", collectorNumber = "253")
 @CardRegistration(set = "PIP", collectorNumber = "781")
 @CardRegistration(set = "MB2", collectorNumber = "103")
@@ -23,8 +24,10 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "260")
 @CardRegistration(set = "LTC", collectorNumber = "295")
 @CardRegistration(set = "TDC", collectorNumber = "339")
+@CardRegistration(set = "M3C", collectorNumber = "318")
 @CardRegistration(set = "MKC", collectorNumber = "248")
 @CardRegistration(set = "C20", collectorNumber = "255")
+@CardRegistration(set = "C19", collectorNumber = "227")
 public class AshBarrens extends Card {
 
     public AshBarrens() {

@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "120")
+@CardRegistration(set = "WHO", collectorNumber = "406")
+@CardRegistration(set = "WHO", collectorNumber = "725")
+@CardRegistration(set = "WHO", collectorNumber = "997")
 public class TheDalekEmperor extends Card {
 
     public TheDalekEmperor() {

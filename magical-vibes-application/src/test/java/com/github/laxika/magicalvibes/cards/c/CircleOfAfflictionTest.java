@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.m.MireBoa;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,18 +15,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfAffliction.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({CircleOfAffliction.class, MireBoa.class, ProdigalPyromancer.class})
 class CircleOfAfflictionTest extends BaseCardTest {
 
     @Test
     void chosenColorSourceDamageCanBePaidToDrainTargetPlayer() {
         addCircleChoosing(CardColor.RED);
         preparePlayer1MainPhase();
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        addCreatureReady(player1, new ProdigalPyromancer());
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -38,21 +36,51 @@ class CircleOfAfflictionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void decliningPaymentDoesNotDrainTargetPlayer() {
+        addCircleChoosing(CardColor.RED);
+        preparePlayer1MainPhase();
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void damageToAnotherPlayerDoesNotTrigger() {
+        addCircleChoosing(CardColor.RED);
+        preparePlayer1MainPhase();
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
     void sourceOfAnotherColorDoesNotTrigger() {
         addCircleChoosing(CardColor.RED);
         preparePlayer1MainPhase();
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MireBoa());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
@@ -62,14 +90,10 @@ class CircleOfAfflictionTest extends BaseCardTest {
     void chosenColorCombatDamageAlsoTriggers() {
         addCircleChoosing(CardColor.RED);
         preparePlayer1MainPhase();
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ProdigalPyromancer());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, player1.getId());
@@ -78,10 +102,10 @@ class CircleOfAfflictionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
-    private Permanent addCircleChoosing(CardColor color) {
+    private void addCircleChoosing(CardColor color) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -92,7 +116,6 @@ class CircleOfAfflictionTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player2, color.name());
-        return findPermanent(player2, "Circle of Affliction");
     }
 
     private void preparePlayer1MainPhase() {

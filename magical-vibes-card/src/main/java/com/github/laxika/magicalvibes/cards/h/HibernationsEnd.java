@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -19,9 +20,10 @@ public class HibernationsEnd extends Card {
 
     public HibernationsEnd() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.withPaidEffects(
-                "{1}", List.of(new SearchLibraryEffect(
+                "{1}", List.of(new MayEffect(new SearchLibraryEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         LibrarySearchDestination.BATTLEFIELD,
-                        new ManaValueBound(new CountersOnSource(CounterType.AGE), true, 0)))));
+                        new ManaValueBound(new CountersOnSource(CounterType.AGE), true, 0)),
+                        "Search your library for a creature card?"))));
     }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "65")
 @CardRegistration(set = "C14", collectorNumber = "116")
+@CardRegistration(set = "C19", collectorNumber = "87")
 public class Ixidron extends Card {
 
     public Ixidron() {

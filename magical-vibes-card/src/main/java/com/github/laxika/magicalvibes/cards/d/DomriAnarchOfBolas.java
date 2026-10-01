@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "191")
 @CardRegistration(set = "SLD", collectorNumber = "521")
+@CardRegistration(set = "BLC", collectorNumber = "98")
 public class DomriAnarchOfBolas extends Card {
 
     public DomriAnarchOfBolas() {

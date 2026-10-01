@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.b.BreedingPool;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,25 +15,38 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WeightOfSpires.class, HillGiant.class, Mountain.class, Wasteland.class})
+@CardUsed({WeightOfSpires.class, AssaultZeppelid.class, BreedingPool.class, Mountain.class})
 class WeightOfSpiresTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals damage equal to the target creature controller's nonbasic lands")
     void dealsDamageForTargetControllersNonbasicLands() {
-        harness.addToBattlefield(player1, new Wasteland());
-        harness.addToBattlefield(player1, new Wasteland());
-        harness.addToBattlefield(player2, new Wasteland());
-        harness.addToBattlefield(player2, new Wasteland());
+        harness.addToBattlefield(player1, new BreedingPool());
+        harness.addToBattlefield(player1, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
         harness.addToBattlefield(player2, new Mountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new WeightOfSpires()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts nonbasic lands added before the spell resolves")
+    void countsNonbasicLandsAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
         harness.setHand(player1, List.of(new WeightOfSpires()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player2, new BreedingPool());
         harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -40,15 +54,14 @@ class WeightOfSpiresTest extends BaseCardTest {
     void ignoresBasicLands() {
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
         harness.setHand(player1, List.of(new WeightOfSpires()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Assault Zeppelid");
     }
 
     @Test

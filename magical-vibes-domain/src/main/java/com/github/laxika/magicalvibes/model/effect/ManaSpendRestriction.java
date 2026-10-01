@@ -46,6 +46,9 @@ public enum ManaSpendRestriction {
     /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
     SOURCE_PERMANENT_COLORS,
 
+    /** Choose from the colors previously chosen for the source permanent. */
+    CHOSEN_COLORS,
+
     /** Spendable only to cast spells with the legendary supertype. */
     LEGENDARY_SPELLS,
 
@@ -71,6 +74,9 @@ public enum ManaSpendRestriction {
     EXILED_SPELL_ONLY,
     /** Spendable only to cast spells from a graveyard (Rootcoil Creeper). */
     GRAVEYARD_SPELL_ONLY,
+
+    /** Spendable only to cast spells that are not from the controller's starting deck. */
+    OUTSIDE_STARTING_DECK_SPELL_ONLY,
 
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
@@ -102,6 +108,9 @@ public enum ManaSpendRestriction {
      * (Pillar of Origins, Unclaimed Territory).
      */
     CHOSEN_SUBTYPE_CREATURE,
+
+    /** Spendable only to cast spells of the source permanent's chosen creature subtype. */
+    CHOSEN_SUBTYPE_SPELL,
 
     /**
      * Spendable only to cast spells of the source permanent's chosen creature subtype or activate

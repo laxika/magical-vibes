@@ -29,7 +29,7 @@ class SurlyBadgersaurTest extends BaseCardTest {
         Permanent scribe = prepareDiscard(new GrizzlyBears(), new Forest());
 
         discardOneCard(scribe);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(badgersaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -41,7 +41,7 @@ class SurlyBadgersaurTest extends BaseCardTest {
         Permanent scribe = prepareDiscard(new Forest(), new Shock());
 
         discardOneCard(scribe);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).singleElement()
                 .matches(permanent -> !permanent.isTapped());

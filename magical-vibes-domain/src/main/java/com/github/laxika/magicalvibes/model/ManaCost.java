@@ -272,6 +272,11 @@ public class ManaCost {
         return xSymbolCount > 0;
     }
 
+    /** Whether this cost contains at least one ordinary hybrid mana symbol. */
+    public boolean hasHybridMana() {
+        return hybridCosts.stream().anyMatch(hybrid -> !hybrid.phyrexianAlternative());
+    }
+
     /**
      * Number of mana symbols in this cost that include the given color (chroma counting). A colored
      * symbol like {W}, a Phyrexian symbol {W/P}, and a hybrid symbol containing white ({W/U}, {2/W})

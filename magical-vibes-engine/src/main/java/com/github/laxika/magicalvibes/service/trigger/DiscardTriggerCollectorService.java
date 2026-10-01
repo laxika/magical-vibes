@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -587,6 +588,13 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handlePerpetualBoostOnDiscard(TriggerMatchContext match,
+            PerpetuallyBoostSourceEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "perpetual source boost");
+    }
+
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
@@ -748,6 +756,26 @@ public class DiscardTriggerCollectorService {
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handlePutCountersOnSourceOnDiscard(TriggerMatchContext match,
             PutCountersOnSourceEffect trigger, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller discard (put counters on source)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handlePutCountersOnSelfOnDiscard(TriggerMatchContext match,
+            PutCountersOnSelfEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(

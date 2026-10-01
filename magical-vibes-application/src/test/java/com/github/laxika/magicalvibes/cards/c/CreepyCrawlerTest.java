@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,9 +22,10 @@ class CreepyCrawlerTest extends BaseCardTest {
     void horrorEnteringThisTurnTriggersDiscardAndDraw() {
         GrizzlyBears discardedCard = new GrizzlyBears();
         GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(discardedCard));
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.addToBattlefieldAndReturn(player1, new Frightcrawler());
+        harness.enterBattlefieldAndReturn(player1, new Frightcrawler());
 
         Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
         crawler.setAttacking(true);
@@ -43,12 +45,14 @@ class CreepyCrawlerTest extends BaseCardTest {
     void attackingHorrorTriggersDiscardAndDraw() {
         GrizzlyBears discardedCard = new GrizzlyBears();
         GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(discardedCard));
         harness.setLibrary(player1, List.of(drawnCard));
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new Frightcrawler());
         gd.permanentsEnteredBattlefieldThisTurn.clear();
 
         horror.setAttacking(true);
+        gd.playersAttackedThisTurn.put(horror.getId(), Set.of(player2.getId()));
         Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
         crawler.setAttacking(true);
 
@@ -66,6 +70,7 @@ class CreepyCrawlerTest extends BaseCardTest {
     void noAfraidConditionDoesNothing() {
         GrizzlyBears retainedCard = new GrizzlyBears();
         GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(retainedCard));
         harness.setLibrary(player1, List.of(drawnCard));
 
@@ -73,7 +78,6 @@ class CreepyCrawlerTest extends BaseCardTest {
         crawler.setAttacking(true);
 
         resolveCombat();
-        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);

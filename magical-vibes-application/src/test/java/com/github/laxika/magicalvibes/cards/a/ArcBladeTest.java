@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ArcBlade.class)
+@CardUsed({ArcBlade.class, BlindPhantasm.class})
 class ArcBladeTest extends BaseCardTest {
 
     @Test
@@ -32,14 +34,25 @@ class ArcBladeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Suspend exiles Arc Blade with three time counters")
-    void suspendExilesWithThreeTimeCounters() {
+    @DisplayName("Deals 2 damage to a target creature")
+    void dealsDamageToTargetCreature() {
+        Permanent creature = addCreatureReady(player2, new BlindPhantasm());
         ArcBlade blade = new ArcBlade();
         harness.setHand(player1, List.of(blade));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        addCastMana();
 
-        harness.activateHandAbility(player1, 0, null);
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
+    }
+
+    @Test
+    @DisplayName("Suspend exiles Arc Blade with three time counters")
+    void suspendExilesWithThreeTimeCounters() {
+        ArcBlade blade = suspendCard();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
@@ -50,12 +63,8 @@ class ArcBladeTest extends BaseCardTest {
     @Test
     @DisplayName("A suspended Arc Blade deals damage when cast for free")
     void suspendedCardCastsForFree() {
-        ArcBlade blade = new ArcBlade();
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(blade));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateHandAbility(player1, 0, null);
+        ArcBlade blade = suspendCard();
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
@@ -72,8 +81,34 @@ class ArcBladeTest extends BaseCardTest {
                 .containsExactly(new GameData.SuspendedSpellExile(blade.getId(), player1.getId(), 3));
     }
 
+    @Test
+    @DisplayName("Declining the free suspend cast leaves Arc Blade exiled without time counters")
+    void decliningSuspendCastLeavesCardExiled() {
+        ArcBlade blade = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blade);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(blade.getId());
+        assertThat(gd.suspendedSpellExiles).isEmpty();
+    }
+
     private void addCastMana() {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    private ArcBlade suspendCard() {
+        ArcBlade blade = new ArcBlade();
+        harness.setHand(player1, List.of(blade));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+        return blade;
     }
 }

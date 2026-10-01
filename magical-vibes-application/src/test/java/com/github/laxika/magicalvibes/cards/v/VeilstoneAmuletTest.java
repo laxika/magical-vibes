@@ -56,6 +56,38 @@ class VeilstoneAmuletTest extends BaseCardTest {
     }
 
     @Test
+    void opponentsCastingDoesNotCreateRestriction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new VeilstoneAmulet());
+
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+    }
+
+    @Test
+    void restrictionDoesNotAffectOpponentsCreatures() {
+        resolveTriggerForCreature();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, opponentCreature.getId());
+
+        assertThat(opponentCreature.getPowerModifier()).isEqualTo(3);
+    }
+
+    @Test
     void creaturesEnteringLaterAreAffected() {
         resolveTriggerForCreature();
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

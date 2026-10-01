@@ -13,6 +13,9 @@ import java.util.Set;
 @CardRegistration(set = "SOI", collectorNumber = "270")
 @CardRegistration(set = "SIR", collectorNumber = "264")
 @CardRegistration(set = "WHO", collectorNumber = "261")
+@CardRegistration(set = "WHO", collectorNumber = "484")
+@CardRegistration(set = "WHO", collectorNumber = "852")
+@CardRegistration(set = "WHO", collectorNumber = "1075")
 @CardRegistration(set = "40K", collectorNumber = "268")
 @CardRegistration(set = "LTC", collectorNumber = "299")
 @CardRegistration(set = "MSC", collectorNumber = "229")
@@ -20,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "MKC", collectorNumber = "254")
 @CardRegistration(set = "AFC", collectorNumber = "228")
 @CardRegistration(set = "LCC", collectorNumber = "322")
+@CardRegistration(set = "MIC", collectorNumber = "169")
 public class ChokedEstuary extends Card {
 
     public ChokedEstuary() {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoultetherGolem.class, GrizzlyBears.class})
+@CardUsed({SoultetherGolem.class, NessianCourser.class})
 class SoultetherGolemTest extends BaseCardTest {
 
     @Test
@@ -35,9 +35,9 @@ class SoultetherGolemTest extends BaseCardTest {
         Permanent golem = addCreatureReady(player1, new SoultetherGolem());
         golem.setCounterCount(CounterType.TIME, 1);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new NessianCourser()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -54,6 +54,31 @@ class SoultetherGolemTest extends BaseCardTest {
 
         Permanent golem = findPermanent(player1, "Soultether Golem");
         assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for a creature entering under an opponent's control")
+    void doesNotTriggerForOpponentCreatureEntering() {
+        Permanent golem = addCreatureReady(player1, new SoultetherGolem());
+        golem.setCounterCount(CounterType.TIME, 1);
+
+        harness.addToBattlefield(player2, new NessianCourser());
+        resolveAllTriggers();
+
+        assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger again once it has no time counters")
+    void doesNotTriggerWithNoTimeCounters() {
+        Permanent golem = addCreatureReady(player1, new SoultetherGolem());
+        golem.setCounterCount(CounterType.TIME, 0);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText()
+                .contains("Soultether Golem's upkeep ability triggers."));
     }
 
     @Test

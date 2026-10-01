@@ -32,6 +32,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "OTC", collectorNumber = "273")
 @CardRegistration(set = "LCC", collectorNumber = "320")
 @CardRegistration(set = "C20", collectorNumber = "259")
+@CardRegistration(set = "BLC", collectorNumber = "294")
+@CardRegistration(set = "MIC", collectorNumber = "167")
+@CardRegistration(set = "C19", collectorNumber = "232")
 public class BojukaBog extends Card {
 
     public BojukaBog() {

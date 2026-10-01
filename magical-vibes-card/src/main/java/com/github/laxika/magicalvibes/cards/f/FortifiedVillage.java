@@ -13,6 +13,9 @@ import java.util.Set;
 @CardRegistration(set = "SOI", collectorNumber = "274")
 @CardRegistration(set = "SIR", collectorNumber = "267")
 @CardRegistration(set = "WHO", collectorNumber = "280")
+@CardRegistration(set = "WHO", collectorNumber = "497")
+@CardRegistration(set = "WHO", collectorNumber = "871")
+@CardRegistration(set = "WHO", collectorNumber = "1088")
 @CardRegistration(set = "LTC", collectorNumber = "311")
 @CardRegistration(set = "MSC", collectorNumber = "245")
 @CardRegistration(set = "MSC", collectorNumber = "474")
@@ -20,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "MKC", collectorNumber = "262")
 @CardRegistration(set = "AFC", collectorNumber = "239")
 @CardRegistration(set = "LCC", collectorNumber = "331")
+@CardRegistration(set = "MIC", collectorNumber = "174")
 public class FortifiedVillage extends Card {
 
     public FortifiedVillage() {

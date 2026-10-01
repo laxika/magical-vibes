@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -555,6 +556,18 @@ public class PotentialManaService {
                 if (amount > 0) {
                     fixed.merge(ManaProductionSupport.effectiveColor(gameData, null, permanent,
                             manaEffect.color()), amount, Integer::sum);
+                }
+            } else if (effect instanceof AwardAnyColorManaEffect anyColor
+                    && anyColor.restriction() == ManaSpendRestriction.CHOSEN_COLORS) {
+                int amount = estimateManaAmount(anyColor.amount(), permanent, gameData);
+                if (amount > 0 && permanent != null) {
+                    for (ManaColor color : ManaColor.COLORS) {
+                        if (permanent.getChosenColors().contains(CardColor.valueOf(color.name()))) {
+                            EnumMap<ManaColor, Integer> option = new EnumMap<>(ManaColor.class);
+                            option.put(color, amount);
+                            conditionalOptions.add(option);
+                        }
+                    }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect anyColor
                     && (anyColor.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY

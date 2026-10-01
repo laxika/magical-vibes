@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CoastWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,13 +50,39 @@ class SoulCollectorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, shorelineRanger.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Soul Collector");
         harness.assertOnBattlefield(player1, "Shoreline Ranger");
         harness.assertNotInGraveyard(player2, "Shoreline Ranger");
         assertThat(soulCollector.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotReturnCreatureDamagedOnAPreviousTurn() {
+        addCreatureReady(player1, new SoulCollector());
+        Permanent shorelineRanger = addCreatureReady(player2, new ShorelineRanger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        harness.setHand(player1, List.of(new SparkSpray(), new SparkSpray(), new SparkSpray(), new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        for (int i = 0; i < 4; i++) {
+            harness.castInstant(player1, 0, shorelineRanger.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertInGraveyard(player2, "Shoreline Ranger");
+        harness.assertNotOnBattlefield(player1, "Shoreline Ranger");
     }
 
     @Test

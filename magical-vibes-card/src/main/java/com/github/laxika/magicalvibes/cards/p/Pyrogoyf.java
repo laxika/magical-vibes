@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "AA2", collectorNumber = "12")
+@CardRegistration(set = "M3C", collectorNumber = "59")
+@CardRegistration(set = "M3C", collectorNumber = "111")
 public class Pyrogoyf extends Card {
 
     public Pyrogoyf() {

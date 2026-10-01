@@ -47,6 +47,7 @@ class SynthInfiltratorTest extends BaseCardTest {
 
     @Test
     void decliningToCopyLeavesNoPermanent() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         SynthInfiltrator infiltrator = new SynthInfiltrator();
         harness.setHand(player1, List.of(infiltrator));
         harness.addMana(player1, ManaColor.BLUE, 2);

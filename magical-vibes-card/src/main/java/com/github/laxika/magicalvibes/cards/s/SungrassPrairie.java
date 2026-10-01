@@ -10,6 +10,9 @@ import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "328")
 @CardRegistration(set = "WHO", collectorNumber = "311")
+@CardRegistration(set = "WHO", collectorNumber = "521")
+@CardRegistration(set = "WHO", collectorNumber = "902")
+@CardRegistration(set = "WHO", collectorNumber = "1112")
 @CardRegistration(set = "PIP", collectorNumber = "295")
 @CardRegistration(set = "PIP", collectorNumber = "513")
 @CardRegistration(set = "PIP", collectorNumber = "823")
@@ -19,6 +22,9 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "297")
 @CardRegistration(set = "AFC", collectorNumber = "264")
 @CardRegistration(set = "C20", collectorNumber = "317")
+@CardRegistration(set = "BLC", collectorNumber = "334")
+@CardRegistration(set = "MIC", collectorNumber = "181")
+@CardRegistration(set = "C19", collectorNumber = "277")
 public class SungrassPrairie extends Card {
 
     public SungrassPrairie() {

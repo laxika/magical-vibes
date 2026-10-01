@@ -22,6 +22,7 @@ class EonFrolickerTest extends BaseCardTest {
     @DisplayName("When cast, gives the target opponent an extra turn and protects you and your planeswalkers")
     void castEtbGrantsExtraTurnAndProtection() {
         Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
         castEon(player2.getId());
 
         harness.passBothPriorities();

@@ -8,12 +8,18 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>{@code copyEnchantedCreature} switches the copied permanent from the source itself to
  * the creature the source Aura is attached to ("Nontoken creatures you control enter as a
  * copy of enchanted creature" — Infinite Reflection); nothing happens while the source is
- * unattached. {@code nontokenOnly} restricts the replacement to nontoken entering creatures.
+ * unattached. {@code nontokenOnly} restricts the replacement to nontoken entering creatures,
+ * while {@code tokenOnly} restricts it to token entering creatures.
  */
-public record CreaturesEnterAsCopyOfSourceEffect(boolean copyEnchantedCreature, boolean nontokenOnly)
+public record CreaturesEnterAsCopyOfSourceEffect(boolean copyEnchantedCreature, boolean nontokenOnly,
+                                                 boolean tokenOnly)
         implements CardEffect {
 
     public CreaturesEnterAsCopyOfSourceEffect() {
-        this(false, false);
+        this(false, false, false);
+    }
+
+    public CreaturesEnterAsCopyOfSourceEffect(boolean copyEnchantedCreature, boolean nontokenOnly) {
+        this(copyEnchantedCreature, nontokenOnly, false);
     }
 }

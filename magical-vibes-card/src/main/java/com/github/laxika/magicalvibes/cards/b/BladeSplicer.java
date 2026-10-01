@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "MM3", collectorNumber = "3")
 @CardRegistration(set = "2XM", collectorNumber = "9")
 @CardRegistration(set = "MOC", collectorNumber = "175")
+@CardRegistration(set = "BLC", collectorNumber = "136")
 public class BladeSplicer extends Card {
 
     public BladeSplicer() {

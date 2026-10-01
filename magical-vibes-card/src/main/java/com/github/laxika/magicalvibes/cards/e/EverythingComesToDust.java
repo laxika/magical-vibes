@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 
 @CardRegistration(set = "WHO", collectorNumber = "19")
 @CardRegistration(set = "WHO", collectorNumber = "339")
+@CardRegistration(set = "WHO", collectorNumber = "624")
+@CardRegistration(set = "WHO", collectorNumber = "930")
 public class EverythingComesToDust extends Card {
 
     public EverythingComesToDust() {

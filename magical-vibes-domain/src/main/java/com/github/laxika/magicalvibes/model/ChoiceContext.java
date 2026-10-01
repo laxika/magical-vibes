@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,6 +174,8 @@ public sealed interface ChoiceContext {
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
+    record OutsideStartingDeckSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount,
+                                                    boolean anyColorCombination) implements ChoiceContext {}
     record CommanderManaColorChoice(UUID playerId, boolean fromCreature, int amount,
                                     UUID recipientPlayerId) implements ChoiceContext {
 
@@ -1040,11 +1043,18 @@ public sealed interface ChoiceContext {
      */
     record SpellCreatureTypeChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing a nonbasic land type at resolution for a spell with no permanent to store it on. */
+    record SpellNonbasicLandTypeChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing land or nonland at resolution for a spell with no permanent to store it on. */
-    record SpellLandOrNonlandChoice(UUID controllerId) implements ChoiceContext {}
+    record SpellLandOrNonlandChoice(UUID controllerId, boolean secret) implements ChoiceContext {
+        public SpellLandOrNonlandChoice(UUID controllerId) {
+            this(controllerId, false);
+        }
+    }
 
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
@@ -1316,6 +1326,16 @@ public sealed interface ChoiceContext {
     record EachPlayerCardNameRevealChoice(List<UUID> playerOrder,
                                           Map<UUID, String> chosenNames) implements ChoiceContext {}
 
+    /** Each player chooses a color in APNAP order before a selective permanent exile. */
+    record EachPlayerChoosesColorThenExileOtherPermanentsChoice(
+            List<UUID> playerOrder, Map<UUID, CardColor> chosenColors) implements ChoiceContext {
+
+        public EachPlayerChoosesColorThenExileOtherPermanentsChoice {
+            playerOrder = List.copyOf(playerOrder);
+            chosenColors = Map.copyOf(new LinkedHashMap<>(chosenColors));
+        }
+    }
+
     /**
      * Sphinx Ambassador: the damaged player names a card after the controller has selected
      * a card from their library. The selected card is stored in
@@ -1568,6 +1588,16 @@ public sealed interface ChoiceContext {
     /** The controller is choosing the two distinct colors stored by Tablet of the Guilds. */
     record ChooseTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,
                                         List<CardColor> chosen) implements ChoiceContext {}
+
+    /** The controller is choosing up to two colors represented by cards in hand. */
+    record ChooseUpToTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,
+                                            List<CardColor> allowedColors,
+                                            List<CardColor> chosen) implements ChoiceContext {
+        public ChooseUpToTwoColorsOnEnterChoice {
+            allowedColors = List.copyOf(allowedColors);
+            chosen = List.copyOf(chosen);
+        }
+    }
 
     /**
      * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,
@@ -1837,7 +1867,8 @@ public sealed interface ChoiceContext {
     /** Chooses controlled permanents from which an optional forced counter cost removes counters. */
     record RemoveCountersFromForcedCostOrElse(PendingMayAbility ability,
                                               com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
-                                              UUID payerId, int remaining, Map<String, UUID> permanentOptions)
+                                              UUID payerId, int remaining,
+                                              Map<String, CounterSelection> permanentOptions)
             implements ChoiceContext {
 
         public RemoveCountersFromForcedCostOrElse {
@@ -2204,6 +2235,16 @@ public sealed interface ChoiceContext {
             List<UUID> remainingPlayerIds, String sourceName) implements ChoiceContext {
 
         public EachPlayerChoosesTokenChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        }
+    }
+
+    /** Each player chooses a mode for a face-up planar object. */
+    record EachPlayerChoosesPlanarModeChoice(
+            com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPlanarModeEffect effect,
+            UUID planarObjectId, List<UUID> remainingPlayerIds, String sourceName) implements ChoiceContext {
+
+        public EachPlayerChoosesPlanarModeChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
         }
     }

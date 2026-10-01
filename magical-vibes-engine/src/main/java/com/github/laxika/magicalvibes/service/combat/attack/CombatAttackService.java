@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -69,6 +70,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
@@ -80,7 +82,6 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
@@ -149,6 +150,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAt
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
@@ -156,7 +158,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
@@ -192,6 +193,7 @@ import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostServi
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1297,6 +1299,7 @@ public class CombatAttackService {
                                     attacker.getId()
                             );
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                            attackTrigger.setDefendingPlayerId(defendingPlayerId);
                             attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                             if (otherEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
                                 attackTrigger.setEventValue(attackingPower);
@@ -1561,12 +1564,24 @@ public class CombatAttackService {
             Integer matchingAttackerCount = null;
             boolean oncePerTurn = false;
             boolean markOncePerTurnOnAcceptance = false;
+            boolean onceOnly = false;
             for (CardEffect effect : allyAttackEffects) {
                 CardEffect normalizedEffect = effect;
                 if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
                     if (!conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
+                    normalizedEffect = ce.wrapped();
+                }
+                if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof MinimumAttackers minimumAttackers) {
+                    boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                    if (!minimumMet) {
+                        log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
+                                gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
                         continue;
                     }
                     normalizedEffect = ce.wrapped();
@@ -1579,7 +1594,20 @@ public class CombatAttackService {
                     markOncePerTurnOnAcceptance |= onceEffect.markOnAcceptance();
                     normalizedEffect = onceEffect.wrapped();
                 }
+                if (normalizedEffect instanceof OnceOnlyTriggerEffect onceEffect) {
+                    if (OnceOnlyTriggerSupport.isFired(gameData, perm)) {
+                        continue;
+                    }
+                    onceOnly = true;
+                    normalizedEffect = onceEffect.wrapped();
+                }
                 if (normalizedEffect != effect) {
+                    if (normalizedEffect instanceof ConditionalEffect conditional
+                            && containsHasAttackerCondition(conditional.condition())
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
                     filteredEffects.add(normalizedEffect);
                 } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
                     boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -1737,6 +1765,9 @@ public class CombatAttackService {
                         gameData.stack.add(attackTrigger);
                         if (oncePerTurn && !markOncePerTurnOnAcceptance) {
                             gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                        }
+                        if (onceOnly) {
+                            OnceOnlyTriggerSupport.mark(gameData, perm);
                         }
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
@@ -1959,7 +1990,8 @@ public class CombatAttackService {
                             attackTrigger.setTriggeringPermanentOwnerId(
                                     gameData.defaultControllerOf(attacker.getId()));
                             if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
-                                    && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect)) {
+                                    && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect valueEffect
+                                    && valueEffect.usesTriggeringPermanentManaValue())) {
                                 attackTrigger.setEventValue(attacker.getCard().getManaValue());
                             }
                             gameData.stack.add(attackTrigger);
@@ -2055,6 +2087,40 @@ public class CombatAttackService {
                     log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                             gameData.id, card.getName(), attackerIndices.size());
                 }
+            }
+        }
+
+        // Check for exile-based "whenever you attack" triggers. These fire once per combat
+        // while the face-up card is in its owner's exile zone.
+        if (!attackerIndices.isEmpty()) {
+            for (ExiledCardEntry exiled : new ArrayList<>(gameData.exiledCards)) {
+                if (exiled.faceDown() || !playerId.equals(exiled.ownerId())) {
+                    continue;
+                }
+                List<CardEffect> exileAttackEffects = exiled.card().getEffects(
+                        EffectSlot.EXILE_ON_ALLY_CREATURES_ATTACK);
+                if (exileAttackEffects.isEmpty()) {
+                    continue;
+                }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        exiled.card(),
+                        playerId,
+                        exiled.card().getName() + "'s exile attack trigger",
+                        new ArrayList<>(exileAttackEffects),
+                        attackerIndices.size(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+                gameLogService.append(gameData,
+                        GameLog.builder().card(exiled.card()).text("'s exile attack ability triggers.").build());
+                log.info("Game {} - {} EXILE_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                        gameData.id, exiled.card().getName(), attackerIndices.size());
             }
         }
 
@@ -2336,6 +2402,7 @@ public class CombatAttackService {
                                 perm.getId()
                         );
                         anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
+                        anyAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                         anyAttackTrigger.setTriggeringPermanentControllerId(playerId);
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
@@ -2502,6 +2569,7 @@ public class CombatAttackService {
                                     attackerIndices.size(),
                                     perm.getId());
                             playerAttackTrigger.setTargetId(playerId);
+                            playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
                             playerAttackTrigger.setNonTargeting(true);
                             gameData.stack.add(playerAttackTrigger);
                             gameLogService.append(gameData,
@@ -3105,6 +3173,7 @@ public class CombatAttackService {
     private boolean isDefendingPlayerCondition(Condition condition) {
         return switch (condition) {
             case DefendingPlayerControlsPermanent ignored -> true;
+            case DefendingPlayerControlsMoreLandsThanController ignored -> true;
             case DefendingPlayerHasMoreCardsInHandThanController ignored -> true;
             case DefendingPlayerHandAtMost ignored -> true;
             case DefendingPlayerPoisoned ignored -> true;
@@ -3286,7 +3355,8 @@ public class CombatAttackService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (int idx : attackableIndices) {
-            if (!declaredAttackerIndices.contains(idx)) {
+            if (!declaredAttackerIndices.contains(idx)
+                    && !canOnlyAttackAlone(gameData, battlefield.get(idx))) {
                 throw new IllegalStateException(battlefield.get(idx).getCard().getName()
                         + " must also attack when another creature you control attacks");
             }

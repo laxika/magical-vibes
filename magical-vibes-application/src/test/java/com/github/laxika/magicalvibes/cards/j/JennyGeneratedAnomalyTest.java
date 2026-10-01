@@ -18,6 +18,7 @@ class JennyGeneratedAnomalyTest extends BaseCardTest {
 
     @Test
     void doubleStrikeExploresTwiceWhenItDealsCombatDamage() {
+        harness.setHand(player1, List.of());
         Card firstLand = new Forest();
         Card secondLand = new Forest();
         harness.setLibrary(player1, List.of(firstLand, secondLand));

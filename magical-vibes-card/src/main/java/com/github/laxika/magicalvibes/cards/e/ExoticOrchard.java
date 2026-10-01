@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "142")
+@CardRegistration(set = "MIC", collectorNumber = "173")
 @CardRegistration(set = "PC2", collectorNumber = "117")
 @CardRegistration(set = "PCA", collectorNumber = "117")
 @CardRegistration(set = "SOC", collectorNumber = "369")
@@ -19,6 +20,9 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "148")
 @CardRegistration(set = "TMC", collectorNumber = "66")
 @CardRegistration(set = "WHO", collectorNumber = "276")
+@CardRegistration(set = "WHO", collectorNumber = "493")
+@CardRegistration(set = "WHO", collectorNumber = "867")
+@CardRegistration(set = "WHO", collectorNumber = "1084")
 @CardRegistration(set = "PIP", collectorNumber = "264")
 @CardRegistration(set = "PIP", collectorNumber = "495")
 @CardRegistration(set = "PIP", collectorNumber = "792")
@@ -28,11 +32,15 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "275")
 @CardRegistration(set = "LTC", collectorNumber = "307")
 @CardRegistration(set = "TDC", collectorNumber = "360")
+@CardRegistration(set = "M3C", collectorNumber = "341")
 @CardRegistration(set = "MKC", collectorNumber = "260")
 @CardRegistration(set = "AFC", collectorNumber = "236")
 @CardRegistration(set = "OTC", collectorNumber = "293")
 @CardRegistration(set = "LCC", collectorNumber = "329")
 @CardRegistration(set = "C20", collectorNumber = "273")
+@CardRegistration(set = "BLC", collectorNumber = "131")
+@CardRegistration(set = "C19", collectorNumber = "242")
+@CardRegistration(set = "NEC", collectorNumber = "168")
 public class ExoticOrchard extends Card {
 
     public ExoticOrchard() {

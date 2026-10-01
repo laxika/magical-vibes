@@ -12,14 +12,16 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Used by Wort, the Raidmother (conspire, on red or green instant and sorcery spells), Chief Engineer
  * (convoke, on artifact spells), Inspiring Statuary (improvise, on nonartifact spells), and
  * Niv-Mizzet, Supreme (jump-start, on exactly two-color instants and sorceries in the graveyard),
- * and Wrenn and Six (retrace, on instants and sorceries in the graveyard).
+ * and Wrenn and Six (retrace, on instants and sorceries in the graveyard). Demonstrate is
+ * handled by the self-cast trigger collector rather than by an additional cast cost.
  * For replicate, a positive {@code abilityValue} grants that fixed generic cost;
  * zero keeps the default of the matching spell's mana cost.
  * The {@link #allPlayers(Keyword, CardPredicate)} factory is for symmetric grants such as a Plane's
  * "instant and sorcery spells have rebound" ability.
  * <p>
  * Only abilities with engine support are accepted: a grant nothing consults would be silently
- * inert, so widening this set means wiring a new gate at the same time.
+ * inert, so widening this set means wiring a new gate at the same time. Split second is stamped
+ * onto the spell's stack entry by the spell-casting flow.
  */
 public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
                                                      Zone sourceZone, int abilityValue,
@@ -56,10 +58,11 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
                 && grantedAbility != Keyword.JUMP_START
                 && grantedAbility != Keyword.CASUALTY
                 && grantedAbility != Keyword.REPLICATE
-                && grantedAbility != Keyword.RETRACE) {
+                && grantedAbility != Keyword.RETRACE
+                && grantedAbility != Keyword.SPLIT_SECOND) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only DEMONSTRATE, CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, and RETRACE do");
+                            + "; only DEMONSTRATE, CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, CASUALTY, REPLICATE, RETRACE, and SPLIT_SECOND do");
         }
     }
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {

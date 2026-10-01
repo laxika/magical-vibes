@@ -33,6 +33,24 @@ class SkyscribingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("X=0 makes each player draw no cards")
+    void zeroXDrawsNoCards() {
+        harness.setHand(player1, List.of(new Skyscribing()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Forecast makes each player draw a card and keeps Skyscribing in hand")
     void forecastMakesEachPlayerDrawAndKeepsSourceInHand() {
         Skyscribing card = new Skyscribing();
@@ -40,9 +58,7 @@ class SkyscribingTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -72,9 +88,7 @@ class SkyscribingTest extends BaseCardTest {
     @DisplayName("Forecast can be activated only once each turn")
     void forecastIsLimitedToOncePerTurn() {
         harness.setHand(player1, List.of(new Skyscribing()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -83,5 +97,48 @@ class SkyscribingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("Forecast can be activated again during its controller's next upkeep")
+    void forecastActivationLimitResetsOnNextTurn() {
+        Skyscribing card = new Skyscribing();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Forecast cannot be activated during an opponent's upkeep")
+    void forecastRequiresYourUpkeep() {
+        Skyscribing card = new Skyscribing();
+        harness.setHand(player1, List.of(card));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
 }

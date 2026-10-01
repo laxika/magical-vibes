@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "498")
 @CardRegistration(set = "TMC", collectorNumber = "76")
 @CardRegistration(set = "WHO", collectorNumber = "312")
+@CardRegistration(set = "WHO", collectorNumber = "522")
+@CardRegistration(set = "WHO", collectorNumber = "903")
+@CardRegistration(set = "WHO", collectorNumber = "1113")
 @CardRegistration(set = "PIP", collectorNumber = "296")
 @CardRegistration(set = "PIP", collectorNumber = "514")
 @CardRegistration(set = "PIP", collectorNumber = "824")
@@ -30,6 +33,8 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "299")
 @CardRegistration(set = "AFC", collectorNumber = "265")
 @CardRegistration(set = "C20", collectorNumber = "318")
+@CardRegistration(set = "MIC", collectorNumber = "182")
+@CardRegistration(set = "C19", collectorNumber = "278")
 public class SunkenHollow extends Card {
 
     public SunkenHollow() {

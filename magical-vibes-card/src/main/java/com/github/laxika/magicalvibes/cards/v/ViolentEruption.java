@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "117")
+@CardRegistration(set = "C19", collectorNumber = "154")
 public class ViolentEruption extends Card {
 
     public ViolentEruption() {

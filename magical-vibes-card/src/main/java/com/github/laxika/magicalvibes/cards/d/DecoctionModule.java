@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "205")
 @CardRegistration(set = "KLR", collectorNumber = "232")
+@CardRegistration(set = "M3C", collectorNumber = "288")
 public class DecoctionModule extends Card {
 
     public DecoctionModule() {

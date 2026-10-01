@@ -39,7 +39,7 @@ public class RegisterDelayedTargetPlayerSpellCastTriggerEffectHandler implements
                 entry.getSourcePermanentSnapshot(),
                 null,
                 false,
-                false,
+                e.persistsUntilConsumed(),
                 gameData.turnNumber));
         log.info("Game {} - {} registers a delayed spell-cast trigger for the targeted player",
                 gameData.id, entry.getCard().getName());

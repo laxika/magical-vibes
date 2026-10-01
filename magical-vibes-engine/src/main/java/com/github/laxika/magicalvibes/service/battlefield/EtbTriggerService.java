@@ -186,7 +186,7 @@ public class EtbTriggerService {
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst()
                 .orElse(null);
-        if (enteringPermanent != null && enteringPermanent.getChosenColor() == null && colorChoice != null) {
+        if (enteringPermanent != null && colorChoice != null && !colorChoice.choiceComplete(enteringPermanent)) {
             playerInputService.beginColorChoice(gameData, controllerId, enteringPermanent.getId(), null, colorChoice);
             return;
         }
@@ -564,6 +564,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (!faceDown && card.hasType(CardType.LAND)) {
+            triggerCollectionService.checkEnchantedPlayerLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkPlanarLandEntersTriggers(gameData, controllerId, card);
@@ -684,7 +685,8 @@ public class EtbTriggerService {
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .filter(e -> card.getEffectTargetIndex(e) < 0)
+                // A target-group declaration describes the ETB ability's target, but the
+                // graveyard card is chosen when that ability goes on the stack.
                 .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))

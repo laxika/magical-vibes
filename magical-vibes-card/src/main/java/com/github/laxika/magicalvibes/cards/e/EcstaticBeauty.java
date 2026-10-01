@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnA
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "83")
+@CardRegistration(set = "WHO", collectorNumber = "383")
+@CardRegistration(set = "WHO", collectorNumber = "688")
+@CardRegistration(set = "WHO", collectorNumber = "974")
 public class EcstaticBeauty extends Card {
 
     public EcstaticBeauty() {

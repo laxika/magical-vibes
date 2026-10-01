@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "244")
+@CardRegistration(set = "M3C", collectorNumber = "293")
 public class ForsakenMonument extends Card {
 
     public ForsakenMonument() {

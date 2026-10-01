@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -29,6 +29,7 @@ import java.util.Set;
 @CardRegistration(set = "2XM", collectorNumber = "314")
 @CardRegistration(set = "DMR", collectorNumber = "244")
 @CardRegistration(set = "TLE", collectorNumber = "56")
+@CardRegistration(set = "M3C", collectorNumber = "334")
 public class DarkDepths extends Card {
 
     public DarkDepths() {
@@ -37,8 +38,8 @@ public class DarkDepths extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false,
-                null,
-                List.of(new RemoveCounterFromSourceCost(1, CounterType.ICE)),
+                "{3}",
+                List.of(new RemoveCounterFromSourceEffect(CounterType.ICE, 1)),
                 "Remove an ice counter from Dark Depths."
         ));
 

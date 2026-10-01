@@ -13,6 +13,9 @@ import java.util.List;
 @CardRegistration(set = "IMA", collectorNumber = "246")
 @CardRegistration(set = "WHO", collectorNumber = "297")
 @CardRegistration(set = "MKC", collectorNumber = "283")
+@CardRegistration(set = "WHO", collectorNumber = "509")
+@CardRegistration(set = "WHO", collectorNumber = "888")
+@CardRegistration(set = "WHO", collectorNumber = "1100")
 public class RiverOfTears extends Card {
 
     public RiverOfTears() {

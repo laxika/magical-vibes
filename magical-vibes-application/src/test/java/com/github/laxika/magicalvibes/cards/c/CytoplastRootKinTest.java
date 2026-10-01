@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,12 +10,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CytoplastRootKin.class, GrizzlyBears.class})
+@CardUsed({CytoplastRootKin.class, MistralCharger.class})
 class CytoplastRootKinTest extends BaseCardTest {
 
     @Test
@@ -29,10 +27,10 @@ class CytoplastRootKinTest extends BaseCardTest {
     @Test
     @DisplayName("Its enter-the-battlefield ability adds counters to other countered creatures you control")
     void entersAndAddsCountersToOtherCounteredCreatures() {
-        Permanent counteredCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent counteredCreature = addCreatureReady(player1, new MistralCharger());
         counteredCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Permanent uncounteredCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent uncounteredCreature = addCreatureReady(player1, new MistralCharger());
+        Permanent opponentCreature = addCreatureReady(player2, new MistralCharger());
         opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         Permanent rootKin = castRootKin();
@@ -48,18 +46,50 @@ class CytoplastRootKinTest extends BaseCardTest {
     void graftMovesCounterOntoEnteringCreature() {
         Permanent rootKin = castRootKin();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent charger = findPermanent(player1, "Mistral Charger");
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may move a counter onto an opponent's creature that enters")
+    void graftMovesCounterOntoOpponentsEnteringCreature() {
+        Permanent rootKin = castRootKin();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player2, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may be declined")
+    void graftMayBeDeclined() {
+        Permanent rootKin = castRootKin();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -67,8 +97,8 @@ class CytoplastRootKinTest extends BaseCardTest {
     void activatedAbilityMovesCounterOntoSource() {
         Permanent rootKin = castRootKin();
         rootKin.setSummoningSick(false);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -77,11 +107,32 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(rootKin),
                 null,
-                bears.getId());
+                charger.getId());
         harness.passBothPriorities();
 
         assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability does nothing when the target has no +1/+1 counter")
+    void activatedAbilityDoesNothingWhenTargetHasNoCounter() {
+        Permanent rootKin = castRootKin();
+        rootKin.setSummoningSick(false);
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(rootKin),
+                null,
+                charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -89,7 +140,7 @@ class CytoplastRootKinTest extends BaseCardTest {
     void activatedAbilityCannotTargetOpponentsCreature() {
         Permanent rootKin = castRootKin();
         rootKin.setSummoningSick(false);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new MistralCharger());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -107,10 +158,7 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CytoplastRootKin()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CytoplastRootKin(), "{2}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Cytoplast Root-Kin");

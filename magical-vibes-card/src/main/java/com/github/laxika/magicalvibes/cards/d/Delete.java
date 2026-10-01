@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "81")
+@CardRegistration(set = "WHO", collectorNumber = "381")
+@CardRegistration(set = "WHO", collectorNumber = "686")
+@CardRegistration(set = "WHO", collectorNumber = "972")
 public class Delete extends Card {
 
     public Delete() {

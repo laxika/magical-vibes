@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "MAR", collectorNumber = "75")
 @CardRegistration(set = "OMB", collectorNumber = "33")
 @CardRegistration(set = "WHO", collectorNumber = "228")
+@CardRegistration(set = "WHO", collectorNumber = "819")
 @CardRegistration(set = "NCC", collectorNumber = "282")
 @CardRegistration(set = "LTC", collectorNumber = "234")
 @CardRegistration(set = "SOC", collectorNumber = "263")
@@ -30,10 +31,15 @@ import java.util.Set;
 @CardRegistration(set = "C21", collectorNumber = "186")
 @CardRegistration(set = "DSC", collectorNumber = "80")
 @CardRegistration(set = "TDC", collectorNumber = "249")
+@CardRegistration(set = "M3C", collectorNumber = "223")
 @CardRegistration(set = "AFC", collectorNumber = "152")
 @CardRegistration(set = "LCC", collectorNumber = "233")
 @CardRegistration(set = "DMC", collectorNumber = "129")
 @CardRegistration(set = "C20", collectorNumber = "168")
+@CardRegistration(set = "BLC", collectorNumber = "206")
+@CardRegistration(set = "MIC", collectorNumber = "133")
+@CardRegistration(set = "C19", collectorNumber = "157")
+@CardRegistration(set = "NEC", collectorNumber = "114")
 public class BeastWithin extends Card {
 
     public BeastWithin() {

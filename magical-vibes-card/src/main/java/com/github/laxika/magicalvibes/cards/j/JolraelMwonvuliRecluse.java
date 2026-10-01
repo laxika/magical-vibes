@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "299")
 @CardRegistration(set = "CMM", collectorNumber = "564")
 @CardRegistration(set = "MKC", collectorNumber = "173")
+@CardRegistration(set = "BLC", collectorNumber = "225")
 public class JolraelMwonvuliRecluse extends Card {
 
     public JolraelMwonvuliRecluse() {

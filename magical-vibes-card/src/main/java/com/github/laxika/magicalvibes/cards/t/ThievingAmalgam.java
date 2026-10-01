@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 
 @CardRegistration(set = "OTC", collectorNumber = "150")
+@CardRegistration(set = "C19", collectorNumber = "21")
 public class ThievingAmalgam extends Card {
 
     public ThievingAmalgam() {

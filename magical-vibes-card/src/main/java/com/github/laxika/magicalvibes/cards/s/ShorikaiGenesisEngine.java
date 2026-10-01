@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1880")
+@CardRegistration(set = "NEC", collectorNumber = "4")
+@CardRegistration(set = "NEC", collectorNumber = "76")
 public class ShorikaiGenesisEngine extends Card {
 
     public ShorikaiGenesisEngine() {

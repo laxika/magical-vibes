@@ -44,19 +44,24 @@ public class AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             return;
         }
 
-        List<UUID> legalEquipmentIds = controlledEquipmentIds(gameData, entry.getControllerId(), creature);
+        beginChoiceForCreature(gameData, entry.getControllerId(), creature, entry.getCard().getName());
+    }
+
+    public void beginChoiceForCreature(GameData gameData, UUID controllerId, Permanent creature,
+                                       String sourceCardName) {
+        List<UUID> legalEquipmentIds = controlledEquipmentIds(gameData, controllerId, creature);
         if (legalEquipmentIds.isEmpty()) {
             return;
         }
 
         playerInputService.beginMultiPermanentChoice(
                 gameData,
-                entry.getControllerId(),
+                controllerId,
                 legalEquipmentIds,
                 legalEquipmentIds.size(),
                 new MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature(
                         creature.getId()),
-                entry.getCard().getName() + " — Choose any number of Equipment to attach.");
+                sourceCardName + " — Choose any number of Equipment to attach.");
     }
 
     private List<UUID> controlledEquipmentIds(GameData gameData, UUID controllerId, Permanent creature) {

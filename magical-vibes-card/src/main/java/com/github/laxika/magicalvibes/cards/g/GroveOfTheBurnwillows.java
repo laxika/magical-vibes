@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 
@@ -28,19 +28,10 @@ public class GroveOfTheBurnwillows extends Card {
                 true,
                 null,
                 List.of(
-                        new AwardManaEffect(ManaColor.RED),
+                        new AwardAnyColorManaEffect(1, List.of(ManaColor.RED, ManaColor.GREEN)),
                         new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT)
                 ),
-                "{T}: Add {R}. Each opponent gains 1 life."
-        ));
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(
-                        new AwardManaEffect(ManaColor.GREEN),
-                        new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT)
-                ),
-                "{T}: Add {G}. Each opponent gains 1 life."
+                "{T}: Add {R} or {G}. Each opponent gains 1 life."
         ));
     }
 }
