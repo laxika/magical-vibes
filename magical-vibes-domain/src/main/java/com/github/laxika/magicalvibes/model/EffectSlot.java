@@ -1263,6 +1263,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
      *  instant or sorcery is cast from hand. */
     GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
+    /** Marker slot: "Enchantment spells you cast from your hand have cascade." Holds a
+     *  {@code CascadeEffect}; detected by {@code TriggerCollectionService.checkSpellCastTriggers}
+     *  when an enchantment is cast from hand. */
+    GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND,
     /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
      *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
     GRANT_CASCADE_TO_SLIVER_SPELL,

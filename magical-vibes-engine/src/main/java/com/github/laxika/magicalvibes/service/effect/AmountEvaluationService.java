@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerByArti
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourcePermanentBySourceNameThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceByControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
@@ -785,6 +786,11 @@ public class AmountEvaluationService {
                     ctx.sourcePermanent() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn
                                     .getOrDefault(ctx.sourcePermanent().getId(), 0);
+            case DamageDealtToSourceByControllerThisTurn ignored ->
+                    ctx.sourcePermanent() == null || ctx.controllerId() == null ? 0
+                            : gameData.damageDealtToPermanentsBySourceControllerThisTurn
+                                    .getOrDefault(ctx.sourcePermanent().getId(), java.util.Map.of())
+                                    .getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToTargetPermanentThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn

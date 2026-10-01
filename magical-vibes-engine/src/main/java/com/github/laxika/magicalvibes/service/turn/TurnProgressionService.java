@@ -1183,6 +1183,7 @@ public class TurnProgressionService {
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.damageDealtToPermanentsBySourceThisTurn.clear();
+        gameData.damageDealtToPermanentsBySourceControllerThisTurn.clear();
         gameData.damageSourceNamesThisTurn.clear();
         gameData.controllersOfPermanentsDealtExcessDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();

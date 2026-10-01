@@ -244,13 +244,34 @@ public class PlayerInputService {
                                 CardPredicate enterTappedAndAttackingIf,
                                 UUID blockingAttackerId, UUID untapSourcePermanentId,
                                 Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceCardId, returnToHandAtEndStep, cloaked, thenEffect, thenCondition,
+                enterTappedAndAttackingIf, blockingAttackerId, untapSourcePermanentId,
+                untapSourceIfEnteredCardHasAnySubtype, false);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, boolean cloaked,
+                                CardEffect thenEffect, CardPredicate thenCondition,
+                                CardPredicate enterTappedAndAttackingIf,
+                                UUID blockingAttackerId, UUID untapSourcePermanentId,
+                                Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                                boolean markEntryAsPutByTriggeringPermanent) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
                 cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId,
-                untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype, null, 0, null));
+                untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype, null, 0, null,
+                markEntryAsPutByTriggeringPermanent));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,

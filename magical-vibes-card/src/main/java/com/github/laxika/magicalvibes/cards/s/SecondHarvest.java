@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachControll
 @CardRegistration(set = "SLD", collectorNumber = "2380")
 @CardRegistration(set = "SLD", collectorNumber = "2382")
 @CardRegistration(set = "SIR", collectorNumber = "213")
+@CardRegistration(set = "BLC", collectorNumber = "123")
 public class SecondHarvest extends Card {
 
     public SecondHarvest() {

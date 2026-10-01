@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TemptingOfferSearchLibraryForLandToBattlefieldEffect;
 
 @CardRegistration(set = "C13", collectorNumber = "174")
+@CardRegistration(set = "BLC", collectorNumber = "124")
 public class TemptWithDiscovery extends Card {
 
     public TemptWithDiscovery() {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "681")
 @CardRegistration(set = "PIP", collectorNumber = "973")
 @CardRegistration(set = "SOC", collectorNumber = "410")
+@CardRegistration(set = "BLC", collectorNumber = "336")
 public class SunscorchedDivide extends Card {
 
     public SunscorchedDivide() {

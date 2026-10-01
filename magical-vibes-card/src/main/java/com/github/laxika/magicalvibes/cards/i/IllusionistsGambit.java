@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitEffect;
 
 @CardRegistration(set = "C13", collectorNumber = "47")
+@CardRegistration(set = "BLC", collectorNumber = "166")
 public class IllusionistsGambit extends Card {
 
     public IllusionistsGambit() {

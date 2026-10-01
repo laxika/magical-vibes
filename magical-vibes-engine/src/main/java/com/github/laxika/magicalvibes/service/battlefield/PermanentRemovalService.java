@@ -1390,7 +1390,8 @@ public class PermanentRemovalService {
         if (sourceRestrictedRedirect) {
             if (effectiveDamage > 0) {
                 target.addMarkedDamage(sourcePermanentId, effectiveDamage);
-                recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
+                recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage,
+                        sourcePermanentId, sourceCard, sourceName);
                 if (gameQueryService.isCreature(gameData, target) && sourcePermanentId != null) {
                     gameData.recordDamageDealtToCreatureBySource(sourcePermanentId, target.getId());
                 }
@@ -1416,7 +1417,8 @@ public class PermanentRemovalService {
         }
 
         target.addMarkedDamage(sourcePermanentId, effectiveDamage);
-        recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
+        recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage,
+                sourcePermanentId, sourceCard, sourceName);
         if (gameQueryService.isCreature(gameData, target) && sourcePermanentId != null) {
             gameData.recordDamageDealtToCreatureBySource(sourcePermanentId, target.getId());
         }
@@ -1433,11 +1435,19 @@ public class PermanentRemovalService {
     }
 
     private void recordDamageToPermanent(GameData gameData, UUID permanentId, int amount,
-                                         boolean isCombatDamage) {
+                                         boolean isCombatDamage, UUID sourcePermanentId,
+                                         Card sourceCard, String sourceName) {
+        UUID sourceId = sourcePermanentId != null
+                ? sourcePermanentId
+                : sourceCard == null ? null : sourceCard.getId();
+        UUID sourceControllerId = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentController(gameData, sourcePermanentId);
         if (isCombatDamage) {
-            gameData.recordDamageToPermanent(permanentId, amount);
+            gameData.recordDamageToPermanent(permanentId, amount, sourceId, sourceName, sourceControllerId);
         } else {
             gameData.recordNoncombatDamageToPermanent(permanentId, amount);
+            gameData.recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName,
+                    sourceControllerId);
         }
     }
 

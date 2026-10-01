@@ -883,7 +883,12 @@ public class DamageSupport {
         String sourceName = damageSource != null
                 ? gameQueryService.getEffectiveName(gameData, damageSource)
                 : sourceCard == null ? null : sourceCard.getName();
-        gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName);
+        UUID sourceControllerId = damageSource != null
+                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                : entry != null && entry.getSourcePermanentId() != null
+                        ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
+                        : entry == null ? null : entry.getControllerId();
+        gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName, sourceControllerId);
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
@@ -2054,7 +2059,9 @@ public class DamageSupport {
                                 : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
                         gameData.recordDamageToPermanentFromSource(targetPerm.getId(), effectiveDamage,
                                 redirect.damageSourceId(), damageSource == null ? null
-                                        : gameQueryService.getEffectiveName(gameData, damageSource));
+                                        : gameQueryService.getEffectiveName(gameData, damageSource),
+                                damageSource == null ? null
+                                        : gameQueryService.findPermanentController(gameData, damageSource.getId()));
                     }
                 }
             }

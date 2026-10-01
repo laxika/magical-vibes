@@ -25,6 +25,7 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "1056")
 @CardRegistration(set = "DSC", collectorNumber = "326")
 @CardRegistration(set = "LTC", collectorNumber = "346")
+@CardRegistration(set = "BLC", collectorNumber = "354")
 public class WoodlandCemetery extends Card {
 
     public WoodlandCemetery() {

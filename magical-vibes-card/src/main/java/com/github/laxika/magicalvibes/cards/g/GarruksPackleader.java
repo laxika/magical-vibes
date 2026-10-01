@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "177")
 @CardRegistration(set = "M13", collectorNumber = "175")
+@CardRegistration(set = "BLC", collectorNumber = "218")
 public class GarruksPackleader extends Card {
 
     public GarruksPackleader() {

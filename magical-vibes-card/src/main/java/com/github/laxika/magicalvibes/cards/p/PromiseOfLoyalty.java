@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "200")
 @CardRegistration(set = "C21", collectorNumber = "21")
 @CardRegistration(set = "MKC", collectorNumber = "79")
+@CardRegistration(set = "BLC", collectorNumber = "148")
 public class PromiseOfLoyalty extends Card {
 
     public PromiseOfLoyalty() {

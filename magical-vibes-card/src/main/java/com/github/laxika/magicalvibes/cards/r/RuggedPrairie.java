@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "247")
 @CardRegistration(set = "2XM", collectorNumber = "325")
 @CardRegistration(set = "SOC", collectorNumber = "401")
+@CardRegistration(set = "BLC", collectorNumber = "327")
 public class RuggedPrairie extends Card {
 
     public RuggedPrairie() {

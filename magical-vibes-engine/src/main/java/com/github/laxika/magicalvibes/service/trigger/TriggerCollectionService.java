@@ -1969,6 +1969,34 @@ public class TriggerCollectionService {
         }
         // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
 
+        if (castZone == Zone.HAND && spellCard.hasType(CardType.ENCHANTMENT)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(
+                            EffectSlot.GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry cascadeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
+                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
+                    gameData.stack.add(cascadeTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to enchantment {} cast from hand for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
         // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
         // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
         // battlefield rather than an effect-type check. recordSpellCast runs before this method in

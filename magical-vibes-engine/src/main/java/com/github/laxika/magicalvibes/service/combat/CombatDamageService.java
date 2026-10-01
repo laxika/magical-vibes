@@ -3566,8 +3566,13 @@ public class CombatDamageService {
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
                 attributedDamage.forEach((sourceId, amount) -> {
                     Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceId);
+                    UUID sourceControllerId = state.combatDamageDealerControllers.get(damageSource);
+                    if (sourceControllerId == null && damageSource != null) {
+                        sourceControllerId = gameQueryService.findPermanentController(gameData, sourceId);
+                    }
                     gameData.recordDamageToPermanentFromSource(perm.getId(), amount, sourceId,
-                            damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource));
+                            damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource),
+                            sourceControllerId);
                     if (gameQueryService.isCreature(gameData, perm)) {
                         gameData.recordDamageDealtToCreatureBySource(sourceId, perm.getId());
                     }
@@ -4030,7 +4035,8 @@ public class CombatDamageService {
                     }
                     gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage,
                             redirect.damageSourceId(), damageSource == null ? null
-                                    : gameQueryService.getEffectiveName(gameData, damageSource));
+                                    : gameQueryService.getEffectiveName(gameData, damageSource),
+                            sourceControllerId);
                     if (isCreature && redirect.damageSourceId() != null) {
                         gameData.recordDamageDealtToCreatureBySource(
                                 redirect.damageSourceId(), targetPerm.getId());
@@ -4736,8 +4742,12 @@ public class CombatDamageService {
                 }
             }
             if (afterShield > 0) {
+                sourceControllerId = state.combatDamageDealerControllers.get(source);
+                if (sourceControllerId == null) {
+                    sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+                }
                 gameData.recordDamageToPermanent(target.getId(), afterShield, source.getId(),
-                        gameQueryService.getEffectiveName(gameData, source));
+                        gameQueryService.getEffectiveName(gameData, source), sourceControllerId);
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, afterShield);
                 recordQualifyingCombatDamage(gameData, source, target);
             }

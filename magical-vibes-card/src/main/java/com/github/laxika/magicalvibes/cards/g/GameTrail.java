@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "40K", collectorNumber = "282")
 @CardRegistration(set = "MKC", collectorNumber = "264")
 @CardRegistration(set = "AFC", collectorNumber = "240")
+@CardRegistration(set = "BLC", collectorNumber = "306")
 public class GameTrail extends Card {
 
     public GameTrail() {

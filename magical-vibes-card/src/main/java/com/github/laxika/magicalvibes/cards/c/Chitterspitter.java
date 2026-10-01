@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "153")
+@CardRegistration(set = "BLC", collectorNumber = "211")
 public class Chitterspitter extends Card {
 
     public Chitterspitter() {

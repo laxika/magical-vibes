@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "MH2", collectorNumber = "232")
+@CardRegistration(set = "BLC", collectorNumber = "281")
 public class OrnithopterOfParadise extends Card {
 
     public OrnithopterOfParadise() {
