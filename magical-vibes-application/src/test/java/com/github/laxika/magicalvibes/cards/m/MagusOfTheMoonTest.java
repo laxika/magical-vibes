@@ -92,6 +92,7 @@ class MagusOfTheMoonTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(magus);
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);

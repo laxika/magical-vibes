@@ -4219,7 +4219,9 @@ public class TargetLegalityService {
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
         if (gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
-            return target.getCard().getName() + " can't be targeted by this player's spells or abilities";
+            return target.getCard().getName() + (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)
+                    ? " has hexproof and can't be targeted"
+                    : " can't be targeted by this player's spells or abilities");
         }
         if (gameQueryService.cantBeAffectedByOwnEffects(gameData, target, sourcePlayerId)) {
             return target.getCard().getName()

@@ -635,6 +635,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -935,6 +936,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -1338,6 +1340,7 @@ class TargetLegalityServiceTest {
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))

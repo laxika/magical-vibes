@@ -139,7 +139,10 @@ class CardImmutabilityArchTest {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
                 .withImportOption(location -> !location.contains("test-fixtures")
-                        && !location.contains("testFixtures"))
+                        && !location.contains("testFixtures")
+                        && !location.contains("/classes/java/test/"))
+                // Card classes are exempt from this rule; importing their bytecode adds no coverage.
+                .withImportOption(location -> !location.contains("/com/github/laxika/magicalvibes/cards/"))
                 .importPackages("com.github.laxika.magicalvibes");
 
         noClasses()

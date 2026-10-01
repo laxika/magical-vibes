@@ -381,7 +381,10 @@ public class PlanechaseService {
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
                 int targetGroupIndex = card.getEffectTargetIndex(effect);
                 TargetFilter targetFilter = targetGroupIndex >= 0
-                        ? card.getSpellTargets().get(targetGroupIndex).getFilter() : card.getTargetFilter();
+                        ? card.getSpellTargets().get(targetGroupIndex).getFilter()
+                        : card.getSpellTargets().stream()
+                                .noneMatch(target -> card.bindsEffectToTargetGroup(target.getIndex()))
+                                ? card.getTargetFilter() : null;
                 game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         card, controller, List.of(effect), playerTargetOnly, targetFilter,
                         0, null, null, false, null, null, controller, object.copy()));
@@ -402,10 +405,10 @@ public class PlanechaseService {
         if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
             return false;
         }
-        // Bare positional groups are consumed by the same effect (for example, the creature
-        // dealing damage and the creature receiving it). They still need separate choices.
-        if (card.getSpellTargets().stream().anyMatch(target -> target.getIndex() != targetGroupIndex
-                && !card.bindsEffectToTargetGroup(target.getIndex()))) {
+        // A bare positional group directly before this effect's bound group belongs to the
+        // same ability (for example, the dealing creature before its victim). Earlier groups
+        // completed by another bound effect belong to a different ability on the plane.
+        if (targetGroupIndex > 0 && !card.bindsEffectToTargetGroup(targetGroupIndex - 1)) {
             return false;
         }
         SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);

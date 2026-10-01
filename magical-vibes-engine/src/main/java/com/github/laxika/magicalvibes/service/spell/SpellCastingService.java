@@ -3368,19 +3368,6 @@ public class SpellCastingService {
         boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
-        if (hasModalEtb && targetId != null) {
-            for (CardEffect etbEffect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-                if (etbEffect instanceof ChooseOneEffect choice
-                        && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
-                    Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE
-                            : gameQueryService.findGraveyardOwnerById(gameData, targetId) != null ? Zone.GRAVEYARD
-                            : Zone.BATTLEFIELD;
-                    targetLegalityService.validateEffectTargetInZone(gameData, card,
-                            choice.options().get(effectiveXValue).effects(), targetId, etbTargetZone,
-                            effectiveXValue, playerId);
-                }
-            }
-        }
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         if (!fromGraveyard) {
             filteredSpellEffects.removeIf(effect -> effect instanceof ExileNCardsFromGraveyardCost cost
@@ -4367,6 +4354,20 @@ public class SpellCastingService {
         if (!castingPermissionService.isFlashCastTargetPermissionSatisfied(
                 gameData, playerId, card, targetId, targetIds)) {
             throw new IllegalStateException("Card is not playable");
+        }
+
+        if (hasModalEtb && targetId != null) {
+            for (CardEffect etbEffect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+                if (etbEffect instanceof ChooseOneEffect choice
+                        && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
+                    Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE
+                            : gameQueryService.findGraveyardOwnerById(gameData, targetId) != null ? Zone.GRAVEYARD
+                            : Zone.BATTLEFIELD;
+                    targetLegalityService.validateEffectTargetInZone(gameData, card,
+                            choice.options().get(effectiveXValue).effects(), targetId, etbTargetZone,
+                            effectiveXValue, playerId);
+                }
+            }
         }
 
         // Validate and apply convoke or improvise
