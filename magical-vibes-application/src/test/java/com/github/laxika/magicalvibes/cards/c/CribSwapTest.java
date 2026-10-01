@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CribSwap.class, GrizzlyBears.class, Forest.class})
 class CribSwapTest extends BaseCardTest {
 
     // ===== Exile creature and give its controller a Shapeshifter token =====
@@ -26,7 +28,8 @@ class CribSwapTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles target creature and gives its controller a 1/1 colorless Shapeshifter with changeling")
     void exilesCreatureAndCreatesTokenForController() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.addToBattlefield(player2, target);
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         harness.forceActivePlayer(player1);
@@ -34,12 +37,12 @@ class CribSwapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CribSwap()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Target creature exiled (not to graveyard)
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
 
         // Its controller (player2) gets a 1/1 colorless Shapeshifter token with changeling
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -64,8 +67,7 @@ class CribSwapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CribSwap()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 

@@ -84,7 +84,7 @@ class WandOfTheElementsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({MarchOfTheMachines.class, AshayaSoulOfTheWild.class, AquitectsWill.class})
+    @CardUsed({WandOfTheElements.class, MarchOfTheMachines.class, AshayaSoulOfTheWild.class, AquitectsWill.class})
     @DisplayName("The Wand itself may be sacrificed when it is an Island")
     void canSacrificeItselfWhenItIsAnIsland() {
         Permanent wand = addCreatureReady(player1, new WandOfTheElements());
@@ -93,8 +93,7 @@ class WandOfTheElementsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castSorcery(player1, 0, wand.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, wand.getId());
 
         assertThat(gqs.effectiveBasicLandTypes(gd, wand)).contains(CardSubtype.ISLAND);
         harness.activateAbility(player1, 0, 0, null, null);

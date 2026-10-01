@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,16 +12,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlimmerdustNap.class, GoldmeadowDodger.class})
 class GlimmerdustNapTest extends BaseCardTest {
-
-    // ===== Targeting restriction: enchant tapped creature =====
 
     @Test
     @DisplayName("Can target a tapped creature")
     void canTargetTappedCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GoldmeadowDodger());
         bears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new GlimmerdustNap()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -35,14 +32,12 @@ class GlimmerdustNapTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an untapped creature")
     void cannotTargetUntappedCreature() {
-        Permanent untapped = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(untapped);
+        Permanent untapped = addCreatureReady(player2, new GoldmeadowDodger());
 
         // A legal tapped target exists too, so the card is playable and the
         // rejection reports the target restriction rather than "not playable".
-        Permanent tapped = new Permanent(new GrizzlyBears());
+        Permanent tapped = addCreatureReady(player2, new GoldmeadowDodger());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         harness.setHand(player1, List.of(new GlimmerdustNap()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -52,19 +47,51 @@ class GlimmerdustNapTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a tapped creature");
     }
 
-    // ===== Resolving attaches =====
+    @Test
+    @DisplayName("Fizzles if the target becomes untapped before resolution")
+    void fizzlesIfTargetBecomesUntappedBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new GoldmeadowDodger());
+        creature.tap();
+
+        harness.setHand(player1, List.of(new GlimmerdustNap()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        creature.untap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Glimmerdust Nap");
+        harness.assertInGraveyard(player1, "Glimmerdust Nap");
+    }
+
+    @Test
+    @DisplayName("Glimmerdust Nap goes to the graveyard if its creature becomes untapped")
+    void auraLeavesWhenEnchantedCreatureBecomesUntapped() {
+        Permanent creature = addCreatureReady(player2, new GoldmeadowDodger());
+        creature.tap();
+
+        harness.setHand(player1, List.of(new GlimmerdustNap()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        creature.untap();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Glimmerdust Nap");
+        harness.assertInGraveyard(player1, "Glimmerdust Nap");
+    }
 
     @Test
     @DisplayName("Resolving attaches Glimmerdust Nap to the tapped creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GoldmeadowDodger());
         bears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new GlimmerdustNap()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -74,21 +101,16 @@ class GlimmerdustNapTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bears.getId()));
     }
 
-    // ===== Prevents untapping =====
-
     @Test
     @DisplayName("Enchanted creature does not untap during its controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player2, new GoldmeadowDodger());
         bears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        Permanent nap = new Permanent(new GlimmerdustNap());
+        Permanent nap = harness.addToBattlefieldAndReturn(player1, new GlimmerdustNap());
         nap.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(nap);
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(bears.isTapped()).isTrue();
     }
@@ -96,32 +118,17 @@ class GlimmerdustNapTest extends BaseCardTest {
     @Test
     @DisplayName("Creature untaps again after Glimmerdust Nap is removed")
     void creatureUntapsAfterRemoval() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player2, new GoldmeadowDodger());
         bears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        Permanent nap = new Permanent(new GlimmerdustNap());
+        Permanent nap = harness.addToBattlefieldAndReturn(player1, new GlimmerdustNap());
         nap.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(nap);
 
         gd.playerBattlefields.get(player1.getId()).remove(nap);
 
-        advanceToNextTurn(player1);
+        advanceToUpkeep(player2);
 
         assertThat(bears.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
-    }
 }

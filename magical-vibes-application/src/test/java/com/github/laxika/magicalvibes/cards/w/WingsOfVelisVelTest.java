@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GoblinKing;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CloudgoatRanger;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,83 +18,96 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WingsOfVelisVel.class, FountainOfYouth.class, GoblinKing.class, GrizzlyBears.class})
+@CardUsed({WingsOfVelisVel.class, CloudgoatRanger.class, WizenedCenn.class, Island.class})
 class WingsOfVelisVelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Wings of Velis Vel puts it on the stack with target creature")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CloudgoatRanger());
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
+        UUID rangerId = harness.getPermanentId(player1, "Cloudgoat Ranger");
+        harness.castInstant(player1, 0, rangerId);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(rangerId);
     }
 
     @Test
     @DisplayName("Resolving sets base P/T to 4/4 and grants flying to target creature")
     void setsBasePowerToughnessAndGrantsFlying() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CloudgoatRanger());
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        UUID rangerId = harness.getPermanentId(player1, "Cloudgoat Ranger");
+        harness.castAndResolveInstant(player1, 0, rangerId);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        Permanent ranger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(ranger.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
+        assertThat(ranger.getEffectivePower()).isEqualTo(4);
+        assertThat(ranger.getEffectiveToughness()).isEqualTo(4);
         // The flying grant is a floating CR 613 layer-6 effect, visible through the query layer.
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
     }
 
     @Test
-    @DisplayName("Target gains all creature types, so Goblin King buffs it")
-    void gainsAllCreatureTypes() {
-        harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        harness.addToBattlefield(player2, new CloudgoatRanger());
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2); // not a Goblin yet
+        UUID rangerId = harness.getPermanentId(player2, "Cloudgoat Ranger");
+        harness.castAndResolveInstant(player1, 0, rangerId);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        Permanent ranger = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
+    }
 
-        // Base 4/4 as a Goblin (changeling) + Goblin King's +1/+1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    @Test
+    @DisplayName("Target gains all creature types, so Wizened Cenn buffs it")
+    void gainsAllCreatureTypes() {
+        harness.addToBattlefield(player1, new WizenedCenn());
+        harness.addToBattlefield(player1, new CloudgoatRanger());
+        harness.setHand(player1, List.of(new WingsOfVelisVel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        Permanent ranger = findPermanent(player1, "Cloudgoat Ranger");
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(3); // not a Kithkin yet
+
+        UUID rangerId = harness.getPermanentId(player1, "Cloudgoat Ranger");
+        harness.castAndResolveInstant(player1, 0, rangerId);
+
+        // Base 4/4 as a Kithkin (changeling) + Wizened Cenn's +1/+1
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Effects wear off at end of turn")
     void wearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CloudgoatRanger());
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        UUID rangerId = harness.getPermanentId(player1, "Cloudgoat Ranger");
+        harness.castAndResolveInstant(player1, 0, rangerId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        Permanent ranger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(ranger.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
+        assertThat(ranger.getEffectivePower()).isEqualTo(3);
+        assertThat(ranger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(ranger.hasKeyword(Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -103,12 +115,12 @@ class WingsOfVelisVelTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         // A creature must exist so the spell has a legal target and is castable (CR 601.2c);
         // targeting the noncreature is then rejected by the spell's target-type validation.
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new CloudgoatRanger());
+        harness.addToBattlefield(player1, new Island());
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player1, "Island");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");

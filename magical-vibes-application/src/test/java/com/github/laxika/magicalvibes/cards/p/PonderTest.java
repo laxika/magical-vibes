@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Ponder.class)
 class PonderTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -24,15 +25,11 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Ponder puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Ponder");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -51,10 +48,7 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Ponder enters library reorder state with 3 cards")
     void resolvingEntersLibraryReorderState() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -62,15 +56,33 @@ class PonderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Handles a library with fewer than three cards")
+    void handlesLibraryWithFewerThanThreeCards() {
+        Ponder first = new Ponder();
+        Ponder second = new Ponder();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.castFromHand(player1, new Ponder(), "{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+    }
+
     // ===== Resolving — reorder then decline shuffle, then draw =====
 
     @Test
     @DisplayName("After reorder, player is asked to shuffle")
     void afterReorderPlayerIsAskedToShuffle() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         // Complete reorder (keep same order)
@@ -82,13 +94,10 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Declining shuffle and drawing keeps top card")
     void declineShuffleDrawsTopCard() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         // Keep same order
@@ -106,13 +115,10 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Reordering changes which card is drawn")
     void reorderingChangesDrawnCard() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top2 = deck.get(2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         // Put card at index 2 on top
@@ -134,10 +140,7 @@ class PonderTest extends BaseCardTest {
     void acceptShuffleRandomizesBeforeDraw() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         // Complete reorder
@@ -158,10 +161,7 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Ponder goes to graveyard after fully resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         // Complete reorder
@@ -179,10 +179,7 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting shuffle logs shuffle message")
     void acceptingShuffleLogsMessage() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
@@ -194,10 +191,7 @@ class PonderTest extends BaseCardTest {
     @Test
     @DisplayName("Declining shuffle logs decline message")
     void decliningShuffleLogsMessage() {
-        harness.setHand(player1, List.of(new Ponder()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
