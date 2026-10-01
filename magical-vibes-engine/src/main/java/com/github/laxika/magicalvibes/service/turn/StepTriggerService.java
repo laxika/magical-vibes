@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -1943,6 +1944,42 @@ public class StepTriggerService {
                             GameLog.cardThen(card, "'s suspend ability triggers."));
                     log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, card.getName());
                 }
+            }
+        }
+
+        for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            if (!activePlayerId.equals(exiledEntry.ownerId())) {
+                continue;
+            }
+            Card card = exiledEntry.card();
+            List<CardEffect> upkeepEffects = new ArrayList<>(
+                    card.getEffects(EffectSlot.EXILED_UPKEEP_TRIGGERED));
+            upkeepEffects.addAll(gameData.perpetualTriggeredAbilityGrants
+                    .getOrDefault(card.getId(), Map.of())
+                    .getOrDefault(EffectSlot.EXILED_UPKEEP_TRIGGERED, List.of()));
+
+            for (CardEffect effect : upkeepEffects) {
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forCard(card, exiledEntry.ownerId()))) {
+                    continue;
+                }
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, exiledEntry.ownerId(), may, null);
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            exiledEntry.ownerId(),
+                            card.getName() + "'s exile upkeep ability",
+                            new ArrayList<>(List.of(effect))));
+                }
+
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s exile upkeep ability triggers."));
+                log.info("Game {} - {} exile upkeep trigger pushed onto stack",
+                        gameData.id, card.getName());
             }
         }
 
@@ -6713,6 +6750,7 @@ public class StepTriggerService {
                 .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
         List<ChooseModeNotYetChosenEffect> consumedModalEffects = new ArrayList<>();
+        List<ChooseModeNotYetChosenThisTurnEffect> turnScopedModalEffects = new ArrayList<>();
         List<ChooseOneEffect> modalEffects = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
@@ -6723,6 +6761,10 @@ public class StepTriggerService {
             }
             if (effect instanceof ChooseModeNotYetChosenEffect chooseMode) {
                 consumedModalEffects.add(chooseMode);
+                continue;
+            }
+            if (effect instanceof ChooseModeNotYetChosenThisTurnEffect chooseMode) {
+                turnScopedModalEffects.add(chooseMode);
                 continue;
             }
             if (effect instanceof ChooseOneEffect chooseOne) {
@@ -6762,6 +6804,14 @@ public class StepTriggerService {
                     perm.getCard(), controllerId, effect, perm.getId()));
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} beginning-of-combat trigger queued for consumed mode selection",
+                    gameData.id, perm.getCard().getName());
+        }
+
+        for (ChooseModeNotYetChosenThisTurnEffect effect : turnScopedModalEffects) {
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    perm.getCard(), controllerId, new ChooseOneEffect(effect.options()), perm.getId(), true));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} beginning-of-combat trigger queued for turn-scoped mode selection",
                     gameData.id, perm.getCard().getName());
         }
 

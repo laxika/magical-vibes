@@ -27,7 +27,7 @@ public class ConjureDuplicateOfReturnedPermanentIntoHandEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Card returnedCard = entry.lastKnownPermanentCard(entry.getTargetId());
-        if (returnedCard == null) {
+        if (returnedCard == null || returnedCard.isToken()) {
             return;
         }
 
