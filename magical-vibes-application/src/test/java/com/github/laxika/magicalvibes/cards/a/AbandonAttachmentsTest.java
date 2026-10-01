@@ -25,8 +25,7 @@ class AbandonAttachmentsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnOne, drawnTwo));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -34,9 +33,9 @@ class AbandonAttachmentsTest extends BaseCardTest {
                 .containsExactly(0);
 
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(drawnOne, drawnTwo);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -50,8 +49,7 @@ class AbandonAttachmentsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(libraryCard));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
@@ -68,12 +66,37 @@ class AbandonAttachmentsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(libraryCard));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Red mana pays the hybrid cost and the chosen card is discarded before drawing")
+    void redManaAndChoosingSecondCard() {
+        Forest retained = new Forest();
+        AbandonAttachments discarded = new AbandonAttachments();
+        Forest drawnOne = new Forest();
+        Forest drawnTwo = new Forest();
+        harness.setHand(player1, List.of(new AbandonAttachments(), retained, discarded));
+        harness.setLibrary(player1, List.of(drawnOne, drawnTwo));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).validIndices())
+                .containsExactly(0, 1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnOne, drawnTwo);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(retained, drawnOne, drawnTwo);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded).doesNotContain(retained);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
