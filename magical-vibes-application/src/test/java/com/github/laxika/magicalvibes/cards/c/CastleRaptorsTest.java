@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FlickeringSpirit;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CastleRaptors.class)
+@CardUsed({CastleRaptors.class, FlickeringSpirit.class})
 class CastleRaptorsTest extends BaseCardTest {
 
     @Test
@@ -38,5 +39,15 @@ class CastleRaptorsTest extends BaseCardTest {
         raptors.untap();
 
         assertThat(gqs.getEffectiveToughness(gd, raptors)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Only boosts itself")
+    void onlyBoostsItself() {
+        Permanent raptors = harness.addToBattlefieldAndReturn(player1, new CastleRaptors());
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new FlickeringSpirit());
+
+        assertThat(gqs.getEffectiveToughness(gd, raptors)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 }

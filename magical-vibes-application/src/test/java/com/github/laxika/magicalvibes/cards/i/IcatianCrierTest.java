@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +20,7 @@ class IcatianCrierTest extends BaseCardTest {
 
     @Test
     void discardingACardCreatesTwoCitizenTokensAndTapsIcatianCrier() {
-        Permanent crier = addReadyCrier();
+        Permanent crier = addCreatureReady(player1, new IcatianCrier());
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -42,7 +44,7 @@ class IcatianCrierTest extends BaseCardTest {
 
     @Test
     void abilityCannotBeActivatedWithoutACardToDiscard() {
-        addReadyCrier();
+        addCreatureReady(player1, new IcatianCrier());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -51,10 +53,40 @@ class IcatianCrierTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyCrier() {
-        Permanent crier = new Permanent(new IcatianCrier());
-        crier.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(crier);
-        return crier;
+    @Test
+    void discardsTheChosenCardAndCreatesWhiteCitizenCreatureTokens() {
+        addCreatureReady(player1, new IcatianCrier());
+        Forest keptForest = new Forest();
+        Forest discardedForest = new Forest();
+        harness.setHand(player1, List.of(keptForest, discardedForest));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptForest);
+        List<Permanent> tokens = findPermanents(player1, "Citizen");
+        assertThat(tokens).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+            assertThat(token.getCard().getName()).isEqualTo("Citizen");
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.CITIZEN);
+            assertThat(token.isTapped()).isFalse();
+        });
+    }
+
+    @Test
+    void abilityCannotBeActivatedWhileIcatianCrierIsTapped() {
+        Permanent crier = addCreatureReady(player1, new IcatianCrier());
+        crier.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

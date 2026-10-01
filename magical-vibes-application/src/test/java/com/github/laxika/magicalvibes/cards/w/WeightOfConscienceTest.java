@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,86 +14,74 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WeightOfConscience.class, IndomitableAncients.class, PricklyBoggart.class})
 class WeightOfConscienceTest extends BaseCardTest {
-
-    // ===== Static: enchanted creature can't attack =====
 
     @Test
     @DisplayName("Creature enchanted with Weight of Conscience cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent enchanted = addCreatureReady(player1, new IndomitableAncients());
 
-        Permanent auraPerm = new Permanent(new WeightOfConscience());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player2, new WeightOfConscience());
+        auraPerm.setAttachedTo(enchanted.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
 
-    // ===== Activated ability: tap two creatures sharing a type, exile enchanted creature =====
+    @Test
+    @DisplayName("Creature enchanted with Weight of Conscience can still block")
+    void enchantedCreatureCanStillBlock() {
+        Permanent attacker = addCreatureReady(player1, new IndomitableAncients());
+        attacker.setAttacking(true);
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
+
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
+        auraPerm.setAttachedTo(enchanted.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(enchanted),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(enchanted.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Tapping two creatures that share a creature type exiles the enchanted creature")
     void activatedAbilityExilesEnchantedCreature() {
-        Permanent enchanted = new Permanent(new GrizzlyBears());
-        enchanted.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(enchanted);
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
 
-        Permanent auraPerm = new Permanent(new WeightOfConscience());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
         auraPerm.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
-        bear1.setSummoningSick(false);
-        Permanent bear2 = new Permanent(new GrizzlyBears());
-        bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
+        Permanent firstCreature = addCreatureReady(player1, new IndomitableAncients());
+        Permanent secondCreature = addCreatureReady(player1, new IndomitableAncients());
 
         int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(auraPerm);
         harness.activateAbility(player1, auraIndex, null, null);
         harness.passBothPriorities();
 
-        // Both Bears (shared creature type) tapped to pay the cost
-        assertThat(bear1.isTapped()).isTrue();
-        assertThat(bear2.isTapped()).isTrue();
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(secondCreature.isTapped()).isTrue();
 
-        // Enchanted creature exiled, and the now-orphaned Aura leaves the battlefield
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchanted);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(enchanted.getCard().getId()));
         harness.assertNotOnBattlefield(player1, "Weight of Conscience");
     }
 
-    // ===== Activated ability illegal when no two creatures share a type =====
-
     @Test
     @DisplayName("Ability can't be activated without two creatures sharing a creature type")
     void cannotActivateWithoutSharedType() {
-        Permanent enchanted = new Permanent(new GrizzlyBears());
-        enchanted.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(enchanted);
+        Permanent enchanted = addCreatureReady(player2, new IndomitableAncients());
 
-        Permanent auraPerm = new Permanent(new WeightOfConscience());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new WeightOfConscience());
         auraPerm.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        // Bear + Elf: no shared creature type
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        Permanent elf = new Permanent(new LlanowarElves());
-        elf.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
-        gd.playerBattlefields.get(player1.getId()).add(elf);
+        Permanent treefolk = addCreatureReady(player1, new IndomitableAncients());
+        Permanent boggart = addCreatureReady(player1, new PricklyBoggart());
 
         int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(auraPerm);
 
@@ -100,7 +89,8 @@ class WeightOfConscienceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("share a creature type");
 
-        // Enchanted creature untouched
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
+        assertThat(treefolk.isTapped()).isFalse();
+        assertThat(boggart.isTapped()).isFalse();
     }
 }

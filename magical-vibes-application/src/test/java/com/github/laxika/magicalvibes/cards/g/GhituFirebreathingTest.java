@@ -18,9 +18,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GhituFirebreathingTest extends BaseCardTest {
 
     private Permanent attachTo(Permanent host) {
-        Permanent auraPerm = new Permanent(new GhituFirebreathing());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new GhituFirebreathing());
         auraPerm.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
         return auraPerm;
     }
 
@@ -76,14 +75,54 @@ class GhituFirebreathingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot enchant a noncreature permanent")
-    void cannotEnchantNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
-        harness.setHand(player1, List.of(new GhituFirebreathing()));
+    @DisplayName("Can enchant a creature")
+    void canEnchantCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        GhituFirebreathing auraCard = new GhituFirebreathing();
+        harness.setHand(player1, List.of(auraCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() == auraCard)
+                .singleElement()
+                .extracting(Permanent::getAttachedTo)
+                .isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Can cast Ghitu Firebreathing at instant speed during an opponent's turn")
+    void canCastAtInstantSpeedAsNonActivePlayer() {
+        harness.forceActivePlayer(player2);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        GhituFirebreathing auraCard = new GhituFirebreathing();
+        harness.setHand(player1, List.of(auraCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passPriority(player2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() == auraCard)
+                .singleElement()
+                .extracting(Permanent::getAttachedTo)
+                .isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantNonCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new GhituFirebreathing()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

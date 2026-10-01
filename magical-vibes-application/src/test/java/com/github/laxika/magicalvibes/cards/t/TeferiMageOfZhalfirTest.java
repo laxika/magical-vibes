@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.e.EmptyTheWarrens;
+import com.github.laxika.magicalvibes.cards.f.Fortify;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TeferiMageOfZhalfir.class, GrizzlyBears.class, Opt.class})
+@CardUsed({TeferiMageOfZhalfir.class, BenalishCavalry.class, Fortify.class, EmptyTheWarrens.class})
 class TeferiMageOfZhalfirTest extends BaseCardTest {
 
     @Test
@@ -24,8 +25,8 @@ class TeferiMageOfZhalfirTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
 
@@ -40,10 +41,42 @@ class TeferiMageOfZhalfirTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new BenalishCavalry()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Opponent cannot cast an instant outside their own sorcery timing")
+    void opponentCannotCastInstantOutsideSorceryTiming() {
+        harness.addToBattlefield(player1, new TeferiMageOfZhalfir());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new Fortify()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Creature flash grant does not apply to noncreature sorceries")
+    void creatureFlashGrantDoesNotApplyToNoncreatureSorceries() {
+        harness.addToBattlefield(player1, new TeferiMageOfZhalfir());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new EmptyTheWarrens()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -56,8 +89,8 @@ class TeferiMageOfZhalfirTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Opt()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Fortify()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
 
         harness.castInstant(player2, 0);
 

@@ -1,21 +1,24 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MindShatter.class, ElvishWarrior.class, IndomitableAncients.class,
+        MudbuttonClanger.class, PricklyBoggart.class})
 class MindShatterTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -31,7 +34,6 @@ class MindShatterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Mind Shatter");
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
@@ -41,7 +43,8 @@ class MindShatterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving with X=3 discards 3 cards at random from target player's hand")
     void discardsXCardsAtRandom() {
-        harness.setHand(player2, List.of(new GrizzlyBears(), new SerraAngel(), new LightningBolt(), new GiantGrowth()));
+        harness.setHand(player2, List.of(new ElvishWarrior(), new IndomitableAncients(),
+                new MudbuttonClanger(), new PricklyBoggart()));
         harness.setHand(player1, List.of(new MindShatter()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
@@ -52,12 +55,14 @@ class MindShatterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         // 3 cards should be in graveyard (discarded cards)
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("discards")
+                && log.plainText().contains("at random"));
     }
 
     @Test
     @DisplayName("X=0 discards no cards")
     void xZeroDiscardsNothing() {
-        harness.setHand(player2, List.of(new GrizzlyBears(), new SerraAngel()));
+        harness.setHand(player2, List.of(new ElvishWarrior(), new IndomitableAncients()));
         harness.setHand(player1, List.of(new MindShatter()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -71,7 +76,7 @@ class MindShatterTest extends BaseCardTest {
     @Test
     @DisplayName("X greater than hand size discards entire hand")
     void xGreaterThanHandSizeDiscardsAll() {
-        harness.setHand(player2, List.of(new GrizzlyBears(), new SerraAngel()));
+        harness.setHand(player2, List.of(new ElvishWarrior(), new IndomitableAncients()));
         harness.setHand(player1, List.of(new MindShatter()));
         harness.addMana(player1, ManaColor.BLACK, 7);
 
@@ -97,9 +102,21 @@ class MindShatterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MindShatter()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Can target yourself")
     void canTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new MindShatter(), new GrizzlyBears(), new SerraAngel(), new LightningBolt())));
+        harness.setHand(player1, List.of(new MindShatter(), new ElvishWarrior(),
+                new IndomitableAncients(), new MudbuttonClanger()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castSorcery(player1, 0, 2, player1.getId());

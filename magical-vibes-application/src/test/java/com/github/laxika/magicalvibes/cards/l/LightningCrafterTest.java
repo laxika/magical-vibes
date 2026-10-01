@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.cards.w.WolfSkullShaman;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightningCrafter.class, ElvishWarrior.class, PricklyBoggart.class, WolfSkullShaman.class})
 class LightningCrafterTest extends BaseCardTest {
 
     private void castLightningCrafter() {
@@ -29,7 +30,7 @@ class LightningCrafterTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when controller has no Goblin or Shaman")
     void autoSacrificesWithNoGoblinOrShaman() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         castLightningCrafter();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
@@ -41,43 +42,62 @@ class LightningCrafterTest extends BaseCardTest {
     @Test
     @DisplayName("Championing a Goblin exiles it and keeps Lightning Crafter")
     void championingGoblinExilesIt() {
-        harness.addToBattlefield(player1, new MoggFanatic());
+        harness.addToBattlefield(player1, new PricklyBoggart());
         castLightningCrafter();
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        UUID goblinId = harness.getPermanentId(player1, "Mogg Fanatic");
+        UUID goblinId = harness.getPermanentId(player1, "Prickly Boggart");
         harness.handlePermanentChosen(player1, goblinId);
 
         harness.assertOnBattlefield(player1, "Lightning Crafter");
-        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertNotOnBattlefield(player1, "Prickly Boggart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mogg Fanatic"));
+                .anyMatch(c -> c.getName().equals("Prickly Boggart"));
     }
 
     @Test
     @DisplayName("A Shaman also satisfies the champion cost")
     void shamanSatisfiesChampion() {
-        harness.addToBattlefield(player1, new AnabaShaman());
+        harness.addToBattlefield(player1, new WolfSkullShaman());
         castLightningCrafter();
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        UUID shamanId = harness.getPermanentId(player1, "Anaba Shaman");
+        UUID shamanId = harness.getPermanentId(player1, "Wolf-Skull Shaman");
         harness.handlePermanentChosen(player1, shamanId);
 
         harness.assertOnBattlefield(player1, "Lightning Crafter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Anaba Shaman"));
+                .anyMatch(c -> c.getName().equals("Wolf-Skull Shaman"));
+    }
+
+    @Test
+    @DisplayName("The championed creature returns when Lightning Crafter leaves")
+    void championedCreatureReturnsWhenCrafterLeaves() {
+        harness.addToBattlefield(player1, new PricklyBoggart());
+        castLightningCrafter();
+        harness.passBothPriorities();
+
+        UUID goblinId = harness.getPermanentId(player1, "Prickly Boggart");
+        harness.handlePermanentChosen(player1, goblinId);
+        Permanent crafter = findPermanent(player1, "Lightning Crafter");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, crafter));
+
+        harness.assertNotOnBattlefield(player1, "Lightning Crafter");
+        harness.assertOnBattlefield(player1, "Prickly Boggart");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Prickly Boggart"));
     }
 
     @Test
     @DisplayName("Tap ability deals 3 damage to any target")
     void tapDealsThreeDamage() {
         harness.setLife(player2, 20);
-        Permanent crafter = addReadyCrafter(player1);
+        Permanent crafter = addCreatureReady(player1, new LightningCrafter());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -86,10 +106,17 @@ class LightningCrafterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
-    private Permanent addReadyCrafter(Player player) {
-        Permanent perm = new Permanent(new LightningCrafter());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Tap ability deals 3 damage to a creature")
+    void tapDealsThreeDamageToCreature() {
+        Permanent crafter = addCreatureReady(player1, new LightningCrafter());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(crafter.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
     }
 }

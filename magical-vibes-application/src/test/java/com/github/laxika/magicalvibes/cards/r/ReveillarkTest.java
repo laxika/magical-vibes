@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
+import com.github.laxika.magicalvibes.cards.c.CennsTactician;
+import com.github.laxika.magicalvibes.cards.c.ChangelingSentinel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Reveillark.class, BallyrushBanneret.class, CennsTactician.class, ChangelingSentinel.class})
 class ReveillarkTest extends BaseCardTest {
-
-    private long battlefieldCount(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return countPermanents(player, name);
-    }
 
     private void killReveillark(Permanent reveillark) {
         harness.inMutationScope(
@@ -27,34 +25,56 @@ class ReveillarkTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
+        harness.passBothPriorities(); // advance the trigger to its target-choice interaction
     }
 
     @Test
-    @DisplayName("LTB returns up to two small creatures from graveyard automatically when two or fewer qualify")
+    @DisplayName("LTB can target two small creatures from its controller's graveyard")
     void returnsTwoSmallCreatures() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
+        CennsTactician first = new CennsTactician();
+        BallyrushBanneret second = new BallyrushBanneret();
+        harness.setGraveyard(player1, List.of(first, second));
         Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
 
         killReveillark(reveillark);
 
-        assertThat(battlefieldCount(player1, "Grizzly Bears")).isEqualTo(1);
-        assertThat(battlefieldCount(player1, "Llanowar Elves")).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Llanowar Elves"));
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.minCount()).isZero();
+        assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Cenn's Tactician")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Ballyrush Banneret")).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Cenn's Tactician");
+        harness.assertNotInGraveyard(player1, "Ballyrush Banneret");
     }
 
     @Test
     @DisplayName("Creatures with power 3 or more are not eligible to return")
     void powerThreeCreatureNotReturned() {
-        harness.setGraveyard(player1, List.of(new HillGiant(), new GrizzlyBears()));
+        ChangelingSentinel tooLarge = new ChangelingSentinel();
+        BallyrushBanneret eligible = new BallyrushBanneret();
+        harness.setGraveyard(player1, List.of(tooLarge, eligible));
         Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
 
         killReveillark(reveillark);
 
-        assertThat(battlefieldCount(player1, "Grizzly Bears")).isEqualTo(1);
-        assertThat(battlefieldCount(player1, "Hill Giant")).isZero();
-        harness.assertInGraveyard(player1, "Hill Giant");
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Ballyrush Banneret")).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Ballyrush Banneret");
+        harness.assertInGraveyard(player1, "Changeling Sentinel");
     }
 
     @Test
@@ -65,47 +85,81 @@ class ReveillarkTest extends BaseCardTest {
 
         killReveillark(reveillark);
 
-        assertThat(battlefieldCount(player1, "Reveillark")).isZero();
+        assertThat(countPermanents(player1, "Reveillark")).isZero();
         harness.assertInGraveyard(player1, "Reveillark");
     }
 
     @Test
     @DisplayName("With more than two eligible creatures, controller chooses exactly two")
     void choosesTwoOfThree() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new GrizzlyBears()));
+        CennsTactician first = new CennsTactician();
+        BallyrushBanneret middle = new BallyrushBanneret();
+        CennsTactician third = new CennsTactician();
+        harness.setGraveyard(player1, List.of(first, middle, third));
         Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
 
         killReveillark(reveillark);
 
-        // Controller is prompted to choose which creatures to return (up to two).
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0); // first eligible creature
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0); // second eligible creature
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.minCount()).isZero();
+        assertThat(choice.validCardIds()).containsExactly(first.getId(), middle.getId(), third.getId());
 
-        long returned = battlefieldCount(player1, "Grizzly Bears") + battlefieldCount(player1, "Llanowar Elves");
-        assertThat(returned).isEqualTo(2);
-        // Exactly one eligible creature stays behind (plus Reveillark).
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Llanowar Elves"))
-                .hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), third.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Cenn's Tactician")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Ballyrush Banneret")).isZero();
+        harness.assertInGraveyard(player1, "Ballyrush Banneret");
+    }
+
+    @Test
+    @DisplayName("LTB may target no creature")
+    void mayChooseNoTargets() {
+        CennsTactician eligible = new CennsTactician();
+        harness.setGraveyard(player1, List.of(eligible));
+        Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
+
+        killReveillark(reveillark);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.minCount()).isZero();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Cenn's Tactician");
+        harness.assertNotOnBattlefield(player1, "Cenn's Tactician");
     }
 
     @Test
     @DisplayName("Evoke: sacrificed on entry, then returns small creatures from graveyard")
     void evokeSacrificeThenReturn() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        BallyrushBanneret eligible = new BallyrushBanneret();
+        harness.setGraveyard(player1, List.of(eligible));
         harness.setHand(player1, List.of(new Reveillark()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castCreatureWithEvoke(player1, 0, null);
-        harness.passBothPriorities(); // resolve Reveillark -> ETB evoke-sacrifice trigger on stack
-        harness.passBothPriorities(); // resolve sacrifice -> LTB trigger on stack
-        harness.passBothPriorities(); // resolve LTB trigger -> return small creature
+        resolveAllTriggers();
 
-        assertThat(battlefieldCount(player1, "Reveillark")).isZero();
-        assertThat(battlefieldCount(player1, "Grizzly Bears")).isEqualTo(1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Reveillark")).isZero();
+        assertThat(countPermanents(player1, "Ballyrush Banneret")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Reveillark");
     }
 }

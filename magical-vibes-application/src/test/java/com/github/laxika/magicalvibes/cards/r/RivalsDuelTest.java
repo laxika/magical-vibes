@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.o.OrderOfTheGoldenCricket;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.cards.w.WarSpikeChangeling;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,85 +18,81 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RivalsDuel.class, OrderOfTheGoldenCricket.class, PricklyBoggart.class,
+        WarSpikeChangeling.class})
 class RivalsDuelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Two creatures sharing no creature types fight each other")
     void creaturesSharingNoTypesFight() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player1, new OrderOfTheGoldenCricket());
+        harness.addToBattlefield(player2, new PricklyBoggart());
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
+        UUID cricketId = harness.getPermanentId(player1, "Order of the Golden Cricket");
+        UUID boggartId = harness.getPermanentId(player2, "Prickly Boggart");
+        harness.castSorcery(player1, 0, List.of(cricketId, boggartId));
         harness.passBothPriorities();
 
-        // Bear (2/2) deals 2 to Elf (1/1) which dies; Elf's 1 damage leaves the Bear alive.
-        harness.assertInGraveyard(player2, "Llanowar Elves");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        // Cricket (2/2) deals 2 to Boggart (1/1) which dies; Boggart's 1 damage leaves the Cricket alive.
+        harness.assertInGraveyard(player2, "Prickly Boggart");
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
     }
 
     @Test
     @DisplayName("Spell does not resolve when both targets gain shroud")
     void doesNotResolveWhenBothTargetsGainShroud() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent elves = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.castSorcery(player1, 0, List.of(bears.getId(), elves.getId()));
+        harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
 
-        bears.getGrantedKeywords().add(Keyword.SHROUD);
-        elves.getGrantedKeywords().add(Keyword.SHROUD);
+        cricket.getGrantedKeywords().add(Keyword.SHROUD);
+        boggart.getGrantedKeywords().add(Keyword.SHROUD);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
-        assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(elves.getMarkedDamage()).isZero();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles (illegal target)"));
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        assertThat(cricket.getMarkedDamage()).isZero();
+        assertThat(boggart.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
     }
 
     @Test
     @DisplayName("Neither creature fights when one target gains shroud")
     void creaturesDoNotFightWhenOneTargetGainsShroud() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent elves = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.castSorcery(player1, 0, List.of(bears.getId(), elves.getId()));
+        harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
 
-        elves.getGrantedKeywords().add(Keyword.SHROUD);
+        boggart.getGrantedKeywords().add(Keyword.SHROUD);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
-        assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(elves.getMarkedDamage()).isZero();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(log -> log.contains("fizzles (illegal target)"));
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        assertThat(cricket.getMarkedDamage()).isZero();
+        assertThat(boggart.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles (illegal target)")).isFalse();
     }
 
     @Test
     @DisplayName("Cannot choose two creatures that share a creature type")
     void cannotTargetCreaturesSharingType() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OrderOfTheGoldenCricket());
+        harness.addToBattlefield(player2, new OrderOfTheGoldenCricket());
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID firstBear = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID secondBear = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID firstCricket = harness.getPermanentId(player1, "Order of the Golden Cricket");
+        UUID secondCricket = harness.getPermanentId(player2, "Order of the Golden Cricket");
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(firstBear, secondBear)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(firstCricket, secondCricket)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature types");
     }
@@ -103,16 +100,52 @@ class RivalsDuelTest extends BaseCardTest {
     @Test
     @DisplayName("A Changeling shares every creature type, so it cannot be paired with another creature")
     void cannotTargetChangelingWithAnyCreature() {
-        harness.addToBattlefield(player1, new AvianChangeling());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player1, new WarSpikeChangeling());
+        harness.addToBattlefield(player2, new OrderOfTheGoldenCricket());
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID changelingId = harness.getPermanentId(player1, "Avian Changeling");
-        UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID changelingId = harness.getPermanentId(player1, "War-Spike Changeling");
+        UUID cricketId = harness.getPermanentId(player2, "Order of the Golden Cricket");
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(changelingId, elvesId)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(changelingId, cricketId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature types");
+    }
+
+    @Test
+    @DisplayName("Creatures controlled by the same player may fight")
+    void creaturesControlledBySamePlayerMayFight() {
+        harness.addToBattlefield(player1, new OrderOfTheGoldenCricket());
+        harness.addToBattlefield(player1, new PricklyBoggart());
+        harness.setHand(player1, List.of(new RivalsDuel()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID cricketId = harness.getPermanentId(player1, "Order of the Golden Cricket");
+        UUID boggartId = harness.getPermanentId(player1, "Prickly Boggart");
+        harness.castSorcery(player1, 0, List.of(cricketId, boggartId));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
+        harness.assertInGraveyard(player1, "Prickly Boggart");
+    }
+
+    @Test
+    @DisplayName("Spell fizzles when the targets share a creature type before resolution")
+    void spellFizzlesWhenTargetsStartSharingCreatureType() {
+        Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
+        harness.setHand(player1, List.of(new RivalsDuel()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
+        boggart.getGrantedSubtypes().add(CardSubtype.KNIGHT);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        assertThat(cricket.getMarkedDamage()).isZero();
+        assertThat(boggart.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
     }
 }

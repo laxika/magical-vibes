@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +15,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrimoireThief.class, Shock.class, GrizzlyBears.class, InvasionOfZendikar.class,
+        AwakenedSkyclave.class})
 class GrimoireThiefTest extends BaseCardTest {
-
-    // ===== Becomes-tapped trigger =====
 
     @Test
     @DisplayName("Becoming tapped exiles the top three cards of the opponent's library, tracked with it")
@@ -22,12 +25,7 @@ class GrimoireThiefTest extends BaseCardTest {
         Permanent thief = addCreatureReady(player1, new GrimoireThief());
         harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -35,8 +33,6 @@ class GrimoireThiefTest extends BaseCardTest {
         assertThat(gd.exiledCards).filteredOn(e -> thief.getId().equals(e.sourcePermanentId()))
                 .allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
     }
-
-    // ===== Sacrifice ability counters matching spells =====
 
     @Test
     @DisplayName("Sacrifice ability counters a spell whose name matches an exiled card")
@@ -80,5 +76,50 @@ class GrimoireThiefTest extends BaseCardTest {
         harness.passBothPriorities(); // resolves Shock
 
         harness.assertLife(player1, 18); // Shock resolved for 2 damage
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability turns all cards exiled with it face up")
+    void sacrificeTurnsExiledCardsFaceUp() {
+        Permanent thief = addCreatureReady(player1, new GrimoireThief());
+        harness.setLibrary(player2, List.of(new Shock(), new GrizzlyBears(), new Shock()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).filteredOn(e -> thief.getId().equals(e.sourcePermanentId()))
+                .hasSize(3)
+                .allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).filteredOn(e -> thief.getId().equals(e.sourcePermanentId()))
+                .hasSize(3)
+                .allMatch(e -> !e.faceDown());
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability counters a matching Battle spell")
+    void sacrificeCountersMatchingBattleSpell() {
+        Permanent thief = addCreatureReady(player1, new GrimoireThief());
+        gd.addToExile(player2.getId(), new InvasionOfZendikar(), thief.getId());
+
+        harness.setHand(player2, List.of(new InvasionOfZendikar()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType()
+                == com.github.laxika.magicalvibes.model.StackEntryType.BATTLE_SPELL);
     }
 }

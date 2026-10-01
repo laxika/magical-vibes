@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
+import com.github.laxika.magicalvibes.cards.s.ScrybRanger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,58 +16,94 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Feebleness.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({Feebleness.class, BenalishCavalry.class, PrismaticLens.class, ScrybRanger.class})
 class FeeblenessTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Feebleness attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         harness.setHand(player1, List.of(new Feebleness()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() instanceof Feebleness && bears.getId().equals(p.getAttachedTo()));
+                .anyMatch(p -> p.getCard() instanceof Feebleness && creature.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Flash allows Feebleness to be cast during an opponent's turn")
+    void canBeCastDuringOpponentsTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Feebleness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passPriority(player2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
     @DisplayName("Enchanted creature gets -2/-1")
     void enchantedCreatureGetsDebuff() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         Permanent aura = new Permanent(new Feebleness());
-        aura.setAttachedTo(bears.getId());
+        aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Creature returns to base stats when Feebleness is removed")
     void effectsStopWhenRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         Permanent aura = new Permanent(new Feebleness());
-        aura.setAttachedTo(bears.getId());
+        aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Feebleness destroys a 1/1 creature through its toughness reduction")
+    void killsCreatureWithOneToughness() {
+        harness.addToBattlefield(player1, new ScrybRanger());
+        Permanent creature = findPermanent(player1, "Scryb Ranger");
+        harness.setHand(player1, List.of(new Feebleness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Scryb Ranger");
+        harness.assertInGraveyard(player1, "Scryb Ranger");
     }
 
     @Test
     @DisplayName("Feebleness fizzles if the target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         harness.setHand(player1, List.of(new Feebleness()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Feebleness");
@@ -75,11 +113,12 @@ class FeeblenessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Feebleness")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new PrismaticLens());
         harness.setHand(player1, List.of(new Feebleness()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Prismatic Lens");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JudgeOfCurrents;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AquitectsWill.class, JudgeOfCurrents.class, Mountain.class})
 class AquitectsWillTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,9 @@ class AquitectsWillTest extends BaseCardTest {
         UUID mountainId = castWillOnMountain();
 
         Permanent mountain = gqs.findPermanentById(gd, mountainId);
-        assertThat(mountain.getGrantedSubtypes()).contains(CardSubtype.ISLAND);
+        assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain))
+                .containsExactlyInAnyOrder(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
     }
 
     @Test
@@ -44,15 +48,31 @@ class AquitectsWillTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Island grant is permanent — survives end-of-turn cleanup")
+    @DisplayName("Island type survives end-of-turn cleanup while the flood counter remains")
     void islandGrantSurvivesTurnReset() {
         UUID mountainId = castWillOnMountain();
 
         Permanent mountain = gqs.findPermanentById(gd, mountainId);
         mountain.resetModifiers();
 
-        assertThat(mountain.getGrantedSubtypes()).contains(CardSubtype.ISLAND);
-        assertThat(gs.getEffectiveActivatedAbilities(gd, mountain)).hasSize(1);
+        assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain))
+                .containsExactlyInAnyOrder(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, mountain)).contains(ManaColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("Island type ends when the flood counter is removed")
+    void islandGrantEndsWhenFloodCounterRemoved() {
+        UUID mountainId = castWillOnMountain();
+
+        Permanent mountain = gqs.findPermanentById(gd, mountainId);
+        mountain.setCounterCount(CounterType.FLOOD, 1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).contains(CardSubtype.ISLAND);
+
+        mountain.setCounterCount(CounterType.FLOOD, 0);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
     }
 
     @Test
@@ -61,9 +81,9 @@ class AquitectsWillTest extends BaseCardTest {
         UUID mountainId = castWillOnMountain();
 
         Permanent mountain = gqs.findPermanentById(gd, mountainId);
-        // The Card object is shared with AI simulation copies and must stay unmodified
+        // The Card object is shared with AI simulation copies and must stay unmodified.
         assertThat(mountain.getCard().getActivatedAbilities()).isEmpty();
-        assertThat(mountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
+        assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
     }
 
     @Test
@@ -108,14 +128,14 @@ class AquitectsWillTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonland() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new JudgeOfCurrents());
+        UUID judgeId = harness.getPermanentId(player2, "Judge of Currents");
         harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bearsId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, judgeId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -131,8 +151,7 @@ class AquitectsWillTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, mountainId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, mountainId);
         return mountainId;
     }
 }

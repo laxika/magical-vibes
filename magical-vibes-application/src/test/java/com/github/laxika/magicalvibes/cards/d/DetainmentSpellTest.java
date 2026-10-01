@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.j.JhoirasTimebug;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,28 +15,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DetainmentSpell.class, BottleGnomes.class, FountainOfYouth.class})
+@CardUsed({DetainmentSpell.class, JhoirasTimebug.class, PrismaticLens.class})
 class DetainmentSpellTest extends BaseCardTest {
 
     @Test
     void resolvingAttachesAndLocksTheEnchantedCreature() {
-        Permanent gnomes = readyCreature(player2);
+        Permanent timebug = addCreatureReady(player2, new JhoirasTimebug());
         harness.setHand(player1, List.of(new DetainmentSpell()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castEnchantment(player1, 0, gnomes.getId());
+        harness.castEnchantment(player1, 0, timebug.getId());
         harness.passBothPriorities();
 
-        assertThat(findAura(player1).getAttachedTo()).isEqualTo(gnomes.getId());
-        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, gnomes), null, null))
+        assertThat(findAura(player1).getAttachedTo()).isEqualTo(timebug.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, timebug), null, timebug.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
 
     @Test
     void activatedAbilityMovesAuraToTargetCreature() {
-        Permanent first = readyCreature(player2);
-        Permanent second = readyCreature(player2);
+        Permanent first = addCreatureReady(player2, new JhoirasTimebug());
+        Permanent second = addCreatureReady(player2, new JhoirasTimebug());
         Permanent aura = attachAura(player1, first);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -48,11 +48,43 @@ class DetainmentSpellTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aura.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(aura.isTapped()).isFalse();
+    }
+
+    @Test
+    void movingAuraMovesActivatedAbilityLockToNewCreature() {
+        Permanent first = addCreatureReady(player2, new JhoirasTimebug());
+        Permanent second = addCreatureReady(player2, new JhoirasTimebug());
+        Permanent aura = attachAura(player1, first);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, first), null, first.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, indexOf(player1, aura), null, second.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, indexOf(player2, first), null, first.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, second), null, second.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
     }
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PrismaticLens());
         harness.setHand(player1, List.of(new DetainmentSpell()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -61,11 +93,20 @@ class DetainmentSpellTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent readyCreature(Player player) {
-        Permanent gnomes = new Permanent(new BottleGnomes());
-        gnomes.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(gnomes);
-        return gnomes;
+    @Test
+    void activatedAbilityCannotTargetNonCreaturePermanent() {
+        Permanent creature = addCreatureReady(player2, new JhoirasTimebug());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PrismaticLens());
+        Permanent aura = attachAura(player1, creature);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, aura), null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {

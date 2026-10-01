@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OphidianEye.class, GrizzlyBears.class})
+@CardUsed({OphidianEye.class, AshcoatBear.class, FledglingMawcor.class})
 class OphidianEyeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature dealing combat damage presents a may-draw choice")
     void combatDamagePresentsMayChoice() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
         attachOphidianEye(player1, creature);
         creature.setAttacking(true);
 
@@ -32,7 +33,7 @@ class OphidianEyeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may-draw choice draws a card")
     void acceptingMayDrawsCard() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
         attachOphidianEye(player1, creature);
         creature.setAttacking(true);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -46,7 +47,7 @@ class OphidianEyeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may-draw choice does not draw a card")
     void decliningMayDoesNotDraw() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
         attachOphidianEye(player1, creature);
         creature.setAttacking(true);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -58,13 +59,53 @@ class OphidianEyeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncombat damage to an opponent presents a may-draw choice")
+    void noncombatDamageToOpponentPresentsMayChoice() {
+        Permanent creature = addCreatureReady(player1, new FledglingMawcor());
+        attachOphidianEye(player1, creature);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Damage to the enchanted creature's controller does not trigger Ophidian Eye")
+    void damageToEnchantedCreatureControllerDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new FledglingMawcor());
+        attachOphidianEye(player1, creature);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage to Ophidian Eye's controller by an opponent's enchanted creature does not trigger")
+    void opponentCreatureDamagingEyeControllerDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player2, new FledglingMawcor());
+        attachOphidianEye(player1, creature);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
     @DisplayName("A blocked enchanted creature that deals no damage to a player does not trigger")
     void blockedCreatureDoesNotTrigger() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
         attachOphidianEye(player1, creature);
         creature.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -76,7 +117,7 @@ class OphidianEyeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Ophidian Eye attaches it to the target creature")
     void castingAttachesToCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
 
         harness.setHand(player1, List.of(new OphidianEye()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -94,7 +135,7 @@ class OphidianEyeTest extends BaseCardTest {
     @Test
     @DisplayName("Ophidian Eye fizzles if its target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
 
         harness.setHand(player1, List.of(new OphidianEye()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -109,8 +150,7 @@ class OphidianEyeTest extends BaseCardTest {
     }
 
     private void attachOphidianEye(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new OphidianEye());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new OphidianEye());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 }

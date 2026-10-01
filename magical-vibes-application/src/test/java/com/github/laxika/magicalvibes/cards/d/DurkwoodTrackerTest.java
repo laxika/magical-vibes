@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DurkwoodTracker.class, GrizzlyBears.class})
+@CardUsed({DurkwoodTracker.class, AshcoatBear.class})
 class DurkwoodTrackerTest extends BaseCardTest {
 
     @Test
     void fightsTargetAttackingCreature() {
-        Permanent tracker = addReadyTracker(player1);
+        Permanent tracker = addCreatureReady(player1, new DurkwoodTracker());
         Permanent attacker = addAttackingCreature(player2);
         addAbilityMana();
 
@@ -29,8 +29,8 @@ class DurkwoodTrackerTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonAttackingCreature() {
-        addReadyTracker(player1);
-        Permanent creature = addCreature(player2);
+        addCreatureReady(player1, new DurkwoodTracker());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -39,7 +39,7 @@ class DurkwoodTrackerTest extends BaseCardTest {
 
     @Test
     void doesNothingIfTrackerLeavesBeforeResolution() {
-        Permanent tracker = addReadyTracker(player1);
+        Permanent tracker = addCreatureReady(player1, new DurkwoodTracker());
         Permanent attacker = addAttackingCreature(player2);
         addAbilityMana();
 
@@ -51,23 +51,37 @@ class DurkwoodTrackerTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isZero();
     }
 
-    private Permanent addReadyTracker(Player player) {
-        Permanent tracker = new Permanent(new DurkwoodTracker());
-        tracker.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(tracker);
-        return tracker;
+    @Test
+    void doesNothingIfTargetLeavesBeforeResolution() {
+        Permanent tracker = addCreatureReady(player1, new DurkwoodTracker());
+        Permanent attacker = addAttackingCreature(player2);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tracker);
+        assertThat(tracker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void doesNothingIfTargetStopsAttackingBeforeResolution() {
+        Permanent tracker = addCreatureReady(player1, new DurkwoodTracker());
+        Permanent attacker = addAttackingCreature(player2);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(tracker.getMarkedDamage()).isZero();
     }
 
     private Permanent addAttackingCreature(Player player) {
-        Permanent creature = addCreature(player);
+        Permanent creature = addCreatureReady(player, new AshcoatBear());
         creature.setAttacking(true);
-        return creature;
-    }
-
-    private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 

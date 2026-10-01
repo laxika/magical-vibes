@@ -1552,6 +1552,7 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @CardUsed({CrypticCommand.class, GrizzlyBears.class})
     @DisplayName("prepareModalSpellCast retains the target for a fixed choose-two spell")
     void prepareModalSpellCastRetainsChooseTwoTarget() {
         Permanent target = new Permanent(new GrizzlyBears());

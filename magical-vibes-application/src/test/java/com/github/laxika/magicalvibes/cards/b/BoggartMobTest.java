@@ -1,45 +1,40 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SkirkProspector;
+import com.github.laxika.magicalvibes.cards.m.Mulldrifter;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoggartMob.class, BoggartSpriteChaser.class, Mulldrifter.class})
 class BoggartMobTest extends BaseCardTest {
 
     private Permanent addReadyBoggartMob() {
-        Permanent perm = new Permanent(new BoggartMob());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new BoggartMob());
     }
 
     private Permanent addReadyGoblin() {
-        Permanent perm = new Permanent(new SkirkProspector());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new BoggartSpriteChaser());
     }
 
     private Permanent addReadyNonGoblin() {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new Mulldrifter());
     }
 
     private void runCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage → triggers onto stack
-        harness.passBothPriorities(); // resolve the ally-combat-damage trigger (MayEffect prompt)
+        resolveCombat();
+        resolveAllTriggers();
+    }
+
+    private void castBoggartMob() {
+        harness.castFromHand(player1, new BoggartMob(), "{3}{B}");
+        harness.passBothPriorities(); // resolve the creature spell -> champion ETB on the stack
     }
 
     private long goblinRogueTokens() {
@@ -65,6 +60,7 @@ class BoggartMobTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOBLIN, CardSubtype.ROGUE);
     }
 
@@ -110,5 +106,58 @@ class BoggartMobTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(goblinRogueTokens()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Champion ETB sacrifices Boggart Mob when no other Goblin is controlled")
+    void championAutoSacrificesWithoutAnotherGoblin() {
+        castBoggartMob();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boggart Mob");
+        harness.assertInGraveyard(player1, "Boggart Mob");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Champion ETB offers only another Goblin controlled by Boggart Mob's controller")
+    void championChoiceOnlyOffersAnotherControlledGoblin() {
+        Permanent goblin = addReadyGoblin();
+        Permanent nonGoblin = addReadyNonGoblin();
+        Permanent opponentGoblin = addCreatureReady(player2, new BoggartSpriteChaser());
+
+        castBoggartMob();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(goblin.getId())
+                .doesNotContain(nonGoblin.getId(), opponentGoblin.getId());
+
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        harness.assertOnBattlefield(player1, "Boggart Mob");
+        harness.assertNotOnBattlefield(player1, "Boggart Sprite-Chaser");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Boggart Sprite-Chaser"));
+    }
+
+    @Test
+    @DisplayName("Champion returns the exiled Goblin when Boggart Mob leaves the battlefield")
+    void championedGoblinReturnsWhenBoggartMobLeaves() {
+        Permanent goblin = addReadyGoblin();
+        castBoggartMob();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        Permanent mob = findPermanent(player1, "Boggart Mob");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, mob));
+
+        harness.assertNotOnBattlefield(player1, "Boggart Mob");
+        harness.assertOnBattlefield(player1, "Boggart Sprite-Chaser");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Boggart Sprite-Chaser"));
     }
 }

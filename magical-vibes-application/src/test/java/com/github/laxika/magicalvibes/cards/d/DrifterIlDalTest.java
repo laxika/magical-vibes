@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed({DrifterIlDal.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({DrifterIlDal.class, AshcoatBear.class})
 class DrifterIlDalTest extends BaseCardTest {
 
     @Test
@@ -63,5 +68,31 @@ class DrifterIlDalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drifter il-Dal");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Shadow prevents a non-shadow creature from blocking Drifter il-Dal")
+    void cannotBeBlockedByNonShadowCreature() {
+        addCreatureReady(player1, new DrifterIlDal());
+        addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shadow prevents Drifter il-Dal from blocking a non-shadow creature")
+    void cannotBlockNonShadowCreature() {
+        addCreatureReady(player1, new AshcoatBear());
+        addCreatureReady(player2, new DrifterIlDal());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.c.ChangelingSentinel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.w.WarSpikeChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BattletideAlchemist.class, ChangelingSentinel.class, Shock.class, WarSpikeChangeling.class})
 class BattletideAlchemistTest extends BaseCardTest {
-
-    // ===== Noncombat damage =====
 
     @Test
     @DisplayName("Prevents 1 damage from a source (X=1, only the Alchemist is a Cleric)")
@@ -28,8 +25,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Shock deals 2; 1 is prevented, so player1 takes 1.
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
@@ -38,15 +34,14 @@ class BattletideAlchemistTest extends BaseCardTest {
     @Test
     @DisplayName("X scales with the number of Clerics controlled")
     void preventionScalesWithClerics() {
-        // Alchemist + Inspiring Cleric = 2 Clerics, so X = 2.
+        // Alchemist + Changeling Sentinel = 2 Clerics, so X = 2.
         harness.addToBattlefield(player1, new BattletideAlchemist());
-        harness.addToBattlefield(player1, new InspiringCleric());
+        harness.addToBattlefield(player1, new ChangelingSentinel());
         harness.setLife(player1, 20);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Shock deals 2; all of it is prevented.
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -61,14 +56,26 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // player2 has no Battletide Alchemist, so the full 2 damage lands.
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Combat damage =====
+    @Test
+    @DisplayName("Applies the prevention amount separately to each noncombat source")
+    void preventsDamageFromEachNoncombatSource() {
+        harness.addToBattlefield(player1, new BattletideAlchemist());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        // Each Shock is a separate source, so each deals 1 after prevention.
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
 
     @Test
     @DisplayName("Prevents X of each attacker's combat damage to the controller")
@@ -77,24 +84,29 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // player2 attacks player1 with a 3/3.
-        Permanent giant = new Permanent(new HillGiant());
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        addCreatureReady(player2, new WarSpikeChangeling());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
 
-        // player1 controls a potential blocker (the Alchemist), so declare no blocks to reach combat damage.
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.<BlockerAssignment>of());
-        harness.passBothPriorities();
-
-        // Hill Giant deals 3; 1 (X=1) is prevented, so player1 takes 2.
+        // War-Spike Changeling deals 3; 1 (X=1) is prevented, so player1 takes 2.
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prevents X from each combat source independently")
+    void preventsCombatDamageFromEachAttacker() {
+        harness.addToBattlefield(player1, new BattletideAlchemist());
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new WarSpikeChangeling());
+        addCreatureReady(player2, new WarSpikeChangeling());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        // Each 3/3 is a separate source, so each has 1 damage prevented.
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
     }
 }

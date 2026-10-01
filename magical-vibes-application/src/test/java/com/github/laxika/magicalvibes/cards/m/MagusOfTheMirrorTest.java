@@ -19,7 +19,7 @@ class MagusOfTheMirrorTest extends BaseCardTest {
         addReadyMagus();
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
-        beginUpkeep();
+        advanceToUpkeep(player1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -33,7 +33,7 @@ class MagusOfTheMirrorTest extends BaseCardTest {
     @DisplayName("Can only target an opponent")
     void canOnlyTargetOpponent() {
         addReadyMagus();
-        beginUpkeep();
+        advanceToUpkeep(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -54,19 +54,45 @@ class MagusOfTheMirrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can only be activated during its controller's upkeep")
+    void cannotBeActivatedDuringOpponentsUpkeep() {
+        addReadyMagus();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
+    }
+
+    @Test
+    @DisplayName("Cannot be activated while tapped")
+    void cannotBeActivatedWhileTapped() {
+        Permanent magus = addReadyMagus();
+        advanceToUpkeep(player1);
+        magus.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
     @DisplayName("Does not partially exchange life totals when a player cannot gain life")
     void doesNotPartiallyExchangeWhenPlayerCannotGainLife() {
         addReadyMagus();
         harness.addToBattlefield(player2, new RampagingFerocidon());
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
-        beginUpkeep();
+        advanceToUpkeep(player1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 5);
         harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Magus of the Mirror");
     }
 
     private Permanent addReadyMagus() {
@@ -75,9 +101,4 @@ class MagusOfTheMirrorTest extends BaseCardTest {
         return magus;
     }
 
-    private void beginUpkeep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-    }
 }

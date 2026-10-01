@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.SageOfEpityr;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FledglingMawcor.class, Island.class, LlanowarElves.class})
+@CardUsed({FledglingMawcor.class, Island.class, SageOfEpityr.class, ChandraNalaar.class})
 class FledglingMawcorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent mawcor = addReadyMawcor(player1);
+        Permanent mawcor = addCreatureReady(player1, new FledglingMawcor());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -34,15 +35,31 @@ class FledglingMawcorTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature")
     void deals1DamageToCreature() {
-        addReadyMawcor(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player1, new FledglingMawcor());
+        harness.addToBattlefield(player2, new SageOfEpityr());
 
         harness.activateAbility(player1, 0, null,
-                harness.getPermanentId(player2, "Llanowar Elves"));
+                harness.getPermanentId(player2, "Sage of Epityr"));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Sage of Epityr");
+        harness.assertInGraveyard(player2, "Sage of Epityr");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        addCreatureReady(player1, new FledglingMawcor());
+        ChandraNalaar chandra = new ChandraNalaar();
+        chandra.setLoyalty(6);
+        Permanent planeswalker = new Permanent(chandra);
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
     @Test
@@ -68,17 +85,11 @@ class FledglingMawcorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        addReadyMawcor(player1);
+        addCreatureReady(player1, new FledglingMawcor());
         harness.addToBattlefield(player2, new Island());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
                 harness.getPermanentId(player2, "Island")))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReadyMawcor(Player player) {
-        Permanent mawcor = harness.addToBattlefieldAndReturn(player, new FledglingMawcor());
-        mawcor.setSummoningSick(false);
-        return mawcor;
     }
 }

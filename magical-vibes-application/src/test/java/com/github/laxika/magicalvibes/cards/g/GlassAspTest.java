@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GlassAsp.class, GrizzlyBears.class})
+@CardUsed({GlassAsp.class, BenalishCavalry.class})
 class GlassAspTest extends BaseCardTest {
 
     private Permanent addReadyAsp() {
@@ -19,18 +20,13 @@ class GlassAspTest extends BaseCardTest {
     }
 
     private void dealCombatDamageToPlayer2() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         resolveAllTriggers();
     }
 
     private void advanceToPlayer2DrawStepObligation() {
         gd.turnNumber = 2;
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
         resolveAllTriggers();
     }
@@ -77,11 +73,27 @@ class GlassAspTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Glass Asp that deals combat damage creates a separate obligation")
+    void eachAspCreatesSeparateObligation() {
+        Permanent firstAsp = addReadyAsp();
+        firstAsp.setAttacking(true);
+        Permanent secondAsp = addReadyAsp();
+        secondAsp.setAttacking(true);
+
+        dealCombatDamageToPlayer2();
+        int lifeAfterCombat = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToPlayer2DrawStepObligation();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeAfterCombat - 4);
+    }
+
+    @Test
     @DisplayName("No obligation is scheduled when Glass Asp is blocked and deals no combat damage")
     void blockedCreatesNoObligation() {
         Permanent asp = addReadyAsp();
         asp.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BenalishCavalry());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
