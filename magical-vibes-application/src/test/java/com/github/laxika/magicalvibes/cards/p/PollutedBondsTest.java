@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DevotedDruid;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PollutedBonds.class, Forest.class, DevotedDruid.class})
 class PollutedBondsTest extends BaseCardTest {
 
     @Test
@@ -24,13 +27,13 @@ class PollutedBondsTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new Forest()));
-        harness.castCreature(player2, 0); // plays the land via playCard
+        harness.playLand(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -44,9 +47,23 @@ class PollutedBondsTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new Forest()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent's nonland permanent entering does not trigger Polluted Bonds")
+    void opponentNonlandPermanentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PollutedBonds());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new DevotedDruid());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

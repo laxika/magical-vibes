@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.b.BallynockCohort;
+import com.github.laxika.magicalvibes.cards.e.ElsewhereFlask;
+import com.github.laxika.magicalvibes.cards.w.WoodfallPrimus;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,24 +18,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrderOfWhiteclay.class, BallynockCohort.class, ElsewhereFlask.class, WoodfallPrimus.class})
 class OrderOfWhiteclayTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Paying {1}{W}{W} and untapping reanimates a low-mana-value creature from the graveyard")
-    void reanimatesLowManaValueCreatureAndUntapsSource() {
+    @DisplayName("Paying {1}{W}{W} and untapping reanimates a creature with mana value 3")
+    void reanimatesCreatureWithManaValueThreeAndUntapsSource() {
         Permanent order = addTapped(player1, new OrderOfWhiteclay());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Card target = new LlanowarElves();
+        Card target = new BallynockCohort();
         harness.setGraveyard(player1, List.of(target));
 
         enterMainWithPriority(player1);
 
-        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Llanowar Elves");
-        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Ballynock Cohort");
+        harness.assertNotInGraveyard(player1, "Ballynock Cohort");
         // Paying {Q} untapped the source.
         assertThat(order.isTapped()).isFalse();
     }
@@ -45,13 +47,13 @@ class OrderOfWhiteclayTest extends BaseCardTest {
         addCreatureReady(player1, new OrderOfWhiteclay());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Card target = new LlanowarElves();
+        Card target = new BallynockCohort();
         harness.setGraveyard(player1, List.of(target));
 
         enterMainWithPriority(player1);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not tapped");
     }
@@ -62,13 +64,45 @@ class OrderOfWhiteclayTest extends BaseCardTest {
         addTapped(player1, new OrderOfWhiteclay());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Card target = new SerraAngel();
+        Card target = new WoodfallPrimus();
         harness.setGraveyard(player1, List.of(target));
 
         enterMainWithPriority(player1);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature card even when its mana value is 3 or less")
+    void cannotTargetNoncreatureCard() {
+        addTapped(player1, new OrderOfWhiteclay());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        Card target = new ElsewhereFlask();
+        harness.setGraveyard(player1, List.of(target));
+
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature card in an opponent's graveyard")
+    void cannotTargetOpponentGraveyard() {
+        addTapped(player1, new OrderOfWhiteclay());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        Card target = new BallynockCohort();
+        harness.setGraveyard(player2, List.of(target));
+
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

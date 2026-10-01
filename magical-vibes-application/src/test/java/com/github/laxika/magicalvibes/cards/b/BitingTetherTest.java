@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuskUrchins;
+import com.github.laxika.magicalvibes.cards.i.IlluminatedFolio;
+import com.github.laxika.magicalvibes.cards.i.IslebackSpawn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BitingTether.class, DuskUrchins.class, IlluminatedFolio.class, IslebackSpawn.class})
 class BitingTetherTest extends BaseCardTest {
 
     // ===== Control =====
@@ -21,7 +24,7 @@ class BitingTetherTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Biting Tether steals the enchanted creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DuskUrchins());
 
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -41,7 +44,7 @@ class BitingTetherTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature gets a -1/-1 counter")
     void upkeepPutsMinusCounter() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DuskUrchins());
 
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -60,7 +63,7 @@ class BitingTetherTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DuskUrchins());
 
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -79,7 +82,7 @@ class BitingTetherTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate over multiple upkeeps")
     void countersAccumulateOverUpkeeps() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DuskUrchins());
 
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -101,16 +104,28 @@ class BitingTetherTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Biting Tether")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new IlluminatedFolio());
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Illuminated Folio");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a shrouded creature with Biting Tether")
+    void cannotTargetShroudedCreature() {
+        Permanent creature = addCreatureReady(player2, new IslebackSpawn());
+
+        harness.setHand(player1, List.of(new BitingTether()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 
     // ===== Helper methods =====

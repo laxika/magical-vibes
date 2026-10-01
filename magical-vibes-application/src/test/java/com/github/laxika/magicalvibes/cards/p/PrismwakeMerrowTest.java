@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DevotedDruid;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrismwakeMerrow.class, DevotedDruid.class, Forest.class})
 class PrismwakeMerrowTest extends BaseCardTest {
 
     // ===== ETB trigger =====
@@ -23,22 +26,43 @@ class PrismwakeMerrowTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger goes on the stack targeting the chosen permanent")
     void etbTriggerGoesOnStack() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        castMerrow(bears.getId());
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        castMerrow(druid.getId());
         harness.passBothPriorities(); // resolve the creature spell
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(druid.getId());
+    }
+
+    @Test
+    @DisplayName("Can choose Prismwake Merrow itself as the ETB target after it enters")
+    void canTargetItselfAfterEntering() {
+        harness.setHand(player1, List.of(new PrismwakeMerrow()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve the creature spell
+
+        Permanent merrow = findPermanent(player1, "Prismwake Merrow");
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(merrow.getId());
+
+        harness.handlePermanentChosen(player1, merrow.getId());
+        harness.passBothPriorities(); // resolve the ETB trigger
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "DONE");
+
+        assertThat(gqs.getEffectiveColors(gd, merrow)).containsExactly(CardColor.BLUE);
     }
 
     @Test
     @DisplayName("Resolving prompts the controller for a color choice")
     void resolvingPromptsColorChoice() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        castMerrow(bears.getId());
-        harness.passBothPriorities(); // resolve the creature spell
-        harness.passBothPriorities(); // resolve the ETB trigger
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        castMerrow(druid.getId());
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
     }
@@ -48,19 +72,19 @@ class PrismwakeMerrowTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a single color makes the target only that color until end of turn")
     void singleColorReplacesColors() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        resolveMerrowAndChoose(bears.getId(), "BLUE", "DONE");
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        resolveMerrowAndChoose(druid.getId(), "BLUE", "DONE");
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLUE);
+        assertThat(gqs.getEffectiveColors(gd, druid)).containsExactly(CardColor.BLUE);
     }
 
     @Test
     @DisplayName("Choosing several colors makes the target all of those colors")
     void multipleColorsReplaceColors() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        resolveMerrowAndChoose(bears.getId(), "WHITE", "BLUE", "DONE");
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        resolveMerrowAndChoose(druid.getId(), "WHITE", "BLUE", "DONE");
 
-        assertThat(gqs.getEffectiveColors(gd, bears))
+        assertThat(gqs.getEffectiveColors(gd, druid))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
     }
 
@@ -76,16 +100,15 @@ class PrismwakeMerrowTest extends BaseCardTest {
     @Test
     @DisplayName("The color change wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // green
-        resolveMerrowAndChoose(bears.getId(), "BLUE", "DONE");
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLUE);
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid()); // green
+        resolveMerrowAndChoose(druid.getId(), "BLUE", "DONE");
+        assertThat(gqs.getEffectiveColors(gd, druid)).containsExactly(CardColor.BLUE);
 
-        // Simulate end-of-turn cleanup: the floating CR 613 layer-5 setter expires alongside the
-        // Permanent-level modifier reset, so the creature reverts to its printed color.
-        bears.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
-        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, druid)).containsExactly(CardColor.GREEN);
     }
 
     // ===== Helpers =====
@@ -98,8 +121,7 @@ class PrismwakeMerrowTest extends BaseCardTest {
 
     private void resolveMerrowAndChoose(UUID targetId, String... choices) {
         castMerrow(targetId);
-        harness.passBothPriorities(); // resolve the creature spell
-        harness.passBothPriorities(); // resolve the ETB trigger -> begins the color choice
+        resolveAllTriggers();
         for (String choice : choices) {
             harness.handleListChoice(player1, choice);
         }

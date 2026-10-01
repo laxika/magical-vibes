@@ -25,12 +25,10 @@ class MistmeadowSkulkTest extends BaseCardTest {
     @Test
     @DisplayName("Creature with mana value 3 cannot block Mistmeadow Skulk")
     void manaValue3CannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new MistmeadowSkulk());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new MistmeadowSkulk());
         addCreatureReady(player2, new BlindPhantasm());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,12 +38,10 @@ class MistmeadowSkulkTest extends BaseCardTest {
     @Test
     @DisplayName("Creature with mana value 2 can block Mistmeadow Skulk")
     void manaValue2CanBlock() {
-        Permanent attacker = addCreatureReady(player1, new MistmeadowSkulk());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new MistmeadowSkulk());
         Permanent blocker = addCreatureReady(player2, new BladeOfTheSixthPride());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

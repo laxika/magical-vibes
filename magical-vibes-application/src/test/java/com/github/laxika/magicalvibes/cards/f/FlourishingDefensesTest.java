@@ -1,19 +1,16 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.s.Skinrender;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GrimPoppet;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FlourishingDefenses.class, GrimPoppet.class})
 class FlourishingDefensesTest extends BaseCardTest {
 
     /**
@@ -27,9 +24,11 @@ class FlourishingDefensesTest extends BaseCardTest {
             } else if (!gd.stack.isEmpty()) {
                 harness.passBothPriorities();
             } else {
-                return;
+                break;
             }
         }
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private long elfWarriorTokenCount(Player player) {
@@ -40,17 +39,11 @@ class FlourishingDefensesTest extends BaseCardTest {
     @DisplayName("Triggers once per -1/-1 counter — three counters create three tokens")
     void createsTokenPerCounter() {
         harness.addToBattlefield(player1, new FlourishingDefenses());
-        // 4/4 survives three -1/-1 counters (becomes 1/1), so no death interferes.
-        harness.addToBattlefield(player2, new AirElemental());
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
-
-        harness.setHand(player1, List.of(new Skinrender()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        // Grim Poppet is a 4/4 that enters with three -1/-1 counters, so no death interferes.
+        harness.enterBattlefieldAndReturn(player2, new GrimPoppet());
         resolveAllMayPrompts(player1, true);
 
-        // Skinrender puts 3 -1/-1 counters at once → Flourishing Defenses triggers 3 times.
+        // Grim Poppet enters with 3 -1/-1 counters at once, so Flourishing Defenses triggers 3 times.
         // Tokens belong to the Flourishing Defenses controller, even though the counters landed
         // on an opponent's creature.
         assertThat(elfWarriorTokenCount(player1)).isEqualTo(3);
@@ -61,13 +54,7 @@ class FlourishingDefensesTest extends BaseCardTest {
     @DisplayName("Declining the may-ability creates no token")
     void decliningCreatesNoToken() {
         harness.addToBattlefield(player1, new FlourishingDefenses());
-        harness.addToBattlefield(player2, new AirElemental());
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
-
-        harness.setHand(player1, List.of(new Skinrender()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.enterBattlefieldAndReturn(player2, new GrimPoppet());
         resolveAllMayPrompts(player1, false);
 
         assertThat(elfWarriorTokenCount(player1)).isZero();
@@ -76,16 +63,10 @@ class FlourishingDefensesTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's Flourishing Defenses triggers for its own controller")
     void triggersForItsOwnController() {
-        // Flourishing Defenses belongs to player2; player1's Skinrender puts -1/-1 counters on a
-        // creature — the tokens are created by player2 (the Flourishing Defenses controller).
+        // Flourishing Defenses belongs to player2; player1's Grim Poppet enters with -1/-1
+        // counters — the tokens are created by player2 (the Flourishing Defenses controller).
         harness.addToBattlefield(player2, new FlourishingDefenses());
-        harness.addToBattlefield(player2, new AirElemental());
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
-
-        harness.setHand(player1, List.of(new Skinrender()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.enterBattlefieldAndReturn(player1, new GrimPoppet());
         resolveAllMayPrompts(player2, true);
 
         assertThat(elfWarriorTokenCount(player2)).isEqualTo(3);

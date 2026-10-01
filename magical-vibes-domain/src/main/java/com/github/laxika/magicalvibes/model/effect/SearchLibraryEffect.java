@@ -39,6 +39,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * the selected card is moved. Set it to false when a later effect must resolve before the shuffle.
  * {@code battlefieldIfOpponentControlsMoreLands} lets a single selected hand-search card be put
  * onto the battlefield tapped instead when an opponent controls more lands than the searcher.
+ * {@code topLibraryFractionDenominator} restricts the search to the top ceiling(size / denominator)
+ * cards of the library when positive.
  *
  * @param onlyIfSacrificed when true, an {@code ON_DEATH} trigger only fires when its source was
  *                         sacrificed
@@ -64,8 +66,24 @@ public record SearchLibraryEffect(
         CounterType battlefieldCounter,
         EnterWithCountersEffect enterWithCounters,
         int topLibraryPosition,
-        boolean battlefieldIfOpponentControlsMoreLands
+        boolean battlefieldIfOpponentControlsMoreLands,
+        int topLibraryFractionDenominator
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
+                               CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
+                               int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, 0);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
@@ -78,7 +96,7 @@ public record SearchLibraryEffect(
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
                 grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
                 onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
-                battlefieldCounter, enterWithCounters, topLibraryPosition, false);
+                battlefieldCounter, enterWithCounters, topLibraryPosition, false, 0);
     }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
@@ -265,6 +283,13 @@ public record SearchLibraryEffect(
         return new SearchLibraryEffect(new Fixed(1), filter, LibrarySearchDestination.TOP_OF_LIBRARY, null, 1,
                 false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false, true,
                 null, null, position);
+    }
+
+    /** Single-card unrestricted search limited to the top third of the library. */
+    public static SearchLibraryEffect topThirdOfLibraryToHand() {
+        return new SearchLibraryEffect(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1,
+                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false, true,
+                null, null, 0, false, 3);
     }
 
     @Override

@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.o.OracleOfNectars;
+import com.github.laxika.magicalvibes.cards.t.ThornwatchScarecrow;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,69 +14,42 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SickleRipper.class, ThornwatchScarecrow.class, OracleOfNectars.class})
 class SickleRipperTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
 
     @Test
     @DisplayName("Wither deals combat damage to a blocker as -1/-1 counters")
     void witherDealsMinusCountersToBlocker() {
-        // 4/4 blocker so it survives and we can inspect the counters.
-        Permanent blocker = new Permanent(createCreature("Big Bear", 4, 4));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        // Thornwatch Scarecrow is a 4/4 blocker, so it survives and we can inspect the counters.
+        addCreatureReady(player2, new ThornwatchScarecrow());
 
-        Permanent attacker = new Permanent(new SickleRipper());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SickleRipper());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
-        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
-        harness.passBothPriorities();
-
-        // Sickle Ripper (2 power) deals its damage as two -1/-1 counters; 4/4 becomes 2/2.
-        Permanent survivor = findPermanent(player2, "Big Bear");
+        // Sickle Ripper's 2 damage is dealt as counters rather than marked damage.
+        Permanent survivor = findPermanent(player2, "Thornwatch Scarecrow");
         assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(survivor.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Wither combat damage of lethal counters kills the blocker")
     void witherKillsSmallBlocker() {
-        Permanent attacker = new Permanent(new SickleRipper());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SickleRipper());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Small Bear", 2, 2));
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new OracleOfNectars());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
         // Two -1/-1 counters make the 2/2 a 0/0; it dies.
-        harness.assertInGraveyard(player2, "Small Bear");
+        harness.assertInGraveyard(player2, "Oracle of Nectars");
     }
 
     @Test
@@ -85,15 +57,12 @@ class SickleRipperTest extends BaseCardTest {
     void witherDealsNormalDamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent attacker = new Permanent(new SickleRipper());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SickleRipper());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);

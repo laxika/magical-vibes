@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed(BoonReflection.class)
 class BoonReflectionTest extends BaseCardTest {
 
     @Test

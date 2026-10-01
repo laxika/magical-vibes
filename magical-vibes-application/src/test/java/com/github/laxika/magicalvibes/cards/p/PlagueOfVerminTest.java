@@ -1,7 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.s.StaffOfTheStoryteller;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PlagueOfVermin.class)
+@CardUsed({PlagueOfVermin.class})
 class PlagueOfVerminTest extends BaseCardTest {
 
     private void cast(Player caster) {
@@ -49,6 +55,75 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(ratCount(player1)).isEqualTo(3);
         assertThat(ratCount(player2)).isEqualTo(2);
+
+        Permanent rat = findPermanent(player1, "Rat");
+        assertThat(rat.getCard().getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(rat.getCard().getSubtypes()).containsExactly(CardSubtype.RAT);
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A single decline does not end the process if a later player pays")
+    void continuesAfterAPlayerDeclines() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(player1);
+
+        harness.handleXValueChosen(player1, 0);
+        harness.assertLife(player1, 20);
+        harness.handleXValueChosen(player2, 2);
+        harness.assertLife(player2, 18);
+        harness.handleXValueChosen(player1, 3);
+        harness.assertLife(player1, 17);
+        harness.handleXValueChosen(player2, 0);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ratCount(player1)).isEqualTo(3);
+        assertThat(ratCount(player2)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The spell's controller gets the first life-payment choice")
+    void startsWithTheController() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(player2);
+
+        harness.handleXValueChosen(player2, 1);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleXValueChosen(player2, 0);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 18);
+        assertThat(ratCount(player2)).isEqualTo(1);
+        assertThat(ratCount(player1)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({PlagueOfVermin.class, StaffOfTheStoryteller.class})
+    @DisplayName("Creating Rats triggers an ability that watches for creature tokens")
+    void triggersCreatureTokenCreationAbilities() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfTheStoryteller());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(player1);
+
+        harness.handleXValueChosen(player1, 2);
+        harness.handleXValueChosen(player2, 0);
+        harness.handleXValueChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(staff.getCounterCount(CounterType.STORY)).isEqualTo(1);
     }
 
     @Test

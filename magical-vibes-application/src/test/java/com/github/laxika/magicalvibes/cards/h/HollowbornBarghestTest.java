@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OldGhastbark;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HollowbornBarghest.class, OldGhastbark.class})
 class HollowbornBarghestTest extends BaseCardTest {
 
     // ===== Your upkeep: each opponent loses 2 life if you have no cards in hand =====
@@ -30,7 +32,7 @@ class HollowbornBarghestTest extends BaseCardTest {
     @DisplayName("Your upkeep with cards in hand does nothing")
     void ownUpkeepWithCardsDoesNothing() {
         harness.addToBattlefield(player1, new HollowbornBarghest());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new OldGhastbark()));
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player1);
@@ -58,7 +60,7 @@ class HollowbornBarghestTest extends BaseCardTest {
     @DisplayName("Opponent's upkeep with cards in hand does nothing")
     void opponentUpkeepWithCardsDoesNothing() {
         harness.addToBattlefield(player1, new HollowbornBarghest());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new OldGhastbark()));
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
@@ -78,7 +80,21 @@ class HollowbornBarghestTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         // Trigger is on the stack — give the opponent a card before it resolves
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
+        gd.playerHands.get(player2.getId()).add(new OldGhastbark());
+        harness.passBothPriorities(); // resolve trigger
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Does nothing if you draw into a card before your upkeep trigger resolves")
+    void ownInterveningIfCheckedAtResolution() {
+        harness.addToBattlefield(player1, new HollowbornBarghest());
+        harness.setHand(player1, List.of()); // empty, triggers
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new OldGhastbark()));
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
