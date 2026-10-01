@@ -170,6 +170,8 @@ public class Permanent {
      * distinct colors (Tablet of the Guilds) write here directly and leave {@code chosenColor} null.
      */
     private final Set<CardColor> chosenColors = EnumSet.noneOf(CardColor.class);
+    /** Whether an as-enters color choice has been completed, including an optional empty choice. */
+    @Setter private boolean chosenColorChoiceMade;
     @Setter private String chosenName;
     /** Second card name chosen "as this enters" when two players each name a card
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
@@ -806,6 +808,7 @@ public class Permanent {
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
+        this.chosenColorChoiceMade = source.chosenColorChoiceMade;
         this.chosenName = source.chosenName;
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;

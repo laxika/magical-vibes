@@ -165,6 +165,7 @@ import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LowestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
+import com.github.laxika.magicalvibes.model.amount.MatchingCardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
@@ -527,6 +528,8 @@ public class AmountEvaluationService {
                     countMatchingHandCards(gameData, c, ctx);
             case CardsInLibrary c ->
                     countLibraryCards(gameData, c, ctx);
+            case MatchingCardsInLibrary c ->
+                    countMatchingLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
             case ColorManaPairsSpentToCast c ->
@@ -2108,6 +2111,22 @@ public class AmountEvaluationService {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck != null) {
                 total += deck.size();
+            }
+        }
+        return total;
+    }
+
+    private int countMatchingLibraryCards(GameData gameData, MatchingCardsInLibrary count, AmountContext ctx) {
+        UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId() : null;
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null) continue;
+            for (Card card : deck) {
+                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId)) {
+                    total++;
+                }
             }
         }
         return total;

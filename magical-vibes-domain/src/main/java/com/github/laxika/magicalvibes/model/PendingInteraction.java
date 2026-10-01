@@ -131,6 +131,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.PutCardFromHandIntoGraveyardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
         PendingInteraction.PerpetualActivatedAbilityCardChoice,
@@ -4027,6 +4028,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, !cloaked);
+        }
+    }
+
+    /** Chooses one of a set of cards in hand to put into its owner's graveyard. */
+    record PutCardFromHandIntoGraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                              String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PutCardFromHandIntoGraveyardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

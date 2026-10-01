@@ -389,6 +389,8 @@ public class GameData {
     public final Set<UUID> perpetualExileInsteadOfDyingCardIds = ConcurrentHashMap.newKeySet();
     /** Perpetual triggered abilities keyed by the affected card's identity. */
     public final Map<UUID, List<CardEffect>> perpetualTriggeredAbilities = new ConcurrentHashMap<>();
+    /** Perpetually removed printed triggered abilities keyed by the affected card's identity. */
+    public final Map<UUID, Set<CardEffect>> perpetuallyRemovedTriggeredAbilities = new ConcurrentHashMap<>();
     /** Perpetual triggered-ability grants reapplied when the affected card enters the battlefield. */
     public final Map<UUID, Map<EffectSlot, List<CardEffect>>> perpetualTriggeredAbilityGrants =
             new ConcurrentHashMap<>();
@@ -6841,6 +6843,8 @@ public class GameData {
         copy.perpetualExileInsteadOfDyingCardIds.addAll(this.perpetualExileInsteadOfDyingCardIds);
         this.perpetualTriggeredAbilities.forEach((cardId, effects) ->
                 copy.perpetualTriggeredAbilities.put(cardId, List.copyOf(effects)));
+        this.perpetuallyRemovedTriggeredAbilities.forEach((cardId, effects) ->
+                copy.perpetuallyRemovedTriggeredAbilities.put(cardId, Set.copyOf(effects)));
         this.perpetualTriggeredAbilityGrants.forEach((cardId, effectsBySlot) -> {
             Map<EffectSlot, List<CardEffect>> copied = new EnumMap<>(EffectSlot.class);
             effectsBySlot.forEach((slot, effects) -> copied.put(slot, List.copyOf(effects)));

@@ -3651,6 +3651,18 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    boolean handleConditionalControllerCardsLeaveGraveyard(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard cardsLeft)
+                || cardsLeft.cards().stream().noneMatch(card -> predicateEvaluationService.matchesCardPredicate(
+                card, conditional.predicate(), null, match.gameData(), match.controllerId()))) {
+            return false;
+        }
+        return handleControllerCardsLeaveGraveyard(match, conditional.wrapped(), ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

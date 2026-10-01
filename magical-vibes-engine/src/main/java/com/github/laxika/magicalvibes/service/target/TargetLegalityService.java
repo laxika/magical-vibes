@@ -717,6 +717,9 @@ public class TargetLegalityService {
                 .findFirst()
                 .orElse(null);
         Card sourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
+        if (sourceCard == null && sourceCardId != null) {
+            sourceCard = gameQueryService.findCardInGraveyardById(gameData, sourceCardId);
+        }
         int effectiveXValue = xValue == null ? 0 : xValue;
         for (UUID targetCardId : targetCardIds) {
             String rejection = null;

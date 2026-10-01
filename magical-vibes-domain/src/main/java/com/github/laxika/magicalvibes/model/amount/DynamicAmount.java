@@ -161,6 +161,7 @@ public sealed interface DynamicAmount permits
         CaveManaSpentToCast,
         DesertManaSpentToCast,
         MatchingCardsInHand,
+        MatchingCardsInLibrary,
         Max,
         Min,
         OpponentPoisonCounters,

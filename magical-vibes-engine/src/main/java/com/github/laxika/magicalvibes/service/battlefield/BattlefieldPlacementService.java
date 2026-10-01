@@ -915,7 +915,7 @@ public class BattlefieldPlacementService {
      *
      * <p>With {@code copyEnchantedCreature} the copied permanent is the creature the source Aura is
      * attached to instead (Infinite Reflection); an unattached source does nothing. {@code nontokenOnly}
-     * skips entering tokens.
+     * skips entering tokens, while {@code tokenOnly} skips nontoken creatures.
      */
     private void applyCreaturesEnterAsCopyReplacementEffect(GameData gameData, UUID controllerId, Permanent entering) {
         if (!entering.getCard().hasType(CardType.CREATURE)) {
@@ -931,6 +931,9 @@ public class BattlefieldPlacementService {
                     .findFirst().orElse(null);
             if (effect != null) {
                 if (effect.nontokenOnly() && entering.getCard().isToken()) {
+                    continue;
+                }
+                if (effect.tokenOnly() && !entering.getCard().isToken()) {
                     continue;
                 }
                 Permanent copied = source;

@@ -1050,7 +1050,11 @@ public sealed interface ChoiceContext {
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing land or nonland at resolution for a spell with no permanent to store it on. */
-    record SpellLandOrNonlandChoice(UUID controllerId) implements ChoiceContext {}
+    record SpellLandOrNonlandChoice(UUID controllerId, boolean secret) implements ChoiceContext {
+        public SpellLandOrNonlandChoice(UUID controllerId) {
+            this(controllerId, false);
+        }
+    }
 
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
@@ -1584,6 +1588,16 @@ public sealed interface ChoiceContext {
     /** The controller is choosing the two distinct colors stored by Tablet of the Guilds. */
     record ChooseTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,
                                         List<CardColor> chosen) implements ChoiceContext {}
+
+    /** The controller is choosing up to two colors represented by cards in hand. */
+    record ChooseUpToTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,
+                                            List<CardColor> allowedColors,
+                                            List<CardColor> chosen) implements ChoiceContext {
+        public ChooseUpToTwoColorsOnEnterChoice {
+            allowedColors = List.copyOf(allowedColors);
+            chosen = List.copyOf(chosen);
+        }
+    }
 
     /**
      * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,

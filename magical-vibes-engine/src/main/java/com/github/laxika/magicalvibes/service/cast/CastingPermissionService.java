@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantMayhemToGraveyardCardsEf
 import com.github.laxika.magicalvibes.model.effect.GraveyardPlayPermission;
 import com.github.laxika.magicalvibes.model.effect.LimitNonPhyrexianSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
@@ -78,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibr
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
+import com.github.laxika.magicalvibes.model.effect.TopLibraryCardCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
@@ -2154,6 +2156,14 @@ public class CastingPermissionService {
         return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
     }
 
+    /** Returns whether the owner may privately look at their own top card via that card's ability. */
+    public boolean mayLookAtOwnLibraryTop(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        return deck != null && !deck.isEmpty()
+                && deck.getFirst().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(LookAtTopCardOfOwnLibraryEffect.class::isInstance);
+    }
+
     /** Returns whether the caster may use the specified opponent's current library top. */
     public boolean hasLibraryTopPermission(GameData gameData, UUID castingPlayerId, UUID libraryOwnerId) {
         return gameData.libraryTopCardPermissionsUntilEndOfTurn.stream()
@@ -2252,8 +2262,18 @@ public class CastingPermissionService {
 
     /** Returns whether a specific card may be cast from the top by paying its normal cost. */
     public boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card) {
-        return hasAnyLibraryTopPermission(gameData, playerId)
+        return hasSourceCardTopLibraryCastPermission(gameData, playerId, card)
+                || hasAnyLibraryTopPermission(gameData, playerId)
                 || findTopLibraryCastPermissionSource(gameData, playerId, card).isPresent();
+    }
+
+    private boolean hasSourceCardTopLibraryCastPermission(GameData gameData, UUID playerId, Card card) {
+        if (card == null || card.hasType(CardType.LAND)) return false;
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        return deck != null && !deck.isEmpty()
+                && deck.getFirst().getId().equals(card.getId())
+                && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(TopLibraryCardCastPermissionEffect.class::isInstance);
     }
 
     /** Returns the source permanent granting a normal-cost top-library cast. */

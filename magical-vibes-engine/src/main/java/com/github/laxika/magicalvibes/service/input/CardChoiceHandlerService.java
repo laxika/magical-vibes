@@ -774,6 +774,31 @@ public class CardChoiceHandlerService {
         }
     }
 
+    /** Answers the choice to put one of a set of hand cards into its owner's graveyard. */
+    public void handlePutCardFromHandIntoGraveyardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PutCardFromHandIntoGraveyardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card card = hand.remove(cardIndex);
+        gameData.interaction.clearAwaitingInput();
+        if (graveyardService.addCardToGraveyard(gameData, player.getId(), card, Zone.HAND)) {
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " puts ", card, " into their graveyard."));
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     public void resumeDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted) {
         PendingInteraction.DiscardChoice discardChoice = gameData.pendingDiscardToLibraryChoice;
         int cardIndex = gameData.pendingDiscardToLibraryCardIndex;

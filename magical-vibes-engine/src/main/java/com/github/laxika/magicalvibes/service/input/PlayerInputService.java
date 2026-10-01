@@ -505,6 +505,29 @@ public class PlayerInputService {
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId,
             ChooseColorEffect choice) {
+        if (choice.colorsFromControllerHand()) {
+            List<CardColor> handColors = List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
+                            CardColor.RED, CardColor.GREEN).stream()
+                    .filter(color -> gameData.playerHands.getOrDefault(playerId, List.of()).stream()
+                            .anyMatch(card -> card.getColors() != null && card.getColors().contains(color)))
+                    .toList();
+            if (handColors.isEmpty()) {
+                Permanent permanent = gameData.playerBattlefields.values().stream()
+                        .flatMap(List::stream)
+                        .filter(candidate -> candidate.getId().equals(permanentId))
+                        .findFirst()
+                        .orElse(null);
+                if (permanent != null) {
+                    permanent.setChosenColorChoiceMade(true);
+                    battlefieldEntryService.processCreatureETBEffects(gameData, playerId,
+                            permanent.getCard(), etbTargetId, false);
+                }
+                return;
+            }
+            beginUpToTwoColorsOnEnterChoice(gameData, playerId, permanentId, etbTargetId,
+                    handColors, List.of());
+            return;
+        }
         if (choice.choicesRequired() == 2) {
             beginTwoColorsOnEnterChoice(gameData, playerId, permanentId, etbTargetId, List.of());
             return;
@@ -529,6 +552,27 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose two colors", gameData.id, playerName);
+    }
+
+    public void beginUpToTwoColorsOnEnterChoice(GameData gameData, UUID playerId, UUID permanentId,
+            UUID etbTargetId, List<CardColor> allowedColors, List<CardColor> chosen) {
+        ChoiceContext.ChooseUpToTwoColorsOnEnterChoice ctx =
+                new ChoiceContext.ChooseUpToTwoColorsOnEnterChoice(
+                        permanentId, etbTargetId, allowedColors, new ArrayList<>(chosen));
+
+        List<String> options = new ArrayList<>();
+        for (CardColor color : allowedColors) {
+            if (!chosen.contains(color)) {
+                options.add(color.name());
+            }
+        }
+        options.add("DONE");
+        String prompt = chosen.isEmpty() ? "Choose up to two colors." : "Choose another color, or DONE.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, options, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose up to two colors", gameData.id, playerName);
     }
 
     public void beginDiscardChosenColorChoice(GameData gameData, UUID controllerId, UUID targetPlayerId) {
@@ -1413,11 +1457,15 @@ public class PlayerInputService {
     }
 
     public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId) {
+        beginSpellLandOrNonlandChoice(gameData, playerId, false);
+    }
+
+    public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId, boolean secret) {
         ChoiceContext.SpellLandOrNonlandChoice choiceContext =
-                new ChoiceContext.SpellLandOrNonlandChoice(playerId);
+                new ChoiceContext.SpellLandOrNonlandChoice(playerId, secret);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, List.of("LAND", "NONLAND"),
-                "Choose land or nonland."));
+                secret ? "Secretly choose land or nonland." : "Choose land or nonland."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose land or nonland", gameData.id, playerName);
@@ -2896,6 +2944,12 @@ public class PlayerInputService {
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {
         beginDiscardChoice(gameData, playerId, remainingCount, DiscardFollowUp.NONE);
+    }
+
+    public void beginPutCardFromHandIntoGraveyardChoice(GameData gameData, UUID playerId,
+                                                        List<Integer> validIndices, String prompt) {
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.PutCardFromHandIntoGraveyardChoice(playerId, validIndices, prompt));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount, DiscardFollowUp followUp) {

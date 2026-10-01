@@ -210,6 +210,12 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 false, false, false, false, false, false, Set.of(), true);
     }
 
+    /** "Add one mana of a color chosen for this source permanent." */
+    public static AwardAnyColorManaEffect fromSourceChosenColors() {
+        return new AwardAnyColorManaEffect(new Fixed(1), ManaSpendRestriction.CHOSEN_COLORS,
+                null, false, false, false, false, false, false, Set.of(), false);
+    }
+
     /** "Add N mana in any combination of colors" for spells or abilities of any listed subtype. */
     public static AwardAnyColorManaEffect forSpellOrAbilitySubtypes(int amount,
                                                                       Set<CardSubtype> subtypes) {
@@ -361,7 +367,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     @Override
     public int estimatedWildcardMana() {
         return switch (restriction) {
-            case NONE, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
+            case NONE, CHOSEN_COLORS, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_SPELL, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,

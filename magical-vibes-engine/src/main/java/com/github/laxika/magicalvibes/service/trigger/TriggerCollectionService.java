@@ -4463,7 +4463,7 @@ public class TriggerCollectionService {
     private void collectSelfSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
                                                Card sacrificedCard, Card castingSpell) {
         if (sacrificedCard == null) return;
-        List<CardEffect> deathEffects = sacrificedCard.getEffects(EffectSlot.ON_DEATH);
+        List<CardEffect> deathEffects = effectivePrintedDeathEffects(gameData, sacrificedCard);
         if (deathEffects == null || deathEffects.isEmpty()) return;
 
         boolean wasCreature = sacrificedCard.hasType(CardType.CREATURE);
@@ -9732,6 +9732,15 @@ public class TriggerCollectionService {
 
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
+    private List<CardEffect> effectivePrintedDeathEffects(GameData gameData, Card card) {
+        List<CardEffect> effects = card.getEffects(EffectSlot.ON_DEATH);
+        Set<CardEffect> removed = gameData.perpetuallyRemovedTriggeredAbilities.get(card.getId());
+        if (removed == null || removed.isEmpty()) {
+            return effects;
+        }
+        return effects.stream().filter(effect -> !removed.contains(effect)).toList();
+    }
+
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
         collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, null);
     }
@@ -9834,7 +9843,7 @@ public class TriggerCollectionService {
             return;
         }
         List<CardEffect> deathEffects = dyingPermanent != null && dyingPermanent.isFaceDown()
-                ? List.of() : dyingCard.getEffects(EffectSlot.ON_DEATH);
+                ? List.of() : effectivePrintedDeathEffects(gameData, dyingCard);
 
         // Include temporarily granted ON_DEATH effects (e.g. from Verdant Rebirth)
         List<CardEffect> temporaryDeathEffects = dyingPermanent != null
