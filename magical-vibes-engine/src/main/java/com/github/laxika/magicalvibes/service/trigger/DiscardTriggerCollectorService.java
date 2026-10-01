@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -585,6 +586,13 @@ public class DiscardTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (self-boost)", gameData.id, sourceCard.getName());
         return true;
+    }
+
+    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handlePerpetualBoostOnDiscard(TriggerMatchContext match,
+            PerpetuallyBoostSourceEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "perpetual source boost");
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
