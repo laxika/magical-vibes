@@ -304,9 +304,17 @@ public class SpellCastingService {
 
     private List<Integer> spellCastingAbilityGrantValuesForCard(GameData gameData, UUID playerId,
                                                                  Card card, Keyword ability, Zone sourceZone) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return List.of();
         List<Integer> values = new ArrayList<>();
+        gameData.perpetualCardSpellCastingAbilityGrants
+                .getOrDefault(card.getId(), List.of()).stream()
+                .filter(grant -> grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                        gameData, playerId))
+                .map(SpellCastingAbilityGrantingEffect::abilityValue)
+                .forEach(values::add);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return values;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant

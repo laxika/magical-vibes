@@ -3060,6 +3060,14 @@ public class GameQueryService {
 
     public boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
                                                 Keyword ability, Zone sourceZone) {
+        if (card != null && gameData.perpetualCardSpellCastingAbilityGrants
+                .getOrDefault(card.getId(), List.of()).stream()
+                .anyMatch(grant -> grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                        gameData, playerId))) {
+            return true;
+        }
         if (ability == Keyword.CONVOKE && gameData.hasNextSpellConvokeGrant(playerId)) {
             return true;
         }
@@ -3126,6 +3134,16 @@ public class GameQueryService {
                                                             Card card, Keyword ability,
                                                             Zone sourceZone) {
         List<Integer> values = new ArrayList<>();
+        if (card != null) {
+            gameData.perpetualCardSpellCastingAbilityGrants
+                    .getOrDefault(card.getId(), List.of()).stream()
+                    .filter(grant -> grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                            gameData, playerId))
+                    .map(SpellCastingAbilityGrantingEffect::abilityValue)
+                    .forEach(values::add);
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) {

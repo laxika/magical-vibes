@@ -50,7 +50,7 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
         List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftToExileChoice(
                 entry.getControllerId(), entry.getSourcePermanentId(), offeredCards,
-                entry.getCard().getName()));
+                entry.getCard().getName(), draft.faceDown()));
     }
 
     private Card findCard(String cardName) {

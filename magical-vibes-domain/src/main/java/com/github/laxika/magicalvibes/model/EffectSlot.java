@@ -1386,6 +1386,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
      *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
     ON_ALLY_CREATURE_BECOMES_BLOCKED,
+    /** Triggers once when one or more creatures controlled by this permanent's controller become
+     *  blocked during a single declare-blockers step. Fires on every permanent with this slot on
+     *  that player's battlefield. No combatant is baked into the entry, so effects such as token
+     *  creation resolve once for the whole blocking event. Checked in {@code CombatBlockService}. */
+    ON_ALLY_CREATURES_BECOME_BLOCKED,
     /** Global watcher: triggers once for every attacker/blocker pair created in the declare-blockers
      *  step, on every permanent with this slot across all battlefields, regardless of who controls
      *  the creatures involved. Effects implementing {@code BlockPairConditionalEffect} are filtered

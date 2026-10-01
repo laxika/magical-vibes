@@ -73,6 +73,17 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
             gameData.perpetualNoncombatDamageBonuses.merge(
                     chosenCard.getId(), interaction.noncombatDamageBonus(), Integer::sum);
         }
+        if (interaction.spellCastingAbilityGrant() != null) {
+            gameData.perpetualCardSpellCastingAbilityGrants.compute(chosenCard.getId(),
+                    (ignored, existing) -> {
+                        List<com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect> grants =
+                                existing == null ? new java.util.ArrayList<>() : new java.util.ArrayList<>(existing);
+                        if (!grants.contains(interaction.spellCastingAbilityGrant())) {
+                            grants.add(interaction.spellCastingAbilityGrant());
+                        }
+                        return java.util.Collections.synchronizedList(grants);
+                    });
+        }
         if (interaction.perpetualManaCostIncrease() != null) {
             gameData.perpetualManaCostIncreases.merge(
                     chosenCard.getId(), new ManaCost(interaction.perpetualManaCostIncrease()),

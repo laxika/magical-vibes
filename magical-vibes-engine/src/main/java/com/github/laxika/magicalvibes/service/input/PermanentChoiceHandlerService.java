@@ -406,6 +406,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
             battlefieldHandler.handleBouncePermanentThen(gameData, permanentId, bounceThen);
+        } else if (context instanceof PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel becomeAngel) {
+            battlefieldHandler.handleBouncePermanentAndPerpetuallyBecomeAngel(gameData, permanentId, becomeAngel);
         } else if (context instanceof PermanentChoiceContext.ConjureDuplicateOfCombatDamageDealerChoice conjureChoice) {
             conjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler.completeChoice(
                     gameData, permanentId, conjureChoice);

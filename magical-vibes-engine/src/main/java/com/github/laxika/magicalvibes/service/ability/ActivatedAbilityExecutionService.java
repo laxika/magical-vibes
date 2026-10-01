@@ -1741,6 +1741,7 @@ public class ActivatedAbilityExecutionService {
                         gameData.recordDamageDealtBySourceToPlayer(
                                 permanent.getId(), playerId, effectiveDamage);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                        gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(
                                 gameData, playerId, permanent.getId(), effectiveDamage);
                         triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
@@ -1963,6 +1964,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.recordDamageDealtBySourceToPlayer(
                         permanent.getId(), playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, playerId, permanent.getId(), effectiveDamage);
                 triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(

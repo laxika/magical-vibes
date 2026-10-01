@@ -75,8 +75,16 @@ public class PlayerInputService {
     public void beginPerpetualCreatureCardChoice(GameData gameData, UUID playerId,
                                                   List<Integer> validIndices, String prompt,
                                                   int powerBoost, Set<Keyword> keywords) {
+        beginPerpetualCreatureCardChoice(gameData, playerId, validIndices, prompt,
+                powerBoost, keywords, false);
+    }
+
+    public void beginPerpetualCreatureCardChoice(GameData gameData, UUID playerId,
+                                                  List<Integer> validIndices, String prompt,
+                                                  int powerBoost, Set<Keyword> keywords,
+                                                  boolean grantBlitz) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualCreatureCardChoice(
-                playerId, new ArrayList<>(validIndices), prompt, powerBoost, keywords));
+                playerId, new ArrayList<>(validIndices), prompt, powerBoost, keywords, grantBlitz));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, boolean enterTapped) {

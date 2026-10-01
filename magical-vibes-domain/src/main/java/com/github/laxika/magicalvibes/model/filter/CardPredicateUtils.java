@@ -45,6 +45,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
             return "creature card sharing a creature type with your commander";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithLibraryCreaturePredicate) {
+            return "creature card sharing a creature type with a creature card in your library";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }

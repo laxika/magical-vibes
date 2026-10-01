@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSour
 import com.github.laxika.magicalvibes.model.filter.CardSharesColorWithControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithLibraryCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -169,6 +170,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToS
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithPermanentThatDealtDamageToSourceControllerLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
@@ -906,6 +908,20 @@ public class PredicateEvaluationService {
                                 graveyardCard, graveyardCard.getOwnerId() != null
                                         ? graveyardCard.getOwnerId() : cardOwnerId));
                 yield sharesWithControlledCreature || sharesWithGraveyardCreature;
+            }
+            case CardSharesCreatureTypeWithLibraryCreaturePredicate ignored -> {
+                if (gameData == null || cardOwnerId == null
+                        || !gameQueryService.cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) {
+                    yield false;
+                }
+                UUID cardOwner = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
+                yield gameData.playerDecks.getOrDefault(cardOwnerId, List.of()).stream()
+                        .filter(libraryCard -> gameQueryService.cardHasType(
+                                libraryCard, CardType.CREATURE, gameData,
+                                libraryCard.getOwnerId() != null ? libraryCard.getOwnerId() : cardOwnerId))
+                        .anyMatch(libraryCard -> sharesCreatureType(
+                                gameData, card, cardOwner, libraryCard,
+                                libraryCard.getOwnerId() != null ? libraryCard.getOwnerId() : cardOwnerId));
             }
             case CardSharesCreatureTypeWithCommanderPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
@@ -2674,6 +2690,14 @@ public class PredicateEvaluationService {
                 Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(permanent.getId());
                 yield (combatVictims != null && combatVictims.contains(sourceControllerId))
                         || (noncombatVictims != null && noncombatVictims.contains(sourceControllerId));
+            }
+            case PermanentSharesNameWithPermanentThatDealtDamageToSourceControllerLastTurnPredicate ignored -> {
+                if (sourceControllerId == null || gameData == null) {
+                    yield false;
+                }
+                String name = effectiveName(permanent, filterContext);
+                yield name != null && gameData.permanentDamageSourceNamesToPlayersLastTurn
+                        .getOrDefault(sourceControllerId, Set.of()).contains(name);
             }
             case PermanentAttackedSourceControllerThisTurnPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {

@@ -55,6 +55,7 @@ public class PutStillExiledCardsIntoGraveyardAndCreateTokensEffectHandler
                 entry.getCard().getSetCode());
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(entry.getControllerId()) + " creates "
-                        + movedCards.size() + " Eldrazi Spawn token(s) for cards put into their graveyard."));
+                        + movedCards.size() + " " + graveyardEffect.tokenEffect().tokenName()
+                        + " token(s) for cards put into their graveyard."));
     }
 }

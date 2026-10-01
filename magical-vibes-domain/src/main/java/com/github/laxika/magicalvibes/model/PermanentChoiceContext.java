@@ -165,6 +165,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** A chosen permanent is returned to hand, then a reflexive follow-up resolves. */
     record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                CardEffect thenEffect) implements PermanentChoiceContext {}
+    /** A chosen permanent is returned to hand, then a non-Angel creature card is upgraded. */
+    record BouncePermanentAndPerpetuallyBecomeAngel(UUID controllerId, Card sourceCard,
+                                                    UUID sourcePermanentId)
+            implements PermanentChoiceContext {}
     /** Vodalian Tide Mage: choose one of the creatures from the triggering combat-damage event. */
     record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
                                                        List<UUID> combatDamageDealerIds)

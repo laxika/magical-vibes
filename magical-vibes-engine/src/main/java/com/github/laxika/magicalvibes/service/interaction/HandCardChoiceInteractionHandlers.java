@@ -108,6 +108,32 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Pass the Torch: choose a hand card to receive a perpetual triggered ability. */
+    @Component
+    public static class PerpetualTriggeredAbilityCardChoiceInteractionHandler
+            extends Base<PendingInteraction.PerpetualTriggeredAbilityCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public PerpetualTriggeredAbilityCardChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.PerpetualTriggeredAbilityCardChoice> handledType() {
+            return PendingInteraction.PerpetualTriggeredAbilityCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.PerpetualTriggeredAbilityCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handlePerpetualTriggeredAbilityCardChosen(
+                    gameData, player, cardIndex(answer));
+        }
+    }
+
     /** Retraced Image — reveal one card from hand and conditionally put it onto the battlefield. */
     @Component
     public static class PerpetualCastCostHandCardChoiceInteractionHandler
