@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -14,6 +17,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AbandonedOutpost.class})
 class AbandonedOutpostTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Sacrifice mana ability can produce each color without using the stack")
+    void sacrificeProducesEachColor(ManaColor color) {
+        harness.addToBattlefield(player1, new AbandonedOutpost());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Abandoned Outpost");
+        harness.assertInGraveyard(player1, "Abandoned Outpost");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither mana ability can be activated while tapped after entering")
+    void cannotActivateAfterEnteringTapped(int abilityIndex) {
+        harness.setHand(player1, List.of(new AbandonedOutpost()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertOnBattlefield(player1, "Abandoned Outpost");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Enters the battlefield tapped")
