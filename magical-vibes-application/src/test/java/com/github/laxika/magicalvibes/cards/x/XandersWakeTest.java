@@ -78,6 +78,8 @@ class XandersWakeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castSorcery(player2, 0);
         harness.passBothPriorities();
 

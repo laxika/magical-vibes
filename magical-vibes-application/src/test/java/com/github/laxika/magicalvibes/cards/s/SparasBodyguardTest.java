@@ -42,7 +42,7 @@ class SparasBodyguardTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -76,8 +76,9 @@ class SparasBodyguardTest extends BaseCardTest {
         shieldedCreature.setCounterCount(CounterType.SHIELD, 2);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, bodyguard)).isEqualTo(5);

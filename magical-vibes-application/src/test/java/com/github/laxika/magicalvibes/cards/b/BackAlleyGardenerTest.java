@@ -24,10 +24,11 @@ class BackAlleyGardenerTest extends BaseCardTest {
         GiantGrowth giantGrowth = new GiantGrowth();
         harness.setLibrary(player1, List.of(new FieldOfRuin(), giantGrowth));
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().hasType(CardType.LAND))
@@ -42,12 +43,13 @@ class BackAlleyGardenerTest extends BaseCardTest {
         addCreatureReady(player1, new BackAlleyGardener());
         harness.setLibrary(player1, List.of(new Forest(), new FieldOfRuin()));
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().hasType(CardType.LAND)))

@@ -28,15 +28,15 @@ class TraumaticPrankTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(bls.canBlock(gd, target)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(bls.canBlock(gd, target)).isFalse();
     }
 
@@ -51,10 +51,8 @@ class TraumaticPrankTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
@@ -68,7 +66,7 @@ class TraumaticPrankTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature");
+                .hasMessageContaining("cannot target players");
     }
 
     private void castPrank(Permanent target) {

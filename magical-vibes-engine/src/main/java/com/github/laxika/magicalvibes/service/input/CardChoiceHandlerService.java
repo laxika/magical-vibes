@@ -53,6 +53,11 @@ import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
@@ -233,6 +238,12 @@ public class CardChoiceHandlerService {
                         .map(AlternateHandCast::blitz)
                         .orElse(false) == false) {
             copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
+            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
+            copy.addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+                    new CastForAlternateCost(), new DrawCardEffect(1)));
         }
         copy.freeze();
         hand.set(cardIndex, copy);

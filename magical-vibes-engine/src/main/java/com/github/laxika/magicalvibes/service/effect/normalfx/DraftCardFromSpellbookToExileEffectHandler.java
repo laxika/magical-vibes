@@ -33,10 +33,6 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetId() != null) {
-            return;
-        }
-
         DraftCardFromSpellbookToExileEffect draft = (DraftCardFromSpellbookToExileEffect) effect;
         List<Card> spellbook = draft.cardNames().stream()
                 .map(this::findCard)

@@ -21,6 +21,7 @@ class CelestialVaultTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
 
         PendingInteraction.SpellbookDraftToExileChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);
@@ -39,6 +40,7 @@ class CelestialVaultTest extends BaseCardTest {
         Permanent vault = harness.addToBattlefieldAndReturn(player1, new CelestialVault());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
 
         PendingInteraction.SpellbookDraftToExileChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);

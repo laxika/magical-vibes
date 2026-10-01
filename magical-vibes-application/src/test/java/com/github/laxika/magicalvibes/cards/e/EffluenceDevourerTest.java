@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.OozeGarden;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EffluenceDevourer.class, GrizzlyBears.class, OozeGarden.class, DiabolicEdict.class})
+@CardUsed({EffluenceDevourer.class, GrizzlyBears.class, DiabolicEdict.class})
 class EffluenceDevourerTest extends BaseCardTest {
 
     @Test
@@ -26,27 +25,23 @@ class EffluenceDevourerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         addCreatureReady(player1, devourer);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent garden = harness.addToBattlefieldAndReturn(player1, new OozeGarden());
+        harness.setHand(player1, List.of(new DiabolicEdict(), new DiabolicEdict()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(garden), null, null);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(garden), null, null);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, devourer.getId());
-        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, gd.playerGraveyards.get(player1.getId()).indexOf(devourer));
         harness.passBothPriorities();
 
         Permanent ooze = gd.playerBattlefields.get(player1.getId()).stream()
@@ -63,18 +58,16 @@ class EffluenceDevourerTest extends BaseCardTest {
         Card devourer = new EffluenceDevourer();
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        Permanent source = addReadyCreature(player1, devourer);
+        addReadyCreature(player1, devourer);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, gd.playerGraveyards.get(player1.getId()).indexOf(devourer));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(devourer);
@@ -91,7 +84,7 @@ class EffluenceDevourerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent devourer = findPermanent(player1, "Effluence Devourer");
         assertThat(gqs.hasKeyword(gd, devourer, Keyword.HASTE)).isTrue();

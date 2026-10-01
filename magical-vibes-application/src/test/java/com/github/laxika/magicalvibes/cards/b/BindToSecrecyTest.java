@@ -93,8 +93,8 @@ class BindToSecrecyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castModalInstantWithModes(player1, 0, 1, 1, new int[]{1}, null,
-                List.of(opponentCard.getId()));
+        harness.castModalInstantWithModes(player1, 0, 1, 1, new int[]{1}, opponentCard.getId(),
+                List.of());
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()

@@ -38,7 +38,7 @@ class RiveteersProvocateurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreatureWithAlternateCost(player1, 1, List.of());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();

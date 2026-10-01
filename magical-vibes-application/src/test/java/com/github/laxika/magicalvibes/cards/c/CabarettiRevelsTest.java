@@ -20,8 +20,7 @@ class CabarettiRevelsTest extends BaseCardTest {
     void seeksCreatureWithLesserManaValueOntoBattlefield() {
         harness.addToBattlefield(player1, new CabarettiRevels());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castFromHand(player1, new GrizzlyBears(), "{2}");
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
@@ -48,8 +47,7 @@ class CabarettiRevelsTest extends BaseCardTest {
     void doesNotPutCreatureOntoBattlefieldWhenNoLesserCreatureExists() {
         harness.addToBattlefield(player1, new CabarettiRevels());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castFromHand(player1, new GrizzlyBears(), "{2}");
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");

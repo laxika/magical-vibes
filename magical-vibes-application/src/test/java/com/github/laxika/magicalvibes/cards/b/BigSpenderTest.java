@@ -72,14 +72,16 @@ class BigSpenderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BigSpender());
         Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        Permanent spareRelic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
 
         harness.activateAbility(player1, 0, null, null);
 
-        PendingInteraction.MultiPermanentChoice cost =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice cost =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(cost).isNotNull();
-        assertThat(cost.validIds()).containsExactlyInAnyOrder(relic.getId(), mindStone.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(relic.getId(), mindStone.getId()));
+        assertThat(cost.validIds()).containsExactlyInAnyOrder(relic.getId(), mindStone.getId(), spareRelic.getId());
+        harness.handlePermanentChosen(player1, relic.getId());
+        harness.handlePermanentChosen(player1, mindStone.getId());
 
         harness.assertInGraveyard(player1, "Darksteel Relic");
         harness.assertInGraveyard(player1, "Mind Stone");

@@ -70,7 +70,7 @@ class SkylineSaviorTest extends BaseCardTest {
 
         Card returnedAngel = angel.getCard();
         harness.setHand(player1, List.of(returnedAngel));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

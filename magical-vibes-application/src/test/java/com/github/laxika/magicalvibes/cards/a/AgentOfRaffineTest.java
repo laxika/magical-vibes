@@ -22,6 +22,7 @@ class AgentOfRaffineTest extends BaseCardTest {
 
     @Test
     void conjuresTheTopCardThenExilesThatCardFaceDown() {
+        harness.setHand(player1, List.of());
         addReadyAgent(player1);
         Shock topCard = new Shock();
         Forest nextCard = new Forest();

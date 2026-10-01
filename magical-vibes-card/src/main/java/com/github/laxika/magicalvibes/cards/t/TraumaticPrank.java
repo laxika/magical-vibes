@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbil
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class TraumaticPrank extends Card {
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
                 .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new PerpetuallyGrantKeywordsToTargetCreatureEffect(
-                        Set.of(Keyword.HASTE)))
+                        Set.of(Keyword.HASTE), new PermanentIsCreaturePredicate()))
                 .addEffect(EffectSlot.SPELL, new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
                         new CantBlockEffect()))
                 .addEffect(EffectSlot.SPELL, new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(

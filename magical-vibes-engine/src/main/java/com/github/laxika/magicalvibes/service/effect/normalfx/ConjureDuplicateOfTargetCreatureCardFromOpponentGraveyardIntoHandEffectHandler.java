@@ -32,7 +32,7 @@ public class ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetCardId = entry.targetsForEffect(effect).stream().findFirst().orElse(null);
+        UUID targetCardId = entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
         Card targetCard = targetCardId == null
                 ? null
                 : gameQueryService.findCardInGraveyardById(gameData, targetCardId);
