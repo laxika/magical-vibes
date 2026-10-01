@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.data.Offset.offset;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -185,6 +186,39 @@ class ReviewServerTest {
     }
 
     @Test
+    void totalsCostsAcrossCardsAndPreviousAttemptsWithoutChangingRunCounts() throws Exception {
+        writeCard("SecondCard", "@CardRegistration(set = \"SOS\", collectorNumber = \"2\")");
+        var run = newRun("Cost totals", "luna");
+        assertThat(run).containsEntry("estimatedCostUsd", null).containsEntry("missingCostCount", 0);
+        var first = service.claim(new ReviewService.Claim("one"));
+        service.submit(id(first), new ReviewService.Result((String) first.get("attemptToken"), "FINDINGS", "First Card",
+                List.of("Missing trigger.", "Wrong target."), "a".repeat(40), "NOT_REQUIRED", null, null, null,
+                1000L, 0L, 200L, new BigDecimal("0.12")));
+        var second = service.claim(new ReviewService.Claim("two"));
+        service.submit(id(second), new ReviewService.Result((String) second.get("attemptToken"), "ERROR", null, List.of(),
+                null, "NOT_REQUIRED", null, "Review failed", null, 1000L, 0L, 200L, new BigDecimal("0.34")));
+        assertThat(((Number) service.run(id(run)).get("estimatedCostUsd")).doubleValue()).isCloseTo(0.46, offset(0.000001));
+        assertThat(service.run(id(run))).containsEntry("total", 2).containsEntry("completed", 1)
+                .containsEntry("failed", 1).containsEntry("findingCount", 2).containsEntry("missingCostCount", 0);
+
+        service.requeue(id(first));
+        assertThat(((Number) service.run(id(run)).get("estimatedCostUsd")).doubleValue()).isCloseTo(0.46, offset(0.000001));
+        var retry = service.claim(new ReviewService.Claim("retry"));
+        service.submit(id(retry), result(retry, "PASS", List.of()));
+        assertThat(service.run(id(run))).containsEntry("missingCostCount", 1).containsEntry("findingCount", 0);
+
+        var otherRun = newRun("Zero cost", "sol");
+        service.activate(id(otherRun));
+        var free = service.claim(new ReviewService.Claim("free"));
+        service.submit(id(free), new ReviewService.Result((String) free.get("attemptToken"), "PASS", "First Card", List.of(),
+                "a".repeat(40), "NOT_REQUIRED", null, null, null, 0L, 0L, 0L, BigDecimal.ZERO));
+        assertThat(((Number) service.run(id(otherRun)).get("estimatedCostUsd")).doubleValue()).isZero();
+        var runs = (List<?>) service.overview().get("runs");
+        assertThat(((Number) ((Map<?, ?>) runs.get(1)).get("estimatedCostUsd")).doubleValue()).isCloseTo(0.46, offset(0.000001));
+        assertThat(((Map<?, ?>) runs.get(1)).get("missingCostCount")).isEqualTo(1);
+    }
+
+    @Test
     void storesCostThroughHttpAndRetainsItInCardAttemptHistory() throws Exception {
         var run = newRun("Costs", "gpt-5.6-luna");
         var task = service.claim(new ReviewService.Claim("cost-worker"));
@@ -194,6 +228,8 @@ class ReviewServerTest {
         String body = mapper.writeValueAsString(result);
         assertThat(post(client, "/api/tasks/" + id(task) + "/result", body).statusCode()).isEqualTo(204);
         assertThat(post(client, "/api/tasks/" + id(task) + "/result", body).statusCode()).isEqualTo(204);
+        var overview = client.send(HttpRequest.newBuilder(uri("/api/overview")).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(mapper.readTree(overview.body()).path("runs").get(0).path("estimatedCostUsd").asDouble()).isEqualTo(0.000296);
         assertThat(service.task(id(task))).containsEntry("inputTokens", 1000).containsEntry("cachedInputTokens", 800)
                 .containsEntry("outputTokens", 200);
         assertThat(((Number) service.task(id(task)).get("estimatedCostUsd")).doubleValue()).isEqualTo(0.000296);
@@ -208,11 +244,14 @@ class ReviewServerTest {
         assertThat(attempts.get(0).path("estimatedCostUsd").isNull()).isTrue();
         assertThat(attempts.get(1).path("estimatedCostUsd").asDouble()).isEqualTo(0.000296);
         assertThat(attempts.get(1).path("cachedInputTokens").asLong()).isEqualTo(800);
+        var runResponse = client.send(HttpRequest.newBuilder(uri("/api/runs/" + id(run))).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(mapper.readTree(runResponse.body()).path("estimatedCostUsd").asDouble()).isEqualTo(0.000296);
+        assertThat(mapper.readTree(runResponse.body()).path("missingCostCount").asInt()).isEqualTo(1);
     }
 
     @Test
     void rejectsInvalidCostAndUsageAndAcceptsUsageWithoutPricing() throws Exception {
-        newRun("Cost validation", "custom-model");
+        var run = newRun("Cost validation", "custom-model");
         var task = service.claim(new ReviewService.Claim("worker"));
         for (var counts : List.of(new Long[]{-1L, 0L, 0L}, new Long[]{1L, 2L, 0L}, new Long[]{1L, null, 0L})) {
             var invalid = new ReviewService.Result((String) task.get("attemptToken"), "PASS", "First Card", List.of(),
@@ -230,6 +269,7 @@ class ReviewServerTest {
         service.submit(id(task), new ReviewService.Result((String) task.get("attemptToken"), "ERROR", null, List.of(),
                 null, "NOT_REQUIRED", null, "Review failed", null, 1000L, 500L, 100L, null));
         assertThat(service.task(id(task))).containsEntry("estimatedCostUsd", null).containsEntry("inputTokens", 1000);
+        assertThat(service.run(id(run))).containsEntry("estimatedCostUsd", null).containsEntry("missingCostCount", 1);
     }
 
     @Test

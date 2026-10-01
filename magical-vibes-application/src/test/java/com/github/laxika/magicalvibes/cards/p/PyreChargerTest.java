@@ -4,12 +4,28 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(PyreCharger.class)
 class PyreChargerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Haste lets Pyre Charger attack the turn it enters")
+    void hasteAllowsImmediateAttack() {
+        harness.setLife(player2, 20);
+        Permanent charger = harness.addToBattlefieldAndReturn(player1, new PyreCharger());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(charger)));
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+    }
 
     @Test
     @DisplayName("{R}: gets +1/+0 until end of turn")

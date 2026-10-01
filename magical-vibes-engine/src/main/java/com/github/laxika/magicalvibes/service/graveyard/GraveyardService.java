@@ -676,6 +676,9 @@ public class GraveyardService {
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
+        if (sourceZone == Zone.HAND) {
+            collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
+        }
         if (sourceZone == Zone.LIBRARY) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
                 gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
@@ -928,6 +931,27 @@ public class GraveyardService {
             gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
+        }
+    }
+
+    /**
+     * Fires "when this card is put into a graveyard from its owner's hand" triggered abilities.
+     * The card has already entered the graveyard; the trigger goes on the stack under its owner's
+     * control.
+     */
+    private void collectPutIntoGraveyardFromHandTriggers(GameData gameData, UUID ownerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    ownerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    (UUID) null
+            ));
+            gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            log.info("Game {} - {} triggers (put into graveyard from hand)", gameData.id, card.getName());
         }
     }
 

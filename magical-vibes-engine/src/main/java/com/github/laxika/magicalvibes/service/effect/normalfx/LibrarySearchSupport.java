@@ -815,6 +815,9 @@ public class LibrarySearchSupport {
 
         // Aven Mindcensor & friends: an opponent's search is limited to the top N cards of that library.
         int topLimit = opponentSearchTopCardsLimit(gameData, params.playerId());
+        if (params.topLibraryCardLimit() > 0) {
+            topLimit = Math.min(topLimit, params.topLibraryCardLimit());
+        }
         if (topLimit != Integer.MAX_VALUE) {
             UUID libraryOwnerId = params.targetPlayerId() != null ? params.targetPlayerId() : params.playerId();
             List<Card> restricted = restrictToTopCards(gameData, libraryOwnerId, params.cards(), topLimit);
@@ -840,6 +843,9 @@ public class LibrarySearchSupport {
         if (ownLibrarySearch) {
             params = params.withAllowCastFromLibraryWhileSearching(true);
             List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+            if (topLimit != Integer.MAX_VALUE) {
+                castableCards = restrictToTopCards(gameData, playerId, castableCards, topLimit);
+            }
             if (!castableCards.isEmpty()) {
                 Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
                 List<Card> cards = new ArrayList<>(params.cards());
