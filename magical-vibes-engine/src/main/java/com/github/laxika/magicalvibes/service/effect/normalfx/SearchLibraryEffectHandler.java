@@ -139,7 +139,11 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         && (totalManaValueBound == null || card.getManaValue() <= totalManaValueBound)
                         && (!putsOntoBattlefield(effect.destination())
                         || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)));
-        List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
+        int topLibraryCardLimit = topLibraryCardLimit(deck.size(), effect.topLibraryFractionDenominator());
+        List<Card> searchableCards = topLibraryCardLimit > 0
+                ? deck.subList(0, topLibraryCardLimit)
+                : deck;
+        List<Card> matchingCards = searchableCards.stream().filter(deckFilter).toList();
 
         String baseDesc = describe(filter, boundValue, bound);
         if (totalManaValueBound != null) {
@@ -161,6 +165,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .canFailToFind(true)
                                 .destination(destination)
                                 .topLibraryPosition(effect.topLibraryPosition())
+                                .topLibraryCardLimit(topLibraryCardLimit)
                                 .filterPredicate(restricted ? searchFilter : null)
                                 .requireDifferentNames(effect.requireDifferentNames())
                                 .manaValueBound(boundValue, bound != null && bound.exact())
@@ -204,6 +209,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .canFailToFind(restricted)
                         .destination(destination)
                         .topLibraryPosition(effect.topLibraryPosition())
+                        .topLibraryCardLimit(topLibraryCardLimit)
                         .filterPredicate(restricted ? searchFilter : null)
                         .requireDifferentNames(effect.requireDifferentNames())
                         .manaValueBound(boundValue, bound != null && bound.exact())
@@ -266,6 +272,13 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                     BATTLEFIELD_UNDER_SEARCHER -> true;
             default -> false;
         };
+    }
+
+    private int topLibraryCardLimit(int librarySize, int denominator) {
+        if (denominator <= 0) {
+            return 0;
+        }
+        return Math.min(librarySize, (librarySize + denominator - 1) / denominator);
     }
 
     /** Human description of the search target, e.g. "creature card with mana value 3 or less". */

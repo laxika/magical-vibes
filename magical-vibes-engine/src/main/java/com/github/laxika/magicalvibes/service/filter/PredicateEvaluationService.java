@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsController
 import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceIntensityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
@@ -193,6 +194,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmon
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasMorphAbilityPredicate;
@@ -753,6 +755,9 @@ public class PredicateEvaluationService {
                 yield sourcePermanent != null
                         && card.getManaValue() <= sourcePermanent.getCounterCount(p.counterType());
             }
+            case CardManaValueEqualsSourceIntensityPredicate ignored ->
+                    gameData != null && sourceCardId != null
+                            && card.getManaValue() == gameData.getCardIntensity(sourceCardId);
             case CardManaValueGreaterThanSourceManaValuePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -2737,6 +2742,24 @@ public class PredicateEvaluationService {
                                 .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
                                 .min().orElse(0));
                 yield gameQueryService.getEffectivePower(gameData, permanent) == minPower;
+            }
+            case PermanentHasLeastToughnessAmongOpponentCreaturesPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null
+                        || !gameQueryService.isCreature(gameData, permanent)) {
+                    yield false;
+                }
+                UUID permanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (permanentControllerId == null || permanentControllerId.equals(sourceControllerId)) {
+                    yield false;
+                }
+                int leastToughness = gameData.playerBattlefields.entrySet().stream()
+                        .filter(entry -> !entry.getKey().equals(sourceControllerId))
+                        .flatMap(entry -> entry.getValue().stream())
+                        .filter(candidate -> gameQueryService.isCreature(gameData, candidate))
+                        .mapToInt(candidate -> gameQueryService.getEffectiveToughness(gameData, candidate))
+                        .min()
+                        .orElse(Integer.MAX_VALUE);
+                yield gameQueryService.getEffectiveToughness(gameData, permanent) == leastToughness;
             }
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) yield false;

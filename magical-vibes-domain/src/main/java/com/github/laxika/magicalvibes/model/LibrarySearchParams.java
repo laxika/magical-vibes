@@ -30,6 +30,7 @@ public record LibrarySearchParams(
         String prompt,
         LibrarySearchDestination destination,
         int topLibraryPosition,
+        int topLibraryCardLimit,
         Integer discoverValue,
         Set<CardType> filterCardTypes,
         List<Card> accumulatedCards,
@@ -90,7 +91,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCards(List<Card> newCards) {
         return new LibrarySearchParams(playerId, decisionPlayerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
@@ -106,7 +107,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
@@ -122,7 +123,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withRemainingCount(int count) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 count, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -137,7 +138,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withDecisionPlayerId(UUID decisionPlayerId) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -152,7 +153,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withExcludedCardNames(List<String> names) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, names, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -181,6 +182,7 @@ public record LibrarySearchParams(
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
         private int topLibraryPosition;
+        private int topLibraryCardLimit;
         private Integer discoverValue;
         private Set<CardType> filterCardTypes;
         private List<Card> accumulatedCards = List.of();
@@ -294,6 +296,11 @@ public record LibrarySearchParams(
 
         public Builder topLibraryPosition(int topLibraryPosition) {
             this.topLibraryPosition = topLibraryPosition;
+            return this;
+        }
+
+        public Builder topLibraryCardLimit(int topLibraryCardLimit) {
+            this.topLibraryCardLimit = topLibraryCardLimit;
             return this;
         }
 
@@ -498,7 +505,7 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, discoverValue, filterCardTypes,
+                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     battlefieldControllerId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,

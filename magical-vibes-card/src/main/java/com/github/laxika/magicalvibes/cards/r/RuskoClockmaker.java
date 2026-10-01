@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MB2", collectorNumber = "263")
+@CardRegistration(set = "YBRO", collectorNumber = "24")
 public class RuskoClockmaker extends Card {
 
     public RuskoClockmaker() {

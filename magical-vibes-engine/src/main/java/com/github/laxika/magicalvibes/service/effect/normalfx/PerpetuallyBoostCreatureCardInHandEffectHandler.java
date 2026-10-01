@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 public class PerpetuallyBoostCreatureCardInHandEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +36,8 @@ public class PerpetuallyBoostCreatureCardInHandEffectHandler implements NormalEf
         }
 
         List<Integer> creatureIndices = IntStream.range(0, hand.size())
-                .filter(index -> hand.get(index).hasType(CardType.CREATURE))
+                .filter(index -> predicateEvaluationService.matchesCardPredicate(
+                        hand.get(index), boost.cardFilter(), null, gameData, entry.getControllerId()))
                 .boxed()
                 .toList();
         if (creatureIndices.isEmpty()) {
@@ -44,6 +46,6 @@ public class PerpetuallyBoostCreatureCardInHandEffectHandler implements NormalEf
 
         playerInputService.beginPerpetualCreatureCardChoice(
                 gameData, entry.getControllerId(), creatureIndices,
-                "Choose a creature card in your hand.", boost.powerBoost(), boost.keywords());
+                "Choose a matching creature card in your hand.", boost.powerBoost(), boost.keywords());
     }
 }
