@@ -21,6 +21,7 @@ class PearlCollectorTest extends BaseCardTest {
     @DisplayName("Conjures Mox Pearl after gaining at least four life this turn")
     void conjuresMoxPearlAfterGainingFourLife() {
         addPearlCollector();
+        harness.setHand(player1, java.util.List.of());
         gd.lifeGainedThisTurn.put(player1.getId(), 4);
 
         enterPostcombatMain();
@@ -47,18 +48,19 @@ class PearlCollectorTest extends BaseCardTest {
     @DisplayName("The conjure trigger works only once for the permanent")
     void conjureTriggersOnlyOnce() {
         addPearlCollector();
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         gd.lifeGainedThisTurn.put(player1.getId(), 4);
 
         enterPostcombatMain();
-        harness.passBothPriorities();
-        int handSizeAfterFirstTrigger = gd.playerHands.get(player1.getId()).size();
+        resolveAllTriggers();
 
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         gd.lifeGainedThisTurn.put(player1.getId(), 4);
         enterPostcombatMain();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterFirstTrigger);
+        assertThat(gd.playerHands.get(player1.getId())).filteredOn(Card::getName, "Mox Pearl").hasSize(1);
     }
 
     @Test
