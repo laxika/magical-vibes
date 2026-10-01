@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "191")
+@CardRegistration(set = "BLC", collectorNumber = "99")
 public class GarrukCursedHuntsman extends Card {
 
     private static final String EMBLEM_TEXT = "Creatures you control get +3/+3 and have trample.";

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,6 +30,31 @@ class GhorClanBloodscaleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability cannot be activated without green mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent bloodscale = addReadyBloodscale(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(bloodscale.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activating the ability does not tap Ghor-Clan Bloodscale")
+    void activationDoesNotTapSource() {
+        Permanent bloodscale = addReadyBloodscale(player1);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bloodscale.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The ability can be activated only once each turn")
     void cannotActivateMoreThanOnceEachTurn() {
         addReadyBloodscale(player1);
@@ -45,6 +71,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn and the ability becomes available again")
     void boostWearsOffAndActivationResets() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent bloodscale = addReadyBloodscale(player1);
         addAbilityMana(player1);
 
@@ -53,13 +81,11 @@ class GhorClanBloodscaleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(bloodscale.getPowerModifier()).isEqualTo(0);
         assertThat(bloodscale.getToughnessModifier()).isEqualTo(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

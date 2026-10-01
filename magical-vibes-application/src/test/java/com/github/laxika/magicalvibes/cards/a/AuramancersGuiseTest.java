@@ -31,13 +31,28 @@ class AuramancersGuiseTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        Permanent guise = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AuramancersGuise)
-                .findFirst()
-                .orElseThrow();
+        Permanent guise = findPermanent(player1, "Auramancer's Guise");
         assertThat(guise.getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Auramancer's Guise counts Auras controlled by either player on an opponent's creature")
+    void countsAurasControlledByEitherPlayerOnOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AuramancersGuise()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent strength = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        strength.setAttachedTo(bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 

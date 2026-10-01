@@ -46,6 +46,9 @@ public enum ManaSpendRestriction {
     /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
     SOURCE_PERMANENT_COLORS,
 
+    /** Choose from the colors previously chosen for the source permanent. */
+    CHOSEN_COLORS,
+
     /** Spendable only to cast spells with the legendary supertype. */
     LEGENDARY_SPELLS,
 

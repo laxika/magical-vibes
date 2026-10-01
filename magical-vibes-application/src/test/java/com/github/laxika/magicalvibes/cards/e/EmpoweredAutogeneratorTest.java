@@ -17,7 +17,7 @@ class EmpoweredAutogeneratorTest extends BaseCardTest {
     @Test
     @DisplayName("Enters tapped")
     void entersTapped() {
-        Permanent generator = harness.addToBattlefieldAndReturn(player1, new EmpoweredAutogenerator());
+        Permanent generator = harness.enterBattlefieldAndReturn(player1, new EmpoweredAutogenerator());
 
         assertThat(generator.isTapped()).isTrue();
     }

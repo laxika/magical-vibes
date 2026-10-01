@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.a.AzoriusGuildmage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,30 +13,28 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RakdosCarnarium.class, Mountain.class})
+@CardUsed({RakdosCarnarium.class, RixMaadiDungeonPalace.class, AzoriusGuildmage.class})
 class RakdosCarnariumTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and returns a chosen land to its owner's hand")
     void entersTappedAndReturnsChosenLand() {
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent rixMaadi = harness.addToBattlefieldAndReturn(player1, new RixMaadiDungeonPalace());
         harness.setHand(player1, List.of(new RakdosCarnarium()));
 
         harness.playLand(player1, 0);
 
-        Permanent carnarium = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof RakdosCarnarium)
-                .findFirst().orElseThrow();
+        Permanent carnarium = findPermanent(player1, "Rakdos Carnarium");
         assertThat(carnarium.isTapped()).isTrue();
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, mountain.getId());
+        harness.handlePermanentChosen(player1, rixMaadi.getId());
 
         harness.assertOnBattlefield(player1, "Rakdos Carnarium");
-        harness.assertInHand(player1, "Mountain");
-        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInHand(player1, "Rix Maadi, Dungeon Palace");
+        harness.assertNotOnBattlefield(player1, "Rix Maadi, Dungeon Palace");
     }
 
     @Test
@@ -47,13 +45,33 @@ class RakdosCarnariumTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent carnarium = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent carnarium = findPermanent(player1, "Rakdos Carnarium");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactly(carnarium.getId());
         harness.handlePermanentChosen(player1, carnarium.getId());
 
         harness.assertNotOnBattlefield(player1, "Rakdos Carnarium");
         harness.assertInHand(player1, "Rakdos Carnarium");
+    }
+
+    @Test
+    @DisplayName("Only offers lands controlled by its controller")
+    void onlyOffersControlledLands() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new RixMaadiDungeonPalace());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new RixMaadiDungeonPalace());
+        Permanent ownNonland = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildmage());
+        harness.setHand(player1, List.of(new RakdosCarnarium()));
+
+        harness.playLand(player1, 0);
+        Permanent carnarium = findPermanent(player1, "Rakdos Carnarium");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(ownLand.getId(), carnarium.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(opponentLand.getId(), ownNonland.getId());
+
+        harness.handlePermanentChosen(player1, ownLand.getId());
     }
 
     @Test

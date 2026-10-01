@@ -18,7 +18,7 @@ class LionheartMaverickTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability gives +1/+2 until end of turn")
     void resolvingAbilityBoostsSelf() {
-        Permanent maverick = addReadyMaverick(player1);
+        Permanent maverick = addCreatureReady(player1, new LionheartMaverick());
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +31,7 @@ class LionheartMaverickTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations give a cumulative boost")
     void repeatedActivationsStack() {
-        Permanent maverick = addReadyMaverick(player1);
+        Permanent maverick = addCreatureReady(player1, new LionheartMaverick());
         addAbilityMana(player1);
         addAbilityMana(player1);
 
@@ -47,7 +47,7 @@ class LionheartMaverickTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
-        Permanent maverick = addReadyMaverick(player1);
+        Permanent maverick = addCreatureReady(player1, new LionheartMaverick());
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -63,8 +63,19 @@ class LionheartMaverickTest extends BaseCardTest {
     @Test
     @DisplayName("The ability requires four generic mana and one white mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyMaverick(player1);
+        addCreatureReady(player1, new LionheartMaverick());
         harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be paid without white mana")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new LionheartMaverick());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -74,12 +85,5 @@ class LionheartMaverickTest extends BaseCardTest {
     private void addAbilityMana(Player player) {
         harness.addMana(player, ManaColor.WHITE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 4);
-    }
-
-    private Permanent addReadyMaverick(Player player) {
-        Permanent permanent = new Permanent(new LionheartMaverick());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

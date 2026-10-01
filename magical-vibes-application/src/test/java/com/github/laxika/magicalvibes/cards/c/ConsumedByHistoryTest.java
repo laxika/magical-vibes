@@ -22,12 +22,15 @@ class ConsumedByHistoryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.addMana(player2, ManaColor.COLORLESS, 5);
         harness.forceActivePlayer(player2);
-        int graveyardIndex = gd.playerGraveyards.get(player2.getId()).indexOf(bears.getCard());
+        int graveyardIndex = java.util.stream.IntStream.range(0, gd.playerGraveyards.get(player2.getId()).size())
+                .filter(index -> gd.playerGraveyards.get(player2.getId()).get(index).getId()
+                        .equals(bears.getCard().getId()))
+                .findFirst().orElseThrow();
         harness.activateGraveyardAbility(player2, graveyardIndex);
         harness.passBothPriorities();
 

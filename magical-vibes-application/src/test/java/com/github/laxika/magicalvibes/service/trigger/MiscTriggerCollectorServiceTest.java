@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1681,5 +1682,24 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("skips a card-conditional trigger when no matching card leaves the graveyard")
+    void skipsCardConditionalTriggerWithoutMatchingCard() {
+        Permanent perm = createPermanent("Oasis of Renewal");
+        var effect = new TriggeringCardConditionalEffect(
+                new CardTypePredicate(CardType.LAND), new DrawCardEffect(1));
+        Card nonland = createCard("Grizzly Bears");
+        when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+                effect, new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(nonland)));
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DomriRade;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +14,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GruulGuildmage.class, Forest.class, ElspethKnightErrant.class, GrizzlyBears.class})
+@CardUsed({GruulGuildmage.class, GruulGuildgate.class, DomriRade.class})
 class GruulGuildmageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a land deals 2 damage to a target player")
     void sacrificesLandAndDamagesPlayer() {
         addReadyGuildmage(player1);
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new GruulGuildgate());
         int lifeBefore = gd.getLife(player2.getId());
 
         addRedAbilityMana();
@@ -30,32 +29,32 @@ class GruulGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Gruul Guildgate");
     }
 
     @Test
     @DisplayName("The first ability can target a planeswalker")
     void damagesTargetPlaneswalker() {
         addReadyGuildmage(player1);
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new GruulGuildgate());
 
-        Permanent planeswalker = new Permanent(new ElspethKnightErrant());
-        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        Permanent planeswalker = new Permanent(new DomriRade());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         addRedAbilityMana();
         harness.activateAbility(player1, 0, 0, null, planeswalker.getId());
         harness.passBothPriorities();
 
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        harness.assertInGraveyard(player1, "Forest");
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Gruul Guildgate");
     }
 
     @Test
     @DisplayName("The second ability gives a target creature +2/+2 until end of turn")
     void boostsTargetCreatureUntilEndOfTurn() {
         Permanent guildmage = addReadyGuildmage(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulGuildmage());
         int powerBefore = gqs.getEffectivePower(gd, target);
         int toughnessBefore = gqs.getEffectiveToughness(gd, target);
 
@@ -79,8 +78,8 @@ class GruulGuildmageTest extends BaseCardTest {
     @DisplayName("The first ability cannot target a creature")
     void cannotTargetCreatureWithDamageAbility() {
         addReadyGuildmage(player1);
-        harness.addToBattlefield(player1, new Forest());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GruulGuildgate());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulGuildmage());
 
         addRedAbilityMana();
 
@@ -88,10 +87,19 @@ class GruulGuildmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The first ability cannot be activated without a land to sacrifice")
+    void cannotActivateWithoutLand() {
+        addReadyGuildmage(player1);
+        addRedAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Sacrifice a land");
+    }
+
     private Permanent addReadyGuildmage(Player player) {
-        Permanent perm = new Permanent(new GruulGuildmage());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        Permanent perm = addCreatureReady(player, new GruulGuildmage());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

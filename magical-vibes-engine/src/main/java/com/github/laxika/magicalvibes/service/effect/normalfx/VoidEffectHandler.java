@@ -121,6 +121,7 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
                 .toList();
         boolean discardCausedByOpponent = !targetPlayerId.equals(entry.getControllerId());
         gameData.discardCausedByOpponent = discardCausedByOpponent;
+        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
         for (Card card : matchingCards) {
             if (!hand.remove(card)) {
                 continue;
@@ -144,6 +145,7 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
             }
             triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

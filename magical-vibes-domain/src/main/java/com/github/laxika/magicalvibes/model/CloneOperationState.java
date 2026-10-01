@@ -38,6 +38,7 @@ public class CloneOperationState {
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
+    public List<CardEffect> reflexiveEffects = List.of();
     // Undercover Operative: a shield counter when the copied permanent is controlled by its controller.
     public boolean shieldCounterIfControllerControlsCopiedPermanent;
     public boolean copyColor = true;

@@ -13,13 +13,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gigadrowse.class, GrizzlyBears.class})
+@CardUsed({Gigadrowse.class, GhostWarden.class})
 class GigadrowseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps a target permanent")
     void tapsTargetPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
         castGigadrowse(target, List.of());
 
         harness.passBothPriorities();
@@ -30,7 +30,7 @@ class GigadrowseTest extends BaseCardTest {
     @Test
     @DisplayName("Replicate creates one copy for each replicate payment")
     void replicateCreatesCopiesForEachPayment() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
         castGigadrowse(target, List.of("{U}", "{U}"));
 
         harness.passBothPriorities();
@@ -43,6 +43,23 @@ class GigadrowseTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Replicate copies may choose a new permanent target")
+    void replicateCopyMayTargetAnotherPermanent() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        castGigadrowse(originalTarget, List.of("{U}"));
+
+        harness.passBothPriorities();
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(originalTarget.isTapped()).isTrue();
+        assertThat(copyTarget.isTapped()).isTrue();
     }
 
     @Test

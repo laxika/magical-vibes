@@ -72,8 +72,8 @@ class TezzeretsGatebreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Tezzeret's Gatebreaker");
-        assertThat(ownCreature.isCantBeBlocked()).isTrue();
-        assertThat(opposingCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isFalse();
     }
 
     private void castGatebreaker() {

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AlabasterWall;
-import com.github.laxika.magicalvibes.cards.h.HengeGuardian;
-import com.github.laxika.magicalvibes.cards.h.HengeOfRamos;
-import com.github.laxika.magicalvibes.cards.i.IvoryMask;
-import com.github.laxika.magicalvibes.cards.k.KyrenToy;
+import com.github.laxika.magicalvibes.cards.b.BadMoon;
+import com.github.laxika.magicalvibes.cards.d.Desert;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
+import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,79 +16,79 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Disenchant.class, KyrenToy.class, HengeGuardian.class, IvoryMask.class,
-        AlabasterWall.class, HengeOfRamos.class})
+@CardUsed({Disenchant.class, TormodsCrypt.class, Dodecapod.class, BadMoon.class,
+        Squire.class, Desert.class})
 class DisenchantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvesAndDestroysArtifact() {
-        harness.addToBattlefield(player2, new KyrenToy());
+        harness.addToBattlefield(player2, new TormodsCrypt());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Kyren Toy");
+        UUID targetId = harness.getPermanentId(player2, "Tormod's Crypt");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Kyren Toy");
-        harness.assertInGraveyard(player2, "Kyren Toy");
+        harness.assertNotOnBattlefield(player2, "Tormod's Crypt");
+        harness.assertInGraveyard(player2, "Tormod's Crypt");
     }
 
     @Test
     @DisplayName("Can target an artifact controlled by the caster")
     void resolvesAndDestroysOwnArtifact() {
-        harness.addToBattlefield(player1, new KyrenToy());
+        harness.addToBattlefield(player1, new TormodsCrypt());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Kyren Toy");
+        UUID targetId = harness.getPermanentId(player1, "Tormod's Crypt");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Kyren Toy");
-        harness.assertInGraveyard(player1, "Kyren Toy");
+        harness.assertNotOnBattlefield(player1, "Tormod's Crypt");
+        harness.assertInGraveyard(player1, "Tormod's Crypt");
     }
 
     @Test
     @DisplayName("Resolving destroys target artifact creature")
     void resolvesAndDestroysArtifactCreature() {
-        harness.addToBattlefield(player2, new HengeGuardian());
+        harness.addToBattlefield(player2, new Dodecapod());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Henge Guardian");
+        UUID targetId = harness.getPermanentId(player2, "Dodecapod");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Henge Guardian");
-        harness.assertInGraveyard(player2, "Henge Guardian");
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
+        harness.assertInGraveyard(player2, "Dodecapod");
     }
 
     @Test
     @DisplayName("Resolving destroys target enchantment")
     void resolvesAndDestroysEnchantment() {
-        harness.addToBattlefield(player2, new IvoryMask());
+        harness.addToBattlefield(player2, new BadMoon());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Ivory Mask");
+        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Ivory Mask");
-        harness.assertInGraveyard(player2, "Ivory Mask");
+        harness.assertNotOnBattlefield(player2, "Bad Moon");
+        harness.assertInGraveyard(player2, "Bad Moon");
     }
 
     @Test
     @DisplayName("Cannot target creature with Disenchant")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new AlabasterWall());
+        harness.addToBattlefield(player2, new Squire());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID creatureId = harness.getPermanentId(player2, "Alabaster Wall");
+        UUID creatureId = harness.getPermanentId(player2, "Squire");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -96,12 +96,12 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target land with Disenchant")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new HengeOfRamos());
+        harness.addToBattlefield(player2, new Desert());
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID landId = harness.getPermanentId(player2, "Henge of Ramos");
+        UUID landId = harness.getPermanentId(player2, "Desert");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
     }

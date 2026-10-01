@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "152")
+@CardRegistration(set = "WHO", collectorNumber = "436")
+@CardRegistration(set = "WHO", collectorNumber = "547")
+@CardRegistration(set = "WHO", collectorNumber = "757")
+@CardRegistration(set = "WHO", collectorNumber = "1027")
+@CardRegistration(set = "WHO", collectorNumber = "1138")
 public class RiverSong extends Card {
 
     public RiverSong() {

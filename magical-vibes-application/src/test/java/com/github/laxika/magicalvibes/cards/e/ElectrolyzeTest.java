@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BatteringWurm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +14,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Electrolyze.class, GrizzlyBears.class})
+@CardUsed({Electrolyze.class, BatteringWurm.class})
 class ElectrolyzeTest extends BaseCardTest {
 
     @Test
     void dealsTwoDamageToOneTargetAndDrawsACard() {
         harness.setHand(player1, List.of(new Electrolyze()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -30,35 +30,89 @@ class ElectrolyzeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Battering Wurm");
     }
 
     @Test
     void dividesDamageAmongTwoTargetsAndDrawsACard() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
         harness.setHand(player1, List.of(new Electrolyze()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player2.getId());
-        harness.castInstant(player1, 0, Map.of(bears.getId(), 1, player2.getId(), 1));
+        harness.castInstant(player1, 0, Map.of(wurm.getId(), 1, player2.getId(), 1));
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
         assertThat(gameData.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(bears.getId())
+                .anyMatch(permanent -> permanent.getId().equals(wurm.getId())
                         && permanent.getMarkedDamage() == 1);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Battering Wurm");
+    }
+
+    @Test
+    void dealsAllTwoDamageToOneCreatureTarget() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, Map.of(wurm.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(wurm.getId())
+                        && permanent.getMarkedDamage() == 2);
+        harness.assertInHand(player1, "Battering Wurm");
+    }
+
+    @Test
+    void requiresAllTwoDamageToBeAssigned() {
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of(player2.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sum to 2");
+    }
+
+    @Test
+    void eachChosenTargetMustReceivePositiveDamage() {
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                Map.of(player2.getId(), 2, player1.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("positive");
+    }
+
+    @Test
+    void requiresAtLeastOneTarget() {
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void cannotChooseMoreThanTwoTargets() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
         harness.setHand(player1, List.of(new Electrolyze()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);

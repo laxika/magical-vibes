@@ -94,6 +94,25 @@ class StackEntryTargetGroupsTest {
     }
 
     @Test
+    void resolvingLaterGroupPreservesSeparatelyStoredPrimaryTarget() {
+        Card card = new Card();
+        card.target(1, 1);
+        card.target(1, 1);
+        UUID spell = UUID.randomUUID();
+        UUID creature = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, CONTROLLER, "test",
+                List.of(), 0, spell, null, java.util.Map.of(), Zone.STACK, List.of(), List.of(creature));
+
+        entry.setTargetIdForEffectResolution(creature);
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(spell);
+        assertThat(entry.targetsForGroup(1)).containsExactly(creature);
+        assertThat(new StackEntry(entry).targetsForGroup(0)).containsExactly(spell);
+        entry.restoreTargetIdAfterEffectResolution(spell);
+        assertThat(entry.getTargetId()).isEqualTo(spell);
+    }
+
+    @Test
     @DisplayName("A separate graveyard target does not shift battlefield target groups")
     void separateGraveyardTargetDoesNotShiftFlatTargetGroups() {
         Card card = new Card();

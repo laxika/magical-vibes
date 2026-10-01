@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "133")
+@CardRegistration(set = "WHO", collectorNumber = "738")
 public class GreatIntelligencesPlan extends Card {
 
     public GreatIntelligencesPlan() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CallOfTheWild;
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GaeasBlessing.class, CallOfTheWild.class, MindStone.class, Millstone.class})
+@CardUsed({GaeasBlessing.class, CallOfTheWild.class, MindStone.class, Millstone.class, FuneralCharm.class})
 class GaeasBlessingTest extends BaseCardTest {
 
     // ===== Casting — graveyard targeting + draw =====
@@ -174,13 +175,10 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(existingGraveyardCard));
 
         // Set up player2's library: Gaea's Blessing on top, another card below
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new GaeasBlessing());
-        gd.playerDecks.get(player2.getId()).add(new MindStone());
+        harness.setLibrary(player2, List.of(new GaeasBlessing(), new MindStone()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Graveyard should be empty — everything was shuffled into library
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -205,13 +203,10 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Player2 has empty graveyard, library has Gaea's Blessing + another card
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new GaeasBlessing());
-        gd.playerDecks.get(player2.getId()).add(new MindStone());
+        harness.setLibrary(player2, List.of(new GaeasBlessing(), new MindStone()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Both milled cards were shuffled back into library (trigger fires after both enter graveyard)
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -219,16 +214,20 @@ class GaeasBlessingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Self-mill trigger does not fire when Gaea's Blessing is discarded (only from library)")
+    @DisplayName("Discarding Gaea's Blessing does not trigger its library ability")
     void noTriggerOnDiscard() {
-        // Gaea's Blessing in graveyard via discard (simulated by setGraveyard) — not milled
-        Card existingCard = new MindStone();
-        harness.setGraveyard(player1, List.of(new GaeasBlessing(), existingCard));
+        int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new FuneralCharm(), new GaeasBlessing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-        // Graveyard should remain intact — no shuffle trigger
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.castInstant(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
         harness.assertInGraveyard(player1, "Gaea's Blessing");
-        harness.assertInGraveyard(player1, "Mind Stone");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySizeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -239,8 +238,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -255,16 +253,13 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Set up player2's library with Gaea's Blessing
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new MindStone());
-        gd.playerDecks.get(player2.getId()).add(new GaeasBlessing());
+        harness.setLibrary(player2, List.of(new MindStone(), new GaeasBlessing()));
 
         // Put something in player2's graveyard
         harness.setGraveyard(player2, List.of(new CallOfTheWild()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Graveyard should be empty — trigger shuffled everything back
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

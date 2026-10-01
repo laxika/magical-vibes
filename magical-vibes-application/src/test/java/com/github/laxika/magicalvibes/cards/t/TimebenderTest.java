@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AncestralVision;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,17 +12,18 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Timebender.class, GrizzlyBears.class, AncestralVision.class})
+@CardUsed({Timebender.class, AncestralVision.class})
 class TimebenderTest extends BaseCardTest {
 
     @Test
     void turningFaceUpRemovesTwoTimeCountersFromTargetPermanent() {
-        Permanent timebender = turnFaceUp();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        turnFaceUp();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Timebender());
         target.setCounterCount(CounterType.TIME, 3);
 
-        chooseModeAndTarget(timebender, "Remove two time counters", target.getId());
+        chooseModeAndTarget("Remove two time counters", target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }
@@ -31,38 +31,60 @@ class TimebenderTest extends BaseCardTest {
     @Test
     void turningFaceUpAddsTwoTimeCountersToTargetPermanentWithTimeCounter() {
         Permanent timebender = prepareFaceDownTimebender();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Timebender());
         target.setCounterCount(CounterType.TIME, 1);
         turnFaceUp(timebender);
 
-        chooseModeAndTarget(timebender, "Put two time counters", target.getId());
+        chooseModeAndTarget("Put two time counters", target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(3);
     }
 
     @Test
     void turningFaceUpCanRemoveTwoTimeCountersFromSuspendedCard() {
-        Permanent timebender = turnFaceUp();
-        AncestralVision target = new AncestralVision();
-        harness.setExile(player1, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        turnFaceUp();
+        AncestralVision target = suspendedAncestralVision(3);
 
-        chooseModeAndTarget(timebender, "Remove two time counters", target.getId());
+        chooseModeAndTarget("Remove two time counters", target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
     }
 
     @Test
-    void removingLastTimeCounterFromSuspendedCardOffersItsSuspendCast() {
-        Permanent timebender = turnFaceUp();
-        AncestralVision target = new AncestralVision();
-        harness.setExile(player1, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 1);
+    void turningFaceUpAddsTwoTimeCountersToSuspendedCard() {
+        Permanent timebender = prepareFaceDownTimebender();
+        AncestralVision target = suspendedAncestralVision(1);
+        turnFaceUp(timebender);
 
-        chooseModeAndTarget(timebender, "Remove two time counters", target.getId());
+        chooseModeAndTarget("Put two time counters", target.getId());
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+    }
+
+    @Test
+    void removingLastTimeCounterFromSuspendedCardOffersItsSuspendCast() {
+        turnFaceUp();
+        AncestralVision target = suspendedAncestralVision(1);
+
+        chooseModeAndTarget("Remove two time counters", target.getId());
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    void cannotTargetExiledCardWithNonSuspendTimeCounters() {
+        turnFaceUp();
+        Timebender target = new Timebender();
+        harness.setExile(player1, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+
+        harness.handleListChoice(player1, "Remove two time counters");
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
     }
 
     private Permanent turnFaceUp() {
@@ -88,7 +110,14 @@ class TimebenderTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(timebender));
     }
 
-    private void chooseModeAndTarget(Permanent timebender, String mode, java.util.UUID targetId) {
+    private AncestralVision suspendedAncestralVision(int timeCounters) {
+        AncestralVision target = new AncestralVision();
+        harness.setExile(player1, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        return target;
+    }
+
+    private void chooseModeAndTarget(String mode, java.util.UUID targetId) {
         harness.handleListChoice(player1, mode);
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();

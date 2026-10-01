@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sparkspitter.class, GrizzlyBears.class})
+@CardUsed({Sparkspitter.class, FomoriNomad.class})
 @DisplayName("Sparkspitter")
 class SparkspitterTest extends BaseCardTest {
 
@@ -25,17 +26,19 @@ class SparkspitterTest extends BaseCardTest {
     void discardingCardCreatesSparkElemental() {
         Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
         sparkspitter.setSummoningSick(false);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FomoriNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
+        assertThat(sparkspitter.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         Permanent token = findPermanent(player1, "Spark Elemental");
         assertThat(token.getEffectivePower()).isEqualTo(3);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
         assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
@@ -46,7 +49,7 @@ class SparkspitterTest extends BaseCardTest {
     void sparkElementalIsSacrificedAtNextEndStep() {
         Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
         sparkspitter.setSummoningSick(false);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FomoriNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -57,7 +60,7 @@ class SparkspitterTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Spark Elemental");
     }
@@ -72,6 +75,23 @@ class SparkspitterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(sparkspitter.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated without red mana")
+    void cannotActivateWithoutRedMana() {
+        Permanent sparkspitter = harness.addToBattlefieldAndReturn(player1, new Sparkspitter());
+        sparkspitter.setSummoningSick(false);
+        harness.setHand(player1, List.of(new FomoriNomad()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sparkspitter.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())).isEmpty();
     }

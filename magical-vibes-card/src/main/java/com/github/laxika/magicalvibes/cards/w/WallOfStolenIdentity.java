@@ -34,9 +34,7 @@ public class WallOfStolenIdentity extends Card {
                 false,
                 null,
                 Set.of(CardSubtype.WALL),
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
-                        DoesntUntapEffect.targetWhileSourceOnBattlefield())),
+                Map.of(),
                 false,
                 false,
                 null,
@@ -50,6 +48,8 @@ public class WallOfStolenIdentity extends Card {
                 null,
                 false,
                 false
-        ));
+        ).withReflexiveEffects(List.of(
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                DoesntUntapEffect.targetWhileSourceControlled())));
     }
 }

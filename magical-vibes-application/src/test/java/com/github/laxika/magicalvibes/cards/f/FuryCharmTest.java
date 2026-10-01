@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuryCharm.class, GrizzlyBears.class, Millstone.class})
+@CardUsed({FuryCharm.class, AncestralVision.class, GrizzlyBears.class, Millstone.class})
 class FuryCharmTest extends BaseCardTest {
 
     @Test
@@ -33,6 +34,14 @@ class FuryCharmTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> cast(0, harness.getPermanentId(player2, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostModeCannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new Millstone());
+
+        assertThatThrownBy(() -> cast(1, harness.getPermanentId(player2, "Millstone")))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -62,6 +71,31 @@ class FuryCharmTest extends BaseCardTest {
         cast(2, target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    void removesTwoTimeCountersFromTargetSuspendedCard() {
+        AncestralVision target = suspendedCard(3);
+
+        cast(2, target.getId());
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+    }
+
+    @Test
+    void cannotTargetExiledCardThatIsNotSuspended() {
+        AncestralVision target = new AncestralVision();
+        harness.setExile(player2, List.of(target));
+
+        assertThatThrownBy(() -> cast(2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private AncestralVision suspendedCard(int timeCounters) {
+        AncestralVision target = new AncestralVision();
+        harness.setExile(player2, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        return target;
     }
 
     private void cast(int mode, java.util.UUID targetId) {

@@ -40,9 +40,7 @@ class GoblinSnowmanTest extends BaseCardTest {
     void nonblockingSnowmanDoesNotTrigger() {
         addCreatureReady(player1, new BalduvianBears());
         Permanent snowman = addCreatureReady(player2, new GoblinSnowman());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
@@ -56,8 +54,7 @@ class GoblinSnowmanTest extends BaseCardTest {
         addCreatureReady(player1, new GoblinSnowman());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -86,12 +83,24 @@ class GoblinSnowmanTest extends BaseCardTest {
         Permanent otherAttacker = addCreatureReady(player1, new BalduvianBears());
         addCreatureReady(player2, new GoblinSnowman());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, otherAttacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tap ability cannot be activated when Goblin Snowman is not blocking")
+    void tapAbilityCannotActivateWithoutBlocking() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player2, new GoblinSnowman());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -129,6 +138,28 @@ class GoblinSnowmanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap ability can target any creature Goblin Snowman is blocking")
+    void tapAbilityDamagesAnyBlockedCreature() {
+        Permanent firstAttacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent secondAttacker = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player2, new GoblinSnowman());
+        harness.addToBattlefield(player2, new BraveTheSands());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
+        ));
+        resolveAllTriggers();
+
+        harness.activateAbility(player2, 0, null, secondAttacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstAttacker.getMarkedDamage()).isZero();
+        assertThat(secondAttacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Blocking multiple creatures triggers Goblin Snowman's block ability only once")
     void blockingMultipleCreaturesTriggersOnlyOnce() {
         Permanent snowman = addCreatureReady(player2, new GoblinSnowman());
@@ -136,8 +167,7 @@ class GoblinSnowmanTest extends BaseCardTest {
         addCreatureReady(player1, new BalduvianBears());
         addCreatureReady(player1, new BalduvianBears());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)
@@ -151,8 +181,7 @@ class GoblinSnowmanTest extends BaseCardTest {
 
     /** Declares player1's first creature as an attacker and blocks it with player2's Goblin Snowman. */
     private void blockWithSnowman() {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 }

@@ -1110,8 +1110,11 @@ public class TriggeredAbilityQueueService {
     }
 
     private boolean hasMultiTargetDeathTrigger(Card card, List<CardEffect> effects) {
+        // A single optional target uses DeathTriggerTarget, which carries the source's last-known
+        // characteristics. Converting it to the ETB queue would lose that snapshot.
         return card.getSpellTargets().stream()
-                .anyMatch(group -> group.getMaxTargets() > 1
+                .anyMatch(group -> (group.getMaxTargets() > 1
+                        || (group.getMinTargets() == 0 && card.getSpellTargets().size() > 1))
                         && effects.stream().anyMatch(effect ->
                         card.isEffectBoundToTargetGroup(effect, group.getIndex())));
     }

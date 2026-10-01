@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.g.GhorClanSavage;
+import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,14 +14,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenedictionOfMoons.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({BenedictionOfMoons.class, GhorClanSavage.class, Mortify.class})
 class BenedictionOfMoonsTest extends BaseCardTest {
 
     @Test
     void gainsLifeAndHauntsTargetCreature() {
         harness.setLife(player1, 10);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new GhorClanSavage());
+        UUID creatureId = harness.getPermanentId(player2, "Ghor-Clan Savage");
         harness.setHand(player1, List.of(new BenedictionOfMoons()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -37,7 +37,7 @@ class BenedictionOfMoonsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Benediction of Moons"));
 
-        destroyWithLightningBolt(creatureId);
+        destroyWithMortify(creatureId);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
@@ -57,13 +57,14 @@ class BenedictionOfMoonsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void destroyWithLightningBolt(UUID targetId) {
+    private void destroyWithMortify(UUID targetId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Mortify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 }

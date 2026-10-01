@@ -103,4 +103,15 @@ class ShadowGuildmageTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Bay Falcon");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLife - 1);
     }
+
+    @Test
+    @DisplayName("The damage ability cannot target a noncreature permanent")
+    void burnRejectsNonCreaturePermanent() {
+        addCreatureReady(player1, new ShadowGuildmage());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

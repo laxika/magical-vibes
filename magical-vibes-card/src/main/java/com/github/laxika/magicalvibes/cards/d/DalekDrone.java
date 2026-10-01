@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "64")
+@CardRegistration(set = "WHO", collectorNumber = "669")
 @CardRegistration(set = "WHO", collectorNumber = "371")
+@CardRegistration(set = "WHO", collectorNumber = "962")
 public class DalekDrone extends Card {
 
     public DalekDrone() {

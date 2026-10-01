@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "SLZ", collectorNumber = "148")
 @CardRegistration(set = "SLZ", collectorNumber = "269")
 @CardRegistration(set = "FIC", collectorNumber = "267")
+@CardRegistration(set = "BLC", collectorNumber = "170")
 public class AnOfferYouCantRefuse extends Card {
 
     public AnOfferYouCantRefuse() {

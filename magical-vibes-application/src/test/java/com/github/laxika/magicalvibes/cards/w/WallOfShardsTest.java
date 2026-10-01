@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,17 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WallOfShards.class, EverlastingTorment.class})
 class WallOfShardsTest extends BaseCardTest {
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
+    private void advanceToNextTurn() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 
     @Test
@@ -51,12 +47,26 @@ class WallOfShardsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        advanceToNextTurn(player2);
+        advanceToNextTurn();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(wall.getCounterCount(CounterType.AGE)).isEqualTo(2);
         harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during the Wall's controller's upkeep")
+    void cumulativeUpkeepTriggersOnlyDuringControllersUpkeep() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfShards());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(wall.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wall);
+        harness.assertLife(player2, 20);
     }
 
     @Test

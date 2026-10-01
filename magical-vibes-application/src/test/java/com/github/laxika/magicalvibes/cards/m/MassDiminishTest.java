@@ -29,12 +29,12 @@ class MassDiminishTest extends BaseCardTest {
 
         castAndResolve(player2.getId());
 
-        assertThat(targetBear.getEffectivePower()).isEqualTo(1);
-        assertThat(targetBear.getEffectiveToughness()).isEqualTo(1);
-        assertThat(targetAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(targetAngel.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetBear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
     }
 
     @Test
@@ -43,20 +43,20 @@ class MassDiminishTest extends BaseCardTest {
         Permanent targetBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castAndResolve(player2.getId());
-        assertThat(targetBear.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(targetBear.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UNTAP);
 
-        assertThat(targetBear.getEffectivePower()).isEqualTo(2);
-        assertThat(targetBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, targetBear)).isEqualTo(2);
     }
 
     @Test
@@ -70,7 +70,7 @@ class MassDiminishTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(targetBear.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Mass Diminish");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Mass Diminish"));
@@ -86,7 +86,7 @@ class MassDiminishTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessageContaining("only target players");
     }
 
     private void castAndResolve(java.util.UUID targetPlayerId) {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentDrawAndUntapEffect;
 
 @CardRegistration(set = "C14", collectorNumber = "15")
+@CardRegistration(set = "BLC", collectorNumber = "168")
 public class IntellectualOffering extends Card {
 
     public IntellectualOffering() {

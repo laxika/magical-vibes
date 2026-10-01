@@ -92,6 +92,43 @@ class MyojinOfToweringMightTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    void rejectsAnIncompleteDistributionBeforeRemovingTheCounter() {
+        Permanent myojin = addReadyMyojin(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(bear.getId(), 7)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sum to 8");
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isOne();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void everyChosenCreatureMustReceiveAtLeastOneCounter() {
+        Permanent myojin = addReadyMyojin(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(first.getId(), 0, second.getId(), 8)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("positive");
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isOne();
+    }
+
+    @Test
+    void mayActivateWithoutChoosingAnyCreatures() {
+        Permanent myojin = addReadyMyojin(player1);
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of());
+        resolveAllTriggers();
+
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+        assertThat(myojin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addReadyMyojin(Player player) {
         Permanent myojin = addCreatureReady(player, new MyojinOfToweringMight());
         myojin.setCounterCount(CounterType.INDESTRUCTIBLE, 1);

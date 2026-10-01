@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.d.DouseInGloom;
+import com.github.laxika.magicalvibes.cards.g.Gristleback;
+import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BelfrySpirit.class, Forest.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({BelfrySpirit.class, DouseInGloom.class, Gristleback.class, GruulSignet.class})
 class BelfrySpiritTest extends BaseCardTest {
 
     @Test
@@ -30,18 +32,20 @@ class BelfrySpiritTest extends BaseCardTest {
         assertThat(bats).allSatisfy(bat -> {
             assertThat(bat.getEffectivePower()).isEqualTo(1);
             assertThat(bat.getEffectiveToughness()).isEqualTo(1);
+            assertThat(bat.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(bat.getCard().getSubtypes()).containsExactly(CardSubtype.BAT);
             assertThat(bat.getCard().getKeywords()).contains(Keyword.FLYING);
         });
     }
 
     @Test
     void hauntingCreatureDeathCreatesTwoMoreBatsAndExilesBelfrySpirit() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new Gristleback());
+        UUID creatureId = harness.getPermanentId(player2, "Gristleback");
         castBelfrySpirit();
 
         UUID belfrySpiritId = harness.getPermanentId(player1, "Belfry Spirit");
-        destroyWithLightningBolt(belfrySpiritId);
+        destroyWithDouseInGloom(belfrySpiritId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, creatureId);
@@ -51,7 +55,7 @@ class BelfrySpiritTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .contains("Belfry Spirit");
 
-        destroyWithLightningBolt(creatureId);
+        destroyWithDouseInGloom(creatureId);
         harness.passBothPriorities();
 
         assertThat(batTokens()).hasSize(4);
@@ -59,40 +63,55 @@ class BelfrySpiritTest extends BaseCardTest {
 
     @Test
     void hauntOnlyOffersCreatureTargets() {
-        harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GruulSignet());
+        harness.addToBattlefield(player2, new Gristleback());
         castBelfrySpirit();
 
         UUID belfrySpiritId = harness.getPermanentId(player1, "Belfry Spirit");
-        UUID forestId = harness.getPermanentId(player2, "Forest");
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        destroyWithLightningBolt(belfrySpiritId);
+        UUID signetId = harness.getPermanentId(player2, "Gruul Signet");
+        UUID creatureId = harness.getPermanentId(player2, "Gristleback");
+        destroyWithDouseInGloom(belfrySpiritId);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(creatureId)
-                .doesNotContain(forestId);
+                .doesNotContain(signetId);
+    }
+
+    @Test
+    void doesNotHauntWhenNoCreatureIsAvailable() {
+        castBelfrySpirit();
+
+        List<UUID> batIds = batTokens().stream().map(Permanent::getId).toList();
+        batIds.forEach(this::destroyWithDouseInGloom);
+        assertThat(batTokens()).isEmpty();
+
+        UUID belfrySpiritId = harness.getPermanentId(player1, "Belfry Spirit");
+        destroyWithDouseInGloom(belfrySpiritId);
+
+        harness.assertInGraveyard(player1, "Belfry Spirit");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Belfry Spirit");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castBelfrySpirit() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new BelfrySpirit()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BelfrySpirit(), "{3}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
-    private void destroyWithLightningBolt(UUID targetId) {
+    private void destroyWithDouseInGloom(UUID targetId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new DouseInGloom()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 
     private List<Permanent> batTokens() {

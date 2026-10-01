@@ -1,45 +1,70 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
+import com.github.laxika.magicalvibes.cards.k.KavuPredator;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sunlance.class, GrizzlyBears.class, WhiteKnight.class})
+@CardUsed({Sunlance.class, CitanulWoodreaders.class, KavuPredator.class, SaltfieldRecluse.class,
+        UrborgTombOfYawgmoth.class})
 class SunlanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 3 damage to a target nonwhite creature")
     void dealsDamageToNonwhiteCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = addCreatureReady(player2, new KavuPredator());
         harness.setHand(player1, List.of(new Sunlance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Kavu Predator");
+        harness.assertInGraveyard(player2, "Kavu Predator");
+    }
+
+    @Test
+    @DisplayName("Deals exactly 3 damage to a nonwhite creature that survives")
+    void dealsExactlyThreeDamageToNonwhiteCreature() {
+        Permanent target = addCreatureReady(player2, new CitanulWoodreaders());
+        harness.setHand(player1, List.of(new Sunlance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Citanul Woodreaders");
     }
 
     @Test
     @DisplayName("Cannot target a white creature")
     void cannotTargetWhiteCreature() {
-        harness.addToBattlefield(player2, new WhiteKnight());
-        UUID targetId = harness.getPermanentId(player2, "White Knight");
+        Permanent target = addCreatureReady(player2, new SaltfieldRecluse());
         harness.setHand(player1, List.of(new Sunlance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonwhite creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UrborgTombOfYawgmoth());
+        harness.setHand(player1, List.of(new Sunlance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonwhite creature");
     }

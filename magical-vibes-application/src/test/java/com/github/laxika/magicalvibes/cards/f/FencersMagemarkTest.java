@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.g.GuardiansMagemark;
+import com.github.laxika.magicalvibes.cards.g.GruulSignet;
+import com.github.laxika.magicalvibes.cards.i.IzzetGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,62 +13,103 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed({FencersMagemark.class, Pacifism.class, GrizzlyBears.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({FencersMagemark.class, GuardiansMagemark.class, GruulSignet.class, IzzetGuildmage.class})
 class FencersMagemarkTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Attaches to a creature when cast")
+    void attachesToCreatureWhenCast() {
+        Permanent creature = addCreatureReady(player1, new IzzetGuildmage());
+        harness.setHand(player1, List.of(new FencersMagemark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof FencersMagemark
+                        && creature.getId().equals(permanent.getAttachedTo()));
+    }
 
     @Test
     @DisplayName("Boosts and grants first strike to each enchanted creature you control")
     void boostsAndGrantsFirstStrikeToEnchantedCreaturesYouControl() {
-        Permanent firstBears = addCreature(player1);
-        Permanent secondBears = addCreature(player1);
-        Permanent unenchantedBears = addCreature(player1);
-        Permanent opponentBears = addCreature(player2);
-        attach(new FencersMagemark(), firstBears, player1);
-        attach(new Pacifism(), secondBears, player1);
+        Permanent firstCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent secondCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent unenchantedCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent opponentCreature = addCreatureReady(player2, new IzzetGuildmage());
+        attach(new FencersMagemark(), firstCreature, player1);
+        attach(new GuardiansMagemark(), secondCreature, player2);
 
-        assertThat(gqs.getEffectivePower(gd, firstBears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, firstBears)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, firstBears, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, secondBears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, secondBears)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, secondBears, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, unenchantedBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, unenchantedBears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, unenchantedBears, Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, unenchantedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, unenchantedCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, unenchantedCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
     @DisplayName("Stops affecting enchanted creatures when Fencer's Magemark leaves the battlefield")
     void stopsAffectingCreaturesWhenRemoved() {
-        Permanent bears = addCreature(player1);
-        Permanent magemark = attach(new FencersMagemark(), bears, player1);
+        Permanent creature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent magemark = attach(new FencersMagemark(), creature, player1);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(magemark);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    private Permanent addCreature(Player controller) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(controller.getId()).add(creature);
-        return creature;
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
+        harness.setHand(player1, List.of(new FencersMagemark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fizzles if its target leaves before resolution")
+    void fizzlesIfTargetRemovedBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new IzzetGuildmage());
+        harness.setHand(player1, List.of(new FencersMagemark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fencer's Magemark");
+        harness.assertNotOnBattlefield(player1, "Fencer's Magemark");
     }
 
     private Permanent attach(Card auraCard, Permanent creature, Player controller) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }

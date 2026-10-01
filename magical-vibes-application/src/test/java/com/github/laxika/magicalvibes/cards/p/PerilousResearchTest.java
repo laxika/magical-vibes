@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +14,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PerilousResearch.class, SnowCoveredForest.class, SnowCoveredIsland.class})
 class PerilousResearchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws two cards before the controller chooses a permanent to sacrifice")
     void drawsThenSacrificesPermanent() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).addFirst(new Forest());
-        gd.playerDecks.get(player1.getId()).addFirst(new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+        harness.addToBattlefield(player1, new SnowCoveredIsland());
+        harness.setLibrary(player1, List.of(new SnowCoveredIsland(), new SnowCoveredForest()));
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.setHand(player1, List.of(new PerilousResearch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        PerilousResearch spell = new PerilousResearch();
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, spell, "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -38,9 +35,27 @@ class PerilousResearchTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest.getCard(), spell);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draws two cards without prompting when the controller has no permanent")
+    void drawsTwoCardsWithoutPermanentToSacrifice() {
+        SnowCoveredIsland drawnIsland = new SnowCoveredIsland();
+        SnowCoveredForest drawnForest = new SnowCoveredForest();
+        harness.setLibrary(player1, List.of(drawnIsland, drawnForest));
+        PerilousResearch spell = new PerilousResearch();
+
+        harness.castFromHand(player1, spell, "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(drawnIsland, drawnForest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
 }

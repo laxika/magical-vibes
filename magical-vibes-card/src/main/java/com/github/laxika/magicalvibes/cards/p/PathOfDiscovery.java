@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 @CardRegistration(set = "FIC", collectorNumber = "312")
 @CardRegistration(set = "MSC", collectorNumber = "179")
 @CardRegistration(set = "MSC", collectorNumber = "386")
+@CardRegistration(set = "BLC", collectorNumber = "231")
 public class PathOfDiscovery extends Card {
 
     public PathOfDiscovery() {

@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 @CardRegistration(set = "WHO", collectorNumber = "5")
 @CardRegistration(set = "WHO", collectorNumber = "346")
+@CardRegistration(set = "WHO", collectorNumber = "535")
+@CardRegistration(set = "WHO", collectorNumber = "610")
+@CardRegistration(set = "WHO", collectorNumber = "937")
+@CardRegistration(set = "WHO", collectorNumber = "1126")
 public class RoseTyler extends Card {
 
     public RoseTyler() {

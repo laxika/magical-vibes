@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Marks a permanent so it doesn't untap during its controller's untap step. The
  * {@link TapUntapScope} selects which permanent is affected and the {@link UntapLockCondition}
  * selects how long the prevention lasts. Scope and condition are tightly coupled, so instances are
- * built through the four static factories below rather than a raw constructor:
+ * built through the static factories below rather than a raw constructor:
  *
  * <ul>
  *   <li>{@link #self()} — {@code SELF}+{@code ALWAYS}: the source permanent never untaps (a
@@ -17,6 +17,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #targetWhileSourceOnBattlefield()} — {@code TARGET}+{@code WHILE_SOURCE_ON_BATTLEFIELD}:
  *       the chosen target doesn't untap while the source stays on the battlefield (Dungeon Geists,
  *       Time of Ice). Resolved on the stack by {@code DoesntUntapEffectHandler}.</li>
+ *   <li>{@link #targetWhileSourceControlled()} — {@code TARGET}+{@code WHILE_SOURCE_CONTROLLED}:
+ *       the chosen target doesn't untap while the ability's controller controls its source
+ *       (Wall of Stolen Identity).</li>
  *   <li>{@link #targetWhileSourceTapped()} — {@code TARGET}+{@code WHILE_SOURCE_TAPPED}: the chosen
  *       target doesn't untap while the source stays tapped (Rust Tick). Resolved on the stack.</li>
  * </ul>
@@ -32,7 +35,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param scope     which permanent's untap is prevented
  * @param condition how long the prevention lasts
  */
-public record DoesntUntapEffect(TapUntapScope scope, UntapLockCondition condition) implements CardEffect {
+public record DoesntUntapEffect(TapUntapScope scope, UntapLockCondition condition) implements PermanentLockEffect {
+
+    @Override
+    public boolean endsWhenSourceControllerChanges() {
+        return condition == UntapLockCondition.WHILE_SOURCE_CONTROLLED;
+    }
+
+    /** Target doesn't untap for as long as the resolving ability's controller controls its source. */
+    public static DoesntUntapEffect targetWhileSourceControlled() {
+        return new DoesntUntapEffect(TapUntapScope.TARGET, UntapLockCondition.WHILE_SOURCE_CONTROLLED);
+    }
 
     public DoesntUntapEffect {
         boolean staticScope = scope == TapUntapScope.SELF || scope == TapUntapScope.ENCHANTED;

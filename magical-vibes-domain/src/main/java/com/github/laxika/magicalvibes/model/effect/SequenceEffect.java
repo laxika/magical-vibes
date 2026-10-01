@@ -117,8 +117,9 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)
-                .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override
@@ -129,8 +130,9 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreaturePermanentAwareEffect aware
                         ? aware.boundToDyingCreature(dyingCreature) : step)
-                .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override
@@ -141,8 +143,9 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         List<CardEffect> boundSteps = steps.stream()
                 .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
                         ? aware.boundToDyingCreatureCounters(counters) : step)
-                .toList();
-        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                  .toList();
+        return boundSteps.equals(steps) ? this
+                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
     }
 
     @Override

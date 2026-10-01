@@ -74,6 +74,17 @@ class UndeadWarchiefTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The cost reduction does not reduce colored mana requirements")
+    void doesNotReduceColoredManaRequirement() {
+        addCreatureReady(player1, new UndeadWarchief());
+        harness.setHand(player1, List.of(new VengefulDead()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Multiple Undead Warchiefs stack their Zombie spell cost reductions")
     void zombieSpellCostReductionsStack() {
         addCreatureReady(player1, new UndeadWarchief());

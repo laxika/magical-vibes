@@ -622,11 +622,8 @@ public class GraveyardService {
             return false;
         }
 
-        UUID effectiveCardControllerId = battlefieldControllerId != null
-                ? battlefieldControllerId
-                : cardControllerId != null ? cardControllerId : ownerId;
         OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
-                gameData, ownerId, effectiveCardControllerId);
+                gameData, ownerId);
         if (opponentExileReplacement != null) {
             if (opponentExileReplacement.effect().addVoidCounter()) {
                 gameData.addToExileWithVoidCounter(ownerId, card,
@@ -1426,9 +1423,9 @@ public class GraveyardService {
     }
 
     private OpponentExileReplacement opponentHasExileReplacementEffect(
-            GameData gameData, UUID ownerId, UUID cardControllerId) {
+            GameData gameData, UUID ownerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(cardControllerId)) continue;
+            if (playerId.equals(ownerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {

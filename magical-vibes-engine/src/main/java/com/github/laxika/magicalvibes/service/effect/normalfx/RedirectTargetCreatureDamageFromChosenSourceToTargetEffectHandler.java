@@ -30,9 +30,9 @@ public class RedirectTargetCreatureDamageFromChosenSourceToTargetEffectHandler i
         List<UUID> redirectTargets = entry.targetsForGroup(redirect.redirectTargetGroup());
         if (protectedTargets.isEmpty() || redirectTargets.isEmpty()) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 

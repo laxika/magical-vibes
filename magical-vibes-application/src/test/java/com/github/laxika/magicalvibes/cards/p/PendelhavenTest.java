@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
-import com.github.laxika.magicalvibes.cards.t.TundraWolves;
-import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
+import com.github.laxika.magicalvibes.cards.f.FlyingMen;
+import com.github.laxika.magicalvibes.cards.s.SpittingSlug;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pendelhaven.class, TundraWolves.class, DurkwoodBoars.class, ZephyrFalcon.class})
+@CardUsed({Pendelhaven.class, FlyingMen.class, SpittingSlug.class})
 class PendelhavenTest extends BaseCardTest {
 
     @Test
@@ -34,38 +33,48 @@ class PendelhavenTest extends BaseCardTest {
     @DisplayName("Ability gives a 1/1 creature +1/+2 until end of turn")
     void boostsOneOneCreature() {
         addPendelhavenReady(player1);
-        Permanent wolves = addCreatureReady(player1, new TundraWolves());
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
 
-        harness.activateAbility(player1, 0, 1, null, wolves.getId());
+        harness.activateAbility(player1, 0, 1, null, flyingMen.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, wolves)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, wolves)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOff() {
         addPendelhavenReady(player1);
-        Permanent wolves = addCreatureReady(player1, new TundraWolves());
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
 
-        harness.activateAbility(player1, 0, 1, null, wolves.getId());
+        harness.activateAbility(player1, 0, 1, null, flyingMen.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, wolves)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, wolves)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Ability cannot target a creature that is not 1/1")
     void cannotTargetNonOneOneCreature() {
         addPendelhavenReady(player1);
-        Permanent boars = addCreatureReady(player1, new DurkwoodBoars());
+        Permanent slug = addCreatureReady(player1, new SpittingSlug());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, boars.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, slug.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a 1/1 creature");
+    }
+
+    @Test
+    @DisplayName("Ability cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent pendelhaven = addPendelhavenReady(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, pendelhaven.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a 1/1 creature");
     }
@@ -74,13 +83,13 @@ class PendelhavenTest extends BaseCardTest {
     @DisplayName("Ability can target an opponent's 1/1 creature")
     void canTargetOpponentCreature() {
         addPendelhavenReady(player1);
-        Permanent falcon = addCreatureReady(player2, new ZephyrFalcon());
+        Permanent flyingMen = addCreatureReady(player2, new FlyingMen());
 
-        harness.activateAbility(player1, 0, 1, null, falcon.getId());
+        harness.activateAbility(player1, 0, 1, null, flyingMen.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(3);
     }
 
     @Test
@@ -88,20 +97,20 @@ class PendelhavenTest extends BaseCardTest {
     void targetMustStillBeOneOneWhenAbilityResolves() {
         Permanent firstPendelhaven = addPendelhavenReady(player1);
         Permanent secondPendelhaven = addPendelhavenReady(player2);
-        Permanent wolves = addCreatureReady(player1, new TundraWolves());
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
 
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(firstPendelhaven),
-                1, null, wolves.getId());
+                1, null, flyingMen.getId());
         harness.passPriority(player1);
         harness.activateAbility(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(secondPendelhaven),
-                1, null, wolves.getId());
+                1, null, flyingMen.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, wolves)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, wolves)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(3);
     }
 
     private Permanent addPendelhavenReady(Player player) {

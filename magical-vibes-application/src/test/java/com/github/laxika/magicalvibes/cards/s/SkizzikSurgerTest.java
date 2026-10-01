@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkizzikSurger.class, Forest.class, Mountain.class})
+@CardUsed({SkizzikSurger.class, DryadArbor.class, Imperiosaur.class})
 class SkizzikSurgerTest extends BaseCardTest {
 
     @Test
     void insufficientLandsSacrificeSkizzikSurger() {
         castSkizzikSurger();
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new DryadArbor());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -33,8 +33,8 @@ class SkizzikSurgerTest extends BaseCardTest {
     @Test
     void acceptingEchoSacrificesTwoLandsAndKeepsSkizzikSurger() {
         castSkizzikSurger();
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player1, new DryadArbor());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -47,14 +47,14 @@ class SkizzikSurgerTest extends BaseCardTest {
     @Test
     void choosingEchoLandsSacrificesExactlyTwo() {
         castSkizzikSurger();
-        harness.addToBattlefield(player1, new Forest());
-        Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new DryadArbor());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstMountain.getId(), secondMountain.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId(), secondLand.getId()));
 
         harness.assertOnBattlefield(player1, "Skizzik Surger");
         assertThat(landCount(player1)).isEqualTo(1);
@@ -63,8 +63,8 @@ class SkizzikSurgerTest extends BaseCardTest {
     @Test
     void decliningEchoSacrificesSkizzikSurger() {
         castSkizzikSurger();
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player1, new DryadArbor());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -78,8 +78,8 @@ class SkizzikSurgerTest extends BaseCardTest {
     @Test
     void echoIsOneShot() {
         castSkizzikSurger();
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player1, new DryadArbor());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -89,6 +89,32 @@ class SkizzikSurgerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Skizzik Surger");
+    }
+
+    @Test
+    void echoOnlyAllowsLandsToBeSacrificed() {
+        castSkizzikSurger();
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player1, new Imperiosaur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Skizzik Surger");
+        harness.assertOnBattlefield(player1, "Imperiosaur");
+        assertThat(landCount(player1)).isZero();
+    }
+
+    @Test
+    void hasteAllowsSkizzikSurgerToAttackTheTurnItEnters() {
+        castSkizzikSurger();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
     }
 
     private void castSkizzikSurger() {

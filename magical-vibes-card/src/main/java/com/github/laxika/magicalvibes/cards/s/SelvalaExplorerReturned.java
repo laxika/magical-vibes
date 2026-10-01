@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "NCC", collectorNumber = "350")
 @CardRegistration(set = "MKC", collectorNumber = "218")
 @CardRegistration(set = "DMC", collectorNumber = "167")
+@CardRegistration(set = "BLC", collectorNumber = "259")
 public class SelvalaExplorerReturned extends Card {
 
     public SelvalaExplorerReturned() {

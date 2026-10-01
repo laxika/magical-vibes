@@ -23,7 +23,7 @@ class RoadOfReturnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(permanent));
         prepareCard(2);
 
-        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0}, List.of(), null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(permanent.getId()));
@@ -39,7 +39,7 @@ class RoadOfReturnTest extends BaseCardTest {
         gd.playerCommandZones.get(player1.getId()).add(commander);
         prepareCard(2);
 
-        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(commander);
@@ -71,7 +71,7 @@ class RoadOfReturnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(nonPermanent, permanent));
         prepareCard(2);
 
-        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0}, List.of(), null);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);

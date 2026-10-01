@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AvalancheRiders;
 import com.github.laxika.magicalvibes.cards.c.ChromeshellCrab;
+import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.p.PsionicBlast;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Willbender.class, PsionicBlast.class, ProdigalSorcerer.class, ChromeshellCrab.class})
+@CardUsed({Willbender.class, PsionicBlast.class, ProdigalSorcerer.class, ChromeshellCrab.class,
+        AvalancheRiders.class, Desert.class})
 class WillbenderTest extends BaseCardTest {
 
     @Test
@@ -50,6 +53,27 @@ class WillbenderTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void turningFaceUpRetargetsSingleTargetTriggeredAbility() {
+        Permanent willbender = castFaceDownWillbender();
+        Permanent originalLand = harness.addToBattlefieldAndReturn(player2, new Desert());
+        Permanent newLand = harness.addToBattlefieldAndReturn(player1, new Desert());
+        AvalancheRiders avalancheRiders = new AvalancheRiders();
+        harness.setHand(player1, List.of(avalancheRiders));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, originalLand.getId());
+        harness.passPriority(player1);
+
+        turnFaceUp(willbender);
+        resolveRetargetingTo(avalancheRiders.getId(), newLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(newLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(originalLand);
     }
 
     @Test

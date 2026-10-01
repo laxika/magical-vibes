@@ -1,45 +1,44 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Delirium;
+import com.github.laxika.magicalvibes.cards.s.Stratozeppelid;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MourningThrull.class, GrizzlyBears.class})
+@CardUsed({MourningThrull.class, Stratozeppelid.class})
 class MourningThrullTest extends BaseCardTest {
 
-    private Permanent addAttacker(MourningThrull card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+    private void addAttacker(MourningThrull card) {
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
     }
 
     private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
     }
 
     @Test
     @DisplayName("Combat damage to a player gains that much life")
     void combatDamageToPlayerGainsLife() {
-        addAttacker(new MourningThrull());
+        MourningThrull thrull = new MourningThrull();
+        thrull.setPower(3);
+        addAttacker(thrull);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
     @Test
@@ -48,11 +47,9 @@ class MourningThrullTest extends BaseCardTest {
         addAttacker(new MourningThrull());
         harness.setLife(player1, 20);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new Stratozeppelid());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
 
@@ -68,14 +65,34 @@ class MourningThrullTest extends BaseCardTest {
         addAttacker(thrull);
         harness.setLife(player1, 20);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new Stratozeppelid());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed(Delirium.class)
+    @DisplayName("Noncombat damage also gains that much life")
+    void noncombatDamageAlsoGainsLife() {
+        Permanent thrull = addCreatureReady(player2, new MourningThrull());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Delirium()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, thrull.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

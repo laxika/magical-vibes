@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "DSC", collectorNumber = "112")
+@CardRegistration(set = "BLC", collectorNumber = "163")
 public class BodyOfKnowledge extends Card {
 
     public BodyOfKnowledge() {

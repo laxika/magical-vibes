@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
+import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
+import com.github.laxika.magicalvibes.cards.r.RonomHulk;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +15,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Counterbalance.class, KjeldoranOutrider.class, RonomHulk.class, RiteOfFlame.class})
 class CounterbalanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the trigger counters an opponent's spell when the mana values match")
     void matchingManaValueCountersSpell() {
         harness.addToBattlefield(player1, new Counterbalance());
-        Card topCard = new GrizzlyBears();
-        GrizzlyBears spell = new GrizzlyBears();
+        Card topCard = new KjeldoranOutrider();
+        KjeldoranOutrider spell = new KjeldoranOutrider();
         harness.setLibrary(player1, List.of(topCard));
-        castOpponentCreature(spell, 2);
+        castOpponentSpell(spell, "{1}{W}");
 
         harness.handleMayAbilityChosen(player1, true);
-        resolveRemainingStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -41,12 +42,12 @@ class CounterbalanceTest extends BaseCardTest {
     @DisplayName("A nonmatching mana value leaves the opponent's spell to resolve")
     void nonmatchingManaValueDoesNotCounterSpell() {
         harness.addToBattlefield(player1, new Counterbalance());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        HillGiant spell = new HillGiant();
-        castOpponentCreature(spell, 5);
+        harness.setLibrary(player1, List.of(new KjeldoranOutrider()));
+        RonomHulk spell = new RonomHulk();
+        castOpponentSpell(spell, "{4}{G}");
 
         harness.handleMayAbilityChosen(player1, true);
-        resolveRemainingStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(spell.getId()));
@@ -56,12 +57,46 @@ class CounterbalanceTest extends BaseCardTest {
     @DisplayName("Declining the trigger leaves the opponent's spell to resolve")
     void decliningDoesNotCounterSpell() {
         harness.addToBattlefield(player1, new Counterbalance());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        GrizzlyBears spell = new GrizzlyBears();
-        castOpponentCreature(spell, 2);
+        harness.setLibrary(player1, List.of(new KjeldoranOutrider()));
+        KjeldoranOutrider spell = new KjeldoranOutrider();
+        castOpponentSpell(spell, "{1}{W}");
 
         harness.handleMayAbilityChosen(player1, false);
-        resolveRemainingStack();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(spell.getId()));
+    }
+
+    @Test
+    @DisplayName("Accepting the trigger counters a matching noncreature spell")
+    void matchingManaValueCountersNoncreatureSpell() {
+        harness.addToBattlefield(player1, new Counterbalance());
+        RiteOfFlame topCard = new RiteOfFlame();
+        RiteOfFlame spell = new RiteOfFlame();
+        harness.setLibrary(player1, List.of(topCard));
+        castOpponentSpell(spell, "{R}");
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(spell.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).singleElement()
+                .extracting(card -> card.getId())
+                .isEqualTo(topCard.getId());
+    }
+
+    @Test
+    @DisplayName("Accepting the trigger does not counter a spell when the library is empty")
+    void emptyLibraryDoesNotCounterSpell() {
+        harness.addToBattlefield(player1, new Counterbalance());
+        harness.setLibrary(player1, List.of());
+        KjeldoranOutrider spell = new KjeldoranOutrider();
+        castOpponentSpell(spell, "{1}{W}");
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(spell.getId()));
@@ -71,38 +106,22 @@ class CounterbalanceTest extends BaseCardTest {
     @DisplayName("The ability does not trigger for a spell cast by its controller")
     void controllerSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new Counterbalance());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KjeldoranOutrider(), "{1}{W}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    private void castOpponentCreature(com.github.laxika.magicalvibes.model.Card card, int mana) {
+    private void castOpponentSpell(Card card, String manaCost) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(card));
-        if (card instanceof HillGiant) {
-            harness.addMana(player2, ManaColor.RED, 1);
-            harness.addMana(player2, ManaColor.COLORLESS, mana - 1);
-        } else {
-            harness.addMana(player2, ManaColor.GREEN, mana);
-        }
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, card, manaCost);
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-    }
-
-    private void resolveRemainingStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
     }
 }

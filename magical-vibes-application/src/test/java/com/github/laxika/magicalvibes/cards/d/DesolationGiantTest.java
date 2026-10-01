@@ -18,12 +18,8 @@ class DesolationGiantTest extends BaseCardTest {
     void withoutKickerDestroysOtherCreaturesIControl() {
         harness.addToBattlefield(player1, new GaeasSkyfolk());
         harness.addToBattlefield(player2, new GaeasSkyfolk());
-        harness.setHand(player1, List.of(new DesolationGiant()));
-        addBaseMana();
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new DesolationGiant(), "{2}{R}{R}");
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Desolation Giant");
         harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
@@ -40,8 +36,7 @@ class DesolationGiantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Desolation Giant");
         harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
@@ -57,8 +52,7 @@ class DesolationGiantTest extends BaseCardTest {
         addBaseMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Battlefield Forge");
         harness.assertOnBattlefield(player2, "Battlefield Forge");
@@ -74,8 +68,7 @@ class DesolationGiantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Battlefield Forge");
         harness.assertOnBattlefield(player2, "Battlefield Forge");

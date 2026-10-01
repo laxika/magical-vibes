@@ -55,14 +55,18 @@ public class ExileOneFromTopCardsFaceDownWithSourceEffectHandler implements Norm
             return;
         }
 
-        String prompt = "Exile one card face down. Put the rest on the bottom of your library in any order.";
+        String prompt = exileEffect.randomOrder()
+                ? "Exile one card face down. Put the rest on the bottom of your library in a random order."
+                : "Exile one card face down. Put the rest on the bottom of your library in any order.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
                         .sourceCards(new ArrayList<>(topCards))
                         .reorderRemainingToBottom(true)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
-                        .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM)
+                        .destination(exileEffect.randomOrder()
+                                ? LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                                : LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM)
                         .sourcePermanentId(sourcePermanentId)
                         .grantExilePlayPermission(false)
                         .allowAnyManaType(false)

@@ -1563,6 +1563,11 @@ public class ConditionEvaluationService {
                 if (targetSpell == null) {
                     yield false;
                 }
+                if (c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate) {
+                    // A card paid from exile is no longer linked to its source; the cost snapshot survives it.
+                    yield ctx.triggeringCard() != null
+                            && ctx.triggeringCard().getName().equals(targetSpell.getCard().getName());
+                }
                 if (c.filter() instanceof StackEntryColorInPredicate colorIn) {
                     yield gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard()).stream()
                             .anyMatch(colorIn.colors()::contains);
@@ -3513,6 +3518,7 @@ public class ConditionEvaluationService {
     private boolean enchantedCreaturePowerAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
         Permanent aura = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (aura == null) aura = ctx.sourcePermanent();
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;
@@ -3893,16 +3899,14 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * True if the source permanent dealt combat damage to an opponent of its current controller this
-     * turn (Whirling Dervish). Reads the per-source combat-damage-to-players tracking and treats any
+     * True if the source permanent dealt damage to an opponent of its current controller this
+     * turn (Whirling Dervish). Reads the per-source damage-to-players tracking and treats any
      * damaged player other than the source's current controller as an opponent.
      */
     private boolean sourceDealtDamageToOpponentThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() == null || ctx.controllerId() == null) return false;
-        Set<UUID> damagedPlayers = gameData.damageRecipientsBySource.get(ctx.sourcePermanentId());
-        if (damagedPlayers == null) return false;
-        return damagedPlayers.stream().anyMatch(playerId -> gameData.playerIds.contains(playerId)
-                && !playerId.equals(ctx.controllerId()));
+        return gameData.orderedPlayerIds.stream().anyMatch(playerId -> !playerId.equals(ctx.controllerId())
+                && gameData.damageDealtBySourceToPlayerThisTurn(ctx.sourcePermanentId(), playerId) > 0);
     }
 
     private boolean didAnyOpponentLoseLifeThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {
@@ -4198,6 +4202,7 @@ public class ConditionEvaluationService {
             case CONTROLLER -> ctx.controllerId();
             case OPPONENT -> gameQueryService.getOpponentId(gameData, ctx.controllerId());
             case TARGET_PLAYER, ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
+            case DYING_CREATURE_CONTROLLER -> ctx.targetId() != null ? ctx.targetId() : ctx.controllerId();
         };
     }
 

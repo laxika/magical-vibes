@@ -63,13 +63,18 @@ both are part of the official rule.
 
 The rules page at <https://magic.wizards.com/en/rules> is scraped for the dated
 `MagicCompRules <date>.txt` link (the URL changes with every release), the text file is split by
-rule number, and the result is written to `mcp/rules-info/cache/comprehensive-rules.json`, which is
-ignored by Git.
+rule number, and the result is written to `~/.magical-vibes-mcp/cache/comprehensive-rules.json`
+(on Windows, `%USERPROFILE%\.magical-vibes-mcp\cache\comprehensive-rules.json`). The directory
+is created on the first cache miss and shared with the card MCP across all MCP clients and
+updated checkouts for the same user. The Java loader's cache remains in the checkout.
 
 The cache is refreshed when it is **older than seven days**. If Wizards is unreachable at that
 point the expired cache is still served, tagged `stale` with the refresh error, since outdated rules
 text beats no rules text. Set `RULES_INFO_CACHE_DIR` to relocate the cache. Concurrent processes
 coordinate through a lock file so they do not download at the same time.
+
+An older checkout's `mcp/rules-info/cache/comprehensive-rules.json` can be copied into the global
+directory without overwriting an existing entry. Restart running MCP clients after updating.
 
 ## Tests
 

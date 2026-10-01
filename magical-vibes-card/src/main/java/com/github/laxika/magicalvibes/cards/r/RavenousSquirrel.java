@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "211")
+@CardRegistration(set = "BLC", collectorNumber = "258")
 public class RavenousSquirrel extends Card {
 
     public RavenousSquirrel() {

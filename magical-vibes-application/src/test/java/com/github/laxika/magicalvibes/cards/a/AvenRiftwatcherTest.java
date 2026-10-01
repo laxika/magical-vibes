@@ -27,8 +27,7 @@ class AvenRiftwatcherTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent riftwatcher = findPermanent(player1, "Aven Riftwatcher");
         assertThat(riftwatcher.getCounterCount(CounterType.TIME)).isEqualTo(3);
@@ -39,19 +38,20 @@ class AvenRiftwatcherTest extends BaseCardTest {
     @DisplayName("Removes a time counter during its controller's upkeep")
     void upkeepRemovesTimeCounter() {
         Permanent riftwatcher = addCreatureReady(player1, new AvenRiftwatcher());
-        riftwatcher.setCounterCount(CounterType.TIME, 1);
+        riftwatcher.setCounterCount(CounterType.TIME, 2);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(riftwatcher.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(riftwatcher.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(riftwatcher);
     }
 
     @Test
-    @DisplayName("Sacrifices itself with no time counters and gains 2 life")
-    void noTimeCountersSacrificesAndGainsLife() {
-        addCreatureReady(player1, new AvenRiftwatcher());
+    @DisplayName("Sacrifices itself when its last time counter is removed and gains 2 life")
+    void lastTimeCounterCausesSacrificeAndGainsLife() {
+        Permanent riftwatcher = addCreatureReady(player1, new AvenRiftwatcher());
+        riftwatcher.setCounterCount(CounterType.TIME, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -60,5 +60,18 @@ class AvenRiftwatcherTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Aven Riftwatcher");
         harness.assertInGraveyard(player1, "Aven Riftwatcher");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice itself when it has no time counters")
+    void noTimeCountersDoesNotSacrifice() {
+        addCreatureReady(player1, new AvenRiftwatcher());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aven Riftwatcher");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }

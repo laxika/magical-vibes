@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentFacesSycoraxCommanderVillainousChoiceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "161")
+@CardRegistration(set = "WHO", collectorNumber = "445")
+@CardRegistration(set = "WHO", collectorNumber = "766")
+@CardRegistration(set = "WHO", collectorNumber = "1036")
 public class SycoraxCommander extends Card {
 
     public SycoraxCommander() {

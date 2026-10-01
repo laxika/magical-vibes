@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeepcavernImp.class, GrizzlyBears.class})
+@CardUsed({DeepcavernImp.class, FomoriNomad.class, DeathRattle.class})
 class DeepcavernImpTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class DeepcavernImpTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Deepcavern Imp");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fomori Nomad");
 
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -46,7 +46,7 @@ class DeepcavernImpTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Deepcavern Imp");
         harness.assertInGraveyard(player1, "Deepcavern Imp");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Fomori Nomad");
     }
 
     @Test
@@ -62,9 +62,42 @@ class DeepcavernImpTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Deepcavern Imp");
     }
 
+    @Test
+    @DisplayName("Echo waits for Deepcavern Imp's controller's next upkeep")
+    void echoTriggersOnlyAtControllersNextUpkeep() {
+        castAndResolveImp(true);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Deepcavern Imp");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Deepcavern Imp");
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield before upkeep removes the echo obligation")
+    void leavingBattlefieldBeforeUpkeepRemovesEchoObligation() {
+        castAndResolveImp(false);
+        harness.setHand(player1, List.of(new DeathRattle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, findPermanent(player1, "Deepcavern Imp").getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Deepcavern Imp");
+    }
+
     private void castAndResolveImp(boolean includeDiscardCard) {
         harness.setHand(player1, includeDiscardCard
-                ? List.of(new DeepcavernImp(), new GrizzlyBears())
+                ? List.of(new DeepcavernImp(), new FomoriNomad())
                 : List.of(new DeepcavernImp()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefiel
 @CardRegistration(set = "C15", collectorNumber = "213")
 @CardRegistration(set = "C21", collectorNumber = "212")
 @CardRegistration(set = "DMC", collectorNumber = "147")
+@CardRegistration(set = "BLC", collectorNumber = "250")
 public class CoilingOracle extends Card {
 
     public CoilingOracle() {

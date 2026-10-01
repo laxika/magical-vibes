@@ -52,7 +52,10 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
                         e.duration().toEffectDuration(), null, entry.getCard().getName());
 
                 if (controlApplied && e.thenEffect() != null) {
-                    int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+                    int effectIndex = entry.getResolvingEffectIndex();
+                    if (effectIndex < 0) {
+                        effectIndex = entry.getEffectsToResolve().indexOf(effect);
+                    }
                     if (effectIndex >= 0) {
                         entry.insertEffectsToResolve(effectIndex + 1, List.of(e.thenEffect()));
                     }

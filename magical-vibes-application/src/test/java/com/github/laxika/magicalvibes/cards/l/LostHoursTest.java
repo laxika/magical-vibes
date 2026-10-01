@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,16 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LostHours.class, Forest.class, GrizzlyBears.class})
+@CardUsed({LostHours.class, ZoeticCavern.class, NessianCourser.class})
 class LostHoursTest extends BaseCardTest {
 
     @Test
     void choosesOnlyNonlandCardAndPutsItThirdFromTop() {
-        Card land = new Forest();
-        Card chosen = new GrizzlyBears();
-        Card top = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card below = new GrizzlyBears();
+        Card land = new ZoeticCavern();
+        Card chosen = new NessianCourser();
+        Card top = new NessianCourser();
+        Card second = new NessianCourser();
+        Card below = new NessianCourser();
         harness.setHand(player2, List.of(land, chosen));
         harness.setLibrary(player2, List.of(top, second, below));
 
@@ -39,8 +39,8 @@ class LostHoursTest extends BaseCardTest {
 
     @Test
     void putsChosenCardOnBottomWhenLibraryHasFewerThanTwoCards() {
-        Card chosen = new GrizzlyBears();
-        Card only = new GrizzlyBears();
+        Card chosen = new NessianCourser();
+        Card only = new NessianCourser();
         harness.setHand(player2, List.of(chosen));
         harness.setLibrary(player2, List.of(only));
 
@@ -51,9 +51,22 @@ class LostHoursTest extends BaseCardTest {
     }
 
     @Test
+    void putsChosenCardOnTopWhenLibraryIsEmpty() {
+        Card chosen = new NessianCourser();
+        harness.setHand(player2, List.of(chosen));
+        harness.setLibrary(player2, List.of());
+
+        castLostHours();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(chosen);
+    }
+
+    @Test
     void doesNothingWhenTargetHasNoNonlandCards() {
-        Card land = new Forest();
-        Card top = new GrizzlyBears();
+        Card land = new ZoeticCavern();
+        Card top = new NessianCourser();
         harness.setHand(player2, List.of(land));
         harness.setLibrary(player2, List.of(top));
 
@@ -68,7 +81,6 @@ class LostHoursTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LostHours()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

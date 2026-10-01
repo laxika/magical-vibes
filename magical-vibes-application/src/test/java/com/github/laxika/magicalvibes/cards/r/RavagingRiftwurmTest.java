@@ -57,6 +57,19 @@ class RavagingRiftwurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not remove a time counter during an opponent's upkeep")
+    void doesNotRemoveTimeCounterDuringOpponentsUpkeep() {
+        Permanent wurm = addCreatureReady(player1, new RavagingRiftwurm());
+        wurm.setCounterCount(CounterType.TIME, 2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Ravaging Riftwurm");
+    }
+
+    @Test
     @DisplayName("Sacrifices itself when its last time counter is removed")
     void sacrificesWhenLastTimeCounterIsRemoved() {
         Permanent wurm = addCreatureReady(player1, new RavagingRiftwurm());

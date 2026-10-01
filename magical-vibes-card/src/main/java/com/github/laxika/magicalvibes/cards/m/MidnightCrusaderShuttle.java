@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "179")
+@CardRegistration(set = "WHO", collectorNumber = "784")
 public class MidnightCrusaderShuttle extends Card {
 
     public MidnightCrusaderShuttle() {

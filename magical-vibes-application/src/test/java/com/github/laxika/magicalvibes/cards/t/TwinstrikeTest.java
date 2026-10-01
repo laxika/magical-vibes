@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,61 +11,90 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Twinstrike.class, GrizzlyBears.class, GiantSpider.class, HillGiant.class, GloriousAnthem.class})
+@CardUsed({Twinstrike.class, AssaultZeppelid.class, SimicRagworm.class, AzoriusSignet.class})
 class TwinstrikeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 2 damage to each target creature when the controller has cards in hand")
     void dealsDamageWithCardsInHand() {
-        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Twinstrike()));
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike(), new Twinstrike()));
         giveMana();
 
-        harness.castInstant(player1, 1, List.of(spider.getId(), giant.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 1, List.of(zeppelid.getId(), ragworm.getId()));
 
-        assertThat(spider.getMarkedDamage()).isEqualTo(2);
-        assertThat(giant.getMarkedDamage()).isEqualTo(2);
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(zeppelid.getMarkedDamage()).isEqualTo(2);
+        assertThat(ragworm.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Assault Zeppelid");
+        harness.assertOnBattlefield(player2, "Simic Ragworm");
     }
 
     @Test
     @DisplayName("Destroys both target creatures with an empty hand")
     void destroysTargetsWithEmptyHand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
         harness.setHand(player1, List.of(new Twinstrike()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(
-                harness.getPermanentId(player2, "Grizzly Bears"),
-                harness.getPermanentId(player2, "Hill Giant")));
+        harness.castAndResolveInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
+        harness.assertInGraveyard(player2, "Simic Ragworm");
+    }
+
+    @Test
+    @DisplayName("Checks hellbent when the spell resolves")
+    void checksHellbentAtResolution() {
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike(), new Twinstrike()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+        harness.setHand(player1, List.of());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
+        harness.assertInGraveyard(player2, "Simic Ragworm");
+    }
+
+    @Test
+    @DisplayName("Resolves against the remaining legal creature target")
+    void resolvesWithOneRemainingLegalTarget() {
+        Permanent zeppelid = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        harness.setHand(player1, List.of(new Twinstrike()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(zeppelid.getId(), ragworm.getId()));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ragworm));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Assault Zeppelid");
     }
 
     @Test
     @DisplayName("Requires exactly two creature targets")
     void rejectsWrongTargetCountAndType() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
         harness.setHand(player1, List.of(new Twinstrike()));
         giveMana();
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bears.getId())))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.addToBattlefield(player2, new GloriousAnthem());
-        UUID anthemId = harness.getPermanentId(player2, "Glorious Anthem");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bears.getId(), anthemId)))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId(), signet.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

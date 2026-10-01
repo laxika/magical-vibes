@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DoomBlade.class, BottleGnomes.class, GrizzlyBears.class, MassOfGhouls.class})
 class DoomBladeTest extends BaseCardTest {
 
     
@@ -26,8 +28,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Doom Blade targeting a nonblack creature puts it on stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -46,10 +47,9 @@ class DoomBladeTest extends BaseCardTest {
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
         // Add a nonblack creature as valid target so spell is playable
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent blackCreature = new Permanent(new MassOfGhouls());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blackCreature);
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -62,8 +62,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an artifact creature (unlike Terror)")
     void canTargetArtifactCreature() {
-        Permanent artifactCreature = new Permanent(new BottleGnomes());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(artifactCreature);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -78,8 +77,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Doom Blade destroys target creature and moves it to graveyard")
     void resolvingDestroysTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -95,8 +93,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Doom Blade fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);

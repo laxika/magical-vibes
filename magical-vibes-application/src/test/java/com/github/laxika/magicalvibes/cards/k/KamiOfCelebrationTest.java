@@ -53,7 +53,7 @@ class KamiOfCelebrationTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castFromExile(player1, topCard.getId());
 
         PendingInteraction.PermanentChoice choice =

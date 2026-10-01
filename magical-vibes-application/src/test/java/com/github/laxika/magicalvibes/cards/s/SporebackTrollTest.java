@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.n.NovijenHeartOfProgress;
+import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SporebackTroll.class, GrizzlyBears.class})
+@CardUsed({SporebackTroll.class, MistralCharger.class, NovijenHeartOfProgress.class, WreckingBall.class})
 class SporebackTrollTest extends BaseCardTest {
 
     @Test
@@ -31,56 +33,153 @@ class SporebackTrollTest extends BaseCardTest {
     void graftMovesCounterOntoEnteringCreature() {
         Permanent troll = castTroll();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent charger = findPermanent(player1, "Mistral Charger");
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may be declined")
+    void graftMayBeDeclined() {
+        Permanent troll = castTroll();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may graft onto an opponent's entering creature")
+    void graftMovesCounterOntoOpponentsCreature() {
+        Permanent troll = castTroll();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player2, "Mistral Charger");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regenerates a target creature with a +1/+1 counter")
     void regeneratesTargetCreatureWithCounter() {
-        addCreatureReady(player1, new SporebackTroll());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castTroll();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, charger.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(charger.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration shields an eligible creature from destruction")
+    void regenerationShieldSavesTargetFromDestruction() {
+        castTroll();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, charger.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new WreckingBall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, charger.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(charger);
+        assertThat(charger.getRegenerationShield()).isZero();
+        assertThat(charger.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot regenerate a creature without a +1/+1 counter")
     void cannotTargetCreatureWithoutCounter() {
-        addCreatureReady(player1, new SporebackTroll());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castTroll();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, charger.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with a +1/+1 counter");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature even if it has a +1/+1 counter")
+    void cannotTargetNoncreatureWithCounter() {
+        castTroll();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature with a +1/+1 counter");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that loses its +1/+1 counter before resolution")
+    void targetMustStillHaveCounterOnResolution() {
+        castTroll();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, charger.getId());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(charger.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can regenerate an opponent's creature with a +1/+1 counter")
+    void canRegenerateOpponentsCreature() {
+        Permanent troll = castTroll();
+        Permanent charger = addCreatureReady(player2, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(charger.getRegenerationShield()).isEqualTo(1);
     }
 
     private Permanent castTroll() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new SporebackTroll()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SporebackTroll(), "{3}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Sporeback Troll");
     }

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -15,9 +17,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
-@CardUsed({MysticSpeculation.class, Forest.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({MysticSpeculation.class, Forest.class, GrizzlyBears.class, Mountain.class, Counterspell.class})
 class MysticSpeculationTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class MysticSpeculationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MysticSpeculation()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -58,7 +59,7 @@ class MysticSpeculationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorceryWithBuyback(player1, 0, (UUID) null);
+        harness.castSorceryWithBuyback(player1, 0, null);
         assertThat(gd.stack.getFirst().isBuyback()).isTrue();
         harness.passBothPriorities();
 
@@ -67,5 +68,42 @@ class MysticSpeculationTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(speculation);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A countered buyback spell goes to its owner's graveyard")
+    void counteredBuybackGoesToGraveyard() {
+        MysticSpeculation speculation = new MysticSpeculation();
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player1, List.of(speculation));
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, speculation.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(speculation);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(speculation);
+    }
+
+    @Test
+    @DisplayName("Buyback requires both additional generic mana")
+    void buybackRequiresAdditionalMana() {
+        MysticSpeculation speculation = new MysticSpeculation();
+        harness.setHand(player1, List.of(speculation));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithBuyback(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(speculation);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }

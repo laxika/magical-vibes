@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeylineOfTheMeek.class, GrizzlyBears.class})
+@CardUsed({LeylineOfTheMeek.class, LionheartMaverick.class})
 class LeylineOfTheMeekTest extends BaseCardTest {
 
     @Test
@@ -35,15 +34,27 @@ class LeylineOfTheMeekTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncreature tokens are unaffected")
+    void doesNotBoostNonCreatureTokens() {
+        harness.addToBattlefield(player1, new LeylineOfTheMeek());
+        harness.addToBattlefield(player1, createTokenCard("Relic Token", CardType.ARTIFACT, 3, 3));
+
+        Permanent relic = findPermanent(player1, "Relic Token");
+
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Non-token creatures are unaffected")
     void doesNotBoostNonTokenCreatures() {
         harness.addToBattlefield(player1, new LeylineOfTheMeek());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LionheartMaverick());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent maverick = findPermanent(player1, "Lionheart Maverick");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, maverick)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, maverick)).isEqualTo(1);
     }
 
     @Test
@@ -57,9 +68,8 @@ class LeylineOfTheMeekTest extends BaseCardTest {
 
         openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), true);
 
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of the Meek"));
+        openingHarness.assertOnBattlefield(openingHarness.getPlayer1(), "Leyline of the Meek");
+        openingHarness.assertNotInHand(openingHarness.getPlayer1(), "Leyline of the Meek");
     }
 
     @Test
@@ -71,18 +81,18 @@ class LeylineOfTheMeekTest extends BaseCardTest {
 
         openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), false);
 
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leyline of the Meek"));
-        assertThat(openingHarness.getGameData().playerHands
-                .get(openingHarness.getPlayer1().getId()))
-                .anyMatch(c -> c.getName().equals("Leyline of the Meek"));
+        openingHarness.assertNotOnBattlefield(openingHarness.getPlayer1(), "Leyline of the Meek");
+        openingHarness.assertInHand(openingHarness.getPlayer1(), "Leyline of the Meek");
     }
 
     private Card createTokenCreature(String name, int power, int toughness) {
+        return createTokenCard(name, CardType.CREATURE, power, toughness);
+    }
+
+    private Card createTokenCard(String name, CardType type, int power, int toughness) {
         Card card = new Card();
         card.setName(name);
-        card.setType(CardType.CREATURE);
+        card.setType(type);
         card.setManaCost("");
         card.setColor(CardColor.WHITE);
         card.setPower(power);

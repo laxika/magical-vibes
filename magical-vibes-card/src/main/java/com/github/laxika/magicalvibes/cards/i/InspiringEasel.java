@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualIncorporationEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,7 +37,7 @@ public class InspiringEasel extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))),
                         "{U}{R}",
-                        new CopyNextInstantOrSorceryCastThisTurnEffect())),
+                        new CopyThisSpellIfConditionEffect(new AllOf(List.of())))),
                 "{T}: Choose an instant or sorcery card in your hand. It perpetually incorporates {U}{R} "
                         + "and gains \"When you cast this spell, copy it. You may choose new targets for the copy.\" "
                         + "Activate only as a sorcery.",

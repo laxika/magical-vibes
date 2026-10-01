@@ -27,7 +27,7 @@ public class NivixAerieOfTheFiremind extends Card {
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        ))
+                        )), true
                 )),
                 "{2}{U}{R}, {T}: Exile the top card of your library. Until your next turn, you may cast it if it's an instant or sorcery spell."
         ));

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IceFangCoatl.class, SnowCoveredForest.class, GrizzlyBears.class, SnowCoveredPlains.class})
+@CardUsed({IceFangCoatl.class, GrizzlyBears.class, SnowCoveredPlains.class})
 class IceFangCoatlTest extends BaseCardTest {
 
     @Test

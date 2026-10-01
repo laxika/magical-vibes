@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "115")
+@CardRegistration(set = "WHO", collectorNumber = "720")
 public class BiggerOnTheInside extends Card {
 
     public BiggerOnTheInside() {
