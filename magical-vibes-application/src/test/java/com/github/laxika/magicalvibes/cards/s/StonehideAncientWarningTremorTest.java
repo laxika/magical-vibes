@@ -26,7 +26,7 @@ class StonehideAncientWarningTremorTest extends BaseCardTest {
         ChardalynDragon secondDragon = new ChardalynDragon();
         harness.setHand(player1, List.of(card, firstDragon, secondDragon));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
 
         harness.castAdventure(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -37,7 +37,7 @@ class StonehideAncientWarningTremorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(harness.countPermanents(player1, "Chardalyn Dragon")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Chardalyn Dragon")).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

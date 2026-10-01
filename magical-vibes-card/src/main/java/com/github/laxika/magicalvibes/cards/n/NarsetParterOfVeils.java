@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1141")
 @CardRegistration(set = "MB2", collectorNumber = "32")
 @CardRegistration(set = "SLD", collectorNumber = "2397")
+@CardRegistration(set = "BLC", collectorNumber = "76")
 public class NarsetParterOfVeils extends Card {
 
     public NarsetParterOfVeils() {

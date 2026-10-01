@@ -129,6 +129,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAdjacentToSourcePred
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
@@ -223,6 +224,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentO
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingRememberedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerOrPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
@@ -1488,6 +1490,10 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && rememberedPlayerId != null
                         && rememberedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingDefendingPlayerPredicate ignored ->
+                    permanent.isAttacking() && filterContext != null
+                            && filterContext.defendingPlayerId() != null
+                            && filterContext.defendingPlayerId().equals(permanent.getAttackTarget());
             case PermanentIsAttackingMonarchPredicate ignored ->
                     permanent.isAttacking() && gameData != null
                             && gameData.monarchPlayerId != null
@@ -1713,6 +1719,19 @@ public class PredicateEvaluationService {
                         ? bonus.basePowerOverride()
                         : permanent.getBasePower();
                 yield basePower == basePowerEqualsPredicate.basePower();
+            }
+            case PermanentBaseToughnessEqualsPredicate baseToughnessEqualsPredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield layered.getBaseToughness() == baseToughnessEqualsPredicate.baseToughness();
+                }
+                if (gameData == null) {
+                    yield permanent.getBaseToughness() == baseToughnessEqualsPredicate.baseToughness();
+                }
+                GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+                int baseToughness = bonus.basePTOverridden()
+                        ? bonus.baseToughnessOverride() : permanent.getBaseToughness();
+                yield baseToughness == baseToughnessEqualsPredicate.baseToughness();
             }
             case PermanentPowerAtMostControlledSubtypeCountPredicate subtypeCountPredicate -> {
                 if (gameData == null || sourceControllerId == null) {
@@ -3236,6 +3255,11 @@ public class PredicateEvaluationService {
                 yield permanent.isAttacking() && rememberedPlayerId != null
                         && rememberedPlayerId.equals(permanent.getAttackTarget());
             }
+            case PermanentIsAttackingDefendingPlayerPredicate ignored -> {
+                UUID defendingPlayerId = context == null ? null : context.defendingPlayerId();
+                yield permanent.isAttacking() && defendingPlayerId != null
+                        && defendingPlayerId.equals(permanent.getAttackTarget());
+            }
             case PermanentIsAttackingMonarchPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield permanent.isAttacking() && gameData != null
@@ -3403,6 +3427,7 @@ public class PredicateEvaluationService {
             case PermanentBasePowerToughnessPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBaseToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentBasePowerEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentBaseToughnessEqualsPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerToughnessTotalAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);

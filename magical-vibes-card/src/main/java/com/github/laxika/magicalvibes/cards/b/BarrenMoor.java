@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C19", collectorNumber = "229")
 @CardRegistration(set = "40K", collectorNumber = "266")
 @CardRegistration(set = "DSC", collectorNumber = "262")
+@CardRegistration(set = "BLC", collectorNumber = "292")
 public class BarrenMoor extends Card {
 
     public BarrenMoor() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "NEO", collectorNumber = "242")
+@CardRegistration(set = "BLC", collectorNumber = "267")
 public class CircuitMender extends Card {
 
     public CircuitMender() {

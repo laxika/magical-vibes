@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "C13", collectorNumber = "186")
+@CardRegistration(set = "BLC", collectorNumber = "87")
 public class DereviEmpyrialTactician extends Card {
 
     public DereviEmpyrialTactician() {

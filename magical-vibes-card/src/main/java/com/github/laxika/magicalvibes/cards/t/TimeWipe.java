@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "DSC", collectorNumber = "237")
 @CardRegistration(set = "TDC", collectorNumber = "308")
 @CardRegistration(set = "DMC", collectorNumber = "173")
+@CardRegistration(set = "BLC", collectorNumber = "262")
 public class TimeWipe extends Card {
 
     public TimeWipe() {

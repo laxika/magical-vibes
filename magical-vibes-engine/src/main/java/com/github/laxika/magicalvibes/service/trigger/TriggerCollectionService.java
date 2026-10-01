@@ -110,7 +110,7 @@ import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -741,12 +741,13 @@ public class TriggerCollectionService {
         }
 
         gameData.expireFloatingEffects(fe ->
-                fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
-                        && castingPlayerId.equals(fe.controllerId())
-                        && fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
-                        && (!reduction.faceDownOnly() || castFaceDown)
+                (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
+                        || fe.duration() == EffectDuration.UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST)
+                        && fe.effect() instanceof NextMatchingSpellCostEffect next
+                        && next.appliesToPlayer(castingPlayerId, fe.controllerId())
+                        && next.appliesToFaceDownCast(castFaceDown)
                         && predicateEvaluationService.matchesCardPredicate(
-                                spellCard, reduction.predicate(), null, gameData, castingPlayerId));
+                                spellCard, next.predicate(), null, gameData, castingPlayerId));
 
         if (spellCard.hasType(CardType.CREATURE)) {
             gameData.expireFloatingEffectsOnCreatureSpellCast();
@@ -1923,6 +1924,34 @@ public class TriggerCollectionService {
             }
         }
         // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
+
+        if (castZone == Zone.HAND && spellCard.hasType(CardType.ENCHANTMENT)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(
+                            EffectSlot.GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry cascadeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
+                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
+                    gameData.stack.add(cascadeTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to enchantment {} cast from hand for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
 
         // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
         // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
@@ -4220,6 +4249,7 @@ public class TriggerCollectionService {
         gameData.recordSacrificedPermanent(sacrificingPlayerId, sacrificedCard);
         checkSacrificeBoonTriggers(gameData, sacrificingPlayerId);
         checkGraveyardAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+        checkExileControllerTokenSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
         if (battlefield != null || !gameData.simultaneousDyingPermanents.isEmpty()) {
             var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
@@ -4279,6 +4309,25 @@ public class TriggerCollectionService {
 
         if (gameData.simultaneousDyingPermanents.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
+        }
+    }
+
+    /** Fires token-sacrifice triggers from face-up cards in the sacrificing player's exile zone. */
+    private void checkExileControllerTokenSacrificedTriggers(GameData gameData,
+                                                              UUID sacrificingPlayerId,
+                                                              Card sacrificedCard) {
+        if (sacrificedCard == null || !sacrificedCard.isToken()) return;
+
+        var context = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
+        for (ExiledCardEntry exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            if (exiledEntry.faceDown() || !sacrificingPlayerId.equals(exiledEntry.ownerId())) continue;
+
+            Card sourceCard = exiledEntry.card();
+            for (CardEffect effect : sourceCard.getEffects(EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)) {
+                registry.dispatch(new TriggerMatchContext(
+                                gameData, null, sacrificingPlayerId, effect, sourceCard),
+                        EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED, effect, context);
+            }
         }
     }
 

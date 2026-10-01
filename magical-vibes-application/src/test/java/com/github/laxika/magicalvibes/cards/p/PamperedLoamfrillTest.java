@@ -51,7 +51,7 @@ class PamperedLoamfrillTest extends BaseCardTest {
 
         Card duplicate = gd.playerDecks.get(player1.getId()).getFirst();
         harness.setHand(player1, List.of());
-        harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

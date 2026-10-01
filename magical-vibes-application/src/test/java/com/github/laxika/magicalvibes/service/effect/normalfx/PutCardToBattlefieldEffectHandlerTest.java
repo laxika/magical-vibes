@@ -38,7 +38,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), eq(List.of(0)), any(),
                 anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(),
                 eq(false), eq(false), eq(0), eq(0), anySet(), isNull(), eq(false), eq(false),
-                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()));
+                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -58,7 +58,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -79,7 +79,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true),
                 isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -100,7 +100,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+                anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -127,7 +127,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), validIndices.capture(), any(), anyBoolean(),
                 anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false),
                 eq(0), eq(0), anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(),
-                isNull(), anySet());
+                isNull(), anySet(), eq(false));
         assertThat(validIndices.getValue()).containsExactly(0);
     }
 
@@ -151,7 +151,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
                 anySet(), isNull(), eq(false), eq(false), isNull(), isNull(),
-                eq(enterTappedAndAttackingIf), isNull(), isNull(), eq(Set.of()));
+                eq(enterTappedAndAttackingIf), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -171,7 +171,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test
@@ -191,7 +191,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
     }
 
     @Test

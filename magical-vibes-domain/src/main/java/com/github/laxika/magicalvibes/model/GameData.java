@@ -1448,6 +1448,14 @@ public class GameData {
     public Integer pendingEachPlayerDrawUpToInitialCount;
     /** Chosen count for the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerMayDrawChosenCount;
+    /** APNAP-ordered players choosing for "each player may draw, then drawers gain life" effects. */
+    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeQueue =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Players who actually drew during the current "may draw, then gain life" resolution. */
+    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeDrawers =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Draw count before the current Kwain-style optional draw instruction. */
+    public Integer pendingEachPlayerMayDrawThenGainLifeInitialCount;
     /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
     public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** The Ring emblem state for players who have been tempted by the Ring. */
@@ -2594,6 +2602,10 @@ public class GameData {
     public final Map<UUID, Map<UUID, Integer>> damageDealtToPermanentsBySourceThisTurn =
             new ConcurrentHashMap<>();
 
+    /** Tracks actual damage dealt to each permanent this turn, grouped by the controller of each damage source. */
+    public final Map<UUID, Map<UUID, Integer>> damageDealtToPermanentsBySourceControllerThisTurn =
+            new ConcurrentHashMap<>();
+
     /** Snapshots the names of damage source objects seen this turn. */
     public final Map<UUID, String> damageSourceNamesThisTurn = new ConcurrentHashMap<>();
 
@@ -2638,17 +2650,37 @@ public class GameData {
         recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName);
     }
 
+    /** Records actual damage dealt to a permanent together with the controller of its source. */
+    public void recordDamageToPermanent(UUID permanentId, int amount, UUID sourceId, String sourceName,
+                                        UUID sourceControllerId) {
+        recordDamageToPermanent(permanentId, amount);
+        recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName, sourceControllerId);
+    }
+
     /** Records the source attribution for actual damage already recorded for a permanent. */
     public void recordDamageToPermanentFromSource(UUID permanentId, int amount, UUID sourceId,
                                                   String sourceName) {
-        if (permanentId == null || amount <= 0 || sourceId == null) {
+        recordDamageToPermanentFromSource(permanentId, amount, sourceId, sourceName, null);
+    }
+
+    /** Records source attribution and source-controller attribution for actual damage. */
+    public void recordDamageToPermanentFromSource(UUID permanentId, int amount, UUID sourceId,
+                                                  String sourceName, UUID sourceControllerId) {
+        if (permanentId == null || amount <= 0) {
             return;
         }
-        damageDealtToPermanentsBySourceThisTurn
-                .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
-                .merge(sourceId, amount, Integer::sum);
-        if (sourceName != null) {
-            damageSourceNamesThisTurn.putIfAbsent(sourceId, sourceName);
+        if (sourceId != null) {
+            damageDealtToPermanentsBySourceThisTurn
+                    .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
+                    .merge(sourceId, amount, Integer::sum);
+            if (sourceName != null) {
+                damageSourceNamesThisTurn.putIfAbsent(sourceId, sourceName);
+            }
+        }
+        if (sourceControllerId != null) {
+            damageDealtToPermanentsBySourceControllerThisTurn
+                    .computeIfAbsent(permanentId, ignored -> new ConcurrentHashMap<>())
+                    .merge(sourceControllerId, amount, Integer::sum);
         }
     }
 
@@ -2697,6 +2729,9 @@ public class GameData {
      *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks source permanents whose once-only triggered ability has already fired. */
+    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
 
     /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
     public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
@@ -6663,6 +6698,9 @@ public class GameData {
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
+        copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
+        copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
+        copy.pendingEachPlayerMayDrawThenGainLifeInitialCount = this.pendingEachPlayerMayDrawThenGainLifeInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
@@ -7121,6 +7159,11 @@ public class GameData {
             sources.putAll(v);
             copy.damageDealtToPermanentsBySourceThisTurn.put(k, sources);
         });
+        this.damageDealtToPermanentsBySourceControllerThisTurn.forEach((k, v) -> {
+            Map<UUID, Integer> controllers = new ConcurrentHashMap<>();
+            controllers.putAll(v);
+            copy.damageDealtToPermanentsBySourceControllerThisTurn.put(k, controllers);
+        });
         copy.damageSourceNamesThisTurn.putAll(this.damageSourceNamesThisTurn);
         copy.controllersOfPermanentsDealtExcessDamageThisTurn.addAll(
                 this.controllersOfPermanentsDealtExcessDamageThisTurn);
@@ -7135,6 +7178,7 @@ public class GameData {
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryPlayPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryPlayPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.onceOnlyTriggersFired.addAll(this.onceOnlyTriggersFired);
         this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
                 copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {

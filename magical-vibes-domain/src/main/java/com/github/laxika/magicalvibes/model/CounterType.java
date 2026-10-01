@@ -86,6 +86,7 @@ public enum CounterType {
     HOPE,
     HUNGER,
     INFLUENCE,
+    INGREDIENT,
     INTENSITY,
     INTERVENTION,
     INSTANT,

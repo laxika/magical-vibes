@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "216")
+@CardRegistration(set = "BLC", collectorNumber = "270")
 public class GhirapurOrrery extends Card {
 
     public GhirapurOrrery() {

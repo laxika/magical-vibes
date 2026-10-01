@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.ArrayList;
@@ -53,11 +54,29 @@ public final class TokenCreationReplacementSupport {
      */
     public static Card replaceCreatureTokenIfApplicable(GameData gameData, UUID controllerId,
                                                          Card tokenCard) {
-        if (!tokenCard.isToken() || !tokenCard.hasType(CardType.CREATURE)
-                || !hasCreatureTokenReplacement(gameData, controllerId)) {
+        if (!tokenCard.isToken()) {
             return tokenCard;
         }
-        return TokenCardFactory.create(DIVINE_VISITATION_TOKEN, 4, 4, tokenCard.getSetCode());
+        Card replacedToken = replaceTokenSubtypeIfApplicable(gameData, controllerId, tokenCard);
+        if (!replacedToken.hasType(CardType.CREATURE)
+                || !hasCreatureTokenReplacement(gameData, controllerId)) {
+            return replacedToken;
+        }
+        return TokenCardFactory.create(DIVINE_VISITATION_TOKEN, 4, 4, replacedToken.getSetCode());
+    }
+
+    /** Applies token-profile replacements before a token permanent is created. */
+    public static CreateTokenEffect replaceTokenSubtypeIfApplicable(GameData gameData,
+                                                                     UUID controllerId,
+                                                                     CreateTokenEffect token) {
+        CreateTokenEffect replaced = token;
+        for (ReplaceTokenSubtypeCreationEffect effect : activeTokenSubtypeReplacements(
+                gameData, controllerId)) {
+            if (replaced.subtypes() != null && replaced.subtypes().contains(effect.sourceSubtype())) {
+                replaced = withEventModifiers(effect.replacementToken(), replaced);
+            }
+        }
+        return replaced;
     }
 
     /** Applies the replacement to a token permanent that was already wrapped in a Permanent. */
@@ -427,6 +446,45 @@ public final class TokenCreationReplacementSupport {
 
     private static boolean hasCreatureTokenReplacement(GameData gameData, UUID controllerId) {
         return hasStaticEffect(gameData, controllerId, ReplaceCreatureTokenCreationEffect.class);
+    }
+
+    private static Card replaceTokenSubtypeIfApplicable(GameData gameData, UUID controllerId,
+                                                         Card tokenCard) {
+        Card replaced = tokenCard;
+        for (ReplaceTokenSubtypeCreationEffect effect : activeTokenSubtypeReplacements(
+                gameData, controllerId)) {
+            if (replaced.getSubtypes() != null
+                    && replaced.getSubtypes().contains(effect.sourceSubtype())) {
+                CreateTokenEffect replacement = effect.replacementToken();
+                replaced = TokenCardFactory.create(
+                        replacement,
+                        replacement.tokenPower(),
+                        replacement.tokenToughness(),
+                        replaced.getSetCode());
+            }
+        }
+        return replaced;
+    }
+
+    private static List<ReplaceTokenSubtypeCreationEffect> activeTokenSubtypeReplacements(
+            GameData gameData, UUID controllerId) {
+        List<ReplaceTokenSubtypeCreationEffect> replacements = new ArrayList<>();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            int sourceLevel = permanent.getCounterCount(CounterType.LEVEL);
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ReplaceTokenSubtypeCreationEffect replacement
+                        && sourceLevel >= replacement.minimumSourceLevel()
+                        && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    replacements.add(replacement);
+                }
+            }
+        }
+        replacements.sort(java.util.Comparator.comparingInt(
+                ReplaceTokenSubtypeCreationEffect::minimumSourceLevel));
+        return replacements;
     }
 
     private static boolean hasStaticEffect(GameData gameData, UUID controllerId,

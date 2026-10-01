@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "221")
+@CardRegistration(set = "BLC", collectorNumber = "261")
 public class SkyfisherSpider extends Card {
 
     public SkyfisherSpider() {

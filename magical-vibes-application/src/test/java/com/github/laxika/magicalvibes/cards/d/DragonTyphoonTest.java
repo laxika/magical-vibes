@@ -37,12 +37,12 @@ class DragonTyphoonTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.allCards()).hasSize(3);
+        assertThat(choice.cards()).hasSize(3);
 
-        Card drafted = choice.allCards().getFirst();
+        Card drafted = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
         resolveAllTriggers();
 
@@ -54,12 +54,13 @@ class DragonTyphoonTest extends BaseCardTest {
     void doesNotTriggerForNonDragonCreatureSpells() {
         harness.addToBattlefield(player1, new DragonTyphoon());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
                 .isNull();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }

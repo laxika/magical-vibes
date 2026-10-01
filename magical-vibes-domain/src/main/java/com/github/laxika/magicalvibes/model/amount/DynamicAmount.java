@@ -101,6 +101,7 @@ public sealed interface DynamicAmount permits
         DamageDealtToOpponentsThisTurn,
         NoncombatDamageDealtToOpponentsThisTurn,
         DamageDealtToSourceThisTurn,
+        DamageDealtToSourceByControllerThisTurn,
         DamageDealtToTargetPermanentThisTurn,
         GreatestDamageDealtBySourceThisTurn,
         DamageDealtToSourcePermanentBySourceNameThisTurn,

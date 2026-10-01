@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -34,17 +35,24 @@ class SongOfSeasonsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        Card soughtMountain = gd.playerHands.get(player1.getId()).getFirst();
+        assertThat(soughtMountain.getSubtypes()).contains(CardSubtype.MOUNTAIN);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class);
+        Card soughtForest = gd.playerHands.get(player1.getId()).getFirst();
+        assertThat(soughtForest.getSubtypes()).contains(CardSubtype.FOREST);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(permanent -> permanent.getCard()))
-                .containsExactly(mountain);
+                .containsExactly(soughtMountain);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(taiga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(soughtForest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(
+                List.of(mountain, forest, taiga).stream()
+                        .filter(card -> !card.equals(soughtMountain) && !card.equals(soughtForest))
+                        .toList());
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

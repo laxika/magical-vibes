@@ -206,7 +206,8 @@ public class PlayerInteractionSupport {
                 effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
                 returnExiledSourceCardId, effect.returnToHandAtEndStep(), effect.cloaked(),
                 thenEffect, thenCondition, effect.enterTappedAndAttackingIf(), blockingAttackerId,
-                sourcePermanentId, effect.untapSourceIfEnteredCardHasAnySubtype());
+                sourcePermanentId, effect.untapSourceIfEnteredCardHasAnySubtype(),
+                effect.suppressesTriggeringPermanentEntry());
 
     }
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,

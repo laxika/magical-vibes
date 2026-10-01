@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.s.SiegeRhino;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,8 +44,7 @@ class CallTheCrashTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(card.getId(), player1.getId(), 2));
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
     }
 
     private void addManaForSpell() {

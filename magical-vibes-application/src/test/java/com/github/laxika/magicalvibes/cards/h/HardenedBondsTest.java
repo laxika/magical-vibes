@@ -60,7 +60,7 @@ class HardenedBondsTest extends BaseCardTest {
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
         Card sought = hand.get(0);
-        assertThat(List.of(firstSought, secondSought)).contains(sought);
+        assertThat(List.<Card>of(firstSought, secondSought)).contains(sought);
         Card remaining = sought.getId().equals(firstSought.getId()) ? secondSought : firstSought;
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
     }

@@ -634,6 +634,8 @@ public class Permanent {
     @Setter private Zone castFromZone;
     /** Zone this permanent entered the battlefield from, when known. */
     @Setter private Zone enteredFromZone;
+    /** Source permanent whose ability put this permanent onto the battlefield, when applicable. */
+    @Setter private UUID putOntoBattlefieldWithAbilitySourcePermanentId;
     /** Whether this permanent entered the battlefield by resolving as a spell its controller cast
      *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
      *  NOT cleared by {@link #resetModifiers()}. */
@@ -989,6 +991,7 @@ public class Permanent {
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.enteredFromZone = source.enteredFromZone;
+        this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;

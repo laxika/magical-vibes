@@ -26,7 +26,7 @@ class CunningAzurescaleDiviningDiveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "LAND");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest, island);

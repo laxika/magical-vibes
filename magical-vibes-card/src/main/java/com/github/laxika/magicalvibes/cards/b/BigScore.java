@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "SOC", collectorNumber = "237")
 @CardRegistration(set = "TDC", collectorNumber = "206")
 @CardRegistration(set = "OTC", collectorNumber = "155")
+@CardRegistration(set = "BLC", collectorNumber = "193")
 public class BigScore extends Card {
 
     public BigScore() {

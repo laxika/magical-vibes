@@ -3441,6 +3441,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
+                    && destination != GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     && destination != GraveyardChoiceDestination.COPY_ON_ENTER
                     && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
@@ -3892,8 +3893,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           UUID blockingAttackerId, UUID untapSourcePermanentId,
                           java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                           CounterType entryCounterType, int entryCounterCount,
-                          CardPredicate entryCounterCondition)
+                          CardPredicate entryCounterCondition,
+                          boolean markEntryAsPutByTriggeringPermanent)
             implements PendingInteraction, HandChoice {
+    public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                          boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                          String drawAndRepeatLabel, boolean putAnyNumber,
+                          boolean faceDown, int faceDownPower, int faceDownToughness,
+                          java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                          UUID returnSourcePermanentId, CounterType artifactCounterType,
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
+                          CardPredicate enterTappedAndAttackingIf,
+                          UUID blockingAttackerId, UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                          CounterType entryCounterType, int entryCounterCount,
+                          CardPredicate entryCounterCondition) {
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount,
+                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf,
+                blockingAttackerId, untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype,
+                entryCounterType, entryCounterCount, entryCounterCondition, false);
+    }
+
     public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
                           boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,

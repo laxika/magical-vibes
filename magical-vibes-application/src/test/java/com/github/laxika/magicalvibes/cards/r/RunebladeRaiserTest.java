@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +18,11 @@ class RunebladeRaiserTest extends BaseCardTest {
     @Test
     @DisplayName("Enters tapped and returns to its owner's battlefield when it dies")
     void entersTappedAndReturnsToOwnersBattlefield() {
-        Permanent raiser = harness.addToBattlefieldAndReturn(player1, new RunebladeRaiser());
+        harness.setHand(player1, List.of(new RunebladeRaiser()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent raiser = findPermanent(player1, "Runeblade Raiser");
         Card card = raiser.getOriginalCard();
 
         assertThat(raiser.isTapped()).isTrue();

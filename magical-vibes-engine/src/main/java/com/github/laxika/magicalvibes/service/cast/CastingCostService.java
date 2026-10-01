@@ -1884,13 +1884,18 @@ public class CastingCostService {
                 && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                 && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                 && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
-                && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
             if (altCost.manaValueCapCounter() == null && altCost.manaValueCapAmount() == null) {
                 return true;
             }
             return sourcePermanent != null && manaValueCapSatisfied(gameData, playerId, sourcePermanent, card, altCost);
         }
         return false;
+    }
+
+    private boolean matchesAlternativeCostPredicate(GameData gameData, UUID playerId, Card card,
+                                                    CardPredicate predicate) {
+        return predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, playerId);
     }
 
     private AlternativeCostForSpellsEffect activeAlternativeCost(GameData gameData, CardEffect effect,
@@ -1930,7 +1935,7 @@ public class CastingCostService {
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
                     return new FreeCastSource(null, altCost, null);
                 }
             }
@@ -2002,7 +2007,7 @@ public class CastingCostService {
                         && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                         && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
                         && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
                     if (altCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
@@ -2077,7 +2082,7 @@ public class CastingCostService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect alternative
                         && alternative.nonManaCost() instanceof CollectEvidenceCost collectEvidence
-                        && predicateEvaluationService.matchesCardPredicate(card, alternative.filter(), null)) {
+                        && matchesAlternativeCostPredicate(gameData, playerId, card, alternative.filter())) {
                     return collectEvidence;
                 }
             }

@@ -50,7 +50,7 @@ class DraconicFealtyTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(graveyardCard));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorceryWithBehold(player1, 0, player2.getId(), List.of(), List.of(1));
+        harness.castSorceryWithBehold(player1, 0, player2.getId(), List.of(), List.of(), List.of(1));
         harness.passBothPriorities();
 
         harness.handleCardChosen(player2, 1);

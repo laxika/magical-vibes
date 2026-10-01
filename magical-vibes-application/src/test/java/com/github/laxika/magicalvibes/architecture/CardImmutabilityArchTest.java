@@ -110,6 +110,8 @@ class CardImmutabilityArchTest {
             "MayCastHandlerService", // evaluates suspend cost on a fresh runtime copy
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
+            "ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffectHandler", // decorates a fresh conjured duplicate
+            "DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler", // grants effects on a fresh runtime copy
             "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
             "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
             "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
