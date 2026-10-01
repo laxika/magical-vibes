@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,13 +21,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CoordinatedBarrage.class, AirElemental.class, ChangelingSentinel.class, FurnaceOfRath.class,
+        GrizzlyBears.class, HillGiant.class})
 class CoordinatedBarrageTest extends BaseCardTest {
 
     /** Puts an attacking creature on player1's battlefield and hands player2 the spell + {W}. */
-    private Permanent setupAttackerAndSpell(Permanent attacker) {
-        attacker.setSummoningSick(false);
+    private Permanent setupAttackerAndSpell(Card attackerCard) {
+        Permanent attacker = addCreatureReady(player1, attackerCard);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -41,7 +44,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent target = setupAttackerAndSpell(new Permanent(new AirElemental()));
+        Permanent target = setupAttackerAndSpell(new AirElemental());
 
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -58,7 +61,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FurnaceOfRath());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent target = setupAttackerAndSpell(new Permanent(new AirElemental()));
+        Permanent target = setupAttackerAndSpell(new AirElemental());
 
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -77,7 +80,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent target = setupAttackerAndSpell(new Permanent(new HillGiant()));
+        Permanent target = setupAttackerAndSpell(new HillGiant());
 
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -92,7 +95,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
     void chosenTypeYouControlNoneDealsZero() {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent target = setupAttackerAndSpell(new Permanent(new AirElemental()));
+        Permanent target = setupAttackerAndSpell(new AirElemental());
 
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -104,11 +107,25 @@ class CoordinatedBarrageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not count matching permanents controlled by an opponent")
+    void doesNotCountOpponentsPermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        Permanent target = setupAttackerAndSpell(new AirElemental());
+
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "BEAR");
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("A Changeling you control counts as the chosen type")
     void changelingCountsAsChosenType() {
-        harness.addToBattlefield(player2, new AvianChangeling());
+        harness.addToBattlefield(player2, new ChangelingSentinel());
 
-        Permanent target = setupAttackerAndSpell(new Permanent(new AirElemental()));
+        Permanent target = setupAttackerAndSpell(new AirElemental());
 
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -122,10 +139,8 @@ class CoordinatedBarrageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a player — the damage is declared at a creature, not at any target")
     void cannotTargetAPlayer() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -140,10 +155,8 @@ class CoordinatedBarrageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
@@ -157,5 +170,23 @@ class CoordinatedBarrageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking creature");
+    }
+
+    @Test
+    @DisplayName("Can target a blocking creature")
+    void canTargetBlockingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new CoordinatedBarrage()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "ELEMENTAL");
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
 }
