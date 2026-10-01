@@ -79,7 +79,8 @@ class OodSphereTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0), Map.of(0, player1.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () ->
+                gs.declareAttackers(gd, player2, List.of(0), Map.of(0, player1.getId())));
 
         assertThat(target.isAttacking()).isTrue();
         assertThat(target.isTapped()).isTrue();
@@ -87,11 +88,11 @@ class OodSphereTest extends BaseCardTest {
 
     private void resolveChaosTarget(Permanent target) {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(target.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(target.getId(), player1.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }

@@ -37,7 +37,7 @@ class UNITHeadquartersTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.reveal(gd, true));
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Soldier Token")).hasSize(1)
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1)
                 .allMatch(permanent -> permanent.isTapped());
 
         harness.forceStep(TurnStep.UPKEEP);
@@ -45,7 +45,7 @@ class UNITHeadquartersTest extends BaseCardTest {
                 .handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Soldier Token")).hasSize(2)
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
                 .allMatch(permanent -> permanent.isTapped());
     }
 

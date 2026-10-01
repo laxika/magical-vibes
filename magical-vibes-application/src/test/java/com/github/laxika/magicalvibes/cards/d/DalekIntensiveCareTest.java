@@ -34,6 +34,7 @@ class DalekIntensiveCareTest extends BaseCardTest {
 
     @Test
     void planeswalkAndUpkeepExileOnlyNonDalekCreaturesAndCreateHastyDaleks() {
+        addCreatureReady(player1, new GrizzlyBears());
         gd.planechase.deck.add(new DalekIntensiveCare());
         harness.inMutationScope(() -> planar.reveal(gd, true));
         harness.passBothPriorities();
@@ -45,6 +46,7 @@ class DalekIntensiveCareTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -64,6 +66,7 @@ class DalekIntensiveCareTest extends BaseCardTest {
 
     @Test
     void chaosDalekDealsItsPowerToAnOpposingCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
         gd.planechase.deck.add(new DalekIntensiveCare());
         harness.inMutationScope(() -> planar.reveal(gd, true));
         harness.passBothPriorities();

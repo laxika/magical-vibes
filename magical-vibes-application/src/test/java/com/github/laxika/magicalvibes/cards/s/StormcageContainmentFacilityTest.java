@@ -45,7 +45,7 @@ class StormcageContainmentFacilityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3));
+        harness.castFromGraveyard(player1, 0, List.of(0, 1, 2));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Raptor Hatchling");

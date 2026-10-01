@@ -60,7 +60,9 @@ class TheMoonbaseTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FLYING)).isFalse();
 
-        ownCreature.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
     }
 

@@ -2052,7 +2052,7 @@ public class CombatDamageService {
             checkSameNameCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt);
+                    gameData, creature, attackerId, defenderId, damageDealt, firedBatchedAllyTriggerSources);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkAnyCreatureCombatDamageToOwnerTriggers(

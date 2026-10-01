@@ -1284,6 +1284,21 @@ public class CastingCostService {
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (var floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof ActivatedAbilityCostReducingEffect reducer
+                        && java.util.Objects.equals(floating.affectedPlayerId(), activatingPlayerId)
+                        && reducer.appliesTo(ability, floating.sourcePermanentId(), targetId, targetIds)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        sourcePermanent, reducer.affectedPermanents(),
+                        FilterContext.of(gameData).withSourceControllerId(floating.controllerId())
+                                .withSourcePermanentId(floating.sourcePermanentId()))) {
+                    reduction += evaluateActivatedAbilityCostReduction(
+                            gameData, reducer, null, floating.controllerId());
+                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
+                }
+            }
+        }
         return preventsReductionBelowOneMana
                 ? Math.min(reduction, maximumReductionForMinimumOneMana)
                 : reduction;

@@ -47,8 +47,8 @@ public class NewNewYork extends Card {
                         null, Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
                         EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact)));
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new CreateTokenEffect(
-                1, "Alien", 2, 2, CardColor.WHITE, List.of(CardSubtype.ALIEN), Set.of(), Set.of()));
+        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1),
+                new CreateTokenEffect(
+                        1, "Alien", 2, 2, CardColor.WHITE, List.of(CardSubtype.ALIEN), Set.of(), Set.of())));
     }
 }

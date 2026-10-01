@@ -36,14 +36,12 @@ public class TheCheetahPlanet extends Card {
 
         target(new ControlledPermanentPredicateTargetFilter(
                 nonCatCreature, "Target must be a non-Cat creature you control"))
-                .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new PutCounterOnTargetPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED,
-                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnTargetPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT));
+                .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, SequenceEffect.of(
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)))
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)));
 
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect(
@@ -51,7 +49,8 @@ public class TheCheetahPlanet extends Card {
                                 EffectSlot.ON_ATTACK,
                                 new MayEffect(
                                         SequenceEffect.of(
-                                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                                new UntapPermanentsEffect(TapUntapScope.TARGET,
+                                                        new PermanentControlledByDefendingPlayerPredicate()),
                                                 new MustBlockSourceEffect(
                                                         null,
                                                         new PermanentControlledByDefendingPlayerPredicate())),

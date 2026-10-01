@@ -54,13 +54,14 @@ class ThePyramidOfMarsTest extends BaseCardTest {
         triggerPlaneswalkTo();
         finishSurveil(arrivalTop, arrivalGraveyard);
 
+        harness.setLibrary(player1, List.of(upkeepTop, upkeepGraveyard));
         harness.forceStep(TurnStep.UPKEEP);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleUpkeepTriggers(gd));
         harness.passBothPriorities();
         finishSurveil(upkeepTop, upkeepGraveyard);
 
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(upkeepTop);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(arrivalGraveyard, upkeepGraveyard);
     }

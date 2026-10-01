@@ -41,6 +41,7 @@ class NewNewYorkTest extends BaseCardTest {
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
 
         harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, this::resolveAllTriggers);
 
         assertThat(gqs.getEffectiveCardTypes(gd, ownArtifact))
                 .containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);

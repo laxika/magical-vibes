@@ -14849,6 +14849,18 @@ public class TriggerCollectionService {
             }
             if (matchingEffects.isEmpty()) continue;
 
+            if (matchingEffects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+                for (CardEffect effect : matchingEffects) {
+                    int targetGroup = object.getCard().getEffectTargetIndex(effect);
+                    TargetFilter filter = targetGroup >= 0
+                            ? object.getCard().getSpellTargets().get(targetGroup).getFilter() : null;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            object.getCard(), planarControllerId, List.of(effect),
+                            !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT), filter,
+                            attackerCount, null, null, false, null, null, planarControllerId, object.copy()));
+                }
+                continue;
+            }
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     object.getCard(),
@@ -14872,13 +14884,14 @@ public class TriggerCollectionService {
 
         UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
         UUID planarControllerId = gameData.planechase.controllerId;
-        if (!planarControllerId.equals(attackerControllerId)) {
-            return;
-        }
-
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             List<CardEffect> matchingEffects = new ArrayList<>();
-            for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS)) {
+            List<CardEffect> attackEffects = new ArrayList<>(
+                    object.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS));
+            if (planarControllerId.equals(attackerControllerId)) {
+                attackEffects.addAll(object.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+            }
+            for (CardEffect effect : attackEffects) {
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
                     if (predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(),
                             object.getCard().getId(), gameData, planarControllerId)) {
@@ -14920,7 +14933,8 @@ public class TriggerCollectionService {
 
     /** Collects ally-creature combat-damage triggers from face-up planes. */
     public void checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
-            GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt) {
+            GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt,
+            Set<UUID> firedBatchedSources) {
         if (damageDealt <= 0 || gameData.planechase == null || gameData.planechase.controllerId == null
                 || creature == null || !gameData.planechase.controllerId.equals(attackerId)) {
             return;
@@ -14941,6 +14955,9 @@ public class TriggerCollectionService {
                     continue;
                 }
 
+                if (trigger.oncePerDamageStep() && !firedBatchedSources.add(object.getId())) {
+                    continue;
+                }
                 UUID sourcePermanentId = trigger.bindSourceToDealer() ? creature.getId() : null;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

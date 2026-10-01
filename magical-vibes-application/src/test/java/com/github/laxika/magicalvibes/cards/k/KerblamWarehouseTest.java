@@ -57,7 +57,7 @@ class KerblamWarehouseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstRelic);
         assertThat(gd.getLife(player2.getId())).isIn(20, 17);
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        secondRelic.clearUntilNextTurnEffects();
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(secondRelic), 0, null, player2.getId()))

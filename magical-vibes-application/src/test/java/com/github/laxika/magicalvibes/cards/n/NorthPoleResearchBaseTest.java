@@ -46,6 +46,9 @@ class NorthPoleResearchBaseTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleUpkeepTriggers(gd));
 
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
+                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .processNextSpellTargetTrigger(gd));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(player2.getId());

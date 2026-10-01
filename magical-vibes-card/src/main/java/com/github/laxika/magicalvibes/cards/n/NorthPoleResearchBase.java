@@ -34,11 +34,10 @@ public class NorthPoleResearchBase extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                        new DrawCardForTargetPlayerEffect(1, false, true))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                        new DrawCardForTargetPlayerEffect(1, false, true),
                         new CreateTokenForTargetPlayerEffect(
-                                CreateTokenEffect.ofTreasureToken(1), PlayerRelation.OPPONENT));
+                                CreateTokenEffect.ofTreasureToken(1), PlayerRelation.OPPONENT)));
 
         PermanentPredicate nontokenCreatureOpponent = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

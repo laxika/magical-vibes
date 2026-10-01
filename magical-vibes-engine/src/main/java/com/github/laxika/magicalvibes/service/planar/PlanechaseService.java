@@ -379,7 +379,9 @@ public class PlanechaseService {
             if (effect.targetSpec().targetPredicate() != null) {
                 boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                TargetFilter targetFilter = playerTargetOnly ? null : card.getTargetFilter();
+                int targetGroupIndex = card.getEffectTargetIndex(effect);
+                TargetFilter targetFilter = targetGroupIndex >= 0
+                        ? card.getSpellTargets().get(targetGroupIndex).getFilter() : card.getTargetFilter();
                 game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         card, controller, List.of(effect), playerTargetOnly, targetFilter,
                         0, null, null, false, null, null, controller, object.copy()));
@@ -398,6 +400,12 @@ public class PlanechaseService {
         }
         int targetGroupIndex = card.getEffectTargetIndex(effect);
         if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
+            return false;
+        }
+        // Bare positional groups are consumed by the same effect (for example, the creature
+        // dealing damage and the creature receiving it). They still need separate choices.
+        if (card.getSpellTargets().stream().anyMatch(target -> target.getIndex() != targetGroupIndex
+                && !card.bindsEffectToTargetGroup(target.getIndex()))) {
             return false;
         }
         SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);

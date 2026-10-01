@@ -39,7 +39,7 @@ class SingingTowersOfDarilliumTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         Forest forest = new Forest();
         harness.setHand(player1, List.of(bears, forest));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.foretell(player1, 0);
 
@@ -56,9 +56,9 @@ class SingingTowersOfDarilliumTest extends BaseCardTest {
         GrizzlyBears firstBears = new GrizzlyBears();
         GrizzlyBears secondBears = new GrizzlyBears();
         harness.setHand(player1, List.of(firstBears, secondBears));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.foretell(player1, 0);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.foretell(player1, 0);
         gd.turnNumber++;
 

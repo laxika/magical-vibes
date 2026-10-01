@@ -50,8 +50,10 @@ class CityOfTheDaleksTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(player2.getId()).doesNotContain(player1.getId(), opponentArtifact.getId());
 
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertLife(player2, 18);
     }
@@ -74,6 +76,7 @@ class CityOfTheDaleksTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         assertThat(findPermanents(player1, "Dalek")).isEmpty();
     }
 }

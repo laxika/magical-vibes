@@ -50,7 +50,9 @@ class CoalHillSchoolTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInHand(player1, "Grizzly Bears");
 
-        harness.passPriority(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Spellbook()));
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();

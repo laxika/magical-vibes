@@ -33,7 +33,7 @@ class TheDoctorsChildhoodBarnTest extends BaseCardTest {
 
     @Test
     void creaturesEnterTappedWhileBarnIsFaceUp() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -47,7 +47,7 @@ class TheDoctorsChildhoodBarnTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(target.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(target.getId(), player1.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

@@ -59,6 +59,7 @@ class BowieBaseOneTest extends BaseCardTest {
 
     @Test
     void chaosGivesTargetCreatureIslandwalkUntilEndOfTurn() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));

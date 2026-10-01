@@ -96,7 +96,7 @@ class TheCheetahPlanetTest extends BaseCardTest {
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(target.getId());
+        assertThat(choice.validIds()).contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }

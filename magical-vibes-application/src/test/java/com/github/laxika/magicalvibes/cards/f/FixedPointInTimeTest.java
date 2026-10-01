@@ -39,14 +39,14 @@ class FixedPointInTimeTest extends BaseCardTest {
         gd.planechase.faceUp.add(source);
         gd.planechase.deck.add(chaosPlane);
 
-        planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId());
+        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
                 .isSameAs(chaosPlane);
         int cardsInHand = gd.playerHands.get(player1.getId()).size();
 
-        planar.completeRoll(gd, player1.getId(), PlanarDieResult.PLANESWALKER);
+        harness.inMutationScope(() -> planar.completeRoll(gd, player1.getId(), PlanarDieResult.PLANESWALKER));
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
                 .isSameAs(chaosPlane);
         harness.passBothPriorities();
@@ -61,15 +61,17 @@ class FixedPointInTimeTest extends BaseCardTest {
         gd.planechase.faceUp.add(source);
         gd.planechase.deck.add(chaosPlane());
 
-        planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId());
+        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
         harness.passBothPriorities();
+        gd.turnNumber++;
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
 
         Card nextPlane = new Card();
         nextPlane.setName("Next plane");
         nextPlane.setType(CardType.PLANE);
+        gd.planechase.deck.clear();
         gd.planechase.deck.add(nextPlane);
-        planar.completeRoll(gd, player1.getId(), PlanarDieResult.PLANESWALKER);
+        harness.inMutationScope(() -> planar.completeRoll(gd, player1.getId(), PlanarDieResult.PLANESWALKER));
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
