@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "69")
+@CardRegistration(set = "WHO", collectorNumber = "674")
 public class GenesisOfTheDaleks extends Card {
 
     private static final CreateTokenEffect DALEKS = new CreateTokenEffect(

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.Quicken;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,18 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WitchMawNephilim.class, GrizzlyBears.class})
+@CardUsed({WitchMawNephilim.class, Quicken.class})
 class WitchMawNephilimTest extends BaseCardTest {
 
     @Test
     @DisplayName("May put two +1/+1 counters on itself when its controller casts a spell")
     void mayPutTwoCountersWhenControllerCastsSpell() {
         harness.addToBattlefield(player1, new WitchMawNephilim());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new WitchMawNephilim(), "{G}{W}{U}{B}");
 
         Permanent nephilim = findPermanent(player1, "Witch-Maw Nephilim");
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -42,16 +39,27 @@ class WitchMawNephilimTest extends BaseCardTest {
     @DisplayName("Declining the spell-cast may ability does not add counters")
     void decliningMayDoesNotAddCounters() {
         harness.addToBattlefield(player1, new WitchMawNephilim());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new WitchMawNephilim(), "{G}{W}{U}{B}");
 
         Permanent nephilim = findPermanent(player1, "Witch-Maw Nephilim");
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(nephilim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an opponent casts a spell")
+    void doesNotTriggerWhenOpponentCastsSpell() {
+        Permanent nephilim = addReadyNephilim();
+        harness.castFromHand(player2, new Quicken(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(nephilim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -62,6 +70,19 @@ class WitchMawNephilimTest extends BaseCardTest {
         nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
 
         declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, nephilim, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Checks power when the attack trigger resolves")
+    void checksPowerWhenAttackTriggerResolves() {
+        Permanent nephilim = addReadyNephilim();
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
+
+        declareAttackers(player1, List.of(0));
+        nephilim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, nephilim, Keyword.TRAMPLE)).isTrue();

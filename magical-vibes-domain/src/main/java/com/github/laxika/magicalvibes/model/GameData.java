@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
@@ -1888,6 +1889,10 @@ public class GameData {
         }
     }
 
+    /** A turn-scoped single-use grant to cast one foretold card owned by the player. */
+    public record ForetoldCardCastPermission(UUID playerId, boolean singleUse) {
+    }
+
     /** Targeted cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
@@ -2088,6 +2093,7 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnBeginning = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
      *  Current-turn grants are cleared during cleanup; grants tied to a later play-permission
@@ -2125,6 +2131,9 @@ public class GameData {
             new CopyOnWriteArrayList<>();
     /** Source-linked exile cast grants that expire at end of turn. */
     public final List<ExileCastPermission> exileCastPermissionsUntilEndOfTurn =
+            new CopyOnWriteArrayList<>();
+    /** Turn-scoped grants to cast one foretold card owned by the granting player for free. */
+    public final List<ForetoldCardCastPermission> foretoldCardCastPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
     /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
     public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
@@ -4914,6 +4923,9 @@ public class GameData {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
+                    } else if (effect instanceof PlayersWithChosenPlanarModePlayAdditionalLandEffect mode
+                            && mode.mode().equals(planar.getChosenModeByPlayer().get(playerId))) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
                             && playerId.equals(planechase.controllerId)) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE,
@@ -5801,6 +5813,7 @@ public class GameData {
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileCardsEnterTapped.remove(cardId);
@@ -7544,6 +7557,7 @@ public class GameData {
         copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
         copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
         copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
+        copy.cloneOperation.reflexiveEffects = this.cloneOperation.reflexiveEffects;
         copy.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 this.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         copy.cloneOperation.xValue = this.cloneOperation.xValue;
@@ -7788,6 +7802,7 @@ public class GameData {
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayPermissionsExpireAtTurnBeginning.putAll(this.exilePlayPermissionsExpireAtTurnBeginning);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
         copy.discordCopySourcePermanents.putAll(this.discordCopySourcePermanents);
@@ -7802,6 +7817,7 @@ public class GameData {
         copy.playersCantPlayFromGraveyardsThisTurn.addAll(this.playersCantPlayFromGraveyardsThisTurn);
         copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
+        copy.foretoldCardCastPermissionsThisTurn.addAll(this.foretoldCardCastPermissionsThisTurn);
         copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.playersMayPlayFaceUpCardsFromExileThisTurn.addAll(this.playersMayPlayFaceUpCardsFromExileThisTurn);
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn

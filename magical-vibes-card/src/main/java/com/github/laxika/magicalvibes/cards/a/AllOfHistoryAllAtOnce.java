@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "34")
 @CardRegistration(set = "WHO", collectorNumber = "352")
+@CardRegistration(set = "WHO", collectorNumber = "639")
+@CardRegistration(set = "WHO", collectorNumber = "943")
 public class AllOfHistoryAllAtOnce extends Card {
 
     public AllOfHistoryAllAtOnce() {

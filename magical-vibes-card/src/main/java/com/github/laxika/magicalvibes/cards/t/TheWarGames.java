@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "30")
+@CardRegistration(set = "WHO", collectorNumber = "635")
 public class TheWarGames extends Card {
 
     private static final PermanentPredicate WARRIOR = new PermanentHasSubtypePredicate(CardSubtype.WARRIOR);

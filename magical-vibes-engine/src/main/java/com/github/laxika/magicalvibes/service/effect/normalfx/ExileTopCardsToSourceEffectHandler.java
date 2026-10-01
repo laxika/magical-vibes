@@ -94,11 +94,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
                 .toList();
-        if (sourcePermanent == null && persistentPermissions.isEmpty()) {
-            log.info("Game {} - Source permanent no longer on battlefield, exile-top-cards fizzles", gameData.id);
-            return;
-        }
-
         if (e.toGraveyardOnControlLoss() && sourcePermanent != null) {
             UUID currentControllerId = gameData.findControllerOf(sourcePermanent);
             gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId,

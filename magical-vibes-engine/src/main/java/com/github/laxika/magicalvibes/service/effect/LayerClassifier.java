@@ -547,7 +547,17 @@ public final class LayerClassifier {
         map.put(BoostEnchantedCreatureByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostCreaturesOfChosenPlayerModeEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostCreaturesOfChosenPlayerModeEffect.class,
+                new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT), (effect, fromOwnStaticSlot) -> {
+                    var boost = (BoostCreaturesOfChosenPlayerModeEffect) effect;
+                    boolean grantsKeywords = boost.grantedKeywords() != null
+                            && !boost.grantedKeywords().isEmpty();
+                    return new LayerClassification(
+                            grantsKeywords
+                                    ? Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT)
+                                    : Set.of(Layer.L7C_MODIFY_PT),
+                            false, false);
+                }));
         map.put(BoostCreaturesSharingColorWithTopCardEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
 

@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HealingSalve;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
+import com.github.laxika.magicalvibes.cards.b.BalduvianRage;
+import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
+import com.github.laxika.magicalvibes.cards.r.RonomHulk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,18 +17,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MartyrOfAshes.class, BorealGriffin.class, BalduvianRage.class, RiteOfFlame.class,
+        RonomHulk.class})
 class MartyrOfAshesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Reveals red cards, sacrifices itself, and damages each creature without flying")
     void revealsRedCardsAndDamagesNonFlyers() {
-        LightningBolt firstRedCard = new LightningBolt();
-        RagingGoblin secondRedCard = new RagingGoblin();
+        RiteOfFlame firstRedCard = new RiteOfFlame();
+        BalduvianRage secondRedCard = new BalduvianRage();
         harness.setHand(player1, List.of(firstRedCard, secondRedCard));
         Permanent martyr = addCreatureReady(player1, new MartyrOfAshes());
-        Permanent ownNonFlyer = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingNonFlyer = addCreatureReady(player2, new GrizzlyBears());
-        Permanent opposingFlyer = addCreatureReady(player2, new AirElemental());
+        Permanent ownNonFlyer = addCreatureReady(player1, new RonomHulk());
+        Permanent opposingNonFlyer = addCreatureReady(player2, new RonomHulk());
+        Permanent opposingFlyer = addCreatureReady(player2, new BorealGriffin());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, null);
@@ -52,14 +54,65 @@ class MartyrOfAshesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot reveal more red cards than are in hand")
     void cannotRevealMoreRedCardsThanAreInHand() {
-        harness.setHand(player1, List.of(new HealingSalve()));
+        RiteOfFlame redCard = new RiteOfFlame();
+        harness.setHand(player1, List.of(redCard));
         Permanent martyr = addCreatureReady(player1, new MartyrOfAshes());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(redCard);
+    }
+
+    @Test
+    @DisplayName("Only red cards can be selected for the reveal cost")
+    void onlyRedCardsCanBeSelectedForRevealCost() {
+        RiteOfFlame redCard = new RiteOfFlame();
+        BorealGriffin nonRedCard = new BorealGriffin();
+        harness.setHand(player1, List.of(redCard, nonRedCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfAshes());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null);
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(redCard.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(nonRedCard.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card ID");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+
+        harness.handleMultipleCardsChosen(player1, List.of(redCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(redCard, nonRedCard);
+    }
+
+    @Test
+    @DisplayName("Can reveal zero red cards, sacrifice itself, and deal no damage")
+    void canRevealZeroRedCards() {
+        BorealGriffin nonRedCard = new BorealGriffin();
+        harness.setHand(player1, List.of(nonRedCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfAshes());
+        Permanent nonFlyer = addCreatureReady(player2, new RonomHulk());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(nonFlyer.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonRedCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

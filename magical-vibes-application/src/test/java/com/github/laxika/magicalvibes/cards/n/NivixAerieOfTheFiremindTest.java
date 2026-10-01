@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CullingSun;
+import com.github.laxika.magicalvibes.cards.q.Quicken;
+import com.github.laxika.magicalvibes.cards.s.SkarrganPitSkulk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NivixAerieOfTheFiremind.class, Shock.class, Pyroclasm.class, GrizzlyBears.class})
+@CardUsed({NivixAerieOfTheFiremind.class, Quicken.class, CullingSun.class, SkarrganPitSkulk.class})
 class NivixAerieOfTheFiremindTest extends BaseCardTest {
 
     @Test
@@ -33,42 +34,59 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles and lets its controller cast a top instant until the next turn")
     void castsTopInstantFromExile() {
-        Card shock = activateExileAbility(new Shock());
+        Card quicken = activateExileAbility(new Quicken());
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(quicken);
+        assertThat(gd.exilePlayPermissions).containsEntry(quicken.getId(), player1.getId());
 
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castFromExile(player1, shock.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, quicken.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(quicken);
     }
 
     @Test
     @DisplayName("Lets its controller cast a top sorcery from exile")
     void castsTopSorceryFromExile() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Card pyroclasm = activateExileAbility(new Pyroclasm());
+        harness.addToBattlefield(player2, new SkarrganPitSkulk());
+        Card cullingSun = activateExileAbility(new CullingSun());
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castFromExile(player1, pyroclasm.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromExile(player1, cullingSun.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(pyroclasm);
+        harness.assertNotOnBattlefield(player2, "Skarrgan Pit-Skulk");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cullingSun);
     }
 
     @Test
     @DisplayName("Exiles but does not allow casting a non-instant or non-sorcery")
     void doesNotAllowCastingCreatureFromExile() {
-        Card bears = activateExileAbility(new GrizzlyBears());
+        Card creature = activateExileAbility(new SkarrganPitSkulk());
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
-        assertThatThrownBy(() -> harness.castFromExile(player1, bears.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Keeps the casting permission through the opponent's turn, not into its controller's next turn")
+    void castingPermissionExpiresWhenNextTurnBegins() {
+        Card quicken = activateExileAbility(new Quicken());
+        harness.setLibrary(player1, List.of(new SkarrganPitSkulk(), new SkarrganPitSkulk()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.exilePlayPermissions).containsEntry(quicken.getId(), player1.getId());
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(quicken.getId());
+        assertThatThrownBy(() -> harness.castFromExile(player1, quicken.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

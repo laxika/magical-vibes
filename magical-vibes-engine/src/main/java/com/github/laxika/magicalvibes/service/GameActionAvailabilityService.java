@@ -1006,12 +1006,22 @@ public class GameActionAvailabilityService {
             paymentPool.promoteOutsideStartingDeckSpellOnlyMana();
         }
         ManaPool initialPaymentPool = paymentPool;
+        List<UUID> coloredReductionTargets = List.of();
+        if (ctx.costSnapshot().containsEffect(
+                ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect.class)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            if (validTargets != null) {
+                coloredReductionTargets = validTargets.validPermanentIds();
+            }
+        }
+        final List<UUID> possibleColoredReductionTargets = coloredReductionTargets;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (!card.isRequiresNoMana()
                 && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
                 && candidateCosts.stream()
                 .map(c -> castingCostService.applyColoredManaCostReductions(
-                        gameData, playerId, card, c, ctx.costSnapshot(), false))
+                        gameData, playerId, card, c, ctx.costSnapshot(), false, possibleColoredReductionTargets))
                 .anyMatch(c -> c.canPayAsGeneric(initialPaymentPool, 0, effectiveAdditionalCost)
                         && canPayWaterbendCost(gameData, playerId, card, initialPaymentPool, c, effectiveAdditionalCost))) {
             return true;
@@ -1100,7 +1110,7 @@ public class GameActionAvailabilityService {
                 || colorlessSpellOrPermanentAbilityContext;
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, cost, ctx.costSnapshot(), false);
+                    gameData, playerId, card, cost, ctx.costSnapshot(), false, possibleColoredReductionTargets);
             if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
                 cost = cost.withBlackManaAsPhyrexian();
             }

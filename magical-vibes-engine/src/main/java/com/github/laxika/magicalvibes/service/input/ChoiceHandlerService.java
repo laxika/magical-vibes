@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -87,6 +86,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanen
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPlanarModeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
@@ -198,6 +198,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
             willOfThePlaneswalkersEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
+    private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
             galadrielElvenQueenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
@@ -1120,6 +1121,17 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesPlanarModeChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid planar mode choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            eachPlayerChoosesPlanarModeEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Elrond of the White Council vote: " + colorName);
@@ -1405,7 +1417,6 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         if (ctx.anyColorCombination()) {
-            manaPool.add(manaColor, 1);
             manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, 1);
             int remaining = ctx.amount() - 1;
             if (remaining > 0) {
@@ -1420,7 +1431,6 @@ public class ChoiceHandlerService {
                 return;
             }
         } else {
-            manaPool.add(manaColor, ctx.amount());
             manaPool.addOutsideStartingDeckSpellOnlyMana(manaColor, ctx.amount());
         }
 
@@ -7462,6 +7472,11 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
+        if (ctx.exileAllMatchingGraveyardCards()) {
+            gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
+                    .filter(card -> cardName.equals(card.getName()) && validIds.contains(card.getId()))
+                    .map(Card::getId).forEach(selectedIds::add);
+        }
         int exiledCount = 0;
         int handExiledCount = 0;
 

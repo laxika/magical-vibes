@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.z.ZealousPersecution;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.r.RitesOfFlourishing;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,23 +13,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeartwoodStoryteller.class, ZealousPersecution.class, GrizzlyBears.class})
+@CardUsed({HeartwoodStoryteller.class, RitesOfFlourishing.class, BlindPhantasm.class})
 class HeartwoodStorytellerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each opponent of a noncreature spell's caster may draw")
     void eachOpponentOfCasterMayDraw() {
         harness.addToBattlefield(player1, new HeartwoodStoryteller());
-        harness.setHand(player1, List.of(new ZealousPersecution()));
         harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
-        addZealousPersecutionMana(player1);
+        harness.setLibrary(player2, List.of(new BlindPhantasm()));
 
         castNoncreatureSpell(player1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
-        resolveRemainingStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
@@ -39,10 +36,8 @@ class HeartwoodStorytellerTest extends BaseCardTest {
     @DisplayName("The caster is not offered a draw")
     void casterIsNotOfferedADraw() {
         harness.addToBattlefield(player1, new HeartwoodStoryteller());
-        harness.setHand(player2, List.of(new ZealousPersecution()));
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        addZealousPersecutionMana(player2);
+        harness.setLibrary(player1, List.of(new BlindPhantasm()));
 
         castNoncreatureSpell(player2);
 
@@ -50,7 +45,7 @@ class HeartwoodStorytellerTest extends BaseCardTest {
         PendingInteraction.MayAbilityChoice choice = (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
-        resolveRemainingStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -59,16 +54,13 @@ class HeartwoodStorytellerTest extends BaseCardTest {
     @DisplayName("Does not trigger for a creature spell")
     void doesNotTriggerForCreatureSpell() {
         harness.addToBattlefield(player1, new HeartwoodStoryteller());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new BlindPhantasm()));
         harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlindPhantasm(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -79,18 +71,7 @@ class HeartwoodStorytellerTest extends BaseCardTest {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(caster, 0);
+        harness.castFromHand(caster, new RitesOfFlourishing(), "{2}{G}");
         harness.passBothPriorities();
-    }
-
-    private void addZealousPersecutionMana(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.addMana(player, ManaColor.BLACK, 1);
-    }
-
-    private void resolveRemainingStack() {
-        while (!gd.stack.isEmpty() && gd.interaction.activeInteraction() == null) {
-            harness.passBothPriorities();
-        }
     }
 }

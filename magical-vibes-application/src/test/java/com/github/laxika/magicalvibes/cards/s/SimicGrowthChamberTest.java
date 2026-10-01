@@ -51,6 +51,20 @@ class SimicGrowthChamberTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ETB ability can return Simic Growth Chamber itself to its owner's hand")
+    void canReturnItselfToHand() {
+        harness.setHand(player1, List.of(new SimicGrowthChamber()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent chamber = findPermanent(player1, "Simic Growth Chamber");
+        harness.handlePermanentChosen(player1, chamber.getId());
+
+        harness.assertNotOnBattlefield(player1, "Simic Growth Chamber");
+        harness.assertInHand(player1, "Simic Growth Chamber");
+    }
+
+    @Test
     @DisplayName("Tapping Simic Growth Chamber adds green and blue mana")
     void tappingAddsGreenAndBlueMana() {
         Permanent chamber = harness.addToBattlefieldAndReturn(player1, new SimicGrowthChamber());

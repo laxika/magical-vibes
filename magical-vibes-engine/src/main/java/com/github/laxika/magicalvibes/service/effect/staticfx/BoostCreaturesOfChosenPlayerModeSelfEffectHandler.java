@@ -37,5 +37,6 @@ public class BoostCreaturesOfChosenPlayerModeSelfEffectHandler implements Static
 
         accumulator.addPower(boost.powerBoost());
         accumulator.addToughness(boost.toughnessBoost());
+        accumulator.addKeywords(boost.grantedKeywords());
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SkarrganFirebird.class)
+@CardUsed({SkarrganFirebird.class})
 class SkarrganFirebirdTest extends BaseCardTest {
 
     @Test
@@ -59,6 +59,24 @@ class SkarrganFirebirdTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard ability returns only the activating Firebird when multiple copies are present")
+    void returnsOnlyTheActivatingFirebird() {
+        SkarrganFirebird activatingFirebird = new SkarrganFirebird();
+        SkarrganFirebird otherFirebird = new SkarrganFirebird();
+        harness.setGraveyard(player1, List.of(activatingFirebird, otherFirebird));
+        addReturnAbilityMana();
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card instanceof SkarrganFirebird)
+                .containsExactly(activatingFirebird);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherFirebird);
+    }
+
+    @Test
     @DisplayName("The graveyard ability ignores damage dealt to its controller")
     void cannotActivateAfterControllerWasDealtDamage() {
         harness.setGraveyard(player1, List.of(new SkarrganFirebird()));
@@ -70,10 +88,7 @@ class SkarrganFirebirdTest extends BaseCardTest {
     }
 
     private void castFirebird() {
-        harness.setHand(player1, List.of(new SkarrganFirebird()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkarrganFirebird(), "{4}{R}{R}");
         resolveAllTriggers();
     }
 

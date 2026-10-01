@@ -1181,7 +1181,6 @@ public class ManaPool {
         total += getNonHandSpellOnlyManaTotal();
         total += getNonOwnedSpellOnlyManaTotal();
         total += getOutsideStartingDeckSpellOnlyManaTotal();
-        total += getOutsideStartingDeckSpellOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;

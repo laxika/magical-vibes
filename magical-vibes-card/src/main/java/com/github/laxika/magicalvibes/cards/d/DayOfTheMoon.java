@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSna
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "79")
+@CardRegistration(set = "WHO", collectorNumber = "684")
 public class DayOfTheMoon extends Card {
 
     public DayOfTheMoon() {

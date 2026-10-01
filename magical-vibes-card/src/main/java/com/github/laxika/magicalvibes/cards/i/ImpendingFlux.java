@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "87")
+@CardRegistration(set = "WHO", collectorNumber = "386")
+@CardRegistration(set = "WHO", collectorNumber = "692")
+@CardRegistration(set = "WHO", collectorNumber = "977")
 public class ImpendingFlux extends Card {
 
     public ImpendingFlux() {

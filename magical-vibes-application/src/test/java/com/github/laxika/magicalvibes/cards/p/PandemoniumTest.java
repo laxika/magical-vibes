@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GideonJura;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.r.RecklessOgre;
 import com.github.laxika.magicalvibes.cards.w.WallOfNets;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -16,17 +18,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pandemonium.class, RecklessOgre.class, WallOfNets.class, HillGiant.class})
+@CardUsed({Pandemonium.class, RecklessOgre.class, WallOfNets.class, HillGiant.class,
+        WurmcoilEngine.class, Unsummon.class, GideonJura.class})
 class PandemoniumTest extends BaseCardTest {
-
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            if (gd.interaction.isAwaitingInput() || gd.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
 
     @Test
     void enteringCreatureControllerMayHaveItDealItsPowerToAnyTarget() {
@@ -37,12 +31,12 @@ class PandemoniumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         PendingInteraction.MayAbilityChoice mayChoice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -50,7 +44,7 @@ class PandemoniumTest extends BaseCardTest {
         assertThat(mayChoice.playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -64,14 +58,33 @@ class PandemoniumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         harness.handlePermanentChosen(player1, target.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed(GideonJura.class)
+    void enteringCreatureMayDealItsPowerToAPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GideonJura());
+        target.setCounterCount(CounterType.LOYALTY, 6);
+        harness.addToBattlefield(player1, new Pandemonium());
+        harness.setHand(player1, List.of(new RecklessOgre()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test
@@ -84,13 +97,13 @@ class PandemoniumTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handlePermanentChosen(player2, player1.getId());
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         PendingInteraction.MayAbilityChoice mayChoice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -98,7 +111,7 @@ class PandemoniumTest extends BaseCardTest {
         assertThat(mayChoice.playerId()).isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
@@ -112,9 +125,9 @@ class PandemoniumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -124,13 +137,13 @@ class PandemoniumTest extends BaseCardTest {
     void currentCreatureControllerChoosesWhetherToDealDamage() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.castFromHand(player1, new HillGiant(), "{3}{R}");
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         var creature = findPermanent(player1, "Hill Giant");
         gd.playerBattlefields.get(player1.getId()).remove(creature);
         gd.playerBattlefields.get(player2.getId()).add(creature);
 
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -144,9 +157,9 @@ class PandemoniumTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new WurmcoilEngine(), "{6}");
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player2, player1.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player2, true);
 
@@ -159,7 +172,7 @@ class PandemoniumTest extends BaseCardTest {
     void departedCreatureUsesLastKnownPowerLifelinkAndController() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.castFromHand(player1, new WurmcoilEngine(), "{6}");
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player1.getId());
         var creature = findPermanent(player1, "Wurmcoil Engine");
         gd.playerBattlefields.get(player1.getId()).remove(creature);
@@ -169,7 +182,7 @@ class PandemoniumTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);

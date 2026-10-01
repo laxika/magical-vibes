@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "85")
+@CardRegistration(set = "WHO", collectorNumber = "385")
+@CardRegistration(set = "WHO", collectorNumber = "690")
+@CardRegistration(set = "WHO", collectorNumber = "976")
 public class FlamingTyrannosaurus extends Card {
 
     public FlamingTyrannosaurus() {

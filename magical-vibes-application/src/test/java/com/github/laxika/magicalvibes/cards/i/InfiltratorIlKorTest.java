@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
+import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InfiltratorIlKor.class, GrizzlyBears.class, SoltariFootSoldier.class})
+@CardUsed({InfiltratorIlKor.class, BladeOfTheSixthPride.class})
 class InfiltratorIlKorTest extends BaseCardTest {
 
     @Test
@@ -50,12 +49,53 @@ class InfiltratorIlKorTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == card);
+
+        Permanent permanent = findPermanent(player1, card.getName());
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove Infiltrator il-Kor's suspend counters")
+    void opponentUpkeepDoesNotRemoveSuspendCounter() {
+        InfiltratorIlKor card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+    }
+
+    @Test
+    @DisplayName("Declining the free suspend cast leaves Infiltrator il-Kor exiled")
+    void decliningFreeCastLeavesCardExiled() {
+        InfiltratorIlKor card = suspendCard();
+
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == card);
     }
 
     @Test
     @DisplayName("Infiltrator il-Kor cannot be blocked by a creature without shadow")
     void cannotBeBlockedByCreatureWithoutShadow() {
-        Permanent blocker = setUpCombat(new GrizzlyBears());
+        Permanent blocker = setUpCombat(new BladeOfTheSixthPride());
+
+        assertThatThrownBy(() -> declareBlock(blocker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Infiltrator il-Kor cannot block a creature without shadow")
+    void cannotBlockCreatureWithoutShadow() {
+        Permanent blocker = setUpCombat(new InfiltratorIlKor(), new BladeOfTheSixthPride());
 
         assertThatThrownBy(() -> declareBlock(blocker))
                 .isInstanceOf(IllegalStateException.class);
@@ -64,7 +104,7 @@ class InfiltratorIlKorTest extends BaseCardTest {
     @Test
     @DisplayName("Infiltrator il-Kor can be blocked by a creature with shadow")
     void canBeBlockedByCreatureWithShadow() {
-        Permanent blocker = setUpCombat(new SoltariFootSoldier());
+        Permanent blocker = setUpCombat(new InfiltratorIlKor());
 
         declareBlock(blocker);
 
@@ -81,19 +121,16 @@ class InfiltratorIlKorTest extends BaseCardTest {
     }
 
     private Permanent setUpCombat(Card blockerCard) {
-        Permanent blocker = new Permanent(blockerCard);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        return setUpCombat(new InfiltratorIlKor(), blockerCard);
+    }
 
-        Permanent attacker = new Permanent(new InfiltratorIlKor());
-        attacker.setSummoningSick(false);
+    private Permanent setUpCombat(Card blockerCard, Card attackerCard) {
+        Permanent blocker = addCreatureReady(player2, blockerCard);
+
+        Permanent attacker = addCreatureReady(player1, attackerCard);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         return blocker;
     }

@@ -279,6 +279,9 @@ class SpellCastingServiceTest {
         lenient().when(castingCostService.applyColoredManaCostReductions(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class), anyBoolean()))
                 .thenAnswer(invocation -> invocation.getArgument(3));
+        lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class), anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerLifeTotals.put(player1Id, 20);
         gd.playerLifeTotals.put(player2Id, 20);
@@ -955,6 +958,27 @@ class SpellCastingServiceTest {
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(dinosaur.getId(), opponentCreature.getId()), null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        }
+
+        @Test
+        void coloredCostPaymentUsesChosenCreatureTarget() {
+            Card instant = createInstant("Reduced removal", "{1}{B}");
+            instant.target(1, 1);
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.COLORLESS, 1);
+            Permanent creature = new Permanent(createCreature("Bear", "{1}{G}"));
+            gd.playerBattlefields.get(player2Id).add(creature);
+            List<UUID> targets = List.of(creature.getId());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(castingCostService.applyColoredManaCostReductions(
+                    eq(gd), eq(player1Id), eq(instant), any(ManaCost.class), eq(targets)))
+                    .thenReturn(new ManaCost("{1}"));
+
+            svc.playCard(gd, player1, 0, null, creature.getId(), null,
+                    targets, null, false, null);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();

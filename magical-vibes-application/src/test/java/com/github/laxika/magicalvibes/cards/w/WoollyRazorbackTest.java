@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoollyRazorback.class, BorealDruid.class})
 class WoollyRazorbackTest extends BaseCardTest {
 
     @Test
@@ -50,13 +51,14 @@ class WoollyRazorbackTest extends BaseCardTest {
         declareBlocks(razorback, List.of(attackerThree));
 
         assertThat(razorback.getCounterCount(CounterType.ICE)).isZero();
+        assertThat(gqs.hasKeyword(gd, razorback, Keyword.DEFENDER)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(attackerThree)
                 .contains(attackerOne, attackerTwo);
     }
 
     private Permanent addAttacker() {
-        Permanent attacker = addCreatureReady(player2, new RagingGoblin());
+        Permanent attacker = addCreatureReady(player2, new BorealDruid());
         attacker.setAttacking(true);
         return attacker;
     }
@@ -72,10 +74,7 @@ class WoollyRazorbackTest extends BaseCardTest {
 
     private void declareBlocks(Permanent blocker, List<Permanent> attackers) {
         int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, attackers.stream()
                 .map(attacker -> new BlockerAssignment(blockerIndex,
                         gd.playerBattlefields.get(player2.getId()).indexOf(attacker)))

@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -15,26 +13,22 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({CrypticAnnelid.class, Forest.class})
+@CardUsed(CrypticAnnelid.class)
 class CrypticAnnelidTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB scries 1, then 2, then 3")
     void etbScriesOneThenTwoThenThree() {
-        Card first = new Forest();
-        Card second = new Forest();
-        Card third = new Forest();
-        Card fourth = new Forest();
-        Card fifth = new Forest();
-        Card sixth = new Forest();
+        Card first = new CrypticAnnelid();
+        Card second = new CrypticAnnelid();
+        Card third = new CrypticAnnelid();
+        Card fourth = new CrypticAnnelid();
+        Card fifth = new CrypticAnnelid();
+        Card sixth = new CrypticAnnelid();
         harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new CrypticAnnelid()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CrypticAnnelid(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -55,5 +49,22 @@ class CrypticAnnelidTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, third, fourth, sixth, first, second);
+    }
+
+    @Test
+    @DisplayName("ETB completes all three scries with an empty library")
+    void etbCompletesAllThreeScriesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new CrypticAnnelid(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("scries 1")).isTrue();
+        assertThat(gameLogContains("scries 2")).isTrue();
+        assertThat(gameLogContains("scries 3")).isTrue();
     }
 }

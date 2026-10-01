@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.TapRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -975,6 +976,14 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.exilePlayPermissionsExpireAtTurnBeginning.entrySet().removeIf(permission -> {
+            if (permission.getValue() > gameData.turnNumber) {
+                return false;
+            }
+            gameData.exilePlayPermissions.remove(permission.getKey());
+            gameData.clearExilePlayPermissionGroup(permission.getKey());
+            return true;
+        });
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 watcher.untilNextTurn()
                         && nextActive.equals(watcher.expirationPlayerId() != null
@@ -1314,6 +1323,14 @@ public class TurnProgressionService {
         // effect overwrites {@code copyUntilNextTurnControllerId}, so an older effect expiring
         // first must not revert the card out from under the still-active newer one.
         for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtTurnStart(nextActive)) {
+            if (expired.effect() instanceof TapRestrictionEffect restriction
+                    && restriction.preventsTappingUnlessAttacking()
+                    && expired.affectedPermanentId() != null) {
+                Permanent affected = findPermanent(gameData, expired.affectedPermanentId());
+                if (affected != null) {
+                    affected.removeTapRestriction(expired.id());
+                }
+            }
             if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());

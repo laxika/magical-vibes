@@ -22,11 +22,12 @@ class KadenaSlinkingSorcererTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(new AinokTracker(), new AinokTracker()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
 
         assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
                 .isInstanceOf(IllegalStateException.class);

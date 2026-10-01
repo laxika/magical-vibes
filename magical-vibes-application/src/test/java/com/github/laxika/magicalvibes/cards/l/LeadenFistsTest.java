@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,12 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LeadenFists.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({LeadenFists.class, FomoriNomad.class, HorizonCanopy.class})
 class LeadenFistsTest extends BaseCardTest {
 
     @Test
     void canBeCastAtInstantSpeed() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -37,20 +37,20 @@ class LeadenFistsTest extends BaseCardTest {
 
     @Test
     void boostsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
 
         harness.setHand(player1, List.of(new LeadenFists()));
         addLeadenFistsMana(player1);
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
     void enchantedCreatureDoesNotUntapDuringItsControllersUntapStep() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
         creature.tap();
 
         harness.setHand(player1, List.of(new LeadenFists()));
@@ -58,18 +58,33 @@ class LeadenFistsTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void enchantedOpponentsCreatureDoesNotUntapDuringItsControllersUntapStep() {
+        Permanent creature = addCreatureReady(player2, new FomoriNomad());
+        creature.tap();
+
+        harness.setHand(player1, List.of(new LeadenFists()));
+        addLeadenFistsMana(player1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HorizonCanopy());
         harness.setHand(player1, List.of(new LeadenFists()));
         addLeadenFistsMana(player1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -79,20 +94,4 @@ class LeadenFistsTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
+import com.github.laxika.magicalvibes.cards.a.AzoriusHerald;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +17,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MacabreWaltz.class, AzoriusFirstWing.class, AzoriusHerald.class, AzoriusSignet.class})
 class MacabreWaltzTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns up to two target creature cards, then the controller discards a card")
     void returnsTwoCreaturesThenDiscards() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
-        harness.setHand(player1, List.of(new MacabreWaltz()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of(new AzoriusFirstWing(), new AzoriusHerald()));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
 
         List<UUID> validIds = new ArrayList<>(
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
@@ -46,12 +45,9 @@ class MacabreWaltzTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature cards in the graveyard are legal targets")
     void onlyCreatureCardsAreLegalTargets() {
-        Card creature = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(creature, new LeoninScimitar()));
-        harness.setHand(player1, List.of(new MacabreWaltz()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        Card creature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(creature, new AzoriusSignet()));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(creature.getId());
@@ -60,11 +56,8 @@ class MacabreWaltzTest extends BaseCardTest {
     @Test
     @DisplayName("Returning one creature still forces the discard")
     void returningOneCreatureStillDiscards() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
-        harness.setHand(player1, List.of(new MacabreWaltz()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of(new AzoriusFirstWing(), new AzoriusHerald()));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
 
         List<UUID> validIds = new ArrayList<>(
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
@@ -82,10 +75,7 @@ class MacabreWaltzTest extends BaseCardTest {
     @Test
     @DisplayName("With an empty graveyard the spell resolves and nothing is discarded from an empty hand")
     void emptyGraveyardAndEmptyHand() {
-        harness.setHand(player1, List.of(new MacabreWaltz()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -100,8 +90,8 @@ class MacabreWaltzTest extends BaseCardTest {
     @Test
     @DisplayName("Discard still happens when no creature cards were returned")
     void discardHappensWithoutReturn() {
-        harness.setGraveyard(player1, List.of(new LeoninScimitar()));
-        harness.setHand(player1, List.of(new MacabreWaltz(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new AzoriusSignet()));
+        harness.setHand(player1, List.of(new MacabreWaltz(), new AzoriusHerald()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, 0);
@@ -113,6 +103,44 @@ class MacabreWaltzTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Azorius Herald");
+    }
+
+    @Test
+    @DisplayName("Choosing no creature cards still forces the discard")
+    void choosingNoCreatureCardsStillDiscards() {
+        AzoriusFirstWing creature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new MacabreWaltz(), new AzoriusHerald()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Azorius First-Wing");
+        harness.assertInGraveyard(player1, "Azorius Herald");
+        harness.assertInGraveyard(player1, "Macabre Waltz");
+    }
+
+    @Test
+    @DisplayName("Only creature cards in your graveyard are legal targets")
+    void excludesCreatureCardsInOpponentGraveyard() {
+        AzoriusFirstWing ownCreature = new AzoriusFirstWing();
+        AzoriusHerald opponentCreature = new AzoriusHerald();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(ownCreature.getId());
     }
 }

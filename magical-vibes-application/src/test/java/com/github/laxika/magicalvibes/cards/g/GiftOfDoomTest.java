@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,14 +22,11 @@ class GiftOfDoomTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent gift = castFaceDown();
 
-        addMorphMana();
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),
                 List.of(sacrifice.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gift.isFaceDown()).isFalse();
         assertThat(gift.getAttachedTo()).isEqualTo(target.getId());
@@ -46,15 +42,13 @@ class GiftOfDoomTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent gift = castFaceDown();
 
-        addMorphMana();
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),
                 List.of(sacrifice.getId()));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gift.isFaceDown()).isFalse();
         assertThat(gift.isAttached()).isFalse();
+        harness.assertInGraveyard(player1, "Gift of Doom");
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
@@ -62,7 +56,6 @@ class GiftOfDoomTest extends BaseCardTest {
     @Test
     void morphCannotSacrificeGiftOfDoomItself() {
         Permanent gift = castFaceDown();
-        addMorphMana();
 
         assertThatThrownBy(() -> harness.turnFaceUp(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift), List.of(gift.getId())))
@@ -80,8 +73,20 @@ class GiftOfDoomTest extends BaseCardTest {
         return findPermanent(player1, "Gift of Doom");
     }
 
-    private void addMorphMana() {
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.BLACK, 1);
+    @Test
+    void attachmentDoesNotTargetAndCanEnchantAnOpponentsHexproofCreature() {
+        Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        Permanent gift = castFaceDown();
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),
+                List.of(sacrifice.getId()));
+
+        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gift.getAttachedTo()).isEqualTo(target.getId());
+        harness.assertOnBattlefield(player1, "Gift of Doom");
     }
 }

@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "137")
+@CardRegistration(set = "WHO", collectorNumber = "421")
+@CardRegistration(set = "WHO", collectorNumber = "742")
+@CardRegistration(set = "WHO", collectorNumber = "1012")
 public class JennyGeneratedAnomaly extends Card {
 
     public JennyGeneratedAnomaly() {

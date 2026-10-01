@@ -22,7 +22,7 @@ class MandateOfPeaceTest extends BaseCardTest {
     @DisplayName("Ends combat, exiles the stack, and silences opponents")
     void endsCombatAndExilesStack() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         harness.setHand(player2, List.of(new Silence()));
         harness.addMana(player2, ManaColor.WHITE, 1);

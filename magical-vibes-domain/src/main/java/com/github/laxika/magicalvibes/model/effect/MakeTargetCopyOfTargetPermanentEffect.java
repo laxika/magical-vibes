@@ -7,10 +7,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 /**
- * Makes the first of two target permanents a permanent copy of the second.
+ * Makes the permanent in {@code targetGroup} a permanent copy of the permanent in
+ * {@code copySourceGroup}.
  * Both targets must be artifacts or creatures.
  */
-public record MakeTargetCopyOfTargetPermanentEffect() implements CardEffect {
+public record MakeTargetCopyOfTargetPermanentEffect(int targetGroup, int copySourceGroup)
+        implements CardEffect {
+
+    public MakeTargetCopyOfTargetPermanentEffect() {
+        this(0, 1);
+    }
 
     @Override
     public TargetSpec targetSpec() {

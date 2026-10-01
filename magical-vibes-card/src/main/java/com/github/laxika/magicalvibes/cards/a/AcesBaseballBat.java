@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "170")
+@CardRegistration(set = "WHO", collectorNumber = "454")
+@CardRegistration(set = "WHO", collectorNumber = "775")
+@CardRegistration(set = "WHO", collectorNumber = "1045")
 public class AcesBaseballBat extends Card {
 
     public AcesBaseballBat() {

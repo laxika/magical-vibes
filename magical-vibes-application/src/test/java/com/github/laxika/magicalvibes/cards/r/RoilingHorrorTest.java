@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RoilingHorror.class)
 class RoilingHorrorTest extends BaseCardTest {
@@ -34,6 +36,59 @@ class RoilingHorrorTest extends BaseCardTest {
         RoilingHorror card = suspendCard(2);
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+    }
+
+    @Test
+    void suspendRejectsZeroX() {
+        RoilingHorror card = new RoilingHorror();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Suspend X requires X to be at least 1");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void timeCounterTriggerFiresWhenNonLastCounterIsRemoved() {
+        RoilingHorror card = suspendCard(2);
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int targetLife = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(targetLife - 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLife + 1);
+    }
+
+    @Test
+    void lastCounterMayCastRoilingHorrorWithHaste() {
+        RoilingHorror card = suspendCard(1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent horror = findPermanent(player1, "Roiling Horror");
+        assertThat(gqs.hasKeyword(gd, horror, Keyword.HASTE)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
     }
 
     @Test

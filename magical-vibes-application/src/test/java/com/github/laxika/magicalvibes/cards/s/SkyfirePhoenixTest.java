@@ -44,7 +44,8 @@ class SkyfirePhoenixTest extends BaseCardTest {
         SkyfirePhoenix phoenix = new SkyfirePhoenix();
         harness.setGraveyard(player1, List.of(phoenix));
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();

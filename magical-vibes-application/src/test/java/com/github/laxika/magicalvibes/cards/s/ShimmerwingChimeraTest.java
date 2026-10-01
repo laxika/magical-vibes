@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ShimmerwingChimera.class, BanishingLight.class, GrizzlyBears.class})
@@ -26,11 +24,12 @@ class ShimmerwingChimeraTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(enchantment.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(enchantment.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player1.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -50,9 +49,9 @@ class ShimmerwingChimeraTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
                 .isNotNull();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

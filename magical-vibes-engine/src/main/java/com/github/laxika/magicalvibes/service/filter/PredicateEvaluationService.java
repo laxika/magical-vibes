@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -152,6 +153,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerDirectionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
@@ -2170,6 +2172,19 @@ public class PredicateEvaluationService {
             case PermanentControlledByPlayerPredicate p ->
                     gameData != null && p.playerId() != null
                             && p.playerId().equals(gameData.findControllerOf(permanent));
+            case PermanentControlledByPlayerDirectionPredicate p -> {
+                if (gameData == null || sourceControllerId == null || p.direction() == null
+                        || gameData.orderedPlayerIds.size() < 2) {
+                    yield false;
+                }
+                int sourceControllerIndex = gameData.orderedPlayerIds.indexOf(sourceControllerId);
+                int permanentControllerIndex = gameData.orderedPlayerIds.indexOf(
+                        gameData.findControllerOf(permanent));
+                yield sourceControllerIndex >= 0 && permanentControllerIndex >= 0
+                        && permanentControllerIndex == Math.floorMod(
+                        sourceControllerIndex + p.direction().turnOrderOffset(),
+                        gameData.orderedPlayerIds.size());
+            }
             case PermanentControlledBySourceChosenPlayerPredicate ignored -> {
                 UUID chosenPlayerId = sourceChosenPlayerId(filterContext);
                 yield gameData != null && chosenPlayerId != null
@@ -2999,6 +3014,11 @@ public class PredicateEvaluationService {
         }
         return switch (predicate) {
             case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate(), context);
+            case PermanentIsSourceCardPredicate ignored -> context != null
+                    && (context.sourcePermanentId() != null
+                    ? permanent.getId().equals(context.sourcePermanentId())
+                    : context.sourceCardId() != null
+                    && permanent.getOriginalCard().getId().equals(context.sourceCardId()));
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
@@ -4637,7 +4657,9 @@ public class PredicateEvaluationService {
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
+                    entry.getCard().getManaValue() + entry.getXValue()
+                            * (entry.getCard().getParsedManaCost() == null ? 0
+                            : entry.getCard().getParsedManaCost().getXSymbolCount()) == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
                     entry.getCard().getManaValue() + entry.getXValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0

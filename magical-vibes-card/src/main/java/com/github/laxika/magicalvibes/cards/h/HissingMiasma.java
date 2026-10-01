@@ -11,7 +11,7 @@ public class HissingMiasma extends Card {
 
     public HissingMiasma() {
         // Whenever a creature attacks you, its controller loses 1 life.
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

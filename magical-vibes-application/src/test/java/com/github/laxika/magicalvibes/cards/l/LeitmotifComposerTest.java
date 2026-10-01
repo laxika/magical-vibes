@@ -77,10 +77,10 @@ class LeitmotifComposerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.isCantBeBlocked()).isTrue();
-        assertThat(otherComposer.isCantBeBlocked()).isTrue();
-        assertThat(opponentComposer.isCantBeBlocked()).isTrue();
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, source)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherComposer)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentComposer)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     private Permanent addReadyComposer(com.github.laxika.magicalvibes.model.Player player) {

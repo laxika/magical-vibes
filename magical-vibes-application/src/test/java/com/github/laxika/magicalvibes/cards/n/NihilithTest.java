@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PactOfTheTitan;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Nihilith.class, Shock.class})
+@CardUsed({Nihilith.class, PactOfTheTitan.class})
 class NihilithTest extends BaseCardTest {
 
     @Test
@@ -31,7 +31,7 @@ class NihilithTest extends BaseCardTest {
     void opponentCardEnteringGraveyardOffersTimeCounterRemoval() {
         Nihilith card = suspendCard();
 
-        castOpponentShock();
+        castOpponentPact();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -44,10 +44,21 @@ class NihilithTest extends BaseCardTest {
     void decliningTriggerLeavesTimeCountersUnchanged() {
         Nihilith card = suspendCard();
 
-        castOpponentShock();
+        castOpponentPact();
 
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
+    }
+
+    @Test
+    @DisplayName("A card entering its controller's own graveyard does not trigger Nihilith")
+    void ownCardEnteringGraveyardDoesNotTrigger() {
+        Nihilith card = suspendCard();
+
+        castOwnPact();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
     }
 
@@ -60,15 +71,20 @@ class NihilithTest extends BaseCardTest {
         return card;
     }
 
-    private void castOpponentShock() {
+    private void castOpponentPact() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castFromHand(player2, new PactOfTheTitan(), "{0}");
         harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void castOwnPact() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new PactOfTheTitan(), "{0}");
         harness.passBothPriorities();
     }
 }

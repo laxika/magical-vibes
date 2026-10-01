@@ -639,6 +639,7 @@ public class TargetPolarityClassifier {
             entry("ReselectAttackingCreatureAttackTargetEffect", TargetPolarity.NEUTRAL),
             entry("TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect", TargetPolarity.NEUTRAL),
             entry("ExchangeTextBoxesEffect", TargetPolarity.NEUTRAL),
+            entry("ExchangeControlOfTargetSpellAndCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ShuffleTargetPermanentsThenEachControllerMayCastEffect", TargetPolarity.NEUTRAL),
             entry("TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MustBlockEachAttackingCreatureThisTurnEffect", TargetPolarity.NEUTRAL),

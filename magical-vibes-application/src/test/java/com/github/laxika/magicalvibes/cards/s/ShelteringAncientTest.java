@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShelteringAncient.class, GrizzlyBears.class})
 class ShelteringAncientTest extends BaseCardTest {
 
     @Test
@@ -78,6 +80,22 @@ class ShelteringAncientTest extends BaseCardTest {
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(otherOpponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ancient);
+    }
+
+    @Test
+    @DisplayName("Declining cumulative upkeep sacrifices Sheltering Ancient")
+    void decliningCumulativeUpkeepSacrifices() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new ShelteringAncient());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ancient);
+        harness.assertInGraveyard(player1, "Sheltering Ancient");
     }
 
     @Test

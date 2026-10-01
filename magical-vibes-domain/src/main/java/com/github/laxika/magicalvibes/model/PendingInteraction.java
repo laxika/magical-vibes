@@ -2351,8 +2351,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                 String sourceSetCode,
                                 UUID sourcePermanentId,
-                                CardEffect followUpEffect)
+                                CardEffect followUpEffect,
+                                boolean exileAllMatchingGraveyardCards)
             implements PendingInteraction {
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName,
+                                    boolean drawForHandExiled,
+                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect, false);
+        }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {

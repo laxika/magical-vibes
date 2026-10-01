@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
 import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
@@ -187,6 +189,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithLessLifeThanCont
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreLandsThanController;
+import com.github.laxika.magicalvibes.model.amount.OtherControlledCreaturesSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostLifeThisTurn;
@@ -532,6 +535,10 @@ public class AmountEvaluationService {
                     countMatchingLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
+            case DevotionToChosenColor ignored ->
+                    gameData.chosenSpellColor == null ? 0 : gameQueryService.getDevotionToColor(
+                            gameData, ctx.controllerId(),
+                            ManaColor.valueOf(gameData.chosenSpellColor.name()));
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
             case ColorsSpentToCast ignored ->
@@ -697,6 +704,8 @@ public class AmountEvaluationService {
                     countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
+            case OtherControlledCreaturesSharingCreatureTypeWithTarget ignored ->
+                    countOtherControlledCreaturesSharingCreatureTypeWithTarget(gameData, ctx);
             case PartySize ignored ->
                     partySize(gameData, ctx);
             case CreatureDeathsThisTurn c ->
@@ -1040,6 +1049,21 @@ public class AmountEvaluationService {
             }
         });
         return count[0];
+    }
+
+    private int countOtherControlledCreaturesSharingCreatureTypeWithTarget(
+            GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target == null) return 0;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) return 0;
+
+        return (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> !permanent.getId().equals(target.getId()))
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> gameQueryService.shareCreatureType(gameData, target, permanent))
+                .count();
     }
 
     private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {
@@ -2726,12 +2750,14 @@ public class AmountEvaluationService {
 
     private int countSpellsCastThisTurn(GameData gameData, SpellsCastThisTurn count, AmountContext ctx) {
         int total = 0;
+        UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId()
+                : ctx.stackEntry() != null ? ctx.stackEntry().getCard().getId() : null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
                     .filter(spell -> count.filter() == null
                             || predicateEvaluationService.matchesCardPredicate(
-                            spell, count.filter(), null, gameData, playerId))
+                            spell, count.filter(), sourceCardId, gameData, playerId))
                     .count();
         }
         return total;
@@ -3343,6 +3369,14 @@ public class AmountEvaluationService {
      * not attacking or has no attack target. See {@link CountScope#DEFENDING_PLAYER}.
      */
     private UUID defendingPlayerId(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() != null && ctx.stackEntry().getDefendingPlayerId() != null) {
+            return ctx.stackEntry().getDefendingPlayerId();
+        }
+        if (ctx.stackEntry() != null && ctx.stackEntry().getAttackedTargetId() != null) {
+            UUID attackedTarget = ctx.stackEntry().getAttackedTargetId();
+            return gameData.playerIds.contains(attackedTarget) ? attackedTarget
+                    : gameQueryService.findPermanentController(gameData, attackedTarget);
+        }
         Permanent source = ctx.sourcePermanent();
         if (source != null) {
             if (!source.isAttacking() || source.getAttackTarget() == null) {

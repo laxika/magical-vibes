@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.b.BloodKnight;
+import com.github.laxika.magicalvibes.cards.b.BruteForce;
+import com.github.laxika.magicalvibes.cards.f.FrozenAether;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,18 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalFrenzy.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({FatalFrenzy.class, BloodKnight.class, FrozenAether.class, BruteForce.class})
 class FatalFrenzyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives a creature you control +X/+0 where X is its power and trample")
     void boostsByTargetPowerAndGrantsTrample() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BloodKnight());
         harness.setHand(player1, List.of(new FatalFrenzy()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bears = findPermanent(player1, "Blood Knight");
         int basePower = gqs.getEffectivePower(gd, bears);
         int baseToughness = gqs.getEffectiveToughness(gd, bears);
 
@@ -41,6 +42,25 @@ class FatalFrenzyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the target's power when Fatal Frenzy resolves")
+    void usesTargetPowerAtResolution() {
+        harness.addToBattlefield(player1, new BloodKnight());
+        harness.setHand(player1, List.of(new FatalFrenzy(), new BruteForce()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        Permanent bears = findPermanent(player1, "Blood Knight");
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(10);
+    }
+
+    @Test
     @DisplayName("Sacrifices the target at the beginning of the next end step")
     void sacrificesTargetAtEndStep() {
         harness.forceActivePlayer(player1);
@@ -50,18 +70,18 @@ class FatalFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalFrenzy()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BloodKnight());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bears = findPermanent(player1, "Blood Knight");
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Blood Knight");
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Blood Knight");
+        harness.assertInGraveyard(player1, "Blood Knight");
     }
 
     @Test
@@ -70,9 +90,9 @@ class FatalFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalFrenzy()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BloodKnight());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent opponentBears = findPermanent(player2, "Blood Knight");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -83,10 +103,10 @@ class FatalFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalFrenzy()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FrozenAether());
 
-        Permanent fountain = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
+        Permanent frozenAether = findPermanent(player1, "Frozen Aether");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, frozenAether.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }

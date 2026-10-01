@@ -67,6 +67,9 @@ public class PlayerInputService {
     private CardCatalog cardCatalog;
     private volatile List<String> catalogNonbasicLandCardNames;
     private volatile List<String> catalogNonbasicCardNames;
+    private final Map<CardNameFilter, List<String>> catalogCardNames = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record CardNameFilter(List<CardType> excludedTypes, CardType requiredType) {}
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         beginCardChoice(gameData, playerId, validIndices, prompt, false);
@@ -2604,7 +2607,25 @@ public class PlayerInputService {
     }
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
-        return collectCardNamesInGame(gameData, card -> isNameCandidate(card, excludedTypes, requiredType));
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> isNameCandidate(card, excludedTypes, requiredType)));
+        if (cardCatalog != null) {
+            names.addAll(catalogCardNames.computeIfAbsent(new CardNameFilter(List.copyOf(excludedTypes), requiredType),
+                    filter -> {
+                        Set<String> catalogNames = new TreeSet<>();
+                        for (CardSet set : CardSet.values()) {
+                            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
+                                Card card = printing.createCard();
+                                if (card.getName() != null && card.getType() != null
+                                        && isNameCandidate(card, filter.excludedTypes(), filter.requiredType())) {
+                                    catalogNames.add(card.getName());
+                                }
+                            }
+                        }
+                        return List.copyOf(catalogNames);
+                    }));
+        }
+        return new ArrayList<>(names);
     }
 
     /** Names of every card in the game that isn't a basic land card (Null Chamber). */
@@ -2703,7 +2724,7 @@ public class PlayerInputService {
     }
 
     private boolean hasExcludedType(Card card, List<CardType> excludedTypes) {
-        if (excludedTypes.contains(card.getType())) {
+        if (card.getType() != null && excludedTypes.contains(card.getType())) {
             return true;
         }
         for (CardType excluded : excludedTypes) {
@@ -2752,6 +2773,15 @@ public class PlayerInputService {
                                           UUID sourcePermanentId) {
         beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, matchingCards.size(), targetPlayerId,
                 cardName, drawForHandExiled, null, null, sourcePermanentId);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          UUID targetPlayerId, String cardName, boolean drawForHandExiled,
+                                          UUID sourcePermanentId, boolean exileAllMatchingGraveyardCards) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, matchingCards.stream().map(Card::getId).toList(), matchingCards.size(),
+                targetPlayerId, choosingPlayerId, cardName, drawForHandExiled, null, null, sourcePermanentId,
+                null, exileAllMatchingGraveyardCards));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,

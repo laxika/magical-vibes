@@ -28,6 +28,7 @@ class RakdosAugermageTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new GrizzlyBears())));
 
         harness.activateAbility(player1, index, null, player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(index).isTapped()).isTrue();
         harness.passBothPriorities();
 
         PendingInteraction.RevealedHandChoice firstChoice =
@@ -53,6 +54,31 @@ class RakdosAugermageTest extends BaseCardTest {
                 .containsExactly("Forest");
         assertThat(gd.playerHands.get(player2.getId())).extracting(card -> card.getName())
                 .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An empty targeted opponent hand still resolves the controller's chosen discard")
+    void emptyTargetHandStillResolvesFirstChoice() {
+        int index = setupReadyAugermage();
+        harness.setHand(player1, new ArrayList<>(List.of(new Forest(), new GrizzlyBears())));
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.choosingPlayerId()).isEqualTo(player2.getId());
+        assertThat(choice.targetPlayerId()).isEqualTo(player1.getId());
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     @Test
@@ -108,8 +134,7 @@ class RakdosAugermageTest extends BaseCardTest {
     }
 
     private int addAugermage(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new RakdosAugermage());
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, new RakdosAugermage());
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 }

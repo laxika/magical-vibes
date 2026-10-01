@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TolariaWest.class, Memnite.class, GrizzlyBears.class})
+@CardUsed({TolariaWest.class, DryadArbor.class, Tarmogoyf.class})
 class TolariaWestTest extends BaseCardTest {
 
     @Test
@@ -38,8 +38,8 @@ class TolariaWestTest extends BaseCardTest {
 
     @Test
     void transmuteSearchesForManaValueZeroCard() {
-        Memnite matchingCard = new Memnite();
-        GrizzlyBears nonMatchingCard = new GrizzlyBears();
+        DryadArbor matchingCard = new DryadArbor();
+        Tarmogoyf nonMatchingCard = new Tarmogoyf();
         harness.setHand(player1, List.of(new TolariaWest()));
         harness.setLibrary(player1, List.of(matchingCard, nonMatchingCard));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -51,10 +51,28 @@ class TolariaWestTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(matchingCard);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Tolaria West");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+    }
+
+    @Test
+    void transmuteCanOnlyBeActivatedAtSorcerySpeed() {
+        TolariaWest land = new TolariaWest();
+        harness.setHand(player1, List.of(land));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

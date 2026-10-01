@@ -1873,7 +1873,7 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (choice.grantHaste()) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {

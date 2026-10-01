@@ -20,10 +20,9 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("With one blocker Spined Sliver gets +1/+1 until end of turn")
     void oneBlockerGivesPlusOnePlusOne() {
         Permanent sliver = addCreatureReady(player1, new SpinedSliver());
-        sliver.setAttacking(true);
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -37,11 +36,10 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("With two blockers Spined Sliver gets +2/+2 until end of turn")
     void twoBlockersGivesPlusTwoPlusTwo() {
         Permanent sliver = addCreatureReady(player1, new SpinedSliver());
-        sliver.setAttacking(true);
         addCreatureReady(player2, new SpinedWurm());
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -58,11 +56,10 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("Spined Sliver boosts a Sliver controlled by the other player")
     void boostsOpponentsSliver() {
         Permanent sliver = addCreatureReady(player1, new HibernationSliver());
-        sliver.setAttacking(true);
         addCreatureReady(player2, new SpinedSliver());
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
@@ -74,11 +71,10 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("Spined Sliver does not trigger for a blocked non-Sliver")
     void doesNotBoostBlockedNonSliver() {
         Permanent wurm = addCreatureReady(player1, new SpinedWurm());
-        wurm.setAttacking(true);
         addCreatureReady(player2, new SpinedSliver());
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).isEmpty();
@@ -90,9 +86,8 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("If unblocked Spined Sliver gets no boost")
     void unblockedGetsNoBoost() {
         Permanent sliver = addCreatureReady(player1, new SpinedSliver());
-        sliver.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -104,10 +99,9 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("Spined Sliver's boost wears off at the end of the turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent sliver = addCreatureReady(player1, new SpinedSliver());
-        sliver.setAttacking(true);
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -126,11 +120,10 @@ class SpinedSliverTest extends BaseCardTest {
     @DisplayName("The boost resolves after the Spined Sliver leaves the battlefield")
     void boostResolvesAfterSourceLeavesBattlefield() {
         Permanent sliver = addCreatureReady(player1, new HibernationSliver());
-        sliver.setAttacking(true);
         Permanent source = addCreatureReady(player2, new SpinedSliver());
         addCreatureReady(player2, new SpinedWurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         gd.playerBattlefields.get(player2.getId()).remove(source);
         harness.passBothPriorities();

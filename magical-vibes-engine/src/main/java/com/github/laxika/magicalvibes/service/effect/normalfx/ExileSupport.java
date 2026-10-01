@@ -169,6 +169,7 @@ public class ExileSupport {
     public void grantPlayUntilNextTurnOfPlayer(GameData gameData, UUID cardId,
                                                 UUID permissionPlayerId, UUID expiryPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
+        gameData.exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
         int expireTurn = gameData.turnNumber + (expiryPlayerId.equals(gameData.activePlayerId) ? 2 : 1);
         gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);

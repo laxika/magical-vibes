@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "74")
+@CardRegistration(set = "WHO", collectorNumber = "679")
+@CardRegistration(set = "WHO", collectorNumber = "377")
+@CardRegistration(set = "WHO", collectorNumber = "968")
 public class VislorTurlough extends Card {
 
     public VislorTurlough() {

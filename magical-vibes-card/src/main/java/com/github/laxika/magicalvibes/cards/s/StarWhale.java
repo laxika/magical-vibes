@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "55")
+@CardRegistration(set = "WHO", collectorNumber = "660")
 public class StarWhale extends Card {
 
     public StarWhale() {

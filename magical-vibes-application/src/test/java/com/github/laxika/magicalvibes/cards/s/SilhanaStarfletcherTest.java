@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.t.TorchDrake;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,8 +15,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SilhanaStarfletcher.class)
+@CardUsed({SilhanaStarfletcher.class, TorchDrake.class})
 class SilhanaStarfletcherTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Reach lets Silhana Starfletcher block a creature with flying")
+    void canBlockFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new TorchDrake());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SilhanaStarfletcher());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Entering the battlefield asks its controller to choose a color")
@@ -36,10 +53,8 @@ class SilhanaStarfletcherTest extends BaseCardTest {
     @Test
     @DisplayName("The tap ability adds one mana of the chosen color")
     void addsChosenColorMana() {
-        Permanent starfletcher = new Permanent(new SilhanaStarfletcher());
-        starfletcher.setSummoningSick(false);
+        Permanent starfletcher = addCreatureReady(player1, new SilhanaStarfletcher());
         starfletcher.setChosenColor(CardColor.BLUE);
-        gd.playerBattlefields.get(player1.getId()).add(starfletcher);
 
         harness.activateAbility(player1, 0, 0, null, null);
 

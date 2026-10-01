@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WHO", collectorNumber = "94")
+@CardRegistration(set = "WHO", collectorNumber = "981")
+@CardRegistration(set = "WHO", collectorNumber = "390")
+@CardRegistration(set = "WHO", collectorNumber = "699")
 public class RyanSinclair extends Card {
 
     public RyanSinclair() {

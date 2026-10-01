@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -80,7 +79,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -2054,7 +2052,7 @@ public class CombatDamageService {
             checkSameNameCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt);
+                    gameData, creature, attackerId, defenderId, damageDealt, firedBatchedAllyTriggerSources);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkAnyCreatureCombatDamageToOwnerTriggers(
@@ -2128,7 +2126,10 @@ public class CombatDamageService {
         attachedDamageSources.forEach((perm, ownerId) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> rawEffects = new ArrayList<>();
-                rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                if (perm.getCard().getEffects(
+                        EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER).isEmpty()) {
+                    rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                }
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
@@ -3650,6 +3651,7 @@ public class CombatDamageService {
                             damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource));
                     if (gameQueryService.isCreature(gameData, perm)) {
                         gameData.recordDamageDealtToCreatureBySource(sourceId, perm.getId());
+                        graveyardService.recordCreatureDamagedByPermanent(gameData, sourceId, perm, amount);
                     }
                 });
                 damageTakenBySource.getOrDefault(idx, Map.of()).keySet()
@@ -4820,6 +4822,7 @@ public class CombatDamageService {
                         gameQueryService.getEffectiveName(gameData, source));
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, afterShield);
                 recordQualifyingCombatDamage(gameData, source, target);
+                graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, afterShield);
             }
             // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks
             // the creature for the CR 704.5h destruction check directly — it never reaches the
@@ -4878,7 +4881,6 @@ public class CombatDamageService {
                     .computeIfAbsent(source, ignored -> new HashSet<>())
                     .add(targetControllerId);
         }
-        graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
         triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
                 gameData, source, target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);

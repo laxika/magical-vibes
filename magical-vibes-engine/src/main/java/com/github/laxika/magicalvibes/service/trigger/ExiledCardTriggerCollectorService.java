@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -31,6 +33,10 @@ public class ExiledCardTriggerCollectorService {
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleConditionalTimeCounterRemoved(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
+        if (isLastCounterEventCondition(conditional)) {
+            if (((TriggerContext.TimeCounterRemovedFromExile) ctx).remainingCounters() != 0) return false;
+            return handleTimeCounterRemoved(match, conditional, ctx);
+        }
         if (conditional.interveningIf()
                 && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
                         ConditionContext.forCard(match.sourceCard(), match.controllerId()))) {
@@ -53,6 +59,10 @@ public class ExiledCardTriggerCollectorService {
         if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
             return true;
         }
+        // The last-counter clause describes the event; adding a counter later does not undo it.
+        triggeredEffects = triggeredEffects.stream().map(triggeredEffect ->
+                triggeredEffect instanceof ConditionalEffect conditional && isLastCounterEventCondition(conditional)
+                        ? conditional.wrapped() : triggeredEffect).toList();
 
         GameData gameData = match.gameData();
         if (triggeredEffects.stream().anyMatch(triggeredEffect ->
@@ -78,5 +88,10 @@ public class ExiledCardTriggerCollectorService {
         log.info("Game {} - {} triggers when a time counter is removed from exile",
                 gameData.id, card.getName());
         return true;
+    }
+
+    private boolean isLastCounterEventCondition(ConditionalEffect conditional) {
+        return conditional.condition() instanceof NotCondition not
+                && not.inner() instanceof SourceCardSuspended;
     }
 }

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
+import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VigeanHydropon.class, GrizzlyBears.class})
+@CardUsed({VigeanHydropon.class, SimicRagworm.class, AzoriusSignet.class})
 class VigeanHydroponTest extends BaseCardTest {
 
     @Test
@@ -31,19 +32,53 @@ class VigeanHydroponTest extends BaseCardTest {
     @DisplayName("Graft moves a counter onto another creature that enters")
     void graftMovesCounterOntoEnteringCreature() {
         Permanent hydropon = castHydropon(player1);
-
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent ragworm = castRagworm(player1);
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may move a counter onto an opponent's creature that enters")
+    void graftMovesCounterOntoOpponentsCreature() {
+        Permanent hydropon = castHydropon(player1);
+        Permanent ragworm = castRagworm(player2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft may be declined")
+    void graftMayBeDeclined() {
+        Permanent hydropon = castHydropon(player1);
+        Permanent ragworm = castRagworm(player1);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft does not trigger for a noncreature entering")
+    void graftDoesNotTriggerForNoncreatureEntering() {
+        Permanent hydropon = castHydropon(player1);
+
+        harness.castFromHand(player1, new AzoriusSignet(), "{2}");
+        harness.passBothPriorities();
+        Permanent signet = findPermanent(player1, "Azorius Signet");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(signet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -51,19 +86,14 @@ class VigeanHydroponTest extends BaseCardTest {
     void cannotAttack() {
         castHydropon(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Cannot block")
     void cannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new SimicRagworm());
         attacker.setAttacking(true);
         castHydropon(player2);
 
@@ -73,16 +103,21 @@ class VigeanHydroponTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent castHydropon(com.github.laxika.magicalvibes.model.Player player) {
+    private Permanent castHydropon(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new VigeanHydropon()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.BLUE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new VigeanHydropon(), "{1}{G}{U}");
         harness.passBothPriorities();
         return findPermanent(player, "Vigean Hydropon");
+    }
+
+    private Permanent castRagworm(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player, new SimicRagworm(), "{3}{G}");
+        harness.passBothPriorities();
+        return findPermanent(player, "Simic Ragworm");
     }
 }

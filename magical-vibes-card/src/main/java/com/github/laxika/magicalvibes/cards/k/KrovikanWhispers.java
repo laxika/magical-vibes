@@ -24,7 +24,7 @@ public class KrovikanWhispers extends Card {
 
         // When this Aura is put into a graveyard from the battlefield, you lose 2 life for each age
         // counter on it.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new LoseLifeEffect(new Scaled(new CountersOnSource(CounterType.AGE), 2),
                         LoseLifeRecipient.CONTROLLER));
     }

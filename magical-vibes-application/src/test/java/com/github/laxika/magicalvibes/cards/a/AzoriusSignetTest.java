@@ -51,9 +51,6 @@ class AzoriusSignetTest extends BaseCardTest {
     }
 
     private Permanent addReadySignet() {
-        Permanent signet = new Permanent(new AzoriusSignet());
-        signet.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(signet);
-        return signet;
+        return harness.addToBattlefieldAndReturn(player1, new AzoriusSignet());
     }
 }

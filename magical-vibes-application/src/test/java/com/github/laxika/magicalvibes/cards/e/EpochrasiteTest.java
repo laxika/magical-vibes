@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.f.FatalAttraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Epochrasite.class, WrathOfGod.class})
+@CardUsed({Epochrasite.class, FatalAttraction.class})
 class EpochrasiteTest extends BaseCardTest {
 
     @Test
@@ -26,10 +26,7 @@ class EpochrasiteTest extends BaseCardTest {
 
     @Test
     void castFromHandDoesNotEnterWithCounters() {
-        harness.setHand(player1, List.of(new Epochrasite()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Epochrasite(), "{2}");
         harness.passBothPriorities();
 
         Permanent epochrasite = findPermanent(player1, "Epochrasite");
@@ -38,14 +35,7 @@ class EpochrasiteTest extends BaseCardTest {
 
     @Test
     void deathExilesItWithSuspendAndReturnsItWithCountersAndHaste() {
-        Permanent epochrasite = harness.enterBattlefieldAndReturn(player1, new Epochrasite());
-        Card epochrasiteCard = epochrasite.getCard();
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        Card epochrasiteCard = exileEpochrasiteWithFatalAttraction();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
         assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), 3);
@@ -61,5 +51,34 @@ class EpochrasiteTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Epochrasite");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void decliningSuspendCastLeavesItInExile() {
+        Card epochrasiteCard = exileEpochrasiteWithFatalAttraction();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(epochrasiteCard.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().equals(epochrasiteCard));
+    }
+
+    private Card exileEpochrasiteWithFatalAttraction() {
+        Permanent epochrasite = addCreatureReady(player1, new Epochrasite());
+        Card epochrasiteCard = epochrasite.getCard();
+        harness.setHand(player1, List.of(new FatalAttraction()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, epochrasite.getId());
+        resolveAllTriggers();
+        return epochrasiteCard;
     }
 }

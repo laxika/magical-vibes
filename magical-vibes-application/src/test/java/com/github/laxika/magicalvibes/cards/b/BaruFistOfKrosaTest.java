@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -98,5 +100,29 @@ class BaruFistOfKrosaTest extends BaseCardTest {
         assertThat(wurm.getEffectivePower()).isEqualTo(3);
         assertThat(wurm.getEffectiveToughness()).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Grandeur counts only your lands and creates a green Wurm")
+    void grandeurCountsOnlyYourLandsAndCreatesGreenWurm() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new BaruFistOfKrosa());
+        harness.setHand(player1, List.of(new BaruFistOfKrosa()));
+
+        harness.activateAbility(player1, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> wurms = findPermanents(player1, "Wurm");
+        assertThat(wurms).hasSize(1);
+        Permanent wurm = wurms.get(0);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, wurm)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasEffectiveSubtype(gd, wurm, CardSubtype.WURM)).isTrue();
     }
 }

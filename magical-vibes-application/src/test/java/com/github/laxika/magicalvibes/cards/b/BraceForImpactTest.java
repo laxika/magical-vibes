@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.c.CacklingFlames;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,45 +18,74 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BraceForImpact.class, WoollyThoctar.class, Shock.class, LightningBolt.class, GrizzlyBears.class})
+@CardUsed({BraceForImpact.class, AssaultZeppelid.class, CacklingFlames.class, MistralCharger.class})
 class BraceForImpactTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents all damage to a multicolored creature and adds a counter for each damage prevented")
     void preventsAllDamageAndAddsCounters() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new WoollyThoctar());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
 
         castBraceForImpact(target);
-        castDamage(player2, new Shock(), target, ManaColor.RED);
-        castDamage(player2, new LightningBolt(), target, ManaColor.RED);
+        castDamage(target);
+        castDamage(target);
 
-        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
     @Test
+    @DisplayName("Can target a multicolored creature controlled by an opponent")
+    void canTargetOpponentsMulticoloredCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AssaultZeppelid());
+
+        castBraceForImpact(target);
+        castDamage(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Damage to another creature is not prevented")
+    void onlyTargetedCreatureIsProtected() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+
+        castBraceForImpact(target);
+        castDamage(otherCreature);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Prevention and its counter rider expire at the end of the turn")
     void expiresAtEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new WoollyThoctar());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
 
         castBraceForImpact(target);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        castDamage(player2, new Shock(), target, ManaColor.RED);
+        castDamage(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cannot target a monocolored creature")
     void cannotTargetMonocoloredCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
         harness.setHand(player1, List.of(new BraceForImpact()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -66,15 +93,15 @@ class BraceForImpactTest extends BaseCardTest {
 
     private void castBraceForImpact(Permanent target) {
         harness.setHand(player1, List.of(new BraceForImpact()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
-    private void castDamage(Player caster, Card damageCard, Permanent target, ManaColor manaColor) {
-        harness.setHand(caster, List.of(damageCard));
-        harness.addMana(caster, manaColor, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+    private void castDamage(Permanent target) {
+        harness.setHand(player2, List.of(new CacklingFlames(), new CacklingFlames()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }
