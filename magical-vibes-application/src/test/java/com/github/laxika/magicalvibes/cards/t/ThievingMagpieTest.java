@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CacklingFiend;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -38,6 +40,48 @@ class ThievingMagpieTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
         Permanent blocker = addCreatureReady(player2, new ThievingMagpie());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({ThievingMagpie.class, CacklingFiend.class})
+    @DisplayName("Flying prevents a nonflying creature from blocking the Magpie")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        prepareDrawState();
+        harness.setLife(player2, 20);
+
+        addCreatureReady(player1, new ThievingMagpie());
+        addCreatureReady(player2, new CacklingFiend());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({ThievingMagpie.class, GiantSpider.class})
+    @DisplayName("Reach allows a Giant Spider to block the flying Magpie")
+    void reachAllowsGiantSpiderToBlock() {
+        prepareDrawState();
+        harness.setLife(player2, 20);
+
+        Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -136,8 +180,7 @@ class ThievingMagpieTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ThievingMagpie());
         Permanent blocker = addCreatureReady(player2, new ThievingMagpie());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));

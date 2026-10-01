@@ -91,6 +91,28 @@ class HolyStrengthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Holy Strength goes to its owner's graveyard when the enchanted creature leaves")
+    void goesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        HolyStrength auraCard = new HolyStrength();
+        harness.setHand(player1, List.of(auraCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Holy Strength");
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bears));
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+    }
+
+    @Test
     @DisplayName("Holy Strength fizzles if its target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());

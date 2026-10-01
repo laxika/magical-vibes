@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StoryCircle;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EssenceDrain.class, GrizzlyBears.class, AirElemental.class, Forest.class})
+@CardUsed({EssenceDrain.class, GrizzlyBears.class, AirElemental.class, Forest.class, StoryCircle.class})
 class EssenceDrainTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -51,6 +54,32 @@ class EssenceDrainTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Essence Drain still gains 3 life when its damage is prevented")
+    void gainsLifeWhenDamageIsPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        Permanent storyCircle = harness.addToBattlefieldAndReturn(player1, new StoryCircle());
+        storyCircle.setChosenColor(CardColor.BLACK);
+
+        EssenceDrain essenceDrain = new EssenceDrain();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(essenceDrain));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(storyCircle), null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, essenceDrain.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 13);
     }
 
     @Test

@@ -61,11 +61,9 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AngelicChorus()));
-        harness.addMana(player2, ManaColor.WHITE, 5);
 
         // 5 mana is not enough (needs 5 + 2 = 7)
-        assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new AngelicChorus(), "{3}{W}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -78,11 +76,10 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AngelicChorus()));
-        harness.addMana(player2, ManaColor.WHITE, 7);
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         // 7 mana is enough (5 + 2 = 7)
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new AngelicChorus(), "{3}{W}{W}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Angelic Chorus");
@@ -129,12 +126,11 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AuraOfSilence()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
         // Aura costs {1}{W}{W} = 3, plus {4} from two opposing Auras = 7 total
-        harness.addMana(player2, ManaColor.WHITE, 6);
 
         // 6 mana is not enough (needs 3 + 4 = 7)
-        assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new AuraOfSilence(), "{1}{W}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -235,6 +231,23 @@ class AuraOfSilenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An invalid target does not pay Aura of Silence's sacrifice cost")
+    void invalidTargetDoesNotSacrificeAura() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, bearId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact or enchantment");
+
+        harness.assertOnBattlefield(player1, "Aura of Silence");
+        harness.assertNotInGraveyard(player1, "Aura of Silence");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot sacrifice without specifying a target")
     void cannotSacrificeWithoutTarget() {
         harness.addToBattlefield(player1, new AuraOfSilence());
@@ -289,11 +302,9 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AngelsFeather()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
 
         // 2 mana is not enough (needs 2 + 2 = 4)
-        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new AngelsFeather(), "{2}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -306,10 +317,8 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new AngelsFeather()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AngelsFeather(), "{2}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -322,10 +331,9 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AngelsFeather()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new AngelsFeather(), "{2}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Angel's Feather");

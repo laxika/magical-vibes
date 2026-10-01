@@ -51,6 +51,22 @@ class AmbassadorLaquatusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mills all remaining cards when the target has fewer than three")
+    void millsAllRemainingCardsWhenTargetHasFewerThanThree() {
+        addCreatureReady(player1, new AmbassadorLaquatus());
+        harness.setLibrary(player2, List.of(
+                new AmbassadorLaquatus(),
+                new AmbassadorLaquatus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Cannot activate the ability without three generic mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new AmbassadorLaquatus());

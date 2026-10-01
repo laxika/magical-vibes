@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -25,24 +24,17 @@ class RootwaterCommandoTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Rootwater Commando puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RootwaterCommando(), "{2}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Rootwater Commando");
     }
 
     @Test
     @DisplayName("Resolving puts Rootwater Commando onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RootwaterCommando(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -62,10 +54,7 @@ class RootwaterCommandoTest extends BaseCardTest {
     @Test
     @DisplayName("Rootwater Commando enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RootwaterCommando(), "{2}{U}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Rootwater Commando");

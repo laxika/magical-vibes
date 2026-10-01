@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,9 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class, GrizzlyBears.class})
+@CardUsed({DiabolicTutor.class, AvenFisher.class, CavesOfKoilos.class})
 class DiabolicTutorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -206,7 +204,6 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
-        GameData gd = harness.getGameData();
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Diabolic Tutor");

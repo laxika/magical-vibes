@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyhunterProwler.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({SkyhunterProwler.class, GiantSpider.class, GrizzlyBears.class, SerraAngel.class})
 class SkyhunterProwlerTest extends BaseCardTest {
 
     @Test
@@ -29,6 +29,18 @@ class SkyhunterProwlerTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Flying lets a creature block Skyhunter Prowler")
+    void flyingLetsCreatureBlockSkyhunterProwler() {
+        addCreatureReady(player1, new SkyhunterProwler());
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
