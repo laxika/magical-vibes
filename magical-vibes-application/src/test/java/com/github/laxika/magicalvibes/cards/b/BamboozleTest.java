@@ -33,8 +33,7 @@ class BamboozleTest extends BaseCardTest {
         Card fourth = new Plains();
         harness.setLibrary(player2, List.of(first, second, third, fourth));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.LibrarySearch firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -49,17 +48,15 @@ class BamboozleTest extends BaseCardTest {
                         && log.contains(fourth.getName()));
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
-        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third, fourth);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourth, third);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -86,8 +83,7 @@ class BamboozleTest extends BaseCardTest {
         Card third = new Mountain();
         harness.setLibrary(player2, List.of(first, second, third));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.LibrarySearch firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -95,14 +91,30 @@ class BamboozleTest extends BaseCardTest {
         assertThat(firstChoice.params().cards()).containsExactly(first, second, third);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, third);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Puts the only revealed card into the graveyard when the library has one card")
+    void handlesSingleCardLibrary() {
+        harness.setHand(player1, List.of(new Bamboozle()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        Card onlyCard = new Island();
+        harness.setLibrary(player2, List.of(onlyCard));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
