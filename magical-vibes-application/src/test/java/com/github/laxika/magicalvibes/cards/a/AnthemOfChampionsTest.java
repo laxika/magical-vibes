@@ -1,16 +1,30 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnthemOfChampions.class, GrizzlyBears.class})
 class AnthemOfChampionsTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(Opalescence.class)
+    void buffsItselfWhenItBecomesACreature() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new AnthemOfChampions());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, anthem)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, anthem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, anthem)).isEqualTo(3);
+    }
 
     @Test
     void buffsCreaturesControllerControls() {
