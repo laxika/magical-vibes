@@ -1,3 +1,4 @@
+# Builds backend modules and runs backend tests, excluding AI tests and frontend tasks.
 # Examples:
 #   .\scripts\run-build-and-fix.ps1
 #   .\scripts\run-build-and-fix.ps1 -MaxFailuresPerBatch 25

@@ -18,7 +18,8 @@ class AggravatedAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Activation untaps your creatures and grants an additional combat/main phase pair")
     void activationUntapsCreaturesAndGrantsAdditionalCombatMainPhasePair() {
-        harness.addToBattlefield(player1, new AggravatedAssault());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new AggravatedAssault());
+        enchantment.tap();
         Permanent creature = addCreatureReady(player1, new GlorySeeker());
         creature.tap();
         Permanent opponentCreature = addCreatureReady(player2, new GlorySeeker());
@@ -33,6 +34,7 @@ class AggravatedAssaultTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(enchantment.isTapped()).isTrue();
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 
@@ -75,5 +77,51 @@ class AggravatedAssaultTest extends BaseCardTest {
 
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    @DisplayName("Multiple postcombat activations add separate combat/main pairs before the end step")
+    void multiplePostcombatActivationsAddSeparatePairs() {
+        harness.addToBattlefield(player1, new AggravatedAssault());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        }
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Activation cannot respond to an unresolved activation")
+    void cannotActivateWithNonemptyStack() {
+        harness.addToBattlefield(player1, new AggravatedAssault());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.passBothPriorities();
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 }

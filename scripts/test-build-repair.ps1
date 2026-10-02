@@ -49,7 +49,7 @@ function New-BuildRepairTestResult {
     param([string] $Head)
     return [pscustomobject] @{
         status = 'green'; failures_targeted = 0; failures_fixed = 0; has_remaining_failures = $false
-        build_exit_code = 0; verified_head = $Head; pushed_head = $Head
+        build_exit_code = 0; full_build_head = $Head; verified_head = $Head; pushed_head = $Head
         summary = 'Full build passed on the pushed commit.'; blocking_reason = $null
     }
 }
@@ -79,6 +79,7 @@ function Invoke-BuildRepairCodex {
                 $result.failures_targeted = 1; $result.failures_fixed = 1
                 $result.build_exit_code = 1; $result.has_remaining_failures = $true
                 $result.verified_head = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
+                $result.full_build_head = $result.verified_head
                 $result.pushed_head = $result.verified_head
                 $result.summary = 'One selected failure fixed and pushed; another remains.'
                 Write-BuildRepairText (Join-Path $Directory 'build.log') "FAILURE: Build failed with an exception.`nBUILD FAILED in 1s`n"
@@ -101,7 +102,7 @@ function Invoke-BuildRepairCodex {
         'mixed_log' { Write-BuildRepairText (Join-Path $Directory 'build.log') "BUILD FAILED in 1s`nBUILD SUCCESSFUL in 1s`n" }
         'dirty_after' { Write-BuildRepairText (Join-Path $Root 'repair.txt') 'uncommitted repair' }
         'blocked' {
-            $result.status = 'blocked'; $result.build_exit_code = $null
+            $result.status = 'blocked'; $result.build_exit_code = $null; $result.full_build_head = $null
             $result.verified_head = $null; $result.pushed_head = $null
             $result.has_remaining_failures = $true; $result.blocking_reason = 'Dependency download unavailable'
             Write-BuildRepairText (Join-Path $Root 'repair.txt') 'preserved diagnostic work'
@@ -112,7 +113,7 @@ function Invoke-BuildRepairCodex {
             Get-BuildRepairGitText $Root @('commit', '-m', 'Preserved unpushed repair') | Out-Null
             $result.status = 'blocked'; $result.pushed_head = $null
             $result.verified_head = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
-            $result.blocking_reason = 'Push rejected after three attempts'
+            $result.blocking_reason = 'Push rejected after twenty attempts'
         }
         'unconfirmed_push' {
             Write-BuildRepairText (Join-Path $Root 'repair.txt') 'unpushed repair'
@@ -121,7 +122,7 @@ function Invoke-BuildRepairCodex {
             $result.verified_head = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
             $result.pushed_head = $result.verified_head
         }
-        { $_ -in @('push_race', 'stale_after_rebase') } {
+        { $_ -in @('push_race', 'stale_after_rebase', 'missing_integration_log', 'stale_integration_log') } {
             $racer = Join-Path $testRoot ($script:mode + '-racer')
             Get-BuildRepairGitText $Root @('clone', (Get-BuildRepairGitText $Root @('remote', 'get-url', 'origin')), $racer) | Out-Null
             Get-BuildRepairGitText $racer @('config', 'user.name', 'Competing test') | Out-Null
@@ -132,6 +133,7 @@ function Invoke-BuildRepairCodex {
             Get-BuildRepairGitText $Root @('add', '--', 'repair.txt') | Out-Null
             Get-BuildRepairGitText $Root @('commit', '-m', 'Local selected repair') | Out-Null
             $beforeRebase = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
+            $result.full_build_head = $beforeRebase
             $script:raceTrace += 'build-before-rebase'
             Write-BuildRepairText (Join-Path $racer 'repair.txt') "concurrent behavior`n"
             Get-BuildRepairGitText $racer @('add', '--', 'repair.txt') | Out-Null
@@ -145,10 +147,13 @@ function Invoke-BuildRepairCodex {
             Get-BuildRepairGitText $Root @('-c', 'core.editor=true', 'rebase', '--continue') | Out-Null
             $result.verified_head = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
             Assert-BuildRepairTest ($result.verified_head -ne $beforeRebase) 'Rebase did not change the built commit'
-            if ($script:mode -eq 'push_race') {
-                $script:raceTrace += 'build-after-rebase'
-                Write-BuildRepairText (Join-Path $Directory 'build.log') "BUILD SUCCESSFUL in 2s`n"
-            } else { $result.verified_head = $beforeRebase }
+            $script:raceTrace += 'focused-check-after-rebase'
+            if ($script:mode -ne 'missing_integration_log') {
+                $integrationHead = $result.verified_head
+                if ($script:mode -eq 'stale_integration_log') { $integrationHead = $beforeRebase }
+                Write-BuildRepairText (Join-Path $Directory 'rebase-validation.log') "Reviewed concurrent change and conflict resolution; selected regression checks passed.`nVerified HEAD: $integrationHead`n"
+            }
+            if ($script:mode -eq 'stale_after_rebase') { $result.verified_head = $beforeRebase }
             Get-BuildRepairGitText $Root @('push', 'origin', 'main') | Out-Null
             $script:raceTrace += 'push'
             $result.pushed_head = Get-BuildRepairGitText $Root @('rev-parse', 'HEAD')
@@ -184,9 +189,16 @@ try {
     Assert-BuildRepairTest ($script:calls -eq 1) 'Already-green checkout did not terminate'
     Assert-BuildRepairTest ($script:capturedModels[0] -eq 'gpt-6.1-sol' -and $script:capturedEfforts[0] -eq 'high') 'Model/effort defaults changed'
     $prompt = Get-Content -LiteralPath (Join-Path $script:directories[0] 'prompt.txt') -Raw
-    foreach ($pattern in @('git pull --rebase origin main', 'build --continue --rerun-tasks --console=plain', 'git push origin main', 'THREE push attempts', 'BEFORE retrying the push', 'overrides AGENTS.md', 'at most 100 distinct failures')) {
+    foreach ($pattern in @('git pull --rebase origin main', 'build --continue --rerun-tasks --console=plain', 'git push origin main', 'TWENTY push attempts', 'multiple pushes per minute', 'Do not run a full build between rebases or push retries', 'Reuse previous validation when incoming changes are independent', 'run only the necessary focused checks', 'overrides AGENTS.md', 'at most 100 distinct failures')) {
         Assert-BuildRepairTest ($prompt.Contains($pattern)) "Prompt is missing a required instruction: $pattern"
     }
+    foreach ($task in @(':magical-vibes-frontend:buildAngular', ':magical-vibes-frontend:testAngular', ':magical-vibes-application:copyFrontend', ':magical-vibes-ai:test')) {
+        Assert-BuildRepairTest ($prompt.Contains("-x $task")) "Prompt does not exclude task: $task"
+    }
+    Assert-BuildRepairTest ($prompt.Contains('with the same exclusions on every run')) 'Verification builds can lose the exclusions'
+    Assert-BuildRepairTest ($prompt.Contains('do not run frontend or AI tests during focused verification either')) 'Focused verification can run excluded tests'
+    Assert-BuildRepairTest (-not $prompt.Contains('with no test/task exclusions')) 'Prompt contradicts the task exclusions'
+    Assert-BuildRepairTest (-not $prompt.Contains('rerun the SAME full build on the integrated HEAD')) 'Prompt requires full rebuilds in the push retry loop'
     $schema = New-BuildRepairSchema 25 | ConvertFrom-Json
     Assert-BuildRepairTest ($schema.properties.failures_targeted.maximum -eq 25) 'Schema ignored the batch limit'
     Assert-BuildRepairThrows { Invoke-BuildRepairLoop -Root $root -MaxFailuresPerBatch 101 } 'greater than|range'
@@ -204,7 +216,7 @@ try {
         failed_green_log = 'does not confirm green'; mixed_log = 'does not confirm green'
         missing_result = 'no result.json'; invalid_json = 'Invalid|JSON'
         codex_failure = 'Codex execution failure'; dirty_after = 'must be clean'
-        blocked = 'Dependency download unavailable'; push_failure = 'Push rejected after three attempts'
+        blocked = 'Dependency download unavailable'; push_failure = 'Push rejected after twenty attempts'
         unconfirmed_push = 'does not confirm the reported push'
     }
     foreach ($case in $cases.GetEnumerator()) { Invoke-BuildRepairTestScenario $case.Key $case.Value | Out-Null }
@@ -215,9 +227,14 @@ try {
 
     $script:raceTrace = @()
     $root = Invoke-BuildRepairTestScenario 'push_race'
-    Assert-BuildRepairTest (($script:raceTrace -join ',') -eq 'build-before-rebase,resolve-conflict,build-after-rebase,push') 'Integrated commit was not rebuilt before pushing'
+    Assert-BuildRepairTest (($script:raceTrace -join ',') -eq 'build-before-rebase,resolve-conflict,focused-check-after-rebase,push') 'Push retry did not use focused validation after conflict resolution'
+    $raceResult = Get-Content -LiteralPath (Join-Path $script:directories[0] 'result.json') -Raw | ConvertFrom-Json
+    Assert-BuildRepairTest ($raceResult.full_build_head -ne $raceResult.pushed_head) 'Result hides the original full-build commit'
+    Assert-BuildRepairTest ((Get-Content -LiteralPath (Join-Path $script:directories[0] 'build.log') -Raw) -ceq "BUILD SUCCESSFUL in 1s`n") 'Integration overwrote the original full-build log'
     Assert-BuildRepairTest ((Get-Content -LiteralPath (Join-Path $root 'repair.txt') -Raw) -match 'concurrent behavior\s+local verified repair') 'Conflict resolution lost one side'
     Invoke-BuildRepairTestScenario 'stale_after_rebase' 'verified commit differs' | Out-Null
+    Invoke-BuildRepairTestScenario 'missing_integration_log' 'requires an integration validation log' | Out-Null
+    Invoke-BuildRepairTestScenario 'stale_integration_log' 'does not confirm the current HEAD' | Out-Null
 
     $root = New-BuildRepairTestCheckout 'preflight'
     $script:calls = 0
@@ -249,6 +266,8 @@ try {
         { param($r) $r.build_exit_code = 1 },
         { param($r) $r.summary = '' },
         { param($r) $r.verified_head = '1234' },
+        { param($r) $r.full_build_head = '1234' },
+        { param($r) $r.full_build_head = $null },
         { param($r) $r.pushed_head = $null },
         { param($r) $r.blocking_reason = 'contradiction' },
         { param($r) $r.status = 'blocked'; $r.blocking_reason = $null },

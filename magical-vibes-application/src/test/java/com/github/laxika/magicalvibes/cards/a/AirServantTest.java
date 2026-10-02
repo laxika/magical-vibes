@@ -1,25 +1,22 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarruksCompanion;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AirServant.class, GarruksCompanion.class})
 class AirServantTest extends BaseCardTest {
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature with flying")
@@ -67,10 +64,10 @@ class AirServantTest extends BaseCardTest {
     @DisplayName("Cannot target creature without flying")
     void cannotTargetNonFlyer() {
         addReadyServant(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonFlyer = addCreatureReady(player2, new GarruksCompanion());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonFlyer.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -118,24 +115,72 @@ class AirServantTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Summoning-sick Air Servant can target itself")
+    void canActivateWhileSummoningSickAndTargetSelf() {
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new AirServant());
+        servant.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, servant.getId());
+        harness.passBothPriorities();
+
+        assertThat(servant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped Air Servant can target an already tapped flyer")
+    void canActivateWhileTappedAndTargetTappedFlyer() {
+        Permanent servant = addReadyServant(player1);
+        servant.setTapped(true);
+        Permanent target = addReadyFlyer(player2);
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Air Servant leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent servant = addReadyServant(player1);
+        Permanent target = addReadyFlyer(player2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(servant);
+        gd.playerGraveyards.get(player1.getId()).add(servant.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Generic mana alone cannot pay the blue activation cost")
+    void cannotActivateWithoutBlueMana() {
+        addReadyServant(player1);
+        Permanent target = addReadyFlyer(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyServant(Player player) {
-        AirServant card = new AirServant();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new AirServant());
     }
 
     private Permanent addReadyFlyer(Player player) {
-        AirElemental card = new AirElemental();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new AirServant());
     }
 }

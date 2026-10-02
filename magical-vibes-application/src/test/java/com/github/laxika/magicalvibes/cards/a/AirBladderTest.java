@@ -76,15 +76,59 @@ class AirBladderTest extends BaseCardTest {
     @Test
     void blockRestrictionEndsWhenAuraLeaves() {
         Permanent blocker = enchantedCreatureOnBattlefield(player2);
-        Permanent aura = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AirBladder)
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player2, "Air Bladder");
         Permanent attacker = addCreatureReady(player1, new RootwaterCommando());
         attacker.setAttacking(true);
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void canEnchantOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new RootwaterCommando());
+        harness.setHand(player1, List.of(new AirBladder()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Air Bladder").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        Permanent attacker = addCreatureReady(player1, new RootwaterCommando());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with flying");
+    }
+
+    @Test
+    void unenchantedCreatureCanStillBlockNonflyingAttacker() {
+        enchantedCreatureOnBattlefield(player2);
+        Permanent blocker = addCreatureReady(player2, new RootwaterCommando());
+        Permanent attacker = addCreatureReady(player1, new RootwaterCommando());
+        attacker.setAttacking(true);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FLYING)).isFalse();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(2, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void canBlockAttackerWithFlyingGrantedByAnotherAirBladder() {
+        Permanent blocker = enchantedCreatureOnBattlefield(player2);
+        Permanent attacker = enchantedCreatureOnBattlefield(player1);
+        attacker.setAttacking(true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
