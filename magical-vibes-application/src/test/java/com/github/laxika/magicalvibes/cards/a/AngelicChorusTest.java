@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -19,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AngelicChorus.class, GiantGrowth.class, GiantSpider.class, GrizzlyBears.class,
-        HuntedWumpus.class, Mobilization.class, Shock.class})
+        HuntedWumpus.class, Mobilization.class, Shock.class, GloriousAnthem.class,
+        Naturalize.class, Terror.class})
 class AngelicChorusTest extends BaseCardTest {
 
     @Test
@@ -134,9 +138,7 @@ class AngelicChorusTest extends BaseCardTest {
         Permanent enteringCreature = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, enteringCreature.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enteringCreature.getId());
         assertThat(gqs.getEffectiveToughness(gd, enteringCreature)).isEqualTo(5);
 
         harness.passBothPriorities();
@@ -153,13 +155,83 @@ class AngelicChorusTest extends BaseCardTest {
         Permanent enteringCreature = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, enteringCreature.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enteringCreature.getId());
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 20);
 
         harness.passBothPriorities();
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Noncreature permanents do not trigger Angelic Chorus")
+    void doesNotTriggerForNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new Mobilization(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Angelic Chorus includes continuous toughness bonuses")
+    void includesContinuousToughnessBonus() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Last known toughness includes continuous bonuses before the creature died")
+    void lastKnownToughnessIncludesContinuousBonus() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent enteringCreature = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, enteringCreature.getId());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Removing Angelic Chorus does not remove its pending life gain")
+    void resolvesAfterChorusLeavesBattlefield() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent chorus = findPermanent(player1, "Angelic Chorus");
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, chorus.getId());
+        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Each successive creature entry gains life independently")
+    void gainsLifeForSuccessiveCreatureEntries() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new GiantSpider(), "{3}{G}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 26);
     }
 }
