@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +24,43 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, DisciplesOfTheInferno.class, GiantSpider.class, GrizzlyBears.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class})
+@CardUsed({Blaze.class, ChandraHopesBeacon.class, ChandraNalaar.class, DisciplesOfTheInferno.class, GiantSpider.class, GrizzlyBears.class, HowlingMine.class, InvasionOfRegatha.class, Mountain.class, Plains.class, Unsummon.class})
 class BlazeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cannot cast with insufficient mana for the chosen X")
+    void cannotCastWithInsufficientManaForX() {
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 3, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Blaze");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not deal damage when its only target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 2, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Blaze");
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Casting Blaze targeting a player puts it on the stack")
