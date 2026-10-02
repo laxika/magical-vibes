@@ -1351,13 +1351,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
                                                 int abilityIndex, int xValue,
                                                 java.util.List<UUID> validCardIds,
-                                                boolean anySpell)
+                                                boolean anySpell, UUID targetId, Zone targetZone)
             implements PendingInteraction {
 
         public ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
                                                      int abilityIndex, int xValue,
                                                      java.util.List<UUID> validCardIds) {
-            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, false);
+            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, false, null, null);
+        }
+
+        public ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                     int abilityIndex, int xValue,
+                                                     java.util.List<UUID> validCardIds, boolean anySpell) {
+            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, anySpell, null, null);
         }
 
         public ExileInstantOrSorcerySpellCostChoice {

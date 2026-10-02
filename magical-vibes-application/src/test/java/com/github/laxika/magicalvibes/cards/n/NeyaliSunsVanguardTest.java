@@ -55,11 +55,12 @@ class NeyaliSunsVanguardTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
         harness.castFromExile(player1, topCard.getId(), player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test

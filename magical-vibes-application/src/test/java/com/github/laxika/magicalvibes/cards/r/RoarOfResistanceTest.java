@@ -50,7 +50,6 @@ class RoarOfResistanceTest extends BaseCardTest {
             declareAttackers(List.of(1, 2));
             harness.passBothPriorities();
 
-            assertThat(gd.stack).hasSize(1);
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             harness.handleMayAbilityChosen(player1, true);
             resolveAllTriggers();

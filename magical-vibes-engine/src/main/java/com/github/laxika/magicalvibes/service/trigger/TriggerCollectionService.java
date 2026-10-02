@@ -3243,16 +3243,15 @@ public class TriggerCollectionService {
                     .getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU);
             for (int effectIndex = 0; effectIndex < authoredEffects.size(); effectIndex++) {
                 CardEffect effect = authoredEffects.get(effectIndex);
-                boolean batched = effect instanceof BatchedCombatDamageToYouTriggerEffect;
                 String triggerKey = perm.getId() + ":" + effectIndex;
-                if (batched && firedBatchedTriggerKeys != null
-                        && firedBatchedTriggerKeys.contains(triggerKey)) {
-                    continue;
-                }
                 CardEffect resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, damagedPlayerId, sourceCreature, effect);
                 if (resolved != null) {
                     if (resolved instanceof BatchedCombatDamageToYouTriggerEffect batchedEffect) {
+                        if (firedBatchedTriggerKeys != null
+                                && firedBatchedTriggerKeys.contains(triggerKey)) {
+                            continue;
+                        }
                         resolved = batchedEffect.wrapped();
                         if (firedBatchedTriggerKeys != null) {
                             firedBatchedTriggerKeys.add(triggerKey);

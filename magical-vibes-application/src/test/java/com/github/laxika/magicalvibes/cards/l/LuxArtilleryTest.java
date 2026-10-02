@@ -68,9 +68,11 @@ class LuxArtilleryTest extends BaseCardTest {
 
     private void reachEndStep() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            gs.advanceStep(gd);
+            resolveAllTriggers();
+        });
     }
 }

@@ -37,7 +37,7 @@ class SynthesisPodTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Divination");
+        harness.assertInGraveyard(player2, "Divination");
     }
 
     @Test

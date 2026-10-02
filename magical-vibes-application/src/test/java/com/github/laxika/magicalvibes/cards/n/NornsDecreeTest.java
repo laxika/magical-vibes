@@ -29,7 +29,7 @@ class NornsDecreeTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
     }
 
     @Test

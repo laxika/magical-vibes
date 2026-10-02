@@ -2621,6 +2621,8 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
+                        && !perm.isFaceDown()
+                        && !gameQueryService.hasLostAllAbilities(gameData, perm)
                         && (!tax.planeswalkersOnly() || attackingPlaneswalker)
                         && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
                         && (tax.activeCondition() == null || conditionEvaluationService.isMet(

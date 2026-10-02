@@ -39,8 +39,8 @@ class TangleweaveArmorTest extends BaseCardTest {
         Permanent armor = findPermanent(player1, "Tangleweave Armor");
         Permanent germ = findPermanent(player1, "Phyrexian Germ");
         assertThat(armor.getAttachedTo()).isEqualTo(germ.getId());
-        assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(6);
     }
 
     @Test

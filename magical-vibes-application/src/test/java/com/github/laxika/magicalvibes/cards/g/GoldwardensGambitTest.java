@@ -37,6 +37,7 @@ class GoldwardensGambitTest extends BaseCardTest {
         });
 
         harness.forceStep(TurnStep.END_STEP);
+        gs.advanceStep(gd);
         assertThat(rebels).allSatisfy(rebel ->
                 assertThat(gqs.hasKeyword(gd, rebel, Keyword.HASTE)).isFalse());
     }

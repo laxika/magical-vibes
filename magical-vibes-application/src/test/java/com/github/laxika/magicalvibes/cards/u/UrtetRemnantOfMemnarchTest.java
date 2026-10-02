@@ -131,5 +131,6 @@ class UrtetRemnantOfMemnarchTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> gs.advanceStep(gd));
     }
 }

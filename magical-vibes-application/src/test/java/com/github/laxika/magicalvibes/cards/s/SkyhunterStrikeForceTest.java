@@ -20,7 +20,7 @@ class SkyhunterStrikeForceTest extends BaseCardTest {
         Card commanderCard = new GrizzlyBears();
         gd.makeCommander(player1.getId(), commanderCard);
         harness.addToBattlefield(player1, new SkyhunterStrikeForce());
-        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MELEE)).isFalse();
@@ -38,7 +38,7 @@ class SkyhunterStrikeForceTest extends BaseCardTest {
         Card commanderCard = new GrizzlyBears();
         gd.makeCommander(player1.getId(), commanderCard);
         harness.addToBattlefield(player1, new SkyhunterStrikeForce());
-        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, commanderCard);
 
         int powerBefore = gqs.getEffectivePower(gd, ally);

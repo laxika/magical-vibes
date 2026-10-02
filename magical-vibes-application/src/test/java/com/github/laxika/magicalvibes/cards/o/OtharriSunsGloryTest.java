@@ -38,7 +38,9 @@ class OtharriSunsGloryTest extends BaseCardTest {
     void graveyardAbilityReturnsOtharri() {
         OtharriSunsGlory otharri = new OtharriSunsGlory();
         harness.setGraveyard(player1, List.of(otharri));
-        Permanent rebel = addCreatureReady(player1, new FrontlineRebel());
+        FrontlineRebel rebelCard = new FrontlineRebel();
+        rebelCard.setSubtypes(List.of(com.github.laxika.magicalvibes.model.CardSubtype.REBEL));
+        Permanent rebel = addCreatureReady(player1, rebelCard);
         addOtharriMana();
 
         harness.activateGraveyardAbility(player1, 0, 0);

@@ -3581,8 +3581,8 @@ public class AbilityActivationService {
                 -1,
                 choice.abilityIndex(),
                 choice.xValue(),
-                null,
-                null,
+                choice.targetId(),
+                choice.targetZone(),
                 null,
                 null,
                 null,
@@ -4410,7 +4410,7 @@ public class AbilityActivationService {
             if (exileInstantOrSorcerySpellCardId == null) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileInstantOrSorcerySpellCostChoice(
                         playerId, permanent.getId(), effectiveIndex, effectiveXValue, validSpellIds,
-                        exileInstantOrSorcerySpellCost.anySpell()));
+                        exileInstantOrSorcerySpellCost.anySpell(), targetId, targetZone));
                 return;
             }
             if (!validSpellIds.contains(exileInstantOrSorcerySpellCardId)) {

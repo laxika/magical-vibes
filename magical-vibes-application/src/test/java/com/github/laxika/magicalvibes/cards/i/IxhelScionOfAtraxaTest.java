@@ -51,7 +51,9 @@ class IxhelScionOfAtraxaTest extends BaseCardTest {
     private void resolveEndStepTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            gs.advanceStep(gd);
+            harness.passBothPriorities();
+        });
     }
 }
