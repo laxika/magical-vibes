@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.CrawWurm;
-import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.c.CloudkinSeer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.h.HealerOfTheGlade;
+import com.github.laxika.magicalvibes.cards.l.LeafkinDruid;
+import com.github.laxika.magicalvibes.cards.s.SoulsFire;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AtemsisAllSeeing.class, Forest.class, HealerOfTheGlade.class,
+        LeafkinDruid.class, CloudkinSeer.class, AirElemental.class})
 class AtemsisAllSeeingTest extends BaseCardTest {
 
     @Test
@@ -44,8 +46,8 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         addReadyAtemsis();
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(
-                new Forest(), new LlanowarElves(), new GrizzlyBears(),
-                new Divination(), new SerraAngel(), new CrawWurm()));
+                new Forest(), new HealerOfTheGlade(), new LeafkinDruid(),
+                new CloudkinSeer(), new AirElemental(), new AtemsisAllSeeing()));
 
         dealCombatDamageToPlayer2();
 
@@ -53,6 +55,7 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -61,8 +64,8 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         addReadyAtemsis();
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(
-                new Forest(), new LlanowarElves(), new GrizzlyBears(),
-                new Divination(), new SerraAngel(), new CrawWurm()));
+                new Forest(), new HealerOfTheGlade(), new LeafkinDruid(),
+                new CloudkinSeer(), new AirElemental(), new AtemsisAllSeeing()));
 
         dealCombatDamageToPlayer2();
 
@@ -76,7 +79,7 @@ class AtemsisAllSeeingTest extends BaseCardTest {
     void fewerThanSixDifferentManaValuesDoesNotLose() {
         addReadyAtemsis();
         harness.setHand(player2, List.of());
-        harness.setHand(player1, List.of(new Forest(), new LlanowarElves(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Forest(), new HealerOfTheGlade(), new LeafkinDruid()));
 
         dealCombatDamageToPlayer2();
         harness.handleMayAbilityChosen(player1, true);
@@ -84,11 +87,83 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
+    @Test
+    @DisplayName("With an empty hand, a newly drawn card can be discarded")
+    void drawsBeforeChoosingDiscardFromEmptyHand() {
+        addReadyAtemsis();
+        harness.setHand(player1, List.of());
+        Forest firstDraw = new Forest();
+        HealerOfTheGlade secondDraw = new HealerOfTheGlade();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondDraw);
+    }
+
+    @Test
+    @DisplayName("Six cards with duplicate mana values do not satisfy the condition")
+    void sixCardsWithOnlyFiveDifferentManaValuesDoNotLose() {
+        addReadyAtemsis();
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new HealerOfTheGlade(),
+                new LeafkinDruid(), new CloudkinSeer(), new AirElemental()));
+
+        dealCombatDamageToPlayer2();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @CardUsed(SoulsFire.class)
+    @DisplayName("Noncombat damage to an opponent can make that opponent lose")
+    void noncombatDamageToOpponentTriggersReveal() {
+        Permanent atemsis = addReadyAtemsis();
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new SoulsFire(), new Forest(), new HealerOfTheGlade(),
+                new LeafkinDruid(), new CloudkinSeer(), new AirElemental(), new AtemsisAllSeeing()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(atemsis.getId(), player2.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @CardUsed(SoulsFire.class)
+    @DisplayName("Damage to Atemsis's controller does not trigger the reveal ability")
+    void damageToControllerDoesNotTriggerReveal() {
+        Permanent atemsis = addReadyAtemsis();
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(atemsis.getId(), player1.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
     private Permanent addReadyAtemsis() {
-        Permanent atemsis = new Permanent(new AtemsisAllSeeing());
-        atemsis.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(atemsis);
-        return atemsis;
+        return addCreatureReady(player1, new AtemsisAllSeeing());
     }
 
     private void dealCombatDamageToPlayer2() {
@@ -96,7 +171,6 @@ class AtemsisAllSeeingTest extends BaseCardTest {
         atemsis.setAttacking(true);
         resolveCombat();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }
